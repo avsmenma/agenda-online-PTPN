@@ -156,18 +156,17 @@ class DashboardPerpajakanController extends Controller
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'perpajakan');
         }
 
-        // Available columns for customization
+        // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
             'nomor_spp' => 'Nomor SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Mirror',
-            'status' => 'Status',
-            'keterangan' => 'Keterangan',
+            'nomor_mirror' => 'Nomor Miro',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kategori',
+            'kebun' => 'Kebun',
             'jenis_dokumen' => 'Jenis Dokumen',
             'jenis_pembayaran' => 'Jenis Pembayaran',
             'nama_pengirim' => 'Nama Pengirim',
@@ -177,25 +176,45 @@ class DashboardPerpajakanController extends Controller
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'Tanggal SPK',
             'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            // Kolom Pajak
+            'npwp' => 'NPWP',
+            'no_faktur' => 'No Faktur',
+            'tanggal_faktur' => 'Tanggal Faktur',
+            'tanggal_selesai_verifikasi_pajak' => 'Tanggal Selesai Verifikasi Pajak',
+            'jenis_pph' => 'Jenis PPh',
+            'dpp_pph' => 'DPP PPh',
+            'ppn_terhutang' => 'PPN Terhutang',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
         
+        // Filter out 'status' and 'keterangan' from selectedColumns if present
+        $selectedColumns = array_filter($selectedColumns, function($col) {
+            return $col !== 'status' && $col !== 'keterangan';
+        });
+        $selectedColumns = array_values($selectedColumns); // Re-index array
+        
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         } else {
-            // Load from session if available
+            // Load from session if available, and filter out 'status'
             $selectedColumns = session('perpajakan_dokumens_table_columns', [
                 'nomor_agenda',
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_mirror',
-                'status',
-                'keterangan'
+                'nomor_mirror'
             ]);
+            // Filter out 'status' and 'keterangan' if they exist in session
+            $selectedColumns = array_filter($selectedColumns, function($col) {
+                return $col !== 'status' && $col !== 'keterangan';
+            });
+            $selectedColumns = array_values($selectedColumns);
+            // Update session to remove 'status' if it was present
+            session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         }
 
         $data = array(

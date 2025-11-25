@@ -1913,7 +1913,9 @@
       <tr>
         <th class="col-no">No</th>
         @foreach($selectedColumns as $col)
+          @if($col !== 'status')
           <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
+          @endif
         @endforeach
         <th class="col-status">Status</th>
         <th class="col-deadline">Deadline</th>
@@ -1963,6 +1965,7 @@
         <tr class="main-row {{ $isLocked ? 'locked-row' : '' }}" onclick="toggleDetail({{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen">
           <td style="text-align: center;">{{ $index + 1 }}</td>
           @foreach($selectedColumns as $col)
+            @if($col !== 'status')
             <td class="col-{{ $col }}">
               @if($col == 'nomor_agenda')
                 <strong>{{ $dokumen->nomor_agenda }}</strong>
@@ -1976,14 +1979,14 @@
                 <strong>{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
               @elseif($col == 'nomor_mirror')
                 {{ $dokumen->nomor_mirror ?? '-' }}
-              @elseif($col == 'keterangan')
-                {{ $dokumen->keterangan ?? '-' }}
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
               @elseif($col == 'uraian_spp')
                 {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
               @elseif($col == 'kategori')
                 {{ $dokumen->kategori ?? '-' }}
+              @elseif($col == 'kebun')
+                {{ $dokumen->kebun ?? '-' }}
               @elseif($col == 'jenis_dokumen')
                 {{ $dokumen->jenis_dokumen ?? '-' }}
               @elseif($col == 'jenis_pembayaran')
@@ -2006,10 +2009,33 @@
                 {{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}
               @elseif($col == 'tanggal_berakhir_spk')
                 {{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}
+              @elseif($col == 'npwp')
+                {{ $dokumen->npwp ?? '-' }}
+              @elseif($col == 'no_faktur')
+                {{ $dokumen->no_faktur ?? '-' }}
+              @elseif($col == 'tanggal_faktur')
+                {{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}
+              @elseif($col == 'tanggal_selesai_verifikasi_pajak')
+                {{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-' }}
+              @elseif($col == 'jenis_pph')
+                {{ $dokumen->jenis_pph ?? '-' }}
+              @elseif($col == 'dpp_pph')
+                {{ $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}
+              @elseif($col == 'ppn_terhutang')
+                {{ $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
+              @elseif($col == 'link_dokumen_pajak')
+                @if($dokumen->link_dokumen_pajak)
+                  <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" rel="noopener noreferrer" title="{{ $dokumen->link_dokumen_pajak }}" style="color: #0d6efd; text-decoration: none;">
+                    <i class="fa-solid fa-link me-1"></i>Lihat Dokumen
+                  </a>
+                @else
+                  -
+                @endif
               @else
                 -
               @endif
             </td>
+            @endif
           @endforeach
           <td style="text-align: center;">
             @if($dokumen->status == 'sent_to_akutansi')
@@ -2051,22 +2077,14 @@
           <td onclick="event.stopPropagation()">
             <div class="action-buttons">
               @if($isLocked)
-                <!-- Locked state - buttons disabled -->
+                <!-- Locked state - hanya tampilkan Set Deadline dan Return -->
                 @unless($isSentToAkutansi)
                   <div class="action-row">
-                    <button class="btn-action btn-edit locked" disabled title="Edit terkunci - tentukan deadline terlebih dahulu">
-                      <i class="fa-solid fa-lock"></i>
-                      <span>Terkunci</span>
+                    <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
+                      <i class="fa-solid fa-clock"></i>
+                      <span>Set Deadline</span>
                     </button>
                   </div>
-                  @if($dokumen->can_set_deadline ?? false)
-                    <div class="action-row">
-                      <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>Set Deadline</span>
-                      </button>
-                    </div>
-                  @endif
                   <div class="action-row">
                     <button type="button" class="btn-action btn-return" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan ke Ibu Yuni">
                       <i class="fa-solid fa-undo"></i>
@@ -2074,20 +2092,6 @@
                     </button>
                   </div>
                 @endunless
-                <div class="action-row">
-                  <button
-                    type="button"
-                    class="btn-action btn-send"
-                    onclick="handleSendToAkutansi({{ $dokumen->id }})"
-                    data-doc-id="{{ $dokumen->id }}"
-                    data-missing-fields="{{ e(implode('||', $missingPerpajakanFields)) }}"
-                    title="{{ $sendButtonTooltip }}"
-                    @if(!$canSendToAkutansi) disabled @endif
-                  >
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Kirim</span>
-                  </button>
-                </div>
               @else
                 <!-- Unlocked state - buttons enabled -->
                 @unless($isSentToAkutansi)
@@ -3264,10 +3268,22 @@ document.addEventListener('DOMContentLoaded', function() {
                               Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
                             @elseif($col == 'nomor_mirror')
                               MIR-{{ 1000 + $i }}
-                            @elseif($col == 'status')
-                              <span style="color: #28a745;">✓ Terkirim</span>
-                            @elseif($col == 'keterangan')
-                              Dokumen lengkap
+                            @elseif($col == 'npwp')
+                              12.345.678.9-{{ str_pad($i, 3, '0', STR_PAD_LEFT) }}.456
+                            @elseif($col == 'no_faktur')
+                              123.456-{{ str_pad($i, 3, '0', STR_PAD_LEFT) }}.789
+                            @elseif($col == 'tanggal_faktur')
+                              {{ date('d/m/Y', strtotime("+$i days")) }}
+                            @elseif($col == 'tanggal_selesai_verifikasi_pajak')
+                              {{ date('d/m/Y', strtotime("+$i days")) }}
+                            @elseif($col == 'jenis_pph')
+                              PPh {{ 21 + $i }}
+                            @elseif($col == 'dpp_pph')
+                              {{ number_format(2000 * $i, 0, ',', '.') }}
+                            @elseif($col == 'ppn_terhutang')
+                              {{ number_format(3000 * $i, 0, ',', '.') }}
+                            @elseif($col == 'link_dokumen_pajak')
+                              <a href="#" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>
                             @else
                               Contoh Data {{ $i }}
                             @endif
@@ -3422,8 +3438,16 @@ function updatePreviewTable() {
     'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
     'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
     'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
-    'status': ['✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim'],
-    'keterangan': ['Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap'],
+    'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
+    'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
+    'npwp': ['12.345.678.9-001.456', '12.345.678.9-002.456', '12.345.678.9-003.456', '12.345.678.9-004.456', '12.345.678.9-005.456'],
+    'no_faktur': ['123.456-001.789', '123.456-002.789', '123.456-003.789', '123.456-004.789', '123.456-005.789'],
+    'tanggal_faktur': ['01/11/2024', '05/11/2024', '10/11/2024', '08/11/2024', '12/11/2024'],
+    'tanggal_selesai_verifikasi_pajak': ['15/11/2024', '18/11/2024', '20/11/2024', '22/11/2024', '25/11/2024'],
+    'jenis_pph': ['PPh 22', 'PPh 23', 'PPh 22', 'PPh 23', 'PPh 22'],
+    'dpp_pph': ['2.000', '4.000', '6.000', '8.000', '10.000'],
+    'ppn_terhutang': ['3.000', '6.000', '9.000', '12.000', '15.000'],
+    'link_dokumen_pajak': ['<a href="#" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>', '<a href="#" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>', '<a href="#" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>', '<a href="#" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>', '<a href="#" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>'],
   };
 
   for (let i = 0; i < 5; i++) {
@@ -3431,14 +3455,20 @@ function updatePreviewTable() {
     previewHTML += `<td>${i + 1}</td>`;
 
     selectedColumnsOrder.forEach(columnKey => {
+      // Skip 'status' column as it's always shown as a special column
+      if (columnKey === 'status') {
+        return;
+      }
+      
       const columnLabel = availableColumnsData[columnKey] || columnKey;
       let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
       
-      if (columnKey === 'status') {
-        cellValue = `<span style="color: #28a745;">${cellValue}</span>`;
+      // Handle special formatting for link_dokumen_pajak
+      if (columnKey === 'link_dokumen_pajak' && sampleData[columnKey]) {
+        previewHTML += `<td>${cellValue}</td>`;
+      } else {
+        previewHTML += `<td>${cellValue}</td>`;
       }
-      
-      previewHTML += `<td>${cellValue}</td>`;
     });
 
     previewHTML += `<td>Edit, Kirim</td>`;

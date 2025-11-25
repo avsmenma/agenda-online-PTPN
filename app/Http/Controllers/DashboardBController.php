@@ -118,8 +118,10 @@ class DashboardBController extends Controller
                 'id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah',
                 'status', 'created_at', 'sent_to_ibub_at', 'tanggal_masuk', 'tanggal_spp',
                 'keterangan', 'alasan_pengembalian', 'deadline_at', 'deadline_days', 'deadline_note',
-                'current_handler', 'bulan', 'tahun', 'kategori', 'jenis_dokumen',
-                'updated_at'
+                'current_handler', 'bulan', 'tahun', 'kategori', 'kebun', 'jenis_dokumen',
+                'updated_at', 'tanggal_spk', 'tanggal_berakhir_spk', 'no_spk', 'nomor_mirror',
+                'nama_pengirim', 'jenis_pembayaran', 'dibayar_kepada', 'no_berita_acara',
+                'tanggal_berita_acara'
             ]);
 
         // Enhanced search functionality - search across all relevant fields
@@ -187,18 +189,17 @@ class DashboardBController extends Controller
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'ibuB');
         }
 
-        // Available columns for customization
+        // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
             'nomor_spp' => 'Nomor SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Mirror',
-            'status' => 'Status',
-            'keterangan' => 'Keterangan',
+            'nomor_mirror' => 'Nomor Miro',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kategori',
+            'kebun' => 'Kebun',
             'jenis_dokumen' => 'Jenis Dokumen',
             'jenis_pembayaran' => 'Jenis Pembayaran',
             'nama_pengirim' => 'Nama Pengirim',
@@ -213,20 +214,31 @@ class DashboardBController extends Controller
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
         
+        // Filter out 'status' and 'keterangan' from selectedColumns if present
+        $selectedColumns = array_filter($selectedColumns, function($col) {
+            return $col !== 'status' && $col !== 'keterangan';
+        });
+        $selectedColumns = array_values($selectedColumns); // Re-index array
+        
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
             session(['ibub_dokumens_table_columns' => $selectedColumns]);
         } else {
-            // Load from session if available
+            // Load from session if available, and filter out 'status'
             $selectedColumns = session('ibub_dokumens_table_columns', [
                 'nomor_agenda',
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_mirror',
-                'status',
-                'keterangan'
+                'nomor_mirror'
             ]);
+            // Filter out 'status' and 'keterangan' if they exist in session
+            $selectedColumns = array_filter($selectedColumns, function($col) {
+                return $col !== 'status' && $col !== 'keterangan';
+            });
+            $selectedColumns = array_values($selectedColumns);
+            // Update session to remove 'status' if it was present
+            session(['ibub_dokumens_table_columns' => $selectedColumns]);
         }
 
         $data = array(

@@ -627,7 +627,7 @@
                         </div>
                       @endif
                       <div class="detail-item">
-                        <span class="detail-label">No Miror</span>
+                        <span class="detail-label">No Miro</span>
                         <span class="detail-value">{{ $dokumen->nomor_mirror ?? '-' }}</span>
                       </div>
                     </div>

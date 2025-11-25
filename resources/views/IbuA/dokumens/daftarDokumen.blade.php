@@ -1835,6 +1835,8 @@
               {{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}
             @elseif($col == 'kategori')
               {{ $dokumen->kategori ?? '-' }}
+            @elseif($col == 'kebun')
+              {{ $dokumen->kebun ?? '-' }}
             @elseif($col == 'jenis_dokumen')
               {{ $dokumen->jenis_dokumen ?? '-' }}
             @elseif($col == 'jenis_pembayaran')
@@ -2582,6 +2584,7 @@ function updatePreviewTable() {
     'tanggal_spp': ['15/11/2024', '10/11/2024', '20/11/2024', '18/11/2024', '22/11/2024'],
     'uraian_spp': ['Pembayaran kontraktor', 'Pembayaran vendor', 'Pembayaran supplier', 'Pembayaran jasa', 'Pembayaran material'],
     'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
+    'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
     'jenis_dokumen': ['SPP', 'SPP', 'SPP', 'SPP', 'SPP'],
     'jenis_pembayaran': ['Tunai', 'Transfer', 'Tunai', 'Transfer', 'Tunai'],
     'nama_pengirim': ['Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul'],

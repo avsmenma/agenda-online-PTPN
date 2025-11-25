@@ -2556,7 +2556,9 @@ search-box .input-group {
       <tr>
         <th class="col-no sticky-column">No</th>
         @foreach($selectedColumns as $col)
+          @if($col !== 'status')
           <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
+          @endif
         @endforeach
         <th class="col-status sticky-column">Status</th>
         <th class="col-action sticky-column">Aksi</th>
@@ -2573,6 +2575,7 @@ search-box .input-group {
       <tr class="main-row {{ $isLocked ? 'locked-row' : '' }}" onclick="toggleDetail(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen (bisa dibuka walau status sudah terkirim)" style="cursor: pointer;">
         <td class="col-no" style="text-align: center;">{{ $loop->iteration }}</td>
         @foreach($selectedColumns as $col)
+          @if($col !== 'status')
           <td class="col-{{ $col }}">
             @if($col == 'nomor_agenda')
               {{ $dokumen->nomor_agenda }}
@@ -2584,14 +2587,14 @@ search-box .input-group {
               <strong>{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
             @elseif($col == 'nomor_mirror')
               {{ $dokumen->nomor_mirror ?? '-' }}
-            @elseif($col == 'keterangan')
-              {{ $dokumen->keterangan ?? '-' }}
             @elseif($col == 'tanggal_spp')
               {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y H:i') : '-' }}
             @elseif($col == 'uraian_spp')
               {{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}
             @elseif($col == 'kategori')
               {{ $dokumen->kategori ?? '-' }}
+            @elseif($col == 'kebun')
+              {{ $dokumen->kebun ?? '-' }}
             @elseif($col == 'jenis_dokumen')
               {{ $dokumen->jenis_dokumen ?? '-' }}
             @elseif($col == 'jenis_pembayaran')
@@ -2618,32 +2621,9 @@ search-box .input-group {
               -
             @endif
           </td>
-        @endforeach
-        <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-          @if($dokumen->deadline_at)
-            @php
-              $isSent = in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi']);
-            @endphp
-            <div class="deadline-card" data-deadline="{{ $dokumen->deadline_at->format('Y-m-d H:i:s') }}" data-sent="{{ $isSent ? 'true' : 'false' }}">
-              <div class="deadline-time">
-                <i class="fa-solid fa-clock"></i>
-                <span>{{ $dokumen->deadline_at->format('d M Y, H:i') }}</span>
-              </div>
-              <div class="deadline-indicator">
-                <i class="fa-solid"></i>
-                <span class="status-text">AMAN</span>
-              </div>
-              @if($dokumen->deadline_note)
-                <div class="deadline-note">{{ Str::limit($dokumen->deadline_note, 50) }}</div>
-              @endif
-            </div>
-          @else
-            <div class="no-deadline">
-              <i class="fa-solid fa-clock"></i>
-              <span>Belum ada deadline</span>
-            </div>
           @endif
-        </td>
+        @endforeach
+        <!-- Kolom Status: Menampilkan status badge -->
         <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
           @if($dokumen->status == 'selesai' || $dokumen->status == 'approved_ibub')
             <span class="badge-status badge-selesai">✓ {{ $dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai' }}</span>
@@ -2654,64 +2634,7 @@ search-box .input-group {
           @elseif($dokumen->status == 'sent_to_akutansi')
             <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
           @elseif(in_array($dokumen->status, ['sent_to_ibub']) && !$isLocked)
-            <!-- Simple Status Change Buttons -->
-            <div class="status-actions" id="status-dropdown-{{ $dokumen->id }}" style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-              <!-- Status Badge -->
-              <span class="badge-status badge-proses" style="margin: 0;">
-                ⏳ Diproses
-              </span>
-
-              <!-- Action Buttons -->
-              <button
-                onclick="quickApprove({{ $dokumen->id }})"
-                style="
-                  background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%) !important;
-                  color: white !important;
-                  border: none !important;
-                  padding: 6px 12px !important;
-                  border-radius: 20px !important;
-                  font-size: 11px !important;
-                  font-weight: 600 !important;
-                  cursor: pointer !important;
-                  display: inline-flex !important;
-                  align-items: center !important;
-                  gap: 4px !important;
-                  transition: all 0.3s ease !important;
-                  box-shadow: 0 2px 8px rgba(64, 145, 108, 0.3) !important;
-                "
-                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(64, 145, 108, 0.4)'"
-                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(64, 145, 108, 0.3)'"
-                title="Approve dokumen ini"
-              >
-                <i class="fas fa-check" style="font-size: 10px;"></i>
-                Approve
-              </button>
-
-              <button
-                onclick="quickReject({{ $dokumen->id }})"
-                style="
-                  background: linear-gradient(135deg, #74c69d 0%, #52b788 100%) !important;
-                  color: white !important;
-                  border: none !important;
-                  padding: 6px 12px !important;
-                  border-radius: 20px !important;
-                  font-size: 11px !important;
-                  font-weight: 600 !important;
-                  cursor: pointer !important;
-                  display: inline-flex !important;
-                  align-items: center !important;
-                  gap: 4px !important;
-                  transition: all 0.3s ease !important;
-                  box-shadow: 0 2px 8px rgba(116, 198, 157, 0.3) !important;
-                "
-                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(116, 198, 157, 0.4)'"
-                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(116, 198, 157, 0.3)'"
-                title="Reject dokumen ini"
-              >
-                <i class="fas fa-times" style="font-size: 10px;"></i>
-                Reject
-              </button>
-            </div>
+            <span class="badge-status badge-proses">⏳ Diproses</span>
           @elseif($dokumen->status == 'sent_to_ibub' && $isLocked)
             <span class="badge-status badge-locked">🔒 Terkunci</span>
           @elseif($dokumen->status == 'returned_to_ibua')
@@ -2722,25 +2645,21 @@ search-box .input-group {
         </td>
         <td class="col-action" onclick="event.stopPropagation()">
           <div class="action-buttons">
-            @if(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi']))
+            @if($isLocked)
+              <!-- Locked state - tampilkan button Set Deadline dan Return -->
+              <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+                <i class="fa-solid fa-clock"></i>
+                <span>Set Deadline</span>
+              </button>
+              <button type="button" class="btn-action btn-return" onclick="openReturnToBidangModal({{ $dokumen->id }})" title="Kembalikan ke Bidang">
+                <i class="fa-solid fa-undo"></i>
+                <span>Return</span>
+              </button>
+            @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi']))
               <!-- Document already sent - show sent status -->
               <button class="btn-action btn-edit locked" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
                 <i class="fa-solid fa-check-circle"></i>
                 <span>Terkirim</span>
-              </button>
-            @elseif($isLocked)
-              <!-- Locked state - buttons disabled -->
-              <button class="btn-action btn-edit locked" disabled title="Edit terkunci - tentukan deadline terlebih dahulu">
-                <i class="fa-solid fa-lock"></i>
-              </button>
-              <button type="button" class="btn-action btn-return locked" disabled title="Kembalikan terkunci - tentukan deadline terlebih dahulu" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
-                <i class="fa-solid fa-lock"></i>
-              </button>
-              <button type="button" class="btn-action locked" disabled title="Kirim terkunci - tentukan deadline terlebih dahulu" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                <i class="fa-solid fa-lock"></i>
-              </button>
-              <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
-                <i class="fa-solid fa-clock"></i>
               </button>
             @else
               <!-- Unlocked state - buttons enabled -->
@@ -2765,6 +2684,7 @@ search-box .input-group {
             @endif
           </div>
         </td>
+        <!-- Kolom Status Paraf: Menampilkan paraf buttons -->
         <td class="col-paraf" onclick="event.stopPropagation()">
           <div class="action-buttons">
             @if(in_array($dokumen->status, ['approved_ibub', 'selesai']))
@@ -4320,10 +4240,6 @@ document.addEventListener('DOMContentLoaded', function() {
                               Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
                             @elseif($col == 'nomor_mirror')
                               MIR-{{ 1000 + $i }}
-                            @elseif($col == 'status')
-                              <span style="color: #28a745;">✓ Terkirim</span>
-                            @elseif($col == 'keterangan')
-                              Dokumen lengkap
                             @else
                               Contoh Data {{ $i }}
                             @endif
@@ -4478,8 +4394,8 @@ function updatePreviewTable() {
     'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
     'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
     'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
-    'status': ['✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim'],
-    'keterangan': ['Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap'],
+    'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
+    'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
   };
 
   for (let i = 0; i < 5; i++) {
@@ -4487,12 +4403,13 @@ function updatePreviewTable() {
     previewHTML += `<td>${i + 1}</td>`;
 
     selectedColumnsOrder.forEach(columnKey => {
+      // Skip 'status' column as it's always shown as a special column
+      if (columnKey === 'status') {
+        return;
+      }
+      
       const columnLabel = availableColumnsData[columnKey] || columnKey;
       let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
-      
-      if (columnKey === 'status') {
-        cellValue = `<span style="color: #28a745;">${cellValue}</span>`;
-      }
       
       previewHTML += `<td>${cellValue}</td>`;
     });
