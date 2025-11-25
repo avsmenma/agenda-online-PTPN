@@ -2,42 +2,50 @@
 
 @section('content')
 <style>
-/* Owner Dashboard - Modern Clean Style */
+/* Owner Dashboard - Senior Friendly Design */
 :root {
-  --primary-color: #007bff;
-  --success-color: #28a745;
-  --warning-color: #ffc107;
-  --danger-color: #dc3545;
-  --info-color: #17a2b8;
-  --secondary-color: #6f42c1;
+  --primary-color: #0056b3;
+  --success-color: #1e7e34;
+  --warning-color: #e0a800;
+  --danger-color: #bd2130;
+  --info-color: #117a8b;
+  --secondary-color: #6c757d;
   --light-bg: #f8f9fa;
-  --border-color: #dee2e6;
-  --text-primary: #343a40;
-  --text-secondary: #6c757d;
-  --text-muted: #adb5bd;
+  --border-color: #ced4da;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-muted: #6c757d;
+  --senior-primary: #004085;
+  --senior-bg-light: #e7f3ff;
+  --senior-font-large: 18px;
+  --senior-font-medium: 16px;
+  --senior-font-small: 14px;
 }
 
 body {
   background: #ffffff !important;
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: var(--senior-font-medium);
+  line-height: 1.6;
 }
 
-/* Header Styles */
+/* Header Styles - Senior Friendly */
 .dashboard-header {
-  background: linear-gradient(135deg, #00695c 0%, #004d40 100%);
+  background: linear-gradient(135deg, var(--senior-primary) 0%, #003366 100%);
   color: white;
-  padding: 1.5rem 0;
+  padding: 2rem 0;
   margin-bottom: 2rem;
   border-radius: 0;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .header-title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: 0.5px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Main Layout */
@@ -52,18 +60,43 @@ body {
   min-width: 0;
 }
 
-/* Search Section Styles */
+/* Search Section Styles - Senior Friendly */
 .search-section {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border: 2px solid var(--border-color);
+}
+
+.search-form .form-control {
+  font-size: var(--senior-font-medium);
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  height: auto;
 }
 
 .search-form .form-control:focus {
-  border-color: #00695c;
-  box-shadow: 0 0 0 0.2rem rgba(0, 105, 92, 0.25);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.25);
+  outline: none;
+}
+
+.search-form .form-label {
+  font-size: var(--senior-font-medium);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.search-form .btn {
+  font-size: var(--senior-font-medium);
+  padding: 12px 24px;
+  font-weight: 600;
+  min-height: 48px;
+  border-radius: 8px;
 }
 
 @media (max-width: 1200px) {
@@ -72,87 +105,91 @@ body {
   }
 }
 
-/* Document Cards */
+/* Document Cards - Senior Friendly */
 .document-card {
   background: white;
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
 }
 
 .document-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
   border-color: var(--primary-color);
 }
 
 .document-card.overdue {
-  border-left: 4px solid var(--danger-color);
+  border-left: 6px solid var(--danger-color);
+  background: #fff5f5;
 }
 
 .document-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .document-number {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: var(--senior-font-large);
+  font-weight: 600;
   color: var(--primary-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
 }
 
-
 .document-body {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .document-value {
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 600;
   color: var(--success-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
 }
 
 .document-info {
-  font-size: 0.875rem;
+  font-size: var(--senior-font-medium);
   color: var(--text-secondary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
 }
 
 .document-status {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: var(--senior-font-medium);
   font-weight: 500;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-/* Progress Bar */
+/* Progress Bar - Senior Friendly */
 .progress-container {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .progress-bar {
-  height: 8px;
+  height: 16px;
   background: #e9ecef;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
   position: relative;
+  border: 1px solid var(--border-color);
 }
 
 .progress-fill {
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.5s ease;
+  border-radius: 8px;
+  transition: width 0.8s ease;
   position: relative;
 }
 
@@ -167,10 +204,11 @@ body {
 }
 
 .progress-percentage {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
+  font-size: var(--senior-font-medium);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 8px;
+  text-align: center;
 }
 
 
@@ -297,7 +335,7 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
-/* Responsive */
+/* Responsive - Senior Friendly */
 @media (max-width: 768px) {
   .dashboard-container {
     flex-direction: column;
@@ -313,15 +351,34 @@ body {
   }
 
   .header-title {
-    font-size: 1.5rem;
+    font-size: 24px;
   }
 
   .document-card {
-    padding: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
   }
 
   .document-number {
-    font-size: 1rem;
+    font-size: var(--senior-font-medium);
+  }
+
+  .document-value {
+    font-size: 18px;
+  }
+
+  .search-section {
+    padding: 1.5rem;
+  }
+
+  .search-form .form-control {
+    font-size: var(--senior-font-medium);
+    padding: 12px;
+  }
+
+  .search-form .btn {
+    padding: 12px 20px;
+    min-height: 44px;
   }
 }
 
@@ -367,7 +424,7 @@ body {
   background: #a8a8a8;
 }
 
-/* Utility Classes */
+/* Utility Classes - Senior Friendly */
 .text-primary { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
@@ -386,43 +443,151 @@ body {
 .rounded-pill { border-radius: 50px; }
 .shadow-sm { box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
 .shadow { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+/* Additional Senior Friendly Improvements */
+.senior-hint {
+  background: var(--senior-bg-light);
+  border-left: 4px solid var(--primary-color);
+  padding: 12px 16px;
+  margin: 16px 0;
+  border-radius: 0 8px 8px 0;
+  font-size: var(--senior-font-medium);
+}
+
+.senior-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.senior-stat-card {
+  flex: 1;
+  min-width: 200px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.senior-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.senior-stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.senior-stat-label {
+  font-size: var(--senior-font-medium);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Focus indicators for accessibility */
+.document-card:focus,
+.btn:focus,
+.form-control:focus {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --text-secondary: #000000;
+    --border-color: #000000;
+  }
+
+  .document-card {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .document-card,
+  .document-card:hover,
+  .senior-stat-card,
+  .senior-stat-card:hover {
+    transform: none;
+    transition: none;
+  }
+
+  .progress-fill {
+    transition: none;
+  }
+}
 </style>
 
 <!-- Dashboard Header -->
 <div class="dashboard-header">
   <div class="container">
     <h1 class="header-title">
-      🎯 PUSAT KOMANDO OWNER
+      <i class="fas fa-chart-line me-3"></i>Dashboard Owner
     </h1>
-    <p class="text-white-50 mb-0">Pemantauan & Analitik Dokumen Real-Time</p>
+    <p class="mb-0" style="font-size: var(--senior-font-medium); opacity: 0.9;">Pantau dan kelola semua dokumen perusahaan dengan mudah</p>
   </div>
 </div>
 
 <div class="container">
+
+  <!-- Senior Friendly Help Hint -->
+  <div class="senior-hint">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Panduan Cepat:</strong> Gunakan kotak pencarian di bawah untuk menemukan dokumen. Klik pada kartu dokumen untuk melihat detail dan status prosesnya.
+  </div>
+
+  <!-- Quick Stats -->
+  @if(!$documents->isEmpty())
+  <div class="senior-stats">
+    <div class="senior-stat-card">
+      <div class="senior-stat-number">{{ $documents->count() }}</div>
+      <div class="senior-stat-label">Total Dokumen</div>
+    </div>
+    <div class="senior-stat-card">
+      <div class="senior-stat-number">{{ $documents->where('is_overdue', true)->count() }}</div>
+      <div class="senior-stat-label">Dokumen Terlambat</div>
+    </div>
+    <div class="senior-stat-card">
+      <div class="senior-stat-number">
+        {{ number_format($documents->sum('nilai_rupiah'), 0, ',', '.') }}
+      </div>
+      <div class="senior-stat-label">Total Nilai (Rp)</div>
+    </div>
+  </div>
+  @endif
+
   <!-- Search Section -->
-  <div class="search-section" style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
+  <div class="search-section">
     <form method="GET" action="{{ url('/owner/dashboard') }}" class="search-form">
-      <div class="d-flex gap-2 align-items-end">
+      <div class="d-flex gap-3 align-items-end">
         <div class="flex-grow-1">
-          <label class="form-label" style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
-            <i class="fas fa-search me-2"></i>Cari Dokumen
+          <label class="form-label">
+            <i class="fas fa-search me-2"></i>Pencarian Dokumen
           </label>
-          <input type="text" 
-                 name="search" 
-                 class="form-control" 
-                 value="{{ $search ?? '' }}" 
-                 placeholder="Cari berdasarkan nomor agenda, SPP, uraian, nilai, bagian, dll..."
-                 style="border-radius: 8px; border: 1px solid var(--border-color); padding: 0.75rem;">
+          <input type="text"
+                 name="search"
+                 class="form-control"
+                 value="{{ $search ?? '' }}"
+                 placeholder="Masukkan nomor agenda, SPP, atau kata kunci...">
         </div>
         <div>
-          <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #00695c 0%, #004d40 100%); border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600;">
-            <i class="fas fa-search me-2"></i>Cari
+          <button type="submit" class="btn btn-primary" style="background: var(--primary-color); border: none;">
+            <i class="fas fa-search me-2"></i>Cari Dokumen
           </button>
         </div>
         @if(isset($search) && !empty($search))
         <div>
-          <a href="{{ url('/owner/dashboard') }}" class="btn btn-secondary" style="border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600;">
-            <i class="fas fa-times me-2"></i>Reset
+          <a href="{{ url('/owner/dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-times me-2"></i>Lihat Semua
           </a>
         </div>
         @endif
@@ -437,17 +602,17 @@ body {
         @if($documents->isEmpty())
           <div class="text-center py-5">
             <div class="mb-4">
-              <i class="fas fa-inbox fa-3x text-muted"></i>
+              <i class="fas fa-folder-open" style="font-size: 48px; color: var(--text-muted);"></i>
             </div>
             @if(isset($search) && !empty($search))
-              <h4 class="text-muted">Tidak ada dokumen ditemukan</h4>
-              <p class="text-muted">Tidak ada dokumen yang sesuai dengan pencarian "{{ $search }}"</p>
-              <a href="{{ url('/owner/dashboard') }}" class="btn btn-primary mt-3" style="background: linear-gradient(135deg, #00695c 0%, #004d40 100%); border: none;">
-                <i class="fas fa-arrow-left me-2"></i>Kembali ke Semua Dokumen
+              <h4 style="color: var(--text-secondary); font-size: var(--senior-font-large);">Tidak ada dokumen ditemukan</h4>
+              <p style="color: var(--text-secondary); font-size: var(--senior-font-medium);">Tidak ada dokumen yang sesuai dengan pencarian "<strong>{{ $search }}</strong>"</p>
+              <a href="{{ url('/owner/dashboard') }}" class="btn btn-primary mt-3" style="background: var(--primary-color); border: none; font-size: var(--senior-font-medium);">
+                <i class="fas fa-arrow-left me-2"></i>Lihat Semua Dokumen
               </a>
             @else
-              <h4 class="text-muted">Belum ada dokumen</h4>
-              <p class="text-muted">Dokumen akan muncul di sini ketika dibuat</p>
+              <h4 style="color: var(--text-secondary); font-size: var(--senior-font-large);">Belum ada dokumen</h4>
+              <p style="color: var(--text-secondary); font-size: var(--senior-font-medium);">Dokumen akan ditampilkan di sini ketika tersedia</p>
             @endif
           </div>
         @else
@@ -458,25 +623,28 @@ body {
               <div class="document-header">
                 <div>
                   <div class="document-number">
-                    📄 #{{ $index + 1 }} - {{ $dokumen['nomor_agenda'] }}
+                    <i class="fas fa-file-alt me-2"></i>Dokumen #{{ $index + 1 }} - {{ $dokumen['nomor_agenda'] }}
                   </div>
                   <div class="document-info">
-                    {{ $dokumen['nomor_spp'] }}
+                    <strong>Nomor SPP:</strong> {{ $dokumen['nomor_spp'] }}
                   </div>
                 </div>
               </div>
 
               <div class="document-body">
                 <div class="document-value">
-                  Rp. {{ number_format($dokumen['nilai_rupiah'], 0, ',', '.') }}
+                  <i class="fas fa-money-bill-wave me-2"></i>
+                  Rp {{ number_format($dokumen['nilai_rupiah'], 0, ',', '.') }}
                 </div>
                 <div class="document-info">
-                  📍 <strong>Posisi:</strong> {{ $dokumen['current_handler_display'] ?? ($dokumen['current_handler'] ?? 'Tidak ada') }}
+                  <i class="fas fa-map-marker-alt me-2"></i>
+                  <strong>Posisi saat ini:</strong> {{ $dokumen['current_handler_display'] ?? ($dokumen['current_handler'] ?? 'Belum ada penangan') }}
                 </div>
                 @if($dokumen['deadline_info'])
                 <div class="document-info">
-                  ⏰ <strong>Deadline:</strong>
-                  <span class="text-{{ $dokumen['deadline_info']['class'] }}">
+                  <i class="fas fa-clock me-2"></i>
+                  <strong>Deadline:</strong>
+                  <span class="text-{{ $dokumen['deadline_info']['class'] }}" style="font-weight: 600;">
                     {{ $dokumen['deadline_info']['text'] }}
                   </span>
                 </div>
@@ -490,8 +658,14 @@ body {
                   </div>
                 </div>
                 <div class="progress-percentage">
-                  {{ $dokumen['progress_percentage'] }}%
+                  <strong>Progres: {{ $dokumen['progress_percentage'] }}%</strong>
                 </div>
+              </div>
+
+              <div class="text-center mt-3">
+                <small style="color: var(--text-muted); font-size: var(--senior-font-small);">
+                  <i class="fas fa-hand-pointer me-1"></i>Klik untuk melihat detail
+                </small>
               </div>
 
             </div>

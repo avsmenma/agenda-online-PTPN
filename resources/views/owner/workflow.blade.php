@@ -1088,14 +1088,6 @@ function toggleAccordion(id) {
   }
 }
 
-// Auto-expand first accordion on load
-document.addEventListener('DOMContentLoaded', function() {
-  const firstAccordion = document.querySelector('.accordion-item');
-  if (firstAccordion) {
-    firstAccordion.classList.add('active');
-  }
-});
-
 // Activity Logs Modal Functions
 function openActivityLogsModal(stageId, stageName) {
   const modal = document.getElementById('activityLogsModal');

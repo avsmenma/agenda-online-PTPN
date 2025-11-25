@@ -156,6 +156,48 @@ class DashboardPerpajakanController extends Controller
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'perpajakan');
         }
 
+        // Available columns for customization
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'nomor_mirror' => 'Nomor Mirror',
+            'status' => 'Status',
+            'keterangan' => 'Keterangan',
+            'tanggal_spp' => 'Tanggal SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'kategori' => 'Kategori',
+            'jenis_dokumen' => 'Jenis Dokumen',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'nama_pengirim' => 'Nama Pengirim',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'no_berita_acara' => 'No Berita Acara',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'no_spk' => 'No SPK',
+            'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+        ];
+
+        // Get selected columns from request or session
+        $selectedColumns = $request->get('columns', []);
+        
+        // If columns are provided in request, save to session
+        if ($request->has('columns') && !empty($selectedColumns)) {
+            session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
+        } else {
+            // Load from session if available
+            $selectedColumns = session('perpajakan_dokumens_table_columns', [
+                'nomor_agenda',
+                'nomor_spp',
+                'tanggal_masuk',
+                'nilai_rupiah',
+                'nomor_mirror',
+                'status',
+                'keterangan'
+            ]);
+        }
+
         $data = array(
             "title" => "Daftar Dokumen Team Perpajakan",
             "module" => "perpajakan",
@@ -164,6 +206,8 @@ class DashboardPerpajakanController extends Controller
             'menuDaftarDokumen' => 'Active',
             'dokumens' => $dokumens,
             'suggestions' => $suggestions,
+            'availableColumns' => $availableColumns,
+            'selectedColumns' => $selectedColumns,
         );
         return view('perpajakan.dokumens.daftarPerpajakan', $data);
     }

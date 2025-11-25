@@ -91,6 +91,36 @@
     box-shadow: 0 6px 20px rgba(8, 62, 64, 0.3);
   }
 
+  .btn-customize-columns-inline {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
+  .btn-customize-columns-inline:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+    background: linear-gradient(135deg, #9ab01f 0%, #a8bf23 100%);
+    color: white;
+  }
+
+  .btn-customize-columns-inline:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+  }
+
   /* Table Container - Enhanced Horizontal Scroll from perpajakan */
   .table-dokumen {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
@@ -1331,6 +1361,357 @@
       padding: 4px 12px;
     }
   }
+
+  /* Modal Customization Styles */
+  .customization-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .customization-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-content-custom {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header-custom {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .modal-header-custom h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .modal-body-custom {
+    padding: 24px 32px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .customization-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .selection-panel {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .panel-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-description {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .column-selection-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+  }
+
+  @media (max-width: 900px) {
+    .column-selection-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .column-selection-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .column-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    cursor: move;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+    min-height: 44px;
+    gap: 8px;
+  }
+
+  .column-item.selected {
+    border-color: #28a745;
+    background: #f0f9f4;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+  }
+
+  .column-item.dragging {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+
+  .drag-handle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    cursor: grab;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  .column-item.selected .drag-handle {
+    color: #28a745;
+  }
+
+  .column-item:not(.selected) .drag-handle {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .column-item-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .column-item-label {
+    font-size: 14px;
+    color: #212529;
+    font-weight: 500;
+    flex: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .column-item-order {
+    width: 24px;
+    height: 24px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .column-item.selected .column-item-order {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .preview-panel {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .preview-container {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 400px;
+    width: 100%;
+  }
+
+  .preview-table {
+    width: 100%;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    font-size: 13px;
+    table-layout: auto;
+  }
+
+  .preview-table th {
+    background: #212529;
+    color: white;
+    padding: 14px 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+  }
+
+  .preview-table td {
+    padding: 12px;
+    text-align: center;
+    border-right: 1px solid #e9ecef;
+    color: #495057;
+    font-size: 13px;
+  }
+
+  .empty-preview {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+  }
+
+  .modal-footer-custom {
+    padding: 20px 40px;
+    border-top: 1px solid #e9ecef;
+    background: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .selected-count {
+    font-size: 15px;
+    color: #495057;
+    font-weight: 500;
+  }
+
+  .selected-count strong {
+    color: #28a745;
+    font-size: 18px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-modal {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-cancel {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-cancel:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+  }
+
+  .btn-save {
+    background: #28a745;
+    color: white;
+  }
+
+  .btn-save:hover {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .btn-save:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+    transform: none;
+  }
 </style>
 
 <h2>{{ $title }}</h2>
@@ -1354,6 +1735,10 @@
     </div>
     <button type="submit" class="btn-filter">
       <i class="fa-solid fa-filter me-2"></i>Filter
+    </button>
+    <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
+      <i class="fa-solid fa-table-columns me-2"></i>
+      Kustomisasi Kolom Tabel
     </button>
   </form>
 </div>
@@ -1410,12 +1795,9 @@
       <thead>
         <tr>
           <th class="col-no">No</th>
-          <th class="col-agenda">Nomor Agenda</th>
-          <th class="col-tanggal">Tanggal Masuk</th>
-          <th class="col-spp">Nomor SPP</th>
-          <th class="col-nilai">Nilai Rupiah</th>
-          <th class="col-tanggal-spp">Tanggal SPP</th>
-          <th class="col-uraian">Uraian</th>
+          @foreach($selectedColumns as $col)
+            <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
+          @endforeach
           <th class="col-deadline">Deadline</th>
           <th class="col-status">Status</th>
           <th class="col-action">Aksi</th>
@@ -1425,16 +1807,55 @@
       @forelse($dokumens as $index => $dokumen)
         <tr class="main-row {{ $dokumen->lock_status_class }}" onclick="toggleDetail({{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
             <td style="text-align: center;">{{ $index + 1 }}</td>
-            <td>
-              <strong>{{ $dokumen->nomor_agenda }}</strong>
-              <br>
-              <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
-            </td>
-            <td>{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y') : '-' }}</td>
-            <td>{{ $dokumen->nomor_spp }}</td>
-            <td><strong>{{ $dokumen->formatted_nilai_rupiah }}</strong></td>
-            <td>{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</td>
-            <td>{{ Str::limit($dokumen->uraian_spp, 60) ?? '-' }}</td>
+            @foreach($selectedColumns as $col)
+              <td class="col-{{ $col }}">
+                @if($col == 'nomor_agenda')
+                  <strong>{{ $dokumen->nomor_agenda }}</strong>
+                  <br>
+                  <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
+                @elseif($col == 'nomor_spp')
+                  {{ $dokumen->nomor_spp }}
+                @elseif($col == 'tanggal_masuk')
+                  {{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}
+                @elseif($col == 'nilai_rupiah')
+                  <strong>{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
+                @elseif($col == 'nomor_mirror')
+                  {{ $dokumen->nomor_mirror ?? '-' }}
+                @elseif($col == 'keterangan')
+                  {{ $dokumen->keterangan ?? '-' }}
+                @elseif($col == 'tanggal_spp')
+                  {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
+                @elseif($col == 'uraian_spp')
+                  {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
+                @elseif($col == 'kategori')
+                  {{ $dokumen->kategori ?? '-' }}
+                @elseif($col == 'jenis_dokumen')
+                  {{ $dokumen->jenis_dokumen ?? '-' }}
+                @elseif($col == 'jenis_pembayaran')
+                  {{ $dokumen->jenis_pembayaran ?? '-' }}
+                @elseif($col == 'nama_pengirim')
+                  {{ $dokumen->nama_pengirim ?? '-' }}
+                @elseif($col == 'dibayar_kepada')
+                  @if($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
+                    {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
+                  @else
+                    {{ $dokumen->dibayar_kepada ?? '-' }}
+                  @endif
+                @elseif($col == 'no_berita_acara')
+                  {{ $dokumen->no_berita_acara ?? '-' }}
+                @elseif($col == 'tanggal_berita_acara')
+                  {{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}
+                @elseif($col == 'no_spk')
+                  {{ $dokumen->no_spk ?? '-' }}
+                @elseif($col == 'tanggal_spk')
+                  {{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}
+                @elseif($col == 'tanggal_berakhir_spk')
+                  {{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}
+                @else
+                  -
+                @endif
+              </td>
+            @endforeach
             <td>
               @if($dokumen->deadline_at)
                 <div class="deadline-card" data-deadline="{{ $dokumen->deadline_at->format('Y-m-d H:i:s') }}">
@@ -1554,7 +1975,7 @@
             </td>
           </tr>
           <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-            <td colspan="10">
+            <td colspan="{{ count($selectedColumns) + 4 }}">
               <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                 <div class="text-center p-4">
                   <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
@@ -1564,7 +1985,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="10" class="text-center py-5">
+            <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center py-5">
               <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
               <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
             </td>
@@ -2150,6 +2571,444 @@ document.addEventListener('DOMContentLoaded', function() {
             form.submit();
         });
     });
+});
+</script>
+
+<!-- Modal: Column Customization -->
+<div class="customization-modal" id="columnCustomizationModal">
+  <div class="modal-content-custom">
+    <div class="modal-header-custom">
+      <h3>
+        <i class="fa-solid fa-table-columns"></i>
+        Kustomisasi Kolom Tabel
+      </h3>
+    </div>
+
+    <div class="modal-body-custom">
+      <div class="customization-grid">
+        <!-- Selection Panel -->
+        <div class="selection-panel">
+          <div class="panel-title">
+            <i class="fa-solid fa-check-square"></i>
+            Pilih Kolom
+          </div>
+          <div class="panel-description">
+            Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+          </div>
+          <div class="column-selection-list" id="columnSelectionList">
+            @foreach($availableColumns as $key => $label)
+              <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
+                   data-column="{{ $key }}"
+                   draggable="{{ in_array($key, $selectedColumns) ? 'true' : 'false' }}"
+                   onclick="toggleColumn(this)">
+                <div class="drag-handle">
+                  <i class="fa-solid fa-grip-vertical"></i>
+                </div>
+                <input type="checkbox"
+                       class="column-item-checkbox"
+                       value="{{ $key }}"
+                       {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
+                       onclick="event.stopPropagation()">
+                <label class="column-item-label">{{ $label }}</label>
+                <span class="column-item-order">
+                  {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
+                </span>
+              </div>
+            @endforeach
+          </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+          <div class="panel-title">
+            <i class="fa-solid fa-eye"></i>
+            Preview Hasil
+          </div>
+          <div class="panel-description">
+            Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
+          </div>
+          <div class="preview-container">
+            <div id="tablePreview">
+              @if(count($selectedColumns) > 0)
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      @foreach($selectedColumns as $col)
+                        <th>{{ $availableColumns[$col] ?? $col }}</th>
+                      @endforeach
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for($i = 1; $i <= 5; $i++)
+                      <tr>
+                        <td>{{ $i }}</td>
+                        @foreach($selectedColumns as $col)
+                          <td>
+                            @if($col == 'nomor_agenda')
+                              AGD/{{ 100 + $i }}/XII/2024
+                            @elseif($col == 'nomor_spp')
+                              {{ 200 + $i }}/M/SPP/8/04/2024
+                            @elseif($col == 'tanggal_masuk')
+                              {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
+                            @elseif($col == 'nilai_rupiah')
+                              Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
+                            @elseif($col == 'nomor_mirror')
+                              MIR-{{ 1000 + $i }}
+                            @elseif($col == 'status')
+                              <span style="color: #28a745;">✓ Terkirim</span>
+                            @elseif($col == 'keterangan')
+                              Dokumen lengkap
+                            @else
+                              Contoh Data {{ $i }}
+                            @endif
+                          </td>
+                        @endforeach
+                        <td>Edit, Kirim</td>
+                      </tr>
+                    @endfor
+                  </tbody>
+                </table>
+              @else
+                <div class="empty-preview">
+                  <i class="fa-solid fa-table"></i>
+                  <p>Belum ada kolom yang dipilih</p>
+                  <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                </div>
+              @endif
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-custom">
+      <div class="selected-count">
+        <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
+        @if(count($selectedColumns) > 0)
+          <br><small>Kolom: {{ implode(', ', array_map(function($col) use ($availableColumns) {
+            return $availableColumns[$col] ?? $col;
+          }, $selectedColumns)) }}</small>
+        @endif
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="closeColumnCustomizationModal()">
+          <i class="fa-solid fa-times"></i>
+          Batal
+        </button>
+        <button type="button" class="btn-modal btn-save" id="saveCustomizationBtn" onclick="saveColumnCustomization()">
+          <i class="fa-solid fa-save"></i>
+          Simpan Perubahan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global variables for column customization
+let selectedColumnsOrder = [];
+let availableColumnsData = {};
+
+// Initialize available columns data from PHP
+@php
+    $columnsJson = json_encode($availableColumns);
+    echo "availableColumnsData = {$columnsJson};";
+@endphp
+
+// Initialize selected columns from existing selection
+@if(count($selectedColumns) > 0)
+  selectedColumnsOrder = @json($selectedColumns);
+@endif
+
+// Global Functions
+function openColumnCustomizationModal() {
+  const modal = document.getElementById('columnCustomizationModal');
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  initializeModalState();
+}
+
+function closeColumnCustomizationModal() {
+  const modal = document.getElementById('columnCustomizationModal');
+  modal.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function toggleColumn(columnElement) {
+  const columnKey = columnElement.dataset.column;
+  const checkbox = columnElement.querySelector('.column-item-checkbox');
+  const isChecked = checkbox.checked;
+
+  if (!isChecked) {
+    if (!selectedColumnsOrder.includes(columnKey)) {
+      selectedColumnsOrder.push(columnKey);
+    }
+    checkbox.checked = true;
+    columnElement.classList.add('selected');
+    columnElement.setAttribute('draggable', 'true');
+  } else {
+    selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
+    checkbox.checked = false;
+    columnElement.classList.remove('selected');
+    columnElement.setAttribute('draggable', 'false');
+  }
+
+  updateColumnOrderBadges();
+  updatePreviewTable();
+  updateSelectedCount();
+  updateDraggableState();
+}
+
+function updateColumnOrderBadges() {
+  document.querySelectorAll('.column-item').forEach(item => {
+    const columnKey = item.dataset.column;
+    const orderBadge = item.querySelector('.column-item-order');
+    const index = selectedColumnsOrder.indexOf(columnKey);
+
+    if (index !== -1) {
+      orderBadge.textContent = index + 1;
+    } else {
+      orderBadge.textContent = '';
+    }
+  });
+}
+
+function updatePreviewTable() {
+  const previewContainer = document.getElementById('tablePreview');
+
+  if (selectedColumnsOrder.length === 0) {
+    previewContainer.innerHTML = `
+      <div class="empty-preview">
+        <i class="fa-solid fa-table fa-2x mb-2"></i>
+        <p>Belum ada kolom yang dipilih</p>
+        <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+      </div>
+    `;
+    return;
+  }
+
+  let previewHTML = `
+    <table class="preview-table">
+      <thead>
+        <tr>
+          <th>No</th>
+  `;
+
+  selectedColumnsOrder.forEach(columnKey => {
+    const columnLabel = availableColumnsData[columnKey] || columnKey;
+    previewHTML += `<th>${columnLabel}</th>`;
+  });
+
+  previewHTML += `
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  const sampleData = {
+    'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
+    'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
+    'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
+    'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
+    'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
+    'status': ['✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim'],
+    'keterangan': ['Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap'],
+  };
+
+  for (let i = 0; i < 5; i++) {
+    previewHTML += `<tr>`;
+    previewHTML += `<td>${i + 1}</td>`;
+
+    selectedColumnsOrder.forEach(columnKey => {
+      const columnLabel = availableColumnsData[columnKey] || columnKey;
+      let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
+      
+      if (columnKey === 'status') {
+        cellValue = `<span style="color: #28a745;">${cellValue}</span>`;
+      }
+      
+      previewHTML += `<td>${cellValue}</td>`;
+    });
+
+    previewHTML += `<td>Edit, Kirim</td>`;
+    previewHTML += `</tr>`;
+  }
+
+  previewHTML += `
+      </tbody>
+    </table>
+  `;
+
+  previewContainer.innerHTML = previewHTML;
+}
+
+function updateSelectedCount() {
+  const countElement = document.getElementById('selectedColumnCount');
+  countElement.textContent = selectedColumnsOrder.length;
+
+  const saveButton = document.getElementById('saveCustomizationBtn');
+  saveButton.disabled = selectedColumnsOrder.length === 0;
+}
+
+function saveColumnCustomization() {
+  if (selectedColumnsOrder.length === 0) {
+    alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
+    return;
+  }
+
+  const filterForm = document.querySelector('form[action*="dokumensAkutansi"]');
+  if (!filterForm) {
+    alert('Form tidak ditemukan.');
+    return;
+  }
+
+  document.querySelectorAll('input[name="columns[]"]').forEach(input => {
+    if (input.type === 'hidden') {
+      input.remove();
+    }
+  });
+
+  selectedColumnsOrder.forEach(columnKey => {
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'columns[]';
+    hiddenInput.value = columnKey;
+    filterForm.appendChild(hiddenInput);
+  });
+
+  closeColumnCustomizationModal();
+  filterForm.submit();
+}
+
+function initializeModalState() {
+  document.querySelectorAll('.column-item').forEach(item => {
+    const columnKey = item.dataset.column;
+    const checkbox = item.querySelector('.column-item-checkbox');
+
+    if (selectedColumnsOrder.includes(columnKey)) {
+      checkbox.checked = true;
+      item.classList.add('selected');
+      item.setAttribute('draggable', 'true');
+    } else {
+      checkbox.checked = false;
+      item.classList.remove('selected');
+      item.setAttribute('draggable', 'false');
+    }
+  });
+
+  initializeDragAndDrop();
+  updateColumnOrderBadges();
+  updatePreviewTable();
+  updateSelectedCount();
+}
+
+function updateDraggableState() {
+  document.querySelectorAll('.column-item').forEach(item => {
+    const columnKey = item.dataset.column;
+    if (selectedColumnsOrder.includes(columnKey)) {
+      item.setAttribute('draggable', 'true');
+    } else {
+      item.setAttribute('draggable', 'false');
+    }
+  });
+}
+
+let draggedElement = null;
+
+function initializeDragAndDrop() {
+  const columnList = document.getElementById('columnSelectionList');
+  if (!columnList) return;
+
+  const newList = columnList.cloneNode(true);
+  columnList.parentNode.replaceChild(newList, columnList);
+
+  newList.querySelectorAll('.column-item.selected').forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('drop', handleDrop);
+  });
+}
+
+function handleDragStart(e) {
+  draggedElement = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.column-item').forEach(el => {
+    el.classList.remove('drag-over');
+  });
+  draggedElement = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  
+  if (this !== draggedElement && this.classList.contains('selected')) {
+    const afterElement = getDragAfterElement(this.parentNode, e.clientY);
+    
+    if (afterElement == null) {
+      this.parentNode.appendChild(draggedElement);
+    } else {
+      this.parentNode.insertBefore(draggedElement, afterElement);
+    }
+  }
+  
+  return false;
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  this.classList.remove('drag-over');
+  
+  if (this !== draggedElement && this.classList.contains('selected')) {
+    const columnList = document.getElementById('columnSelectionList');
+    const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
+    const newOrder = selectedItems.map(item => item.dataset.column);
+    
+    selectedColumnsOrder = newOrder;
+    
+    updateColumnOrderBadges();
+    updatePreviewTable();
+    
+    setTimeout(() => {
+      initializeDragAndDrop();
+    }, 50);
+  }
+  
+  return false;
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('columnCustomizationModal');
+  if (modal && modal.classList.contains('show') && e.target === modal) {
+    closeColumnCustomizationModal();
+  }
 });
 </script>
 

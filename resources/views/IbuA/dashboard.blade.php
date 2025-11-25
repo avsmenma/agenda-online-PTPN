@@ -553,17 +553,22 @@
               </td>
               <td>
                 <div class="action-buttons">
-                  <a href="{{ route('dokumens.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
-                    <i class="fa-solid fa-edit"></i>
-                    Edit
-                  </a>
                   @php
                     $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua', 'sedang diproses'])
                               && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
                               && ($dokumen->created_by ?? 'ibuA') == 'ibuA';
                     $isSent = ($dokumen->status ?? '') == 'sent_to_ibub'
-                             || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua');
+                             || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua')
+                             || !empty($dokumen->sent_to_ibub_at);
+                    $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua', 'sedang diproses'])
+                              && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
                   @endphp
+                  @if($canEdit)
+                  <a href="{{ route('dokumens.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+                    <i class="fa-solid fa-edit"></i>
+                    Edit
+                  </a>
+                  @endif
                   @if($canSend)
                   <button type="button" class="btn-action btn-send" onclick="sendToIbuB({{ $dokumen->id }})" title="Kirim ke Ibu Yuni">
                     <i class="fa-solid fa-paper-plane"></i>

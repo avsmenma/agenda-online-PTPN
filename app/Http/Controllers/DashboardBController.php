@@ -187,6 +187,48 @@ class DashboardBController extends Controller
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'ibuB');
         }
 
+        // Available columns for customization
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'nomor_mirror' => 'Nomor Mirror',
+            'status' => 'Status',
+            'keterangan' => 'Keterangan',
+            'tanggal_spp' => 'Tanggal SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'kategori' => 'Kategori',
+            'jenis_dokumen' => 'Jenis Dokumen',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'nama_pengirim' => 'Nama Pengirim',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'no_berita_acara' => 'No Berita Acara',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'no_spk' => 'No SPK',
+            'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+        ];
+
+        // Get selected columns from request or session
+        $selectedColumns = $request->get('columns', []);
+        
+        // If columns are provided in request, save to session
+        if ($request->has('columns') && !empty($selectedColumns)) {
+            session(['ibub_dokumens_table_columns' => $selectedColumns]);
+        } else {
+            // Load from session if available
+            $selectedColumns = session('ibub_dokumens_table_columns', [
+                'nomor_agenda',
+                'nomor_spp',
+                'tanggal_masuk',
+                'nilai_rupiah',
+                'nomor_mirror',
+                'status',
+                'keterangan'
+            ]);
+        }
+
         $data = array(
             "title" => "Daftar Dokumen B",
             "module" => "ibuB",
@@ -198,6 +240,8 @@ class DashboardBController extends Controller
             'totalDikembalikan' => $totalDikembalikan,
             'totalDikirim' => $totalDikirim,
             'suggestions' => $suggestions,
+            'availableColumns' => $availableColumns,
+            'selectedColumns' => $selectedColumns,
         );
         return view('ibuB.dokumens.daftarDokumenB', $data);
     }
