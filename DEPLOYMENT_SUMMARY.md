@@ -1,0 +1,213 @@
+# 📋 Ringkasan Deployment - Agenda Online PTPN
+
+## ✅ Perubahan yang Sudah Dibuat
+
+### 1. **Fix Migration Error**
+- ✅ Membuat migration baru: `2025_11_23_232000_add_pembayaran_fields_to_dokumens_table.php`
+  - Menambahkan kolom `sent_to_pembayaran_at`
+  - Menambahkan kolom `status_pembayaran`
+- ✅ Memperbaiki migration: `2025_11_23_232538_add_link_bukti_pembayaran_to_dokumens_table.php`
+  - Sekarang mengecek apakah kolom `status_pembayaran` ada sebelum menggunakan `after()`
+
+### 2. **File Deployment**
+- ✅ `DEPLOYMENT_GUIDE.md` - Panduan lengkap deployment
+- ✅ `FIX_MIGRATION_ERROR.md` - Panduan fix error migration
+- ✅ `deploy.sh` - Script otomatis deployment untuk server
+
+### 3. **Perubahan Kode**
+- ✅ Export Excel/PDF untuk rekapan pembayaran
+- ✅ Filter selesai/belum selesai di rekapan owner
+- ✅ Perbaikan lainnya
+
+---
+
+## 🚀 Langkah-langkah Deployment
+
+### **A. DI LOCAL (Development) - Sekarang**
+
+#### 1. Commit dan Push ke GitHub
+
+```bash
+# Commit semua perubahan
+git commit -m "Fix: Migration error untuk status_pembayaran, tambah export Excel/PDF, dan perbaikan lainnya"
+
+# Push ke GitHub
+git push origin main
+```
+
+**Atau jika ingin commit lebih detail:**
+
+```bash
+git commit -m "Fix migration error dan tambah fitur export
+
+- Fix: Migration error untuk kolom status_pembayaran
+- Add: Migration untuk menambahkan status_pembayaran dan sent_to_pembayaran_at
+- Add: Export Excel/PDF untuk rekapan pembayaran
+- Add: Filter selesai/belum selesai di rekapan owner
+- Add: Script deployment otomatis (deploy.sh)
+- Add: Dokumentasi deployment (DEPLOYMENT_GUIDE.md, FIX_MIGRATION_ERROR.md)"
+```
+
+---
+
+### **B. DI SERVER (VPS Ubuntu Alibaba)**
+
+#### **Opsi 1: Menggunakan Script Otomatis (Recommended)**
+
+```bash
+# 1. SSH ke server
+ssh user@your-server-ip
+
+# 2. Masuk ke direktori project
+cd /var/www/agenda_online_ptpn
+
+# 3. Berikan permission execute pada script
+chmod +x deploy.sh
+
+# 4. Jalankan script deployment
+./deploy.sh
+```
+
+#### **Opsi 2: Manual Step-by-Step**
+
+```bash
+# 1. SSH ke server
+ssh user@your-server-ip
+
+# 2. Masuk ke direktori project
+cd /var/www/agenda_online_ptpn
+
+# 3. Backup .env
+cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+
+# 4. Pull perubahan terbaru
+git pull origin main
+
+# 5. Install/Update dependencies
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+
+# 6. Run migrations (PENTING: Pastikan backup database dulu!)
+php artisan migrate --force
+
+# 7. Clear dan optimize cache
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 8. Set permissions
+chmod -R 755 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+
+# 9. Restart PHP-FPM (sesuaikan versi PHP Anda)
+sudo systemctl restart php8.2-fpm
+# atau
+sudo systemctl restart php8.1-fpm
+```
+
+---
+
+## ⚠️ PENTING: Sebelum Migration di Server
+
+### **BACKUP DATABASE DULU!**
+
+```bash
+# Backup database MySQL
+mysqldump -u your_username -p your_database_name > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Atau jika menggunakan Laravel
+php artisan db:backup  # Jika ada package backup
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### Jika Migration Masih Error
+
+1. **Cek file `FIX_MIGRATION_ERROR.md`** untuk panduan lengkap
+2. **Rollback migration yang gagal:**
+   ```bash
+   php artisan migrate:rollback --step=1
+   ```
+3. **Jalankan migration lagi:**
+   ```bash
+   php artisan migrate --force
+   ```
+
+### Jika Website Masih Menampilkan Versi Lama
+
+1. **Clear browser cache:** Ctrl+Shift+R (Windows) atau Cmd+Shift+R (Mac)
+2. **Clear Laravel cache:**
+   ```bash
+   php artisan cache:clear
+   php artisan view:clear
+   ```
+3. **Restart web server:**
+   ```bash
+   sudo systemctl restart nginx
+   # atau
+   sudo systemctl restart apache2
+   ```
+
+### Jika Assets Tidak Ter-load
+
+1. **Pastikan build berhasil:**
+   ```bash
+   npm run build
+   ```
+2. **Cek file `public/build/manifest.json` ada**
+3. **Clear view cache:**
+   ```bash
+   php artisan view:clear
+   ```
+
+---
+
+## 📝 Checklist Deployment
+
+### Sebelum Deployment
+- [ ] Backup database production
+- [ ] Backup file `.env` di server
+- [ ] Test semua fitur di local
+- [ ] Commit dan push semua perubahan ke GitHub
+
+### Saat Deployment
+- [ ] Pull perubahan dari GitHub
+- [ ] Install/update dependencies (composer, npm)
+- [ ] Build assets (npm run build)
+- [ ] Run migrations
+- [ ] Clear dan optimize cache
+- [ ] Set permissions
+- [ ] Restart PHP-FPM
+
+### Setelah Deployment
+- [ ] Test website berfungsi dengan baik
+- [ ] Cek log jika ada error: `tail -f storage/logs/laravel.log`
+- [ ] Verifikasi fitur baru berfungsi
+- [ ] Clear browser cache
+
+---
+
+## 📞 Support
+
+Jika ada masalah:
+1. Cek log Laravel: `storage/logs/laravel.log`
+2. Cek log web server: `/var/log/nginx/error.log` atau `/var/log/apache2/error.log`
+3. Cek status service: `sudo systemctl status nginx` atau `sudo systemctl status php-fpm`
+
+---
+
+## 🎯 Urutan Migration yang Benar
+
+Migration akan dijalankan dalam urutan berikut:
+1. `2025_11_23_232000_add_pembayaran_fields_to_dokumens_table` - Menambahkan `status_pembayaran` dan `sent_to_pembayaran_at`
+2. `2025_11_23_232538_add_link_bukti_pembayaran_to_dokumens_table` - Menambahkan `link_bukti_pembayaran` setelah `status_pembayaran`
+
+Urutan ini memastikan kolom `status_pembayaran` sudah ada sebelum migration kedua mencoba menggunakannya.
+

@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
+
+final class CheckRole
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  string  ...$roles
+     */
+    public function handle(Request $request, Closure $next, string ...$roles): Response
+    {
+        if (!Auth::check()) {
+            Log::warning('Unauthenticated user attempted to access protected route', [
+                'path' => $request->path(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                    'code' => 401
+                ], 401);
+            }
+
+            return redirect('/login')
+                ->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Check if user has the required role
+        if (empty($roles) || !in_array($user->role, $roles, true)) {
+            Log::warning('Unauthorized access attempt', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'user_role' => $user->role,
+                'required_roles' => $roles,
+                'path' => $request->path(),
+                'ip' => $request->ip(),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthorized access.',
+                    'code' => 403,
+                    'required_role' => $roles[0] ?? 'unknown'
+                ], 403);
+            }
+
+            // Redirect to user's dashboard if they have valid role
+            return redirect($user->getDashboardRoute())
+                ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+        }
+
+        Log::info('Role check passed', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'role' => $user->role,
+            'path' => $request->path(),
+        ]);
+
+        return $next($request);
+    }
+}

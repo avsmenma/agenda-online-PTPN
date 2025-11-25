@@ -1,0 +1,2018 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Dokumen;
+use App\Models\DocumentTracking;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class OwnerDashboardController extends Controller
+{
+    /**
+     * Display the owner dashboard with document list and tracking
+     */
+    public function index(Request $request)
+    {
+        // Get all documents with latest status and apply search filter
+        $documents = $this->getDocumentsWithTracking($request);
+
+        return view('owner.dashboard', compact('documents'))
+            ->with('title', 'Dashboard Owner - Pusat Komando')
+            ->with('module', 'owner')
+            ->with('menuDashboard', 'active')
+            ->with('menuRekapan', '')
+            ->with('menuRekapanKeterlambatan', '')
+            ->with('menuDokumen', '')
+            ->with('menuDaftarDokumen', '')
+            ->with('menuEditDokumen', '')
+            ->with('menuRekapKeterlambatan', '')
+            ->with('menuDaftarDokumenDikembalikan', '')
+            ->with('menuPengembalianKeBidang', '')
+            ->with('menuTambahDokumen', '')
+            ->with('dashboardUrl', '/owner/dashboard')
+            ->with('dokumenUrl', '#')
+            ->with('pengembalianUrl', '#')
+            ->with('tambahDokumenUrl', '#')
+            ->with('search', $request->get('search', ''));
+    }
+
+    /**
+     * Get API endpoint for document timeline
+     */
+    public function getDocumentTimeline($id): JsonResponse
+    {
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+            ->findOrFail($id);
+
+        $timeline = $this->generateDocumentTimeline($dokumen);
+
+        return response()->json([
+            'success' => true,
+            'dokumen' => [
+                'id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'status' => $dokumen->status,
+                'current_handler' => $dokumen->current_handler,
+                'created_at' => $dokumen->created_at->format('d M Y H:i'),
+                'progress_percentage' => $this->calculateProgress($dokumen),
+            ],
+            'timeline' => $timeline
+        ]);
+    }
+
+    /**
+     * Get documents with their latest tracking status
+     */
+    private function getDocumentsWithTracking(Request $request = null)
+    {
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Apply search filter if provided
+        if ($request && $request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
+            $search = trim((string)$request->search);
+            $query->where(function($q) use ($search) {
+                // Text fields
+                $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                  ->orWhere('bagian', 'like', '%' . $search . '%')
+                  ->orWhere('kategori', 'like', '%' . $search . '%')
+                  ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                  ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                  ->orWhere('no_spk', 'like', '%' . $search . '%')
+                  ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
+                  ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                  ->orWhere('keterangan', 'like', '%' . $search . '%')
+                  ->orWhere('dibayar_kepada', 'like', '%' . $search . '%')
+                  ->orWhere('npwp', 'like', '%' . $search . '%')
+                  ->orWhere('no_faktur', 'like', '%' . $search . '%')
+                  ->orWhere('jenis_pph', 'like', '%' . $search . '%')
+                  ->orWhere('status', 'like', '%' . $search . '%')
+                  ->orWhere('current_handler', 'like', '%' . $search . '%');
+                
+                // Search in nilai_rupiah - handle various formats
+                $numericSearch = preg_replace('/[^0-9]/', '', $search);
+                if (is_numeric($numericSearch) && $numericSearch > 0) {
+                    $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
+                }
+            })
+            ->orWhereHas('dibayarKepadas', function($q) use ($search) {
+                $q->where('nama_penerima', 'like', '%' . $search . '%');
+            })
+            ->orWhereHas('dokumenPos', function($q) use ($search) {
+                $q->where('nomor_po', 'like', '%' . $search . '%');
+            })
+            ->orWhereHas('dokumenPrs', function($q) use ($search) {
+                $q->where('nomor_pr', 'like', '%' . $search . '%');
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($dokumen) {
+                return [
+                    'id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'nomor_spp' => $dokumen->nomor_spp,
+                    'uraian_spp' => $dokumen->uraian_spp,
+                    'nilai_rupiah' => $dokumen->nilai_rupiah,
+                    'status' => $dokumen->status,
+                    'status_display' => $this->getStatusDisplayName($dokumen->status),
+                    'current_handler' => $dokumen->current_handler,
+                    'current_handler_display' => $this->getRoleDisplayName($dokumen->current_handler),
+                    'created_at' => $dokumen->created_at->format('d M Y H:i'),
+                    'progress_percentage' => $this->calculateProgress($dokumen),
+                    'status_badge_color' => $this->getStatusBadgeColor($dokumen->status),
+                    'progress_color' => $this->getProgressColor($dokumen->status),
+                    'is_overdue' => $this->isDocumentOverdue($dokumen),
+                    'deadline_info' => $this->getDeadlineInfo($dokumen),
+                ];
+            });
+    }
+
+    /**
+     * Generate timeline events for a document
+     */
+    private function generateDocumentTimeline($dokumen)
+    {
+        $events = [];
+        $previousTime = null;
+
+        // Event 1: Dokumen Dibuat
+        if ($dokumen->created_at) {
+            $events[] = [
+                'type' => 'created',
+                'icon' => '✅',
+                'title' => 'Dokumen Dibuat',
+                'timestamp' => $dokumen->created_at->format('d M Y H:i'),
+                'info' => [
+                    'Dibuat oleh' => $this->getRoleDisplayName($dokumen->created_by),
+                    'Nomor Agenda' => $dokumen->nomor_agenda,
+                    'Nomor SPP' => $dokumen->nomor_spp,
+                    'Nilai' => 'Rp. ' . number_format($dokumen->nilai_rupiah, 0, ',', '.'),
+                    'Uraian' => $dokumen->uraian_spp,
+                ]
+            ];
+            $previousTime = $dokumen->created_at;
+        }
+
+        // Event 2: Dikirim ke Ibu Yuni
+        if ($dokumen->sent_to_ibub_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->sent_to_ibub_at) : null;
+            $events[] = [
+                'type' => 'sent_to_ibub',
+                'icon' => '🚀',
+                'title' => 'Dikirim ke Ibu Yuni',
+                'timestamp' => $dokumen->sent_to_ibub_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Pengirim' => 'Ibu Tarapul',
+                    'Penerima' => 'Ibu Yuni',
+                    'Durasi dari dibuat' => $duration,
+                ]
+            ];
+            $previousTime = $dokumen->sent_to_ibub_at;
+        }
+
+        // Event 3: Deadline Ditetapkan
+        if ($dokumen->deadline_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->deadline_at) : null;
+            $events[] = [
+                'type' => 'deadline_set',
+                'icon' => '⏰',
+                'title' => 'Deadline Ditetapkan',
+                'timestamp' => $dokumen->deadline_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Durasi deadline' => $dokumen->deadline_days . ' hari',
+                    'Catatan' => $dokumen->deadline_note,
+                ]
+            ];
+        }
+
+        // Event 4: Diproses Ibu Yuni
+        if ($dokumen->processed_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_at) : null;
+            $events[] = [
+                'type' => 'processed_ibub',
+                'icon' => '⚡',
+                'title' => 'Diproses Ibu Yuni',
+                'timestamp' => $dokumen->processed_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Handler' => 'Ibu Yuni',
+                    'Durasi proses' => $duration,
+                ]
+            ];
+            $previousTime = $dokumen->processed_at;
+        }
+
+        // Event 5: Dikirim ke Perpajakan
+        if ($dokumen->sent_to_perpajakan_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->sent_to_perpajakan_at) : null;
+            $events[] = [
+                'type' => 'sent_to_perpajakan',
+                'icon' => '🚀',
+                'title' => 'Dikirim ke Team Perpajakan',
+                'timestamp' => $dokumen->sent_to_perpajakan_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Pengirim' => $this->getRoleDisplayName($dokumen->current_handler),
+                    'Penerima' => 'Team Perpajakan',
+                    'Durasi dari step sebelumnya' => $duration,
+                ]
+            ];
+            $previousTime = $dokumen->sent_to_perpajakan_at;
+        }
+
+        // Event 6: Diproses Perpajakan
+        if ($dokumen->processed_perpajakan_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_perpajakan_at) : null;
+            $events[] = [
+                'type' => 'processed_perpajakan',
+                'icon' => '⚡',
+                'title' => 'Diproses Team Perpajakan',
+                'timestamp' => $dokumen->processed_perpajakan_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Handler' => 'Team Perpajakan',
+                    'Status Team Perpajakan' => $dokumen->status_perpajakan,
+                    'Durasi proses' => $duration,
+                ]
+            ];
+            $previousTime = $dokumen->processed_perpajakan_at;
+        }
+
+        // Event 7: Dikirim ke Akutansi
+        if ($dokumen->sent_to_akutansi_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->sent_to_akutansi_at) : null;
+            $events[] = [
+                'type' => 'sent_to_akutansi',
+                'icon' => '🚀',
+                'title' => 'Dikirim ke Team Akutansi',
+                'timestamp' => $dokumen->sent_to_akutansi_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Pengirim' => 'Team Perpajakan',
+                    'Penerima' => 'Team Akutansi',
+                    'Durasi dari step sebelumnya' => $duration,
+                ]
+            ];
+            $previousTime = $dokumen->sent_to_akutansi_at;
+        }
+
+        // Event 8: Dikembalikan
+        if ($dokumen->returned_to_ibua_at || $dokumen->department_returned_at || $dokumen->bidang_returned_at) {
+            $returnTime = $dokumen->returned_to_ibua_at ?? $dokumen->department_returned_at ?? $dokumen->bidang_returned_at;
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $returnTime) : null;
+
+            $events[] = [
+                'type' => 'returned',
+                'icon' => '↩️',
+                'title' => 'Dikembalikan',
+                'timestamp' => $returnTime->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Dikembalikan oleh' => $this->getRoleDisplayName($dokumen->current_handler),
+                    'Dikembalikan ke' => $this->getReturnDestination($dokumen),
+                    'Alasan' => $dokumen->alasan_pengembalian ?? $dokumen->department_return_reason ?? $dokumen->bidang_return_reason,
+                ]
+            ];
+            $previousTime = $returnTime;
+        }
+
+        // Event 9: Deadline Selesai (jika ada)
+        if ($dokumen->deadline_completed_at) {
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->deadline_completed_at) : null;
+            $events[] = [
+                'type' => 'deadline_completed',
+                'icon' => '✅',
+                'title' => 'Deadline Selesai',
+                'timestamp' => $dokumen->deadline_completed_at->format('d M Y H:i'),
+                'duration' => $duration,
+                'info' => [
+                    'Status' => 'Deadline terpenuhi',
+                    'Durasi' => $duration,
+                ]
+            ];
+        }
+
+        // Event 10: Dokumen Selesai
+        if (in_array($dokumen->status, ['approved_data_sudah_terkirim', 'selesai'])) {
+            $completedTime = $dokumen->updated_at;
+            $totalDuration = $dokumen->created_at ? $this->calculateDuration($dokumen->created_at, $completedTime) : null;
+
+            $events[] = [
+                'type' => 'completed',
+                'icon' => '🎉',
+                'title' => 'Dokumen Selesai',
+                'timestamp' => $completedTime->format('d M Y H:i'),
+                'total_duration' => $totalDuration,
+                'info' => [
+                    'Status Akhir' => $dokumen->status === 'approved_data_sudah_terkirim' ? 'Approved Data Sudah Terkirim' : 'Selesai',
+                    'Total waktu proses' => $totalDuration,
+                    'Diselesaikan oleh' => $this->getRoleDisplayName($dokumen->current_handler),
+                ]
+            ];
+        }
+
+        return $events;
+    }
+
+    /**
+     * Get dashboard statistics
+     */
+    private function getDashboardStats()
+    {
+        $now = Carbon::now();
+
+        return [
+            'total_documents' => Dokumen::count(),
+            'active_processing' => Dokumen::whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap'])->count(),
+            'completed_today' => Dokumen::where('status', 'approved_data_sudah_terkirim')
+                ->whereDate('updated_at', $now->toDateString())
+                ->count(),
+            'overdue_documents' => Dokumen::whereNotNull('deadline_at')
+                ->where('deadline_at', '<', $now)
+                ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap'])
+                ->count(),
+            'avg_processing_time' => $this->calculateAverageProcessingTime(),
+            'fastest_department' => $this->getFastestDepartment(),
+            'slowest_department' => $this->getSlowestDepartment(),
+        ];
+    }
+
+    /**
+     * Calculate progress percentage based on status
+     */
+    private function calculateProgress($dokumen)
+    {
+        // Calculate progress based on current_handler and status
+        $handler = $dokumen->current_handler ?? 'ibuA';
+        $status = $dokumen->status ?? 'draft';
+        
+        // Get status_pembayaran from model or database
+        $statusPembayaran = null;
+        if (isset($dokumen->status_pembayaran)) {
+            $statusPembayaran = $dokumen->status_pembayaran;
+        } elseif (isset($dokumen->id)) {
+            // Try to get from database directly only if id is available
+            $statusPembayaran = \DB::table('dokumens')->where('id', $dokumen->id)->value('status_pembayaran');
+        }
+
+        // If document is completed or payment is completed
+        if (in_array($status, ['selesai', 'approved_data_sudah_terkirim', 'completed']) || $statusPembayaran === 'sudah_dibayar') {
+            return 100;
+        }
+
+        // Calculate progress based on handler position in workflow
+        $handlerProgress = [
+            'ibuA' => 0,           // Start
+            'ibuB' => 30,          // After Ibu Tarapul
+            'perpajakan' => 50,    // After Ibu Yuni
+            'akutansi' => 70,      // After Perpajakan
+            'pembayaran' => 90,    // After Akutansi
+        ];
+
+        $baseProgress = $handlerProgress[$handler] ?? 0;
+
+        // Adjust based on status within handler
+        if ($status == 'draft' && $handler == 'ibuA') {
+            return 0;
+        }
+
+        if ($status == 'sedang diproses') {
+            // Add 10% if being processed
+            return min($baseProgress + 10, 100);
+        }
+
+        if (strpos($status, 'sent_to_') === 0) {
+            // Document sent to next handler - use base progress
+            return $baseProgress;
+        }
+
+        if (strpos($status, 'pending_approval') === 0) {
+            // Pending approval - slightly less than base
+            return max($baseProgress - 5, 0);
+        }
+
+        if (strpos($status, 'returned') === 0) {
+            // Returned - go back to previous handler progress
+            return max($baseProgress - 20, 0);
+        }
+
+        // Default: use base progress
+        return $baseProgress;
+    }
+
+    /**
+     * Get status badge color
+     */
+    private function getStatusBadgeColor($status)
+    {
+        $colorMap = [
+            'draft' => '#6c757d', // Gray
+            'sedang diproses' => '#007bff', // Blue
+            'menunggu_verifikasi' => '#007bff', // Blue
+            'pending_approval_ibub' => '#ffc107', // Yellow
+            'sent_to_ibub' => '#17a2b8', // Cyan
+            'proses_ibub' => '#ffc107', // Yellow
+            'sent_to_perpajakan' => '#17a2b8', // Cyan
+            'proses_perpajakan' => '#17a2b8', // Cyan
+            'sent_to_akutansi' => '#6f42c1', // Purple
+            'proses_akutansi' => '#6f42c1', // Purple
+            'menunggu_approved_pengiriman' => '#fd7e14', // Orange
+            'proses_pembayaran' => '#6f42c1', // Purple
+            'approved_data_sudah_terkirim' => '#28a745', // Green
+            'rejected_data_tidak_lengkap' => '#dc3545', // Red
+            'selesai' => '#28a745', // Green
+        ];
+
+        return $colorMap[$status] ?? '#6c757d';
+    }
+
+    /**
+     * Get progress bar color
+     */
+    private function getProgressColor($status)
+    {
+        $progress = $this->calculateProgress((object)['status' => $status]);
+
+        if ($progress <= 30) return '#dc3545'; // Red
+        if ($progress <= 60) return '#ffc107'; // Yellow
+        if ($progress <= 90) return '#17a2b8'; // Blue
+        return '#28a745'; // Green
+    }
+
+    /**
+     * Check if document is overdue
+     */
+    private function isDocumentOverdue($dokumen)
+    {
+        if (!$dokumen->deadline_at) return false;
+
+        return Carbon::now()->greaterThan($dokumen->deadline_at) &&
+               !in_array($dokumen->status, ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap']);
+    }
+
+    /**
+     * Get deadline information
+     */
+    private function getDeadlineInfo($dokumen)
+    {
+        if (!$dokumen->deadline_at) return null;
+
+        $now = Carbon::now();
+        $deadline = Carbon::parse($dokumen->deadline_at);
+
+        if ($now->greaterThan($deadline)) {
+            return [
+                'text' => 'Terlambat ' . $now->diffInDays($deadline) . ' hari',
+                'class' => 'overdue'
+            ];
+        } else {
+            return [
+                'text' => $now->diffInDays($deadline) . ' hari lagi',
+                'class' => 'on-time'
+            ];
+        }
+    }
+
+    /**
+     * Calculate duration between two dates
+     */
+    private function calculateDuration($from, $to)
+    {
+        $from = Carbon::parse($from);
+        $to = Carbon::parse($to);
+        $diff = $from->diff($to);
+
+        $parts = [];
+        if ($diff->y > 0) $parts[] = $diff->y . ' tahun';
+        if ($diff->m > 0) $parts[] = $diff->m . ' bulan';
+        if ($diff->d > 0) $parts[] = $diff->d . ' hari';
+        if ($diff->h > 0) $parts[] = $diff->h . ' jam';
+        if ($diff->i > 0) $parts[] = $diff->i . ' menit';
+
+        return empty($parts) ? 'kurang dari 1 menit' : implode(' ', $parts);
+    }
+
+    /**
+     * Get display name for role
+     */
+    private function getRoleDisplayName($role)
+    {
+        $roleMap = [
+            'ibuA' => 'Ibu Tarapul',
+            'ibuB' => 'Ibu Yuni',
+            'perpajakan' => 'Team Perpajakan',
+            'akutansi' => 'Team Akutansi',
+            'pembayaran' => 'Pembayaran',
+        ];
+
+        return $roleMap[$role] ?? $role;
+    }
+
+    /**
+     * Get return destination
+     */
+    private function getReturnDestination($dokumen)
+    {
+        if ($dokumen->returned_to_ibua_at) return 'Ibu Tarapul';
+        if ($dokumen->department_returned_at) return 'Ibu Tarapul (Department)';
+        if ($dokumen->bidang_returned_at) return 'Ibu Yuni';
+        return 'Tidak Diketahui';
+    }
+
+    /**
+     * Get status display name in Indonesian
+     */
+    private function getStatusDisplayName($status)
+    {
+        $statusMap = [
+            'draft' => 'Draft',
+            'sedang diproses' => 'Sedang Diproses',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
+            'proses_ibub' => 'Diproses Ibu Yuni',
+            'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
+            'proses_perpajakan' => 'Diproses Team Perpajakan',
+            'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
+            'proses_akutansi' => 'Diproses Team Akutansi',
+            'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
+            'proses_pembayaran' => 'Diproses Team Pembayaran',
+            'sent_to_pembayaran' => 'Terkirim ke Team Pembayaran',
+            'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
+            'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
+            'selesai' => 'Selesai',
+            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_department' => 'Dikembalikan ke Department',
+            'returned_to_bidang' => 'Dikembalikan ke Bidang',
+        ];
+
+        return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
+    }
+
+    /**
+     * Calculate average processing time
+     */
+    private function calculateAverageProcessingTime()
+    {
+        $completedDocs = Dokumen::where('status', 'approved_data_sudah_terkirim')
+            ->whereNotNull('created_at')
+            ->whereNotNull('updated_at')
+            ->get();
+
+        if ($completedDocs->isEmpty()) {
+            return '0 hari';
+        }
+
+        $totalHours = $completedDocs->sum(function($doc) {
+            return $doc->created_at->diffInHours($doc->updated_at);
+        });
+
+        $avgHours = $totalHours / $completedDocs->count();
+
+        if ($avgHours < 24) {
+            return round($avgHours, 1) . ' jam';
+        } else {
+            return round($avgHours / 24, 1) . ' hari';
+        }
+    }
+
+    /**
+     * Get fastest processing department
+     */
+    private function getFastestDepartment()
+    {
+        $departments = ['ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $avgTimes = [];
+
+        foreach ($departments as $dept) {
+            $avgTimes[$dept] = $this->getDepartmentAvgProcessingTime($dept);
+        }
+
+        return empty($avgTimes) ? '-' : array_keys($avgTimes, min($avgTimes))[0];
+    }
+
+    /**
+     * Get slowest processing department
+     */
+    private function getSlowestDepartment()
+    {
+        $departments = ['ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $avgTimes = [];
+
+        foreach ($departments as $dept) {
+            $avgTimes[$dept] = $this->getDepartmentAvgProcessingTime($dept);
+        }
+
+        return empty($avgTimes) ? '-' : array_keys($avgTimes, max($avgTimes))[0];
+    }
+
+    /**
+     * Get department average processing time
+     */
+    private function getDepartmentAvgProcessingTime($dept)
+    {
+        $completedDocs = Dokumen::where('status', 'approved_data_sudah_terkirim')
+            ->where('created_by', $dept)
+            ->whereNotNull('created_at')
+            ->whereNotNull('updated_at')
+            ->get();
+
+        if ($completedDocs->isEmpty()) {
+            return 999; // High number for departments with no completed docs
+        }
+
+        $totalHours = $completedDocs->sum(function($doc) {
+            return $doc->created_at->diffInHours($doc->updated_at);
+        });
+
+        return $totalHours / $completedDocs->count();
+    }
+
+    /**
+     * Show workflow tracking page for a document
+     */
+    public function showWorkflow($id)
+    {
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+            ->findOrFail($id);
+
+        $workflowStages = $this->generateWorkflowStages($dokumen);
+        
+        // Load activity logs for each stage
+        try {
+            $dokumen->load('activityLogs');
+            $activityLogsByStage = $dokumen->activityLogs->groupBy('stage');
+        } catch (\Exception $e) {
+            // If table doesn't exist yet, use empty collection
+            $activityLogsByStage = collect();
+        }
+
+        return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))
+            ->with('title', 'Workflow Tracking - ' . $dokumen->nomor_agenda)
+            ->with('module', 'owner')
+            ->with('menuDashboard', '')
+            ->with('dashboardUrl', '/owner/dashboard');
+    }
+
+    /**
+     * Generate workflow stages for visualization
+     */
+    private function generateWorkflowStages($dokumen)
+    {
+        $stages = [];
+        $currentTime = now();
+        $returnEvents = $this->getReturnEvents($dokumen);
+
+        // Stage 1: SENDER (Ibu Tarapul) - Always completed
+        $stages[] = [
+            'id' => 'sender',
+            'name' => 'Ibu Tarapul',
+            'label' => 'SENDER',
+            'status' => 'completed',
+            'timestamp' => $dokumen->created_at,
+            'icon' => 'fa-user',
+            'color' => '#10b981',
+            'description' => 'Dokumen Dibuat',
+            'details' => [
+                'Dibuat oleh' => 'Ibu Tarapul',
+                'Nomor Agenda' => $dokumen->nomor_agenda,
+                'Nomor SPP' => $dokumen->nomor_spp,
+                'Nilai' => 'Rp. ' . number_format($dokumen->nilai_rupiah, 0, ',', '.'),
+            ],
+            'hasReturn' => false,
+            'returnInfo' => null
+        ];
+
+        // Stage 2: REVIEWER (Ibu Yuni)
+        $reviewerStatus = 'pending';
+        $reviewerTimestamp = null;
+        $reviewerDescription = 'Menunggu';
+        $reviewerReturnInfo = $this->getReturnInfoForStage($dokumen, 'reviewer', $returnEvents);
+        $reviewerCycleInfo = $this->getCycleInfo($dokumen, 'reviewer');
+
+        if ($dokumen->sent_to_ibub_at) {
+            $reviewerStatus = 'completed';
+            $reviewerTimestamp = $dokumen->sent_to_ibub_at;
+            $reviewerDescription = 'Dikirim ke Ibu Yuni';
+            
+            // Check if this is a re-send after return
+            if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
+                $reviewerDescription = 'Dikirim kembali ke Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
+            }
+        }
+
+        if ($dokumen->processed_at) {
+            $reviewerStatus = 'completed';
+            $reviewerTimestamp = $dokumen->processed_at;
+            $reviewerDescription = 'Diproses Ibu Yuni';
+            
+            // Check if processed after return
+            if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
+                $reviewerDescription = 'Diproses Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
+            }
+        }
+
+        // Check if returned from this stage
+        if ($reviewerReturnInfo && !$reviewerCycleInfo['isResend']) {
+            $reviewerStatus = 'returned';
+            if (!$reviewerTimestamp) {
+                $reviewerTimestamp = $dokumen->sent_to_ibub_at ?? $dokumen->created_at;
+            }
+        }
+
+        $stages[] = [
+            'id' => 'reviewer',
+            'name' => 'Ibu Yuni',
+            'label' => 'REVIEWER',
+            'status' => $reviewerStatus,
+            'timestamp' => $reviewerTimestamp,
+            'icon' => 'fa-user-check',
+            'color' => $reviewerStatus === 'completed' ? '#10b981' : ($reviewerStatus === 'processing' ? '#3b82f6' : ($reviewerStatus === 'returned' ? '#ef4444' : '#9ca3af')),
+            'description' => $reviewerDescription,
+            'details' => $reviewerTimestamp ? [
+                'Dikirim pada' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d M Y H:i') : '-',
+                'Diproses pada' => $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-',
+            ] : [],
+            'hasReturn' => $reviewerReturnInfo !== null,
+            'returnInfo' => $reviewerReturnInfo,
+            'hasCycle' => $reviewerCycleInfo['hasCycle'],
+            'cycleInfo' => $reviewerCycleInfo
+        ];
+
+        // Stage 3: TAX (Team Perpajakan)
+        $taxStatus = 'pending';
+        $taxTimestamp = null;
+        $taxDescription = 'Menunggu';
+        $taxReturnInfo = $this->getReturnInfoForStage($dokumen, 'tax', $returnEvents);
+        $taxCycleInfo = $this->getCycleInfo($dokumen, 'tax');
+
+        if ($dokumen->sent_to_perpajakan_at) {
+            $taxStatus = 'processing';
+            $taxTimestamp = $dokumen->sent_to_perpajakan_at;
+            $taxDescription = 'Dikirim ke Team Perpajakan';
+            
+            // Check if this is a re-send after return
+            if ($taxCycleInfo && $taxCycleInfo['isResend']) {
+                $taxDescription = 'Dikirim kembali ke Team Perpajakan (Attempt ' . $taxCycleInfo['attemptCount'] . ')';
+            }
+        }
+
+        if ($dokumen->processed_perpajakan_at) {
+            $taxStatus = 'completed';
+            $taxTimestamp = $dokumen->processed_perpajakan_at;
+            $taxDescription = 'Diproses Team Perpajakan';
+            
+            // Check if completed after return
+            if ($taxCycleInfo && $taxCycleInfo['isResend']) {
+                $taxDescription = 'Diproses Team Perpajakan (Attempt ' . $taxCycleInfo['attemptCount'] . ')';
+            }
+        }
+
+        // Check if returned from this stage (only if not re-sent)
+        if ($taxReturnInfo && !$taxCycleInfo['isResend']) {
+            // Only show as returned if not yet re-sent
+            if (!$dokumen->sent_to_perpajakan_at || 
+                ($dokumen->returned_from_perpajakan_at && 
+                 $dokumen->sent_to_perpajakan_at->lte($dokumen->returned_from_perpajakan_at))) {
+                $taxStatus = 'returned';
+                if (!$taxTimestamp) {
+                    $taxTimestamp = $dokumen->sent_to_perpajakan_at ?? $dokumen->processed_at;
+                }
+            }
+        }
+
+        $stages[] = [
+            'id' => 'tax',
+            'name' => 'Team Perpajakan',
+            'label' => 'TAX',
+            'status' => $taxStatus,
+            'timestamp' => $taxTimestamp,
+            'icon' => 'fa-file-invoice',
+            'color' => $taxStatus === 'completed' ? '#10b981' : ($taxStatus === 'processing' ? '#3b82f6' : ($taxStatus === 'returned' ? '#ef4444' : '#9ca3af')),
+            'description' => $taxDescription,
+            'details' => $taxTimestamp ? [
+                'Dikirim pada' => $dokumen->sent_to_perpajakan_at ? $dokumen->sent_to_perpajakan_at->format('d M Y H:i') : '-',
+                'Diproses pada' => $dokumen->processed_perpajakan_at ? $dokumen->processed_perpajakan_at->format('d M Y H:i') : '-',
+                'Status' => $dokumen->status_perpajakan ?? '-',
+            ] : [],
+            'hasReturn' => $taxReturnInfo !== null,
+            'returnInfo' => $taxReturnInfo,
+            'hasCycle' => $taxCycleInfo['hasCycle'],
+            'cycleInfo' => $taxCycleInfo
+        ];
+
+        // Stage 4: ACCOUNTING (Team Akutansi)
+        $accountingStatus = 'pending';
+        $accountingTimestamp = null;
+        $accountingDescription = 'Menunggu';
+        $accountingReturnInfo = $this->getReturnInfoForStage($dokumen, 'accounting', $returnEvents);
+
+        // Check if sent to akutansi (using status or sent_to_akutansi_at if exists)
+        if ($dokumen->status === 'sent_to_akutansi' || $dokumen->status === 'processed_by_akutansi') {
+            $accountingStatus = 'processing';
+            $accountingTimestamp = $dokumen->updated_at;
+            $accountingDescription = 'Dikirim ke Team Akutansi';
+        }
+
+        // Try to get sent_to_akutansi_at from database (might not exist in model fillable)
+        $sentToAkutansiAt = null;
+        try {
+            $sentToAkutansiAt = $dokumen->getAttribute('sent_to_akutansi_at') ?? 
+                               (\DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_akutansi_at') ? 
+                                \Carbon\Carbon::parse(\DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_akutansi_at')) : null);
+            if ($sentToAkutansiAt) {
+                $accountingStatus = 'processing';
+                $accountingTimestamp = $sentToAkutansiAt;
+                $accountingDescription = 'Dikirim ke Team Akutansi';
+            }
+        } catch (\Exception $e) {
+            // Field might not exist, use status
+        }
+
+        if ($dokumen->status === 'processed_by_akutansi' || $dokumen->nomor_miro) {
+            $accountingStatus = 'completed';
+            $accountingTimestamp = $dokumen->updated_at;
+            $accountingDescription = 'Diproses Team Akutansi';
+        }
+
+        // Check if returned from this stage
+        if ($accountingReturnInfo) {
+            $accountingStatus = 'returned';
+            if (!$accountingTimestamp) {
+                $accountingTimestamp = $sentToAkutansiAt ?? $dokumen->processed_perpajakan_at;
+            }
+        }
+
+        $stages[] = [
+            'id' => 'accounting',
+            'name' => 'Team Akutansi',
+            'label' => 'ACCOUNTING',
+            'status' => $accountingStatus,
+            'timestamp' => $accountingTimestamp,
+            'icon' => 'fa-calculator',
+            'color' => $accountingStatus === 'completed' ? '#10b981' : ($accountingStatus === 'processing' ? '#3b82f6' : ($accountingStatus === 'returned' ? '#ef4444' : '#9ca3af')),
+            'description' => $accountingDescription,
+            'details' => $accountingTimestamp ? [
+                'Nomor MIRO' => $dokumen->nomor_miro ?? '-',
+                'Status' => $dokumen->status,
+            ] : [],
+            'hasReturn' => $accountingReturnInfo !== null,
+            'returnInfo' => $accountingReturnInfo
+        ];
+
+        // Stage 5: PAYMENT (Pembayaran)
+        $paymentStatus = 'pending';
+        $paymentTimestamp = null;
+        $paymentDescription = 'Menunggu';
+        
+        // Get sent_to_pembayaran_at from model or database
+        $sentToPembayaranAt = null;
+        if (isset($dokumen->sent_to_pembayaran_at)) {
+            $sentToPembayaranAt = $dokumen->sent_to_pembayaran_at;
+        } else {
+            try {
+                $sentToPembayaranAt = \DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_pembayaran_at');
+                if ($sentToPembayaranAt) {
+                    $sentToPembayaranAt = \Carbon\Carbon::parse($sentToPembayaranAt);
+                }
+            } catch (\Exception $e) {
+                // Field might not exist
+            }
+        }
+
+        // Check if sent to pembayaran
+        if ($dokumen->status === 'sent_to_pembayaran' || $dokumen->current_handler === 'pembayaran' || $sentToPembayaranAt) {
+            $paymentStatus = 'processing';
+            $paymentTimestamp = $sentToPembayaranAt ?? $dokumen->updated_at;
+            $paymentDescription = 'Dikirim ke Pembayaran';
+        }
+
+        // Get status_pembayaran from model or database
+        $statusPembayaran = null;
+        if (isset($dokumen->status_pembayaran)) {
+            $statusPembayaran = $dokumen->status_pembayaran;
+        } else {
+            try {
+                $statusPembayaran = \DB::table('dokumens')->where('id', $dokumen->id)->value('status_pembayaran');
+            } catch (\Exception $e) {
+                // Field might not exist
+            }
+        }
+
+        // Check if payment is completed
+        if ($statusPembayaran === 'sudah_dibayar' || $dokumen->status === 'selesai' || $dokumen->status === 'approved_data_sudah_terkirim' || $dokumen->status === 'completed') {
+            $paymentStatus = 'completed';
+            if (!$paymentTimestamp) {
+                $paymentTimestamp = $sentToPembayaranAt ?? $dokumen->updated_at;
+            }
+            $paymentDescription = 'Selesai Dibayar';
+        }
+
+        $stages[] = [
+            'id' => 'payment',
+            'name' => 'Pembayaran',
+            'label' => 'PAYMENT',
+            'status' => $paymentStatus,
+            'timestamp' => $paymentTimestamp,
+            'icon' => 'fa-money-bill-wave',
+            'color' => $paymentStatus === 'completed' ? '#10b981' : ($paymentStatus === 'processing' ? '#3b82f6' : ($paymentStatus === 'returned' ? '#ef4444' : '#9ca3af')),
+            'description' => $paymentDescription,
+            'details' => $paymentTimestamp ? [
+                'Status Pembayaran' => $statusPembayaran ?? '-',
+                'Status' => $dokumen->status,
+            ] : [],
+            'hasReturn' => false,
+            'returnInfo' => null
+        ];
+
+        // Calculate durations between stages
+        for ($i = 0; $i < count($stages); $i++) {
+            if ($i > 0 && $stages[$i]['timestamp'] && $stages[$i-1]['timestamp']) {
+                $stages[$i]['duration'] = $this->calculateDuration($stages[$i-1]['timestamp'], $stages[$i]['timestamp']);
+            }
+        }
+
+        return $stages;
+    }
+
+    /**
+     * Get all return events for a document
+     */
+    private function getReturnEvents($dokumen)
+    {
+        $returns = [];
+
+        // Return from Perpajakan to Ibu Yuni
+        if ($dokumen->returned_from_perpajakan_at) {
+            $returns[] = [
+                'from' => 'tax',
+                'to' => 'reviewer',
+                'timestamp' => $dokumen->returned_from_perpajakan_at,
+                'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
+                'returned_by' => 'Team Perpajakan',
+                'returned_to' => 'Ibu Yuni'
+            ];
+        }
+
+        // Return from Ibu Yuni to Bidang
+        if ($dokumen->bidang_returned_at) {
+            $returns[] = [
+                'from' => 'reviewer',
+                'to' => 'bidang',
+                'timestamp' => $dokumen->bidang_returned_at,
+                'reason' => $dokumen->bidang_return_reason ?? 'Tidak ada alasan',
+                'returned_by' => 'Ibu Yuni',
+                'returned_to' => 'Bidang: ' . ($dokumen->target_bidang ?? 'Tidak diketahui')
+            ];
+        }
+
+        // Return to Department
+        if ($dokumen->department_returned_at) {
+            $returns[] = [
+                'from' => $dokumen->current_handler === 'perpajakan' ? 'tax' : ($dokumen->current_handler === 'akutansi' ? 'accounting' : 'reviewer'),
+                'to' => 'department',
+                'timestamp' => $dokumen->department_returned_at,
+                'reason' => $dokumen->department_return_reason ?? 'Tidak ada alasan',
+                'returned_by' => $this->getRoleDisplayName($dokumen->current_handler),
+                'returned_to' => 'Department'
+            ];
+        }
+
+        // Return to Ibu A
+        if ($dokumen->returned_to_ibua_at) {
+            $returns[] = [
+                'from' => 'reviewer',
+                'to' => 'sender',
+                'timestamp' => $dokumen->returned_to_ibua_at,
+                'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
+                'returned_by' => 'Ibu Yuni',
+                'returned_to' => 'Ibu Tarapul'
+            ];
+        }
+
+        return $returns;
+    }
+
+    /**
+     * Get return info for a specific stage
+     */
+    private function getReturnInfoForStage($dokumen, $stageId, $returnEvents)
+    {
+        foreach ($returnEvents as $return) {
+            if ($return['from'] === $stageId) {
+                return $return;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get cycle/loop information for a stage (return and re-send)
+     */
+    private function getCycleInfo($dokumen, $stageId)
+    {
+        $hasCycle = false;
+        $isResend = false;
+        $attemptCount = 1;
+        $returnTimestamp = null;
+        $resendTimestamp = null;
+
+        if ($stageId === 'tax') {
+            // Check if returned from perpajakan
+            if ($dokumen->returned_from_perpajakan_at) {
+                $hasCycle = true;
+                $returnTimestamp = $dokumen->returned_from_perpajakan_at;
+                $attemptCount = 1;
+
+                // Check if sent back after return
+                if ($dokumen->sent_to_perpajakan_at && 
+                    $dokumen->sent_to_perpajakan_at->gt($dokumen->returned_from_perpajakan_at)) {
+                    $isResend = true;
+                    $resendTimestamp = $dokumen->sent_to_perpajakan_at;
+                    $attemptCount = 2;
+
+                    // Check if there's a fixed_at timestamp (indicates re-send after fix)
+                    if ($dokumen->getAttribute('returned_from_perpajakan_fixed_at')) {
+                        $resendTimestamp = $dokumen->getAttribute('returned_from_perpajakan_fixed_at');
+                    }
+                }
+            }
+        } elseif ($stageId === 'reviewer') {
+            // Check if returned to bidang and sent back
+            if ($dokumen->bidang_returned_at) {
+                $hasCycle = true;
+                $returnTimestamp = $dokumen->bidang_returned_at;
+                $attemptCount = 1;
+
+                // Check if processed again after return from bidang
+                if ($dokumen->processed_at && 
+                    $dokumen->processed_at->gt($dokumen->bidang_returned_at)) {
+                    $isResend = true;
+                    $resendTimestamp = $dokumen->processed_at;
+                    $attemptCount = 2;
+                }
+            }
+
+            // Check if returned to Ibu A and sent back
+            if ($dokumen->returned_to_ibua_at) {
+                $hasCycle = true;
+                if (!$returnTimestamp || $dokumen->returned_to_ibua_at->gt($returnTimestamp)) {
+                    $returnTimestamp = $dokumen->returned_to_ibua_at;
+                }
+
+                // Check if sent to Ibu B again after return
+                if ($dokumen->sent_to_ibub_at && 
+                    $dokumen->sent_to_ibub_at->gt($dokumen->returned_to_ibua_at)) {
+                    $isResend = true;
+                    if (!$resendTimestamp || $dokumen->sent_to_ibub_at->gt($resendTimestamp)) {
+                        $resendTimestamp = $dokumen->sent_to_ibub_at;
+                    }
+                    $attemptCount = max($attemptCount, 2);
+                }
+            }
+        }
+
+        return [
+            'hasCycle' => $hasCycle,
+            'isResend' => $isResend,
+            'attemptCount' => $attemptCount,
+            'returnTimestamp' => $returnTimestamp,
+            'resendTimestamp' => $resendTimestamp
+        ];
+    }
+
+    /**
+     * Display rekapan dokumen for owner (all documents from all roles)
+     */
+    public function rekapan(Request $request)
+    {
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Filter by bagian
+        $selectedBagian = $request->get('bagian', '');
+        if ($selectedBagian) {
+            $query->where('bagian', $selectedBagian);
+        }
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = trim((string)$request->search);
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                });
+            }
+        }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $query->where('tahun', $request->year);
+        }
+
+        // Filter by completion status
+        $completionFilter = $request->get('completion_status', '');
+        if ($completionFilter === 'selesai') {
+            // Dokumen selesai: status completed atau status_pembayaran = sudah_dibayar
+            $query->where(function($q) {
+                $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+            });
+        } elseif ($completionFilter === 'belum_selesai') {
+            // Dokumen belum selesai: tidak termasuk status selesai
+            $query->where(function($q) {
+                $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->where(function($subQ) {
+                      $subQ->whereNull('status_pembayaran')
+                           ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                  });
+            });
+        }
+
+        $dokumens = $query->latest('tanggal_masuk')->paginate(20)->appends($request->query());
+
+        // Get statistics
+        $statistics = $this->getRekapanStatistics($selectedBagian);
+
+        // Get available years
+        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
+            ->whereNotNull('tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Bagian list with document counts
+        $bagianList = [
+            'DPM' => 'DPM',
+            'SKH' => 'SKH',
+            'SDM' => 'SDM',
+            'TEP' => 'TEP',
+            'KPL' => 'KPL',
+            'AKN' => 'AKN',
+            'TAN' => 'TAN',
+            'PMO' => 'PMO'
+        ];
+
+        // Get document counts per bagian
+        $bagianCounts = [];
+        foreach ($bagianList as $code => $name) {
+            $countQuery = Dokumen::where('bagian', $code);
+            
+            // Apply same filters as main query (year filter)
+            if ($request->has('year') && $request->year) {
+                $countQuery->where('tahun', $request->year);
+            }
+            
+            // Apply search filter if exists
+            if ($request->has('search') && $request->search) {
+                $search = trim((string)$request->search);
+                if (!empty($search)) {
+                    $countQuery->where(function($q) use ($search) {
+                        $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                          ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                          ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                          ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                    });
+                }
+            }
+            
+            // Apply completion status filter if exists
+            if ($completionFilter === 'selesai') {
+                $countQuery->where(function($q) {
+                    $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                      ->orWhere('status_pembayaran', 'sudah_dibayar');
+                });
+            } elseif ($completionFilter === 'belum_selesai') {
+                $countQuery->where(function($q) {
+                    $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                      ->where(function($subQ) {
+                          $subQ->whereNull('status_pembayaran')
+                               ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                      });
+                });
+            }
+            
+            $bagianCounts[$code] = $countQuery->count();
+        }
+
+        $completionFilter = $request->get('completion_status', '');
+        
+        return view('owner.rekapan', compact('dokumens', 'statistics', 'availableYears', 'bagianList', 'bagianCounts', 'selectedBagian', 'completionFilter'))
+            ->with('title', 'Rekapan Dokumen - Owner')
+            ->with('module', 'owner')
+            ->with('menuDashboard', '')
+            ->with('menuRekapan', 'active')
+            ->with('menuRekapanKeterlambatan', '')
+            ->with('dashboardUrl', '/owner/dashboard');
+    }
+
+    /**
+     * Display rekapan dokumen by handler (Ibu Tarapul, Ibu Yuni, Team Perpajakan, Team Akutansi)
+     */
+    public function rekapanByHandler(Request $request, $handler)
+    {
+        // Validate handler
+        $validHandlers = ['ibuA', 'ibuB', 'perpajakan', 'akutansi'];
+        if (!in_array($handler, $validHandlers)) {
+            abort(404, 'Handler tidak valid');
+        }
+
+        $handlerNames = [
+            'ibuA' => 'Ibu Tarapul',
+            'ibuB' => 'Ibu Yuni',
+            'perpajakan' => 'Team Perpajakan',
+            'akutansi' => 'Team Akutansi'
+        ];
+
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Filter by handler
+        if ($handler === 'ibuA') {
+            // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
+            $query->where(function($q) {
+                $q->where('current_handler', 'ibuA')
+                  ->orWhere(function($subQ) {
+                      $subQ->where('status', 'draft')
+                           ->where(function($subSubQ) {
+                               $subSubQ->whereNull('current_handler')
+                                       ->orWhere('current_handler', 'ibuA');
+                           });
+                  });
+            });
+        } elseif ($handler === 'ibuB') {
+            // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
+            $query->where(function($q) {
+                $q->where('current_handler', 'ibuB')
+                  ->orWhere('status', 'sent_to_ibub')
+                  ->orWhere('status', 'pending_approval_ibub')
+                  ->orWhere('status', 'proses_ibub');
+            });
+        } elseif ($handler === 'perpajakan') {
+            // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
+            $query->where(function($q) {
+                $q->where('current_handler', 'perpajakan')
+                  ->orWhere('status', 'sent_to_perpajakan')
+                  ->orWhere('status', 'proses_perpajakan');
+            });
+        } elseif ($handler === 'akutansi') {
+            // Team Akutansi: dokumen dengan current_handler = 'akutansi' atau status sent_to_akutansi
+            $query->where(function($q) {
+                $q->where('current_handler', 'akutansi')
+                  ->orWhere('status', 'sent_to_akutansi')
+                  ->orWhere('status', 'proses_akutansi');
+            });
+        }
+
+        // Filter by bagian
+        $selectedBagian = $request->get('bagian', '');
+        if ($selectedBagian) {
+            $query->where('bagian', $selectedBagian);
+        }
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = trim((string)$request->search);
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                });
+            }
+        }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $query->where('tahun', $request->year);
+        }
+
+        // Filter by completion status
+        $completionFilter = $request->get('completion_status', '');
+        if ($completionFilter === 'selesai') {
+            $query->where(function($q) {
+                $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+            });
+        } elseif ($completionFilter === 'belum_selesai') {
+            $query->where(function($q) {
+                $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->where(function($subQ) {
+                      $subQ->whereNull('status_pembayaran')
+                           ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                  });
+            });
+        }
+
+        $dokumens = $query->latest('tanggal_masuk')->paginate(20)->appends($request->query());
+
+        // Get statistics (with handler filter)
+        $statistics = $this->getRekapanStatistics($selectedBagian);
+
+        // Get available years
+        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
+            ->whereNotNull('tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Bagian list with document counts
+        $bagianList = [
+            'DPM' => 'DPM',
+            'SKH' => 'SKH',
+            'SDM' => 'SDM',
+            'TEP' => 'TEP',
+            'KPL' => 'KPL',
+            'AKN' => 'AKN',
+            'TAN' => 'TAN',
+            'PMO' => 'PMO'
+        ];
+
+        // Get document counts per bagian (with handler filter)
+        $bagianCounts = [];
+        foreach ($bagianList as $code => $name) {
+            $countQuery = Dokumen::where('bagian', $code);
+            
+            // Apply handler filter
+            if ($handler === 'ibuA') {
+                $countQuery->where(function($q) {
+                    $q->where('current_handler', 'ibuA')
+                      ->orWhere(function($subQ) {
+                          $subQ->where('status', 'draft')
+                               ->where(function($subSubQ) {
+                                   $subSubQ->whereNull('current_handler')
+                                           ->orWhere('current_handler', 'ibuA');
+                               });
+                      });
+                });
+            } elseif ($handler === 'ibuB') {
+                $countQuery->where(function($q) {
+                    $q->where('current_handler', 'ibuB')
+                      ->orWhere('status', 'sent_to_ibub')
+                      ->orWhere('status', 'pending_approval_ibub')
+                      ->orWhere('status', 'proses_ibub');
+                });
+            } elseif ($handler === 'perpajakan') {
+                $countQuery->where(function($q) {
+                    $q->where('current_handler', 'perpajakan')
+                      ->orWhere('status', 'sent_to_perpajakan')
+                      ->orWhere('status', 'proses_perpajakan');
+                });
+            } elseif ($handler === 'akutansi') {
+                $countQuery->where(function($q) {
+                    $q->where('current_handler', 'akutansi')
+                      ->orWhere('status', 'sent_to_akutansi')
+                      ->orWhere('status', 'proses_akutansi');
+                });
+            }
+            
+            // Apply same filters as main query
+            if ($request->has('year') && $request->year) {
+                $countQuery->where('tahun', $request->year);
+            }
+            
+            if ($request->has('search') && $request->search) {
+                $search = trim((string)$request->search);
+                if (!empty($search)) {
+                    $countQuery->where(function($q) use ($search) {
+                        $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                          ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                          ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                          ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                    });
+                }
+            }
+            
+            if ($completionFilter === 'selesai') {
+                $countQuery->where(function($q) {
+                    $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                      ->orWhere('status_pembayaran', 'sudah_dibayar');
+                });
+            } elseif ($completionFilter === 'belum_selesai') {
+                $countQuery->where(function($q) {
+                    $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                      ->where(function($subQ) {
+                          $subQ->whereNull('status_pembayaran')
+                               ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                      });
+                });
+            }
+            
+            $bagianCounts[$code] = $countQuery->count();
+        }
+        
+        return view('owner.rekapan', compact('dokumens', 'statistics', 'availableYears', 'bagianList', 'bagianCounts', 'selectedBagian', 'completionFilter', 'handler', 'handlerNames'))
+            ->with('title', 'Rekapan Dokumen - ' . $handlerNames[$handler])
+            ->with('module', 'owner')
+            ->with('menuDashboard', '')
+            ->with('menuRekapan', 'active')
+            ->with('menuRekapanKeterlambatan', '')
+            ->with('dashboardUrl', '/owner/dashboard');
+    }
+
+    /**
+     * Display detail rekapan dengan 4 statistik (total, selesai, proses, terlambat)
+     */
+    public function rekapanDetail(Request $request, $type)
+    {
+        // Validate type
+        $validTypes = ['total', 'selesai', 'ibuA', 'ibuB', 'perpajakan', 'akutansi'];
+        if (!in_array($type, $validTypes)) {
+            abort(404, 'Type tidak valid');
+        }
+
+        $typeNames = [
+            'total' => 'Total Dokumen',
+            'selesai' => 'Dokumen Selesai',
+            'ibuA' => 'Dokumen Ibu Tarapul',
+            'ibuB' => 'Dokumen Ibu Yuni',
+            'perpajakan' => 'Dokumen Team Perpajakan',
+            'akutansi' => 'Dokumen Team Akutansi'
+        ];
+
+        $now = Carbon::now();
+        $baseQuery = Dokumen::query();
+
+        // Apply filter based on type
+        if ($type === 'total') {
+            // All documents
+        } elseif ($type === 'selesai') {
+            // Completed documents
+            $baseQuery->where(function($q) {
+                $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+            });
+        } elseif ($type === 'ibuA') {
+            // Ibu Tarapul documents
+            $baseQuery->where(function($q) {
+                $q->where('current_handler', 'ibuA')
+                  ->orWhere(function($subQ) {
+                      $subQ->where('status', 'draft')
+                           ->where(function($subSubQ) {
+                               $subSubQ->whereNull('current_handler')
+                                       ->orWhere('current_handler', 'ibuA');
+                           });
+                  });
+            });
+        } elseif ($type === 'ibuB') {
+            // Ibu Yuni documents
+            $baseQuery->where(function($q) {
+                $q->where('current_handler', 'ibuB')
+                  ->orWhere('status', 'sent_to_ibub')
+                  ->orWhere('status', 'pending_approval_ibub')
+                  ->orWhere('status', 'proses_ibub');
+            });
+        } elseif ($type === 'perpajakan') {
+            // Team Perpajakan documents
+            $baseQuery->where(function($q) {
+                $q->where('current_handler', 'perpajakan')
+                  ->orWhere('status', 'sent_to_perpajakan')
+                  ->orWhere('status', 'proses_perpajakan');
+            });
+        } elseif ($type === 'akutansi') {
+            // Team Akutansi documents
+            $baseQuery->where(function($q) {
+                $q->where('current_handler', 'akutansi')
+                  ->orWhere('status', 'sent_to_akutansi')
+                  ->orWhere('status', 'proses_akutansi');
+            });
+        }
+
+        // Calculate 4 statistics
+        // 1. Total Dokumen
+        $totalDokumen = (clone $baseQuery)->count();
+
+        // 2. Total Dokumen Selesai
+        $totalSelesai = (clone $baseQuery)->where(function($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+              ->orWhere('status_pembayaran', 'sudah_dibayar');
+        })->count();
+
+        // 3. Total Dokumen Proses (sedang diproses)
+        $totalProses = (clone $baseQuery)->where(function($q) {
+            $q->where('status', 'sedang diproses')
+              ->orWhere('status', 'sent_to_ibub')
+              ->orWhere('status', 'sent_to_perpajakan')
+              ->orWhere('status', 'sent_to_akutansi')
+              ->orWhere('status', 'sent_to_pembayaran')
+              ->orWhere('status', 'proses_ibub')
+              ->orWhere('status', 'proses_perpajakan')
+              ->orWhere('status', 'proses_akutansi')
+              ->orWhere('status', 'pending_approval_ibub');
+        })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+          ->where(function($subQ) {
+              $subQ->whereNull('status_pembayaran')
+                   ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+          })->count();
+
+        // 4. Total Dokumen Terlambat (memiliki deadline dan sudah lewat deadline, belum selesai)
+        $totalTerlambat = (clone $baseQuery)
+            ->whereNotNull('deadline_at')
+            ->where('deadline_at', '<', $now)
+            ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+            ->where(function($subQ) {
+                $subQ->whereNull('status_pembayaran')
+                     ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            })->count();
+
+        // Get documents list with pagination
+        $documentsQuery = (clone $baseQuery)->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search) {
+            $search = trim((string)$request->search);
+            if (!empty($search)) {
+                $documentsQuery->where(function($q) use ($search) {
+                    $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                });
+            }
+        }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $documentsQuery->where('tahun', $request->year);
+        }
+
+        // Filter by bagian
+        $selectedBagian = $request->get('bagian', '');
+        if ($selectedBagian) {
+            $documentsQuery->where('bagian', $selectedBagian);
+        }
+
+        // Filter by completion status
+        $completionFilter = $request->get('completion_status', '');
+        if ($completionFilter === 'selesai') {
+            $documentsQuery->where(function($q) {
+                $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+            });
+        } elseif ($completionFilter === 'belum_selesai') {
+            $documentsQuery->where(function($q) {
+                $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->where(function($subQ) {
+                      $subQ->whereNull('status_pembayaran')
+                           ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                  });
+            });
+        }
+
+        // Filter by statistic card (total, selesai, proses, terlambat)
+        $statFilter = $request->get('stat_filter', '');
+        if ($statFilter === 'selesai') {
+            $documentsQuery->where(function($q) {
+                $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+            });
+        } elseif ($statFilter === 'proses') {
+            $documentsQuery->where(function($q) {
+                $q->where('status', 'sedang diproses')
+                  ->orWhere('status', 'sent_to_ibub')
+                  ->orWhere('status', 'sent_to_perpajakan')
+                  ->orWhere('status', 'sent_to_akutansi')
+                  ->orWhere('status', 'sent_to_pembayaran')
+                  ->orWhere('status', 'proses_ibub')
+                  ->orWhere('status', 'proses_perpajakan')
+                  ->orWhere('status', 'proses_akutansi')
+                  ->orWhere('status', 'pending_approval_ibub');
+            })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+              ->where(function($subQ) {
+                  $subQ->whereNull('status_pembayaran')
+                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+              });
+        } elseif ($statFilter === 'terlambat') {
+            $documentsQuery->whereNotNull('deadline_at')
+                ->where('deadline_at', '<', $now)
+                ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                });
+        }
+        // If stat_filter is 'total' or empty, show all documents (no additional filter)
+
+        $dokumens = $documentsQuery->latest('tanggal_masuk')->paginate(20)->appends($request->query());
+
+        // Get available years
+        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
+            ->whereNotNull('tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Bagian list
+        $bagianList = [
+            'DPM' => 'DPM',
+            'SKH' => 'SKH',
+            'SDM' => 'SDM',
+            'TEP' => 'TEP',
+            'KPL' => 'KPL',
+            'AKN' => 'AKN',
+            'TAN' => 'TAN',
+            'PMO' => 'PMO'
+        ];
+
+        $statFilter = $request->get('stat_filter', '');
+
+        return view('owner.rekapanDetail', compact('type', 'typeNames', 'totalDokumen', 'totalSelesai', 'totalProses', 'totalTerlambat', 'dokumens', 'availableYears', 'bagianList', 'selectedBagian', 'completionFilter', 'statFilter'))
+            ->with('title', 'Detail ' . $typeNames[$type])
+            ->with('module', 'owner')
+            ->with('menuDashboard', '')
+            ->with('menuRekapan', 'active')
+            ->with('menuRekapanKeterlambatan', '')
+            ->with('dashboardUrl', '/owner/dashboard');
+    }
+
+    /**
+     * Display rekapan keterlambatan for owner
+     */
+    public function rekapanKeterlambatan(Request $request)
+    {
+        $now = Carbon::now();
+
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+            ->whereNotNull('deadline_at')
+            ->where('deadline_at', '<', $now)
+            ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap', 'selesai']);
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = trim((string)$request->search);
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                      ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+                });
+            }
+        }
+
+        // Filter by handler
+        $selectedHandler = $request->get('handler', '');
+        if ($selectedHandler) {
+            $query->where('current_handler', $selectedHandler);
+        }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $query->where('tahun', $request->year);
+        }
+
+        $dokumens = $query->orderBy('deadline_at', 'asc')->paginate(20)->appends($request->query());
+
+        // Calculate keterlambatan statistics
+        $totalTerlambat = Dokumen::whereNotNull('deadline_at')
+            ->where('deadline_at', '<', $now)
+            ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap', 'selesai'])
+            ->count();
+
+        $terlambatByHandler = [];
+        $handlers = ['ibuA' => 'Ibu Tarapul', 'ibuB' => 'Ibu Yuni', 'perpajakan' => 'Team Perpajakan', 'akutansi' => 'Team Akutansi'];
+        foreach ($handlers as $handlerCode => $handlerName) {
+            $terlambatByHandler[$handlerCode] = Dokumen::whereNotNull('deadline_at')
+                ->where('deadline_at', '<', $now)
+                ->where('current_handler', $handlerCode)
+                ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap', 'selesai'])
+                ->count();
+        }
+
+        // Get available years
+        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
+            ->whereNotNull('tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Handler list
+        $handlerList = [
+            'ibuA' => 'Ibu Tarapul',
+            'ibuB' => 'Ibu Yuni',
+            'perpajakan' => 'Team Perpajakan',
+            'akutansi' => 'Team Akutansi'
+        ];
+
+        return view('owner.rekapanKeterlambatan', compact('dokumens', 'totalTerlambat', 'terlambatByHandler', 'availableYears', 'handlerList', 'selectedHandler'))
+            ->with('title', 'Rekapan Keterlambatan - Owner')
+            ->with('module', 'owner')
+            ->with('menuDashboard', '')
+            ->with('menuRekapan', '')
+            ->with('menuRekapanKeterlambatan', 'active')
+            ->with('dashboardUrl', '/owner/dashboard');
+    }
+
+    /**
+     * Get statistics for rekapan
+     */
+    private function getRekapanStatistics($filterBagian = '')
+    {
+        $query = Dokumen::query();
+
+        if ($filterBagian) {
+            $query->where('bagian', $filterBagian);
+        }
+
+        $total = $query->count();
+
+        // Count completed documents (status = 'selesai' or 'approved_data_sudah_terkirim' or current_handler = 'pembayaran')
+        $completedQuery = Dokumen::query();
+        if ($filterBagian) {
+            $completedQuery->where('bagian', $filterBagian);
+        }
+        $completedCount = $completedQuery->where(function($q) {
+            $q->where('status', 'selesai')
+              ->orWhere('status', 'approved_data_sudah_terkirim')
+              ->orWhere('current_handler', 'pembayaran');
+        })->count();
+
+        // Count documents by handler
+        $ibuTarapulQuery = Dokumen::query();
+        $ibuYuniQuery = Dokumen::query();
+        $perpajakanQuery = Dokumen::query();
+        $akutansiQuery = Dokumen::query();
+
+        if ($filterBagian) {
+            $ibuTarapulQuery->where('bagian', $filterBagian);
+            $ibuYuniQuery->where('bagian', $filterBagian);
+            $perpajakanQuery->where('bagian', $filterBagian);
+            $akutansiQuery->where('bagian', $filterBagian);
+        }
+
+        // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
+        $ibuTarapulCount = $ibuTarapulQuery->where(function($q) {
+            $q->where('current_handler', 'ibuA')
+              ->orWhere(function($subQ) {
+                  $subQ->where('status', 'draft')
+                       ->where(function($subSubQ) {
+                           $subSubQ->whereNull('current_handler')
+                                   ->orWhere('current_handler', 'ibuA');
+                       });
+              });
+        })->count();
+
+        // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
+        $ibuYuniCount = $ibuYuniQuery->where(function($q) {
+            $q->where('current_handler', 'ibuB')
+              ->orWhere('status', 'sent_to_ibub')
+              ->orWhere('status', 'pending_approval_ibub')
+              ->orWhere('status', 'proses_ibub');
+        })->count();
+
+        // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
+        $perpajakanCount = $perpajakanQuery->where(function($q) {
+            $q->where('current_handler', 'perpajakan')
+              ->orWhere('status', 'sent_to_perpajakan')
+              ->orWhere('status', 'proses_perpajakan');
+        })->count();
+
+        // Team Akutansi: dokumen dengan current_handler = 'akutansi' atau status sent_to_akutansi
+        $akutansiCount = $akutansiQuery->where(function($q) {
+            $q->where('current_handler', 'akutansi')
+              ->orWhere('status', 'sent_to_akutansi')
+              ->orWhere('status', 'proses_akutansi');
+        })->count();
+
+        return [
+            'total_documents' => $total,
+            'completed_documents' => $completedCount,
+            'ibu_tarapul' => $ibuTarapulCount,
+            'ibu_yuni' => $ibuYuniCount,
+            'perpajakan' => $perpajakanCount,
+            'akutansi' => $akutansiCount
+        ];
+    }
+
+    /**
+     * Get document detail for owner recap page
+     */
+    public function getDocumentDetail(Dokumen $dokumen)
+    {
+        // Load required relationships
+        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Return HTML partial for detail view
+        $html = $this->generateDocumentDetailHtml($dokumen);
+
+        return response($html);
+    }
+
+    /**
+     * Generate HTML for document detail with all data (initial, perpajakan, akutansi)
+     */
+    private function generateDocumentDetailHtml($dokumen)
+    {
+        $html = '<div class="detail-grid">';
+
+        // Document Information Section (Basic Data - Data Awal)
+        $detailItems = [
+            'Tanggal Masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-',
+            'Bulan' => $dokumen->bulan ?? '-',
+            'Tahun' => $dokumen->tahun ?? '-',
+            'No SPP' => $dokumen->nomor_spp ?? '-',
+            'Tanggal SPP' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-',
+            'Uraian SPP' => $dokumen->uraian_spp ?? '-',
+            'Nilai Rp' => $dokumen->formatted_nilai_rupiah ?? 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.'),
+            'Kategori' => $dokumen->kategori ?? '-',
+            'Jenis Dokumen' => $dokumen->jenis_dokumen ?? '-',
+            'SubBagian Pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? '-',
+            'Jenis Pembayaran' => $dokumen->jenis_pembayaran ?? '-',
+            'Kebun' => $dokumen->kebun ?? '-',
+            'Bagian' => $dokumen->bagian ?? '-',
+            'Dibayar Kepada' => $dokumen->dibayarKepadas->count() > 0
+                ? htmlspecialchars($dokumen->dibayarKepadas->pluck('nama_penerima')->join(', '))
+                : ($dokumen->dibayar_kepada ?? '-'),
+            'No Berita Acara' => $dokumen->no_berita_acara ?? '-',
+            'Tanggal Berita Acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
+            'No SPK' => $dokumen->no_spk ?? '-',
+            'Tanggal SPK' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
+            'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
+            'No PO' => $dokumen->dokumenPos->count() > 0 ? htmlspecialchars($dokumen->dokumenPos->pluck('nomor_po')->join(', ')) : '-',
+            'No PR' => $dokumen->dokumenPrs->count() > 0 ? htmlspecialchars($dokumen->dokumenPrs->pluck('nomor_pr')->join(', ')) : '-',
+            'No Mirror' => $dokumen->nomor_mirror ?? '-',
+            'Status' => $this->getStatusDisplayName($dokumen->status),
+            'Current Handler' => $this->getRoleDisplayName($dokumen->current_handler),
+        ];
+
+        foreach ($detailItems as $label => $value) {
+            $html .= sprintf('
+                <div class="detail-item">
+                    <span class="detail-label">%s</span>
+                    <span class="detail-value">%s</span>
+                </div>',
+                htmlspecialchars($label),
+                $value
+            );
+        }
+
+        $html .= '</div>';
+
+        // Check if document has perpajakan data
+        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) || 
+                             !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
+                             !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
+                             !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
+
+        if ($hasPerpajakanData || $dokumen->status == 'sent_to_akutansi' || $dokumen->status == 'sent_to_pembayaran' || $dokumen->current_handler == 'akutansi' || $dokumen->current_handler == 'pembayaran') {
+            // Visual Separator for Perpajakan Data
+            $html .= '<div class="detail-section-separator">
+                <div class="separator-content">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Data Perpajakan</span>
+                    <span class="tax-badge">DITAMBAHKAN OLEH TEAM PERPAJAKAN</span>
+                </div>
+            </div>';
+
+            // Perpajakan Information Section
+            $html .= '<div class="detail-grid tax-section">';
+
+            $taxFields = [
+                'NPWP' => $dokumen->npwp ?: '<span class="empty-field">Belum diisi</span>',
+                'Status Perpajakan' => $this->formatTaxStatus($dokumen->status_perpajakan),
+                'No Faktur' => $dokumen->no_faktur ?: '<span class="empty-field">Belum diisi</span>',
+                'Tanggal Faktur' => $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '<span class="empty-field">Belum diisi</span>',
+                'Tanggal Selesai Verifikasi Pajak' => $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '<span class="empty-field">Belum diisi</span>',
+                'Jenis PPh' => $dokumen->jenis_pph ?: '<span class="empty-field">Belum diisi</span>',
+                'DPP PPh' => $dokumen->dpp_pph ? 'Rp ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '<span class="empty-field">Belum diisi</span>',
+                'PPN Terhutang' => $dokumen->ppn_terhutang ? 'Rp ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '<span class="empty-field">Belum diisi</span>',
+                'Link Dokumen Pajak' => $this->formatTaxDocumentLink($dokumen->link_dokumen_pajak),
+            ];
+
+            foreach ($taxFields as $label => $value) {
+                $html .= sprintf('
+                    <div class="detail-item tax-field">
+                        <span class="detail-label">%s</span>
+                        <span class="detail-value">%s</span>
+                    </div>',
+                    htmlspecialchars($label),
+                    $value
+                );
+            }
+
+            $html .= '</div>';
+        }
+
+        // Data Akutansi Section - Show if document has akutansi data or sent to pembayaran
+        $hasAkutansiData = !empty($dokumen->nomor_miro);
+        if ($hasAkutansiData || $dokumen->status == 'sent_to_pembayaran' || $dokumen->current_handler == 'pembayaran') {
+            $html .= '<div class="detail-section-separator">
+                <div class="separator-content">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Data Akutansi</span>
+                    <span class="tax-badge" style="background: rgba(255, 255, 255, 0.2);">DITAMBAHKAN OLEH TEAM AKUTANSI</span>
+                </div>
+            </div>';
+
+            // Akutansi Information Section
+            $html .= '<div class="detail-grid tax-section">';
+
+            $akutansiFields = [
+                'Nomor MIRO' => $dokumen->nomor_miro ?: '<span class="empty-field">Belum diisi</span>',
+            ];
+
+            foreach ($akutansiFields as $label => $value) {
+                $html .= sprintf('
+                    <div class="detail-item tax-field">
+                        <span class="detail-label">%s</span>
+                        <span class="detail-value">%s</span>
+                    </div>',
+                    htmlspecialchars($label),
+                    $value
+                );
+            }
+
+            $html .= '</div>';
+        }
+
+        // Data Pembayaran Section - Show if document has payment data or status_pembayaran is set
+        $hasPembayaranData = !empty($dokumen->link_bukti_pembayaran) || !empty($dokumen->status_pembayaran);
+        if ($hasPembayaranData || $dokumen->current_handler == 'pembayaran' || $dokumen->status == 'sent_to_pembayaran') {
+            // Get status_pembayaran and link_bukti_pembayaran from database if not in model
+            $statusPembayaran = $dokumen->status_pembayaran ?? \DB::table('dokumens')->where('id', $dokumen->id)->value('status_pembayaran');
+            $linkBuktiPembayaran = $dokumen->link_bukti_pembayaran ?? \DB::table('dokumens')->where('id', $dokumen->id)->value('link_bukti_pembayaran');
+            
+            $html .= '<div class="detail-section-separator">
+                <div class="separator-content" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-left: 4px solid #28a745;">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span>Data Pembayaran</span>
+                    <span class="tax-badge" style="background: rgba(255, 255, 255, 0.2);">DITAMBAHKAN OLEH TEAM PEMBAYARAN</span>
+                </div>
+            </div>';
+
+            // Pembayaran Information Section
+            $html .= '<div class="detail-grid tax-section">';
+
+            $pembayaranFields = [
+                'Status Pembayaran' => $statusPembayaran ? ucfirst(str_replace('_', ' ', $statusPembayaran)) : '<span class="empty-field">Belum diisi</span>',
+                'Link Bukti Pembayaran' => $linkBuktiPembayaran 
+                    ? sprintf('<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>', 
+                        htmlspecialchars($linkBuktiPembayaran), 
+                        htmlspecialchars($linkBuktiPembayaran))
+                    : '<span class="empty-field">Belum diisi</span>',
+            ];
+
+            foreach ($pembayaranFields as $label => $value) {
+                $html .= sprintf('
+                    <div class="detail-item tax-field">
+                        <span class="detail-label">%s</span>
+                        <span class="detail-value">%s</span>
+                    </div>',
+                    htmlspecialchars($label),
+                    $value
+                );
+            }
+
+            $html .= '</div>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * Format tax status with badge
+     */
+    private function formatTaxStatus($status)
+    {
+        if (!$status) {
+            return '<span class="empty-field">Belum diisi</span>';
+        }
+
+        $statusLabel = $status == 'selesai' ? 'Selesai' : 'Sedang Diproses';
+        $badgeClass = $status == 'selesai' ? 'badge-selesai' : 'badge-proses';
+
+        return sprintf('<span class="badge %s">%s</span>', $badgeClass, $statusLabel);
+    }
+
+    /**
+     * Format tax document link
+     */
+    private function formatTaxDocumentLink($link)
+    {
+        if (!$link) {
+            return '<span class="empty-field">Belum diisi</span>';
+        }
+
+        if (filter_var($link, FILTER_VALIDATE_URL)) {
+            return sprintf('<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
+                htmlspecialchars($link),
+                htmlspecialchars($link)
+            );
+        }
+
+        return htmlspecialchars($link);
+    }
+}
