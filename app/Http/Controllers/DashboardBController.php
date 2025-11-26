@@ -97,7 +97,8 @@ class DashboardBController extends Controller
         // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
         // Exclude pending approval documents (they should use daftar masuk dokumen)
         // Optimized query - only load essential columns for list view
-        $query = Dokumen::where(function($q) {
+        $query = Dokumen::with('activityLogs')
+            ->where(function($q) {
                 $q->where('current_handler', 'ibuB')
                   ->orWhere(function($subQ) {
                       $subQ->where('status', 'sedang_diproses')
@@ -121,7 +122,8 @@ class DashboardBController extends Controller
                 'current_handler', 'bulan', 'tahun', 'kategori', 'kebun', 'jenis_dokumen',
                 'updated_at', 'tanggal_spk', 'tanggal_berakhir_spk', 'no_spk', 'nomor_mirror',
                 'nama_pengirim', 'jenis_pembayaran', 'dibayar_kepada', 'no_berita_acara',
-                'tanggal_berita_acara'
+                'tanggal_berita_acara', 'inbox_approval_status', 'inbox_approval_reason',
+                'inbox_approval_for', 'inbox_approval_responded_at', 'created_by'
             ]);
 
         // Enhanced search functionality - search across all relevant fields
@@ -446,10 +448,12 @@ class DashboardBController extends Controller
             ]);
 
             // Allow access if document was handled by ibuB or sent from ibuB
-            $allowedHandlers = ['ibuB', 'perpajakan', 'akutansi'];
-            $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'approved_ibub', 'returned_to_department', 'returned_to_bidang'];
+            // Juga allow untuk dokumen yang di-reject dari inbox IbuB
+            $allowedHandlers = ['ibuB', 'perpajakan', 'akutansi', 'ibuA'];
+            $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'approved_ibub', 'returned_to_department', 'returned_to_bidang', 'returned_to_ibua'];
+            $isInboxRejected = $dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'rejected';
 
-            if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
+            if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses) && !$isInboxRejected) {
                 Log::warning('Access denied for document detail', [
                     'document_id' => $dokumen->id,
                     'current_handler' => $dokumen->current_handler,
@@ -461,7 +465,7 @@ class DashboardBController extends Controller
 
             // Load required relationships with error handling
             try {
-                $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+                $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs']);
             } catch (\Exception $e) {
                 Log::error('Failed to load document relationships', [
                     'document_id' => $dokumen->id,
@@ -583,6 +587,29 @@ class DashboardBController extends Controller
                 <span class="detail-value">%s</span>
             </div>', $statusBadge);
 
+        // Inbox rejection information
+        if ($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason) {
+            $html .= sprintf('
+                <div class="detail-item" style="grid-column: 1 / -1; background: #fff5f5; border: 2px solid #f56565;">
+                    <span class="detail-label" style="color: #c53030;">
+                        <i class="fa-solid fa-times-circle me-1"></i>Ditolak dari Inbox
+                    </span>
+                    <span class="detail-value" style="color: #742a2a; font-weight: 600;">
+                        %s
+                    </span>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fed7d7;">
+                        <small style="color: #718096;">
+                            <strong>Tanggal Penolakan:</strong> %s<br>
+                            <strong>Ditolak oleh:</strong> %s
+                        </small>
+                    </div>
+                </div>',
+                htmlspecialchars($this->escapeHtml($dokumen->inbox_approval_reason), ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($dokumen->inbox_approval_responded_at ? $dokumen->inbox_approval_responded_at->format('d/m/Y H:i') : '-', ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($this->getRejectedByDisplayName($dokumen), ENT_QUOTES, 'UTF-8')
+            );
+        }
+
         // Dates
         $dates = [
             'Tanggal Dikirim ke Ibu Yuni' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d-m-Y H:i') : null,
@@ -640,20 +667,45 @@ class DashboardBController extends Controller
 
     public function pengembalian(Request $request){
         // IbuB sees documents that were returned to department (unified return page)
-        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs'])
-            ->where('current_handler', 'ibuB')
+        // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
+        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs'])
             ->where(function($q) {
-                $q->where('status', 'returned_to_department')
-                  ->orWhere(function($subQ) {
-                      $subQ->whereNotNull('returned_from_perpajakan_at')
-                            ->where('pengembalian_awaiting_fix', true); // Hanya yang masih menunggu perbaikan
-                  });
+                // Dokumen yang dikembalikan dari department/bagian
+                $q->where(function($subQ) {
+                    $subQ->where('current_handler', 'ibuB')
+                         ->where(function($statusQ) {
+                             $statusQ->where('status', 'returned_to_department')
+                                    ->orWhere(function($perpajakanQ) {
+                                        $perpajakanQ->whereNotNull('returned_from_perpajakan_at')
+                                                    ->where('pengembalian_awaiting_fix', true);
+                                    });
+                         });
+                })
+                // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke IbuB
+                ->orWhere(function($inboxRejectQ) {
+                    $inboxRejectQ->where('current_handler', 'ibuB')
+                                ->where('inbox_approval_status', 'rejected')
+                                ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi']);
+                });
             })
-            ->orderByRaw('COALESCE(returned_from_perpajakan_at, department_returned_at) DESC');
+            ->orderByRaw('
+                CASE 
+                    WHEN inbox_approval_status = "rejected" THEN inbox_approval_responded_at
+                    WHEN returned_from_perpajakan_at IS NOT NULL THEN returned_from_perpajakan_at
+                    ELSE department_returned_at
+                END DESC
+            ');
 
-        // Filter by department
+        // Filter by department (hanya untuk dokumen yang dikembalikan dari department, bukan dari inbox)
         if ($request->has('department') && $request->department) {
-            $query->where('target_department', $request->department);
+            $query->where(function($q) use ($request) {
+                $q->where('target_department', $request->department)
+                  ->orWhere(function($inboxQ) {
+                      // Dokumen yang di-reject dari inbox tidak memiliki target_department
+                      $inboxQ->where('inbox_approval_status', 'rejected')
+                            ->where('inbox_approval_for', 'IbuB');
+                  });
+            });
         }
 
         // Search functionality
@@ -669,13 +721,24 @@ class DashboardBController extends Controller
         $dokumens = $query->paginate(10);
 
         // Get statistics
-        $totalReturnedToDept = \App\Models\Dokumen::where('current_handler', 'ibuB')
-            ->where(function($q) {
-                $q->where('status', 'returned_to_department')
-                  ->orWhere(function($subQ) {
-                      $subQ->whereNotNull('returned_from_perpajakan_at')
-                            ->where('pengembalian_awaiting_fix', true); // Hanya yang masih menunggu perbaikan
-                  });
+        $totalReturnedToDept = \App\Models\Dokumen::where(function($q) {
+                // Dokumen yang dikembalikan dari department/bagian
+                $q->where(function($subQ) {
+                    $subQ->where('current_handler', 'ibuB')
+                         ->where(function($statusQ) {
+                             $statusQ->where('status', 'returned_to_department')
+                                    ->orWhere(function($perpajakanQ) {
+                                        $perpajakanQ->whereNotNull('returned_from_perpajakan_at')
+                                                    ->where('pengembalian_awaiting_fix', true);
+                                    });
+                         });
+                })
+                // Dokumen yang di-reject dari inbox IbuB
+                ->orWhere(function($inboxRejectQ) {
+                    $inboxRejectQ->where('inbox_approval_for', 'IbuB')
+                                ->where('inbox_approval_status', 'rejected')
+                                ->where('status', 'returned_to_ibua');
+                });
             })
             ->count();
 
@@ -803,9 +866,72 @@ class DashboardBController extends Controller
     }
 
     /**
-     * Send document to next handler (Perpajakan or Akutansi)
+     * Send document to next handler (Perpajakan or Akutansi) via inbox
      */
     public function sendToNextHandler(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Validate current handler
+            if ($dokumen->current_handler !== 'ibuB') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
+                ], 403);
+            }
+
+            // Validate next handler
+            $request->validate([
+                'next_handler' => 'required|in:perpajakan,akutansi'
+            ]);
+
+            \DB::beginTransaction();
+
+            // Map handler to inbox role format
+            $inboxRoleMap = [
+                'perpajakan' => 'Perpajakan',
+                'akutansi' => 'Akutansi',
+            ];
+            
+            $inboxRole = $inboxRoleMap[$request->next_handler] ?? $request->next_handler;
+            
+            // Simpan status original sebelum dikirim ke inbox
+            $originalStatus = $dokumen->status;
+            
+            // Kirim ke inbox menggunakan sistem inbox yang sudah ada
+            $dokumen->sendToInbox($inboxRole);
+            
+            // Set processed_at untuk tracking
+            $dokumen->processed_at = now();
+            $dokumen->save();
+
+            \DB::commit();
+
+            $nextHandlerName = $request->next_handler === 'perpajakan' ? 'Team Perpajakan' : 'Team Akutansi';
+
+            \Log::info("Document #{$dokumen->id} sent to inbox {$inboxRole} by ibuB");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil dikirim ke inbox {$nextHandlerName} dan menunggu persetujuan."
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error sending document to next handler: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen.'
+            ], 500);
+        }
+    }
+
+    /**
+     * OLD METHOD - DEPRECATED: Send document to next handler (Perpajakan or Akutansi) - DIRECT SEND
+     * This method is kept for backward compatibility but should not be used
+     * Use sendToNextHandler instead which uses inbox system
+     */
+    public function sendToNextHandlerDirect(Dokumen $dokumen, Request $request)
     {
         try {
             // Validate current handler
@@ -1794,6 +1920,48 @@ class DashboardBController extends Controller
     /**
      * Helper method to safely escape HTML content with type casting
      */
+    /**
+     * Get rejected by display name from activity log
+     */
+    private function getRejectedByDisplayName($dokumen): string
+    {
+        if ($dokumen->inbox_approval_status == 'rejected') {
+            // Cari dari activity log
+            $rejectLog = $dokumen->activityLogs()
+                ->where('action', 'inbox_rejected')
+                ->latest('action_at')
+                ->first();
+            
+            if ($rejectLog) {
+                $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? null;
+                
+                if ($rejectedBy) {
+                    $nameMap = [
+                        'IbuB' => 'Ibu Yuni',
+                        'ibuB' => 'Ibu Yuni',
+                        'Perpajakan' => 'Team Perpajakan',
+                        'perpajakan' => 'Team Perpajakan',
+                        'Akutansi' => 'Team Akutansi',
+                        'akutansi' => 'Team Akutansi',
+                    ];
+                    return $nameMap[$rejectedBy] ?? $rejectedBy;
+                }
+            }
+            
+            // Fallback ke inbox_approval_for
+            if ($dokumen->inbox_approval_for) {
+                $nameMap = [
+                    'IbuB' => 'Ibu Yuni',
+                    'Perpajakan' => 'Team Perpajakan',
+                    'Akutansi' => 'Team Akutansi',
+                ];
+                return $nameMap[$dokumen->inbox_approval_for] ?? $dokumen->inbox_approval_for;
+            }
+        }
+        
+        return '-';
+    }
+
     private function escapeHtml(mixed $value): string
     {
         // Handle different data types safely
@@ -1905,6 +2073,97 @@ class DashboardBController extends Controller
         }
         
         return $suggestions;
+    }
+
+    /**
+     * API endpoint untuk check dokumen yang di-reject dari inbox untuk IbuB
+     */
+    public function checkRejectedDocuments(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            // Hanya allow IbuB
+            if (!$user || !in_array(strtolower($user->role), ['ibub', 'ibu b', 'ibu yuni'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            // Get last check time from request (dari localStorage client)
+            $lastCheckTime = $request->input('last_check_time');
+            $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : now()->subHours(24);
+
+            // Cari dokumen yang di-reject dari inbox Perpajakan atau Akutansi setelah last check
+            // Dokumen yang dikembalikan ke IbuB setelah di-reject dari inbox
+            $rejectedDocuments = Dokumen::where('current_handler', 'ibuB')
+                ->where('inbox_approval_status', 'rejected')
+                ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi'])
+                ->where('inbox_approval_responded_at', '>', $checkFrom)
+                ->with('activityLogs')
+                ->orderBy('inbox_approval_responded_at', 'desc')
+                ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_responded_at', 'inbox_approval_reason', 'inbox_approval_for'])
+                ->get();
+
+            // Hitung total rejected
+            $totalRejected = Dokumen::where('current_handler', 'ibuB')
+                ->where('inbox_approval_status', 'rejected')
+                ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi'])
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'rejected_documents_count' => $rejectedDocuments->count(),
+                'total_rejected' => $totalRejected,
+                'rejected_documents' => $rejectedDocuments->map(function($doc) {
+                    // Get rejected by name from activity log
+                    $rejectLog = $doc->activityLogs()
+                        ->where('action', 'inbox_rejected')
+                        ->latest('action_at')
+                        ->first();
+                    
+                    $rejectedBy = 'Unknown';
+                    if ($rejectLog) {
+                        $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
+                        // Map role to display name
+                        $nameMap = [
+                            'Perpajakan' => 'Team Perpajakan',
+                            'perpajakan' => 'Team Perpajakan',
+                            'Akutansi' => 'Team Akutansi',
+                            'akutansi' => 'Team Akutansi',
+                        ];
+                        $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
+                    } else if ($doc->inbox_approval_for) {
+                        $nameMap = [
+                            'Perpajakan' => 'Team Perpajakan',
+                            'Akutansi' => 'Team Akutansi',
+                        ];
+                        $rejectedBy = $nameMap[$doc->inbox_approval_for] ?? $doc->inbox_approval_for;
+                    }
+
+                    return [
+                        'id' => $doc->id,
+                        'nomor_agenda' => $doc->nomor_agenda,
+                        'nomor_spp' => $doc->nomor_spp,
+                        'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 50),
+                        'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
+                        'rejected_at' => $doc->inbox_approval_responded_at->format('d/m/Y H:i'),
+                        'rejected_by' => $rejectedBy,
+                        'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
+                        'url' => route('dokumensB.index') . '#doc-' . $doc->id,
+                    ];
+                }),
+                'current_time' => now()->toIso8601String(),
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error checking rejected documents for IbuB: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa dokumen yang ditolak'
+            ], 500);
+        }
     }
 }
 

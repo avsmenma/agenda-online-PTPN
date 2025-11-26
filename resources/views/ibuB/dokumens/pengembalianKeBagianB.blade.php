@@ -534,7 +534,9 @@
               <td class="uraian-column">{{ \Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 50) }}</td>
               <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
               <td class="tanggal-column">
-                @if($dokumen->returned_from_perpajakan_at)
+                @if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_responded_at)
+                  <small>{{ $dokumen->inbox_approval_responded_at->format('d/m/Y H:i') }}</small>
+                @elseif($dokumen->returned_from_perpajakan_at)
                   <small>{{ $dokumen->returned_from_perpajakan_at->format('d/m/Y H:i') }}</small>
                 @elseif($dokumen->department_returned_at)
                   <small>{{ $dokumen->department_returned_at->format('d/m/Y H:i') }}</small>
@@ -543,7 +545,11 @@
                 @endif
               </td>
               <td class="dari-column">
-                @if($dokumen->returned_from_perpajakan_at)
+                @if($dokumen->inbox_approval_status == 'rejected')
+                  <span class="dept-badge" style="background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);">
+                    <i class="fa-solid fa-inbox me-1"></i>Ditolak dari Inbox
+                  </span>
+                @elseif($dokumen->returned_from_perpajakan_at)
                   <span class="dept-badge perpajakan">
                     <i class="fa-solid fa-building me-1"></i>Team Perpajakan
                   </span>
@@ -564,24 +570,39 @@
                 @endif
               </td>
               <td class="alasan-column">
-                <small>{{ $dokumen->alasan_pengembalian ?? '-' }}</small>
+                @if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason)
+                  <small class="text-danger" title="{{ $dokumen->inbox_approval_reason }}">
+                    <i class="fa-solid fa-times-circle me-1"></i>
+                    {{ \Illuminate\Support\Str::limit($dokumen->inbox_approval_reason, 50) }}
+                  </small>
+                @else
+                  <small>{{ $dokumen->alasan_pengembalian ?? '-' }}</small>
+                @endif
               </td>
               <td onclick="event.stopPropagation()">
                 <div class="action-buttons">
-                  <a href="{{ route('dokumensB.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
-                    <i class="fa-solid fa-pen"></i>
-                    <span>Edit</span>
-                  </a>
-                  @if($dokumen->returned_from_perpajakan_at)
-                    <button type="button" class="btn-action btn-send" onclick="sendBackToPerpajakan({{ $dokumen->id }})" title="Kirim ke Team Perpajakan">
-                      <i class="fa-solid fa-paper-plane"></i>
-                      <span>Kirim</span>
-                    </button>
+                  @if($dokumen->inbox_approval_status == 'rejected')
+                    {{-- Dokumen yang di-reject dari inbox tidak bisa diedit atau dikirim --}}
+                    <span class="text-muted" style="font-size: 12px;">
+                      <i class="fa-solid fa-info-circle me-1"></i>
+                      Dokumen ditolak dari inbox
+                    </span>
                   @else
-                    <button type="button" class="btn-action btn-send" onclick="sendToNextHandler({{ $dokumen->id }})" title="Kirim Dokumen">
-                      <i class="fa-solid fa-paper-plane"></i>
-                      <span>Kirim</span>
-                    </button>
+                    <a href="{{ route('dokumensB.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+                      <i class="fa-solid fa-pen"></i>
+                      <span>Edit</span>
+                    </a>
+                    @if($dokumen->returned_from_perpajakan_at)
+                      <button type="button" class="btn-action btn-send" onclick="sendBackToPerpajakan({{ $dokumen->id }})" title="Kirim ke Team Perpajakan">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Kirim</span>
+                      </button>
+                    @else
+                      <button type="button" class="btn-action btn-send" onclick="sendToNextHandler({{ $dokumen->id }})" title="Kirim Dokumen">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Kirim</span>
+                      </button>
+                    @endif
                   @endif
                 </div>
               </td>

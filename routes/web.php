@@ -103,6 +103,13 @@ Route::get('dashboard',[DashboardController::class, 'index'])
     ->middleware('autologin', 'role:admin,ibua')
     ->name('dashboard.main');
 
+Route::get('/ibua/check-rejected', [DashboardController::class, 'checkRejectedDocuments'])
+    ->middleware('autologin', 'role:admin,ibua')
+    ->name('ibua.checkRejected');
+Route::get('/ibub/check-rejected', [DashboardBController::class, 'checkRejectedDocuments'])
+    ->middleware('autologin', 'role:admin,ibub')
+    ->name('ibub.checkRejected');
+
 Route::get('dashboardB',[DashboardBController::class, 'index'])
     ->middleware('autologin', 'role:admin,ibub')
     ->name('dashboard.ibub');
@@ -238,6 +245,15 @@ Route::middleware(['autologin'])->group(function () {
 
     Route::get('/universal-approval/notifications', [\App\Http\Controllers\UniversalApprovalController::class, 'checkNotifications'])
         ->name('universal.approval.notifications');
+});
+
+// Inbox Routes - Untuk IbuB, Perpajakan, Akutansi
+Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,admin'])->group(function () {
+    Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
+    Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
+    Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show');
+    Route::post('/inbox/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])->name('inbox.approve');
+    Route::post('/inbox/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])->name('inbox.reject');
 });
 
 // Pembayaran Routes

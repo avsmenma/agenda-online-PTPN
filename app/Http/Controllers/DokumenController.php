@@ -20,7 +20,7 @@ class DokumenController extends Controller
     public function index(Request $request)
     {
         // IbuA only sees documents created by ibuA
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
             ->where('created_by', 'ibuA')
             ->latest('tanggal_masuk');
 
@@ -627,50 +627,26 @@ class DokumenController extends Controller
 
             DB::beginTransaction();
 
-            // Langsung kirim ke Ibu Yuni tanpa persetujuan
-            $dokumen->update([
-                'status' => 'sent_to_ibub',                   // Status langsung terkirim
-                'current_handler' => 'ibuB',                  // Pindah handler ke Ibu Yuni
-                'sent_to_ibub_at' => now(),                   // Timestamp pengiriman
-                'processed_at' => now(),                      // Timestamp proses oleh Ibu Yuni
-            ]);
+            // Kirim ke inbox Ibu Yuni untuk approval (sesuai approve_system.md)
+            $dokumen->sendToInbox('IbuB');
 
             $dokumen->refresh();
             DB::commit();
 
-            // Log activity: dokumen dikirim ke Ibu Yuni (di stage SENDER/Ibu Tarapul)
+            // Broadcast event untuk inbox (DocumentSentToInbox sudah di-broadcast di method sendToInbox)
             try {
-                ActivityLogHelper::logSent($dokumen, 'ibuB', 'ibuA');
-            } catch (\Exception $logException) {
-                \Log::error('Failed to log document sent: ' . $logException->getMessage());
-            }
-
-            // Log activity: dokumen masuk/diterima (di stage REVIEWER/Ibu Yuni)
-            try {
-                ActivityLogHelper::logReceived($dokumen, 'ibuB');
-            } catch (\Exception $logException) {
-                \Log::error('Failed to log document received: ' . $logException->getMessage());
-            }
-
-            // Broadcast event to IbuB (after commit to ensure data is saved)
-            try {
-                broadcast(new \App\Events\DocumentSent($dokumen, 'ibuA', 'ibuB'));
-                \Log::info('DocumentSent event broadcasted', [
+                \Log::info('Document sent to inbox IbuB', [
                     'document_id' => $dokumen->id,
-                    'sent_to' => 'ibuB',
-                    'status' => $dokumen->status
+                    'status' => $dokumen->status,
+                    'inbox_approval_status' => $dokumen->inbox_approval_status
                 ]);
-            } catch (\Exception $broadcastException) {
-                \Log::error('Failed to broadcast DocumentSent event: ' . $broadcastException->getMessage(), [
-                    'document_id' => $dokumen->id,
-                    'error' => $broadcastException->getTraceAsString()
-                ]);
-                // Don't fail the request if broadcast fails
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log document sent to inbox: ' . $logException->getMessage());
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikirim ke Ibu Yuni dan langsung masuk ke daftar dokumen.'
+                'message' => 'Dokumen berhasil dikirim ke inbox Ibu Yuni dan menunggu persetujuan.'
             ]);
 
         } catch (Exception $e) {

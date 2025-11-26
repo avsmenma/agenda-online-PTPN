@@ -84,6 +84,10 @@
     background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%);
   }
 
+  .stat-icon.rejected {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  }
+
   .stat-content {
     flex: 1;
     min-width: 0;
@@ -492,6 +496,23 @@
             </div>
         </div>
     </div>
+
+    @if(isset($totalDitolakInbox) && $totalDitolakInbox > 0)
+    <div class="col-xl-4 col-lg-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-card-body">
+                <div class="stat-icon rejected">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-title">Ditolak dari Inbox</div>
+                    <div class="stat-value">{{ number_format($totalDitolakInbox, 0, ',', '.') }}</div>
+                    <div class="stat-description">Dokumen yang ditolak dan dikembalikan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 <!-- Search Box -->
@@ -543,6 +564,16 @@
                   <span class="badge badge-pending">
                     <i class="fas fa-clock"></i>
                     Belum Dikirim
+                  </span>
+                @elseif($dokumen->status == 'menunggu_di_approve' && $dokumen->inbox_approval_status == 'pending')
+                  <span class="badge badge-sent">
+                    <i class="fas fa-check-circle"></i>
+                    Terkirim, sedang menunggu approve
+                  </span>
+                @elseif($dokumen->status == 'sent_to_ibub' && $dokumen->inbox_approval_status == 'approved')
+                  <span class="badge badge-sent">
+                    <i class="fas fa-check-circle"></i>
+                    Terkirim, dokumen diapprove
                   </span>
                 @else
                   <span class="badge badge-sent">

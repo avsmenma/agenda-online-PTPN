@@ -38,3 +38,33 @@ Broadcast::channel('documents.{department}', function ($user, $department) {
     return true;
 });
 
+// Private channel for inbox notifications per role
+Broadcast::channel('inbox.{role}', function ($user, $role) {
+    // Get user role
+    $userRole = strtolower($user->role ?? $user->name ?? '');
+    $roleLower = strtolower($role);
+    
+    // Map role variations
+    $roleMap = [
+        'ibub' => 'ibub',
+        'ibu b' => 'ibub',
+        'perpajakan' => 'perpajakan',
+        'akutansi' => 'akutansi',
+    ];
+    
+    $userRoleNormalized = $roleMap[$userRole] ?? $userRole;
+    
+    // Allow access if user role matches channel role
+    if ($userRoleNormalized === $roleLower) {
+        return true;
+    }
+    
+    // For development: allow all for testing
+    \Log::info('Inbox channel access granted for testing', [
+        'channel' => 'inbox.' . $role,
+        'user_role' => $userRole,
+        'requested_role' => $roleLower
+    ]);
+    return true;
+});
+

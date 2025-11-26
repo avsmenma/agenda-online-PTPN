@@ -808,7 +808,7 @@ class DashboardPerpajakanController extends Controller
     }
 
     /**
-     * Send document to akutansi with perpajakan data (like dokumensB flow)
+     * Send document to akutansi via inbox system
      */
     public function sendToAkutansi(Request $request, Dokumen $dokumen)
     {
@@ -831,41 +831,23 @@ class DashboardPerpajakanController extends Controller
         try {
             \DB::beginTransaction();
 
-            // Update document to keep it in perpajakan view but mark as sent
-            // Reset deadline_at so document will be locked until akutansi sets deadline
-            $dokumen->update([
-                'status' => 'sent_to_akutansi', // Keep document in perpajakan view
-                'current_handler' => 'akutansi', // Move to akutansi for processing
-                'sent_to_akutansi_at' => now(), // Mark timestamp when sent to akutansi
-                'tanggal_selesai_verifikasi_pajak' => now(), // Mark completion timestamp
-                // Reset deadline so akutansi must set their own deadline
-                'deadline_at' => null,
-                'deadline_days' => null,
-                'deadline_note' => null,
-            ]);
+            // Simpan status original sebelum dikirim ke inbox
+            $originalStatus = $dokumen->status;
+            
+            // Kirim ke inbox Akutansi menggunakan sistem inbox yang sudah ada
+            $dokumen->sendToInbox('Akutansi');
+            
+            // Set tanggal selesai verifikasi pajak
+            $dokumen->tanggal_selesai_verifikasi_pajak = now();
+            $dokumen->save();
 
             \DB::commit();
 
-            // Log activity: dokumen dikirim ke akutansi oleh Team Perpajakan
-            try {
-                \App\Helpers\ActivityLogHelper::logSent(
-                    $dokumen->fresh(),
-                    'akutansi',
-                    'perpajakan'
-                );
-                
-                // Log activity: dokumen masuk/diterima di stage akutansi
-                \App\Helpers\ActivityLogHelper::logReceived(
-                    $dokumen->fresh(),
-                    'akutansi'
-                );
-            } catch (\Exception $logException) {
-                \Log::error('Failed to log document sent: ' . $logException->getMessage());
-            }
+            \Log::info("Document #{$dokumen->id} sent to inbox Akutansi by Perpajakan");
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikirim ke Team Akutansi. Dokumen tetap ditampilkan di halaman Team Perpajakan dengan status "Sudah terkirim ke Team Akutansi".'
+                'message' => 'Dokumen berhasil dikirim ke inbox Team Akutansi dan menunggu persetujuan.'
             ]);
 
         } catch (\Exception $e) {

@@ -1094,11 +1094,15 @@
     border: 2px solid transparent;
     text-align: center;
     min-width: 100px;
+    max-width: 250px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    word-wrap: break-word;
+    line-height: 1.3;
   }
 
   /* State 1: Draft / Belum Dikirim */
@@ -1148,8 +1152,22 @@
   }
 
   .badge-status.badge-dikembalikan::before {
-    content: '⚠️';
-    margin-right: 4px;
+    content: '';
+    display: none;
+  }
+
+  .badge-status.badge-dikembalikan a {
+    color: white;
+    text-decoration: underline;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .badge-status.badge-dikembalikan a:hover {
+    color: #ffeb3b;
+    text-decoration: underline;
+    text-shadow: 0 0 5px rgba(255, 235, 59, 0.5);
   }
 
   /* Enhanced hover effects */
@@ -1175,7 +1193,10 @@
       padding: 6px 12px;
       font-size: 11px;
       min-width: 80px;
+      max-width: 200px;
       gap: 4px;
+      white-space: normal;
+      line-height: 1.2;
     }
 
     .badge-status.badge-terkirim::after {
@@ -1301,21 +1322,21 @@
 
   /* Action button types with enhanced gradients */
   .btn-edit {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
+    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #48bb78 100%);
     color: white;
   }
 
   .btn-edit:hover {
-    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
+    background: linear-gradient(135deg, #20c997 0%, #48bb78 50%, #38a169 100%);
   }
 
   .btn-send {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 50%, #a8bf23 100%);
+    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #48bb78 100%);
     color: white;
   }
 
   .btn-send:hover {
-    background: linear-gradient(135deg, #9ab01f 0%, #a8bf23 50%, #b8cf27 100%);
+    background: linear-gradient(135deg, #20c997 0%, #48bb78 50%, #38a169 100%);
   }
 
   .btn-send:disabled {
@@ -1801,10 +1822,34 @@
             @elseif($col == 'nomor_mirror')
               {{ $dokumen->nomor_mirror ?? '-' }}
             @elseif($col == 'status')
-              @if(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+              @if($dokumen->inbox_approval_status == 'rejected')
+                {{-- Dokumen ditolak dari inbox --}}
+                <span class="badge-status badge-dikembalikan" style="position: relative;">
+                  <i class="fa-solid fa-times-circle me-1"></i>
+                  <span>Dokumen Ditolak, 
+                    <a href="#" 
+                       class="text-white text-decoration-underline fw-bold" 
+                       data-bs-toggle="modal" 
+                       data-bs-target="#rejectReasonModal{{ $dokumen->id }}"
+                       onclick="event.stopPropagation();">
+                      Alasan
+                    </a>
+                  </span>
+                </span>
+              @elseif(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
                 <span class="badge-status badge-draft">
                   <i class="fa-solid fa-file-lines me-1"></i>
                   <span>Belum Dikirim</span>
+                </span>
+              @elseif($dokumen->status == 'menunggu_di_approve' && $dokumen->inbox_approval_status == 'pending')
+                <span class="badge-status badge-terkirim">
+                  <i class="fa-solid fa-clock me-1"></i>
+                  <span>Waiting Approve</span>
+                </span>
+              @elseif($dokumen->status == 'sent_to_ibub' && $dokumen->inbox_approval_status == 'approved')
+                <span class="badge-status badge-terkirim">
+                  <i class="fa-solid fa-check-circle me-1"></i>
+                  <span>Document Approved</span>
                 </span>
               @elseif($dokumen->status == 'sent_to_ibub')
                 <span class="badge-status badge-terkirim">
@@ -1992,6 +2037,91 @@
         Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari total {{ $dokumens->total() }} dokumen
     </small>
 </div>
+@endif
+
+{{-- Modal untuk menampilkan alasan reject dari inbox --}}
+@if(isset($dokumens))
+  @foreach($dokumens as $dokumen)
+    @if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason)
+    <div class="modal fade" id="rejectReasonModal{{ $dokumen->id }}" tabindex="-1" aria-labelledby="rejectReasonModalLabel{{ $dokumen->id }}" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="rejectReasonModalLabel{{ $dokumen->id }}">
+              <i class="fas fa-times-circle me-2"></i>Alasan Penolakan Dokumen
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nomor Agenda:</label>
+              <p class="mb-0">{{ $dokumen->nomor_agenda }}</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nomor SPP:</label>
+              <p class="mb-0">{{ $dokumen->nomor_spp }}</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Ditolak oleh:</label>
+              <p class="mb-0">
+                @php
+                  $rejectedBy = null;
+                  // Cari dari activity log
+                  $rejectLog = $dokumen->activityLogs()
+                    ->where('action', 'inbox_rejected')
+                    ->latest('action_at')
+                    ->first();
+                  
+                  if ($rejectLog) {
+                    $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? null;
+                  }
+                  
+                  // Fallback ke inbox_approval_for jika masih ada
+                  if (!$rejectedBy && $dokumen->inbox_approval_for) {
+                    $rejectedBy = $dokumen->inbox_approval_for;
+                  }
+                  
+                  // Format nama yang lebih ramah
+                  if ($rejectedBy) {
+                    $nameMap = [
+                      'IbuB' => 'Ibu Yuni',
+                      'ibuB' => 'Ibu Yuni',
+                      'Perpajakan' => 'Team Perpajakan',
+                      'perpajakan' => 'Team Perpajakan',
+                      'Akutansi' => 'Team Akutansi',
+                      'akutansi' => 'Team Akutansi',
+                    ];
+                    $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
+                  }
+                @endphp
+                {{ $rejectedBy ?? '-' }}
+              </p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Tanggal Penolakan:</label>
+              <p class="mb-0">
+                @if($dokumen->inbox_approval_responded_at)
+                  {{ $dokumen->inbox_approval_responded_at->format('d/m/Y H:i') }}
+                @else
+                  -
+                @endif
+              </p>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-bold">Alasan Penolakan:</label>
+              <div class="alert alert-warning mb-0">
+                <p class="mb-0" style="white-space: pre-wrap;">{{ $dokumen->inbox_approval_reason }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    @endif
+  @endforeach
 @endif
 
 

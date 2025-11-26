@@ -85,6 +85,13 @@ class Dokumen extends Model
         'universal_approval_responded_at',
         'universal_approval_responded_by',
         'universal_approval_rejection_reason',
+        // Inbox Approval System fields
+        'inbox_approval_for',
+        'inbox_approval_status',
+        'inbox_approval_sent_at',
+        'inbox_approval_responded_at',
+        'inbox_approval_reason',
+        'inbox_original_status',
     ];
 
     protected $casts = [
@@ -118,6 +125,9 @@ class Dokumen extends Model
         // Universal Approval System casts
         'universal_approval_sent_at' => 'datetime',
         'universal_approval_responded_at' => 'datetime',
+        // Inbox Approval System casts
+        'inbox_approval_sent_at' => 'datetime',
+        'inbox_approval_responded_at' => 'datetime',
     ];
 
     public function dokumenPos(): HasMany
@@ -278,14 +288,248 @@ class Dokumen extends Model
      */
     public function getSenderDisplayName(): string
     {
+        // Jika dokumen masuk via inbox, cari pengirim dari activity log
+        if ($this->inbox_approval_status == 'pending' || $this->inbox_approval_sent_at) {
+            // Cari activity log untuk inbox_sent
+            $sentLog = $this->activityLogs()
+                ->where('action', 'inbox_sent')
+                ->where('stage', $this->inbox_approval_for)
+                ->latest('action_at')
+                ->first();
+            
+            if ($sentLog) {
+                $performedBy = $sentLog->performed_by ?? $sentLog->details['performed_by'] ?? null;
+                
+                // Map role/name ke display name
+                $nameMap = [
+                    'ibuA' => 'Ibu Tarapul',
+                    'IbuA' => 'Ibu Tarapul',
+                    'Ibu A' => 'Ibu Tarapul',
+                    'ibuB' => 'Ibu Yuni',
+                    'IbuB' => 'Ibu Yuni',
+                    'Ibu B' => 'Ibu Yuni',
+                    'Ibu Yuni' => 'Ibu Yuni',
+                    'perpajakan' => 'Team Perpajakan',
+                    'Perpajakan' => 'Team Perpajakan',
+                    'akutansi' => 'Team Akutansi',
+                    'Akutansi' => 'Team Akutansi',
+                ];
+                
+                if ($performedBy && isset($nameMap[$performedBy])) {
+                    return $nameMap[$performedBy];
+                }
+                
+                // Jika tidak ada di map, coba dari details
+                $recipientRole = $sentLog->details['recipient_role'] ?? null;
+                if ($recipientRole) {
+                    // Jika recipient adalah Perpajakan, sender kemungkinan IbuB
+                    if ($recipientRole === 'Perpajakan') {
+                        return 'Ibu Yuni';
+                    }
+                    // Jika recipient adalah Akutansi, sender kemungkinan Perpajakan
+                    if ($recipientRole === 'Akutansi') {
+                        return 'Team Perpajakan';
+                    }
+                }
+            }
+            
+            // Fallback: jika inbox_approval_for adalah Perpajakan, sender adalah IbuB
+            if ($this->inbox_approval_for === 'Perpajakan') {
+                return 'Ibu Yuni';
+            }
+            // Jika inbox_approval_for adalah Akutansi, sender adalah Perpajakan
+            if ($this->inbox_approval_for === 'Akutansi') {
+                return 'Team Perpajakan';
+            }
+        }
+        
+        // Default: gunakan created_by
         $senderMap = [
-            'ibuA' => 'Ibu A',
-            'ibuB' => 'Ibu B',
-            'perpajakan' => 'Perpajakan',
-            'akutansi' => 'Akutansi',
-            'pembayaran' => 'Pembayaran',
+            'ibuA' => 'Ibu Tarapul',
+            'ibuB' => 'Ibu Yuni',
+            'perpajakan' => 'Team Perpajakan',
+            'akutansi' => 'Team Akutansi',
+            'pembayaran' => 'Team Pembayaran',
         ];
 
         return $senderMap[$this->created_by] ?? $this->created_by;
+    }
+
+    /**
+     * Inbox Approval System Methods
+     */
+
+    /**
+     * Send document to inbox for approval
+     */
+    public function sendToInbox($recipientRole)
+    {
+        $this->inbox_approval_for = $recipientRole;
+        $this->inbox_approval_status = 'pending';
+        $this->inbox_approval_sent_at = now();
+        $this->inbox_original_status = $this->status;
+        $this->status = 'menunggu_di_approve';
+        
+        // Clear rejection fields jika dokumen dikirim kembali ke inbox
+        // (dokumen yang sebelumnya di-reject sekarang dikirim ulang)
+        $this->inbox_approval_reason = null;
+        $this->inbox_approval_responded_at = null;
+        
+        $this->save();
+
+        // Log activity
+        DokumenActivityLog::create([
+            'dokumen_id' => $this->id,
+            'stage' => $recipientRole,
+            'action' => 'inbox_sent',
+            'action_description' => "Dokumen dikirim ke inbox {$recipientRole} menunggu persetujuan",
+            'performed_by' => auth()->user()->name ?? auth()->user()->role ?? 'System',
+            'action_at' => now(),
+            'details' => [
+                'recipient_role' => $recipientRole,
+                'original_status' => $this->inbox_original_status,
+            ]
+        ]);
+
+        // Fire event
+        event(new \App\Events\DocumentSentToInbox($this, $recipientRole));
+    }
+
+    /**
+     * Approve document from inbox
+     */
+    public function approveInbox()
+    {
+        $this->inbox_approval_status = 'approved';
+        $this->inbox_approval_responded_at = now();
+
+        // Update current_handler berdasarkan recipient role
+        $handlerMap = [
+            'IbuB' => 'ibuB',
+            'Perpajakan' => 'perpajakan',
+            'Akutansi' => 'akutansi',
+        ];
+        
+        if (isset($handlerMap[$this->inbox_approval_for])) {
+            $this->current_handler = $handlerMap[$this->inbox_approval_for];
+            
+            // Update status sesuai dengan recipient role
+            $statusMap = [
+                'IbuB' => 'sent_to_ibub',
+                'Perpajakan' => 'sent_to_perpajakan',
+                'Akutansi' => 'sent_to_akutansi',
+            ];
+            
+            $this->status = $statusMap[$this->inbox_approval_for] ?? $this->inbox_original_status ?? 'diterima';
+            
+            // Set timestamp sesuai recipient
+            if ($this->inbox_approval_for === 'IbuB') {
+                $this->sent_to_ibub_at = now();
+                $this->processed_at = now();
+            } elseif ($this->inbox_approval_for === 'Perpajakan') {
+                $this->sent_to_perpajakan_at = now();
+            } elseif ($this->inbox_approval_for === 'Akutansi') {
+                // Note: sent_to_akutansi_at field might not exist, but we set processed_at
+                $this->processed_at = now();
+            }
+        } else {
+            // Fallback ke status original jika role tidak dikenali
+            $this->status = $this->inbox_original_status ?? 'diterima';
+        }
+
+        $this->save();
+
+        // Log approval
+        DokumenActivityLog::create([
+            'dokumen_id' => $this->id,
+            'stage' => $this->inbox_approval_for,
+            'action' => 'inbox_approved',
+            'action_description' => "Dokumen disetujui di inbox {$this->inbox_approval_for}",
+            'performed_by' => auth()->user()->name ?? auth()->user()->role ?? 'System',
+            'action_at' => now(),
+            'details' => [
+                'approved_by' => auth()->user()->name ?? auth()->user()->role ?? 'System',
+            ]
+        ]);
+
+        // Fire event
+        event(new \App\Events\DocumentApprovedInbox($this));
+    }
+
+    /**
+     * Reject document from inbox
+     */
+    public function rejectInbox($reason)
+    {
+        // Simpan recipient role sebelum di-clear
+        $inboxRecipient = $this->inbox_approval_for;
+        
+        $this->inbox_approval_status = 'rejected';
+        $this->inbox_approval_reason = $reason;
+        $this->inbox_approval_responded_at = now();
+
+        // Tentukan pengirim asli berdasarkan inbox_approval_for
+        // Jika ditolak dari IbuB, kembali ke IbuA
+        // Jika ditolak dari Perpajakan, kembali ke IbuB
+        // Jika ditolak dari Akutansi, kembali ke Perpajakan
+        $originalSender = null;
+        $returnStatus = null;
+        
+        if ($inboxRecipient === 'IbuB') {
+            // Ditolak dari IbuB, kembali ke IbuA
+            $originalSender = 'ibuA';
+            $returnStatus = 'returned_to_ibua';
+            $this->returned_to_ibua_at = now();
+        } elseif ($inboxRecipient === 'Perpajakan') {
+            // Ditolak dari Perpajakan, kembali ke IbuB
+            $originalSender = 'ibuB';
+            $returnStatus = 'returned_to_department';
+            $this->department_returned_at = now();
+            $this->target_department = 'perpajakan';
+            $this->department_return_reason = $reason;
+        } elseif ($inboxRecipient === 'Akutansi') {
+            // Ditolak dari Akutansi, kembali ke Perpajakan
+            $originalSender = 'perpajakan';
+            $returnStatus = 'returned_from_akutansi';
+            $this->returned_from_akutansi_at = now();
+        } else {
+            // Fallback: gunakan created_by
+            $originalSender = $this->created_by ?? 'ibuA';
+            if ($originalSender === 'ibuA') {
+                $returnStatus = 'returned_to_ibua';
+                $this->returned_to_ibua_at = now();
+            } else {
+                $returnStatus = $this->inbox_original_status ?? 'draft';
+            }
+        }
+        
+        // Kembalikan ke pengirim dengan status yang sesuai
+        $this->current_handler = $originalSender;
+        $this->status = $returnStatus;
+
+        // JANGAN clear inbox_approval_for dan inbox_approval_sent_at
+        // Biarkan tetap ada agar bisa ditampilkan sebagai "dokumen ditolak, alasan"
+        // Hanya clear jika dokumen dikirim kembali ke inbox (di method sendToInbox)
+
+        $this->save();
+
+        // Log rejection
+        DokumenActivityLog::create([
+            'dokumen_id' => $this->id,
+            'stage' => $inboxRecipient ?? 'inbox',
+            'action' => 'inbox_rejected',
+            'action_description' => "Dokumen ditolak di inbox {$inboxRecipient} dan dikembalikan ke {$originalSender}. Alasan: {$reason}",
+            'performed_by' => auth()->user()->name ?? auth()->user()->role ?? 'System',
+            'action_at' => now(),
+            'details' => [
+                'rejection_reason' => $reason,
+                'rejected_by' => auth()->user()->name ?? auth()->user()->role ?? 'System',
+                'returned_to' => $originalSender,
+                'original_inbox_recipient' => $inboxRecipient,
+            ]
+        ]);
+
+        // Fire event
+        event(new \App\Events\DocumentRejectedInbox($this, $reason));
     }
 }
