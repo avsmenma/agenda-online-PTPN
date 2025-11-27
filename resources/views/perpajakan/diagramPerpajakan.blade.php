@@ -331,64 +331,38 @@
 
   // Chart 2: Dot/Bubble Chart - Statistik Keterlambatan Dokumen
   const dotCtx = document.getElementById('dotChart').getContext('2d');
+  
+  // Prepare bubble chart data
+  const keterlambatanBubbleData = keterlambatanData.map((value, index) => ({
+    x: index,
+    y: value,
+    r: 8
+  }));
+  
+  const ketepatanBubbleData = ketepatanData.map((value, index) => ({
+    x: index,
+    y: value,
+    r: 8
+  }));
+  
   const dotChart = new Chart(dotCtx, {
     type: 'bubble',
     data: {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
       datasets: [
-        // {
-        //   label: 'Kategori 1',
-        //   data: [
-        //     {x: 0, y: 50, r: 8},
-        //     {x: 1, y: 30, r: 8},
-        //     {x: 2, y: 70, r: 8},
-        //     {x: 3, y: 40, r: 8},
-        //     {x: 4, y: 60, r: 8},
-        //     {x: 5, y: 35, r: 8},
-        //     {x: 6, y: 55, r: 8},
-        //     {x: 7, y: 45, r: 8},
-        //     {x: 8, y: 65, r: 8},
-        //     {x: 9, y: 50, r: 8},
-        //     {x: 10, y: 40, r: 8},
-        //     {x: 11, y: 60, r: 8}
-        //   ],
-        //   backgroundColor: '#083E40'
-        // },
         {
           label: 'Keterlambatan',
-          data: [
-            {x: 0, y: 65, r: 8},
-            {x: 1, y: 45, r: 8},
-            {x: 2, y: 55, r: 8},
-            {x: 3, y: 70, r: 8},
-            {x: 4, y: 50, r: 8},
-            {x: 5, y: 60, r: 8},
-            {x: 6, y: 40, r: 8},
-            {x: 7, y: 75, r: 8},
-            {x: 8, y: 55, r: 8},
-            {x: 9, y: 65, r: 8},
-            {x: 10, y: 70, r: 8},
-            {x: 11, y: 50, r: 8}
-          ],
-          backgroundColor: '#ff9800'
+          data: keterlambatanBubbleData,
+          backgroundColor: 'rgba(255, 152, 0, 0.7)',
+          borderColor: '#ff9800',
+          borderWidth: 2
         },
         {
           label: 'Ketepatan',
-          data: [
-            {x: 0, y: 80, r: 8},
-            {x: 1, y: 60, r: 8},
-            {x: 2, y: 40, r: 8},
-            {x: 3, y: 85, r: 8},
-            {x: 4, y: 35, r: 8},
-            {x: 5, y: 75, r: 8},
-            {x: 6, y: 70, r: 8},
-            {x: 7, y: 60, r: 8},
-            {x: 8, y: 80, r: 8},
-            {x: 9, y: 45, r: 8},
-            {x: 10, y: 85, r: 8},
-            {x: 11, y: 75, r: 8}
-          ],
-          backgroundColor: '#889717'
+          data: ketepatanBubbleData,
+          backgroundColor: 'rgba(136, 151, 23, 0.7)',
+          borderColor: '#889717',
+          borderWidth: 2
         }
       ]
     },
