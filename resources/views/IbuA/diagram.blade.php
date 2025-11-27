@@ -205,16 +205,12 @@
   </div>
   <div class="legend">
     <div class="legend-item">
-      <span class="legend-color color-teal"></span>
-      <span>Kategori 1</span>
-    </div>
-    <div class="legend-item">
       <span class="legend-color color-orange"></span>
-      <span>Kategori 2</span>
+      <span>Keterlambatan (%)</span>
     </div>
     <div class="legend-item">
       <span class="legend-color color-yellow"></span>
-      <span>Kategori 3</span>
+      <span>Ketepatan (%)</span>
     </div>
   </div>
 </div>
@@ -240,11 +236,11 @@
   <div class="legend">
     <div class="legend-item">
       <span class="legend-color color-red"></span>
-      <span>Kategori A</span>
+      <span>Dokumen Tidak Selesai</span>
     </div>
     <div class="legend-item">
       <span class="legend-color color-blue"></span>
-      <span>Kategori B</span>
+      <span>Dokumen Selesai</span>
     </div>
   </div>
 </div>
@@ -428,15 +424,15 @@
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
       datasets: [
         {
-          label: 'Kategori A',
-          data: [45, 52, 38, 60, 42, 55, 48, 65, 50, 58, 44, 62],
+          label: 'Dokumen Tidak Selesai',
+          data: tidakSelesaiData,
           backgroundColor: '#f44336',
           borderRadius: 8,
           borderSkipped: false
         },
         {
-          label: 'Kategori B',
-          data: [35, 42, 48, 40, 52, 45, 58, 50, 55, 48, 60, 52],
+          label: 'Dokumen Selesai',
+          data: selesaiData,
           backgroundColor: '#2196f3',
           borderRadius: 8,
           borderSkipped: false
