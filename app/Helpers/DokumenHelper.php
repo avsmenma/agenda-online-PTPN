@@ -14,7 +14,9 @@ class DokumenHelper
      */
     public static function isDocumentLocked(Dokumen $dokumen): bool
     {
-        if (Str::startsWith($dokumen->status, 'returned_') || $dokumen->status === 'returned_to_department') {
+        // Documents that are returned should never be locked
+        if (Str::startsWith($dokumen->status, 'returned_') || 
+            in_array($dokumen->status, ['returned_to_department', 'returned_from_akutansi', 'returned_from_perpajakan'])) {
             return false;
         }
 

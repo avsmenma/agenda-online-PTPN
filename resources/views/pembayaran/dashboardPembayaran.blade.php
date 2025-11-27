@@ -466,12 +466,22 @@
 
 <!-- Search Box -->
     <div class="search-box">
-      <div class="input-group">
-        <span class="input-group-text">
-          <i class="fa-solid fa-magnifying-glass text-muted"></i>
-        </span>
-        <input type="text" class="form-control" placeholder="Search...">
-      </div>
+      <form method="GET" action="{{ url('/dashboardPembayaran') }}" style="margin-bottom: 0;">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+          </span>
+          <input type="text" name="search" class="form-control" placeholder="Cari dokumen..." value="{{ $search ?? '' }}">
+          <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none;">
+            <i class="fa-solid fa-search"></i> Cari
+          </button>
+          @if(!empty($search))
+          <a href="{{ url('/dashboardPembayaran') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-times"></i> Reset
+          </a>
+          @endif
+        </div>
+      </form>
     </div>
 
        <!-- Tabel Dokumen Terbaru -->

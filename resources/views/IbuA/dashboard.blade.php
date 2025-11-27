@@ -521,7 +521,7 @@
         <span class="input-group-text">
           <i class="fa-solid fa-magnifying-glass text-muted"></i>
         </span>
-        <input type="text" class="form-control" placeholder="Search...">
+        <input type="text" class="form-control" placeholder="Cari dokumen...">
       </div>
     </div>
 

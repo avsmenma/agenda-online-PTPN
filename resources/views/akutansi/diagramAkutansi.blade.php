@@ -171,7 +171,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Jumlah Dokumen</h3>
     <div class="chart-actions">
-      <input type="number" name="quantity" id="23" min="1" max="10" class="dropTahun" placeholder="Tahun">
+      <form method="GET" action="{{ route('diagramAkutansi.index') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter1" class="dropTahun" onchange="this.form.submit()" style="width: 120px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
@@ -185,24 +191,26 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Keterlambatan Dokumen</h3>
     <div class="chart-actions">
-      <input type="number" name="quantity" id="23" min="1" max="10" class="dropTahun" placeholder="Tahun">
+      <form method="GET" action="{{ route('diagramAkutansi.index') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter2" class="dropTahun" onchange="this.form.submit()" style="width: 120px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
     <canvas id="dotChart"></canvas>
   </div>
   <div class="legend">
-    <!-- <div class="legend-item">
-      <span class="legend-color color-teal"></span>
-      <span>Kategori 1</span>
-    </div> -->
     <div class="legend-item">
       <span class="legend-color color-orange"></span>
-      <span>Keterlambatan</span>
+      <span>Keterlambatan (%)</span>
     </div>
     <div class="legend-item">
       <span class="legend-color color-yellow"></span>
-      <span>Ketepatan</span>
+      <span>Ketepatan (%)</span>
     </div>
   </div>
 </div>
@@ -213,7 +221,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Jumlah Dokumen Selesai</h3>
     <div class="chart-actions">
-    <input type="number" name="quantity" id="23" min="1" max="10" class="dropTahun" placeholder="Tahun">
+      <form method="GET" action="{{ route('diagramAkutansi.index') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter3" class="dropTahun" onchange="this.form.submit()" style="width: 120px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
@@ -233,15 +247,23 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  // Data from controller
+  const monthlyData = @json($monthlyData);
+  const keterlambatanData = @json($keterlambatanData);
+  const ketepatanData = @json($ketepatanData);
+  const selesaiData = @json($selesaiData);
+  const tidakSelesaiData = @json($tidakSelesaiData);
+  const months = @json($months);
+
   // Chart 1: Line Chart - Statistik Jumlah Dokumen
   const lineCtx = document.getElementById('lineChart').getContext('2d');
   const lineChart = new Chart(lineCtx, {
     type: 'line',
     data: {
-      labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+      labels: months,
       datasets: [{
         label: 'Jumlah Dokumen',
-        data: [65, 59, 80, 81, 56, 95, 70, 85, 60, 90, 75, 88],
+        data: monthlyData,
         borderColor: '#083E40',
         backgroundColor: 'rgba(8, 62, 64, 0.1)',
         borderWidth: 3,
@@ -308,64 +330,38 @@
 
   // Chart 2: Dot/Bubble Chart - Statistik Keterlambatan Dokumen
   const dotCtx = document.getElementById('dotChart').getContext('2d');
+  
+  // Prepare bubble chart data
+  const keterlambatanBubbleData = keterlambatanData.map((value, index) => ({
+    x: index,
+    y: value,
+    r: 8
+  }));
+  
+  const ketepatanBubbleData = ketepatanData.map((value, index) => ({
+    x: index,
+    y: value,
+    r: 8
+  }));
+  
   const dotChart = new Chart(dotCtx, {
     type: 'bubble',
     data: {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
       datasets: [
-        // {
-        //   label: 'Kategori 1',
-        //   data: [
-        //     {x: 0, y: 50, r: 8},
-        //     {x: 1, y: 30, r: 8},
-        //     {x: 2, y: 70, r: 8},
-        //     {x: 3, y: 40, r: 8},
-        //     {x: 4, y: 60, r: 8},
-        //     {x: 5, y: 35, r: 8},
-        //     {x: 6, y: 55, r: 8},
-        //     {x: 7, y: 45, r: 8},
-        //     {x: 8, y: 65, r: 8},
-        //     {x: 9, y: 50, r: 8},
-        //     {x: 10, y: 40, r: 8},
-        //     {x: 11, y: 60, r: 8}
-        //   ],
-        //   backgroundColor: '#083E40'
-        // },
         {
           label: 'Keterlambatan',
-          data: [
-            {x: 0, y: 65, r: 8},
-            {x: 1, y: 45, r: 8},
-            {x: 2, y: 55, r: 8},
-            {x: 3, y: 70, r: 8},
-            {x: 4, y: 50, r: 8},
-            {x: 5, y: 60, r: 8},
-            {x: 6, y: 40, r: 8},
-            {x: 7, y: 75, r: 8},
-            {x: 8, y: 55, r: 8},
-            {x: 9, y: 65, r: 8},
-            {x: 10, y: 70, r: 8},
-            {x: 11, y: 50, r: 8}
-          ],
-          backgroundColor: '#ff9800'
+          data: keterlambatanBubbleData,
+          backgroundColor: 'rgba(255, 152, 0, 0.7)',
+          borderColor: '#ff9800',
+          borderWidth: 2
         },
         {
           label: 'Ketepatan',
-          data: [
-            {x: 0, y: 80, r: 8},
-            {x: 1, y: 60, r: 8},
-            {x: 2, y: 40, r: 8},
-            {x: 3, y: 85, r: 8},
-            {x: 4, y: 35, r: 8},
-            {x: 5, y: 75, r: 8},
-            {x: 6, y: 70, r: 8},
-            {x: 7, y: 60, r: 8},
-            {x: 8, y: 80, r: 8},
-            {x: 9, y: 45, r: 8},
-            {x: 10, y: 85, r: 8},
-            {x: 11, y: 75, r: 8}
-          ],
-          backgroundColor: '#889717'
+          data: ketepatanBubbleData,
+          backgroundColor: 'rgba(136, 151, 23, 0.7)',
+          borderColor: '#889717',
+          borderWidth: 2
         }
       ]
     },
@@ -428,15 +424,15 @@
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
       datasets: [
         {
-          label: 'Dokumen Selesai',
-          data: [45, 52, 38, 60, 42, 55, 48, 65, 50, 58, 44, 62],
+          label: 'Dokumen Tidak Selesai',
+          data: tidakSelesaiData,
           backgroundColor: '#f44336',
           borderRadius: 8,
           borderSkipped: false
         },
         {
-          label: 'Dokumen Tidak Selesai',
-          data: [35, 42, 48, 40, 52, 45, 58, 50, 55, 48, 60, 52],
+          label: 'Dokumen Selesai',
+          data: selesaiData,
           backgroundColor: '#2196f3',
           borderRadius: 8,
           borderSkipped: false
