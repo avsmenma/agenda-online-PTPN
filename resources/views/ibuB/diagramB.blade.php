@@ -171,7 +171,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Jumlah Dokumen</h3>
     <div class="chart-actions">
-      <input type="number" name="quantity" id="23" min="1" max="10" class="dropTahun" placeholder="Tahun">
+      <form method="GET" action="{{ route('diagramB.index') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter1" class="dropTahun" onchange="this.form.submit()" style="width: 120px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
@@ -185,24 +191,26 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Keterlambatan Dokumen</h3>
     <div class="chart-actions">
-      <input type="number" name="quantity" id="23" min="1" max="10" class="dropTahun" placeholder="Tahun">
+      <form method="GET" action="{{ route('diagramB.index') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter2" class="dropTahun" onchange="this.form.submit()" style="width: 120px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
     <canvas id="dotChart"></canvas>
   </div>
   <div class="legend">
-    <!-- <div class="legend-item">
-      <span class="legend-color color-teal"></span>
-      <span>Kategori 1</span>
-    </div> -->
     <div class="legend-item">
       <span class="legend-color color-orange"></span>
-      <span>Keterlambatan</span>
+      <span>Keterlambatan (%)</span>
     </div>
     <div class="legend-item">
       <span class="legend-color color-yellow"></span>
-      <span>Ketepatan</span>
+      <span>Ketepatan (%)</span>
     </div>
   </div>
 </div>
@@ -213,7 +221,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Jumlah Dokumen Selesai</h3>
     <div class="chart-actions">
-    <input type="number" name="quantity" id="23" min="1" max="10" class="dropTahun" placeholder="Tahun">
+      <form method="GET" action="{{ route('diagramB.index') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter3" class="dropTahun" onchange="this.form.submit()" style="width: 120px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
