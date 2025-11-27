@@ -251,15 +251,23 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  // Data from controller
+  const monthlyData = @json($monthlyData);
+  const keterlambatanData = @json($keterlambatanData);
+  const ketepatanData = @json($ketepatanData);
+  const selesaiData = @json($selesaiData);
+  const tidakSelesaiData = @json($tidakSelesaiData);
+  const months = @json($months);
+
   // Chart 1: Line Chart - Statistik Jumlah Dokumen
   const lineCtx = document.getElementById('lineChart').getContext('2d');
   const lineChart = new Chart(lineCtx, {
     type: 'line',
     data: {
-      labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+      labels: months,
       datasets: [{
         label: 'Jumlah Dokumen',
-        data: [65, 59, 80, 81, 56, 95, 70, 85, 60, 90, 75, 88],
+        data: monthlyData,
         borderColor: '#083E40',
         backgroundColor: 'rgba(8, 62, 64, 0.1)',
         borderWidth: 3,
