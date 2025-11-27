@@ -872,11 +872,84 @@ class DashboardPerpajakanController extends Controller
     }
 
     public function diagram(){
+        // Get current year or from request
+        $selectedYear = request('year', date('Y'));
+
+        // Get available years for filter
+        $availableYears = Dokumen::selectRaw('YEAR(tanggal_masuk) as year')
+            ->whereNotNull('tanggal_masuk')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->toArray();
+
+        if (empty($availableYears)) {
+            $availableYears = [date('Y')];
+        }
+
+        // Initialize monthly data
+        $monthlyData = array_fill(0, 12, 0);
+        $keterlambatanData = array_fill(0, 12, 0);
+        $ketepatanData = array_fill(0, 12, 0);
+        $selesaiData = array_fill(0, 12, 0);
+        $tidakSelesaiData = array_fill(0, 12, 0);
+
+        // Get monthly document statistics
+        $monthlyStats = Dokumen::selectRaw('MONTH(tanggal_masuk) as month, COUNT(*) as count')
+            ->whereYear('tanggal_masuk', $selectedYear)
+            ->groupBy('month')
+            ->pluck('count', 'month')
+            ->toArray();
+
+        // Get keterlambatan data
+        $keterlambatanStats = Dokumen::selectRaw('MONTH(tanggal_masuk) as month,
+            AVG(CASE WHEN DATEDIFF(COALESCE(updated_at, NOW()), tanggal_masuk) > 7
+                THEN DATEDIFF(COALESCE(updated_at, NOW()), tanggal_masuk) - 7
+                ELSE 0 END) as avg_keterlambatan')
+            ->whereYear('tanggal_masuk', $selectedYear)
+            ->groupBy('month')
+            ->pluck('avg_keterlambatan', 'month')
+            ->toArray();
+
+        // Get completion statistics
+        $completionStats = Dokumen::selectRaw('MONTH(tanggal_masuk) as month,
+            SUM(CASE WHEN status = "selesai" THEN 1 ELSE 0 END) as selesai_count,
+            SUM(CASE WHEN status != "selesai" THEN 1 ELSE 0 END) as tidak_selesai_count')
+            ->whereYear('tanggal_masuk', $selectedYear)
+            ->groupBy('month')
+            ->get();
+
+        // Fill the data arrays
+        foreach ($monthlyStats as $month => $count) {
+            $monthlyData[$month - 1] = $count;
+        }
+
+        foreach ($keterlambatanStats as $month => $keterlambatan) {
+            $keterlambatanData[$month - 1] = min($keterlambatan, 100);
+            $ketepatanData[$month - 1] = max(0, 100 - $keterlambatan);
+        }
+
+        foreach ($completionStats as $stat) {
+            $selesaiData[$stat->month - 1] = $stat->selesai_count;
+            $tidakSelesaiData[$stat->month - 1] = $stat->tidak_selesai_count;
+        }
+
+        $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
         $data = array(
             "title" => "Diagram Perpajakan",
             "module" => "perpajakan",
             "menuDashboard" => "",
             'menuDiagram' => 'Active',
+            'selectedYear' => $selectedYear,
+            'availableYears' => $availableYears,
+            'monthlyData' => $monthlyData,
+            'keterlambatanData' => $keterlambatanData,
+            'ketepatanData' => $ketepatanData,
+            'selesaiData' => $selesaiData,
+            'tidakSelesaiData' => $tidakSelesaiData,
+            'months' => $months,
         );
         return view('perpajakan.diagramPerpajakan', $data);
     }
