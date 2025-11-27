@@ -14,16 +14,61 @@ use Illuminate\Support\Facades\Response;
 class DashboardPembayaranController extends Controller
 {
     public function index(Request $request){
-        // Get statistics
-        $totalDokumen = Dokumen::count();
-        $totalSelesai = Dokumen::where('status', 'selesai')->count();
-        $totalProses = Dokumen::where('status', 'sedang diproses')->count();
-        $totalDikembalikan = Dokumen::where('status', 'dikembalikan')->count();
-
-        // Get latest documents query
-        $query = Dokumen::query();
+        // ===== PAYMENT-FOCUSED ANALYTICS =====
         
-        // Apply search filter if provided
+        // 1. Documents for Pembayaran
+        $dokumenPembayaran = Dokumen::where('current_handler', 'pembayaran')
+            ->orWhere('status', 'sent_to_pembayaran')
+            ->orWhereNotNull('status_pembayaran');
+        
+        $totalDokumen = $dokumenPembayaran->count();
+        $totalSelesai = Dokumen::where('status_pembayaran', 'sudah_dibayar')->count();
+        $totalSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')->count();
+        $totalProses = $dokumenPembayaran->where('status', 'sedang diproses')->count();
+        
+        // 2. Financial Metrics
+        $totalNilaiBayar = Dokumen::where('current_handler', 'pembayaran')
+            ->orWhere('status', 'sent_to_pembayaran')
+            ->sum('nilai_rupiah');
+        $nilaiSudahBayar = Dokumen::where('status_pembayaran', 'sudah_dibayar')
+            ->sum('nilai_rupiah');
+        $nilaiSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->sum('nilai_rupiah');
+        $nilaiMenunggu = $totalNilaiBayar - $nilaiSudahBayar - $nilaiSiapBayar;
+        
+        // 3. Today's Activity
+        $todayDisbursed = Dokumen::whereDate('updated_at', today())
+            ->where('status_pembayaran', 'sudah_dibayar')->count();
+        $todayReady = Dokumen::whereDate('updated_at', today())
+            ->where('status_pembayaran', 'siap_dibayar')->count();
+        
+        // 4. Urgent Documents (overdue or high value)
+        $urgentDocs = Dokumen::where('current_handler', 'pembayaran')
+            ->where(function($q) {
+                $q->where('deadline_at', '<', now())
+                  ->orWhere('nilai_rupiah', '>', 100000000);
+            })
+            ->whereNull('status_pembayaran')
+            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+            ->count();
+        
+        // 5. Payment Status Distribution
+        $statusDistribution = [
+            'sudah_dibayar' => Dokumen::where('status_pembayaran', 'sudah_dibayar')->count(),
+            'siap_dibayar' => Dokumen::where('status_pembayaran', 'siap_dibayar')->count(),
+            'menunggu' => $dokumenPembayaran->whereNull('status_pembayaran')
+                ->orWhere('status_pembayaran', '!=', 'siap_dibayar')
+                ->where('status_pembayaran', '!=', 'sudah_dibayar')
+                ->count(),
+        ];
+        
+        // 6. Recent documents with search
+        $query = Dokumen::where(function($q) {
+            $q->where('current_handler', 'pembayaran')
+              ->orWhere('status', 'sent_to_pembayaran')
+              ->orWhereNotNull('status_pembayaran');
+        });
+        
         $search = $request->get('search', '');
         if (!empty(trim($search))) {
             $searchTerm = trim($search);
@@ -31,27 +76,48 @@ class DashboardPembayaranController extends Controller
                 $q->where('nomor_agenda', 'like', '%' . $searchTerm . '%')
                   ->orWhere('nomor_spp', 'like', '%' . $searchTerm . '%')
                   ->orWhere('uraian_spp', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('dibayar_kepada', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('status', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('current_handler', 'like', '%' . $searchTerm . '%');
+                  ->orWhere('dibayar_kepada', 'like', '%' . $searchTerm . '%');
             });
         }
         
-        // Get documents (limit to 10 for dashboard)
-        $dokumenTerbaru = $query->latest('tanggal_masuk')
-            ->take(10)
-            ->get();
+        $dokumenTerbaru = $query->latest('updated_at')->take(15)->get();
+        
+        // 7. Weekly disbursement trend
+        $weeklyDisbursement = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $count = Dokumen::whereDate('updated_at', $date->toDateString())
+                ->where('status_pembayaran', 'sudah_dibayar')
+                ->count();
+            $weeklyDisbursement[] = [
+                'date' => $date->format('d M'),
+                'count' => $count
+            ];
+        }
 
         $data = array(
             "title" => "Dashboard Pembayaran",
             "module" => "pembayaran",
             "menuDashboard" => "Active",
             'menuDokumen' => '',
+            // Basic stats
             'totalDokumen' => $totalDokumen,
             'totalSelesai' => $totalSelesai,
+            'totalSiapBayar' => $totalSiapBayar,
             'totalProses' => $totalProses,
-            'totalDikembalikan' => $totalDikembalikan,
+            // Financial
+            'totalNilaiBayar' => $totalNilaiBayar,
+            'nilaiSudahBayar' => $nilaiSudahBayar,
+            'nilaiSiapBayar' => $nilaiSiapBayar,
+            'nilaiMenunggu' => $nilaiMenunggu,
+            // Activity
+            'todayDisbursed' => $todayDisbursed,
+            'todayReady' => $todayReady,
+            'urgentDocs' => $urgentDocs,
+            // Distribution
+            'statusDistribution' => $statusDistribution,
+            'weeklyDisbursement' => $weeklyDisbursement,
+            // Documents
             'dokumenTerbaru' => $dokumenTerbaru,
             'search' => $search,
         );
