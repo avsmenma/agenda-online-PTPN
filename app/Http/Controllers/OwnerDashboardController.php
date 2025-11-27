@@ -19,6 +19,87 @@ class OwnerDashboardController extends Controller
         // Get all documents with latest status and apply search filter
         $documents = $this->getDocumentsWithTracking($request);
 
+        // ===== EXECUTIVE KPIs & ANALYTICS =====
+        
+        // 1. Financial Metrics
+        $totalNilaiDokumen = Dokumen::sum('nilai_rupiah');
+        $nilaiSelesai = Dokumen::where('status', 'selesai')->sum('nilai_rupiah');
+        $nilaiProses = Dokumen::whereNotIn('status', ['selesai', 'dibatalkan'])->sum('nilai_rupiah');
+        
+        // 2. Document Metrics
+        $totalDokumen = Dokumen::count();
+        $dokumenSelesai = Dokumen::where('status', 'selesai')->count();
+        $dokumenProses = Dokumen::whereNotIn('status', ['selesai', 'dibatalkan'])->count();
+        $dokumenOverdue = Dokumen::where('deadline_at', '<', now())
+            ->whereNotIn('status', ['selesai'])->count();
+        
+        // 3. Performance Metrics - Average Processing Time
+        $avgProcessingTime = Dokumen::where('status', 'selesai')
+            ->whereNotNull('tanggal_masuk')
+            ->whereNotNull('updated_at')
+            ->selectRaw('AVG(DATEDIFF(updated_at, tanggal_masuk)) as avg_days')
+            ->value('avg_days');
+        
+        // 4. Department Efficiency
+        $departmentMetrics = [
+            'ibuB' => [
+                'total' => Dokumen::where('current_handler', 'ibuB')->orWhere('status', 'sent_to_ibub')->count(),
+                'completed' => Dokumen::where('current_handler', 'ibuB')->where('status', 'selesai')->count(),
+            ],
+            'perpajakan' => [
+                'total' => Dokumen::where('current_handler', 'perpajakan')->orWhere('status', 'sent_to_perpajakan')->count(),
+                'completed' => Dokumen::where('current_handler', 'perpajakan')->where('status', 'selesai')->count(),
+            ],
+            'akutansi' => [
+                'total' => Dokumen::where('current_handler', 'akutansi')->orWhere('status', 'sent_to_akutansi')->count(),
+                'completed' => Dokumen::where('current_handler', 'akutansi')->where('status', 'selesai')->count(),
+            ],
+            'pembayaran' => [
+                'total' => Dokumen::where('current_handler', 'pembayaran')->orWhere('status', 'sent_to_pembayaran')->count(),
+                'completed' => Dokumen::where('status_pembayaran', 'sudah_dibayar')->count(),
+            ],
+        ];
+        
+        // 5. Today's Activity
+        $todayDokumen = Dokumen::whereDate('created_at', today())->count();
+        $todaySelesai = Dokumen::whereDate('updated_at', today())
+            ->where('status', 'selesai')->count();
+        
+        // 6. Weekly Trend (last 7 days)
+        $weeklyTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $weeklyTrend[] = [
+                'date' => $date->format('d M'),
+                'count' => Dokumen::whereDate('created_at', $date)->count(),
+            ];
+        }
+        
+        // 7. Status Distribution
+        $statusDistribution = [
+            'selesai' => Dokumen::where('status', 'selesai')->count(),
+            'proses' => Dokumen::where('status', 'sedang diproses')->count(),
+            'pending' => Dokumen::whereIn('status', ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])->count(),
+            'returned' => Dokumen::where('status', 'like', 'returned_%')->count(),
+        ];
+        
+        // 8. Bottleneck Analysis - Documents stuck >7 days
+        $bottlenecks = Dokumen::whereNotIn('status', ['selesai'])
+            ->where('updated_at', '<', Carbon::now()->subDays(7))
+            ->with(['dokumenPos', 'dokumenPrs'])
+            ->orderBy('updated_at', 'asc')
+            ->limit(10)
+            ->get();
+        
+        // 9. Top Processing Departments (by speed)
+        $fastestDepartments = DB::table('dokumens')
+            ->select('current_handler', DB::raw('AVG(DATEDIFF(updated_at, created_at)) as avg_days'))
+            ->where('status', 'selesai')
+            ->groupBy('current_handler')
+            ->orderBy('avg_days', 'asc')
+            ->limit(5)
+            ->get();
+
         return view('owner.dashboard', compact('documents'))
             ->with('title', 'Dashboard Owner - Pusat Komando')
             ->with('module', 'owner')
@@ -36,7 +117,23 @@ class OwnerDashboardController extends Controller
             ->with('dokumenUrl', '#')
             ->with('pengembalianUrl', '#')
             ->with('tambahDokumenUrl', '#')
-            ->with('search', $request->get('search', ''));
+            ->with('search', $request->get('search', ''))
+            // Executive Analytics Data
+            ->with('totalNilaiDokumen', $totalNilaiDokumen)
+            ->with('nilaiSelesai', $nilaiSelesai)
+            ->with('nilaiProses', $nilaiProses)
+            ->with('totalDokumen', $totalDokumen)
+            ->with('dokumenSelesai', $dokumenSelesai)
+            ->with('dokumenProses', $dokumenProses)
+            ->with('dokumenOverdue', $dokumenOverdue)
+            ->with('avgProcessingTime', round($avgProcessingTime ?? 0, 1))
+            ->with('departmentMetrics', $departmentMetrics)
+            ->with('todayDokumen', $todayDokumen)
+            ->with('todaySelesai', $todaySelesai)
+            ->with('weeklyTrend', $weeklyTrend)
+            ->with('statusDistribution', $statusDistribution)
+            ->with('bottlenecks', $bottlenecks)
+            ->with('fastestDepartments', $fastestDepartments);
     }
 
     /**
