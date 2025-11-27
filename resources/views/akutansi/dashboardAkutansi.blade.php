@@ -1,548 +1,96 @@
 @extends('layouts/app')
+
 @section('content')
+@include('shared.modern-dashboard-style')
 
 <style>
-  h2 {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 30px;
-    font-weight: 700;
-    font-size: 28px;
-  }
-
-  /* Statistics Cards - Modern Grid Layout for 5 Cards */
-  .stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(8, 62, 64, 0.05) 0%, transparent 70%);
-    transition: all 0.5s ease;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
-    border-color: rgba(8, 62, 64, 0.15);
-  }
-
-  .stat-card:hover::before {
-    top: -60%;
-    right: -60%;
-  }
-
-  .stat-card-body {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-  }
-
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    color: white;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
-  }
-
-  /* Icon Colors for Each Statistic - Accounting Theme */
-  .stat-icon.total {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-  }
-  .stat-icon.selesai {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-  }
-  .stat-icon.proses {
-    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-  }
-  .stat-icon.belum {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  }
-  .stat-icon.dikembalikan {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  }
-  .stat-icon.dikirim {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  }
-
-  .stat-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .stat-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #6c757d;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1.2;
-  }
-
-  .stat-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 2px;
-    line-height: 1;
-  }
-
-  .stat-description {
-    font-size: 10px;
-    color: #868e96;
-    opacity: 0.8;
-  }
-
-  .stat-card:hover .stat-value {
-    color: #083E40;
-  }
-
-  /* Card Icon Animation */
-  .stat-card:hover .stat-icon {
-    transform: scale(1.1) rotate(5deg);
-    transition: all 0.3s ease;
-  }
-
-  .search-box {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 24px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
-  }
-
-  .search-box .input-group {
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
-  .search-box .input-group-text {
-    background: white;
-    border: 2px solid rgba(8, 62, 64, 0.1);
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-    padding: 10px 14px;
-  }
-
-  .search-box .form-control {
-    border: 2px solid rgba(8, 62, 64, 0.1);
-    border-left: none;
-    border-radius: 0 10px 10px 0;
-    padding: 10px 14px;
-    font-size: 13px;
-    transition: all 0.3s ease;
-  }
-
-  .search-box .form-control:focus {
-    outline: none;
-    border-color: #889717;
-    box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
-  }
-
-  .table-container {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
-  }
-
-  .table-container h6 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid rgba(8, 62, 64, 0.1);
-  }
-
-  .table-container h6 span {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 700;
-    font-size: 24px;
-  }
-
-  .table-container h6 a {
-    color: #083E40;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    padding: 8px 20px;
-    border-radius: 20px;
-    border: 2px solid #083E40;
-    background: transparent;
-  }
-
-  .table-container h6 a:hover {
-    color: white;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    border-color: #0a4f52;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-  }
-
-  .table {
-    margin-bottom: 0;
-  }
-
-  .table thead {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-  }
-
-  .table thead th {
-    color: white;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    padding: 18px 16px;
-    border: none;
-    text-transform: uppercase;
-  }
-
-  .table tbody tr {
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-  }
-
-  .table tbody tr:hover {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #889717;
-    transform: scale(1.002);
-  }
-
-  .table tbody tr.highlight-row {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%);
-    border-left: 3px solid #889717;
-  }
-
-  .table tbody td {
-    padding: 16px;
-    font-size: 13px;
-    vertical-align: middle;
-    border-bottom: 1px solid rgba(8, 62, 64, 0.05);
-  }
-
-  .badge {
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .badge-selesai {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(136, 151, 23, 0.3);
-  }
-
-  .badge-proses {
-    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-  }
-
-  .badge-belum {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
-  }
-
-  .badge-dikembalikan {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-  }
-
-  .badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Action Buttons - Modern Design */
-  .btn-action {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-  }
-
-  .btn-action:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.3);
-  }
-
-  .btn-action:active {
-    transform: translateY(-1px);
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .stat-card {
-      height: 110px;
-      padding: 16px;
-    }
-
-    .stat-icon {
-      width: 45px;
-      height: 45px;
-      font-size: 18px;
-    }
-
-    .stat-value {
-      font-size: 24px;
-    }
-
-    .table thead th {
-      padding: 14px 12px;
-      font-size: 12px;
-    }
-
-    .table tbody td {
-      padding: 12px 10px;
-      font-size: 12px;
-    }
-  }
+.page-header { --header-color-1: #ec4899; --header-color-2: #db2777; }
+.action-btn { --btn-hover-color: #ec4899; }
 </style>
 
-<h2>{{ $title }}</h2>
-
-<!-- Statistics Cards - 5 Cards Grid Layout -->
-<div class="row mb-4">
-    <!-- Total Dokumen -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-icon total">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-title">Total Dokumen</div>
-                    <div class="stat-value">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
-                    <div class="stat-description">Semua dokumen akutansi</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Selesai -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-icon selesai">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-title">Total Selesai</div>
-                    <div class="stat-value">{{ number_format($totalSelesai, 0, ',', '.') }}</div>
-                    <div class="stat-description">Verifikasi akutansi selesai</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Diproses -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-icon proses">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-title">Total Proses</div>
-                    <div class="stat-value">{{ number_format($totalProses, 0, ',', '.') }}</div>
-                    <div class="stat-description">Sedang dalam verifikasi</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Belum Diproses -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-icon belum">
-                    <i class="fas fa-hourglass-half"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-title">Total Belum Diproses</div>
-                    <div class="stat-value">{{ number_format($totalBelumDiproses, 0, ',', '.') }}</div>
-                    <div class="stat-description">Menunggu diproses</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Dikembalikan -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-icon dikembalikan">
-                    <i class="fas fa-arrow-left"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-title">Total Dikembalikan</div>
-                    <div class="stat-value">{{ number_format($totalDikembalikan, 0, ',', '.') }}</div>
-                    <div class="stat-description">Dokumen dikembalikan</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Dikirim -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-icon dikirim">
-                    <i class="fas fa-check-double"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-title">Total Selesai & Dikirim</div>
-                    <div class="stat-value">{{ number_format($totalDikirim, 0, ',', '.') }}</div>
-                    <div class="stat-description">Dokumen selesai dikirim ke tahap berikutnya</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Search Box -->
-<div class="search-box">
-  <div class="input-group">
-    <span class="input-group-text">
-      <i class="fa-solid fa-magnifying-glass text-muted"></i>
-    </span>
-    <input type="text" class="form-control" placeholder="Cari dokumen akutansi...">
+<div class="page-header">
+  <div class="container">
+    <h1 class="page-title"><i class="fas fa-calculator me-3"></i>Dashboard Akutansi</h1>
+    <p class="page-subtitle">Verifikasi dan validasi dokumen keuangan</p>
+    <p class="page-timestamp"><i class="far fa-clock me-2"></i>{{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY - HH:mm') }} WIB</p>
   </div>
 </div>
 
-<!-- Tabel Dokumen Terbaru -->
-<div class="table-container">
-  <h6>
-    <span>Dokumen Terbaru</span>
-    <a href="{{ route('dokumensAkutansi.index') }}">View All</a>
-  </h6>
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead>
-        <tr class="table table-dark">
-          <th>No</th>
-          <th>Nomor Agenda</th>
-          <th>Nomor SPP</th>
-          <th>Tanggal Masuk</th>
-          <th>Nilai Rupiah</th>
-          <th>Status</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        @forelse($dokumenTerbaru as $index => $dokumen)
-        <tr>
-          <td>{{ $index + 1 }}</td>
-          <td>
-            <strong>{{ $dokumen->nomor_agenda }}</strong>
-            <br>
-            <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
-          </td>
-          <td>{{ $dokumen->nomor_spp }}</td>
-          <td>{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</td>
-          <td>
-            <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
-          </td>
-          <td>
-            @if($dokumen->status == 'selesai')
-              <span class="badge badge-selesai">
-                <i class="fas fa-check-circle"></i>
-                Selesai
-              </span>
-            @elseif($dokumen->status == 'sedang diproses' && $dokumen->current_handler == 'akutansi')
-              <span class="badge badge-proses">
-                <i class="fas fa-clock"></i>
-                Diproses
-              </span>
-            @elseif($dokumen->status == 'sent_to_akutansi')
-              <span class="badge badge-belum">
-                <i class="fas fa-hourglass-half"></i>
-                Belum Diproses
-              </span>
-            @elseif(in_array($dokumen->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']))
-              <span class="badge badge-dikembalikan">
-                <i class="fas fa-arrow-left"></i>
-                Dikembalikan
-              </span>
-            @else
-              <span class="badge badge-secondary">{{ $dokumen->status }}</span>
-            @endif
-          </td>
-          <td>
-            <button class="btn btn-action btn-sm" onclick="viewDocument({{ $dokumen->id }})">
-              <i class="fas fa-eye"></i>
-            </button>
-          </td>
-        </tr>
-        @empty
-          <tr>
-            <td colspan="7" class="text-center py-4">
-              <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
-              <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
-            </td>
-          </tr>
-        @endforelse
-      </tbody>
-    </table>
+<div class="container">
+
+  <div class="kpi-grid">
+    <div class="kpi-card fade-in" style="--card-color: #ec4899;">
+      <div class="kpi-header">
+        <div><div class="kpi-label">Total Dokumen</div></div>
+        <div class="kpi-icon" style="--icon-bg: rgba(236, 72, 153, 0.1); --icon-color: #ec4899;"><i class="fas fa-file-invoice"></i></div>
+      </div>
+      <div class="kpi-value">{{ number_format($totalDokumen ?? 0) }}</div>
+      <div class="kpi-trend"><i class="fas fa-inbox"></i> <span>Di Akutansi</span></div>
+    </div>
+
+    <div class="kpi-card fade-in" style="--card-color: #f59e0b;">
+      <div class="kpi-header">
+        <div><div class="kpi-label">Perlu Verifikasi</div></div>
+        <div class="kpi-icon" style="--icon-bg: rgba(245, 158, 11, 0.1); --icon-color: #f59e0b;"><i class="fas fa-tasks"></i></div>
+      </div>
+      <div class="kpi-value">{{ number_format($totalDokumenProses ?? 0) }}</div>
+      <div class="kpi-trend"><i class="fas fa-clock"></i> <span>Menunggu review</span></div>
+    </div>
+
+    <div class="kpi-card fade-in" style="--card-color: #10b981;">
+      <div class="kpi-header">
+        <div><div class="kpi-label">Terverifikasi</div></div>
+        <div class="kpi-icon" style="--icon-bg: rgba(16, 185, 129, 0.1); --icon-color: #10b981;"><i class="fas fa-check-double"></i></div>
+      </div>
+      <div class="kpi-value">{{ number_format($totalDokumenApproved ?? 0) }}</div>
+      <div class="kpi-trend"><i class="fas fa-shield-alt"></i> <span>Valid & lengkap</span></div>
+    </div>
+
+    <div class="kpi-card fade-in" style="--card-color: #ef4444;">
+      <div class="kpi-header">
+        <div><div class="kpi-label">Dikembalikan</div></div>
+        <div class="kpi-icon" style="--icon-bg: rgba(239, 68, 68, 0.1); --icon-color: #ef4444;"><i class="fas fa-exclamation-circle"></i></div>
+      </div>
+      <div class="kpi-value">{{ number_format($totalDokumenRejected ?? 0) }}</div>
+      <div class="kpi-trend"><i class="fas fa-undo"></i> <span>Perlu koreksi</span></div>
+    </div>
   </div>
+
+  <div class="action-grid">
+    <a href="{{ url('/dokumensAkutansi') }}" class="action-btn"><div class="action-icon"><i class="fas fa-list"></i></div><span>Daftar Dokumen</span></a>
+    <a href="{{ url('/dokumensAkutansi?status=new') }}" class="action-btn"><div class="action-icon"><i class="fas fa-file-import"></i></div><span>Dokumen Baru</span></a>
+    <a href="{{ url('/pengembalian-akutansi') }}" class="action-btn"><div class="action-icon"><i class="fas fa-reply"></i></div><span>Pengembalian</span></a>
+    <a href="{{ url('/diagramAkutansi') }}" class="action-btn"><div class="action-icon"><i class="fas fa-chart-line"></i></div><span>Diagram</span></a>
+  </div>
+
+  <div class="content-card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-clipboard-check"></i>Dokumen untuk Verifikasi</h3>
+      <a href="{{ url('/dokumensAkutansi') }}" class="card-action">Lihat Semua →</a>
+    </div>
+    <div class="search-box">
+      <form method="GET"><input type="text" name="search" class="search-input" placeholder="Cari nomor agenda, SPP, atau nilai dokumen..." value="{{ request('search') }}"></form>
+    </div>
+    @if(isset($dokumenTerbaru) && $dokumenTerbaru->count() > 0)
+      <div class="doc-list">
+        @foreach($dokumenTerbaru->take(10) as $dok)
+        <div class="doc-item">
+          <div class="doc-header">
+            <div class="doc-number"><i class="fas fa-file-alt me-2"></i>{{ $dok->nomor_agenda ?? 'N/A' }} - {{ $dok->nomor_spp ?? 'N/A' }}</div>
+            <span class="status-badge status-purple">{{ ucwords(str_replace('_', ' ', $dok->status ?? 'pending')) }}</span>
+          </div>
+          <div class="doc-details">
+            <div><strong>Nilai:</strong> Rp {{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</div>
+            <div><strong>Tanggal:</strong> {{ $dok->tanggal_masuk ? $dok->tanggal_masuk->format('d M Y') : 'N/A' }}</div>
+            <div><strong>Status:</strong> {{ $dok->current_handler ?? 'N/A' }}</div>
+          </div>
+        </div>
+        @endforeach
+      </div>
+    @else
+      <div class="empty-state"><div class="empty-icon"><i class="fas fa-clipboard-check"></i></div><p>Tidak ada dokumen untuk diverifikasi</p></div>
+    @endif
+  </div>
+
 </div>
-
-<script>
-function viewDocument(id) {
-  // Implement document view functionality
-  console.log('View document:', id);
-  // You can redirect to detail page or open modal
-  window.location.href = `/dokumensAkutansi/${id}/detail`;
-}
-</script>
-
 @endsection
