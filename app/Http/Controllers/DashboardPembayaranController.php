@@ -13,16 +13,34 @@ use Illuminate\Support\Facades\Response;
 
 class DashboardPembayaranController extends Controller
 {
-    public function index(){
+    public function index(Request $request){
         // Get statistics
         $totalDokumen = Dokumen::count();
         $totalSelesai = Dokumen::where('status', 'selesai')->count();
         $totalProses = Dokumen::where('status', 'sedang diproses')->count();
         $totalDikembalikan = Dokumen::where('status', 'dikembalikan')->count();
 
-        // Get latest documents (5 most recent)
-        $dokumenTerbaru = Dokumen::latest('tanggal_masuk')
-            ->take(5)
+        // Get latest documents query
+        $query = Dokumen::query();
+        
+        // Apply search filter if provided
+        $search = $request->get('search', '');
+        if (!empty(trim($search))) {
+            $searchTerm = trim($search);
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('nomor_agenda', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('nomor_spp', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('uraian_spp', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('nama_pengirim', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('dibayar_kepada', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('status', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('current_handler', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        // Get documents (limit to 10 for dashboard)
+        $dokumenTerbaru = $query->latest('tanggal_masuk')
+            ->take(10)
             ->get();
 
         $data = array(
@@ -35,6 +53,7 @@ class DashboardPembayaranController extends Controller
             'totalProses' => $totalProses,
             'totalDikembalikan' => $totalDikembalikan,
             'dokumenTerbaru' => $dokumenTerbaru,
+            'search' => $search,
         );
         return view('pembayaran.dashboardPembayaran', $data);
     }
