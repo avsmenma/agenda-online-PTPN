@@ -603,7 +603,28 @@
        <div class="topbar mb-0 mt-0">
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
         <div class="d-flex align-items-center">
-          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666;"></i>
+          <!-- Notification Bell with Dropdown -->
+          <div class="notification-bell-container me-3" style="position: relative;">
+            <i class="fa-solid fa-bell" id="notificationBellIcon" 
+               style="font-size: 20px; color: #666; cursor: pointer;"
+               onclick="toggleNotificationDropdown()"></i>
+            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+            
+            <!-- Notification Dropdown -->
+            <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
+              <div class="notification-dropdown-header">
+                <h6 style="margin: 0; color: #083E40; font-weight: 600;">Notifikasi</h6>
+                <button class="btn-clear-notif" onclick="clearAllNotifications()" style="background: none; border: none; color: #666; font-size: 12px; cursor: pointer;">Hapus Semua</button>
+              </div>
+              <div class="notification-dropdown-body" id="notificationDropdownBody">
+                <div class="text-center py-4" style="color: #999;">
+                  <i class="fa-solid fa-bell-slash" style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+                  <p style="margin: 0; font-size: 14px;">Tidak ada notifikasi baru</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <i class="fa-solid fa-user" style="font-size: 18px; color: #666;"></i>
       </div>
   </header>
