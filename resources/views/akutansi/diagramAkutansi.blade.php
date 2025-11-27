@@ -424,15 +424,15 @@
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
       datasets: [
         {
-          label: 'Dokumen Selesai',
-          data: [45, 52, 38, 60, 42, 55, 48, 65, 50, 58, 44, 62],
+          label: 'Dokumen Tidak Selesai',
+          data: tidakSelesaiData,
           backgroundColor: '#f44336',
           borderRadius: 8,
           borderSkipped: false
         },
         {
-          label: 'Dokumen Tidak Selesai',
-          data: [35, 42, 48, 40, 52, 45, 58, 50, 55, 48, 60, 52],
+          label: 'Dokumen Selesai',
+          data: selesaiData,
           backgroundColor: '#2196f3',
           borderRadius: 8,
           borderSkipped: false
