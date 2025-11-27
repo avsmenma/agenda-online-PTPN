@@ -514,6 +514,94 @@
       animation: slideOutRight 0.3s ease forwards;
     }
 
+    /* Notification Bell Dropdown Styles */
+    .notification-bell-container {
+      position: relative;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+
+    .notification-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      width: 380px;
+      max-height: 500px;
+      overflow: hidden;
+      z-index: 10000;
+      border: 1px solid #e0e0e0;
+    }
+
+    .notification-dropdown-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .notification-dropdown-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .notification-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .notification-item:hover {
+      background: #f8f9fa;
+    }
+
+    .notification-item.unread {
+      background: #e7f3ff;
+      border-left: 4px solid #083E40;
+    }
+
+    .notification-item-title {
+      font-weight: 600;
+      color: #083E40;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .notification-item-desc {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .notification-item-time {
+      color: #999;
+      font-size: 11px;
+    }
+
+    .btn-clear-notif:hover {
+      color: #dc3545 !important;
+    }
+
     /* Sidebar Badge Styles */
     .menu-notification-badge {
       position: absolute;
