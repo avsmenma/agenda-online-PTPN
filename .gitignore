@@ -18,3 +18,7 @@ Thumbs.db
 *.log
 .local
 
+-e 
+# Environment files
+*.env
+*.env.*
