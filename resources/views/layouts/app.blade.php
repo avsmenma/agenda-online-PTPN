@@ -2537,5 +2537,178 @@
 })();
 </script>
 
+<!-- Notification Bell Dropdown Script -->
+<script>
+// Global notifications storage
+let globalNotifications = [];
+
+// Toggle notification dropdown
+function toggleNotificationDropdown() {
+  const dropdown = document.getElementById('notificationDropdown');
+  const isVisible = dropdown.style.display === 'block';
+  
+  if (isVisible) {
+    dropdown.style.display = 'none';
+  } else {
+    dropdown.style.display = 'block';
+    loadNotifications();
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+  const dropdown = document.getElementById('notificationDropdown');
+  const bell = document.getElementById('notificationBellIcon');
+  const container = document.querySelector('.notification-bell-container');
+  
+  if (dropdown && !container.contains(event.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+// Load notifications from localStorage or generate from recent activity
+function loadNotifications() {
+  // Try to get from localStorage first
+  const stored = localStorage.getItem('userNotifications');
+  if (stored) {
+    try {
+      globalNotifications = JSON.parse(stored);
+    } catch (e) {
+      globalNotifications = [];
+    }
+  }
+  
+  renderNotifications();
+  updateBadgeCount();
+}
+
+// Render notifications in dropdown
+function renderNotifications() {
+  const body = document.getElementById('notificationDropdownBody');
+  
+  if (globalNotifications.length === 0) {
+    body.innerHTML = `
+      <div class="text-center py-4" style="color: #999;">
+        <i class="fa-solid fa-bell-slash" style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+        <p style="margin: 0; font-size: 14px;">Tidak ada notifikasi baru</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  globalNotifications.forEach((notif, index) => {
+    const unreadClass = notif.read ? '' : 'unread';
+    html += `
+      <div class="notification-item ${unreadClass}" onclick="markAsReadAndNavigate(${index}, '${notif.url || '#'}')">
+        <div class="notification-item-title">${notif.title}</div>
+        <div class="notification-item-desc">${notif.message}</div>
+        <div class="notification-item-time">
+          <i class="fa-regular fa-clock"></i> ${notif.time}
+        </div>
+      </div>
+    `;
+  });
+  
+  body.innerHTML = html;
+}
+
+// Update badge count
+function updateBadgeCount() {
+  const badge = document.getElementById('notificationBadge');
+  const unreadCount = globalNotifications.filter(n => !n.read).length;
+  
+  if (unreadCount > 0) {
+    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Add new notification
+function addNotification(title, message, url = null) {
+  const newNotif = {
+    id: Date.now(),
+    title: title,
+    message: message,
+    url: url,
+    time: new Date().toLocaleString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      day: '2-digit',
+      month: 'short'
+    }),
+    read: false
+  };
+  
+  globalNotifications.unshift(newNotif);
+  
+  // Keep only last 50 notifications
+  if (globalNotifications.length > 50) {
+    globalNotifications = globalNotifications.slice(0, 50);
+  }
+  
+  // Save to localStorage
+  localStorage.setItem('userNotifications', JSON.stringify(globalNotifications));
+  
+  updateBadgeCount();
+  
+  // Show toast notification as well
+  showGlobalToastNotification('info', title, message, url, 'Lihat');
+}
+
+// Mark notification as read and navigate
+function markAsReadAndNavigate(index, url) {
+  globalNotifications[index].read = true;
+  localStorage.setItem('userNotifications', JSON.stringify(globalNotifications));
+  updateBadgeCount();
+  renderNotifications();
+  
+  if (url && url !== '#') {
+    window.location.href = url;
+  }
+}
+
+// Clear all notifications
+function clearAllNotifications() {
+  if (confirm('Hapus semua notifikasi?')) {
+    globalNotifications = [];
+    localStorage.setItem('userNotifications', JSON.stringify(globalNotifications));
+    renderNotifications();
+    updateBadgeCount();
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotifications();
+  
+  // Listen for custom notification events
+  document.addEventListener('newNotification', function(e) {
+    if (e.detail) {
+      addNotification(e.detail.title, e.detail.message, e.detail.url);
+    }
+  });
+});
+
+// Override existing notification functions to also add to dropdown
+const originalShowNotification = window.showNotification;
+if (originalShowNotification) {
+  window.showNotification = function(data, type) {
+    // Call original function
+    originalShowNotification(data, type);
+    
+    // Add to dropdown
+    if (data && data.length > 0) {
+      const doc = data[0];
+      const title = type === 'new' ? '📄 Dokumen Baru' : '🔄 Dokumen Diperbarui';
+      const message = `${doc.nomor_agenda || 'N/A'} - ${doc.nomor_spp || 'N/A'}`;
+      addNotification(title, message, null);
+    }
+  };
+}
+</script>
+
 </body>
 </html>
