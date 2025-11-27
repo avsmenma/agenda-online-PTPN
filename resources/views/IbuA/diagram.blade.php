@@ -171,7 +171,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Jumlah Dokumen</h3>
     <div class="chart-actions">
-      <button class="btn-export">Export</button>
+      <form method="GET" action="{{ url('diagram') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter1" class="chart-filter" onchange="this.form.submit()" style="width: 120px; padding: 8px 12px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
@@ -185,7 +191,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Keterlambatan Dokumen</h3>
     <div class="chart-actions">
-      <button class="btn-export">Export</button>
+      <form method="GET" action="{{ url('diagram') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter2" class="chart-filter" onchange="this.form.submit()" style="width: 120px; padding: 8px 12px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
@@ -213,7 +225,13 @@
   <div class="chart-header">
     <h3 class="chart-title">Statistik Jumlah Dokumen Selesai</h3>
     <div class="chart-actions">
-      <button class="btn-export">Export</button>
+      <form method="GET" action="{{ url('diagram') }}" style="display: inline-block;">
+        <select name="year" id="yearFilter3" class="chart-filter" onchange="this.form.submit()" style="width: 120px; padding: 8px 12px;">
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </form>
     </div>
   </div>
   <div class="chart-wrapper">
