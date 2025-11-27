@@ -1317,15 +1317,19 @@ function showNotification(type, title, message) {
         toast.classList.add('show');
     }, 10);
 
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        toast.classList.add('hide');
+    // Auto-remove untuk notifikasi success/error biasa (dari session) setelah 4 detik
+    // Notifikasi dokumen masuk/reject tetap permanen (dipanggil dengan showNotificationWithAction)
+    if (type === 'success' || type === 'error') {
         setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
-            }
-        }, 300);
-    }, 5000);
+            toast.classList.add('hide');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 4000); // 4 detik untuk notifikasi success/error biasa
+    }
+    // Jika type info/warning atau dokumen masuk/reject, tetap permanen
 }
 
 // Notification Toast Function with Action Button
@@ -1370,15 +1374,8 @@ function showNotificationWithAction(type, title, message, actionUrl, actionText)
         toast.classList.add('show');
     }, 10);
 
-    // Auto remove after 8 seconds (longer for actionable notifications)
-    setTimeout(() => {
-        toast.classList.add('hide');
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
-            }
-        }, 300);
-    }, 8000);
+    // Notifikasi permanen - hanya hilang ketika user klik tombol X
+    // Auto-remove dihapus agar notifikasi tetap muncul sampai user menutupnya
 }
 </script>
 

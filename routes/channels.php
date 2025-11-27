@@ -40,31 +40,32 @@ Broadcast::channel('documents.{department}', function ($user, $department) {
 
 // Private channel for inbox notifications per role
 Broadcast::channel('inbox.{role}', function ($user, $role) {
-    // Get user role
-    $userRole = strtolower($user->role ?? $user->name ?? '');
-    $roleLower = strtolower($role);
-    
-    // Map role variations
-    $roleMap = [
-        'ibub' => 'ibub',
-        'ibu b' => 'ibub',
-        'perpajakan' => 'perpajakan',
-        'akutansi' => 'akutansi',
-    ];
-    
-    $userRoleNormalized = $roleMap[$userRole] ?? $userRole;
-    
-    // Allow access if user role matches channel role
-    if ($userRoleNormalized === $roleLower) {
+    // Always allow in development for testing
+    \Log::info('Inbox channel authorization attempt', [
+        'channel' => 'inbox.' . $role,
+        'user_id' => $user->id ?? 'guest',
+        'user_role' => $user->role ?? 'none',
+        'user_name' => $user->name ?? 'none',
+        'requested_role' => $role,
+        'auth_check' => auth()->check(),
+        'session_valid' => session()->isStarted(),
+    ]);
+
+    // FOR DEVELOPMENT: Allow all authenticated users
+    if (auth()->check()) {
+        \Log::info('✅ Channel access granted - development mode', [
+            'channel' => 'inbox.' . $role,
+            'user_id' => $user->id,
+            'user_role' => $user->role
+        ]);
         return true;
     }
-    
-    // For development: allow all for testing
-    \Log::info('Inbox channel access granted for testing', [
+
+    \Log::error('❌ Channel access denied - user not authenticated', [
         'channel' => 'inbox.' . $role,
-        'user_role' => $userRole,
-        'requested_role' => $roleLower
+        'user_id' => $user->id ?? 'none'
     ]);
-    return true;
+
+    return false;
 });
 

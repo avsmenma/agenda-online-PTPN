@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Helpers;
 
 use App\Models\Dokumen;
+use Illuminate\Support\Str;
 
 class DokumenHelper
 {
@@ -13,10 +14,15 @@ class DokumenHelper
      */
     public static function isDocumentLocked(Dokumen $dokumen): bool
     {
+        if (Str::startsWith($dokumen->status, 'returned_') || $dokumen->status === 'returned_to_department') {
+            return false;
+        }
+
         // Base condition: must be sent to department without deadline
         $isLocked = is_null($dokumen->deadline_at) &&
                    in_array($dokumen->status, [
                        'sent_to_ibub',
+                       'sedang diproses', // Dokumen yang baru di-approve dari inbox IbuB
                        'sent_to_akutansi',
                        'sent_to_perpajakan',
                        'sent_to_pembayaran'
@@ -25,12 +31,14 @@ class DokumenHelper
         // Additional validation based on current handler
         switch ($dokumen->current_handler) {
             case 'ibuB':
-                $isLocked = $isLocked && $dokumen->status === 'sent_to_ibub';
+                // Lock dokumen dengan status 'sent_to_ibub' atau 'sedang diproses' (baru di-approve dari inbox)
+                $isLocked = $isLocked && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses']);
                 break;
             case 'akutansi':
                 $isLocked = $isLocked && $dokumen->status === 'sent_to_akutansi';
                 break;
             case 'perpajakan':
+                // Lock dokumen dengan status 'sent_to_perpajakan' (baru di-approve dari inbox)
                 $isLocked = $isLocked && $dokumen->status === 'sent_to_perpajakan';
                 break;
             case 'pembayaran':
@@ -38,8 +46,14 @@ class DokumenHelper
                 break;
         }
 
-        // Don't lock documents that were returned and repaired
-        if ($dokumen->returned_from_perpajakan_at || $dokumen->department_returned_at) {
+        // Don't lock documents that were returned and repaired (only if they have been fixed)
+        // Check if document was returned but has been fixed and re-sent
+        if ($dokumen->returned_from_perpajakan_at && $dokumen->returned_from_perpajakan_fixed_at) {
+            // Document was returned and fixed, don't lock
+            $isLocked = false;
+        }
+        if ($dokumen->department_returned_at && $dokumen->returned_from_perpajakan_fixed_at) {
+            // Document was returned from department and fixed, don't lock
             $isLocked = false;
         }
 
@@ -126,9 +140,9 @@ class DokumenHelper
 
         // Check document status based on handler
         $validStatuses = match($dokumen->current_handler) {
-            'ibuB' => ['sent_to_ibub'],
+            'ibuB' => ['sent_to_ibub', 'sedang diproses'], // Include 'sedang diproses' for newly approved from inbox
             'akutansi' => ['sent_to_akutansi', 'approved_data_sudah_terkirim'],
-            'perpajakan' => ['sent_to_perpajakan'],
+            'perpajakan' => ['sent_to_perpajakan'], // Dokumen yang baru di-approve dari inbox Perpajakan
             'pembayaran' => ['sent_to_pembayaran'],
             default => []
         };

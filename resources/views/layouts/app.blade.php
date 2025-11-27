@@ -45,6 +45,23 @@
       margin-top:20px;
       transition: all 0.3s;
     }
+    
+    .sidebar a .badge.right {
+      margin-left: 10px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #083E40;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 12px;
+      border: none;
+    }
+
+    .sidebar a:hover .badge.right,
+    .sidebar a.active .badge.right {
+      background: #ffffff;
+      color: #083E40;
+    }
 
     .sidebar a:hover, .sidebar a.active {
       background-color: #083E40;
@@ -296,6 +313,14 @@
       position: fixed;
       top: 20px;
       right: 20px;
+      z-index: 9999;
+      max-width: 400px;
+    }
+
+    #globalNotificationContainer {
+      position: fixed;
+      top: 20px;
+      right: 420px;
       z-index: 9999;
       max-width: 400px;
     }
@@ -853,6 +878,7 @@
 
     <!-- Notification Container -->
     <div id="notification-container"></div>
+    <div id="globalNotificationContainer"></div>
 
     <footer>
       &copy; 2025 Agenda Online - All Rights Reserved
@@ -865,6 +891,37 @@
   <!-- Pusher & Laravel Echo -->
   <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+
+  <!-- Laravel Echo Setup for Real-time Notifications -->
+  <script>
+    // Get CSRF token
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    window.Echo = new Echo({
+      broadcaster: 'pusher',
+      key: '5ce115effb7713734101',
+      cluster: 'ap1',
+      forceTLS: true,
+      disableStats: true,
+      enabledTransports: ['ws', 'wss', 'flashsocket']
+    });
+
+    console.log('Laravel Echo initialized for real-time notifications with Pusher');
+    console.log('CSRF Token:', token);
+
+    // Test connection
+    window.Echo.connector.pusher.connection.bind('connected', () => {
+        console.log('✅ Pusher connected successfully');
+    });
+
+    window.Echo.connector.pusher.connection.bind('error', (err) => {
+        console.error('❌ Pusher connection error:', err);
+    });
+
+    window.Echo.connector.pusher.connection.bind('disconnected', () => {
+        console.warn('⚠️ Pusher disconnected');
+    });
+  </script>
 
   <!-- Custom JS for Dropdown -->
   <script>
@@ -1229,10 +1286,8 @@
 
             container.appendChild(notification);
 
-            // Auto remove
-            setTimeout(() => {
-              removeNotification(notificationId);
-            }, NOTIFICATION_DURATION);
+            // Notifikasi permanen - hanya hilang ketika user klik tombol X
+            // Auto-remove dihapus agar notifikasi tetap muncul sampai user menutupnya
 
             notificationCount++;
           }, index * 500); // Stagger notifications
@@ -1716,6 +1771,8 @@
     if (isIbuA) {
         console.log('Initializing IbuA rejected notifications');
         initIbuARejectedNotifications();
+        // IbuA does not have inbox access, so exit here
+        return;
     }
 
     // Initialize IbuB rejected documents notification if applicable
@@ -1724,8 +1781,9 @@
         initIbuBRejectedNotifications();
     }
 
-    if (!hasInboxAccess && !isIbuA && !isIbuB) {
-        console.log('User does not have inbox access, exiting notification system');
+    // Only continue with inbox notifications if user has inbox access
+    if (!hasInboxAccess) {
+        console.log('User does not have inbox access, exiting inbox notification system');
         return; // Exit if user doesn't have access
     }
 
@@ -1752,6 +1810,58 @@
                                                     userRoleLower === 'ibub' ? 'IbuB' : userRole);
     
     console.log('Mapped inbox role:', inboxRole);
+
+    // Real-time notification using Laravel Echo (Public Channel)
+    if (window.Echo && hasInboxAccess) {
+        console.log('🚀 Setting up real-time notifications for inbox role:', inboxRole);
+
+        try {
+            // Use public channel - no authentication required
+            window.Echo.channel('inbox-updates')
+                .listen('.document.sent.to.inbox', (e) => {
+                    console.log('🎉 Real-time notification received:', e);
+
+                    // Only show notification if it's for this user's role
+                    if (e.recipientRole && (e.recipientRole.toLowerCase() === inboxRole.toLowerCase() ||
+                        (e.recipientRole.toLowerCase() === 'ibub' && inboxRole.toLowerCase() === 'ibub'))) {
+
+                        console.log('✅ Notification is for current user role:', inboxRole);
+
+                        // Show immediate notification
+                        showGlobalToastNotification(
+                            'info',
+                            'Dokumen Baru Masuk',
+                            `${e.dokumen.nomor_agenda} - ${e.dokumen.nomor_spp}`,
+                            `/inbox/${e.dokumen.id}`,
+                            'Lihat Dokumen'
+                        );
+
+                        // Play notification sound if available
+                        playNotificationSound();
+
+                        // Update inbox count immediately
+                        updateInboxCount();
+
+                        // Don't wait for polling - refresh last check time
+                        const now = new Date().toISOString();
+                        localStorage.setItem('inbox_last_check_time', now);
+                        inboxLastCheckTime = now;
+                    } else {
+                        console.log('🔕 Notification not for current user role. For:', e.recipientRole, 'Current:', inboxRole);
+                    }
+                })
+                .subscribed(() => {
+                    console.log('✅ Successfully subscribed to public channel: inbox-updates');
+                })
+                .error((error) => {
+                    console.error('❌ Error subscribing to public channel:', error);
+                });
+
+            console.log('🔧 Real-time listener setup completed for public channel: inbox-updates');
+        } catch (error) {
+            console.error('💥 Failed to setup real-time notifications:', error);
+        }
+    }
 
     // Global toast notification function
     function showGlobalToastNotification(type, title, message, actionUrl, actionText) {
@@ -1791,15 +1901,19 @@
             toast.classList.add('show');
         }, 10);
 
-        // Auto remove after 8 seconds
-        setTimeout(() => {
-            toast.classList.add('hide');
+        // Auto-remove untuk notifikasi success/error biasa setelah 4 detik
+        // Notifikasi dokumen masuk/reject (dengan actionUrl) tetap permanen
+        if ((type === 'success' || type === 'error') && !actionUrl) {
             setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 300);
-        }, 8000);
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 4000); // 4 detik untuk notifikasi success/error biasa
+        }
+        // Jika punya actionUrl (dokumen masuk/reject) atau type info/warning, tetap permanen
     }
 
     // Play notification sound
@@ -1825,11 +1939,36 @@
         }
     }
 
+    // Function to update inbox count immediately
+    function updateInboxCount() {
+        try {
+            const inboxBadges = document.querySelectorAll('.badge-danger');
+            fetch('/inbox/check-new?last_check_time=' + encodeURIComponent(new Date(Date.now() - 60000).toISOString()))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.pending_count !== undefined) {
+                        inboxBadges.forEach(badge => {
+                            if (data.pending_count > 0) {
+                                badge.textContent = data.pending_count;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('Error updating inbox count:', error));
+        } catch (error) {
+            console.error('Error in updateInboxCount:', error);
+        }
+    }
+
     // Function to check for new inbox documents
     async function checkInboxNotifications() {
         try {
             // Ensure we have inbox access before checking
-            if (!hasInboxAccess && !isIbuA) {
+            // IbuA does not have inbox access, so skip the check
+            if (!hasInboxAccess) {
                 console.log('No inbox access, skipping notification check');
                 return;
             }
@@ -1932,8 +2071,8 @@
         checkInboxNotifications();
     }, 1000);
 
-    // Poll every 30 seconds
-    setInterval(checkInboxNotifications, 30000);
+    // Poll every 3 seconds for better responsiveness (as backup to real-time)
+    setInterval(checkInboxNotifications, 3000);
 
     // Also check when page becomes visible (user switches back to tab)
     document.addEventListener('visibilitychange', function() {
@@ -1960,10 +2099,20 @@
     function initIbuARejectedNotifications() {
         console.log('initIbuARejectedNotifications function called');
         // Rejected documents notification polling
+        // Reset last check time jika lebih dari 24 jam yang lalu untuk memastikan semua dokumen terdeteksi
         let rejectedLastCheckTime = localStorage.getItem('ibua_rejected_last_check_time');
         if (!rejectedLastCheckTime) {
-            rejectedLastCheckTime = new Date().toISOString();
+            rejectedLastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 jam yang lalu
             localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+        } else {
+            // Jika last check time lebih dari 24 jam yang lalu, reset ke 24 jam yang lalu
+            const lastCheck = new Date(rejectedLastCheckTime);
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            if (lastCheck < twentyFourHoursAgo) {
+                rejectedLastCheckTime = twentyFourHoursAgo.toISOString();
+                localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+                console.log('🔄 Reset rejected documents last check time to 24 hours ago');
+            }
         }
 
         // Track shown rejected notifications to prevent duplicates
@@ -1972,6 +2121,8 @@
         // Function to check for rejected documents
         async function checkRejectedDocuments() {
             try {
+                console.log('🔍 Checking for rejected documents...', { lastCheckTime: rejectedLastCheckTime });
+                
                 const response = await fetch(`/ibua/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
@@ -1982,67 +2133,162 @@
                 });
 
                 if (!response.ok) {
+                    console.error('❌ Failed to check rejected documents:', response.status, response.statusText);
+                    if (response.status === 403) {
+                        console.error('Access denied - user may not have permission');
+                    }
                     return;
                 }
 
                 const data = await response.json();
+                console.log('📋 Rejected documents check result:', {
+                    success: data.success,
+                    rejected_count: data.rejected_documents_count,
+                    total_rejected: data.total_rejected,
+                    documents: data.rejected_documents
+                });
 
                 if (data.success) {
-                    // Update last check time
+                    // JANGAN update lastCheckTime terlalu cepat
+                    // Biarkan dokumen yang sama bisa ditampilkan lagi jika sudah lebih dari 30 menit
+                    // Update lastCheckTime hanya untuk tracking, bukan untuk filtering
                     if (data.current_time) {
+                        // Update last check time untuk tracking, tapi jangan gunakan untuk filtering dokumen
                         rejectedLastCheckTime = data.current_time;
                         localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+                        console.log('✅ Updated last check time to:', rejectedLastCheckTime);
                     }
 
-                    // If there are rejected documents
+                    // If there are rejected documents (baik baru maupun yang sudah pernah ditampilkan)
                     if (data.rejected_documents_count > 0 && data.rejected_documents.length > 0) {
-                        // Filter out already shown notifications
+                        console.log('🔔 Found rejected documents:', data.rejected_documents.length);
+                        
+                        // Filter dokumen yang perlu ditampilkan
+                        // Untuk memastikan notifikasi selalu muncul, tampilkan dokumen yang di-reject dalam 24 jam terakhir
+                        // Tampilkan jika:
+                        // 1. Belum pernah ditampilkan sebelumnya, ATAU
+                        // 2. Sudah pernah ditampilkan tapi lebih dari 5 menit yang lalu (untuk memastikan user melihat notifikasi)
+                        //    (Dikurangi dari 30 menit menjadi 5 menit agar notifikasi lebih sering muncul)
+                        const now = Date.now();
+                        const fiveMinutesInMs = 5 * 60 * 1000; // 5 menit dalam milliseconds
+                        
                         const newRejectedToShow = data.rejected_documents.filter(doc => {
-                            if (shownRejectedIds.has(doc.id)) {
-                                return false;
+                            const docKey = `rejected_doc_${doc.id}_shown_time`;
+                            const shownTime = localStorage.getItem(docKey);
+                            
+                            if (!shownTime) {
+                                // Belum pernah ditampilkan - tampilkan
+                                localStorage.setItem(docKey, now.toString());
+                                shownRejectedIds.add(doc.id);
+                                console.log('✅ New rejected document to show:', doc.id, doc.nomor_agenda);
+                                return true;
                             }
-                            shownRejectedIds.add(doc.id);
-                            return true;
+                            
+                            const shownTimeNum = parseInt(shownTime);
+                            const timeSinceShown = now - shownTimeNum; // Selisih waktu dalam milliseconds
+                            
+                            // Jika sudah ditampilkan lebih dari 5 menit yang lalu, tampilkan lagi
+                            // Ini memastikan bahwa jika user kembali ke halaman, notifikasi akan muncul lagi
+                            // FIX: Bandingkan timeSinceShown dengan fiveMinutesInMs (durasi), bukan dengan timestamp
+                            if (timeSinceShown > fiveMinutesInMs) {
+                                localStorage.setItem(docKey, now.toString());
+                                const minutesAgo = Math.round(timeSinceShown / 1000 / 60);
+                                console.log('🔄 Re-showing rejected document (shown >5min ago):', doc.id, doc.nomor_agenda, 'shown', minutesAgo, 'minutes ago');
+                                return true;
+                            }
+                            
+                            // Jika sudah ditampilkan kurang dari 5 menit yang lalu, skip
+                            const minutesAgo = Math.round(timeSinceShown / 1000 / 60);
+                            console.log('⏭️ Skipping recently shown document:', doc.id, 'shown', minutesAgo, 'minutes ago');
+                            return false;
                         });
 
                         // Save shown notification IDs to localStorage
                         localStorage.setItem('ibua_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
 
-                        // Only show notification if we have new rejected documents
+                        // Show notification untuk semua dokumen yang perlu ditampilkan
                         if (newRejectedToShow.length > 0) {
+                            console.log('🔔 Showing notifications for', newRejectedToShow.length, 'rejected documents');
+                            
                             // Show toast notification for each rejected document
-                            newRejectedToShow.forEach(doc => {
-                                const message = `${doc.nomor_agenda} - ${doc.uraian_spp}\nDitolak oleh: ${doc.rejected_by}\nAlasan: ${doc.rejection_reason}`;
-                                showGlobalToastNotification('error', 'Dokumen Ditolak!', message, doc.url, 'Lihat Dokumen');
+                            newRejectedToShow.forEach((doc, index) => {
+                                setTimeout(() => {
+                                    const message = `${doc.nomor_agenda} - ${doc.uraian_spp}\nDitolak oleh: ${doc.rejected_by}\nAlasan: ${doc.rejection_reason}`;
+                                    console.log('📢 Showing notification for document:', doc.id, doc.nomor_agenda);
+                                    
+                                    // Use global notification function if available
+                                    if (typeof showGlobalToastNotification === 'function') {
+                                        showGlobalToastNotification('error', 'Dokumen Ditolak!', message, doc.url, 'Lihat Dokumen');
+                                    } else {
+                                        // Fallback: use alert or console
+                                        console.warn('⚠️ showGlobalToastNotification not available, using alert');
+                                        alert(`Dokumen Ditolak!\n\n${message}`);
+                                    }
+                                }, index * 500); // Stagger notifications
                             });
 
                             // Play sound only once
-                            playNotificationSound();
+                            if (typeof playNotificationSound === 'function') {
+                                playNotificationSound();
+                            }
+                        } else {
+                            console.log('ℹ️ No rejected documents to show (all recently shown)');
                         }
+                    } else if (data.total_rejected > 0) {
+                        // Ada dokumen yang di-reject tapi tidak dalam 24 jam terakhir
+                        console.log('ℹ️ Total rejected documents:', data.total_rejected, 'but none in last 24 hours');
+                    } else {
+                        console.log('✅ No rejected documents found');
                     }
+                } else {
+                    console.warn('⚠️ Rejected documents check returned unsuccessful:', data.message);
                 }
             } catch (error) {
-                console.error('Error checking rejected documents:', error);
+                console.error('❌ Error checking rejected documents:', error);
             }
         }
 
-        // Check immediately on page load
-        checkRejectedDocuments();
+        // Store interval ID so we can clear it if needed
+        let rejectedDocumentsInterval = null;
 
-        // Poll every 30 seconds
-        setInterval(checkRejectedDocuments, 30000);
+        // Check immediately on page load (with small delay to ensure DOM is ready)
+        setTimeout(function() {
+            checkRejectedDocuments();
+        }, 500);
+
+        // Poll every 3 seconds for faster notification (rejected documents are critical)
+        // Store interval ID globally so it persists across page navigations
+        rejectedDocumentsInterval = setInterval(checkRejectedDocuments, 3000);
+        
+        // Store interval in window object to ensure it persists
+        window.ibuaRejectedDocumentsInterval = rejectedDocumentsInterval;
 
         // Also check when page becomes visible (user switches back to tab)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
+                console.log('👁️ Page became visible, checking rejected documents immediately');
+                // Check immediately when page becomes visible
                 checkRejectedDocuments();
             }
         });
 
         // Check when window gains focus
         window.addEventListener('focus', function() {
+            console.log('🎯 Window gained focus, checking rejected documents immediately');
             checkRejectedDocuments();
         });
+        
+        // Also check when page is fully loaded (faster check)
+        if (document.readyState === 'complete') {
+            setTimeout(checkRejectedDocuments, 1000);
+        } else {
+            window.addEventListener('load', function() {
+                setTimeout(checkRejectedDocuments, 1000);
+            });
+        }
+        
+        // Additional check after 2 seconds to catch any missed notifications
+        setTimeout(checkRejectedDocuments, 2000);
     }
 
     // IbuB Rejected Documents Notification System

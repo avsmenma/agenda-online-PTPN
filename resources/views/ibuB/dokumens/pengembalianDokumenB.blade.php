@@ -581,7 +581,7 @@
       <tbody>
         @forelse($dokumens ?? [] as $dokumen)
         <tr class="main-row" onclick="toggleDetail({{ $dokumen->id }})">
-          <td style="text-align: center;">{{ $loop->iteration }}</td>
+          <td style="text-align: center;">{{ isset($dokumens) && $dokumens->hasPages() ? (($dokumens->currentPage() - 1) * $dokumens->perPage() + $loop->iteration) : $loop->iteration }}</td>
           <td>{{ $dokumen->nomor_agenda }}</td>
           <td>{{ $dokumen->nomor_spp }}</td>
           <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>

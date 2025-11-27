@@ -510,15 +510,19 @@ function showNotification(type, title, message) {
         toast.classList.add('show');
     }, 10);
 
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        toast.classList.add('hide');
+    // Auto-hide untuk notifikasi success/error biasa setelah 4 detik
+    // Notifikasi dokumen masuk/reject tetap permanen
+    if (type === 'success' || type === 'error') {
         setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
-            }
-        }, 300);
-    }, 5000);
+            toast.classList.add('hide');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 4000); // 4 detik untuk notifikasi success/error biasa
+    }
+    // Jika type warning atau dokumen masuk/reject, tetap permanen
 }
 </script>
 @endsection

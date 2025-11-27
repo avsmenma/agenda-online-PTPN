@@ -75,6 +75,7 @@ class Dokumen extends Model
         'sent_to_perpajakan_at',
         'processed_perpajakan_at',
         'returned_from_perpajakan_at',
+        'returned_from_akutansi_at',
         // Pembayaran fields
         'sent_to_pembayaran_at',
         'status_pembayaran',
@@ -120,6 +121,7 @@ class Dokumen extends Model
         'sent_to_perpajakan_at' => 'datetime',
         'processed_perpajakan_at' => 'datetime',
         'returned_from_perpajakan_at' => 'datetime',
+        'returned_from_akutansi_at' => 'datetime',
         // Pembayaran casts
         'sent_to_pembayaran_at' => 'datetime',
         // Universal Approval System casts
@@ -364,7 +366,27 @@ class Dokumen extends Model
      */
     public function sendToInbox($recipientRole)
     {
-        $this->inbox_approval_for = $recipientRole;
+        // Normalize recipient role to match enum values (IbuB, Perpajakan, Akutansi)
+        $roleMap = [
+            'IbuB' => 'IbuB',
+            'ibuB' => 'IbuB',
+            'Ibu B' => 'IbuB',
+            'Ibu Yuni' => 'IbuB',
+            'Perpajakan' => 'Perpajakan',
+            'perpajakan' => 'Perpajakan',
+            'Akutansi' => 'Akutansi',
+            'akutansi' => 'Akutansi',
+        ];
+        $normalizedRole = $roleMap[$recipientRole] ?? $recipientRole;
+        
+        \Log::info('sendToInbox called', [
+            'document_id' => $this->id,
+            'original_recipient_role' => $recipientRole,
+            'normalized_role' => $normalizedRole,
+            'current_status' => $this->status,
+        ]);
+        
+        $this->inbox_approval_for = $normalizedRole;
         $this->inbox_approval_status = 'pending';
         $this->inbox_approval_sent_at = now();
         $this->inbox_original_status = $this->status;
@@ -376,6 +398,14 @@ class Dokumen extends Model
         $this->inbox_approval_responded_at = null;
         
         $this->save();
+        
+        \Log::info('sendToInbox completed', [
+            'document_id' => $this->id,
+            'inbox_approval_for' => $this->inbox_approval_for,
+            'inbox_approval_status' => $this->inbox_approval_status,
+            'inbox_approval_sent_at' => $this->inbox_approval_sent_at,
+            'status' => $this->status,
+        ]);
 
         // Log activity
         DokumenActivityLog::create([
@@ -392,7 +422,27 @@ class Dokumen extends Model
         ]);
 
         // Fire event
-        event(new \App\Events\DocumentSentToInbox($this, $recipientRole));
+        try {
+            \Log::info('Firing DocumentSentToInbox event', [
+                'document_id' => $this->id,
+                'recipient_role' => $recipientRole,
+                'inbox_approval_status' => $this->inbox_approval_status,
+                'inbox_approval_sent_at' => $this->inbox_approval_sent_at,
+            ]);
+
+            event(new \App\Events\DocumentSentToInbox($this, $recipientRole));
+
+            \Log::info('DocumentSentToInbox event fired successfully', [
+                'document_id' => $this->id,
+                'recipient_role' => $recipientRole
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to fire DocumentSentToInbox event: ' . $e->getMessage(), [
+                'document_id' => $this->id,
+                'recipient_role' => $recipientRole,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     /**
@@ -414,8 +464,9 @@ class Dokumen extends Model
             $this->current_handler = $handlerMap[$this->inbox_approval_for];
             
             // Update status sesuai dengan recipient role
+            // Untuk IbuB, setelah approve dari inbox, status menjadi 'sedang diproses' (bukan 'sent_to_ibub')
             $statusMap = [
-                'IbuB' => 'sent_to_ibub',
+                'IbuB' => 'sedang diproses',  // Ubah dari 'sent_to_ibub' ke 'sedang diproses'
                 'Perpajakan' => 'sent_to_perpajakan',
                 'Akutansi' => 'sent_to_akutansi',
             ];
@@ -424,13 +475,33 @@ class Dokumen extends Model
             
             // Set timestamp sesuai recipient
             if ($this->inbox_approval_for === 'IbuB') {
-                $this->sent_to_ibub_at = now();
-                $this->processed_at = now();
+                // Only set sent_to_ibub_at if it's null (first time entering IbuB)
+                // This preserves the original entry time for consistent ordering
+                if (is_null($this->sent_to_ibub_at)) {
+                    $this->sent_to_ibub_at = now();
+                }
+                // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
+                $this->deadline_at = null;
+                $this->deadline_days = null;
+                $this->deadline_note = null;
+                // Jangan set processed_at karena dokumen masih perlu diproses
+                // $this->processed_at = now();
             } elseif ($this->inbox_approval_for === 'Perpajakan') {
                 $this->sent_to_perpajakan_at = now();
+                // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
+                $this->deadline_at = null;
+                $this->deadline_days = null;
+                $this->deadline_note = null;
+                $this->deadline_perpajakan_at = null;
+                $this->deadline_perpajakan_days = null;
+                $this->deadline_perpajakan_note = null;
             } elseif ($this->inbox_approval_for === 'Akutansi') {
                 // Note: sent_to_akutansi_at field might not exist, but we set processed_at
                 $this->processed_at = now();
+                // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
+                $this->deadline_at = null;
+                $this->deadline_days = null;
+                $this->deadline_note = null;
             }
         } else {
             // Fallback ke status original jika role tidak dikenali

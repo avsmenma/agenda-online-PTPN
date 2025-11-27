@@ -699,13 +699,19 @@ function showNotification(message, type = 'info') {
     notification.classList.add('show');
   }, 10);
 
-  // Auto remove
-  setTimeout(() => {
-    notification.classList.remove('show');
+  // Auto-hide untuk notifikasi success/error biasa setelah 4 detik
+  // Notifikasi dokumen masuk/reject tetap permanen
+  if (type === 'success' || type === 'error') {
     setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 300);
-  }, 3000);
+      notification.classList.remove('show');
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.parentElement.removeChild(notification);
+        }
+      }, 300);
+    }, 4000); // 4 detik untuk notifikasi success/error biasa
+  }
+  // Jika type info atau dokumen masuk/reject, tetap permanen
 }
 
 // Auto-refresh notification badge

@@ -1808,7 +1808,7 @@
       <tbody>
       @forelse($dokumens as $index => $dokumen)
         <tr class="main-row {{ $dokumen->lock_status_class }}" onclick="toggleDetail({{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
-            <td style="text-align: center;">{{ $index + 1 }}</td>
+            <td style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
             @foreach($selectedColumns as $col)
               @if($col !== 'status')
               <td class="col-{{ $col }}">

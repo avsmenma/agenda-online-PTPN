@@ -1,5 +1,8 @@
 @extends('layouts/app')
 @section('content')
+@php
+  use Illuminate\Support\Str;
+@endphp
 
 <!-- Critical JavaScript Functions - Load First -->
 <script>
@@ -181,11 +184,15 @@
         // Show notification
         setTimeout(() => notification.classList.add('show'), 100);
 
-        // Hide after 3 seconds
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        // Auto-hide untuk notifikasi success/error biasa setelah 4 detik
+        // Notifikasi dokumen masuk/reject tetap permanen
+        if (type === 'success' || type === 'error') {
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000); // 4 detik untuk notifikasi success/error biasa
+        }
+        // Jika type info atau dokumen masuk/reject, tetap permanen
     }
 
     // Assign functions to global window object immediately
@@ -1251,7 +1258,7 @@ search-box .input-group {
   }
 
   .badge-sent {
-    background: linear-gradient(135deg, #0401ccff 0%, #020daaff 100%);
+    background: #083E40;
     color: white;
   }
 
@@ -1544,9 +1551,9 @@ search-box .input-group {
 
   /* Special state for sent documents */
   .badge-status.badge-sent {
-    background: linear-gradient(135deg, #0401ccff 0%, #020daaff 100%);
+    background: #083E40;
     color: white;
-    border-color: #0401ccff;
+    border-color: #083E40;
     position: relative;
   }
 
@@ -2582,12 +2589,25 @@ search-box .input-group {
     <tbody>
       @forelse($dokumens ?? [] as $dokumen)
       @php
-        // Fix: Document should only be locked if it has NO deadline AND is in initial sent_to_ibub status
+        // Document is locked if:
+        // 1. It has NO deadline AND
+        // 2. Status is 'sent_to_ibub' OR 'sedang diproses' (newly approved from inbox) AND
+        // 3. It's not a returned document (from departments/bidangs)
         // Documents returned from departments/bidangs should not be locked even if they have no deadline initially
-        $isLocked = is_null($dokumen->deadline_at) && in_array($dokumen->status, ['sent_to_ibub']) && is_null($dokumen->returned_to_department_at) && is_null($dokumen->returned_to_bidang_at);
+        $isLocked = is_null($dokumen->deadline_at) 
+                    && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses']) 
+                    && is_null($dokumen->returned_to_department_at) 
+                    && is_null($dokumen->returned_to_bidang_at);
+
+        $isReturnedStatus = Str::startsWith($dokumen->status, 'returned_') 
+                            || in_array($dokumen->status, ['returned_to_department']);
+
+        if ($isReturnedStatus || $dokumen->inbox_approval_status === 'rejected') {
+          $isLocked = false;
+        }
       @endphp
       <tr class="main-row {{ $isLocked ? 'locked-row' : '' }}" onclick="toggleDetail(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen (bisa dibuka walau status sudah terkirim)" style="cursor: pointer;">
-        <td class="col-no" style="text-align: center;">{{ $loop->iteration }}</td>
+        <td class="col-no" style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $loop->iteration }}</td>
         @foreach($selectedColumns as $col)
           @if($col !== 'status')
           <td class="col-{{ $col }}">
@@ -2644,10 +2664,8 @@ search-box .input-group {
             <span class="badge-status badge-dikembalikan" style="position: relative;">
               <i class="fa-solid fa-times-circle me-1"></i>
               <span>Dokumen Ditolak, 
-                <a href="#" 
-                   class="text-white text-decoration-underline fw-bold" 
-                   data-bs-toggle="modal" 
-                   data-bs-target="#rejectReasonModal{{ $dokumen->id }}"
+                <a href="{{ route('ibub.rejected.show', $dokumen) }}"
+                   class="text-white text-decoration-underline fw-bold"
                    onclick="event.stopPropagation();"
                    style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
                   Alasan
@@ -2655,6 +2673,7 @@ search-box .input-group {
               </span>
             </span>
           @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_ibub')
+            {{-- Dokumen yang benar-benar sudah selesai diproses --}}
             <span class="badge-status badge-selesai">✓ {{ $dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai' }}</span>
           @elseif($dokumen->status == 'rejected_ibub')
             <span class="badge-status badge-dikembalikan">Rejected</span>
@@ -2667,30 +2686,40 @@ search-box .input-group {
               <i class="fa-solid fa-clock me-1"></i>
               <span>Waiting Approve</span>
             </span>
-          @elseif($dokumen->inbox_approval_status == 'approved')
-            <span class="badge-status badge-selesai">
-              <i class="fa-solid fa-check-circle me-1"></i>
-              <span>Document Approved</span>
-            </span>
+          @elseif($dokumen->status == 'sedang diproses' && $isLocked)
+            {{-- Dokumen yang baru di-approve dari inbox tapi belum di-set deadline --}}
+            <span class="badge-status badge-locked">🔒 Terkunci</span>
+          @elseif($dokumen->status == 'sedang diproses')
+            {{-- Dokumen yang baru di-approve dari inbox dan sudah di-set deadline --}}
+            <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
           @elseif(in_array($dokumen->status, ['sent_to_ibub']) && !$isLocked)
+            {{-- Dokumen yang sedang diproses (status lama) --}}
             <span class="badge-status badge-proses">⏳ Diproses</span>
           @elseif($dokumen->status == 'sent_to_ibub' && $isLocked)
             <span class="badge-status badge-locked">🔒 Terkunci</span>
           @elseif($dokumen->status == 'returned_to_ibua')
-            <span class="badge-status badge-dikembalikan">Dikembalikan</span>
+            <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
+          @elseif($dokumen->status == 'returned_to_department')
+            <span class="badge-status badge-dikembalikan">
+              Dikembalikan dari {{ Str::title($dokumen->target_department ?? 'Bagian Terkait') }}
+            </span>
+          @elseif(Str::startsWith($dokumen->status, 'returned_from_'))
+            @php
+              $source = Str::after($dokumen->status, 'returned_from_');
+              $sourceLabel = match($source) {
+                'akutansi' => 'Team Akutansi',
+                'perpajakan' => 'Team Perpajakan',
+                default => Str::title(str_replace('_', ' ', $source)),
+              };
+            @endphp
+            <span class="badge-status badge-dikembalikan">Dikembalikan dari {{ $sourceLabel }}</span>
           @else
             <span class="badge-status badge-proses">⏳ {{ ucfirst($dokumen->status) }}</span>
           @endif
         </td>
         <td class="col-action" onclick="event.stopPropagation()">
           <div class="action-buttons">
-            @if($dokumen->inbox_approval_status == 'approved')
-              <!-- Dokumen sudah di-approve - hanya tampilkan tombol Kirim yang disabled -->
-              <button type="button" class="btn-action btn-kirim" disabled title="Dokumen sudah di-approve">
-                <i class="fa-solid fa-paper-plane"></i>
-                <span>Kirim</span>
-              </button>
-            @elseif($isLocked)
+            @if($isLocked)
               <!-- Locked state - tampilkan button Set Deadline -->
               <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
                 <i class="fa-solid fa-clock"></i>
@@ -2722,7 +2751,7 @@ search-box .input-group {
                   <span>Edit</span>
                 </button>
               </a>
-              @if(in_array($dokumen->status, ['sent_to_ibub', 'approved_ibub', 'sedang diproses']))
+              @if(in_array($dokumen->status, ['sent_to_ibub', 'approved_ibub', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']))
               <button type="button" class="btn-action btn-kirim" onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
                 <i class="fa-solid fa-paper-plane"></i>
                 <span>Kirim</span>
@@ -2763,91 +2792,6 @@ search-box .input-group {
   </table>
   </div>
 </div>
-
-{{-- Modal untuk menampilkan alasan reject dari inbox --}}
-@if(isset($dokumens))
-  @foreach($dokumens as $dokumen)
-    @if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason)
-    <div class="modal fade" id="rejectReasonModal{{ $dokumen->id }}" tabindex="-1" aria-labelledby="rejectReasonModalLabel{{ $dokumen->id }}" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title" id="rejectReasonModalLabel{{ $dokumen->id }}">
-              <i class="fas fa-times-circle me-2"></i>Alasan Penolakan Dokumen
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label fw-bold">Nomor Agenda:</label>
-              <p class="mb-0">{{ $dokumen->nomor_agenda }}</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">Nomor SPP:</label>
-              <p class="mb-0">{{ $dokumen->nomor_spp }}</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">Ditolak oleh:</label>
-              <p class="mb-0">
-                @php
-                  $rejectedBy = null;
-                  // Cari dari activity log
-                  $rejectLog = $dokumen->activityLogs()
-                    ->where('action', 'inbox_rejected')
-                    ->latest('action_at')
-                    ->first();
-                  
-                  if ($rejectLog) {
-                    $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? null;
-                  }
-                  
-                  // Fallback ke inbox_approval_for jika masih ada
-                  if (!$rejectedBy && $dokumen->inbox_approval_for) {
-                    $rejectedBy = $dokumen->inbox_approval_for;
-                  }
-                  
-                  // Format nama yang lebih ramah
-                  if ($rejectedBy) {
-                    $nameMap = [
-                      'IbuB' => 'Ibu Yuni',
-                      'ibuB' => 'Ibu Yuni',
-                      'Perpajakan' => 'Team Perpajakan',
-                      'perpajakan' => 'Team Perpajakan',
-                      'Akutansi' => 'Team Akutansi',
-                      'akutansi' => 'Team Akutansi',
-                    ];
-                    $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-                  }
-                @endphp
-                {{ $rejectedBy ?? '-' }}
-              </p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold">Tanggal Penolakan:</label>
-              <p class="mb-0">
-                @if($dokumen->inbox_approval_responded_at)
-                  {{ $dokumen->inbox_approval_responded_at->format('d/m/Y H:i') }}
-                @else
-                  -
-                @endif
-              </p>
-            </div>
-            <div class="mb-0">
-              <label class="form-label fw-bold">Alasan Penolakan:</label>
-              <div class="alert alert-warning mb-0">
-                <p class="mb-0" style="white-space: pre-wrap;">{{ $dokumen->inbox_approval_reason }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    @endif
-  @endforeach
-@endif
 
 <!-- Pagination -->
 @if(isset($dokumens) && $dokumens->hasPages())

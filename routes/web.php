@@ -33,6 +33,49 @@ Route::middleware('autologin')->group(function () {
     Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
 });
 
+// Custom broadcast authentication route - Define BEFORE broadcast routes
+Route::post('/custom-broadcasting/auth', function (\Illuminate\Http\Request $request) {
+    try {
+        \Log::info('🔐 Custom broadcast auth attempt', [
+            'channel_name' => $request->input('channel_name'),
+            'socket_id' => $request->input('socket_id'),
+            'user_authenticated' => auth()->check(),
+            'session_id' => session()->getId(),
+        ]);
+
+        if (!auth()->check()) {
+            \Log::error('❌ Broadcast auth failed: User not authenticated');
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $channelName = $request->input('channel_name');
+        $socketId = $request->input('socket_id');
+
+        // For development: always approve private channels for authenticated users
+        if (str_starts_with($channelName, 'private-')) {
+            $authData = $socketId . ':' . md5($socketId . ':' . config('broadcasting.connections.pusher.key', ''));
+
+            \Log::info('✅ Custom broadcast auth successful', [
+                'channel' => $channelName,
+                'socket_id' => $socketId,
+                'user_id' => auth()->id(),
+                'user_role' => auth()->user()->role,
+            ]);
+
+            return response()->json(['auth' => $authData]);
+        }
+
+        \Log::warning('⚠️ Non-private channel request', ['channel' => $channelName]);
+        return response()->json(['error' => 'Invalid channel type'], 400);
+
+    } catch (\Exception $e) {
+        \Log::error('💥 Custom broadcast auth error: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Authentication failed'], 403);
+    }
+})->middleware(['web'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 Route::get('/', function () {
     return redirect('/login');
 });
@@ -106,9 +149,15 @@ Route::get('dashboard',[DashboardController::class, 'index'])
 Route::get('/ibua/check-rejected', [DashboardController::class, 'checkRejectedDocuments'])
     ->middleware('autologin', 'role:admin,ibua')
     ->name('ibua.checkRejected');
+Route::get('/ibua/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
+    ->middleware('autologin', 'role:admin,ibua')
+    ->name('ibua.rejected.show');
 Route::get('/ibub/check-rejected', [DashboardBController::class, 'checkRejectedDocuments'])
     ->middleware('autologin', 'role:admin,ibub')
     ->name('ibub.checkRejected');
+Route::get('/ibub/rejected/{dokumen}', [DashboardBController::class, 'showRejectedDocument'])
+    ->middleware('autologin', 'role:admin,ibub')
+    ->name('ibub.rejected.show');
 
 Route::get('dashboardB',[DashboardBController::class, 'index'])
     ->middleware('autologin', 'role:admin,ibub')
@@ -183,7 +232,9 @@ Route::get('/dokumens/{dokumen}/detail-ibua', [DokumenController::class, 'getDoc
 Route::get('/dokumens/{dokumen}/progress-ibua', [DokumenController::class, 'getDocumentProgressForIbuA'])->name('dokumens.progress-ibua');
 Route::put('/dokumens/{dokumen}', [DokumenController::class, 'update'])->name('dokumens.update');
 Route::delete('/dokumens/{dokumen}', [DokumenController::class, 'destroy'])->name('dokumens.destroy');
-Route::post('/dokumens/{dokumen}/send-to-ibub', [DokumenController::class, 'sendToIbuB'])->name('dokumens.sendToIbuB');
+Route::post('/dokumens/{dokumen}/send-to-ibub', [DokumenController::class, 'sendToIbuB'])
+    ->middleware(['autologin', 'role:ibuA,admin'])
+    ->name('dokumens.sendToIbuB');
 Route::get('/rekapan', [DokumenRekapanController::class, 'index'])->name('rekapan.index');
 
 // Autocomplete Routes
@@ -362,6 +413,19 @@ Route::get('/test-returned-broadcast', function() {
         ], 500);
     }
 });
+
+// Test route to check broadcast authentication
+Route::get('/test-broadcast-auth', function() {
+    $user = auth()->user();
+    return response()->json([
+        'authenticated' => auth()->check(),
+        'user_id' => $user?->id,
+        'user_role' => $user?->role,
+        'user_name' => $user?->name,
+        'session_id' => session()->getId(),
+        'csrf_token' => csrf_token()
+    ]);
+})->middleware('autologin');
 
 // Simple test route to trigger notification without broadcast
 Route::get('/test-trigger-notification', function() {

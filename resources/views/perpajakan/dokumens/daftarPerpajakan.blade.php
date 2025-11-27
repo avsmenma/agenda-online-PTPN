@@ -88,7 +88,7 @@
   .table-enhanced {
     border-collapse: separate;
     border-spacing: 0;
-    min-width: 1450px; /* Minimum width for horizontal scroll with uraian column */
+    min-width: 1470px; /* Minimum width for horizontal scroll with uraian column + larger action column */
     width: 100%;
   }
 
@@ -614,9 +614,51 @@
     text-align: center;
   }
   .table-enhanced .col-action {
-    width: 160px;
-    min-width: 160px;
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
     text-align: center;
+    overflow: hidden;
+    padding: 8px 4px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  .table-enhanced .col-action > * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .table-enhanced .col-action .action-buttons {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .table-enhanced .col-action .action-row {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .table-enhanced .col-action .btn-action {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .table-enhanced .col-action .action-buttons {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .table-enhanced .col-action .action-row {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .table-enhanced .col-action .btn-action {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .table-dokumen tbody tr.main-row {
@@ -1075,6 +1117,8 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    overflow: hidden; /* Prevent content from spilling out */
+    box-sizing: border-box;
   }
 
   .action-row {
@@ -1083,16 +1127,18 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .btn-action {
     min-width: 44px;
     min-height: 44px;
-    padding: 8px 12px;
+    padding: 8px 10px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
@@ -1105,13 +1151,30 @@
     text-decoration: none;
     user-select: none;
     flex: 1;
-    max-width: 140px;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .btn-action span {
     font-size: 10px;
     font-weight: 600;
     white-space: nowrap;
+  }
+
+  /* Lock info styling - ensure it stays within action container */
+  .lock-info {
+    font-size: 10px;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(107, 114, 128, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
   }
 
   .btn-action:hover {
@@ -1143,9 +1206,14 @@
   .btn-set-deadline {
     background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%) !important;
     color: white;
-    border: 2px solid rgba(255, 193, 7, 0.3);
+    border: 1px solid rgba(255, 193, 7, 0.3) !important;
     position: relative;
     overflow: hidden;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 8px 8px !important;
+    font-size: 10px !important;
   }
 
   .btn-set-deadline::before {
@@ -1167,37 +1235,6 @@
   }
 
   .btn-set-deadline i {
-    animation: pulse 2s infinite;
-  }
-
-  /* Return Button Styling */
-  .btn-return {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    border: 2px solid rgba(220, 53, 69, 0.3);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-return::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    animation: shimmer 2s infinite;
-  }
-
-  .btn-return:hover {
-    background: linear-gradient(135deg, #c82333 0%, #a02522 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-    border-color: rgba(220, 53, 69, 0.6);
-  }
-
-  .btn-return i {
     animation: pulse 2s infinite;
   }
 
@@ -1451,7 +1488,7 @@
 
   @media (max-width: 576px) {
     .table-enhanced {
-      min-width: 1450px; /* Still allow horizontal scroll on very small screens */
+      min-width: 1470px; /* Still allow horizontal scroll on very small screens */
     }
 
     .table-enhanced .col-no { min-width: 60px; }
@@ -1461,7 +1498,7 @@
     .table-enhanced .col-uraian { min-width: 280px; }
     .table-enhanced .col-status { min-width: 140px; }
     .table-enhanced .col-deadline { min-width: 130px; }
-    .table-enhanced .col-action { min-width: 140px; }
+    .table-enhanced .col-action { min-width: 160px; }
   }
 
   @keyframes pulse {
@@ -1963,7 +2000,7 @@
           }
         @endphp
         <tr class="main-row {{ $isLocked ? 'locked-row' : '' }}" onclick="toggleDetail({{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen">
-          <td style="text-align: center;">{{ $index + 1 }}</td>
+          <td style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
             <td class="col-{{ $col }}">
@@ -2068,28 +2105,22 @@
                 @endif
               </div>
             @else
-              <div class="no-deadline">
-                <i class="fa-solid fa-clock"></i>
-                <span>Belum ada deadline</span>
-              </div>
+              <span style="color: #9ca3af;">-</span>
             @endif
           </td>
           <td onclick="event.stopPropagation()">
             <div class="action-buttons">
               @if($isLocked)
-                <!-- Locked state - hanya tampilkan Set Deadline dan Return -->
+                <!-- Locked state - hanya tampilkan Set Deadline dengan keterangan -->
                 @unless($isSentToAkutansi)
                   <div class="action-row">
-                    <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
-                      <i class="fa-solid fa-clock"></i>
+                    <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Dokumen terkunci - Tetapkan Deadline untuk membuka editing">
+                      <i class="fa-solid fa-lock"></i>
                       <span>Set Deadline</span>
                     </button>
                   </div>
-                  <div class="action-row">
-                    <button type="button" class="btn-action btn-return" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan ke Ibu Yuni">
-                      <i class="fa-solid fa-undo"></i>
-                      <span>Return</span>
-                    </button>
+                  <div class="lock-info">
+                    <i class="fa-solid fa-info-circle"></i> Dokumen dikunci
                   </div>
                 @endunless
               @else
@@ -2102,12 +2133,6 @@
                         <span>Edit</span>
                       </button>
                     </a>
-                  </div>
-                  <div class="action-row">
-                    <button type="button" class="btn-action btn-return" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan ke Ibu Yuni">
-                      <i class="fa-solid fa-undo"></i>
-                      <span>Return</span>
-                    </button>
                   </div>
                 @endunless
                 <div class="action-row">
@@ -2858,182 +2883,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// Open Return Modal
-function openReturnModal(docId) {
-  document.getElementById('returnDocId').value = docId;
-  document.getElementById('returnReason').value = '';
-  document.getElementById('returnCharCount').textContent = '0';
-  const modal = new bootstrap.Modal(document.getElementById('returnModal'));
-  modal.show();
-}
-
-// Character counter for return reason
-document.addEventListener('DOMContentLoaded', function() {
-  const returnReason = document.getElementById('returnReason');
-  const returnCharCount = document.getElementById('returnCharCount');
-
-  if (returnReason && returnCharCount) {
-    returnReason.addEventListener('input', function() {
-      const currentLength = this.value.length;
-      returnCharCount.textContent = currentLength;
-
-      if (currentLength > 500) {
-        returnCharCount.classList.add('text-danger');
-      } else {
-        returnCharCount.classList.remove('text-danger');
-      }
-    });
-  }
-});
-
-// Show validation warning modal
-function showReturnValidationWarning(title, message) {
-  document.getElementById('returnValidationWarningTitle').textContent = title;
-  document.getElementById('returnValidationWarningMessage').textContent = message;
-  const warningModalEl = document.getElementById('returnValidationWarningModal');
-  const warningModal = new bootstrap.Modal(warningModalEl);
-  
-  // Ensure return modal stays open
-  const returnModal = bootstrap.Modal.getInstance(document.getElementById('returnModal'));
-  if (!returnModal || !returnModal._isShown) {
-    // If return modal is not open, open it first
-    const returnModalNew = new bootstrap.Modal(document.getElementById('returnModal'));
-    returnModalNew.show();
-  }
-  
-  // When warning modal is closed, focus back to return reason textarea
-  warningModalEl.addEventListener('hidden.bs.modal', function() {
-    const returnReasonTextarea = document.getElementById('returnReason');
-    if (returnReasonTextarea) {
-      setTimeout(() => {
-        returnReasonTextarea.focus();
-        returnReasonTextarea.select();
-      }, 100);
-    }
-  }, { once: true });
-  
-  warningModal.show();
-}
-
-// Confirm Return
-function confirmReturn() {
-  const docId = document.getElementById('returnDocId').value;
-  const returnReason = document.getElementById('returnReason').value.trim();
-
-  // Validation
-  if (!returnReason) {
-    showReturnValidationWarning(
-      'Alasan Pengembalian Harus Diisi!',
-      'Silakan isi alasan pengembalian terlebih dahulu sebelum mengembalikan dokumen. Alasan pengembalian wajib diisi untuk keperluan dokumentasi dan tracking.'
-    );
-    return;
-  }
-
-  if (returnReason.length < 10) {
-    showReturnValidationWarning(
-      'Alasan Pengembalian Terlalu Singkat!',
-      'Alasan pengembalian minimal 10 karakter. Mohon jelaskan dengan lebih detail agar Ibu Yuni dapat memahami alasan pengembalian dokumen ini.'
-    );
-    return;
-  }
-
-  if (returnReason.length > 500) {
-    showReturnValidationWarning(
-      'Alasan Pengembalian Terlalu Panjang!',
-      'Alasan pengembalian maksimal 500 karakter. Silakan ringkas alasan pengembalian Anda.'
-    );
-    return;
-  }
-
-  // Show confirmation modal with return reason
-  const confirmationModal = new bootstrap.Modal(document.getElementById('returnConfirmationModal'));
-  const reasonDisplay = document.getElementById('returnConfirmationReason');
-  const displayReason = returnReason.length > 200 ? returnReason.substring(0, 200) + '...' : returnReason;
-  reasonDisplay.textContent = displayReason;
-  
-  // Store data for final confirmation
-  document.getElementById('confirmReturnBtn').setAttribute('data-doc-id', docId);
-  document.getElementById('confirmReturnBtn').setAttribute('data-return-reason', returnReason);
-  
-  // Close return modal and show confirmation modal
-  const returnModal = bootstrap.Modal.getInstance(document.getElementById('returnModal'));
-  returnModal.hide();
-  
-  confirmationModal.show();
-}
-
-// Final confirmation and execute return
-function executeReturn() {
-  const docId = document.getElementById('confirmReturnBtn').getAttribute('data-doc-id');
-  const returnReason = document.getElementById('confirmReturnBtn').getAttribute('data-return-reason');
-  
-  if (!docId || !returnReason) {
-    console.error('Missing document ID or return reason');
-    return;
-  }
-
-  // Close confirmation modal
-  const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('returnConfirmationModal'));
-  confirmationModal.hide();
-
-  // Show loading state
-  const submitBtn = document.querySelector('#returnModal .btn-danger');
-  const originalText = submitBtn ? submitBtn.innerHTML : 'Kembalikan';
-
-  // AJAX call to return document
-  fetch(`/dokumensPerpajakan/${docId}/return`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify({
-      return_reason: returnReason
-    })
-  })
-  .then(async response => {
-    // Check if response is ok (status 200-299)
-    if (!response.ok) {
-      // Try to parse error response
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (e) {
-        errorData = { message: `Server error: ${response.status} ${response.statusText}` };
-      }
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      // Show success modal
-      const successModal = new bootstrap.Modal(document.getElementById('returnSuccessModal'));
-      successModal.show();
-      
-      // Reload page when success modal is closed
-      const successModalEl = document.getElementById('returnSuccessModal');
-      successModalEl.addEventListener('hidden.bs.modal', function() {
-        location.reload();
-      }, { once: true });
-    } else {
-      alert('❌ Gagal mengembalikan dokumen: ' + (data.message || 'Terjadi kesalahan tidak diketahui'));
-    }
-  })
-  .catch(error => {
-    console.error('Error returning document:', error);
-    alert('❌ Gagal mengembalikan dokumen: ' + (error.message || 'Terjadi kesalahan saat mengembalikan dokumen. Silakan coba lagi.'));
-  });
-}
-
-// Initialize confirmation button click handler
-document.addEventListener('DOMContentLoaded', function() {
-  const confirmReturnBtn = document.getElementById('confirmReturnBtn');
-  if (confirmReturnBtn) {
-    confirmReturnBtn.addEventListener('click', executeReturn);
-  }
-});
+// Return functionality has been removed as it's no longer needed
 
 let currentSendButton = null;
 let currentSendButtonOriginalHTML = '';

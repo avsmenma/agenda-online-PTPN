@@ -1132,6 +1132,51 @@
     border-color: #083E40;
   }
 
+  /* State 2a: Document Approved - Special styling */
+  .badge-status.badge-approved {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border-color: #083E40;
+    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.4);
+    position: relative;
+    overflow: hidden;
+    border-width: 2.5px; /* Slightly thicker border */
+  }
+
+  .badge-status.badge-approved::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer-approved 2.5s infinite;
+  }
+
+  .badge-status.badge-approved::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+    animation: pulse-approved 2s infinite;
+  }
+
+  @keyframes pulse-approved {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.3); }
+  }
+
+  @keyframes shimmer-approved {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
   .badge-status.badge-terkirim::after {
     content: '';
     display: inline-block;
@@ -1203,6 +1248,10 @@
       width: 4px;
       height: 4px;
       margin-left: 4px;
+    }
+
+    .badge-status.badge-approved::before {
+      animation-duration: 3s; /* Slower animation on mobile */
     }
   }
 
@@ -1846,8 +1895,13 @@
                   <i class="fa-solid fa-clock me-1"></i>
                   <span>Waiting Approve</span>
                 </span>
+              @elseif($dokumen->status == 'sedang diproses' && $dokumen->inbox_approval_status == 'approved')
+                <span class="badge-status badge-approved">
+                  <i class="fa-solid fa-check-circle me-1"></i>
+                  <span>Document Approved</span>
+                </span>
               @elseif($dokumen->status == 'sent_to_ibub' && $dokumen->inbox_approval_status == 'approved')
-                <span class="badge-status badge-terkirim">
+                <span class="badge-status badge-approved">
                   <i class="fa-solid fa-check-circle me-1"></i>
                   <span>Document Approved</span>
                 </span>
@@ -2490,13 +2544,19 @@ function showNotification(message, type = 'info') {
     notification.classList.add('show');
   }, 10);
 
-  // Auto remove
-  setTimeout(() => {
-    notification.classList.remove('show');
+  // Auto-hide untuk notifikasi success/error biasa setelah 4 detik
+  // Notifikasi dokumen masuk/reject tetap permanen
+  if (type === 'success' || type === 'error') {
     setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 300);
-  }, 3000);
+      notification.classList.remove('show');
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.parentElement.removeChild(notification);
+        }
+      }, 300);
+    }, 4000); // 4 detik untuk notifikasi success/error biasa
+  }
+  // Jika type info atau dokumen masuk/reject, tetap permanen
 }
 
 // Add notification styles

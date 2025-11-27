@@ -108,12 +108,8 @@ class DashboardBController extends Controller
             })
             ->where('status', '!=', 'returned_to_bidang')
             ->orderByRaw("
-                CASE
-                    WHEN status = 'sedang_diproses' AND current_handler = 'ibuB' THEN 1
-                    WHEN current_handler = 'ibuB' THEN 2
-                    ELSE 3
-                END ASC,
-                COALESCE(sent_to_ibub_at, updated_at, created_at) DESC
+                COALESCE(sent_to_ibub_at, created_at) DESC,
+                id DESC
             ")
             ->select([
                 'id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah',
@@ -1078,7 +1074,8 @@ class DashboardBController extends Controller
                 ], 403);
             }
 
-            $validStatuses = ['sent_to_ibub', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
+            // Valid statuses untuk set deadline: dokumen yang baru di-approve dari inbox atau sedang diproses
+            $validStatuses = ['sent_to_ibub', 'sedang diproses', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
             if (!in_array($dokumen->status, $validStatuses)) {
                 Log::warning('Deadline set failed - Invalid document status', [
                     'document_id' => $dokumen->id,
@@ -2093,14 +2090,31 @@ class DashboardBController extends Controller
 
             // Get last check time from request (dari localStorage client)
             $lastCheckTime = $request->input('last_check_time');
-            $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : now()->subHours(24);
+            
+            // Cari dokumen yang di-reject dalam 24 jam terakhir (untuk memastikan notifikasi selalu muncul)
+            // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
+            $checkFrom24Hours = now()->subHours(24);
+            $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
+            
+            // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
+            if ($checkFrom->gt($checkFrom24Hours)) {
+                $checkFrom = $checkFrom24Hours;
+            }
 
-            // Cari dokumen yang di-reject dari inbox Perpajakan atau Akutansi setelah last check
+            \Log::info('IbuB checkRejectedDocuments called', [
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+                'last_check_time' => $lastCheckTime,
+                'check_from' => $checkFrom->toIso8601String(),
+            ]);
+
+            // Cari dokumen yang di-reject dari inbox Perpajakan atau Akutansi dalam 24 jam terakhir
             // Dokumen yang dikembalikan ke IbuB setelah di-reject dari inbox
             $rejectedDocuments = Dokumen::where('current_handler', 'ibuB')
                 ->where('inbox_approval_status', 'rejected')
                 ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi'])
-                ->where('inbox_approval_responded_at', '>', $checkFrom)
+                ->where('inbox_approval_responded_at', '>=', $checkFrom)
+                ->whereNotNull('inbox_approval_responded_at')
                 ->with('activityLogs')
                 ->orderBy('inbox_approval_responded_at', 'desc')
                 ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_responded_at', 'inbox_approval_reason', 'inbox_approval_for'])
@@ -2151,7 +2165,7 @@ class DashboardBController extends Controller
                         'rejected_at' => $doc->inbox_approval_responded_at->format('d/m/Y H:i'),
                         'rejected_by' => $rejectedBy,
                         'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
-                        'url' => route('dokumensB.index') . '#doc-' . $doc->id,
+                        'url' => route('ibub.rejected.show', $doc->id),
                     ];
                 }),
                 'current_time' => now()->toIso8601String(),
@@ -2163,6 +2177,71 @@ class DashboardBController extends Controller
                 'success' => false,
                 'message' => 'Gagal memeriksa dokumen yang ditolak'
             ], 500);
+        }
+    }
+
+    /**
+     * Menampilkan detail dokumen yang di-reject dari inbox Perpajakan/Akutansi untuk IbuB
+     */
+    public function showRejectedDocument(Dokumen $dokumen)
+    {
+        try {
+            $user = auth()->user();
+            
+            // Hanya allow IbuB
+            if (!$user || !in_array(strtolower($user->role), ['ibub', 'ibu b', 'ibu yuni'])) {
+                abort(403, 'Unauthorized access');
+            }
+
+            // Validasi: dokumen harus di-reject dari inbox Perpajakan/Akutansi dan dikembalikan ke IbuB
+            if ($dokumen->inbox_approval_status !== 'rejected' ||
+                !in_array($dokumen->inbox_approval_for, ['Perpajakan', 'Akutansi']) ||
+                strtolower($dokumen->current_handler) !== 'ibub') {
+                abort(404, 'Dokumen tidak ditemukan atau tidak valid');
+            }
+
+            // Get rejected by name from activity log
+            $rejectLog = $dokumen->activityLogs()
+                ->where('action', 'inbox_rejected')
+                ->latest('action_at')
+                ->first();
+            
+            $rejectedBy = 'Unknown';
+            if ($rejectLog) {
+                $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
+                // Map role to display name
+                $nameMap = [
+                    'Perpajakan' => 'Team Perpajakan',
+                    'perpajakan' => 'Team Perpajakan',
+                    'Akutansi' => 'Team Akutansi',
+                    'akutansi' => 'Team Akutansi',
+                ];
+                $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
+            } else if ($dokumen->inbox_approval_for) {
+                $nameMap = [
+                    'Perpajakan' => 'Team Perpajakan',
+                    'Akutansi' => 'Team Akutansi',
+                ];
+                $rejectedBy = $nameMap[$dokumen->inbox_approval_for] ?? $dokumen->inbox_approval_for;
+            }
+
+            $data = [
+                "title" => "Detail Dokumen Ditolak",
+                "module" => "IbuB",
+                "menuDokumen" => "",
+                "menuDaftarDokumen" => "",
+                "menuDashboard" => "",
+                "dokumen" => $dokumen,
+                "rejectedBy" => $rejectedBy,
+                "rejectionReason" => $dokumen->inbox_approval_reason,
+                "rejectedAt" => $dokumen->inbox_approval_responded_at,
+            ];
+
+            return view('ibuB.rejected-detail', $data);
+
+        } catch (\Exception $e) {
+            \Log::error('Error showing rejected document for IbuB: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memuat detail dokumen yang ditolak');
         }
     }
 }

@@ -505,6 +505,8 @@ class DashboardPerpajakanController extends Controller
                 : null;
 
             // Update both deadline_at (for locking) and deadline_perpajakan_at (for perpajakan-specific tracking)
+            // Set status tetap 'sent_to_perpajakan' untuk memastikan dokumen tidak terlock lagi setelah deadline di-set
+            // Status akan berubah saat dokumen selesai diproses atau dikirim ke akutansi
             $dokumen->update([
                 'deadline_at' => $deadlineAt, // This unlocks the document
                 'deadline_days' => $deadlineDays,
@@ -512,7 +514,8 @@ class DashboardPerpajakanController extends Controller
                 'deadline_perpajakan_at' => $deadlineAt,
                 'deadline_perpajakan_days' => $deadlineDays,
                 'deadline_perpajakan_note' => $deadlineNote,
-                'status' => 'sedang diproses', // Change status to allow editing
+                // Jangan ubah status, biarkan tetap 'sent_to_perpajakan' agar dokumen tidak terlock lagi
+                // Status akan berubah saat dokumen selesai diproses atau dikirim
                 'processed_at' => now(),
             ]);
 
@@ -764,7 +767,7 @@ class DashboardPerpajakanController extends Controller
             ]);
 
             // Update all fields in a single call to avoid multiple queries and potential issues
-            $dokumen->update([
+            $updateData = [
                 'status' => 'returned_to_department',
                 'current_handler' => 'ibuB',
                 'returned_from_perpajakan_at' => now(),
@@ -774,10 +777,17 @@ class DashboardPerpajakanController extends Controller
                 'tanggal_selesai_verifikasi_pajak' => null,
                 'deadline_perpajakan_at' => null,
                 'deadline_perpajakan_note' => null,
-                // Clear sent timestamps and mark when sent back to ibuB
+                // Clear sent timestamps
                 'sent_to_perpajakan_at' => null,
-                'sent_to_ibub_at' => now(),
-            ]);
+            ];
+            
+            // Only set sent_to_ibub_at if it's null (first time entering IbuB)
+            // This preserves the original entry time for consistent ordering
+            if (is_null($dokumen->sent_to_ibub_at)) {
+                $updateData['sent_to_ibub_at'] = now();
+            }
+            
+            $dokumen->update($updateData);
 
             \DB::commit();
 

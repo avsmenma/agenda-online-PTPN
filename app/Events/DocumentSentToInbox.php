@@ -37,13 +37,14 @@ class DocumentSentToInbox implements ShouldBroadcast
 
     /**
      * Get the channels the event should broadcast on.
+     * Using Public Channel for development - no authentication required
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('inbox.' . strtolower($this->recipientRole)),
+            new \Illuminate\Broadcasting\Channel('inbox-updates'), // Public channel
         ];
     }
 
@@ -66,6 +67,7 @@ class DocumentSentToInbox implements ShouldBroadcast
             'dokumen' => $this->dokumen,
             'recipientRole' => $this->recipientRole,
             'message' => "Dokumen baru menunggu persetujuan di inbox {$this->recipientRole}",
+            'timestamp' => now()->toISOString(),
         ];
     }
 }

@@ -25,11 +25,28 @@ class InboxController extends Controller
             }
 
             // Ambil dokumen yang menunggu approval di inbox untuk role user ini
+            // Debug logging
+            \Log::info('InboxController::index - Fetching documents', [
+                'user_id' => $user->id ?? null,
+                'user_role_raw' => $user->role ?? null,
+                'user_role_mapped' => $userRole,
+                'query_conditions' => [
+                    'inbox_approval_for' => $userRole,
+                    'inbox_approval_status' => 'pending',
+                ],
+            ]);
+            
             $documents = Dokumen::with('activityLogs')
                 ->where('inbox_approval_for', $userRole)
                 ->where('inbox_approval_status', 'pending')
                 ->latest('inbox_approval_sent_at')
                 ->paginate(10);
+            
+            \Log::info('InboxController::index - Documents found', [
+                'user_role' => $userRole,
+                'documents_count' => $documents->count(),
+                'document_ids' => $documents->pluck('id')->toArray(),
+            ]);
 
             // Hitung statistik
             $pendingCount = Dokumen::where('inbox_approval_for', $userRole)
@@ -198,24 +215,35 @@ class InboxController extends Controller
     private function getUserRole($user)
     {
         if (!$user) {
+            \Log::warning('getUserRole: User is null');
             return null;
         }
 
         // Prioritize role field over name field
         if (isset($user->role)) {
             $role = $user->role;
-            // Map role ke format yang sesuai untuk inbox
+            // Map role ke format yang sesuai untuk inbox (must match enum: IbuB, Perpajakan, Akutansi)
             $roleMap = [
                 'ibuB' => 'IbuB',
                 'IbuB' => 'IbuB',
                 'Ibu B' => 'IbuB',
+                'ibu B' => 'IbuB',
                 'Ibu Yuni' => 'IbuB',
+                'ibu yuni' => 'IbuB',
                 'perpajakan' => 'Perpajakan',
                 'Perpajakan' => 'Perpajakan',
                 'akutansi' => 'Akutansi',
                 'Akutansi' => 'Akutansi',
             ];
-            return $roleMap[$role] ?? $role;
+            $mappedRole = $roleMap[$role] ?? $role;
+            
+            \Log::info('getUserRole: Mapped from role field', [
+                'user_id' => $user->id,
+                'original_role' => $role,
+                'mapped_role' => $mappedRole,
+            ]);
+            
+            return $mappedRole;
         }
 
         // Fallback ke field name
@@ -224,16 +252,35 @@ class InboxController extends Controller
             $nameToRole = [
                 'Ibu A' => 'ibuA',
                 'IbuA' => 'ibuA',
+                'ibuA' => 'ibuA',
+                'Ibu Tarapul' => 'ibuA',
                 'IbuB' => 'IbuB',
                 'Ibu B' => 'IbuB',
+                'ibuB' => 'IbuB',
+                'ibu B' => 'IbuB',
                 'Ibu Yuni' => 'IbuB',
+                'ibu yuni' => 'IbuB',
                 'Perpajakan' => 'Perpajakan',
+                'perpajakan' => 'Perpajakan',
                 'Akutansi' => 'Akutansi',
+                'akutansi' => 'Akutansi',
                 'Pembayaran' => 'pembayaran'
             ];
-            return $nameToRole[$name] ?? null;
+            $mappedRole = $nameToRole[$name] ?? null;
+            
+            \Log::info('getUserRole: Mapped from name field', [
+                'user_id' => $user->id,
+                'user_name' => $name,
+                'mapped_role' => $mappedRole,
+            ]);
+            
+            return $mappedRole;
         }
 
+        \Log::warning('getUserRole: No role or name field found', [
+            'user_id' => $user->id ?? null,
+        ]);
+        
         return null;
     }
 
