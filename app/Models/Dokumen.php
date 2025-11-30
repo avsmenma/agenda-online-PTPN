@@ -654,6 +654,40 @@ class Dokumen extends Model
     }
 
     /**
+     * Get status display name in Indonesian
+     * Helper method untuk menampilkan status dalam format yang user-friendly
+     */
+    public function getStatusDisplay(): string
+    {
+        $statusMap = [
+            'draft' => 'Draft',
+            'sedang diproses' => 'Sedang Diproses',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
+            'proses_ibub' => 'Diproses Ibu Yuni',
+            'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
+            'proses_perpajakan' => 'Diproses Team Perpajakan',
+            'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
+            'proses_akutansi' => 'Diproses Team Akutansi',
+            'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
+            'proses_pembayaran' => 'Diproses Team Pembayaran',
+            'sent_to_pembayaran' => 'Terkirim ke Team Pembayaran',
+            'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
+            'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
+            'selesai' => 'Selesai',
+            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_department' => 'Dikembalikan ke Department',
+            'returned_to_bidang' => 'Dikembalikan ke Bidang',
+            'returned_from_ibub' => 'Dikembalikan dari Ibu Yuni',
+            'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
+            'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
+        ];
+
+        return $statusMap[$this->status] ?? ucfirst(str_replace('_', ' ', $this->status));
+    }
+
+    /**
      * Helper untuk menampilkan status yang benar ke Ibu Tarapul
      * Milestone-aware status display untuk mencegah kesalahan architcktural
      */
