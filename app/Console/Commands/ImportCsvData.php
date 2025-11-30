@@ -93,14 +93,17 @@ class ImportCsvData extends Command
                         'created_by' => 'csv_import'
                     ];
 
-                    // Validasi data penting
-                    if (empty($data['nomor_spp']) || empty($data['nilai_rupiah'])) {
-                        $reason = [];
-                        if (empty($data['nomor_spp'])) $reason[] = 'nomor_spp kosong';
-                        if (empty($data['nilai_rupiah'])) $reason[] = 'nilai_rupiah kosong';
-                        $this->warn("Baris {$lineNumber}: Data tidak lengkap (" . implode(', ', $reason) . "), dilewati");
-                        $skippedCount++;
-                        continue;
+                    // Handle nilai default untuk field yang kosong
+                    if (empty($data['nomor_spp'])) {
+                        // Generate nomor_spp otomatis jika kosong
+                        $data['nomor_spp'] = 'SPP-AUTO-' . str_pad($lineNumber, 6, '0', STR_PAD_LEFT);
+                        $this->warn("Baris {$lineNumber}: nomor_spp kosong, menggunakan nilai default: {$data['nomor_spp']}");
+                    }
+                    
+                    if (empty($data['nilai_rupiah']) || $data['nilai_rupiah'] == 0) {
+                        // Gunakan 0 sebagai default jika nilai_rupiah kosong
+                        $data['nilai_rupiah'] = 0;
+                        $this->warn("Baris {$lineNumber}: nilai_rupiah kosong, menggunakan nilai default: 0");
                     }
 
                     // Handle tanggal_masuk yang null - gunakan tanggal_spp sebagai fallback
@@ -236,13 +239,13 @@ class ImportCsvData extends Command
      */
     private function parseCurrency($value)
     {
-        if (empty($value)) return null;
+        if (empty($value)) return 0;
 
         // Remove formatting and convert to decimal
         $cleanValue = str_replace(['.', ','], ['', ''], $value);
         $cleanValue = str_replace(['Rp', ' '], ['', ''], $cleanValue);
 
-        return is_numeric($cleanValue) ? (float) $cleanValue : null;
+        return is_numeric($cleanValue) ? (float) $cleanValue : 0;
     }
 
     /**

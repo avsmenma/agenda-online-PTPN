@@ -1432,7 +1432,10 @@
                             {{ $doc->jenis_dokumen ?? '-' }}
                             @break
                         @case('kebun')
-                            {{ $doc->kebun->nama_kebuns ?? '-' }}
+                            {{ $doc->kebun ?? $doc->nama_kebuns ?? '-' }}
+                            @break
+                        @case('uraian_spp')
+                            {{ $doc->uraian_spp ?? '-' }}
                             @break
                         @case('nomor_mirror')
                           {{ $doc->nomor_mirror ?? '-' }}

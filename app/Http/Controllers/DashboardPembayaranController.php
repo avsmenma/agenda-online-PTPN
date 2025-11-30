@@ -625,6 +625,7 @@ class DashboardPembayaranController extends Controller
             'jenis_sub_pekerjaan' => 'Jenis Subbagian',
             'nomor_mirror' => 'Nomor Miro',
             'nomor_spp' => 'No SPP',
+            'uraian_spp' => 'Uraian SPP',
             'tanggal_spp' => 'Tanggal SPP',
             'tanggal_berita_acara' => 'Tanggal BA',
             'no_berita_acara' => 'Nomor BA',
@@ -632,6 +633,7 @@ class DashboardPembayaranController extends Controller
             'no_spk' => 'Nomor SPK',
             'tanggal_spk' => 'Tanggal SPK',
             'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'kebun' => 'Kebun',
             'umur_dokumen_tanggal_masuk' => 'Umur Dokumen (Berdasarkan Tanggal Masuk)',
             'umur_dokumen_tanggal_spp' => 'Umur Dokumen (Berdasarkan Tanggal SPP)',
             'umur_dokumen_tanggal_ba' => 'Umur Dokumen (Berdasarkan Tanggal BA)',
@@ -902,6 +904,10 @@ class DashboardPembayaranController extends Controller
                 return $dokumen->nomor_mirror ?? '-';
             case 'tanggal_spp':
                 return $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-';
+            case 'uraian_spp':
+                return $dokumen->uraian_spp ?? '-';
+            case 'kebun':
+                return $dokumen->kebun ?? $dokumen->nama_kebuns ?? '-';
             case 'tanggal_berita_acara':
                 return $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-';
             case 'no_berita_acara':
