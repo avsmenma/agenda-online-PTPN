@@ -323,6 +323,15 @@ Route::get('/pengembalian-dokumensPembayaran', [DashboardPembayaranController::c
 Route::get('/rekapan-keterlambatan', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('rekapanKeterlambatan.index');
 Route::get('/rekapan-pembayaran', [DashboardPembayaranController::class, 'rekapan'])->name('pembayaran.rekapan');
 Route::get('/rekapan-pembayaran/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('pembayaran.rekapan.export');
+
+// Dashboard Pembayaran Routes
+Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {
+    Route::get('/', [DashboardPembayaranController::class, 'index'])->name('index');
+    Route::get('/import', [DashboardPembayaranController::class, 'showImportForm'])->name('import');
+    Route::post('/import-csv', [DashboardPembayaranController::class, 'importCsv'])->name('import-csv');
+    Route::get('/download-csv-template', [DashboardPembayaranController::class, 'downloadCsvTemplate'])->name('download-csv-template');
+    Route::post('/check-updates', [DashboardPembayaranController::class, 'checkUpdates']);
+});
 Route::get('/diagramPembayaran', [DashboardPembayaranController::class, 'diagram'])->name('diagramPembayaran.index');
 
 // Akutansi Routes

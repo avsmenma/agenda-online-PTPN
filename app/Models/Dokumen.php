@@ -93,6 +93,14 @@ class Dokumen extends Model
         'inbox_approval_responded_at',
         'inbox_approval_reason',
         'inbox_original_status',
+        // CSV Import additional fields
+        'nama_kebuns',
+        'no_ba',
+        'NO_PO',
+        'NO_MIRO_SES',
+        'DIBAYAR',
+        'BELUM_DIBAYAR',
+        'KATEGORI',
     ];
 
     protected $casts = [

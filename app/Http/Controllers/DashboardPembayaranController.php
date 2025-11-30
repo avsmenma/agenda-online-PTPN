@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\DokumenHelper;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class DashboardPembayaranController extends Controller
 {
@@ -1377,6 +1379,64 @@ class DashboardPembayaranController extends Controller
                 'message' => 'Failed to check updates: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Show import form
+     */
+    public function showImportForm()
+    {
+        return view('pembayaranNEW.importCsv');
+    }
+
+    /**
+     * Import CSV data
+     */
+    public function importCsv(Request $request)
+    {
+        // Validate request
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:10240', // Max 10MB
+        ]);
+
+        try {
+            $file = $request->file('csv_file');
+            $fileName = 'import_' . time() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('imports', $fileName, 'public');
+
+            // Execute import command
+            $exitCode = \Illuminate\Support\Facades\Artisan::call('import:csv', [
+                'path' => storage_path('app/public/' . $filePath)
+            ]);
+
+            if ($exitCode === 0) {
+                // Redirect with success message
+                return redirect()->back()->with('success', 'Data CSV berhasil diimport ke database!');
+            } else {
+                return redirect()->back()->with('error', 'Gagal import data CSV. Silakan cek log error.');
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('CSV Import Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat import CSV: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download CSV template
+     */
+    public function downloadCsvTemplate()
+    {
+        $templatePath = public_path('DATA 12.csv');
+
+        if (!file_exists($templatePath)) {
+            abort(404, 'Template tidak ditemukan');
+        }
+
+        return response()->download($templatePath, 'template_dokumen.csv', [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="template_dokumen.csv"',
+        ]);
     }
 }
 
