@@ -1774,17 +1774,27 @@ window.saveColumnSelection = function() {
   // Get current checked checkboxes from modal
   const checkedCheckboxes = document.querySelectorAll('.column-checkbox-item-modern input[type="checkbox"]:checked');
   
-  // Update selectionOrder based on current checked state
-  selectionOrder = [];
-  checkedCheckboxes.forEach(checkbox => {
+  // Get checked column keys
+  const checkedKeys = Array.from(checkedCheckboxes).map(checkbox => {
     const item = checkbox.closest('.column-checkbox-item-modern');
-    const columnKey = item.dataset.column;
-    if (columnKey && !selectionOrder.includes(columnKey)) {
-      selectionOrder.push(columnKey);
+    return item ? item.dataset.column : null;
+  }).filter(key => key !== null);
+  
+  // Preserve order from selectionOrder, only include checked columns
+  // This maintains the user's selected order
+  const orderedSelection = selectionOrder.filter(key => checkedKeys.includes(key));
+  
+  // Add any newly checked columns that weren't in selectionOrder (shouldn't happen, but just in case)
+  checkedKeys.forEach(key => {
+    if (!orderedSelection.includes(key)) {
+      orderedSelection.push(key);
     }
   });
   
-  console.log('Selected columns:', selectionOrder);
+  // Update selectionOrder with the ordered selection
+  selectionOrder = orderedSelection;
+  
+  console.log('Selected columns (preserving order):', selectionOrder);
   
   if (selectionOrder.length === 0) {
     alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
