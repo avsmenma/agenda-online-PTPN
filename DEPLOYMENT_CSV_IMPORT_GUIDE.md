@@ -163,11 +163,15 @@ tgl_masuk             → tanggal_masuk
 status pembayaran     → status_pembayaran (spasi diubah ke underscore)
 DIBAYAR              → DIBAYAR
 BELUM DIBAYAR        → BELUM_DIBAYAR (spasi diubah ke underscore)
-kategori              → kategori
+kategori              → kategori (kolom 16 dari CSV)
 jenis dokumen         → jenis_dokumen (spasi diubah ke underscore)
-KATEGORI             → KATEGORI
+KATEGORI             → (dilewati - MySQL menganggap sama dengan kategori)
 NO PO                 → NO_PO (spasi diubah ke underscore)
 NO MIRO/SES          → NO_MIRO_SES (slash diubah ke underscore)
+
+**Catatan Penting**: 
+- Kolom `kategori` (kolom 16) dan `KATEGORI` (kolom 18) dianggap sama oleh MySQL (case-insensitive)
+- Hanya kolom `kategori` yang diisi dari CSV untuk menghindari error duplikasi
 ```
 
 ### Penanganan Khusus:
@@ -215,11 +219,16 @@ if (Dokumen::where('nomor_spp', $data['nomor_spp'])->exists()) {
 
 ### Common Issues & Solutions:
 
-#### 1. File Tidak Bisa Diupload
+#### 1. Error "Column 'kategori' specified twice"
+- **Problem**: MySQL menganggap `kategori` dan `KATEGORI` sebagai kolom yang sama
+- **Solution**: Sudah diperbaiki di command - hanya menggunakan `kategori` saja
+- **Note**: Jika perlu menggunakan `KATEGORI` sebagai kolom terpisah, pastikan konfigurasi MySQL case-sensitive untuk nama kolom
+
+#### 2. File Tidak Bisa Diupload
 - **Problem**: File terlalu besar (>10MB)
 - **Solution**: Compress CSV atau bagi menjadi beberapa file
 
-#### 2. Format Tanggal Error
+#### 3. Format Tanggal Error
 - **Problem**: Format tanggal tidak dikenali
 - **Solution**: Command sudah support multiple format:
   - `d-M-y` (20-Jan-23)

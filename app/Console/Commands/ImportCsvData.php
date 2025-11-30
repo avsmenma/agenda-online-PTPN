@@ -83,9 +83,10 @@ class ImportCsvData extends Command
                         'status_pembayaran' => $this->cleanValue($row[13]),
                         'DIBAYAR' => $this->parseCurrency($row[14]),
                         'BELUM_DIBAYAR' => $this->parseCurrency($row[15]),
-                        'kategori' => $this->cleanValue($row[16]),
+                        'kategori' => $this->cleanValue($row[16]), // Use kategori from CSV column 16
                         'jenis_dokumen' => $this->cleanValue($row[17]),
-                        'KATEGORI' => $this->cleanValue($row[18]),
+                        // KATEGORI from row[18] - skip to avoid duplicate column error
+                        // MySQL treats 'kategori' and 'KATEGORI' as same column (case-insensitive)
                         'NO_PO' => $this->cleanValue($row[19]),
                         'NO_MIRO_SES' => $this->cleanValue($row[20]),
                         'bulan' => $this->extractMonth($this->parseDate($row[12])),
