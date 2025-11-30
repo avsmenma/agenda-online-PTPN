@@ -144,6 +144,9 @@
     .content {
       margin-left: 250px;
       padding: 20px;
+      /* Ensure content stays in normal document flow */
+      position: relative;
+      z-index: auto;
     }
 
     .topbar {
@@ -2162,7 +2165,17 @@
                     // If there are rejected documents (baik baru maupun yang sudah pernah ditampilkan)
                     if (data.rejected_documents_count > 0 && data.rejected_documents.length > 0) {
                         console.log('🔔 Found rejected documents:', data.rejected_documents.length);
-                        
+
+                        // FIX: Filter hanya dokumen yang benar-benar milik user
+                        // Ini mencegah cross-interference dari reject dokumen user lain
+                        const userRejectedDocs = data.rejected_documents.filter(doc => {
+                            // Hanya dokumen yang created_by milik user yang sedang login
+                            const createdBy = (doc.created_by || '').toString().toLowerCase();
+                            return createdBy === 'ibua' || createdBy === 'ibu a' || createdBy === 'ibua' || createdBy === 'ibu tarapul';
+                        });
+
+                        console.log('👤 User rejected documents after filtering:', userRejectedDocs.length);
+
                         // Filter dokumen yang perlu ditampilkan
                         // Untuk memastikan notifikasi selalu muncul, tampilkan dokumen yang di-reject dalam 24 jam terakhir
                         // Tampilkan jika:
@@ -2171,8 +2184,8 @@
                         //    (Dikurangi dari 30 menit menjadi 5 menit agar notifikasi lebih sering muncul)
                         const now = Date.now();
                         const fiveMinutesInMs = 5 * 60 * 1000; // 5 menit dalam milliseconds
-                        
-                        const newRejectedToShow = data.rejected_documents.filter(doc => {
+
+                        const newRejectedToShow = userRejectedDocs.filter(doc => {
                             const docKey = `rejected_doc_${doc.id}_shown_time`;
                             const shownTime = localStorage.getItem(docKey);
                             

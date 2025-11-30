@@ -1876,10 +1876,8 @@
                 <span class="badge-status badge-dikembalikan" style="position: relative;">
                   <i class="fa-solid fa-times-circle me-1"></i>
                   <span>Dokumen Ditolak, 
-                    <a href="#" 
+                    <a href="{{ route('ibua.rejected.show', $dokumen->id) }}" 
                        class="text-white text-decoration-underline fw-bold" 
-                       data-bs-toggle="modal" 
-                       data-bs-target="#rejectReasonModal{{ $dokumen->id }}"
                        onclick="event.stopPropagation();">
                       Alasan
                     </a>
@@ -1890,17 +1888,12 @@
                   <i class="fa-solid fa-file-lines me-1"></i>
                   <span>Belum Dikirim</span>
                 </span>
-              @elseif($dokumen->status == 'menunggu_di_approve' && $dokumen->inbox_approval_status == 'pending')
+              @elseif($dokumen->getIbuTarapulStatusDisplay() == 'Menunggu Approve Ibu Yuni')
                 <span class="badge-status badge-terkirim">
                   <i class="fa-solid fa-clock me-1"></i>
                   <span>Waiting Approve</span>
                 </span>
-              @elseif($dokumen->status == 'sedang diproses' && $dokumen->inbox_approval_status == 'approved')
-                <span class="badge-status badge-approved">
-                  <i class="fa-solid fa-check-circle me-1"></i>
-                  <span>Document Approved</span>
-                </span>
-              @elseif($dokumen->status == 'sent_to_ibub' && $dokumen->inbox_approval_status == 'approved')
+              @elseif($dokumen->getIbuTarapulStatusDisplay() == 'Document Approved')
                 <span class="badge-status badge-approved">
                   <i class="fa-solid fa-check-circle me-1"></i>
                   <span>Document Approved</span>

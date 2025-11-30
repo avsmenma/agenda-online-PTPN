@@ -97,19 +97,19 @@ class DashboardController extends Controller
             ]);
 
             // Cari dokumen yang di-reject dari inbox dalam 24 jam terakhir
-            // Gunakan case-insensitive untuk created_by dan current_handler
+            // FIX: Gunakan AND condition yang ketat untuk mencegah cross-interference
+            // Hanya dokumen yang BENAR-BENAR dibuat oleh IbuA yang akan ditampilkan
             $rejectedDocuments = Dokumen::where(function($query) {
-                    $query->whereRaw('LOWER(created_by) = ?', ['ibua'])
+                    // Hanya dokumen yang dibuat oleh IbuA
+                    $query->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
                           ->orWhere('created_by', 'ibuA')
                           ->orWhere('created_by', 'IbuA');
                 })
                 ->where(function($query) {
-                    $query->whereRaw('LOWER(current_handler) = ?', ['ibua'])
-                          ->orWhere('current_handler', 'ibuA')
-                          ->orWhere('current_handler', 'IbuA');
+                    // DAN status returned ke IbuA
+                    $query->where('status', 'returned_to_ibua')
+                          ->where('inbox_approval_status', 'rejected');
                 })
-                ->where('status', 'returned_to_ibua')
-                ->where('inbox_approval_status', 'rejected')
                 ->where('inbox_approval_responded_at', '>=', $checkFrom)
                 ->whereNotNull('inbox_approval_responded_at')
                 ->with('activityLogs')

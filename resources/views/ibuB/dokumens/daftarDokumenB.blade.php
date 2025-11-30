@@ -2980,7 +2980,8 @@ function changeDocumentStatus(docId, action, event) {
       'X-Requested-With': 'XMLHttpRequest'
     },
     body: JSON.stringify({
-      status: action
+      status: action,
+      document_id: docId  // FIX: Kirim document ID untuk mencegah cross-interference
     })
   })
   .then(response => {

@@ -36,7 +36,7 @@ class DashboardPembayaranController extends Controller
             'totalDikembalikan' => $totalDikembalikan,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
-        return view('pembayaran.dashboardPembayaran', $data);
+        return view('pembayaranNEW.dashboardPembayaran', $data);
     }
 
     public function dokumens(Request $request){
@@ -88,6 +88,60 @@ class DashboardPembayaranController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Available columns for customization (exclude 'status' as it's always shown as a special column)
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'tanggal_masuk' => 'Tanggal Masuk',
+            'nomor_spp' => 'No SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'nomor_mirror' => 'Nomor Miro',
+            'tanggal_spp' => 'Tanggal SPP',
+            'kategori' => 'Kategori',
+            'kebun' => 'Kebun',
+            'jenis_dokumen' => 'Jenis Dokumen',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'nama_pengirim' => 'Nama Pengirim',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'no_berita_acara' => 'No Berita Acara',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'no_spk' => 'No SPK',
+            'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'status_pembayaran' => 'Status Pembayaran',
+            'deadline' => 'Deadline',
+        ];
+
+        // Get selected columns from request or session
+        $selectedColumns = $request->get('columns', []);
+
+        // Filter out 'status' and 'aksi' from selectedColumns if present
+        $selectedColumns = array_filter($selectedColumns, function($col) {
+            return $col !== 'status' && $col !== 'aksi';
+        });
+        $selectedColumns = array_values($selectedColumns); // Re-index array
+
+        // If columns are provided in request, save to session
+        if ($request->has('columns') && !empty($selectedColumns)) {
+            session(['pembayaran_dokumens_table_columns' => $selectedColumns]);
+        } else {
+            // Load from session if available, and filter out 'status'
+            $selectedColumns = session('pembayaran_dokumens_table_columns', [
+                'nomor_agenda',
+                'nomor_spp',
+                'tanggal_masuk',
+                'nilai_rupiah',
+                'dibayar_kepada'
+            ]);
+            // Filter out 'status' and 'aksi' if they exist in session
+            $selectedColumns = array_filter($selectedColumns, function($col) {
+                return $col !== 'status' && $col !== 'aksi';
+            });
+            $selectedColumns = array_values($selectedColumns);
+            // Update session to remove 'status' if it was present
+            session(['pembayaran_dokumens_table_columns' => $selectedColumns]);
+        }
+
         $data = array(
             "title" => "Daftar Pembayaran",
             "module" => "pembayaran",
@@ -96,8 +150,10 @@ class DashboardPembayaranController extends Controller
             'menuDaftarDokumen' => 'Active',
             'dokumens' => $dokumens,
             'statusFilter' => $statusFilter,
+            'availableColumns' => $availableColumns,    // <-- TAMBAHKAN INI
+            'selectedColumns' => $selectedColumns,      // <-- TAMBAHKAN INI
         );
-        return view('pembayaran.dokumens.daftarPembayaran', $data);
+        return view('pembayaranNEW.dokumens.daftarPembayaran', $data);
     }
 
     public function createDokumen(){
@@ -108,6 +164,7 @@ class DashboardPembayaranController extends Controller
             'menuDokumen' => 'Active',
             'menuTambahDokumen' => 'Active',
         );
+        // TODO: Update this to pembayaranNEW when tambahPembayaran.blade.php is available in pembayaranNEW folder
         return view('pembayaran.dokumens.tambahPembayaran', $data);
     }
 
@@ -124,7 +181,7 @@ class DashboardPembayaranController extends Controller
             'menuDokumen' => 'Active',
             'menuEditDokumen' => 'Active',
         );
-        return view('pembayaran.dokumens.editPembayaran', $data);
+        return view('pembayaranNEW.dokumens.editPembayaran', $data);
     }
 
     public function updateDokumen(Request $request, $id){
@@ -299,7 +356,7 @@ class DashboardPembayaranController extends Controller
             'menuDokumen' => 'Active',
             'menuRekapKeterlambatan' => 'Active',
         );
-        return view('pembayaran.dokumens.rekapanKeterlambatan', $data);
+        return view('pembayaranNEW.dokumens.rekapanKeterlambatan', $data);
     }
 
     /**
@@ -359,6 +416,45 @@ class DashboardPembayaranController extends Controller
             });
         }
 
+        // Apply rekapan detail filters (only for rekapan_table mode)
+        if ($mode === 'rekapan_table') {
+            // Filter by Dibayar Kepada (Vendor)
+            $filterDibayarKepada = request('filter_dibayar_kepada_column');
+            if ($filterDibayarKepada) {
+                $query->where('dibayar_kepada', $filterDibayarKepada);
+            }
+
+            // Filter by Kategori
+            $filterKategori = request('filter_kategori_column');
+            if ($filterKategori) {
+                $query->where('kategori', $filterKategori);
+            }
+
+            // Filter by Jenis Dokumen
+            $filterJenisDokumen = request('filter_jenis_dokumen_column');
+            if ($filterJenisDokumen) {
+                $query->where('jenis_dokumen', $filterJenisDokumen);
+            }
+
+            // Filter by Jenis Sub Pekerjaan
+            $filterJenisSubPekerjaan = request('filter_jenis_sub_pekerjaan_column');
+            if ($filterJenisSubPekerjaan) {
+                $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
+            }
+
+            // Filter by Jenis Pembayaran
+            $filterJenisPembayaran = request('filter_jenis_pembayaran_column');
+            if ($filterJenisPembayaran) {
+                $query->where('jenis_pembayaran', $filterJenisPembayaran);
+            }
+
+            // Filter by Kebun
+            $filterKebun = request('filter_jenis_kebuns_column');
+            if ($filterKebun) {
+                $query->where('kebun', $filterKebun);
+            }
+        }
+
         // Helper function to calculate computed status
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
             // Jika sudah dibayar
@@ -380,15 +476,20 @@ class DashboardPembayaranController extends Controller
         // For rekapan table mode - group by vendor
         $rekapanByVendor = null;
         if ($mode === 'rekapan_table' && !empty($selectedColumns)) {
-            $allDocsForRekapan = (clone $query)->orderBy('dibayar_kepada')->get();
+            $allDocsForRekapan = (clone $query)
+                ->orderBy('dibayar_kepada')
+                ->get();
 
             // Add computed status to each document
             $allDocsForRekapan->each(function($doc) use ($getComputedStatus) {
                 $doc->computed_status = $getComputedStatus($doc);
             });
 
-            // Group by vendor
-            $rekapanByVendor = $allDocsForRekapan->groupBy('dibayar_kepada')->map(function($docs, $vendor) {
+            // Group by vendor - dokumen tanpa vendor akan dikelompokkan sebagai null
+            $rekapanByVendor = $allDocsForRekapan->groupBy(function($doc) {
+                // Jika dibayar_kepada kosong atau null, gunakan null sebagai key
+                return $doc->dibayar_kepada ?: null;
+            })->map(function($docs, $vendor) {
                 return [
                     'vendor' => $vendor ?: 'Tidak Diketahui',
                     'documents' => $docs,
@@ -398,6 +499,10 @@ class DashboardPembayaranController extends Controller
                     'total_sudah_dibayar' => $docs->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
                     'count' => $docs->count(),
                 ];
+            })->filter(function($vendorData) {
+                // Filter out "Tidak Diketahui" group jika user tidak ingin melihatnya
+                // Untuk sementara kita biarkan, tapi bisa diubah nanti jika diperlukan
+                return true;
             });
         }
 
@@ -451,6 +556,65 @@ class DashboardPembayaranController extends Controller
             ->orderBy('year', 'desc')
             ->pluck('year');
 
+        // Get unique data for dropdown filters from existing documents
+        $baseDokumenQuery = Dokumen::whereNotNull('nomor_agenda');
+
+        // Apply same filters for dropdown data
+        if ($year) {
+            $baseDokumenQuery->whereYear('created_at', $year);
+        }
+        if ($month) {
+            $baseDokumenQuery->whereMonth('created_at', $month);
+        }
+
+        // Get unique values for Dibayar Kepada (Vendor)
+        $availableDibayarKepada = $baseDokumenQuery->clone()
+            ->whereNotNull('dibayar_kepada')
+            ->where('dibayar_kepada', '!=', '')
+            ->selectRaw('DISTINCT dibayar_kepada')
+            ->orderBy('dibayar_kepada')
+            ->pluck('dibayar_kepada', 'dibayar_kepada');
+
+        // Get unique values for Kategori
+        $availableKategori = $baseDokumenQuery->clone()
+            ->whereNotNull('kategori')
+            ->where('kategori', '!=', '')
+            ->selectRaw('DISTINCT kategori')
+            ->orderBy('kategori')
+            ->pluck('kategori', 'kategori');
+
+        // Get unique values for Jenis Dokumen
+        $availableJenisDokumen = $baseDokumenQuery->clone()
+            ->whereNotNull('jenis_dokumen')
+            ->where('jenis_dokumen', '!=', '')
+            ->selectRaw('DISTINCT jenis_dokumen')
+            ->orderBy('jenis_dokumen')
+            ->pluck('jenis_dokumen', 'jenis_dokumen');
+
+        // Get unique values for Jenis Sub Pekerjaan
+        $availableJenisSubPekerjaan = $baseDokumenQuery->clone()
+            ->whereNotNull('jenis_sub_pekerjaan')
+            ->where('jenis_sub_pekerjaan', '!=', '')
+            ->selectRaw('DISTINCT jenis_sub_pekerjaan')
+            ->orderBy('jenis_sub_pekerjaan')
+            ->pluck('jenis_sub_pekerjaan', 'jenis_sub_pekerjaan');
+
+        // Get unique values for Jenis Pembayaran
+        $availableJenisPembayaran = $baseDokumenQuery->clone()
+            ->whereNotNull('jenis_pembayaran')
+            ->where('jenis_pembayaran', '!=', '')
+            ->selectRaw('DISTINCT jenis_pembayaran')
+            ->orderBy('jenis_pembayaran')
+            ->pluck('jenis_pembayaran', 'jenis_pembayaran');
+
+        // Get unique values for Kebun
+        $availableKebuns = $baseDokumenQuery->clone()
+            ->whereNotNull('kebun')
+            ->where('kebun', '!=', '')
+            ->selectRaw('DISTINCT kebun')
+            ->orderBy('kebun')
+            ->pluck('kebun', 'kebun');
+
         // Available columns for rekapan table
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
@@ -492,9 +656,16 @@ class DashboardPembayaranController extends Controller
             'selectedColumns' => $selectedColumns,
             'availableColumns' => $availableColumns,
             'rekapanByVendor' => $rekapanByVendor,
+            // Dropdown data
+            'availableDibayarKepada' => $availableDibayarKepada,
+            'availableKategori' => $availableKategori,
+            'availableJenisDokumen' => $availableJenisDokumen,
+            'availableJenisSubPekerjaan' => $availableJenisSubPekerjaan,
+            'availableJenisPembayaran' => $availableJenisPembayaran,
+            'availableKebuns' => $availableKebuns,
         ];
 
-        return view('pembayaran.dokumens.rekapanDokumen', $data);
+        return view('pembayaranNEW.dokumens.rekapanDokumen', $data);
     }
 
     /**
@@ -691,6 +862,7 @@ class DashboardPembayaranController extends Controller
         ];
 
         // Return view that can be printed as PDF using browser print
+        // TODO: Update this to pembayaranNEW when export-pdf.blade.php is available in pembayaranNEW folder
         return view('pembayaran.dokumens.export-pdf', $pdfData);
     }
 
@@ -878,7 +1050,7 @@ class DashboardPembayaranController extends Controller
             'tidakSelesaiData' => $tidakSelesaiData,
             'months' => $months,
         );
-        return view('pembayaran.diagramPembayaran', $data);
+        return view('pembayaranNEW.diagramPembayaran', $data);
     }
 
     /**

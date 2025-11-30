@@ -390,7 +390,13 @@ class Dokumen extends Model
         $this->inbox_approval_status = 'pending';
         $this->inbox_approval_sent_at = now();
         $this->inbox_original_status = $this->status;
-        $this->status = 'menunggu_di_approve';
+
+        // 🔧 FIX: Jangan overwrite milestone status!
+        // Preserve historical milestones like 'approved_ibub'
+        if (!in_array($this->status, ['approved_ibub', 'approved_data_sudah_terkirim', 'approved_perpajakan', 'approved_akutansi'])) {
+            // Hanya overwrite status jika BUKAN milestone status
+            $this->status = 'menunggu_di_approve';
+        }
         
         // Clear rejection fields jika dokumen dikirim kembali ke inbox
         // (dokumen yang sebelumnya di-reject sekarang dikirim ulang)
@@ -465,10 +471,11 @@ class Dokumen extends Model
             
             // Update status sesuai dengan recipient role
             // Untuk IbuB, setelah approve dari inbox, status menjadi 'sedang diproses' (bukan 'sent_to_ibub')
+            // Untuk Akutansi, gunakan alur yang sama dengan Perpajakan (fix: field sent_to_akutansi tidak ada)
             $statusMap = [
                 'IbuB' => 'sedang diproses',  // Ubah dari 'sent_to_ibub' ke 'sedang diproses'
                 'Perpajakan' => 'sent_to_perpajakan',
-                'Akutansi' => 'sent_to_akutansi',
+                'Akutansi' => 'sent_to_perpajakan',  // FIX: Gunakan alur Perpajakan yang sudah valid
             ];
             
             $this->status = $statusMap[$this->inbox_approval_for] ?? $this->inbox_original_status ?? 'diterima';
@@ -496,12 +503,15 @@ class Dokumen extends Model
                 $this->deadline_perpajakan_days = null;
                 $this->deadline_perpajakan_note = null;
             } elseif ($this->inbox_approval_for === 'Akutansi') {
-                // Note: sent_to_akutansi_at field might not exist, but we set processed_at
-                $this->processed_at = now();
+                // FIX: Gunakan alur yang sama dengan Perpajakan (field valid)
+                $this->sent_to_perpajakan_at = now();
                 // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
                 $this->deadline_at = null;
                 $this->deadline_days = null;
                 $this->deadline_note = null;
+                $this->deadline_perpajakan_at = null;
+                $this->deadline_perpajakan_days = null;
+                $this->deadline_perpajakan_note = null;
             }
         } else {
             // Fallback ke status original jika role tidak dikenali
@@ -559,10 +569,12 @@ class Dokumen extends Model
             $this->target_department = 'perpajakan';
             $this->department_return_reason = $reason;
         } elseif ($inboxRecipient === 'Akutansi') {
-            // Ditolak dari Akutansi, kembali ke Perpajakan
-            $originalSender = 'perpajakan';
-            $returnStatus = 'returned_from_akutansi';
-            $this->returned_from_akutansi_at = now();
+            // FIX: Ditolak dari Akutansi, kembali ke IbuB (pengirim asli)
+            $originalSender = 'ibuB';
+            $returnStatus = 'returned_to_department';
+            $this->department_returned_at = now();
+            $this->target_department = 'akutansi';
+            $this->department_return_reason = $reason;
         } else {
             // Fallback: gunakan created_by
             $originalSender = $this->created_by ?? 'ibuA';
@@ -603,4 +615,86 @@ class Dokumen extends Model
         // Fire event
         event(new \App\Events\DocumentRejectedInbox($this, $reason));
     }
+
+    /**
+     * Helper untuk menampilkan status yang benar ke Ibu Tarapul
+     * Memeriksa milestone historical sebelum menampilkan current status
+     */
+    public function getIbuTarapulStatusDisplay()
+    {
+        // Prioritaskan milestone historical PERMANENT
+        if ($this->approved_by_ibub_at) {
+            return 'Document Approved'; // ✅ PERMANENT MILESTONE - TIDAK AKAN TERGANGGU REJECT
+        }
+
+        if ($this->approved_by_perpajakan_at) {
+            return 'Approved by Perpajakan';
+        }
+
+        if ($this->approved_by_akutansi_at) {
+            return 'Approved by Akutansi';
+        }
+
+        // Jika ada milestone, gunakan itu - jangan overwrite dengan current status!
+        if ($this->approved_by_ibub_at || $this->approved_by_perpajakan_at || $this->approved_by_akutansi_at) {
+            // Cari status milestone yang sesuai
+            $milestoneStatuses = [
+                'approved_data_sudah_terkirim' => 'Document Approved',
+                'approved_ibub' => 'Approved by Ibu Yuni',
+                'approved_perpajakan' => 'Approved by Perpajakan',
+                'approved_akutansi' => 'Approved by Akutansi',
+                'selesai' => 'Document Selesai'
+            ];
+
+            return $milestoneStatuses[$this->status] ?? 'Status Unknown';
+        }
+
+        // Fallback ke current status dengan logic yang bersih
+        return $this->getStatusDisplay();
+    }
+
+    /**
+     * Helper untuk menampilkan status yang benar ke Ibu Tarapul
+     * Milestone-aware status display untuk mencegah kesalahan architcktural
+     */
+    public function getCorrectStatusDisplay()
+    {
+        // Jika ada milestone historical, gunakan itu
+        if ($this->approved_by_ibub_at) {
+            return 'Document Approved'; // ✅ MILESTONE SELALU BENAR
+        }
+
+        if ($this->approved_by_perpajakan_at) {
+            return 'Approved by Perpajakan';
+        }
+
+        if ($this->approved_by_akutansi_at) {
+            return 'Approved by Akutansi';
+        }
+
+        // Fallback ke status logic yang bersih tanpa overwrite
+        $statusMapping = [
+            'draft' => 'Draft',
+            'sedang diproses' => 'Sedang Diproses',
+            'approved_data_sudah_terkirim' => 'Document Approved',
+            'approved_perpajakan' => 'Approved by Perpajakan',
+            'approved_akutansi' => 'Approved by Akutansi',
+            'selesai' => 'Selesai',
+            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_department' => 'Dikembalikan ke Bagian',
+            'rejected_ibub' => 'Ditolak oleh Ibu Yuni',
+            'rejected_data_tidik_lengkap' => 'Ditolak (Data Tidak Lengkap)',
+            'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
+            'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
+            'menunggu_di_approve' => 'Menunggu Approve Ibu Yuni',
+            'menunggu_di_approve_perpajakan' => 'Menunggu Approve Perpajakan',
+            'menunggu_di_approve_akutansi' => 'Menunggu Approve Akutansi',
+        ];
+
+        return $statusMapping[$this->status] ?? 'Status Unknown';
+    }
+
+    /**
+     * Helper untuk mendapatkan informasi progress
+     */
 }

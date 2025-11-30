@@ -104,7 +104,13 @@ class DashboardBController extends Controller
                       $subQ->where('status', 'sedang_diproses')
                             ->where('current_handler', 'ibuB');
                   })
-                  ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+                  ->orWhereIn('status', ['sent_to_perpajakan']) // FIX: Hanya status yang valid
+                  ->orWhere(function($rejectQ) {
+                      // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
+                      $rejectQ->where('status', 'returned_to_department')
+                             ->whereIn('target_department', ['perpajakan', 'akutansi'])
+                             ->where('current_handler', 'ibuB');
+                  });
             })
             ->where('status', '!=', 'returned_to_bidang')
             ->orderByRaw("
@@ -1601,6 +1607,14 @@ class DashboardBController extends Controller
     public function changeDocumentStatus(Dokumen $dokumen, Request $request)
     {
         try {
+            // FIX: Validasi document ID untuk mencegah cross-interference
+            if ($request->has('document_id') && $dokumen->id != $request->input('document_id')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document ID mismatch detected! Cross-document interference prevented.'
+                ], 403);
+            }
+
             // Only allow if current_handler is ibuB
             if ($dokumen->current_handler !== 'ibuB') {
                 return response()->json([
@@ -1611,21 +1625,45 @@ class DashboardBController extends Controller
 
             // Validate status
             $request->validate([
-                'status' => 'required|in:approved,rejected'
+                'status' => 'required|in:approved,rejected',
+                'document_id' => 'sometimes|integer|exists:dokumens,id'
             ], [
                 'status.required' => 'Status wajib dipilih.',
-                'status.in' => 'Status tidak valid. Pilih approved atau rejected.'
+                'status.in' => 'Status tidak valid. Pilih approved atau rejected.',
+                'document_id.exists' => 'Document ID tidak valid.'
             ]);
 
             $newStatus = $request->status === 'approved' ? 'approved_ibub' : 'rejected_ibub';
 
             \DB::beginTransaction();
 
-            // Update document status
-            $dokumen->update([
+            // Prepare milestone data for approved documents
+            $updateData = [
                 'status' => $newStatus,
                 'processed_at' => now(),
-            ]);
+                'updated_at' => now()
+            ];
+
+            // Set milestone if approved
+            if ($newStatus === 'approved_ibub') {
+                $updateData['approved_by_ibub_at'] = now();
+                $updateData['approved_by_ibub_by'] = 'ibuB';
+            }
+
+            // FIX: Atomic update spesifik per document ID untuk mencegah cross-interference
+            $affectedRows = \DB::table('dokumens')
+                ->where('id', $dokumen->id)
+                ->where('current_handler', 'ibuB') // Double check
+                ->update($updateData);
+
+            // Jika tidak ada row yang terupdate, ada kemungkinan race condition
+            if ($affectedRows === 0) {
+                \DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak dapat diperbarui. Kemungkinan telah diubah oleh user lain.'
+                ], 409);
+            }
 
             \DB::commit();
 
@@ -1700,7 +1738,7 @@ class DashboardBController extends Controller
 
             // Broadcast event (opsional)
             try {
-                broadcast(new \App\Events\DocumentAccepted($dokumen, 'ibuB'));
+                broadcast(new \App\Events\DocumentApprovedInbox($dokumen));
             } catch (\Exception $e) {
                 \Log::error('Failed to broadcast acceptance: ' . $e->getMessage());
             }
@@ -1766,7 +1804,7 @@ class DashboardBController extends Controller
 
             // Broadcast event (opsional)
             try {
-                broadcast(new \App\Events\DocumentRejected($dokumen, 'ibuB', $request->rejection_reason));
+                broadcast(new \App\Events\DocumentRejectedInbox($dokumen));
             } catch (\Exception $e) {
                 \Log::error('Failed to broadcast rejection: ' . $e->getMessage());
             }
