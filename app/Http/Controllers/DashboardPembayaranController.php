@@ -393,11 +393,17 @@ class DashboardPembayaranController extends Controller
                       ->orWhere('status', 'sent_to_pembayaran');
                 })->where(function($q) {
                     $q->whereNull('status_pembayaran')
-                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                      ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                      ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
                 });
             } elseif ($statusPembayaran === 'sudah_dibayar') {
-                // Sudah dibayar
-                $query->where('status_pembayaran', 'sudah_dibayar');
+                // Sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+                $query->where(function($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                      ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                      ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                });
             }
         }
 
@@ -462,8 +468,11 @@ class DashboardPembayaranController extends Controller
 
         // Helper function to calculate computed status
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
-            // Jika sudah dibayar
-            if ($doc->status_pembayaran === 'sudah_dibayar') {
+            // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
+            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
+                $statusPembayaran === 'SUDAH DIBAYAR' ||
+                $doc->status_pembayaran === 'sudah_dibayar') {
                 return 'sudah_dibayar';
             }
             // Jika masih di akuntansi, perpajakan, ibu_a, ibu_b
@@ -714,10 +723,17 @@ class DashboardPembayaranController extends Controller
                       ->orWhere('status', 'sent_to_pembayaran');
                 })->where(function($q) {
                     $q->whereNull('status_pembayaran')
-                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                      ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                      ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
                 });
             } elseif ($statusPembayaran === 'sudah_dibayar') {
-                $query->where('status_pembayaran', 'sudah_dibayar');
+                // Sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+                $query->where(function($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                      ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                      ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                });
             }
         }
 
@@ -740,7 +756,11 @@ class DashboardPembayaranController extends Controller
 
         // Helper function to calculate computed status
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
-            if ($doc->status_pembayaran === 'sudah_dibayar') {
+            // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
+            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
+                $statusPembayaran === 'SUDAH DIBAYAR' ||
+                $doc->status_pembayaran === 'sudah_dibayar') {
                 return 'sudah_dibayar';
             }
             if (in_array($doc->current_handler, $belumSiapHandlers)) {
