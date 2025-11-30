@@ -89,18 +89,35 @@ class ImportCsvData extends Command
                         // MySQL treats 'kategori' and 'KATEGORI' as same column (case-insensitive)
                         'NO_PO' => $this->cleanValue($row[19]),
                         'NO_MIRO_SES' => $this->cleanValue($row[20]),
-                        'bulan' => $this->extractMonth($this->parseDate($row[12])),
-                        'tahun' => $this->extractYear($this->parseDate($row[12])),
                         'status' => 'sedang diproses', // Set status awal
                         'created_by' => 'csv_import'
                     ];
 
                     // Validasi data penting
                     if (empty($data['nomor_spp']) || empty($data['nilai_rupiah'])) {
-                        $this->warn("Baris {$lineNumber}: Data tidak lengkap, dilewati");
+                        $reason = [];
+                        if (empty($data['nomor_spp'])) $reason[] = 'nomor_spp kosong';
+                        if (empty($data['nilai_rupiah'])) $reason[] = 'nilai_rupiah kosong';
+                        $this->warn("Baris {$lineNumber}: Data tidak lengkap (" . implode(', ', $reason) . "), dilewati");
                         $skippedCount++;
                         continue;
                     }
+
+                    // Handle tanggal_masuk yang null - gunakan tanggal_spp sebagai fallback
+                    if (empty($data['tanggal_masuk'])) {
+                        if (!empty($data['tanggal_spp'])) {
+                            $data['tanggal_masuk'] = $data['tanggal_spp'];
+                            $this->warn("Baris {$lineNumber}: tanggal_masuk tidak valid, menggunakan tanggal_spp sebagai fallback");
+                        } else {
+                            // Jika tanggal_spp juga null, gunakan tanggal sekarang
+                            $data['tanggal_masuk'] = Carbon::now();
+                            $this->warn("Baris {$lineNumber}: tanggal_masuk dan tanggal_spp tidak valid, menggunakan tanggal sekarang");
+                        }
+                    }
+
+                    // Set bulan dan tahun dari tanggal_masuk yang sudah dipastikan tidak null
+                    $data['bulan'] = $this->extractMonth($data['tanggal_masuk']);
+                    $data['tahun'] = $this->extractYear($data['tanggal_masuk']);
 
                     // Cek duplikasi
                     $existing = Dokumen::where('nomor_spp', $data['nomor_spp'])->first();
