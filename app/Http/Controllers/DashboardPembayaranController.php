@@ -450,10 +450,13 @@ class DashboardPembayaranController extends Controller
                 $query->where('jenis_pembayaran', $filterJenisPembayaran);
             }
 
-            // Filter by Kebun
+            // Filter by Kebun (check both kebun and nama_kebuns fields)
             $filterKebun = request('filter_jenis_kebuns_column');
             if ($filterKebun) {
-                $query->where('kebun', $filterKebun);
+                $query->where(function($q) use ($filterKebun) {
+                    $q->where('kebun', $filterKebun)
+                      ->orWhere('nama_kebuns', $filterKebun);
+                });
             }
         }
 
@@ -609,13 +612,23 @@ class DashboardPembayaranController extends Controller
             ->orderBy('jenis_pembayaran')
             ->pluck('jenis_pembayaran', 'jenis_pembayaran');
 
-        // Get unique values for Kebun
-        $availableKebuns = $baseDokumenQuery->clone()
+        // Get unique values for Kebun (from both kebun and nama_kebuns fields)
+        // First get from kebun field
+        $kebunFromKebun = $baseDokumenQuery->clone()
             ->whereNotNull('kebun')
             ->where('kebun', '!=', '')
-            ->selectRaw('DISTINCT kebun')
-            ->orderBy('kebun')
+            ->distinct()
             ->pluck('kebun', 'kebun');
+        
+        // Then get from nama_kebuns field
+        $kebunFromNamaKebuns = $baseDokumenQuery->clone()
+            ->whereNotNull('nama_kebuns')
+            ->where('nama_kebuns', '!=', '')
+            ->distinct()
+            ->pluck('nama_kebuns', 'nama_kebuns');
+        
+        // Merge both collections and remove duplicates
+        $availableKebuns = $kebunFromKebun->merge($kebunFromNamaKebuns)->unique()->sortKeys();
 
         // Available columns for rekapan table
         $availableColumns = [
