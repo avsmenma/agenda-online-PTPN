@@ -80,7 +80,7 @@ class ImportCsvData extends Command
                         'uraian_spp' => $this->cleanValue($row[10]),
                         'nilai_rupiah' => $this->parseCurrency($row[11]),
                         'tanggal_masuk' => $this->parseDate($row[12]),
-                        'status_pembayaran' => $this->cleanValue($row[13]),
+                        'status_pembayaran' => $this->mapStatusPembayaran($this->cleanValue($row[13])),
                         'DIBAYAR' => $this->parseCurrency($row[14]),
                         'BELUM_DIBAYAR' => $this->parseCurrency($row[15]),
                         'kategori' => $this->cleanValue($row[16]), // Use kategori from CSV column 16
@@ -244,5 +244,45 @@ class ImportCsvData extends Command
     {
         if (!$date) return null;
         return (int) $date->format('Y');
+    }
+
+    /**
+     * Map status pembayaran from CSV to standardized format
+     */
+    private function mapStatusPembayaran($value)
+    {
+        if (empty($value)) return null;
+        
+        $value = strtoupper(trim($value));
+        
+        // Map various CSV values to standardized format
+        $mapping = [
+            'SUDAH DIBAYAR' => 'SUDAH DIBAYAR',
+            'BELUM SIAP DIBAYAR' => 'BELUM SIAP DIBAYAR',
+            'BELUM SIAPDIBAYAR' => 'BELUM SIAP DIBAYAR',
+            'SIAP DIBAYAR' => 'SIAP DIBAYAR',
+            'BELUM DIBAYAR' => 'BELUM DIBAYAR',
+        ];
+        
+        // Check exact match first
+        if (isset($mapping[$value])) {
+            return $mapping[$value];
+        }
+        
+        // Check partial matches
+        if (strpos($value, 'SUDAH') !== false && strpos($value, 'DIBAYAR') !== false) {
+            return 'SUDAH DIBAYAR';
+        }
+        
+        if (strpos($value, 'BELUM') !== false && strpos($value, 'SIAP') !== false) {
+            return 'BELUM SIAP DIBAYAR';
+        }
+        
+        if (strpos($value, 'SIAP') !== false && strpos($value, 'DIBAYAR') !== false) {
+            return 'SIAP DIBAYAR';
+        }
+        
+        // Return original value if no mapping found
+        return $value;
     }
 }
