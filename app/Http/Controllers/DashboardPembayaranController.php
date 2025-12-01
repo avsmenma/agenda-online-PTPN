@@ -51,45 +51,8 @@ class DashboardPembayaranController extends Controller
         // Filter by status will determine which documents to show
         $query = \App\Models\Dokumen::whereNotNull('nomor_agenda');
 
-        // Apply status filter if specified
-        if ($statusFilter) {
-            switch ($statusFilter) {
-                case 'belum_siap_dibayar':
-                    // Dokumen yang belum siap = masih di tahap sebelum pembayaran (akuntansi, perpajakan, ibu_a, ibu_b)
-                    // Handler yang dianggap "belum siap dibayar"
-                    // Sama dengan logika di method rekapan() untuk konsistensi
-                    $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
-                    $query->whereIn('current_handler', $belumSiapHandlers)
-                          ->where(function($q) {
-                              // Pastikan tidak termasuk dokumen yang sudah dibayar
-                              $q->whereNull('status_pembayaran')
-                                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                                ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                                ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
-                          });
-                    break;
-                case 'siap_dibayar':
-                    // Dokumen yang siap dibayar = sudah di pembayaran tapi belum dibayar
-                    $query->where(function($q) {
-                        $q->where('current_handler', 'pembayaran')
-                          ->orWhere('status', 'sent_to_pembayaran');
-                    })->where(function($q) {
-                        $q->whereNull('status_pembayaran')
-                          ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                          ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                          ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
-                    });
-                    break;
-                case 'sudah_dibayar':
-                    // Dokumen yang sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
-                    $query->where(function($q) {
-                        $q->where('status_pembayaran', 'sudah_dibayar')
-                          ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                          ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
-                    });
-                    break;
-            }
-        }
+        // Note: Status filter will be applied after computing computed_status
+        // to ensure consistency with how status is displayed
 
         // Apply search filter if provided
         if ($search && trim($search) !== '') {
@@ -114,7 +77,8 @@ class DashboardPembayaranController extends Controller
         }
 
         // Handler yang dianggap "belum siap dibayar"
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
         
         // Helper function to calculate computed status (same logic as rekapan method)
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
@@ -125,7 +89,13 @@ class DashboardPembayaranController extends Controller
                 $doc->status_pembayaran === 'sudah_dibayar') {
                 return 'sudah_dibayar';
             }
-            // Jika masih di akuntansi, perpajakan, ibu_a, ibu_b
+            // Jika status_pembayaran = 'BELUM SIAP DIBAYAR', maka belum siap dibayar
+            if ($statusPembayaran === 'BELUM SIAP DIBAYAR' || 
+                $statusPembayaran === 'BELUM_SIAP_DIBAYAR' ||
+                $doc->status_pembayaran === 'belum_siap_dibayar') {
+                return 'belum_siap_dibayar';
+            }
+            // Jika masih di akuntansi, perpajakan, ibuA, ibuB (atau variasi lainnya)
             if (in_array($doc->current_handler, $belumSiapHandlers)) {
                 return 'belum_siap_dibayar';
             }
@@ -133,7 +103,7 @@ class DashboardPembayaranController extends Controller
             if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
                 return 'siap_dibayar';
             }
-            // Default
+            // Default - jika tidak ada status_pembayaran dan tidak di handler pembayaran, berarti belum siap
             return 'belum_siap_dibayar';
         };
 
@@ -152,6 +122,14 @@ class DashboardPembayaranController extends Controller
         $dokumens->each(function($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
+
+        // Apply status filter based on computed_status (after computing)
+        // This ensures consistency with how status is displayed in the view
+        if ($statusFilter) {
+            $dokumens = $dokumens->filter(function($doc) use ($statusFilter) {
+                return $doc->computed_status === $statusFilter;
+            })->values(); // Re-index the collection
+        }
 
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
@@ -440,7 +418,8 @@ class DashboardPembayaranController extends Controller
         $selectedColumns = request('columns', []); // Array of selected columns in order
 
         // Handler yang dianggap "belum siap dibayar"
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
 
         // Base query - semua dokumen yang sudah melewati proses awal
         $query = Dokumen::whereNotNull('nomor_agenda');
@@ -539,7 +518,13 @@ class DashboardPembayaranController extends Controller
                 $doc->status_pembayaran === 'sudah_dibayar') {
                 return 'sudah_dibayar';
             }
-            // Jika masih di akuntansi, perpajakan, ibu_a, ibu_b
+            // Jika status_pembayaran = 'BELUM SIAP DIBAYAR', maka belum siap dibayar
+            if ($statusPembayaran === 'BELUM SIAP DIBAYAR' || 
+                $statusPembayaran === 'BELUM_SIAP_DIBAYAR' ||
+                $doc->status_pembayaran === 'belum_siap_dibayar') {
+                return 'belum_siap_dibayar';
+            }
+            // Jika masih di akuntansi, perpajakan, ibuA, ibuB (atau variasi lainnya)
             if (in_array($doc->current_handler, $belumSiapHandlers)) {
                 return 'belum_siap_dibayar';
             }
@@ -547,7 +532,7 @@ class DashboardPembayaranController extends Controller
             if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
                 return 'siap_dibayar';
             }
-            // Default
+            // Default - jika tidak ada status_pembayaran dan tidak di handler pembayaran, berarti belum siap
             return 'belum_siap_dibayar';
         };
 
@@ -772,7 +757,8 @@ class DashboardPembayaranController extends Controller
         $selectedColumns = $request->get('columns', []);
 
         // Handler yang dianggap "belum siap dibayar"
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
 
         // Base query - semua dokumen yang sudah melewati proses awal
         $query = Dokumen::whereNotNull('nomor_agenda');
@@ -1003,7 +989,8 @@ class DashboardPembayaranController extends Controller
     private function exportToPDF($dokumens, $columns, $availableColumns, $mode, $statusFilter, $year, $month, $search)
     {
         // Handler yang dianggap "belum siap dibayar"
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
         
         // Helper function to calculate computed status
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
