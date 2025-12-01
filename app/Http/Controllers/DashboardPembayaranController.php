@@ -645,29 +645,27 @@ class DashboardPembayaranController extends Controller
         }
 
         // Helper function to calculate computed status
+        // Di halaman pembayaran, hanya ada 2 status: siap_dibayar dan sudah_dibayar
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
-            // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
-            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
-            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
-                $statusPembayaran === 'SUDAH DIBAYAR' ||
+            // Cek apakah dokumen sudah dibayar berdasarkan:
+            // 1. Ada tanggal_dibayar, ATAU
+            // 2. Ada link_bukti_pembayaran, ATAU
+            // 3. status_pembayaran = 'sudah_dibayar' (berbagai format)
+            if ($doc->tanggal_dibayar || 
+                $doc->link_bukti_pembayaran ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
                 $doc->status_pembayaran === 'sudah_dibayar') {
                 return 'sudah_dibayar';
             }
-            // Jika status_pembayaran = 'BELUM SIAP DIBAYAR', maka belum siap dibayar
-            if ($statusPembayaran === 'BELUM SIAP DIBAYAR' || 
-                $statusPembayaran === 'BELUM_SIAP_DIBAYAR' ||
-                $doc->status_pembayaran === 'belum_siap_dibayar') {
-                return 'belum_siap_dibayar';
-            }
-            // Jika masih di akuntansi, perpajakan, ibuA, ibuB (atau variasi lainnya)
-            if (in_array($doc->current_handler, $belumSiapHandlers)) {
-                return 'belum_siap_dibayar';
-            }
-            // Jika sudah di pembayaran tapi belum dibayar
+            
+            // Jika sudah di pembayaran atau sudah dikirim ke pembayaran
             if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
                 return 'siap_dibayar';
             }
-            // Default - jika tidak ada status_pembayaran dan tidak di handler pembayaran, berarti belum siap
+            
+            // Jika masih di handler lain (akuntansi, perpajakan, ibuA, ibuB)
+            // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
             return 'belum_siap_dibayar';
         };
 
@@ -682,6 +680,19 @@ class DashboardPembayaranController extends Controller
             $allDocsForRekapan->each(function($doc) use ($getComputedStatus) {
                 $doc->computed_status = $getComputedStatus($doc);
             });
+
+            // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
+            // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
+            $allDocsForRekapan = $allDocsForRekapan->filter(function($doc) {
+                return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
+            })->values();
+
+            // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
+            if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
+                $allDocsForRekapan = $allDocsForRekapan->filter(function($doc) use ($statusPembayaran) {
+                    return $doc->computed_status === $statusPembayaran;
+                })->values();
+            }
 
             // Group by vendor - dokumen tanpa vendor akan dikelompokkan sebagai null
             $rekapanByVendor = $allDocsForRekapan->groupBy(function($doc) {
@@ -706,13 +717,37 @@ class DashboardPembayaranController extends Controller
 
         // Get paginated results for normal mode
         $dokumens = $query->orderBy('created_at', 'desc')
-                         ->paginate(15)
-                         ->withQueryString();
+                         ->get();
 
-        // Add computed status to paginated results
+        // Add computed status to each document
         $dokumens->each(function($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
+
+        // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
+        // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
+        $dokumens = $dokumens->filter(function($doc) {
+            return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
+        })->values();
+
+        // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
+        if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
+            $dokumens = $dokumens->filter(function($doc) use ($statusPembayaran) {
+                return $doc->computed_status === $statusPembayaran;
+            })->values();
+        }
+
+        // Paginate the filtered results
+        $currentPage = request()->get('page', 1);
+        $perPage = 15;
+        $currentItems = $dokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $dokumens = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentItems,
+            $dokumens->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         // Calculate statistics
         $allDokumensQuery = Dokumen::whereNotNull('nomor_agenda');

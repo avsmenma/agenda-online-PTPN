@@ -984,7 +984,6 @@
           <label for="status_pembayaran" class="filter-label">Status Pembayaran</label>
           <select name="status_pembayaran" id="status_pembayaran" class="form-select-modern">
             <option value="">Semua Status</option>
-            <option value="belum_siap_dibayar" {{ $selectedStatus == 'belum_siap_dibayar' ? 'selected' : '' }}>Belum Siap Dibayar</option>
             <option value="siap_dibayar" {{ $selectedStatus == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
             <option value="sudah_dibayar" {{ $selectedStatus == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
           </select>
