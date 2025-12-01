@@ -1312,7 +1312,12 @@
                 @foreach($selectedColumns as $col)
                   @if($col === 'umur_dokumen_tanggal_ba')
                     {{-- Handle umur_dokumen_tanggal_ba secara khusus --}}
-                    @if($doc->tanggal_berita_acara)
+                    @if(isset($doc->computed_status) && $doc->computed_status === 'sudah_dibayar')
+                        {{-- Jika sudah dibayar, tampilkan 0 --}}
+                        <td style="background: #28a745; color: white; font-weight: 700; text-align: center; padding: 12px;">
+                            0 HARI
+                        </td>
+                    @elseif($doc->tanggal_berita_acara)
                         @php
                             $tanggalBa = \Carbon\Carbon::parse($doc->tanggal_berita_acara)->startOfDay();
                             $hariIni = \Carbon\Carbon::now()->startOfDay();
@@ -1345,7 +1350,12 @@
                     @endif
                   @elseif($col === 'umur_dokumen_tanggal_spp')
                     {{-- Handle umur_dokumen_tanggal_spp secara khusus --}}
-                    @if($doc->tanggal_spp)
+                    @if(isset($doc->computed_status) && $doc->computed_status === 'sudah_dibayar')
+                        {{-- Jika sudah dibayar, tampilkan 0 --}}
+                        <td style="background: #28a745; color: white; font-weight: 700; text-align: center; padding: 12px;">
+                            0 HARI
+                        </td>
+                    @elseif($doc->tanggal_spp)
                         @php
                             $tanggalSpp = \Carbon\Carbon::parse($doc->tanggal_spp)->startOfDay();
                             $hariIni = \Carbon\Carbon::now()->startOfDay();
@@ -1378,7 +1388,12 @@
                     @endif
                   @elseif($col === 'umur_dokumen_tanggal_masuk')
                     {{-- Handle umur_dokumen_tanggal_masuk secara khusus --}}
-                    @if($doc->tanggal_masuk)
+                    @if(isset($doc->computed_status) && $doc->computed_status === 'sudah_dibayar')
+                        {{-- Jika sudah dibayar, tampilkan 0 --}}
+                        <td style="background: #28a745; color: white; font-weight: 700; text-align: center; padding: 12px;">
+                            0 HARI
+                        </td>
+                    @elseif($doc->tanggal_masuk)
                         @php
                             $tanggalMasuk = \Carbon\Carbon::parse($doc->tanggal_masuk)->startOfDay();
                             $hariIni = \Carbon\Carbon::now()->startOfDay();

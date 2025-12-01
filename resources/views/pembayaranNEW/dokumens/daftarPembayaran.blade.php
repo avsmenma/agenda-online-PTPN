@@ -482,7 +482,6 @@
     text-align: center;
   }
 
-  /* Modal for Deadline Setting */
   .modal-content {
     background: white;
     border-radius: 16px;
@@ -673,10 +672,6 @@
               <i class="fa-solid fa-list"></i>
               <span>Semua Dokumen</span>
             </a>
-            <a href="#" class="dropdown-item-modern {{ $statusFilter === 'belum_siap_dibayar' ? 'active' : '' }}" data-filter="belum_siap_dibayar">
-              <i class="fa-solid fa-clock"></i>
-              <span>Belum Siap Bayar</span>
-            </a>
             <a href="#" class="dropdown-item-modern {{ $statusFilter === 'siap_dibayar' ? 'active' : '' }}" data-filter="siap_dibayar">
               <i class="fa-solid fa-check-circle"></i>
               <span>Siap Dibayar</span>
@@ -710,7 +705,6 @@
             @endif
           @endforeach
           <th class="col-status sticky-column">Status</th>
-          <th class="col-deadline sticky-column">Deadline</th>
           <th class="col-action sticky-column">Aksi</th>
         </tr>
       </thead>
@@ -798,14 +792,6 @@
               @endswitch
             @endif
           </td>
-          <td class="col-deadline">
-            @if($dokumen->deadline_at)
-              {{ $dokumen->deadline_at->format('d/m/Y') }}
-              <br><small class="text-muted">{{ $dokumen->deadline_at->format('H:i') }}</small>
-            @else
-              -
-            @endif
-          </td>
           <td class="col-action">
             <div class="action-buttons">
               @php
@@ -821,24 +807,19 @@
                   }
                 }
               @endphp
-              @if(in_array($dokumen->current_handler, ['pembayaran']) && $docStatus !== 'sudah_dibayar')
-                <button type="button" class="btn-action" onclick="setDeadline({{ $dokumen->id }})">
-                  <i class="fa-solid fa-calendar-days"></i>
-                  Set Deadline
+              @php
+                // Cek apakah kedua field sudah diisi
+                $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
+              @endphp
+              @if($isComplete)
+                <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
+                  <i class="fa-solid fa-check-circle"></i>
+                  Selesai
                 </button>
-              @endif
-
-              @if($docStatus === 'siap_dibayar')
-                <button type="button" class="btn-action" onclick="updatePaymentStatus({{ $dokumen->id }}, 'sudah_dibayar')">
-                  <i class="fa-solid fa-check"></i>
-                  Sudah Dibayar
-                </button>
-              @endif
-
-              @if($docStatus === 'sudah_dibayar')
-                <button type="button" class="btn-action" onclick="uploadPaymentProof({{ $dokumen->id }})">
-                  <i class="fa-solid fa-upload"></i>
-                  Upload Bukti
+              @else
+                <button type="button" class="btn-action" onclick="openEditPembayaranModal({{ $dokumen->id }})">
+                  <i class="fa-solid fa-edit"></i>
+                  Edit
                 </button>
               @endif
             </div>
@@ -858,36 +839,39 @@
   </div>
 </div>
 
-<!-- Modal untuk Set Deadline -->
-<div class="modal fade" id="setDeadlineModal" tabindex="-1">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3><i class="fa-solid fa-calendar-days me-2"></i>Set Deadline Pembayaran</h3>
-    </div>
-    <div class="modal-body">
-      <form id="deadlineForm">
-        <input type="hidden" id="deadlineDocId" name="dokumen_id" value="">
-        <div class="form-group">
-          <label for="deadline_days">Periode Deadline</label>
-          <select name="deadline_days" id="deadline_days" class="form-control" required>
-            <option value="">Pilih periode</option>
-            <option value="3">3 hari</option>
-            <option value="5">5 hari</option>
-            <option value="7">7 hari</option>
-            <option value="14">14 hari</option>
-            <option value="21">21 hari</option>
-            <option value="30">30 hari</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="deadline_note">Catatan (Opsional)</label>
-          <textarea name="deadline_note" id="deadline_note" class="form-control" rows="3" placeholder="Masukkan catatan tambahan..."></textarea>
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-      <button type="button" class="btn btn-primary" onclick="submitDeadline()">Tetapkan</button>
+<!-- Modal: Edit Pembayaran -->
+<div class="modal fade" id="editPembayaranModal" tabindex="-1" aria-labelledby="editPembayaranModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPembayaranModalLabel">
+          <i class="fa-solid fa-edit me-2"></i>Edit Pembayaran
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editPembayaranForm">
+          <input type="hidden" id="editPembayaranDocId" name="dokumen_id" value="">
+          <div class="form-group mb-3">
+            <label for="tanggal_dibayar" class="form-label">Tanggal Pembayaran</label>
+            <input type="date" name="tanggal_dibayar" id="tanggal_dibayar" class="form-control" value="">
+            <small class="text-muted">Isi tanggal ketika pembayaran dilakukan</small>
+          </div>
+          <div class="form-group mb-3">
+            <label for="link_bukti_pembayaran" class="form-label">Link Bukti Pembayaran</label>
+            <input type="url" name="link_bukti_pembayaran" id="link_bukti_pembayaran" class="form-control" placeholder="https://drive.google.com/..." value="">
+            <small class="text-muted">Masukkan link PDF/Drive bukti pembayaran</small>
+          </div>
+          <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle me-2"></i>
+            <strong>Catatan:</strong> Minimal salah satu field harus diisi. Status akan otomatis berubah menjadi "Sudah Dibayar" setelah salah satu field diisi.
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary" onclick="submitEditPembayaran()">Simpan</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1803,7 +1787,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update dropdown text
         const texts = {
             '': 'Semua Dokumen',
-            'belum_siap_dibayar': 'Belum Siap Bayar',
             'siap_dibayar': 'Siap Dibayar',
             'sudah_dibayar': 'Sudah Dibayar'
         };
@@ -1916,129 +1899,120 @@ function clearSearch() {
     }
 }
 
-function setDeadline(docId) {
+function openEditPembayaranModal(docId) {
     // Set dokumen ID in hidden field
-    document.getElementById('deadlineDocId').value = docId;
+    const docIdField = document.getElementById('editPembayaranDocId');
+    const tanggalField = document.getElementById('tanggal_dibayar');
+    const linkField = document.getElementById('link_bukti_pembayaran');
+    const modalElement = document.getElementById('editPembayaranModal');
     
-    // Reset form
-    document.getElementById('deadline_days').value = '';
-    document.getElementById('deadline_note').value = '';
+    if (!docIdField || !tanggalField || !linkField || !modalElement) {
+        console.error('Modal elements not found');
+        alert('Terjadi kesalahan. Silakan muat ulang halaman.');
+        return;
+    }
     
-    const modal = new bootstrap.Modal(document.getElementById('setDeadlineModal'));
-    modal.show();
+    docIdField.value = docId;
+    
+    // Ambil data terbaru dari server untuk memastikan nilai tidak hilang
+    fetch(`/dokumensPembayaran/${docId}/get-payment-data`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            tanggalField.value = data.tanggal_dibayar || '';
+            linkField.value = data.link_bukti_pembayaran || '';
+        }
+        
+        // Use getOrCreateInstance for better compatibility
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error fetching payment data:', error);
+        // Jika error, tetap buka modal dengan nilai kosong
+        tanggalField.value = '';
+        linkField.value = '';
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modal.show();
+    });
 }
 
-function submitDeadline() {
-    const docId = document.getElementById('deadlineDocId').value;
+function submitEditPembayaran() {
+    const docId = document.getElementById('editPembayaranDocId').value;
     if (!docId) {
         alert('Dokumen tidak ditemukan. Silakan muat ulang halaman.');
         return;
     }
     
-    const form = document.getElementById('deadlineForm');
+    const form = document.getElementById('editPembayaranForm');
     const formData = new FormData(form);
-    const submitBtn = document.querySelector('#setDeadlineModal .btn-primary');
+    const submitBtn = document.querySelector('#editPembayaranModal .btn-primary');
 
-    const deadlineDays = formData.get('deadline_days');
-    if (!deadlineDays) {
-        alert('Silakan pilih periode deadline terlebih dahulu.');
+    const tanggalDibayar = formData.get('tanggal_dibayar');
+    const linkBukti = formData.get('link_bukti_pembayaran');
+
+    // Validasi: minimal salah satu harus diisi
+    if (!tanggalDibayar && !linkBukti) {
+        alert('Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.');
         return;
     }
 
     const originalHTML = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menetapkan...';
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
 
-    fetch(`/dokumensPembayaran/${docId}/set-deadline`, {
+    // Kirim semua field yang ada di form (termasuk yang kosong, untuk mempertahankan nilai yang sudah ada)
+    const requestData = {};
+    // Selalu kirim tanggal_dibayar jika ada (termasuk string kosong, akan di-handle di backend)
+    if (tanggalDibayar) {
+        requestData.tanggal_dibayar = tanggalDibayar;
+    }
+    // Selalu kirim link_bukti_pembayaran jika ada (termasuk string kosong, akan di-handle di backend)
+    if (linkBukti) {
+        requestData.link_bukti_pembayaran = linkBukti;
+    }
+
+    fetch(`/dokumensPembayaran/${docId}/update-pembayaran`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({
-            deadline_days: parseInt(deadlineDays, 10),
-            deadline_note: formData.get('deadline_note')
-        })
+        body: JSON.stringify(requestData)
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('setDeadlineModal'));
-            modal.hide();
-            alert('Deadline berhasil ditetapkan! Dokumen sekarang siap untuk diproses.');
+            const modalElement = document.getElementById('editPembayaranModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            if (data.is_complete) {
+                alert('Data pembayaran berhasil disimpan! Kedua field sudah lengkap, dokumen selesai.');
+            } else {
+                alert('Data pembayaran berhasil disimpan! Status otomatis berubah menjadi "Sudah Dibayar".');
+            }
             location.reload();
         } else {
-            alert(data.message || 'Gagal menetapkan deadline.');
+            alert(data.message || 'Gagal menyimpan data pembayaran.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalHTML;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Terjadi kesalahan saat menetapkan deadline.');
+        alert('Terjadi kesalahan saat menyimpan data pembayaran.');
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalHTML;
-    });
-}
-
-function updatePaymentStatus(docId, status) {
-    if (!confirm('Apakah Anda yakin ingin mengubah status pembayaran?')) {
-        return;
-    }
-
-    fetch(`/dokumensPembayaran/${docId}/update-status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            status_pembayaran: status
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Status pembayaran berhasil diperbarui!');
-            location.reload();
-        } else {
-            alert(data.message || 'Gagal memperbarui status pembayaran.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat memperbarui status pembayaran.');
-    });
-}
-
-function uploadPaymentProof(docId) {
-    const proofUrl = prompt('Masukkan link bukti pembayaran:');
-    if (!proofUrl) {
-        return;
-    }
-
-    fetch(`/dokumensPembayaran/${docId}/upload-bukti`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            link_bukti_pembayaran: proofUrl
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Link bukti pembayaran berhasil disimpan!');
-            location.reload();
-        } else {
-            alert(data.message || 'Gagal menyimpan link bukti pembayaran.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat menyimpan link bukti pembayaran.');
     });
 }
 </script>

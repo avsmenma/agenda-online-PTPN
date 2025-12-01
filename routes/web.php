@@ -311,9 +311,11 @@ Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,admin'])->group(f
 Route::get('/dokumensPembayaran', [DashboardPembayaranController::class, 'dokumens'])->name('dokumensPembayaran.index');
 Route::get('/dokumensPembayaran/dokumens', [DashboardPembayaranController::class, 'dokumens'])->name('dokumensPembayaran.dokumens');
 Route::get('/dokumensPembayaran/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('dokumensPembayaran.detail');
+Route::get('/dokumensPembayaran/{dokumen}/get-payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('dokumensPembayaran.getPaymentData');
 Route::post('/dokumensPembayaran/{dokumen}/set-deadline', [DashboardPembayaranController::class, 'setDeadline'])->name('dokumensPembayaran.setDeadline');
 Route::post('/dokumensPembayaran/{dokumen}/update-status', [DashboardPembayaranController::class, 'updateStatus'])->name('dokumensPembayaran.updateStatus');
 Route::post('/dokumensPembayaran/{dokumen}/upload-bukti', [DashboardPembayaranController::class, 'uploadBukti'])->name('dokumensPembayaran.uploadBukti');
+Route::post('/dokumensPembayaran/{dokumen}/update-pembayaran', [DashboardPembayaranController::class, 'updatePembayaran'])->name('dokumensPembayaran.updatePembayaran');
 Route::get('/dokumensPembayaran/create', [DashboardPembayaranController::class, 'createDokumen'])->name('dokumensPembayaran.create');
 Route::post('/dokumensPembayaran', [DashboardPembayaranController::class, 'storeDokumen'])->name('dokumensPembayaran.store');
 Route::get('/dokumensPembayaran/{dokumen}/edit', [DashboardPembayaranController::class, 'editDokumen'])->name('dokumensPembayaran.edit');

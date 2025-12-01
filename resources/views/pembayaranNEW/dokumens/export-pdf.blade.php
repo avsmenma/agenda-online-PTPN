@@ -227,7 +227,10 @@
                                                 $value = $doc->kebun ?? $doc->nama_kebuns ?? '-';
                                                 break;
                                             case 'umur_dokumen_tanggal_masuk':
-                                                if ($doc->tanggal_masuk) {
+                                                // Jika sudah dibayar, tampilkan 0
+                                                if (isset($doc->computed_status) && $doc->computed_status === 'sudah_dibayar') {
+                                                    $value = '0 HARI';
+                                                } elseif ($doc->tanggal_masuk) {
                                                     $tanggalMasuk = \Carbon\Carbon::parse($doc->tanggal_masuk)->startOfDay();
                                                     $hariIni = \Carbon\Carbon::now()->startOfDay();
                                                     $days = $tanggalMasuk->lte($hariIni) ? (int) $tanggalMasuk->diffInDays($hariIni) : 0;
@@ -237,7 +240,10 @@
                                                 }
                                                 break;
                                             case 'umur_dokumen_tanggal_spp':
-                                                if ($doc->tanggal_spp) {
+                                                // Jika sudah dibayar, tampilkan 0
+                                                if (isset($doc->computed_status) && $doc->computed_status === 'sudah_dibayar') {
+                                                    $value = '0 HARI';
+                                                } elseif ($doc->tanggal_spp) {
                                                     $tanggalSpp = \Carbon\Carbon::parse($doc->tanggal_spp)->startOfDay();
                                                     $hariIni = \Carbon\Carbon::now()->startOfDay();
                                                     $days = $tanggalSpp->lte($hariIni) ? (int) $tanggalSpp->diffInDays($hariIni) : 0;
@@ -247,7 +253,10 @@
                                                 }
                                                 break;
                                             case 'umur_dokumen_tanggal_ba':
-                                                if ($doc->tanggal_berita_acara) {
+                                                // Jika sudah dibayar, tampilkan 0
+                                                if (isset($doc->computed_status) && $doc->computed_status === 'sudah_dibayar') {
+                                                    $value = '0 HARI';
+                                                } elseif ($doc->tanggal_berita_acara) {
                                                     $tanggalBa = \Carbon\Carbon::parse($doc->tanggal_berita_acara)->startOfDay();
                                                     $hariIni = \Carbon\Carbon::now()->startOfDay();
                                                     $days = $tanggalBa->lte($hariIni) ? (int) $tanggalBa->diffInDays($hariIni) : 0;
@@ -403,7 +412,10 @@
                                             $value = $dokumen->kebun ?? $dokumen->nama_kebuns ?? '-';
                                             break;
                                         case 'umur_dokumen_tanggal_masuk':
-                                            if ($dokumen->tanggal_masuk) {
+                                            // Jika sudah dibayar, tampilkan 0
+                                            if (isset($dokumen->computed_status) && $dokumen->computed_status === 'sudah_dibayar') {
+                                                $value = '0 HARI';
+                                            } elseif ($dokumen->tanggal_masuk) {
                                                 $tanggalMasuk = \Carbon\Carbon::parse($dokumen->tanggal_masuk)->startOfDay();
                                                 $hariIni = \Carbon\Carbon::now()->startOfDay();
                                                 $days = $tanggalMasuk->lte($hariIni) ? (int) $tanggalMasuk->diffInDays($hariIni) : 0;
@@ -413,7 +425,10 @@
                                             }
                                             break;
                                         case 'umur_dokumen_tanggal_spp':
-                                            if ($dokumen->tanggal_spp) {
+                                            // Jika sudah dibayar, tampilkan 0
+                                            if (isset($dokumen->computed_status) && $dokumen->computed_status === 'sudah_dibayar') {
+                                                $value = '0 HARI';
+                                            } elseif ($dokumen->tanggal_spp) {
                                                 $tanggalSpp = \Carbon\Carbon::parse($dokumen->tanggal_spp)->startOfDay();
                                                 $hariIni = \Carbon\Carbon::now()->startOfDay();
                                                 $days = $tanggalSpp->lte($hariIni) ? (int) $tanggalSpp->diffInDays($hariIni) : 0;
@@ -423,7 +438,10 @@
                                             }
                                             break;
                                         case 'umur_dokumen_tanggal_ba':
-                                            if ($dokumen->tanggal_berita_acara) {
+                                            // Jika sudah dibayar, tampilkan 0
+                                            if (isset($dokumen->computed_status) && $dokumen->computed_status === 'sudah_dibayar') {
+                                                $value = '0 HARI';
+                                            } elseif ($dokumen->tanggal_berita_acara) {
                                                 $tanggalBa = \Carbon\Carbon::parse($dokumen->tanggal_berita_acara)->startOfDay();
                                                 $hariIni = \Carbon\Carbon::now()->startOfDay();
                                                 $days = $tanggalBa->lte($hariIni) ? (int) $tanggalBa->diffInDays($hariIni) : 0;

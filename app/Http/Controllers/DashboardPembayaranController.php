@@ -80,30 +80,28 @@ class DashboardPembayaranController extends Controller
         // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
         $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
         
-        // Helper function to calculate computed status (same logic as rekapan method)
+        // Helper function to calculate computed status
+        // Di halaman pembayaran, hanya ada 2 status: siap_dibayar dan sudah_dibayar
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
-            // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
-            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
-            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
-                $statusPembayaran === 'SUDAH DIBAYAR' ||
+            // Cek apakah dokumen sudah dibayar berdasarkan:
+            // 1. Ada tanggal_dibayar, ATAU
+            // 2. Ada link_bukti_pembayaran, ATAU
+            // 3. status_pembayaran = 'sudah_dibayar' (berbagai format)
+            if ($doc->tanggal_dibayar || 
+                $doc->link_bukti_pembayaran ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
                 $doc->status_pembayaran === 'sudah_dibayar') {
                 return 'sudah_dibayar';
             }
-            // Jika status_pembayaran = 'BELUM SIAP DIBAYAR', maka belum siap dibayar
-            if ($statusPembayaran === 'BELUM SIAP DIBAYAR' || 
-                $statusPembayaran === 'BELUM_SIAP_DIBAYAR' ||
-                $doc->status_pembayaran === 'belum_siap_dibayar') {
-                return 'belum_siap_dibayar';
-            }
-            // Jika masih di akuntansi, perpajakan, ibuA, ibuB (atau variasi lainnya)
-            if (in_array($doc->current_handler, $belumSiapHandlers)) {
-                return 'belum_siap_dibayar';
-            }
-            // Jika sudah di pembayaran tapi belum dibayar
+            
+            // Jika sudah di pembayaran atau sudah dikirim ke pembayaran
             if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
                 return 'siap_dibayar';
             }
-            // Default - jika tidak ada status_pembayaran dan tidak di handler pembayaran, berarti belum siap
+            
+            // Jika masih di handler lain (akuntansi, perpajakan, ibuA, ibuB)
+            // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
             return 'belum_siap_dibayar';
         };
 
@@ -123,9 +121,14 @@ class DashboardPembayaranController extends Controller
             $doc->computed_status = $getComputedStatus($doc);
         });
 
-        // Apply status filter based on computed_status (after computing)
-        // This ensures consistency with how status is displayed in the view
-        if ($statusFilter) {
+        // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
+        // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
+        $dokumens = $dokumens->filter(function($doc) {
+            return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
+        })->values();
+
+        // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
+        if ($statusFilter && in_array($statusFilter, ['siap_dibayar', 'sudah_dibayar'])) {
             $dokumens = $dokumens->filter(function($doc) use ($statusFilter) {
                 return $doc->computed_status === $statusFilter;
             })->values(); // Re-index the collection
@@ -152,7 +155,6 @@ class DashboardPembayaranController extends Controller
             'tanggal_spk' => 'TGL SPK',
             'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
             'status_pembayaran' => 'Status Pembayaran',
-            'deadline' => 'Deadline',
         ];
 
         // Get selected columns from request or session
@@ -307,6 +309,139 @@ class DashboardPembayaranController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memperbarui status pembayaran: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update pembayaran (tanggal pembayaran dan/atau link bukti)
+     * Status otomatis berubah menjadi 'sudah_dibayar' jika salah satu sudah diisi
+     */
+    public function updatePembayaran(Request $request, Dokumen $dokumen)
+    {
+        // Only allow if current_handler is pembayaran
+        if ($dokumen->current_handler !== 'pembayaran') {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        try {
+            $validated = $request->validate([
+                'tanggal_dibayar' => 'nullable|date',
+                'link_bukti_pembayaran' => 'nullable|url|max:1000',
+            ], [
+                'tanggal_dibayar.date' => 'Format tanggal tidak valid.',
+                'link_bukti_pembayaran.url' => 'Format link tidak valid.',
+                'link_bukti_pembayaran.max' => 'Link maksimal 1000 karakter.',
+            ]);
+
+            // Minimal salah satu harus diisi
+            if (empty($validated['tanggal_dibayar']) && empty($validated['link_bukti_pembayaran'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.'
+                ], 422);
+            }
+
+            // Store old values for logging
+            $oldTanggalDibayar = $dokumen->tanggal_dibayar;
+            $oldLinkBukti = $dokumen->link_bukti_pembayaran;
+            $oldStatusPembayaran = $dokumen->status_pembayaran;
+
+            DB::transaction(function () use ($dokumen, $validated) {
+                $updateData = [];
+
+                // Update tanggal_dibayar jika diisi (jika dikirim dalam request)
+                if (isset($validated['tanggal_dibayar']) && !empty($validated['tanggal_dibayar'])) {
+                    $updateData['tanggal_dibayar'] = $validated['tanggal_dibayar'];
+                }
+
+                // Update link_bukti_pembayaran jika diisi (jika dikirim dalam request)
+                if (isset($validated['link_bukti_pembayaran']) && !empty($validated['link_bukti_pembayaran'])) {
+                    $updateData['link_bukti_pembayaran'] = $validated['link_bukti_pembayaran'];
+                }
+
+                // Jika salah satu sudah diisi (baik yang baru atau yang sudah ada), update status menjadi 'sudah_dibayar'
+                $hasTanggal = !empty($updateData['tanggal_dibayar']) || !empty($dokumen->tanggal_dibayar);
+                $hasLink = !empty($updateData['link_bukti_pembayaran']) || !empty($dokumen->link_bukti_pembayaran);
+                
+                if ($hasTanggal || $hasLink) {
+                    $updateData['status_pembayaran'] = 'sudah_dibayar';
+                    $updateData['status'] = 'completed';
+                }
+
+                $dokumen->update($updateData);
+            });
+
+            $dokumen->refresh();
+
+            // Log changes
+            if ($oldTanggalDibayar != $dokumen->tanggal_dibayar) {
+                try {
+                    \App\Helpers\ActivityLogHelper::logDataEdited(
+                        $dokumen,
+                        'tanggal_dibayar',
+                        $oldTanggalDibayar ? $oldTanggalDibayar->format('d/m/Y') : null,
+                        $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : null,
+                        'pembayaran'
+                    );
+                } catch (\Exception $logException) {
+                    \Log::error('Failed to log tanggal_dibayar change: ' . $logException->getMessage());
+                }
+            }
+
+            if ($oldLinkBukti != $dokumen->link_bukti_pembayaran) {
+                try {
+                    \App\Helpers\ActivityLogHelper::logDataEdited(
+                        $dokumen,
+                        'link_bukti_pembayaran',
+                        $oldLinkBukti,
+                        $dokumen->link_bukti_pembayaran,
+                        'pembayaran'
+                    );
+                } catch (\Exception $logException) {
+                    \Log::error('Failed to log link upload: ' . $logException->getMessage());
+                }
+            }
+
+            if ($oldStatusPembayaran != $dokumen->status_pembayaran) {
+                try {
+                    \App\Helpers\ActivityLogHelper::logDataEdited(
+                        $dokumen,
+                        'status_pembayaran',
+                        $oldStatusPembayaran ? ucfirst(str_replace('_', ' ', $oldStatusPembayaran)) : null,
+                        ucfirst(str_replace('_', ' ', $dokumen->status_pembayaran)),
+                        'pembayaran'
+                    );
+                } catch (\Exception $logException) {
+                    \Log::error('Failed to log status change: ' . $logException->getMessage());
+                }
+            }
+
+            Log::info('Pembayaran successfully updated', [
+                'document_id' => $dokumen->id,
+                'tanggal_dibayar' => $dokumen->tanggal_dibayar,
+                'has_link_bukti' => !empty($dokumen->link_bukti_pembayaran),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data pembayaran berhasil diperbarui.',
+                'is_complete' => !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error updating payment: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating payment: ' . $e->getMessage(), [
+                'document_id' => $dokumen->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memperbarui data pembayaran: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1143,6 +1278,10 @@ class DashboardPembayaranController extends Controller
             case 'tanggal_berakhir_spk':
                 return $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-';
             case 'umur_dokumen_tanggal_masuk':
+                // Jika sudah dibayar, tampilkan 0
+                if (isset($dokumen->computed_status) && $dokumen->computed_status === 'sudah_dibayar') {
+                    return '0 HARI';
+                }
                 if ($dokumen->tanggal_masuk) {
                     $tanggalMasuk = \Carbon\Carbon::parse($dokumen->tanggal_masuk)->startOfDay();
                     $hariIni = \Carbon\Carbon::now()->startOfDay();
@@ -1151,6 +1290,10 @@ class DashboardPembayaranController extends Controller
                 }
                 return '-';
             case 'umur_dokumen_tanggal_spp':
+                // Jika sudah dibayar, tampilkan 0
+                if (isset($dokumen->computed_status) && $dokumen->computed_status === 'sudah_dibayar') {
+                    return '0 HARI';
+                }
                 if ($dokumen->tanggal_spp) {
                     $tanggalSpp = \Carbon\Carbon::parse($dokumen->tanggal_spp)->startOfDay();
                     $hariIni = \Carbon\Carbon::now()->startOfDay();
@@ -1159,6 +1302,10 @@ class DashboardPembayaranController extends Controller
                 }
                 return '-';
             case 'umur_dokumen_tanggal_ba':
+                // Jika sudah dibayar, tampilkan 0
+                if (isset($dokumen->computed_status) && $dokumen->computed_status === 'sudah_dibayar') {
+                    return '0 HARI';
+                }
                 if ($dokumen->tanggal_berita_acara) {
                     $tanggalBa = \Carbon\Carbon::parse($dokumen->tanggal_berita_acara)->startOfDay();
                     $hariIni = \Carbon\Carbon::now()->startOfDay();
@@ -1292,6 +1439,23 @@ class DashboardPembayaranController extends Controller
     /**
      * Get document detail for Pembayaran view
      */
+    /**
+     * Get payment data (tanggal_dibayar and link_bukti_pembayaran) for edit modal
+     */
+    public function getPaymentData(Dokumen $dokumen)
+    {
+        // Only allow if current_handler is pembayaran
+        if ($dokumen->current_handler !== 'pembayaran') {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'tanggal_dibayar' => $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('Y-m-d') : '',
+            'link_bukti_pembayaran' => $dokumen->link_bukti_pembayaran ?? '',
+        ]);
+    }
+
     public function getDocumentDetail(Dokumen $dokumen)
     {
         // Allow access if document is handled by pembayaran or sent to pembayaran
