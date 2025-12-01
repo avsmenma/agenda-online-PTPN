@@ -47,19 +47,9 @@ class DashboardPembayaranController extends Controller
         $search = $request->get('search');
 
         // Build query for pembayaran documents
-        // Include all documents that are related to pembayaran OR have payment status
-        // This ensures consistency with rekapan() method
-        $query = \App\Models\Dokumen::whereNotNull('nomor_agenda')
-            ->where(function($query) {
-                $query->where('current_handler', 'pembayaran')
-                      ->orWhere('status', 'sent_to_pembayaran')
-                      ->orWhere(function($subQuery) {
-                          $subQuery->where('status', 'sedang diproses')
-                                   ->where('universal_approval_for', 'pembayaran');
-                      })
-                      ->orWhere('created_by', 'pembayaran')
-                      ->orWhereNotNull('status_pembayaran'); // Include all documents with payment status
-            });
+        // Include all documents with nomor_agenda (same as rekapan method)
+        // Filter by status will determine which documents to show
+        $query = \App\Models\Dokumen::whereNotNull('nomor_agenda');
 
         // Apply status filter if specified
         if ($statusFilter) {
