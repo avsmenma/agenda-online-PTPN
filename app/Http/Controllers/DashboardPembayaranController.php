@@ -12,6 +12,8 @@ use App\Helpers\DokumenHelper;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 class DashboardPembayaranController extends Controller
 {
@@ -672,9 +674,7 @@ class DashboardPembayaranController extends Controller
         // For rekapan table mode - group by vendor
         $rekapanByVendor = null;
         if ($mode === 'rekapan_table' && !empty($selectedColumns)) {
-            $allDocsForRekapan = (clone $query)
-                ->orderBy('dibayar_kepada')
-                ->get();
+            $allDocsForRekapan = $query->orderBy('dibayar_kepada')->get();
 
             // Add computed status to each document
             $allDocsForRekapan->each(function($doc) use ($getComputedStatus) {
@@ -715,38 +715,42 @@ class DashboardPembayaranController extends Controller
             });
         }
 
-        // Get paginated results for normal mode
-        $dokumens = $query->orderBy('created_at', 'desc')
-                         ->get();
+        // Get all results first (before pagination) to apply computed_status filter
+        $allDokumens = $query->orderBy('created_at', 'desc')->get();
 
         // Add computed status to each document
-        $dokumens->each(function($doc) use ($getComputedStatus) {
+        $allDokumens->each(function($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
         // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
         // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
-        $dokumens = $dokumens->filter(function($doc) {
+        $allDokumens = $allDokumens->filter(function($doc) {
             return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
         })->values();
 
         // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
         if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
-            $dokumens = $dokumens->filter(function($doc) use ($statusPembayaran) {
+            $allDokumens = $allDokumens->filter(function($doc) use ($statusPembayaran) {
                 return $doc->computed_status === $statusPembayaran;
             })->values();
         }
 
-        // Paginate the filtered results
+        // Paginate the filtered results manually
         $currentPage = request()->get('page', 1);
         $perPage = 15;
-        $currentItems = $dokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        $dokumens = new \Illuminate\Pagination\LengthAwarePaginator(
+        $total = $allDokumens->count();
+        $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        
+        $dokumens = new LengthAwarePaginator(
             $currentItems,
-            $dokumens->count(),
+            $total,
             $perPage,
             $currentPage,
-            ['path' => request()->url(), 'query' => request()->query()]
+            [
+                'path' => request()->url(),
+                'query' => request()->except('page')
+            ]
         );
 
         // Calculate statistics
@@ -789,19 +793,20 @@ class DashboardPembayaranController extends Controller
             ->orderBy('year', 'desc')
             ->pluck('year');
 
-        // Get unique data for dropdown filters from existing documents
-        $baseDokumenQuery = Dokumen::whereNotNull('nomor_agenda');
-
-        // Apply same filters for dropdown data
-        if ($year) {
-            $baseDokumenQuery->whereYear('created_at', $year);
-        }
-        if ($month) {
-            $baseDokumenQuery->whereMonth('created_at', $month);
-        }
+        // Helper function to create a new query with same filters
+        $createFilteredQuery = function() use ($year, $month) {
+            $q = Dokumen::whereNotNull('nomor_agenda');
+            if ($year) {
+                $q->whereYear('created_at', $year);
+            }
+            if ($month) {
+                $q->whereMonth('created_at', $month);
+            }
+            return $q;
+        };
 
         // Get unique values for Dibayar Kepada (Vendor)
-        $availableDibayarKepada = $baseDokumenQuery->clone()
+        $availableDibayarKepada = $createFilteredQuery()
             ->whereNotNull('dibayar_kepada')
             ->where('dibayar_kepada', '!=', '')
             ->selectRaw('DISTINCT dibayar_kepada')
@@ -809,7 +814,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('dibayar_kepada', 'dibayar_kepada');
 
         // Get unique values for Kategori
-        $availableKategori = $baseDokumenQuery->clone()
+        $availableKategori = $createFilteredQuery()
             ->whereNotNull('kategori')
             ->where('kategori', '!=', '')
             ->selectRaw('DISTINCT kategori')
@@ -817,7 +822,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('kategori', 'kategori');
 
         // Get unique values for Jenis Dokumen
-        $availableJenisDokumen = $baseDokumenQuery->clone()
+        $availableJenisDokumen = $createFilteredQuery()
             ->whereNotNull('jenis_dokumen')
             ->where('jenis_dokumen', '!=', '')
             ->selectRaw('DISTINCT jenis_dokumen')
@@ -825,7 +830,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('jenis_dokumen', 'jenis_dokumen');
 
         // Get unique values for Jenis Sub Pekerjaan
-        $availableJenisSubPekerjaan = $baseDokumenQuery->clone()
+        $availableJenisSubPekerjaan = $createFilteredQuery()
             ->whereNotNull('jenis_sub_pekerjaan')
             ->where('jenis_sub_pekerjaan', '!=', '')
             ->selectRaw('DISTINCT jenis_sub_pekerjaan')
@@ -833,7 +838,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('jenis_sub_pekerjaan', 'jenis_sub_pekerjaan');
 
         // Get unique values for Jenis Pembayaran
-        $availableJenisPembayaran = $baseDokumenQuery->clone()
+        $availableJenisPembayaran = $createFilteredQuery()
             ->whereNotNull('jenis_pembayaran')
             ->where('jenis_pembayaran', '!=', '')
             ->selectRaw('DISTINCT jenis_pembayaran')
@@ -842,14 +847,14 @@ class DashboardPembayaranController extends Controller
 
         // Get unique values for Kebun (from both kebun and nama_kebuns fields)
         // First get from kebun field
-        $kebunFromKebun = $baseDokumenQuery->clone()
+        $kebunFromKebun = $createFilteredQuery()
             ->whereNotNull('kebun')
             ->where('kebun', '!=', '')
             ->distinct()
             ->pluck('kebun', 'kebun');
         
         // Then get from nama_kebuns field
-        $kebunFromNamaKebuns = $baseDokumenQuery->clone()
+        $kebunFromNamaKebuns = $createFilteredQuery()
             ->whereNotNull('nama_kebuns')
             ->where('nama_kebuns', '!=', '')
             ->distinct()
