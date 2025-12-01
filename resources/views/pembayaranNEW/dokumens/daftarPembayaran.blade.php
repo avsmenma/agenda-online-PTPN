@@ -648,11 +648,14 @@
 <div class="search-box">
   <div class="search-filter-container">
     <div class="search-input-wrapper">
-      <div class="input-group">
-        <span class="input-group-text">
+      <div class="input-group" id="searchInputGroup">
+        <span class="input-group-text" style="cursor: pointer;" onclick="performSearch()">
           <i class="fa-solid fa-magnifying-glass text-muted"></i>
         </span>
-        <input type="text" id="pembayaranSearchInput" class="form-control" placeholder="Cari dokumen pembayaran...">
+        <input type="text" id="pembayaranSearchInput" class="form-control" placeholder="Cari dokumen pembayaran..." value="{{ $search ?? '' }}">
+        <button class="input-group-text" type="button" id="clearSearchBtn" onclick="clearSearch()" style="cursor: pointer; border-left: none; background: white; border: 2px solid rgba(8, 62, 64, 0.1); border-left: none; display: {{ ($search ?? null) ? 'block' : 'none' }};">
+          <i class="fa-solid fa-times text-muted"></i>
+        </button>
       </div>
     </div>
     <div class="filter-wrapper">
@@ -737,7 +740,20 @@
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
               @elseif($col == 'status_pembayaran')
-                @switch($dokumen->status_pembayaran)
+                @php
+                  // Use computed_status if available, otherwise fallback to status_pembayaran
+                  $status = $dokumen->computed_status ?? $dokumen->status_pembayaran ?? 'belum_siap_dibayar';
+                  // Handle uppercase formats
+                  if (is_string($status)) {
+                    $statusUpper = strtoupper(trim($status));
+                    if ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
+                      $status = 'sudah_dibayar';
+                    } elseif ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
+                      $status = 'siap_dibayar';
+                    }
+                  }
+                @endphp
+                @switch($status)
                   @case('siap_dibayar')
                     <span class="status-badge siap-dibayar">Siap Dibayar</span>
                     @break
@@ -756,7 +772,20 @@
           @endforeach
           <td class="col-status">
             @if(!in_array('status_pembayaran', $selectedColumns))
-              @switch($dokumen->status_pembayaran)
+              @php
+                // Use computed_status if available, otherwise fallback to status_pembayaran
+                $status = $dokumen->computed_status ?? $dokumen->status_pembayaran ?? 'belum_siap_dibayar';
+                // Handle uppercase formats
+                if (is_string($status)) {
+                  $statusUpper = strtoupper(trim($status));
+                  if ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
+                    $status = 'sudah_dibayar';
+                  } elseif ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
+                    $status = 'siap_dibayar';
+                  }
+                }
+              @endphp
+              @switch($status)
                 @case('siap_dibayar')
                   <span class="status-badge siap-dibayar">Siap Dibayar</span>
                   @break
@@ -779,21 +808,34 @@
           </td>
           <td class="col-action">
             <div class="action-buttons">
-              @if(in_array($dokumen->current_handler, ['pembayaran']) && $dokumen->status_pembayaran !== 'sudah_dibayar')
+              @php
+                // Use computed_status if available, otherwise fallback to status_pembayaran
+                $docStatus = $dokumen->computed_status ?? $dokumen->status_pembayaran ?? 'belum_siap_dibayar';
+                // Handle uppercase formats
+                if (is_string($docStatus)) {
+                  $statusUpper = strtoupper(trim($docStatus));
+                  if ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
+                    $docStatus = 'sudah_dibayar';
+                  } elseif ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
+                    $docStatus = 'siap_dibayar';
+                  }
+                }
+              @endphp
+              @if(in_array($dokumen->current_handler, ['pembayaran']) && $docStatus !== 'sudah_dibayar')
                 <button type="button" class="btn-action" onclick="setDeadline({{ $dokumen->id }})">
                   <i class="fa-solid fa-calendar-days"></i>
                   Set Deadline
                 </button>
               @endif
 
-              @if($dokumen->status_pembayaran === 'siap_dibayar')
+              @if($docStatus === 'siap_dibayar')
                 <button type="button" class="btn-action" onclick="updatePaymentStatus({{ $dokumen->id }}, 'sudah_dibayar')">
                   <i class="fa-solid fa-check"></i>
                   Sudah Dibayar
                 </button>
               @endif
 
-              @if($dokumen->status_pembayaran === 'sudah_dibayar')
+              @if($docStatus === 'sudah_dibayar')
                 <button type="button" class="btn-action" onclick="uploadPaymentProof({{ $dokumen->id }})">
                   <i class="fa-solid fa-upload"></i>
                   Upload Bukti
@@ -1722,9 +1764,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const filter = this.getAttribute('data-filter');
 
-            // Auto-navigate to filter URL
+            // Auto-navigate to filter URL while preserving search parameter
             const url = new URL(window.location);
             url.searchParams.set('status_filter', filter);
+            
+            // Preserve search parameter if exists
+            const searchInput = document.getElementById('pembayaranSearchInput');
+            if (searchInput && searchInput.value.trim()) {
+                url.searchParams.set('search', searchInput.value.trim());
+            } else {
+                url.searchParams.delete('search');
+            }
+            
             window.location.href = url.toString();
         });
     });
@@ -1770,6 +1821,100 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('pembayaranSearchInput');
+    let searchTimeout;
+
+    if (searchInput) {
+        // Handle Enter key press
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch();
+            }
+        });
+
+        // Handle input with debounce (auto-search after user stops typing for 800ms)
+        searchInput.addEventListener('input', function() {
+            // Show/hide clear button based on input value
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) {
+                if (this.value.trim()) {
+                    clearBtn.style.display = 'block';
+                } else {
+                    clearBtn.style.display = 'none';
+                }
+            }
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                performSearch();
+            }, 800);
+        });
+
+        // Handle search icon click
+        const searchIcon = searchInput.closest('.input-group')?.querySelector('.input-group-text');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performSearch();
+            });
+        }
+    }
+
+    function performSearch() {
+        const searchValue = searchInput.value.trim();
+        const currentFilter = '{{ $statusFilter ?? "" }}';
+        
+        // Build URL with current filter and search
+        const url = new URL(window.location.pathname, window.location.origin);
+        
+        // Add search parameter if not empty
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        // Preserve status filter
+        if (currentFilter) {
+            url.searchParams.set('status_filter', currentFilter);
+        } else {
+            url.searchParams.delete('status_filter');
+        }
+        
+        // Navigate to new URL
+        window.location.href = url.toString();
+    }
+
+    // Make performSearch available globally
+    window.performSearch = performSearch;
+});
+
+// Clear search function
+function clearSearch() {
+    const searchInput = document.getElementById('pembayaranSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        const currentFilter = '{{ $statusFilter ?? "" }}';
+        
+        // Build URL without search parameter
+        const url = new URL(window.location.pathname, window.location.origin);
+        url.searchParams.delete('search');
+        
+        // Preserve status filter
+        if (currentFilter) {
+            url.searchParams.set('status_filter', currentFilter);
+        } else {
+            url.searchParams.delete('status_filter');
+        }
+        
+        // Navigate to new URL
+        window.location.href = url.toString();
+    }
+}
 
 function setDeadline(docId) {
     // Set dokumen ID in hidden field

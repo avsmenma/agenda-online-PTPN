@@ -113,20 +113,20 @@
   .stat-value {
     font-size: 36px;
     font-weight: 800;
-    color: #2c3e50;
+    color: #000000 !important;
     line-height: 1.2;
     margin-bottom: 4px;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: #000000 !important;
+    background-clip: unset !important;
   }
 
   .stat-description {
     font-size: 12px;
-    color: #889717;
+    color: #6c757d;
     font-weight: 500;
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
   /* Legacy card styles for backward compatibility */
@@ -286,6 +286,7 @@
   }
 
   .table thead th {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
     color: white !important;
     font-weight: 600 !important;
     font-size: 14px !important;
@@ -489,11 +490,25 @@
   }
 
   .table-container .table-responsive table thead tr.table-dark th {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
     color: white !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     padding: 16px 12px !important;
     border: none !important;
+  }
+  
+  /* Override Bootstrap table-dark untuk memastikan warna hijau */
+  .table-dark {
+    background-color: #083E40 !important;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+  }
+  
+  .table-dark th {
+    background-color: transparent !important;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
   }
 
   /* Section Title Styling */
@@ -665,7 +680,7 @@
        <!-- Tabel Dokumen Terbaru -->
     <div class="table-container">
       <h6>
-        <span style="color: #1a4d3e; text-decoration: none; font-size: 24px;">Dokumen Masuk</span>
+        <span style="background: linear-gradient(135deg, #083E40 0%, #889717 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none; font-size: 24px; font-weight: 700;">Dokumen Masuk</span>
         <a href="{{ url('/dokumensPembayaran')}}" style="color: #1a4d3e; text-decoration: none; font-size: 14px;">View All</a>
       </h6>
       <div class="table-responsive">

@@ -42,42 +42,107 @@ class DashboardPembayaranController extends Controller
     }
 
     public function dokumens(Request $request){
-        // Get status filter from request
+        // Get status filter and search from request
         $statusFilter = $request->get('status_filter');
+        $search = $request->get('search');
 
         // Build query for pembayaran documents
-        $query = \App\Models\Dokumen::where(function($query) {
-            $query->where('current_handler', 'pembayaran')
-                  ->orWhere('status', 'sent_to_pembayaran')
-                  ->orWhere(function($subQuery) {
-                      $subQuery->where('status', 'sedang diproses')
-                               ->where('universal_approval_for', 'pembayaran');
-                  })
-                  ->orWhere('created_by', 'pembayaran')
-                  ->orWhereNotNull('status_pembayaran'); // Include documents with payment status
-        });
+        // Include all documents that are related to pembayaran OR have payment status
+        // This ensures consistency with rekapan() method
+        $query = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->where(function($query) {
+                $query->where('current_handler', 'pembayaran')
+                      ->orWhere('status', 'sent_to_pembayaran')
+                      ->orWhere(function($subQuery) {
+                          $subQuery->where('status', 'sedang diproses')
+                                   ->where('universal_approval_for', 'pembayaran');
+                      })
+                      ->orWhere('created_by', 'pembayaran')
+                      ->orWhereNotNull('status_pembayaran'); // Include all documents with payment status
+            });
 
         // Apply status filter if specified
         if ($statusFilter) {
             switch ($statusFilter) {
                 case 'belum_siap_dibayar':
                     // Dokumen yang belum siap = belum ada status_pembayaran atau masih sent_to_pembayaran
-                    $query->where(function($q) {
-                        $q->whereNull('status_pembayaran')
+                    // Handler yang dianggap "belum siap dibayar"
+                    $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+                    $query->where(function($q) use ($belumSiapHandlers) {
+                        $q->whereIn('current_handler', $belumSiapHandlers)
+                          ->orWhereNull('status_pembayaran')
                           ->orWhere('status', 'sent_to_pembayaran')
                           ->orWhere('status', 'sedang diproses');
                     });
                     break;
                 case 'siap_dibayar':
-                    // Dokumen yang siap dibayar = status_pembayaran = siap_dibayar
-                    $query->where('status_pembayaran', 'siap_dibayar');
+                    // Dokumen yang siap dibayar = sudah di pembayaran tapi belum dibayar
+                    $query->where(function($q) {
+                        $q->where('current_handler', 'pembayaran')
+                          ->orWhere('status', 'sent_to_pembayaran');
+                    })->where(function($q) {
+                        $q->whereNull('status_pembayaran')
+                          ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                          ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                          ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
+                    });
                     break;
                 case 'sudah_dibayar':
-                    // Dokumen yang sudah dibayar = status_pembayaran = sudah_dibayar
-                    $query->where('status_pembayaran', 'sudah_dibayar');
+                    // Dokumen yang sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+                    $query->where(function($q) {
+                        $q->where('status_pembayaran', 'sudah_dibayar')
+                          ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                          ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                    });
                     break;
             }
         }
+
+        // Apply search filter if provided
+        if ($search && trim($search) !== '') {
+            $searchTerm = trim($search);
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('nomor_agenda', 'like', "%{$searchTerm}%")
+                  ->orWhere('nomor_spp', 'like', "%{$searchTerm}%")
+                  ->orWhere('uraian_spp', 'like', "%{$searchTerm}%")
+                  ->orWhere('dibayar_kepada', 'like', "%{$searchTerm}%")
+                  ->orWhere('nomor_mirror', 'like', "%{$searchTerm}%")
+                  ->orWhere('no_berita_acara', 'like', "%{$searchTerm}%")
+                  ->orWhere('no_spk', 'like', "%{$searchTerm}%");
+                
+                // Search in nilai_rupiah - handle various formats
+                $numericSearch = preg_replace('/[^0-9]/', '', $searchTerm);
+                if (is_numeric($numericSearch) && $numericSearch > 0) {
+                    $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
+                }
+            })->orWhereHas('dibayarKepadas', function($q) use ($searchTerm) {
+                $q->where('nama_penerima', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Handler yang dianggap "belum siap dibayar"
+        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+        
+        // Helper function to calculate computed status (same logic as rekapan method)
+        $getComputedStatus = function($doc) use ($belumSiapHandlers) {
+            // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
+            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
+                $statusPembayaran === 'SUDAH DIBAYAR' ||
+                $doc->status_pembayaran === 'sudah_dibayar') {
+                return 'sudah_dibayar';
+            }
+            // Jika masih di akuntansi, perpajakan, ibu_a, ibu_b
+            if (in_array($doc->current_handler, $belumSiapHandlers)) {
+                return 'belum_siap_dibayar';
+            }
+            // Jika sudah di pembayaran tapi belum dibayar
+            if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
+                return 'siap_dibayar';
+            }
+            // Default
+            return 'belum_siap_dibayar';
+        };
 
         // Get documents with ordering and eager load relationships
         $dokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
@@ -89,6 +154,11 @@ class DashboardPembayaranController extends Controller
             ->orderBy('updated_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Add computed status to each document
+        $dokumens->each(function($doc) use ($getComputedStatus) {
+            $doc->computed_status = $getComputedStatus($doc);
+        });
 
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
@@ -152,8 +222,9 @@ class DashboardPembayaranController extends Controller
             'menuDaftarDokumen' => 'Active',
             'dokumens' => $dokumens,
             'statusFilter' => $statusFilter,
-            'availableColumns' => $availableColumns,    // <-- TAMBAHKAN INI
-            'selectedColumns' => $selectedColumns,      // <-- TAMBAHKAN INI
+            'search' => $search,
+            'availableColumns' => $availableColumns,
+            'selectedColumns' => $selectedColumns,
         );
         return view('pembayaranNEW.dokumens.daftarPembayaran', $data);
     }
