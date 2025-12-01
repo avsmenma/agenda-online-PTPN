@@ -80,7 +80,7 @@ class DashboardPembayaranController extends Controller
 
         // Handler yang dianggap "belum siap dibayar"
         // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
         
         // Helper function to calculate computed status
         // Di halaman pembayaran, hanya ada 2 status: siap_dibayar dan sudah_dibayar
@@ -102,7 +102,7 @@ class DashboardPembayaranController extends Controller
                 return 'siap_dibayar';
             }
             
-            // Jika masih di handler lain (akuntansi, perpajakan, ibuA, ibuB)
+            // Jika masih di handler lain (akutansi, perpajakan, ibuA, ibuB)
             // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
             return 'belum_siap_dibayar';
         };
@@ -556,7 +556,7 @@ class DashboardPembayaranController extends Controller
 
         // Handler yang dianggap "belum siap dibayar"
         // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
 
         // Base query - semua dokumen yang sudah melewati proses awal
         $query = Dokumen::whereNotNull('nomor_agenda');
@@ -564,7 +564,7 @@ class DashboardPembayaranController extends Controller
         // Apply status filter based on new logic
         if ($statusPembayaran) {
             if ($statusPembayaran === 'belum_siap_dibayar') {
-                // Belum siap = masih di akuntansi, perpajakan, ibu_a, ibu_b
+                // Belum siap = masih di akutansi, perpajakan, ibu_a, ibu_b
                 $query->whereIn('current_handler', $belumSiapHandlers);
             } elseif ($statusPembayaran === 'siap_dibayar') {
                 // Siap dibayar = sudah di pembayaran tapi belum dibayar
@@ -666,7 +666,7 @@ class DashboardPembayaranController extends Controller
                 return 'siap_dibayar';
             }
             
-            // Jika masih di handler lain (akuntansi, perpajakan, ibuA, ibuB)
+            // Jika masih di handler lain (akutansi, perpajakan, ibuA, ibuB)
             // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
             return 'belum_siap_dibayar';
         };
@@ -814,7 +814,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('dibayar_kepada', 'dibayar_kepada');
 
         // Get unique values for Kategori
-        $availableKategori = $createFilteredQuery()
+        $availableKategori = $createFilteredQuery($year, $month)
             ->whereNotNull('kategori')
             ->where('kategori', '!=', '')
             ->selectRaw('DISTINCT kategori')
@@ -822,7 +822,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('kategori', 'kategori');
 
         // Get unique values for Jenis Dokumen
-        $availableJenisDokumen = $createFilteredQuery()
+        $availableJenisDokumen = $createFilteredQuery($year, $month)
             ->whereNotNull('jenis_dokumen')
             ->where('jenis_dokumen', '!=', '')
             ->selectRaw('DISTINCT jenis_dokumen')
@@ -830,7 +830,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('jenis_dokumen', 'jenis_dokumen');
 
         // Get unique values for Jenis Sub Pekerjaan
-        $availableJenisSubPekerjaan = $createFilteredQuery()
+        $availableJenisSubPekerjaan = $createFilteredQuery($year, $month)
             ->whereNotNull('jenis_sub_pekerjaan')
             ->where('jenis_sub_pekerjaan', '!=', '')
             ->selectRaw('DISTINCT jenis_sub_pekerjaan')
@@ -838,7 +838,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('jenis_sub_pekerjaan', 'jenis_sub_pekerjaan');
 
         // Get unique values for Jenis Pembayaran
-        $availableJenisPembayaran = $createFilteredQuery()
+        $availableJenisPembayaran = $createFilteredQuery($year, $month)
             ->whereNotNull('jenis_pembayaran')
             ->where('jenis_pembayaran', '!=', '')
             ->selectRaw('DISTINCT jenis_pembayaran')
@@ -847,14 +847,14 @@ class DashboardPembayaranController extends Controller
 
         // Get unique values for Kebun (from both kebun and nama_kebuns fields)
         // First get from kebun field
-        $kebunFromKebun = $createFilteredQuery()
+        $kebunFromKebun = $createFilteredQuery($year, $month)
             ->whereNotNull('kebun')
             ->where('kebun', '!=', '')
             ->distinct()
             ->pluck('kebun', 'kebun');
         
         // Then get from nama_kebuns field
-        $kebunFromNamaKebuns = $createFilteredQuery()
+        $kebunFromNamaKebuns = $createFilteredQuery($year, $month)
             ->whereNotNull('nama_kebuns')
             ->where('nama_kebuns', '!=', '')
             ->distinct()
@@ -933,7 +933,7 @@ class DashboardPembayaranController extends Controller
 
         // Handler yang dianggap "belum siap dibayar"
         // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
 
         // Base query - semua dokumen yang sudah melewati proses awal
         $query = Dokumen::whereNotNull('nomor_agenda');
@@ -1165,7 +1165,7 @@ class DashboardPembayaranController extends Controller
     {
         // Handler yang dianggap "belum siap dibayar"
         // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
         
         // Helper function to calculate computed status
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
