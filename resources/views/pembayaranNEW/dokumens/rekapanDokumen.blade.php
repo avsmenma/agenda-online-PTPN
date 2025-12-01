@@ -2185,46 +2185,8 @@ async function exportToExcel() {
   }
 }
 
-// Export to PDF Function
+// Export to PDF Function - Server-side approach
 function exportToPDF() {
-  console.log('PDF Export: Starting export process');
-
-  // Cari tabel rekapan
-  const rekapanTableContainer = document.getElementById('rekapanTableContainer');
-  const rekapanTable = document.getElementById('rekapanTable');
-  
-  // Fallback ke tabel normal
-  const normalTableContainer = document.querySelector('.table-container:not(#rekapanTableContainer)');
-  
-  // Pilih container yang akan di-export
-  let tableContainer = rekapanTableContainer || normalTableContainer;
-  let table = null;
-  
-  if (tableContainer) {
-    table = tableContainer.querySelector('table');
-  }
-
-  if (!tableContainer || !table) {
-    alert('Tabel tidak ditemukan! Pastikan:\n1. Mode rekapan table sudah diaktifkan\n2. Kolom sudah dipilih\n3. Data sudah ditampilkan');
-    return;
-  }
-
-  const rows = table.querySelectorAll('tbody tr');
-  const headers = table.querySelectorAll('thead th');
-  
-  console.log('PDF Export: Found', rows.length, 'rows and', headers.length, 'headers');
-  
-  if (rows.length === 0) {
-    alert('Tidak ada data untuk di-export! Pastikan data sudah ditampilkan.');
-    return;
-  }
-  
-  if (headers.length === 0) {
-    alert('Tabel tidak memiliki header! Pastikan tabel sudah dimuat dengan benar.');
-    return;
-  }
-
-  // Show loading
   const btn = document.querySelector('.btn-export-pdf');
   if (!btn) {
     alert('Tombol export tidak ditemukan!');
@@ -2236,267 +2198,71 @@ function exportToPDF() {
   btn.disabled = true;
 
   try {
-    console.log('PDF Export: Starting PDF generation process');
-    console.log('PDF Export: Export mode:', exportMode);
-
-    // Get table and header info
-    const tableHeader = tableContainer.querySelector('.table-header');
-    const title = tableHeader ? tableHeader.querySelector('h5')?.textContent || 'Rekapan Pembayaran' : 'Rekapan Pembayaran';
-    const summary = tableHeader ? tableHeader.querySelector('.text-muted')?.textContent || '' : '';
-
-    console.log('PDF Export: Title:', title);
-    console.log('PDF Export: Summary:', summary);
-
-    // Get current date
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    const timeStr = now.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    // Clone table for PDF
-    const tableClone = table.cloneNode(true);
-    console.log('PDF Export: Table cloned successfully');
-
-    // Attach to DOM temporarily to get proper dimensions
-    tableClone.style.position = 'absolute';
-    tableClone.style.left = '-9999px';
-    tableClone.style.top = '0';
-    tableClone.style.visibility = 'hidden';
-    document.body.appendChild(tableClone);
-
-    // Remove no-export elements
-    const noExportElements = tableClone.querySelectorAll('.no-export');
-    noExportElements.forEach(el => el.remove());
-
-    // Force reflow to get proper dimensions
-    tableClone.offsetHeight; // Force reflow
-
-    // Create professional PDF wrapper
-    const pdfWrapper = document.createElement('div');
-    pdfWrapper.style.cssText = `
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      width: 100%;
-      background: #ffffff;
-      color: #333333;
-      padding: 0;
-      margin: 0;
-    `;
-
-    // Create header
-    const header = document.createElement('div');
-    header.style.cssText = `
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-      color: white;
-      padding: 25px 30px;
-      margin-bottom: 25px;
-      border-radius: 8px 8px 0 0;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    `;
-    header.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.5px;">
-            ${title}
-          </h1>
-          ${summary ? `<p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">${summary}</p>` : ''}
-        </div>
-        <div style="text-align: right; font-size: 12px; opacity: 0.9;">
-          <div style="margin-bottom: 5px;">${dateStr}</div>
-          <div>${timeStr}</div>
-        </div>
-      </div>
-    `;
-
-    // Create table container with better styling
-    const tableContainerDiv = document.createElement('div');
-    tableContainerDiv.style.cssText = `
-      overflow-x: auto;
-      margin-bottom: 20px;
-    `;
-
-    // Apply professional table styling directly to table
-    tableClone.style.cssText = `
-      width: 100% !important;
-      border-collapse: collapse !important;
-      margin: 0 !important;
-      font-size: 9px !important;
-      background: white !important;
-      table-layout: auto !important;
-    `;
+    // Get all filter parameters
+    const params = new URLSearchParams();
+    params.append('status_pembayaran', '{{ $selectedStatus ?? "" }}');
+    params.append('year', '{{ $selectedYear ?? "" }}');
+    params.append('month', '{{ $selectedMonth ?? "" }}');
+    params.append('search', '{{ $search ?? "" }}');
+    params.append('export', 'pdf');
     
-    // Style thead
-    const thead = tableClone.querySelector('thead');
-    if (thead) {
-      thead.style.cssText = `
-        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-        color: white !important;
-        display: table-header-group !important;
-      `;
-      
-      const ths = thead.querySelectorAll('th');
-      ths.forEach(th => {
-        th.style.cssText = `
-          padding: 10px 8px !important;
-          text-align: center !important;
-          font-weight: 600 !important;
-          font-size: 9px !important;
-          text-transform: uppercase !important;
-          border: 1px solid rgba(255,255,255,0.3) !important;
-          white-space: nowrap !important;
-        `;
-      });
-    }
+    // Determine mode based on whether rekapan table is enabled
+    const enableRekapan = document.getElementById('enableRekapanTable');
+    const mode = enableRekapan && enableRekapan.checked ? 'rekapan_table' : 'normal';
+    params.append('mode', mode);
     
-    // Style tbody
-    const tbody = tableClone.querySelector('tbody');
-    if (tbody) {
-      const trs = tbody.querySelectorAll('tr');
-      trs.forEach((tr, index) => {
-        if (tr.classList.contains('vendor-header-row')) {
-          tr.style.cssText = `
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-            color: white !important;
-          `;
-          const tds = tr.querySelectorAll('td');
-          tds.forEach(td => {
-            td.style.cssText = `
-              padding: 10px 15px !important;
-              font-weight: 700 !important;
-              font-size: 10px !important;
-              text-align: center !important;
-              border: none !important;
-            `;
-          });
-        } else if (tr.classList.contains('subtotal-row') || tr.classList.contains('grand-total-row')) {
-          tr.style.cssText = `
-            background: #f3f4f6 !important;
-            font-weight: 600 !important;
-          `;
-          const tds = tr.querySelectorAll('td');
-          tds.forEach(td => {
-            td.style.cssText = `
-              padding: 10px 8px !important;
-              font-size: 9px !important;
-              text-align: center !important;
-              border-top: 2px solid #083E40 !important;
-              border-bottom: 2px solid #083E40 !important;
-            `;
-          });
-        } else {
-          tr.style.cssText = `
-            background: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'} !important;
-            border-bottom: 1px solid #e5e7eb !important;
-          `;
-          const tds = tr.querySelectorAll('td');
-          tds.forEach(td => {
-            td.style.cssText = `
-              padding: 8px 6px !important;
-              text-align: center !important;
-              vertical-align: middle !important;
-              font-size: 9px !important;
-              color: #374151 !important;
-              border-right: 1px solid #e5e7eb !important;
-              white-space: nowrap !important;
-            `;
-          });
-        }
-      });
-    }
+    // Add selected columns if in rekapan_table mode
+    @if(!empty($selectedColumns))
+      @foreach($selectedColumns as $col)
+        params.append('columns[]', '{{ $col }}');
+      @endforeach
+    @endif
 
-    // Put table in container
-    tableContainerDiv.appendChild(tableClone);
-    
-    // Verify table has content
-    const finalRows = tableClone.querySelectorAll('tbody tr');
-    const finalHeaders = tableClone.querySelectorAll('thead th');
-    console.log('PDF Export: Final table has', finalRows.length, 'rows and', finalHeaders.length, 'headers');
-    
-    if (finalRows.length === 0) {
-      alert('Tabel tidak memiliki data! Pastikan data sudah ditampilkan.');
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      return;
-    }
-
-    // Create footer
-    const footer = document.createElement('div');
-    footer.style.cssText = `
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #e5e7eb;
-      text-align: center;
-      font-size: 10px;
-      color: #6b7280;
-    `;
-    footer.innerHTML = `
-      <div style="margin-bottom: 5px;">
-        <strong>Agenda Online - Sistem Manajemen Dokumen Pembayaran</strong>
-      </div>
-      <div>
-        Dokumen ini dihasilkan secara otomatis pada ${dateStr} pukul ${timeStr}
-      </div>
-    `;
-
-    // Assemble PDF content
-    pdfWrapper.appendChild(style);
-    pdfWrapper.appendChild(header);
-    pdfWrapper.appendChild(tableContainerDiv);
-    pdfWrapper.appendChild(footer);
-
-    // PDF options optimized for landscape A4
-    const opt = {
-      margin: [8, 8, 10, 8],
-      filename: `Rekapan_Pembayaran_${new Date().toISOString().slice(0, 10)}.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        letterRendering: true,
-        windowWidth: 1920,
-        windowHeight: 1080,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-        scrollX: 0,
-        scrollY: 0
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'landscape',
-        compress: true
-      },
-      pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy'],
-        before: '.vendor-header-row',
-        after: '.grand-total-row'
+    // Add rekapan detail filters if in rekapan_table mode
+    if (mode === 'rekapan_table') {
+      const filterDibayarKepada = document.getElementById('filter_dibayar_kepada_column')?.value;
+      if (filterDibayarKepada) {
+        params.append('filter_dibayar_kepada_column', filterDibayarKepada);
       }
-    };
 
-    console.log('PDF Export: Ready to generate PDF with', finalRows.length, 'rows');
+      const filterKategori = document.getElementById('filter_kategori_column')?.value;
+      if (filterKategori) {
+        params.append('filter_kategori_column', filterKategori);
+      }
 
-    // Generate PDF
-    console.log('PDF Export: Starting PDF generation...');
-    html2pdf().set(opt).from(pdfWrapper).save().then(() => {
-      console.log('PDF Export: Completed successfully');
+      const filterJenisDokumen = document.getElementById('filter_jenis_dokumen_column')?.value;
+      if (filterJenisDokumen) {
+        params.append('filter_jenis_dokumen_column', filterJenisDokumen);
+      }
+
+      const filterJenisSubPekerjaan = document.getElementById('filter_jenis_sub_pekerjaan_column')?.value;
+      if (filterJenisSubPekerjaan) {
+        params.append('filter_jenis_sub_pekerjaan_column', filterJenisSubPekerjaan);
+      }
+
+      const filterJenisPembayaran = document.getElementById('filter_jenis_pembayaran_column')?.value;
+      if (filterJenisPembayaran) {
+        params.append('filter_jenis_pembayaran_column', filterJenisPembayaran);
+      }
+
+      const filterKebun = document.getElementById('filter_jenis_kebuns_column')?.value;
+      if (filterKebun) {
+        params.append('filter_jenis_kebuns_column', filterKebun);
+      }
+    }
+
+    // Open export route in new tab
+    const exportUrl = '{{ route("pembayaran.rekapan.export") }}?' + params.toString();
+    window.open(exportUrl, '_blank');
+    
+    // Reset button after a short delay
+    setTimeout(() => {
       btn.innerHTML = originalText;
       btn.disabled = false;
-    }).catch(err => {
-      console.error('PDF Export Error:', err);
-      alert('Terjadi kesalahan saat membuat PDF: ' + err.message + '\n\nPastikan:\n1. Data sudah ditampilkan dengan benar\n2. Browser mendukung export PDF\n3. Coba refresh halaman dan ulangi');
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    });
+    }, 500);
   } catch (error) {
-    console.error('PDF Export error:', error);
-    alert('Terjadi kesalahan saat export PDF: ' + error.message);
+    console.error('Export error:', error);
+    alert('Terjadi kesalahan saat export: ' + error.message);
     btn.innerHTML = originalText;
     btn.disabled = false;
   }
@@ -2504,7 +2270,6 @@ function exportToPDF() {
 
 // Alternative export function with delay for better loading
 function exportToPDFWithDelay() {
-  console.log('PDF Export: Using delayed export');
   setTimeout(() => {
     exportToPDF();
   }, 300);

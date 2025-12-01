@@ -11,136 +11,17 @@
     font-weight: 700;
   }
 
-  /* Modern Card Styles */
-  .stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-    transition: all 0.6s ease;
-    opacity: 0;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.15), 0 4px 16px rgba(136, 151, 23, 0.1);
-    border-color: rgba(136, 151, 23, 0.3);
-  }
-
-  .stat-card:hover::before {
-    opacity: 1;
-    top: -60%;
-    right: -60%;
-  }
-
-  .stat-card-body {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .stat-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    color: white;
-    flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .stat-card:hover .stat-icon {
-    transform: scale(1.15) rotate(5deg);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  .stat-icon.total {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-  }
-
-  .stat-icon.selesai {
-    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
-  }
-
-  .stat-icon.proses {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-  }
-
-  .stat-icon.dikembalikan {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  }
-
-  .stat-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .stat-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 8px;
-    opacity: 0.9;
-  }
-
-  .stat-value {
-    font-size: 36px;
-    font-weight: 800;
-    color: #2c3e50;
-    line-height: 1.2;
-    margin-bottom: 4px;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .stat-description {
-    font-size: 12px;
-    color: #889717;
-    font-weight: 500;
-    opacity: 0.8;
-  }
-
-  /* Legacy card styles for backward compatibility */
   .card {
-    border-radius: 20px;
+    border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(8, 62, 64, 0.2), 0 2px 8px rgba(136, 151, 23, 0.1);
   }
 
   .card::before {
-    content: '';
+    /* content: ''; */
     position: absolute;
     top: -50%;
     right: -50%;
@@ -151,7 +32,7 @@
   }
 
   .card:hover {
-    transform: translateY(-10px) scale(1.02);
+    transform: translateY(-8px);
     box-shadow: 0 12px 32px rgba(8, 62, 64, 0.3), 0 4px 12px rgba(136, 151, 23, 0.2);
   }
 
@@ -163,31 +44,26 @@
   .card-body {
     position: relative;
     z-index: 1;
-    padding: 24px !important;
   }
 
   .card i {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
   }
 
   .card:hover i {
-    transform: scale(1.15) rotate(5deg);
+    transform: scale(1.1) rotate(5deg);
   }
 
   .text-xs {
-    font-size: 13px;
-    letter-spacing: 0.8px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
     opacity: 0.95;
-    font-weight: 600;
-    text-transform: uppercase;
   }
 
   .h5 {
-    font-size: 32px;
-    font-weight: 800;
+    font-size: 28px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    line-height: 1.2;
   }
 
   .search-box {
@@ -517,139 +393,75 @@
   .detail-item-full {
     grid-column: 1 / -1;
   }
-
-  /* Responsive adjustments for cards */
-  @media (max-width: 1200px) {
-    .stat-value {
-      font-size: 30px;
-    }
-    .stat-icon {
-      width: 60px;
-      height: 60px;
-      font-size: 28px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .stat-card {
-      padding: 20px;
-    }
-    .stat-value {
-      font-size: 28px;
-    }
-    .stat-icon {
-      width: 55px;
-      height: 55px;
-      font-size: 24px;
-    }
-    .stat-title {
-      font-size: 11px;
-    }
-    .stat-description {
-      font-size: 11px;
-    }
-  }
-
-  /* Animation for card entrance */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .stat-card {
-    animation: fadeInUp 0.6s ease-out;
-  }
-
-  .stat-card:nth-child(1) {
-    animation-delay: 0.1s;
-  }
-
-  .stat-card:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  .stat-card:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-
-  .stat-card:nth-child(4) {
-    animation-delay: 0.4s;
-  }
 </style>
 
-<h2 style="margin-bottom: 30px; font-weight: 700;">{{ $title }}</h2>
+<h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <!-- Total Dokumen -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4 ">
+                            <div class="card border-left-primary shadow h-100 py-2" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-white mb-1">
+                                                T.Dokumen</div>
+                                            <div class="h5 mb-0 font-weight-bold text-white">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-tasks fa-2x text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Total Dokumen</div>
-                    <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Semua dokumen pembayaran</div>
-                </div>
-                <div class="stat-icon total">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Selesai -->
+                            <div class="card border-left-primary shadow h-100 py-2" style="background: linear-gradient(135deg, #889717 0%, #9ab01f 50%, #083E40 100%);">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-white mb-1">
+                                                T.Dokumen Selesai</div>
+                                            <div class="h5 mb-0 font-weight-bold text-white">{{ number_format($totalSelesai ?? 0, 0, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-book-open fa-2x text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Dokumen Selesai</div>
-                    <div class="stat-value">{{ number_format($totalSelesai ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Pembayaran selesai</div>
-                </div>
-                <div class="stat-icon selesai">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Proses -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Dokumen Proses</div>
-                    <div class="stat-value">{{ number_format($totalProses ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Sedang diproses</div>
-                </div>
-                <div class="stat-icon proses">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Dokumen Dikembalikan -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Dikembalikan</div>
-                    <div class="stat-value">{{ number_format($totalDikembalikan ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Dokumen dikembalikan</div>
-                </div>
-                <div class="stat-icon dikembalikan">
-                    <i class="fas fa-arrow-left"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+                            <div class="card border-left-primary shadow h-100 py-2" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-white  mb-1">
+                                                T.Dokumen Proses</div>
+                                            <div class="h5 mb-0 font-weight-bold text-white">{{ number_format($totalProses ?? 0, 0, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-refresh fa-2x text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    <div class="col-xl-3 col-md-6 mb-4 ">
+                            <div class="card border-left-primary shadow h-100 py-2" style="background: linear-gradient(135deg, #889717 0%, #9ab01f 50%, #083E40 100%);">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-white  mb-1">
+                                                T.Dokumen Dikembalikan</div>
+                                            <div class="h5 mb-0 font-weight-bold text-white">{{ number_format($totalDikembalikan ?? 0, 0, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-arrow-left fa-2x text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 </div>
 
 <!-- Search Box -->
@@ -775,6 +587,10 @@
                         <span class="detail-value">{{ $dokumen->jenis_pembayaran ?? '-' }}</span>
                       </div>
                       <div class="detail-item">
+                        <span class="detail-label">Kebun</span>
+                        <span class="detail-value">{{ $dokumen->kebun ?? '-' }}</span>
+                      </div>
+                      <div class="detail-item">
                         <span class="detail-label">Dibayar Kepada</span>
                         <span class="detail-value">{{ $dokumen->dibayar_kepada ?? '-' }}</span>
                       </div>
@@ -811,14 +627,14 @@
                         </div>
                       @endif
                       <div class="detail-item">
-                        <span class="detail-label">No Miror</span>
+                        <span class="detail-label">No Miro</span>
                         <span class="detail-value">{{ $dokumen->nomor_mirror ?? '-' }}</span>
                       </div>
                     </div>
 
                     @if($dokumen->jenis_pph || $dokumen->dpp_pph || $dokumen->ppn_terhutang)
                       <!-- Section Perpajakan -->
-                      <div class="section-title">Informasi Perpajakan</div>
+                      <div class="section-title">Informasi Team Perpajakan</div>
                       <div class="detail-grid">
                         <div class="detail-item">
                           <span class="detail-label">Jenis PPh</span>

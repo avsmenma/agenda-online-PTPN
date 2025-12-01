@@ -754,6 +754,48 @@ class DashboardPembayaranController extends Controller
             });
         }
 
+        // Apply rekapan detail filters (only for rekapan_table mode)
+        if ($mode === 'rekapan_table') {
+            // Filter by Dibayar Kepada (Vendor)
+            $filterDibayarKepada = $request->get('filter_dibayar_kepada_column');
+            if ($filterDibayarKepada) {
+                $query->where('dibayar_kepada', $filterDibayarKepada);
+            }
+
+            // Filter by Kategori
+            $filterKategori = $request->get('filter_kategori_column');
+            if ($filterKategori) {
+                $query->where('kategori', $filterKategori);
+            }
+
+            // Filter by Jenis Dokumen
+            $filterJenisDokumen = $request->get('filter_jenis_dokumen_column');
+            if ($filterJenisDokumen) {
+                $query->where('jenis_dokumen', $filterJenisDokumen);
+            }
+
+            // Filter by Jenis Sub Pekerjaan
+            $filterJenisSubPekerjaan = $request->get('filter_jenis_sub_pekerjaan_column');
+            if ($filterJenisSubPekerjaan) {
+                $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
+            }
+
+            // Filter by Jenis Pembayaran
+            $filterJenisPembayaran = $request->get('filter_jenis_pembayaran_column');
+            if ($filterJenisPembayaran) {
+                $query->where('jenis_pembayaran', $filterJenisPembayaran);
+            }
+
+            // Filter by Kebun (check both kebun and nama_kebuns fields)
+            $filterKebun = $request->get('filter_jenis_kebuns_column');
+            if ($filterKebun) {
+                $query->where(function($q) use ($filterKebun) {
+                    $q->where('kebun', $filterKebun)
+                      ->orWhere('nama_kebuns', $filterKebun);
+                });
+            }
+        }
+
         // Helper function to calculate computed status
         $getComputedStatus = function($doc) use ($belumSiapHandlers) {
             // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
@@ -773,16 +815,23 @@ class DashboardPembayaranController extends Controller
         };
 
         // Get all documents (no pagination for export)
-        $dokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // For rekapan_table mode, order by dibayar_kepada to match the display order
+        if ($mode === 'rekapan_table') {
+            $dokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+                ->orderBy('dibayar_kepada')
+                ->get();
+        } else {
+            $dokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         // Add computed status to each document
         $dokumens->each(function($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
-        // Available columns mapping
+        // Available columns mapping - must match rekapan() method
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
             'dibayar_kepada' => 'Nama Vendor/Dibayar Kepada',
@@ -790,6 +839,7 @@ class DashboardPembayaranController extends Controller
             'jenis_sub_pekerjaan' => 'Jenis Subbagian',
             'nomor_mirror' => 'Nomor Miro',
             'nomor_spp' => 'No SPP',
+            'uraian_spp' => 'Uraian SPP',
             'tanggal_spp' => 'Tanggal SPP',
             'tanggal_berita_acara' => 'Tanggal BA',
             'no_berita_acara' => 'Nomor BA',
@@ -797,6 +847,7 @@ class DashboardPembayaranController extends Controller
             'no_spk' => 'Nomor SPK',
             'tanggal_spk' => 'Tanggal SPK',
             'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'kebun' => 'Kebun',
             'umur_dokumen_tanggal_masuk' => 'Umur Dokumen (Berdasarkan Tanggal Masuk)',
             'umur_dokumen_tanggal_spp' => 'Umur Dokumen (Berdasarkan Tanggal SPP)',
             'umur_dokumen_tanggal_ba' => 'Umur Dokumen (Berdasarkan Tanggal BA)',
@@ -887,6 +938,86 @@ class DashboardPembayaranController extends Controller
      */
     private function exportToPDF($dokumens, $columns, $availableColumns, $mode, $statusFilter, $year, $month, $search)
     {
+        // Handler yang dianggap "belum siap dibayar"
+        $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+        
+        // Helper function to calculate computed status
+        $getComputedStatus = function($doc) use ($belumSiapHandlers) {
+            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
+            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
+                $statusPembayaran === 'SUDAH DIBAYAR' ||
+                $doc->status_pembayaran === 'sudah_dibayar') {
+                return 'sudah_dibayar';
+            }
+            if (in_array($doc->current_handler, $belumSiapHandlers)) {
+                return 'belum_siap_dibayar';
+            }
+            if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
+                return 'siap_dibayar';
+            }
+            return 'belum_siap_dibayar';
+        };
+
+        // Add computed status to all documents first
+        $dokumens->each(function($doc) use ($getComputedStatus) {
+            $doc->computed_status = $getComputedStatus($doc);
+        });
+
+        // Calculate totals for subtotal and grand total
+        $rekapanByVendor = null;
+        $grandTotalNilai = 0;
+        $grandTotalBelum = 0;
+        $grandTotalSiap = 0;
+        $grandTotalSudah = 0;
+
+        if ($mode === 'rekapan_table' && !empty($columns)) {
+            // Group by vendor - same logic as rekapan() method
+            $rekapanByVendor = $dokumens->groupBy(function($doc) {
+                return $doc->dibayar_kepada ?: null;
+            })->map(function($docs, $vendor) {
+                return [
+                    'vendor' => $vendor ?: 'Tidak Diketahui',
+                    'documents' => $docs,
+                    'total_nilai' => $docs->sum('nilai_rupiah'),
+                    'total_belum_dibayar' => $docs->where('computed_status', 'belum_siap_dibayar')->sum('nilai_rupiah'),
+                    'total_siap_dibayar' => $docs->where('computed_status', 'siap_dibayar')->sum('nilai_rupiah'),
+                    'total_sudah_dibayar' => $docs->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
+                    'count' => $docs->count(),
+                ];
+            })->sortBy(function($vendorData) {
+                // Sort vendors: "Tidak Diketahui" should come last, others alphabetically
+                if ($vendorData['vendor'] === 'Tidak Diketahui') {
+                    return 'zzz_' . $vendorData['vendor'];
+                }
+                return $vendorData['vendor'];
+            });
+
+            // Calculate grand totals
+            foreach ($rekapanByVendor as $vendorData) {
+                $grandTotalNilai += $vendorData['total_nilai'];
+                $grandTotalBelum += $vendorData['total_belum_dibayar'];
+                $grandTotalSiap += $vendorData['total_siap_dibayar'];
+                $grandTotalSudah += $vendorData['total_sudah_dibayar'];
+            }
+        } else {
+            // For normal mode, calculate grand totals from all documents
+            $grandTotalNilai = $dokumens->sum('nilai_rupiah');
+            $grandTotalBelum = $dokumens->where('computed_status', 'belum_siap_dibayar')->sum('nilai_rupiah');
+            $grandTotalSiap = $dokumens->where('computed_status', 'siap_dibayar')->sum('nilai_rupiah');
+            $grandTotalSudah = $dokumens->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah');
+        }
+
+        // Find the index of first value column
+        $valueColumns = ['nilai_rupiah', 'nilai_belum_siap_bayar', 'nilai_siap_bayar', 'nilai_sudah_dibayar'];
+        $firstValueIndex = null;
+        foreach($columns as $idx => $col) {
+            if (in_array($col, $valueColumns)) {
+                $firstValueIndex = $idx;
+                break;
+            }
+        }
+        $colspanCount = $firstValueIndex !== null ? $firstValueIndex + 1 : count($columns) + 1;
+
         // Prepare data for PDF view
         $pdfData = [
             'dokumens' => $dokumens,
@@ -896,11 +1027,18 @@ class DashboardPembayaranController extends Controller
             'year' => $year,
             'month' => $month,
             'search' => $search,
+            'mode' => $mode,
+            'rekapanByVendor' => $rekapanByVendor,
+            'grandTotalNilai' => $grandTotalNilai,
+            'grandTotalBelum' => $grandTotalBelum,
+            'grandTotalSiap' => $grandTotalSiap,
+            'grandTotalSudah' => $grandTotalSudah,
+            'firstValueIndex' => $firstValueIndex,
+            'colspanCount' => $colspanCount,
         ];
 
         // Return view that can be printed as PDF using browser print
-        // TODO: Update this to pembayaranNEW when export-pdf.blade.php is available in pembayaranNEW folder
-        return view('pembayaran.dokumens.export-pdf', $pdfData);
+        return view('pembayaranNEW.dokumens.export-pdf', $pdfData);
     }
 
     /**
