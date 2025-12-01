@@ -279,14 +279,14 @@
   }
 
   .table thead {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+    background: #083E40 !important;
     display: table-header-group !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
 
   .table thead th {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+    background: #083E40 !important;
     color: white !important;
     font-weight: 600 !important;
     font-size: 14px !important;
@@ -484,13 +484,13 @@
     cursor: pointer;
   }
 
-  /* Custom thead styling with gradient */
+  /* Custom thead styling */
   .table-container .table-responsive table thead tr.table-dark {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+    background: #083E40 !important;
   }
 
   .table-container .table-responsive table thead tr.table-dark th {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+    background: #083E40 !important;
     color: white !important;
     font-size: 14px !important;
     font-weight: 600 !important;
@@ -501,12 +501,10 @@
   /* Override Bootstrap table-dark untuk memastikan warna hijau */
   .table-dark {
     background-color: #083E40 !important;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
   }
   
   .table-dark th {
-    background-color: transparent !important;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%) !important;
+    background-color: #083E40 !important;
     color: white !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
   }
