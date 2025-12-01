@@ -68,9 +68,14 @@ class DashboardPembayaranController extends Controller
                     // Dokumen yang belum siap = belum ada status_pembayaran atau masih sent_to_pembayaran
                     // Handler yang dianggap "belum siap dibayar"
                     $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
-                    $query->where(function($q) use ($belumSiapHandlers) {
+                    // Pastikan tidak termasuk dokumen yang sudah dibayar
+                    $query->where(function($q) {
+                        $q->whereNull('status_pembayaran')
+                          ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                          ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                          ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
+                    })->where(function($q) use ($belumSiapHandlers) {
                         $q->whereIn('current_handler', $belumSiapHandlers)
-                          ->orWhereNull('status_pembayaran')
                           ->orWhere('status', 'sent_to_pembayaran')
                           ->orWhere('status', 'sedang diproses');
                     });
