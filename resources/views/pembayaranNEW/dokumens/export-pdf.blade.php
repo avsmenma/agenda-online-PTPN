@@ -45,7 +45,7 @@
             background-color: #083E40;
             color: white;
             padding: 8px;
-            text-align: left;
+            text-align: center;
             font-weight: bold;
             border: 1px solid #ddd;
             font-size: 9px;
@@ -228,24 +228,30 @@
                                                 break;
                                             case 'umur_dokumen_tanggal_masuk':
                                                 if ($doc->tanggal_masuk) {
-                                                    $days = now()->diffInDays($doc->tanggal_masuk);
-                                                    $value = $days . ' hari';
+                                                    $tanggalMasuk = \Carbon\Carbon::parse($doc->tanggal_masuk)->startOfDay();
+                                                    $hariIni = \Carbon\Carbon::now()->startOfDay();
+                                                    $days = $tanggalMasuk->lte($hariIni) ? (int) $tanggalMasuk->diffInDays($hariIni) : 0;
+                                                    $value = $days . ' HARI';
                                                 } else {
                                                     $value = '-';
                                                 }
                                                 break;
                                             case 'umur_dokumen_tanggal_spp':
                                                 if ($doc->tanggal_spp) {
-                                                    $days = now()->diffInDays($doc->tanggal_spp);
-                                                    $value = $days . ' hari';
+                                                    $tanggalSpp = \Carbon\Carbon::parse($doc->tanggal_spp)->startOfDay();
+                                                    $hariIni = \Carbon\Carbon::now()->startOfDay();
+                                                    $days = $tanggalSpp->lte($hariIni) ? (int) $tanggalSpp->diffInDays($hariIni) : 0;
+                                                    $value = $days . ' HARI';
                                                 } else {
                                                     $value = '-';
                                                 }
                                                 break;
                                             case 'umur_dokumen_tanggal_ba':
                                                 if ($doc->tanggal_berita_acara) {
-                                                    $days = now()->diffInDays($doc->tanggal_berita_acara);
-                                                    $value = $days . ' hari';
+                                                    $tanggalBa = \Carbon\Carbon::parse($doc->tanggal_berita_acara)->startOfDay();
+                                                    $hariIni = \Carbon\Carbon::now()->startOfDay();
+                                                    $days = $tanggalBa->lte($hariIni) ? (int) $tanggalBa->diffInDays($hariIni) : 0;
+                                                    $value = $days . ' HARI';
                                                 } else {
                                                     $value = '-';
                                                 }
@@ -398,24 +404,30 @@
                                             break;
                                         case 'umur_dokumen_tanggal_masuk':
                                             if ($dokumen->tanggal_masuk) {
-                                                $days = now()->diffInDays($dokumen->tanggal_masuk);
-                                                $value = $days . ' hari';
+                                                $tanggalMasuk = \Carbon\Carbon::parse($dokumen->tanggal_masuk)->startOfDay();
+                                                $hariIni = \Carbon\Carbon::now()->startOfDay();
+                                                $days = $tanggalMasuk->lte($hariIni) ? (int) $tanggalMasuk->diffInDays($hariIni) : 0;
+                                                $value = $days . ' HARI';
                                             } else {
                                                 $value = '-';
                                             }
                                             break;
                                         case 'umur_dokumen_tanggal_spp':
                                             if ($dokumen->tanggal_spp) {
-                                                $days = now()->diffInDays($dokumen->tanggal_spp);
-                                                $value = $days . ' hari';
+                                                $tanggalSpp = \Carbon\Carbon::parse($dokumen->tanggal_spp)->startOfDay();
+                                                $hariIni = \Carbon\Carbon::now()->startOfDay();
+                                                $days = $tanggalSpp->lte($hariIni) ? (int) $tanggalSpp->diffInDays($hariIni) : 0;
+                                                $value = $days . ' HARI';
                                             } else {
                                                 $value = '-';
                                             }
                                             break;
                                         case 'umur_dokumen_tanggal_ba':
                                             if ($dokumen->tanggal_berita_acara) {
-                                                $days = now()->diffInDays($dokumen->tanggal_berita_acara);
-                                                $value = $days . ' hari';
+                                                $tanggalBa = \Carbon\Carbon::parse($dokumen->tanggal_berita_acara)->startOfDay();
+                                                $hariIni = \Carbon\Carbon::now()->startOfDay();
+                                                $days = $tanggalBa->lte($hariIni) ? (int) $tanggalBa->diffInDays($hariIni) : 0;
+                                                $value = $days . ' HARI';
                                             } else {
                                                 $value = '-';
                                             }

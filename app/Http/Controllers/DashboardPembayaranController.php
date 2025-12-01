@@ -134,12 +134,12 @@ class DashboardPembayaranController extends Controller
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
-            'tanggal_masuk' => 'Tanggal Masuk',
+            'tanggal_masuk' => 'TGL Masuk',
             'nomor_spp' => 'No SPP',
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
             'nomor_mirror' => 'Nomor Miro',
-            'tanggal_spp' => 'Tanggal SPP',
+            'tanggal_spp' => 'TGL SPP',
             'kategori' => 'Kategori',
             'kebun' => 'Kebun',
             'jenis_dokumen' => 'Jenis Dokumen',
@@ -147,10 +147,10 @@ class DashboardPembayaranController extends Controller
             'nama_pengirim' => 'Nama Pengirim',
             'dibayar_kepada' => 'Dibayar Kepada',
             'no_berita_acara' => 'No Berita Acara',
-            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'tanggal_berita_acara' => 'TGL BA',
             'no_spk' => 'No SPK',
-            'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'tanggal_spk' => 'TGL SPK',
+            'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
             'status_pembayaran' => 'Status Pembayaran',
             'deadline' => 'Deadline',
         ];
@@ -697,21 +697,21 @@ class DashboardPembayaranController extends Controller
             'nomor_mirror' => 'Nomor Miro',
             'nomor_spp' => 'No SPP',
             'uraian_spp' => 'Uraian SPP',
-            'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_berita_acara' => 'Tanggal BA',
+            'tanggal_spp' => 'TGL SPP',
+            'tanggal_berita_acara' => 'TGL BA',
             'no_berita_acara' => 'Nomor BA',
-            'tanggal_berakhir_ba' => 'Tanggal Akhir BA',
+            'tanggal_berakhir_ba' => 'TGL Akhir BA',
             'no_spk' => 'Nomor SPK',
-            'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'tanggal_spk' => 'TGL SPK',
+            'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
             'kebun' => 'Kebun',
-            'umur_dokumen_tanggal_masuk' => 'Umur Dokumen (Berdasarkan Tanggal Masuk)',
-            'umur_dokumen_tanggal_spp' => 'Umur Dokumen (Berdasarkan Tanggal SPP)',
-            'umur_dokumen_tanggal_ba' => 'Umur Dokumen (Berdasarkan Tanggal BA)',
+            'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
+            'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
+            'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nilai_belum_siap_bayar' => 'Nilai Rupiah Belum Siap Bayar',
-            'nilai_siap_bayar' => 'Nilai Rupiah Sudah Siap Bayar',
-            'nilai_sudah_dibayar' => 'Nilai Rupiah Sudah Dibayar',
+            'nilai_belum_siap_bayar' => 'Belum siap bayar',
+            'nilai_siap_bayar' => 'sudah siap bayar',
+            'nilai_sudah_dibayar' => 'sudah dibayar',
         ];
 
         $data = [
@@ -890,21 +890,21 @@ class DashboardPembayaranController extends Controller
             'nomor_mirror' => 'Nomor Miro',
             'nomor_spp' => 'No SPP',
             'uraian_spp' => 'Uraian SPP',
-            'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_berita_acara' => 'Tanggal BA',
+            'tanggal_spp' => 'TGL SPP',
+            'tanggal_berita_acara' => 'TGL BA',
             'no_berita_acara' => 'Nomor BA',
-            'tanggal_berakhir_ba' => 'Tanggal Akhir BA',
+            'tanggal_berakhir_ba' => 'TGL Akhir BA',
             'no_spk' => 'Nomor SPK',
-            'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'tanggal_spk' => 'TGL SPK',
+            'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
             'kebun' => 'Kebun',
-            'umur_dokumen_tanggal_masuk' => 'Umur Dokumen (Berdasarkan Tanggal Masuk)',
-            'umur_dokumen_tanggal_spp' => 'Umur Dokumen (Berdasarkan Tanggal SPP)',
-            'umur_dokumen_tanggal_ba' => 'Umur Dokumen (Berdasarkan Tanggal BA)',
+            'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
+            'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
+            'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nilai_belum_siap_bayar' => 'Nilai Rupiah Belum Siap Bayar',
-            'nilai_siap_bayar' => 'Nilai Rupiah Sudah Siap Bayar',
-            'nilai_sudah_dibayar' => 'Nilai Rupiah Sudah Dibayar',
+            'nilai_belum_siap_bayar' => 'Belum siap bayar',
+            'nilai_siap_bayar' => 'sudah siap bayar',
+            'nilai_sudah_dibayar' => 'sudah dibayar',
         ];
 
         // Default columns for normal mode
@@ -1144,20 +1144,26 @@ class DashboardPembayaranController extends Controller
                 return $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-';
             case 'umur_dokumen_tanggal_masuk':
                 if ($dokumen->tanggal_masuk) {
-                    $days = now()->diffInDays($dokumen->tanggal_masuk);
-                    return $days . ' hari';
+                    $tanggalMasuk = \Carbon\Carbon::parse($dokumen->tanggal_masuk)->startOfDay();
+                    $hariIni = \Carbon\Carbon::now()->startOfDay();
+                    $days = $tanggalMasuk->lte($hariIni) ? (int) $tanggalMasuk->diffInDays($hariIni) : 0;
+                    return $days . ' HARI';
                 }
                 return '-';
             case 'umur_dokumen_tanggal_spp':
                 if ($dokumen->tanggal_spp) {
-                    $days = now()->diffInDays($dokumen->tanggal_spp);
-                    return $days . ' hari';
+                    $tanggalSpp = \Carbon\Carbon::parse($dokumen->tanggal_spp)->startOfDay();
+                    $hariIni = \Carbon\Carbon::now()->startOfDay();
+                    $days = $tanggalSpp->lte($hariIni) ? (int) $tanggalSpp->diffInDays($hariIni) : 0;
+                    return $days . ' HARI';
                 }
                 return '-';
             case 'umur_dokumen_tanggal_ba':
                 if ($dokumen->tanggal_berita_acara) {
-                    $days = now()->diffInDays($dokumen->tanggal_berita_acara);
-                    return $days . ' hari';
+                    $tanggalBa = \Carbon\Carbon::parse($dokumen->tanggal_berita_acara)->startOfDay();
+                    $hariIni = \Carbon\Carbon::now()->startOfDay();
+                    $days = $tanggalBa->lte($hariIni) ? (int) $tanggalBa->diffInDays($hariIni) : 0;
+                    return $days . ' HARI';
                 }
                 return '-';
             case 'nilai_belum_siap_bayar':
