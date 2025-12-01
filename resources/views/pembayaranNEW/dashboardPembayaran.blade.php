@@ -665,16 +665,6 @@
     </div>
 </div>
 
-<!-- Search Box -->
-    <div class="search-box">
-      <div class="input-group">
-        <span class="input-group-text">
-          <i class="fa-solid fa-magnifying-glass text-muted"></i>
-        </span>
-        <input type="text" class="form-control" placeholder="Search...">
-      </div>
-    </div>
-
        <!-- Tabel Dokumen Terbaru -->
     <div class="table-container">
       <h6>
@@ -878,42 +868,5 @@
     }
   }
 
-  // Search functionality
-  document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.querySelector('.search-box input');
-
-    if (searchInput) {
-      searchInput.addEventListener('keyup', function() {
-        const searchTerm = this.value.toLowerCase();
-        const tableRows = document.querySelectorAll('.main-row');
-
-        tableRows.forEach(function(row) {
-          const text = row.textContent.toLowerCase();
-          const onclickAttr = row.getAttribute('onclick');
-          if (onclickAttr) {
-            const match = onclickAttr.match(/toggleDetail\((\d+)\)/);
-            if (match) {
-              const dokumenId = match[1];
-              if (text.includes(searchTerm)) {
-                row.style.display = '';
-                // Also show the detail row if it was visible
-                const detailRow = document.getElementById('detail-' + dokumenId);
-                if (detailRow && detailRow.classList.contains('show')) {
-                  detailRow.style.display = '';
-                }
-              } else {
-                row.style.display = 'none';
-                // Hide the detail row too
-                const detailRow = document.getElementById('detail-' + dokumenId);
-                if (detailRow) {
-                  detailRow.style.display = 'none';
-                }
-              }
-            }
-          }
-        });
-      });
-    }
-  });
 </script>
 @endsection
