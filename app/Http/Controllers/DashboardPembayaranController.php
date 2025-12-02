@@ -1977,17 +1977,46 @@ class DashboardPembayaranController extends Controller
             return $doc->computed_status === $statusFilter;
         })->values();
 
-        // Filter by year (based on tanggal_dibayar for sudah_dibayar, or created_at for others)
+        // Filter by year (based on tanggal_dibayar for sudah_dibayar, or tahun/bulan field for others)
         $allDokumens = $allDokumens->filter(function($doc) use ($selectedYear, $statusFilter) {
             try {
-                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                    // Ensure tanggal_dibayar is a Carbon instance
-                    $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                        ? $doc->tanggal_dibayar 
-                        : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                    return $tanggal->format('Y') == $selectedYear;
+                if ($statusFilter === 'sudah_dibayar') {
+                    // Prioritize tanggal_dibayar if available
+                    if ($doc->tanggal_dibayar) {
+                        $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_dibayar 
+                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                        return $tanggal->format('Y') == $selectedYear;
+                    }
+                    
+                    // Fallback: use tahun field from dokumen if available
+                    if (!empty($doc->tahun)) {
+                        return (int)$doc->tahun == (int)$selectedYear;
+                    }
+                    
+                    // Fallback: use tanggal_spp if available
+                    if ($doc->tanggal_spp) {
+                        $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_spp 
+                            : \Carbon\Carbon::parse($doc->tanggal_spp);
+                        return $tanggalSpp->format('Y') == $selectedYear;
+                    }
+                    
+                    // Last fallback: use tanggal_masuk
+                    if ($doc->tanggal_masuk) {
+                        $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_masuk 
+                            : \Carbon\Carbon::parse($doc->tanggal_masuk);
+                        return $tanggalMasuk->format('Y') == $selectedYear;
+                    }
+                    
+                    return false;
                 } else {
-                    // For other status, use created_at
+                    // For other status, use tahun field or created_at
+                    if (!empty($doc->tahun)) {
+                        return (int)$doc->tahun == (int)$selectedYear;
+                    }
+                    
                     if (!$doc->created_at) {
                         return false;
                     }
@@ -2022,12 +2051,65 @@ class DashboardPembayaranController extends Controller
         for ($month = 1; $month <= 12; $month++) {
             $monthDokumens = $allDokumens->filter(function($doc) use ($month, $statusFilter) {
                 try {
-                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                        $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_dibayar 
-                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                        return (int)$tanggal->format('m') == $month;
+                    if ($statusFilter === 'sudah_dibayar') {
+                        // Prioritize tanggal_dibayar if available
+                        if ($doc->tanggal_dibayar) {
+                            $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                                ? $doc->tanggal_dibayar 
+                                : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                            return (int)$tanggal->format('m') == $month;
+                        }
+                        
+                        // Fallback: use bulan field from dokumen if available
+                        if (!empty($doc->bulan)) {
+                            $bulanMap = [
+                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
+                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
+                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
+                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
+                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
+                                'October' => 10, 'November' => 11, 'December' => 12
+                            ];
+                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                            if ($docBulan && $docBulan == $month) {
+                                return true;
+                            }
+                        }
+                        
+                        // Fallback: use tanggal_spp if available
+                        if ($doc->tanggal_spp) {
+                            $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon 
+                                ? $doc->tanggal_spp 
+                                : \Carbon\Carbon::parse($doc->tanggal_spp);
+                            return (int)$tanggalSpp->format('m') == $month;
+                        }
+                        
+                        // Last fallback: use tanggal_masuk
+                        if ($doc->tanggal_masuk) {
+                            $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon 
+                                ? $doc->tanggal_masuk 
+                                : \Carbon\Carbon::parse($doc->tanggal_masuk);
+                            return (int)$tanggalMasuk->format('m') == $month;
+                        }
+                        
+                        return false;
                     } else {
+                        // For other status, use created_at or bulan field
+                        if (!empty($doc->bulan)) {
+                            $bulanMap = [
+                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
+                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
+                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
+                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
+                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
+                                'October' => 10, 'November' => 11, 'December' => 12
+                            ];
+                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                            if ($docBulan && $docBulan == $month) {
+                                return true;
+                            }
+                        }
+                        
                         if (!$doc->created_at) {
                             return false;
                         }
@@ -2058,12 +2140,65 @@ class DashboardPembayaranController extends Controller
         if ($selectedMonth && is_numeric($selectedMonth) && $selectedMonth >= 1 && $selectedMonth <= 12) {
             $tableDokumens = $allDokumens->filter(function($doc) use ($selectedMonth, $statusFilter) {
                 try {
-                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                        $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_dibayar 
-                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                        return (int)$tanggal->format('m') == $selectedMonth;
+                    if ($statusFilter === 'sudah_dibayar') {
+                        // Prioritize tanggal_dibayar if available
+                        if ($doc->tanggal_dibayar) {
+                            $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                                ? $doc->tanggal_dibayar 
+                                : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                            return (int)$tanggal->format('m') == $selectedMonth;
+                        }
+                        
+                        // Fallback: use bulan field from dokumen if available
+                        if (!empty($doc->bulan)) {
+                            $bulanMap = [
+                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
+                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
+                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
+                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
+                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
+                                'October' => 10, 'November' => 11, 'December' => 12
+                            ];
+                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                            if ($docBulan && $docBulan == $selectedMonth) {
+                                return true;
+                            }
+                        }
+                        
+                        // Fallback: use tanggal_spp if available
+                        if ($doc->tanggal_spp) {
+                            $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon 
+                                ? $doc->tanggal_spp 
+                                : \Carbon\Carbon::parse($doc->tanggal_spp);
+                            return (int)$tanggalSpp->format('m') == $selectedMonth;
+                        }
+                        
+                        // Last fallback: use tanggal_masuk
+                        if ($doc->tanggal_masuk) {
+                            $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon 
+                                ? $doc->tanggal_masuk 
+                                : \Carbon\Carbon::parse($doc->tanggal_masuk);
+                            return (int)$tanggalMasuk->format('m') == $selectedMonth;
+                        }
+                        
+                        return false;
                     } else {
+                        // For other status, use bulan field or created_at
+                        if (!empty($doc->bulan)) {
+                            $bulanMap = [
+                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
+                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
+                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
+                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
+                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
+                                'October' => 10, 'November' => 11, 'December' => 12
+                            ];
+                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                            if ($docBulan && $docBulan == $selectedMonth) {
+                                return true;
+                            }
+                        }
+                        
                         if (!$doc->created_at) {
                             return false;
                         }
