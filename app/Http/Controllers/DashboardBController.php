@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
 
 class DashboardBController extends Controller
 {
@@ -349,30 +348,6 @@ class DashboardBController extends Controller
         try {
             \DB::beginTransaction();
 
-            // Store old values for logging
-            $oldValues = [
-                'nomor_agenda' => $dokumen->nomor_agenda,
-                'bulan' => $dokumen->bulan,
-                'tahun' => $dokumen->tahun,
-                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('Y-m-d H:i:s') : null,
-                'nomor_spp' => $dokumen->nomor_spp,
-                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : null,
-                'uraian_spp' => $dokumen->uraian_spp,
-                'nilai_rupiah' => $dokumen->nilai_rupiah,
-                'kategori' => $dokumen->kategori,
-                'jenis_dokumen' => $dokumen->jenis_dokumen,
-                'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
-                'jenis_pembayaran' => $dokumen->jenis_pembayaran,
-                'kebun' => $dokumen->kebun,
-                'dibayar_kepada' => $dokumen->dibayar_kepada,
-                'no_berita_acara' => $dokumen->no_berita_acara,
-                'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
-                'no_spk' => $dokumen->no_spk,
-                'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
-                'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
-                'keterangan' => $dokumen->keterangan,
-            ];
-
             // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
             $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
             if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
@@ -435,134 +410,6 @@ class DashboardBController extends Controller
 
             \DB::commit();
 
-            // Refresh dokumen after commit to get latest data
-            $dokumen->refresh();
-
-            // Log changes for all edited fields (AFTER commit to ensure data is saved)
-            $fieldsToLog = [
-                'nomor_agenda' => 'Nomor Agenda',
-                'bulan' => 'Bulan',
-                'tahun' => 'Tahun',
-                'tanggal_masuk' => 'Tanggal Masuk',
-                'nomor_spp' => 'Nomor SPP',
-                'tanggal_spp' => 'Tanggal SPP',
-                'uraian_spp' => 'Uraian SPP',
-                'nilai_rupiah' => 'Nilai Rupiah',
-                'kategori' => 'Kategori',
-                'jenis_dokumen' => 'Jenis Dokumen',
-                'jenis_sub_pekerjaan' => 'Jenis Sub Pekerjaan',
-                'jenis_pembayaran' => 'Jenis Pembayaran',
-                'kebun' => 'Kebun',
-                'dibayar_kepada' => 'Dibayar Kepada',
-                'no_berita_acara' => 'Nomor Berita Acara',
-                'tanggal_berita_acara' => 'Tanggal Berita Acara',
-                'no_spk' => 'Nomor SPK',
-                'tanggal_spk' => 'Tanggal SPK',
-                'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
-                'keterangan' => 'Keterangan',
-            ];
-
-            $loggedFields = [];
-            foreach ($fieldsToLog as $field => $fieldName) {
-                try {
-                    $oldValueRaw = $oldValues[$field] ?? null;
-                    $newValueRaw = $dokumen->$field ?? null;
-                    $oldValue = null;
-                    $newValue = null;
-                    $hasChanged = false;
-
-                    if ($field === 'tanggal_spp' || $field === 'tanggal_berita_acara' || $field === 'tanggal_spk' || $field === 'tanggal_berakhir_spk') {
-                        $oldValue = $oldValueRaw;
-                        if ($newValueRaw) {
-                            try {
-                                if ($newValueRaw instanceof Carbon) {
-                                    $newValue = $newValueRaw->format('Y-m-d');
-                                } else {
-                                    $newValue = Carbon::parse($newValueRaw)->format('Y-m-d');
-                                }
-                            } catch (\Exception $e) {
-                                $newValue = is_string($newValueRaw) ? $newValueRaw : null;
-                            }
-                        } else {
-                            $newValue = null;
-                        }
-                        $hasChanged = ($oldValue != $newValue);
-                    } elseif ($field === 'tanggal_masuk') {
-                        $oldValue = $oldValueRaw;
-                        if ($newValueRaw) {
-                            try {
-                                if ($newValueRaw instanceof Carbon) {
-                                    $newValue = $newValueRaw->format('Y-m-d H:i:s');
-                                } else {
-                                    $newValue = Carbon::parse($newValueRaw)->format('Y-m-d H:i:s');
-                                }
-                            } catch (\Exception $e) {
-                                $newValue = is_string($newValueRaw) ? $newValueRaw : null;
-                            }
-                        } else {
-                            $newValue = null;
-                        }
-                        $hasChanged = ($oldValue != $newValue);
-                    } elseif ($field === 'nilai_rupiah') {
-                        // Compare numeric values first to ensure accuracy
-                        $oldNumeric = $oldValueRaw ? (float)$oldValueRaw : 0;
-                        $newNumeric = $newValueRaw ? (float)$newValueRaw : 0;
-                        
-                        // Format for display in log
-                        $oldValue = $oldValueRaw ? number_format($oldValueRaw, 0, ',', '.') : '0';
-                        $newValue = $newValueRaw ? number_format($newValueRaw, 0, ',', '.') : '0';
-                        
-                        // Use numeric comparison for accuracy
-                        $hasChanged = (abs($oldNumeric - $newNumeric) > 0.01);
-                    } elseif ($field === 'tahun') {
-                        $oldValue = $oldValueRaw ? (string)$oldValueRaw : null;
-                        $newValue = $newValueRaw ? (string)$newValueRaw : null;
-                        $hasChanged = ($oldValue != $newValue);
-                    } else {
-                        $oldValue = $oldValueRaw;
-                        $newValue = $newValueRaw;
-                        $hasChanged = ($oldValue != $newValue);
-                    }
-
-                    // Log if value changed
-                    if ($hasChanged) {
-                        try {
-                            ActivityLogHelper::logDataEdited(
-                                $dokumen,
-                                $field,
-                                $oldValue,
-                                $newValue,
-                                'ibuB'
-                            );
-                            $loggedFields[] = $field;
-                        } catch (\Exception $logException) {
-                            \Log::error('Failed to log data edit for ' . $field . ': ' . $logException->getMessage(), [
-                                'field' => $field,
-                                'document_id' => $dokumen->id,
-                                'exception' => $logException->getMessage()
-                            ]);
-                        }
-                    }
-                } catch (\Exception $fieldException) {
-                    // Skip this field if there's an error, but continue with others
-                    \Log::warning('Error processing field for logging: ' . $field, [
-                        'field' => $field,
-                        'document_id' => $dokumen->id,
-                        'error' => $fieldException->getMessage()
-                    ]);
-                    continue;
-                }
-            }
-
-            // Log summary if any fields were logged
-            if (!empty($loggedFields)) {
-                \Log::info("Document edit logged for document {$dokumen->id} by ibuB", [
-                    'document_id' => $dokumen->id,
-                    'logged_fields' => $loggedFields,
-                    'total_fields' => count($loggedFields)
-                ]);
-            }
-
             // Check if document is returned document and redirect accordingly
             $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
                                  $dokumen->returned_from_perpajakan_at ||
@@ -582,16 +429,11 @@ class DashboardBController extends Controller
 
         } catch (\Exception $e) {
             \DB::rollback();
-            \Log::error('Error updating document in IbuB: ' . $e->getMessage(), [
-                'document_id' => $dokumen->id ?? null,
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+            \Log::error('Error updating document in IbuB: ' . $e->getMessage());
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui dokumen: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan saat memperbarui dokumen. Silakan coba lagi.');
         }
     }
 
