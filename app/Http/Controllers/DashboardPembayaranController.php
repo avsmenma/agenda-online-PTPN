@@ -1900,5 +1900,196 @@ class DashboardPembayaranController extends Controller
             'Content-Disposition' => 'attachment; filename="template_dokumen.csv"',
         ]);
     }
+
+    /**
+     * Payment Analytics Page - Interactive Drill-down Dashboard
+     * Menampilkan ringkasan tahunan dengan grid bulan dan tabel dokumen interaktif
+     */
+    public function analytics(Request $request)
+    {
+        // Get selected year from request, default to current year
+        $selectedYear = $request->get('year', date('Y'));
+        $selectedMonth = $request->get('month', null); // For initial filter (optional)
+        $statusFilter = $request->get('status', 'sudah_dibayar'); // Default to 'sudah_dibayar' for analytics
+
+        // Helper function to calculate computed status (same as dokumens method)
+        $getComputedStatus = function($doc) {
+            if ($doc->tanggal_dibayar || 
+                $doc->link_bukti_pembayaran ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
+                $doc->status_pembayaran === 'sudah_dibayar') {
+                return 'sudah_dibayar';
+            }
+            
+            if (in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
+                ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))) {
+                return 'siap_bayar';
+            }
+            
+            return 'belum_siap_bayar';
+        };
+
+        // Get all documents with nomor_agenda
+        $allDokumens = Dokumen::whereNotNull('nomor_agenda')
+            ->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+            ->get();
+
+        // Add computed status to each document
+        $allDokumens->each(function($doc) use ($getComputedStatus) {
+            $doc->computed_status = $getComputedStatus($doc);
+        });
+
+        // Filter by status (default: sudah_dibayar)
+        $allDokumens = $allDokumens->filter(function($doc) use ($statusFilter) {
+            return $doc->computed_status === $statusFilter;
+        })->values();
+
+        // Filter by year (based on tanggal_dibayar for sudah_dibayar, or created_at for others)
+        $allDokumens = $allDokumens->filter(function($doc) use ($selectedYear, $statusFilter) {
+            if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                return $doc->tanggal_dibayar->format('Y') == $selectedYear;
+            } else {
+                // For other status, use created_at
+                return $doc->created_at && $doc->created_at->format('Y') == $selectedYear;
+            }
+        })->values();
+
+        // Calculate yearly summary (Total Nominal & Total Jumlah Dokumen)
+        $yearlySummary = [
+            'total_nominal' => $allDokumens->sum('nilai_rupiah'),
+            'total_dokumen' => $allDokumens->count(),
+        ];
+
+        // Calculate monthly statistics (12 months)
+        $monthlyStats = [];
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $monthDokumens = $allDokumens->filter(function($doc) use ($month, $statusFilter) {
+                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                    return (int)$doc->tanggal_dibayar->format('m') == $month;
+                } else {
+                    return $doc->created_at && (int)$doc->created_at->format('m') == $month;
+                }
+            })->values();
+
+            $monthlyStats[$month] = [
+                'name' => $monthNames[$month],
+                'count' => $monthDokumens->count(),
+                'total_nominal' => $monthDokumens->sum('nilai_rupiah'),
+                'dokumens' => $monthDokumens,
+            ];
+        }
+
+        // Get documents for table (filtered by selected month if provided)
+        $tableDokumens = $allDokumens;
+        if ($selectedMonth && is_numeric($selectedMonth) && $selectedMonth >= 1 && $selectedMonth <= 12) {
+            $tableDokumens = $allDokumens->filter(function($doc) use ($selectedMonth, $statusFilter) {
+                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                    return (int)$doc->tanggal_dibayar->format('m') == $selectedMonth;
+                } else {
+                    return $doc->created_at && (int)$doc->created_at->format('m') == $selectedMonth;
+                }
+            })->values();
+
+            // Sort by tanggal_dibayar or created_at descending
+            $tableDokumens = $tableDokumens->sortByDesc(function($doc) use ($statusFilter) {
+                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                    return $doc->tanggal_dibayar;
+                }
+                return $doc->created_at;
+            })->values();
+        } else {
+            // Sort all documents by tanggal_dibayar or created_at descending
+            $tableDokumens = $tableDokumens->sortByDesc(function($doc) use ($statusFilter) {
+                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                    return $doc->tanggal_dibayar;
+                }
+                return $doc->created_at;
+            })->values();
+        }
+
+        // Get available years for dropdown based on status filter
+        // For "sudah_dibayar": get years from tanggal_dibayar (karena ini yang relevan)
+        // Also include years from created_at as fallback
+        $availableYears = [];
+        
+        if ($statusFilter === 'sudah_dibayar') {
+            // Get years from tanggal_dibayar (primary source for sudah_dibayar)
+            $yearsFromTanggalDibayar = Dokumen::whereNotNull('tanggal_dibayar')
+                ->selectRaw('DISTINCT YEAR(tanggal_dibayar) as year')
+                ->orderBy('year', 'desc')
+                ->pluck('year')
+                ->filter()
+                ->toArray();
+            
+            // Also get years from created_at as backup (for documents that might be sudah_dibayar but no tanggal_dibayar yet)
+            $allDokumensForYears = Dokumen::whereNotNull('nomor_agenda')->get();
+            $allDokumensForYears->each(function($doc) use ($getComputedStatus) {
+                $doc->computed_status = $getComputedStatus($doc);
+            });
+            
+            // Filter hanya yang sudah_dibayar
+            $sudahDibayarDocs = $allDokumensForYears->filter(function($doc) {
+                return $doc->computed_status === 'sudah_dibayar';
+            });
+            
+            // Extract years from created_at untuk dokumen sudah_dibayar
+            $yearsFromCreatedAt = $sudahDibayarDocs->map(function($doc) {
+                return $doc->created_at ? (int)$doc->created_at->format('Y') : null;
+            })->filter()->unique()->toArray();
+            
+            // Merge both sources and remove duplicates
+            $availableYears = array_unique(array_merge($yearsFromTanggalDibayar, $yearsFromCreatedAt));
+        } else {
+            // For other status, get years from created_at
+            $allDokumensForYears = Dokumen::whereNotNull('nomor_agenda')->get();
+            $allDokumensForYears->each(function($doc) use ($getComputedStatus) {
+                $doc->computed_status = $getComputedStatus($doc);
+            });
+            
+            // Filter by status
+            $filteredDocs = $allDokumensForYears->filter(function($doc) use ($statusFilter) {
+                return $doc->computed_status === $statusFilter;
+            });
+            
+            // Extract unique years from created_at
+            $years = $filteredDocs->map(function($doc) {
+                return $doc->created_at ? (int)$doc->created_at->format('Y') : null;
+            })->filter()->unique()->toArray();
+            
+            $availableYears = $years;
+        }
+        
+        // Sort descending (newest first)
+        rsort($availableYears);
+
+        // If no years found, add current year
+        if (empty($availableYears)) {
+            $availableYears = [date('Y')];
+        }
+
+        $data = [
+            'title' => 'Analitik Pembayaran',
+            'module' => 'pembayaran',
+            'menuDashboard' => '',
+            'menuDokumen' => 'Active',
+            'menuDaftarDokumen' => '',
+            'selectedYear' => $selectedYear,
+            'selectedMonth' => $selectedMonth,
+            'statusFilter' => $statusFilter,
+            'yearlySummary' => $yearlySummary,
+            'monthlyStats' => $monthlyStats,
+            'dokumens' => $tableDokumens,
+            'availableYears' => $availableYears,
+        ];
+
+        return view('pembayaranNEW.analytics', $data);
+    }
 }
 

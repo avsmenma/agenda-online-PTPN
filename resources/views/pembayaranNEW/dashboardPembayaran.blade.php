@@ -594,6 +594,20 @@
   .stat-card:nth-child(4) {
     animation-delay: 0.4s;
   }
+
+  /* Clickable card styles */
+  a .stat-card {
+    text-decoration: none;
+  }
+
+  a .stat-card:hover {
+    transform: translateY(-12px) scale(1.03);
+  }
+
+  a:hover {
+    text-decoration: none;
+    color: inherit;
+  }
 </style>
 
 <h2 style="margin-bottom: 30px; font-weight: 700;">{{ $title }}</h2>

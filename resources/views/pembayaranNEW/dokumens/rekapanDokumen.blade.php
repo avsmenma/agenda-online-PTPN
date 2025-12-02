@@ -33,6 +33,23 @@
     box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
   }
 
+  /* Clickable card styles */
+  a .stat-card {
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  a .stat-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(8, 62, 64, 0.25), 0 6px 20px rgba(136, 151, 23, 0.15);
+    border-color: rgba(136, 151, 23, 0.3);
+  }
+
+  a:hover {
+    text-decoration: none;
+    color: inherit;
+  }
+
   .stat-card-body {
     display: flex;
     align-items: center;
@@ -959,18 +976,23 @@
     </div>
   </div>
   <div class="col-md-3 mb-3">
-    <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-content">
-          <div class="stat-title">Sudah Dibayar</div>
-          <div class="stat-value">{{ $statistics['by_status']['sudah_dibayar'] }}</div>
-          <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
-        </div>
-        <div class="stat-icon sudah">
-          <i class="fa-solid fa-check-circle"></i>
+    <a href="{{ route('pembayaran.analytics') }}" style="text-decoration: none; color: inherit; display: block;">
+      <div class="stat-card" style="cursor: pointer;">
+        <div class="stat-card-body">
+          <div class="stat-content">
+            <div class="stat-title">Sudah Dibayar</div>
+            <div class="stat-value">{{ $statistics['by_status']['sudah_dibayar'] }}</div>
+            <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+            <div style="font-size: 11px; color: #6c757d; margin-top: 8px; font-style: italic;">
+              <i class="fa-solid fa-arrow-right me-1"></i>Klik untuk detail analitik
+            </div>
+          </div>
+          <div class="stat-icon sudah">
+            <i class="fa-solid fa-check-circle"></i>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
 </div>
 

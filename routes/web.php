@@ -310,6 +310,7 @@ Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,admin'])->group(f
 // Pembayaran Routes
 Route::get('/dokumensPembayaran', [DashboardPembayaranController::class, 'dokumens'])->name('dokumensPembayaran.index');
 Route::get('/dokumensPembayaran/dokumens', [DashboardPembayaranController::class, 'dokumens'])->name('dokumensPembayaran.dokumens');
+Route::get('/payment/analytics', [DashboardPembayaranController::class, 'analytics'])->name('pembayaran.analytics');
 Route::get('/dokumensPembayaran/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('dokumensPembayaran.detail');
 Route::get('/dokumensPembayaran/{dokumen}/get-payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('dokumensPembayaran.getPaymentData');
 Route::post('/dokumensPembayaran/{dokumen}/set-deadline', [DashboardPembayaranController::class, 'setDeadline'])->name('dokumensPembayaran.setDeadline');
