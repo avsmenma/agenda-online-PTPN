@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Helpers\DokumenHelper;
 use App\Helpers\SearchHelper;
 use App\Models\DibayarKepada;
+use App\Models\DocumentTracking;
 
 class DashboardAkutansiController extends Controller
 {
@@ -929,6 +930,9 @@ class DashboardAkutansiController extends Controller
                 ], 403);
             }
 
+            // Store previous status for tracking
+            $previousStatus = $dokumen->status;
+
             // Update document status and handler
             $dokumen->update([
                 'status' => 'sent_to_pembayaran',
@@ -937,17 +941,36 @@ class DashboardAkutansiController extends Controller
                 'sent_to_pembayaran_at' => now(), // Timestamp when sent to pembayaran
             ]);
 
+            // Refresh dokumen setelah update
+            $dokumen->refresh();
+
+            // Log tracking action untuk pembayaran: marked ready for payment
+            try {
+                DocumentTracking::logAction(
+                    $dokumen->id,
+                    'sent_to_pembayaran', // Action type
+                    'akutansi', // Actor (yang melakukan action)
+                    [
+                        'previous_status' => $previousStatus,
+                        'marked_ready_at' => now()->toDateTimeString(),
+                        'nomor_miro' => $dokumen->nomor_miro
+                    ]
+                );
+            } catch (\Exception $trackingException) {
+                \Log::error('Failed to log tracking action: ' . $trackingException->getMessage());
+            }
+
             // Log activity: dokumen dikirim ke pembayaran oleh Team Akutansi
             try {
                 \App\Helpers\ActivityLogHelper::logSent(
-                    $dokumen->fresh(),
+                    $dokumen,
                     'pembayaran',
                     'akutansi'
                 );
                 
                 // Log activity: dokumen masuk/diterima di stage pembayaran
                 \App\Helpers\ActivityLogHelper::logReceived(
-                    $dokumen->fresh(),
+                    $dokumen,
                     'pembayaran'
                 );
             } catch (\Exception $logException) {

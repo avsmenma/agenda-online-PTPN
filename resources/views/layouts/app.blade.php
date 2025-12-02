@@ -768,7 +768,7 @@
         </span>
         <i class="fa-solid fa-chevron-down dropdown-icon"></i>
       </div>
-      <div class="dropdown-content {{ $menuDokumen ? 'show' : '' }}" id="dokumenContent">
+      <div class="dropdown-content {{ ($menuDokumen ?? '') ? 'show' : '' }}" id="dokumenContent">
         @if($module === 'pembayaran')
           <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}"><i></i> Daftar Pembayaran</a>
           <a href="{{ route('pembayaran.rekapan') }}" class="{{ $menuRekapanDokumen ?? '' }}"><i></i> Rekapan Dokumen</a>

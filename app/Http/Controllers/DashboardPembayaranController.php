@@ -78,13 +78,9 @@ class DashboardPembayaranController extends Controller
             });
         }
 
-        // Handler yang dianggap "belum siap dibayar"
-        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
-        
-        // Helper function to calculate computed status
-        // Di halaman pembayaran, hanya ada 2 status: siap_dibayar dan sudah_dibayar
-        $getComputedStatus = function($doc) use ($belumSiapHandlers) {
+        // Helper function to calculate computed status for pembayaran role
+        // Status khusus role pembayaran: "belum_siap_bayar" atau "siap_bayar" atau "sudah_dibayar"
+        $getComputedStatus = function($doc) {
             // Cek apakah dokumen sudah dibayar berdasarkan:
             // 1. Ada tanggal_dibayar, ATAU
             // 2. Ada link_bukti_pembayaran, ATAU
@@ -97,21 +93,28 @@ class DashboardPembayaranController extends Controller
                 return 'sudah_dibayar';
             }
             
-            // Jika sudah di pembayaran atau sudah dikirim ke pembayaran
-            if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
-                return 'siap_dibayar';
+            // Status "Siap Bayar": hanya setelah diproses akutansi atau dikirim ke pembayaran
+            // Status dokumen yang dianggap "Siap Bayar":
+            // - processed_by_akutansi (akutansi sudah selesai memproses)
+            // - sent_to_pembayaran (sudah dikirim ke pembayaran)
+            // - processed_by_pembayaran (sedang diproses pembayaran)
+            // - current_handler = pembayaran
+            if (in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
+                ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))) {
+                return 'siap_bayar';
             }
             
-            // Jika masih di handler lain (akutansi, perpajakan, ibuA, ibuB)
-            // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
-            return 'belum_siap_dibayar';
+            // Default: "Belum Siap Bayar" untuk semua status lainnya
+            // Termasuk: draft, menunggu_di_approve, sent_to_ibub, processed_by_ibub,
+            // sent_to_perpajakan, processed_by_perpajakan, sent_to_akutansi, dll
+            return 'belum_siap_bayar';
         };
 
         // Get documents with ordering and eager load relationships
         $dokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
             ->orderByRaw("CASE
-                WHEN status = 'sent_to_pembayaran' THEN 1
-                WHEN current_handler = 'pembayaran' AND status = 'sedang_diproses' THEN 2
+                WHEN status IN ('processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran') OR current_handler = 'pembayaran' THEN 1
+                WHEN status IN ('sent_to_akutansi', 'processed_by_perpajakan', 'sent_to_perpajakan') THEN 2
                 ELSE 3
             END")
             ->orderBy('updated_at', 'desc')
@@ -123,14 +126,11 @@ class DashboardPembayaranController extends Controller
             $doc->computed_status = $getComputedStatus($doc);
         });
 
-        // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
-        // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
-        $dokumens = $dokumens->filter(function($doc) {
-            return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
-        })->values();
-
-        // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
-        if ($statusFilter && in_array($statusFilter, ['siap_dibayar', 'sudah_dibayar'])) {
+        // Tampilkan semua dokumen (termasuk yang belum siap bayar) untuk real-time visibility
+        // Dokumen muncul sejak awal dibuat, tidak perlu menunggu sent_to_pembayaran
+        
+        // Apply status filter if provided (for filtering between belum_siap_bayar, siap_bayar, dan sudah_dibayar)
+        if ($statusFilter && in_array($statusFilter, ['belum_siap_bayar', 'siap_bayar', 'sudah_dibayar'])) {
             $dokumens = $dokumens->filter(function($doc) use ($statusFilter) {
                 return $doc->computed_status === $statusFilter;
             })->values(); // Re-index the collection

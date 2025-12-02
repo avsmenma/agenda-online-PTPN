@@ -350,6 +350,20 @@
     background: linear-gradient(135deg, rgba(8, 62, 64, 0.02) 0%, rgba(136, 151, 23, 0.02) 100%);
   }
 
+  .table-enhanced tbody tr.clickable-row {
+    cursor: pointer;
+  }
+
+  .table-enhanced tbody tr.clickable-row:hover {
+    background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%);
+    border-left-color: #889717;
+  }
+
+  .table-enhanced tbody tr.non-clickable-row {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
   .table-enhanced tbody tr.locked-row {
     background: linear-gradient(135deg, #f8f9fa 0%, #eef3f3 100%);
     border-left-color: #ffc107;
@@ -672,9 +686,13 @@
               <i class="fa-solid fa-list"></i>
               <span>Semua Dokumen</span>
             </a>
-            <a href="#" class="dropdown-item-modern {{ $statusFilter === 'siap_dibayar' ? 'active' : '' }}" data-filter="siap_dibayar">
+            <a href="#" class="dropdown-item-modern {{ $statusFilter === 'belum_siap_bayar' ? 'active' : '' }}" data-filter="belum_siap_bayar">
+              <i class="fa-solid fa-clock"></i>
+              <span>Belum Siap Bayar</span>
+            </a>
+            <a href="#" class="dropdown-item-modern {{ $statusFilter === 'siap_bayar' ? 'active' : '' }}" data-filter="siap_bayar">
               <i class="fa-solid fa-check-circle"></i>
-              <span>Siap Dibayar</span>
+              <span>Siap Bayar</span>
             </a>
             <a href="#" class="dropdown-item-modern {{ $statusFilter === 'sudah_dibayar' ? 'active' : '' }}" data-filter="sudah_dibayar">
               <i class="fa-solid fa-check-double"></i>
@@ -711,10 +729,31 @@
       <tbody>
       @forelse($dokumens as $index => $dokumen)
         @php
-          // Handler yang dianggap "belum siap dibayar"
-          $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
+          // Tentukan status pembayaran untuk dokumen ini
+          $paymentStatus = $dokumen->computed_status ?? 'belum_siap_bayar';
+          // Normalize status jika menggunakan format lama
+          if (is_string($paymentStatus)) {
+            $statusUpper = strtoupper(trim($paymentStatus));
+            if ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
+              $paymentStatus = 'siap_bayar';
+            } elseif ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
+              $paymentStatus = 'sudah_dibayar';
+            } elseif ($statusUpper === 'BELUM_SIAP_DIBAYAR' || $statusUpper === 'BELUM SIAP DIBAYAR') {
+              $paymentStatus = 'belum_siap_bayar';
+            }
+          }
         @endphp
-        <tr class="{{ in_array($dokumen->current_handler, $belumSiapHandlers) ? 'locked-row' : '' }}" data-dokumen-id="{{ $dokumen->id }}">
+        <tr 
+          @if($paymentStatus === 'siap_bayar')
+            onclick="window.location='{{ route('dokumensPembayaran.detail', $dokumen->id) }}'"
+            style="cursor: pointer;"
+            class="clickable-row"
+          @else
+            style="opacity: 0.7; cursor: not-allowed;"
+            class="non-clickable-row"
+          @endif
+          data-dokumen-id="{{ $dokumen->id }}"
+        >
           <td class="col-no">{{ $index + 1 }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
@@ -734,22 +773,9 @@
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
               @elseif($col == 'status_pembayaran')
-                @php
-                  // Use computed_status if available, otherwise fallback to status_pembayaran
-                  $status = $dokumen->computed_status ?? $dokumen->status_pembayaran ?? 'belum_siap_dibayar';
-                  // Handle uppercase formats
-                  if (is_string($status)) {
-                    $statusUpper = strtoupper(trim($status));
-                    if ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
-                      $status = 'sudah_dibayar';
-                    } elseif ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
-                      $status = 'siap_dibayar';
-                    }
-                  }
-                @endphp
-                @switch($status)
-                  @case('siap_dibayar')
-                    <span class="status-badge siap-dibayar">Siap Dibayar</span>
+                @switch($paymentStatus)
+                  @case('siap_bayar')
+                    <span class="status-badge siap-dibayar">Siap Bayar</span>
                     @break
                   @case('sudah_dibayar')
                     <span class="status-badge sudah-dibayar">Sudah Dibayar</span>
@@ -766,22 +792,9 @@
           @endforeach
           <td class="col-status">
             @if(!in_array('status_pembayaran', $selectedColumns))
-              @php
-                // Use computed_status if available, otherwise fallback to status_pembayaran
-                $status = $dokumen->computed_status ?? $dokumen->status_pembayaran ?? 'belum_siap_dibayar';
-                // Handle uppercase formats
-                if (is_string($status)) {
-                  $statusUpper = strtoupper(trim($status));
-                  if ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
-                    $status = 'sudah_dibayar';
-                  } elseif ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
-                    $status = 'siap_dibayar';
-                  }
-                }
-              @endphp
-              @switch($status)
-                @case('siap_dibayar')
-                  <span class="status-badge siap-dibayar">Siap Dibayar</span>
+              @switch($paymentStatus)
+                @case('siap_bayar')
+                  <span class="status-badge siap-dibayar">Siap Bayar</span>
                   @break
                 @case('sudah_dibayar')
                   <span class="status-badge sudah-dibayar">Sudah Dibayar</span>
@@ -794,32 +807,37 @@
           </td>
           <td class="col-action">
             <div class="action-buttons">
-              @php
-                // Use computed_status if available, otherwise fallback to status_pembayaran
-                $docStatus = $dokumen->computed_status ?? $dokumen->status_pembayaran ?? 'belum_siap_dibayar';
-                // Handle uppercase formats
-                if (is_string($docStatus)) {
-                  $statusUpper = strtoupper(trim($docStatus));
-                  if ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
-                    $docStatus = 'sudah_dibayar';
-                  } elseif ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
-                    $docStatus = 'siap_dibayar';
-                  }
-                }
-              @endphp
-              @php
-                // Cek apakah kedua field sudah diisi
-                $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
-              @endphp
-              @if($isComplete)
+              @if($paymentStatus === 'belum_siap_bayar')
+                {{-- Kondisi A: Status = "Belum Siap Bayar" - Tampilkan icon mata untuk tracking --}}
+                <a href="{{ route('owner.workflow', $dokumen->id) }}" 
+                   target="_blank"
+                   class="btn-action"
+                   title="Lihat Tracking Workflow"
+                   onclick="event.stopPropagation();">
+                  <i class="fas fa-eye"></i>
+                </a>
+              @elseif($paymentStatus === 'siap_bayar')
+                {{-- Kondisi B: Status = "Siap Bayar" - Tampilkan button edit --}}
+                @php
+                  // Cek apakah kedua field sudah diisi
+                  $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
+                @endphp
+                @if($isComplete)
+                  <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
+                    <i class="fa-solid fa-check-circle"></i>
+                    Selesai
+                  </button>
+                @else
+                  <button type="button" class="btn-action" onclick="event.stopPropagation(); openEditPembayaranModal({{ $dokumen->id }})">
+                    <i class="fa-solid fa-edit"></i>
+                    Edit
+                  </button>
+                @endif
+              @elseif($paymentStatus === 'sudah_dibayar')
+                {{-- Status = "Sudah Dibayar" - Tampilkan badge selesai --}}
                 <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
                   <i class="fa-solid fa-check-circle"></i>
                   Selesai
-                </button>
-              @else
-                <button type="button" class="btn-action" onclick="openEditPembayaranModal({{ $dokumen->id }})">
-                  <i class="fa-solid fa-edit"></i>
-                  Edit
                 </button>
               @endif
             </div>
@@ -1787,7 +1805,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update dropdown text
         const texts = {
             '': 'Semua Dokumen',
-            'siap_dibayar': 'Siap Dibayar',
+            'belum_siap_bayar': 'Belum Siap Bayar',
+            'siap_bayar': 'Siap Bayar',
             'sudah_dibayar': 'Sudah Dibayar'
         };
 

@@ -195,7 +195,7 @@ Route::get('owner/api/document-timeline/{id}', [OwnerDashboardController::class,
     ->name('owner.api.document-timeline');
 
 Route::get('owner/workflow/{id}', [OwnerDashboardController::class, 'showWorkflow'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('autologin', 'role:admin,owner,Pembayaran')
     ->name('owner.workflow');
 
 Route::get('owner/rekapan', [OwnerDashboardController::class, 'rekapan'])

@@ -659,11 +659,29 @@ class OwnerDashboardController extends Controller
             $activityLogsByStage = collect();
         }
 
+        // Detect user role to set appropriate module and dashboard URL
+        $user = auth()->user();
+        $userRole = strtolower($user->role ?? $user->name ?? 'owner');
+        $module = 'owner';
+        $dashboardUrl = '/owner/dashboard';
+        
+        // If user is Pembayaran accessing workflow, set module to pembayaran for proper layout
+        if (strtolower($userRole) === 'pembayaran' || 
+            (isset($user->name) && strtolower($user->name) === 'pembayaran') ||
+            (isset($user->role) && strtolower($user->role) === 'pembayaran')) {
+            $module = 'pembayaran';
+            $dashboardUrl = '/dashboardPembayaran';
+        }
+        
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))
             ->with('title', 'Workflow Tracking - ' . $dokumen->nomor_agenda)
-            ->with('module', 'owner')
+            ->with('module', $module)
             ->with('menuDashboard', '')
-            ->with('dashboardUrl', '/owner/dashboard');
+            ->with('menuDokumen', '') // Default value - prevents undefined variable error
+            ->with('menuDaftarDokumen', '') // Default value
+            ->with('menuRekapanDokumen', '') // Default value
+            ->with('menuRekapKeterlambatan', '') // Default value
+            ->with('dashboardUrl', $dashboardUrl);
     }
 
     /**
