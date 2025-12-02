@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\DokumenHelper;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -1942,12 +1943,24 @@ class DashboardPembayaranController extends Controller
         
         if ($statusFilter === 'sudah_dibayar') {
             // Pre-filter untuk sudah_dibayar di database level
-            $query->where(function($q) {
+            // Check if tanggal_dibayar column exists before adding it to query
+            $hasTanggalDibayarColumn = false;
+            try {
+                $hasTanggalDibayarColumn = Schema::hasColumn('dokumens', 'tanggal_dibayar');
+            } catch (\Exception $e) {
+                Log::warning('Failed to check if tanggal_dibayar column exists', ['error' => $e->getMessage()]);
+            }
+            
+            $query->where(function($q) use ($hasTanggalDibayarColumn) {
                 $q->where('status_pembayaran', 'sudah_dibayar')
                   ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
                   ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                  ->orWhereNotNull('tanggal_dibayar')
                   ->orWhereNotNull('link_bukti_pembayaran');
+                
+                // Only check tanggal_dibayar if column exists
+                if ($hasTanggalDibayarColumn) {
+                    $q->orWhereNotNull('tanggal_dibayar');
+                }
             });
         }
         
