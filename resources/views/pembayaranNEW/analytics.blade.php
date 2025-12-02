@@ -304,9 +304,14 @@
     border-left: 3px solid transparent;
   }
 
-  .table tbody tr:hover {
+  .table tbody tr.clickable-row {
+    cursor: pointer;
+  }
+
+  .table tbody tr.clickable-row:hover {
     background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
     border-left: 3px solid #889717;
+    transform: scale(1.001);
   }
 
   .table tbody td {
@@ -447,6 +452,8 @@
         <tr>
           <th>No</th>
           <th>Nomor Agenda</th>
+          <th>Bulan</th>
+          <th>Tahun</th>
           <th>Tanggal Dibayar</th>
           <th>Nomor SPP</th>
           <th>Uraian SPP</th>
@@ -456,9 +463,21 @@
       </thead>
       <tbody id="dokumenTableBody">
         @forelse($dokumens as $index => $dokumen)
-          <tr>
+          <tr class="clickable-row" 
+              onclick="window.location.href='{{ route('dokumensPembayaran.detail', $dokumen->id) }}'"
+              title="Klik untuk melihat detail dokumen">
             <td style="text-align: center;">{{ $index + 1 }}</td>
             <td><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
+            <td>
+              <span style="font-weight: 600; color: #083E40;">
+                {{ $dokumen->bulan ?? '-' }}
+              </span>
+            </td>
+            <td>
+              <span style="font-weight: 600; color: #083E40;">
+                {{ $dokumen->tahun ?? '-' }}
+              </span>
+            </td>
             <td>{{ $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : '-' }}</td>
             <td>{{ $dokumen->nomor_spp ?? '-' }}</td>
             <td>{{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}</td>
@@ -473,7 +492,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="7" class="empty-state">
+            <td colspan="9" class="empty-state">
               <i class="fa-solid fa-inbox"></i>
               <h5>Belum ada dokumen</h5>
               <p>Tidak ada dokumen untuk periode yang dipilih</p>
