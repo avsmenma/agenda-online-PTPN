@@ -4,19 +4,19 @@
 <style>
 /* Owner Dashboard - Senior Friendly Design */
 :root {
-  --primary-color: #0056b3;
-  --success-color: #1e7e34;
+  --primary-color: #083E40;
+  --success-color: #889717;
   --warning-color: #e0a800;
-  --danger-color: #bd2130;
-  --info-color: #117a8b;
+  --danger-color: #889717;
+  --info-color: #0a4f52;
   --secondary-color: #6c757d;
   --light-bg: #f8f9fa;
   --border-color: #ced4da;
   --text-primary: #212529;
   --text-secondary: #495057;
   --text-muted: #6c757d;
-  --senior-primary: #004085;
-  --senior-bg-light: #e7f3ff;
+  --senior-primary: #083E40;
+  --senior-bg-light: #f0f5f5;
   --senior-font-large: 18px;
   --senior-font-medium: 16px;
   --senior-font-small: 14px;
@@ -32,7 +32,7 @@ body {
 
 /* Header Styles - Senior Friendly */
 .dashboard-header {
-  background: linear-gradient(135deg, var(--senior-primary) 0%, #003366 100%);
+  background: linear-gradient(135deg, var(--senior-primary) 0%, #0a4f52 100%);
   color: white;
   padding: 2rem 0;
   margin-bottom: 2rem;
@@ -80,7 +80,7 @@ body {
 
 .search-form .form-control:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.25);
+  box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.25);
   outline: none;
 }
 

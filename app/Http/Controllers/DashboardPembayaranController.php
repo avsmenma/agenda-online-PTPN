@@ -1907,32 +1907,51 @@ class DashboardPembayaranController extends Controller
      */
     public function analytics(Request $request)
     {
-        // Get selected year from request, default to current year
-        $selectedYear = $request->get('year', date('Y'));
-        $selectedMonth = $request->get('month', null); // For initial filter (optional)
-        $statusFilter = $request->get('status', 'sudah_dibayar'); // Default to 'sudah_dibayar' for analytics
+        try {
+            // Get selected year from request, default to current year
+            $selectedYear = $request->get('year', date('Y'));
+            $selectedMonth = $request->get('month', null); // For initial filter (optional)
+            $statusFilter = $request->get('status', 'sudah_dibayar'); // Default to 'sudah_dibayar' for analytics
 
-        // Helper function to calculate computed status (same as dokumens method)
-        $getComputedStatus = function($doc) {
-            if ($doc->tanggal_dibayar || 
-                $doc->link_bukti_pembayaran ||
-                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
-                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
-                $doc->status_pembayaran === 'sudah_dibayar') {
-                return 'sudah_dibayar';
+            // Validate year
+            if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
+                $selectedYear = date('Y');
             }
-            
-            if (in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
-                ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))) {
-                return 'siap_bayar';
-            }
-            
-            return 'belum_siap_bayar';
-        };
+
+            // Helper function to calculate computed status (same as dokumens method)
+            $getComputedStatus = function($doc) {
+                if ($doc->tanggal_dibayar || 
+                    $doc->link_bukti_pembayaran ||
+                    strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+                    strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
+                    $doc->status_pembayaran === 'sudah_dibayar') {
+                    return 'sudah_dibayar';
+                }
+                
+                if (in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
+                    ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))) {
+                    return 'siap_bayar';
+                }
+                
+                return 'belum_siap_bayar';
+            };
 
         // Get all documents with nomor_agenda
-        $allDokumens = Dokumen::whereNotNull('nomor_agenda')
-            ->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+        // For sudah_dibayar status, filter by status_pembayaran or tanggal_dibayar at database level first
+        $query = Dokumen::whereNotNull('nomor_agenda');
+        
+        if ($statusFilter === 'sudah_dibayar') {
+            // Pre-filter untuk sudah_dibayar di database level
+            $query->where(function($q) {
+                $q->where('status_pembayaran', 'sudah_dibayar')
+                  ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                  ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                  ->orWhereNotNull('tanggal_dibayar')
+                  ->orWhereNotNull('link_bukti_pembayaran');
+            });
+        }
+        
+        $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
             ->get();
 
         // Add computed status to each document
@@ -1940,18 +1959,36 @@ class DashboardPembayaranController extends Controller
             $doc->computed_status = $getComputedStatus($doc);
         });
 
-        // Filter by status (default: sudah_dibayar)
+        // Filter by status (to ensure exact match with computed status)
         $allDokumens = $allDokumens->filter(function($doc) use ($statusFilter) {
             return $doc->computed_status === $statusFilter;
         })->values();
 
         // Filter by year (based on tanggal_dibayar for sudah_dibayar, or created_at for others)
         $allDokumens = $allDokumens->filter(function($doc) use ($selectedYear, $statusFilter) {
-            if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                return $doc->tanggal_dibayar->format('Y') == $selectedYear;
-            } else {
-                // For other status, use created_at
-                return $doc->created_at && $doc->created_at->format('Y') == $selectedYear;
+            try {
+                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                    // Ensure tanggal_dibayar is a Carbon instance
+                    $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                        ? $doc->tanggal_dibayar 
+                        : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                    return $tanggal->format('Y') == $selectedYear;
+                } else {
+                    // For other status, use created_at
+                    if (!$doc->created_at) {
+                        return false;
+                    }
+                    $created = $doc->created_at instanceof \Carbon\Carbon 
+                        ? $doc->created_at 
+                        : \Carbon\Carbon::parse($doc->created_at);
+                    return $created->format('Y') == $selectedYear;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Error filtering document by year', [
+                    'doc_id' => $doc->id,
+                    'error' => $e->getMessage()
+                ]);
+                return false;
             }
         })->values();
 
@@ -1971,10 +2008,27 @@ class DashboardPembayaranController extends Controller
 
         for ($month = 1; $month <= 12; $month++) {
             $monthDokumens = $allDokumens->filter(function($doc) use ($month, $statusFilter) {
-                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                    return (int)$doc->tanggal_dibayar->format('m') == $month;
-                } else {
-                    return $doc->created_at && (int)$doc->created_at->format('m') == $month;
+                try {
+                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                        $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_dibayar 
+                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                        return (int)$tanggal->format('m') == $month;
+                    } else {
+                        if (!$doc->created_at) {
+                            return false;
+                        }
+                        $created = $doc->created_at instanceof \Carbon\Carbon 
+                            ? $doc->created_at 
+                            : \Carbon\Carbon::parse($doc->created_at);
+                        return (int)$created->format('m') == $month;
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Error filtering document by month', [
+                        'doc_id' => $doc->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    return false;
                 }
             })->values();
 
@@ -1990,27 +2044,60 @@ class DashboardPembayaranController extends Controller
         $tableDokumens = $allDokumens;
         if ($selectedMonth && is_numeric($selectedMonth) && $selectedMonth >= 1 && $selectedMonth <= 12) {
             $tableDokumens = $allDokumens->filter(function($doc) use ($selectedMonth, $statusFilter) {
-                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                    return (int)$doc->tanggal_dibayar->format('m') == $selectedMonth;
-                } else {
-                    return $doc->created_at && (int)$doc->created_at->format('m') == $selectedMonth;
+                try {
+                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                        $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_dibayar 
+                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                        return (int)$tanggal->format('m') == $selectedMonth;
+                    } else {
+                        if (!$doc->created_at) {
+                            return false;
+                        }
+                        $created = $doc->created_at instanceof \Carbon\Carbon 
+                            ? $doc->created_at 
+                            : \Carbon\Carbon::parse($doc->created_at);
+                        return (int)$created->format('m') == $selectedMonth;
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Error filtering document by month for table', [
+                        'doc_id' => $doc->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    return false;
                 }
             })->values();
 
             // Sort by tanggal_dibayar or created_at descending
             $tableDokumens = $tableDokumens->sortByDesc(function($doc) use ($statusFilter) {
-                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                    return $doc->tanggal_dibayar;
+                try {
+                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                        return $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_dibayar 
+                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                    }
+                    return $doc->created_at instanceof \Carbon\Carbon 
+                        ? $doc->created_at 
+                        : ($doc->created_at ? \Carbon\Carbon::parse($doc->created_at) : now());
+                } catch (\Exception $e) {
+                    return now();
                 }
-                return $doc->created_at;
             })->values();
         } else {
             // Sort all documents by tanggal_dibayar or created_at descending
             $tableDokumens = $tableDokumens->sortByDesc(function($doc) use ($statusFilter) {
-                if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                    return $doc->tanggal_dibayar;
+                try {
+                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                        return $doc->tanggal_dibayar instanceof \Carbon\Carbon 
+                            ? $doc->tanggal_dibayar 
+                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                    }
+                    return $doc->created_at instanceof \Carbon\Carbon 
+                        ? $doc->created_at 
+                        : ($doc->created_at ? \Carbon\Carbon::parse($doc->created_at) : now());
+                } catch (\Exception $e) {
+                    return now();
                 }
-                return $doc->created_at;
             })->values();
         }
 
@@ -2028,50 +2115,58 @@ class DashboardPembayaranController extends Controller
                 ->filter()
                 ->toArray();
             
-            // Also get years from created_at as backup (for documents that might be sudah_dibayar but no tanggal_dibayar yet)
-            $allDokumensForYears = Dokumen::whereNotNull('nomor_agenda')->get();
-            $allDokumensForYears->each(function($doc) use ($getComputedStatus) {
-                $doc->computed_status = $getComputedStatus($doc);
-            });
-            
-            // Filter hanya yang sudah_dibayar
-            $sudahDibayarDocs = $allDokumensForYears->filter(function($doc) {
-                return $doc->computed_status === 'sudah_dibayar';
-            });
-            
-            // Extract years from created_at untuk dokumen sudah_dibayar
-            $yearsFromCreatedAt = $sudahDibayarDocs->map(function($doc) {
-                return $doc->created_at ? (int)$doc->created_at->format('Y') : null;
-            })->filter()->unique()->toArray();
+            // Also get years from created_at as backup using more efficient query
+            try {
+                $yearsFromCreatedAtQuery = Dokumen::whereNotNull('nomor_agenda')
+                    ->where(function($q) {
+                        $q->where('status_pembayaran', 'sudah_dibayar')
+                          ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                          ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                          ->orWhereNotNull('tanggal_dibayar')
+                          ->orWhereNotNull('link_bukti_pembayaran');
+                    })
+                    ->selectRaw('DISTINCT YEAR(created_at) as year')
+                    ->whereNotNull('created_at')
+                    ->orderBy('year', 'desc')
+                    ->pluck('year')
+                    ->filter()
+                    ->toArray();
+                
+                $yearsFromCreatedAt = $yearsFromCreatedAtQuery;
+            } catch (\Exception $e) {
+                \Log::warning('Error getting years from created_at: ' . $e->getMessage());
+                $yearsFromCreatedAt = [];
+            }
             
             // Merge both sources and remove duplicates
             $availableYears = array_unique(array_merge($yearsFromTanggalDibayar, $yearsFromCreatedAt));
         } else {
-            // For other status, get years from created_at
-            $allDokumensForYears = Dokumen::whereNotNull('nomor_agenda')->get();
-            $allDokumensForYears->each(function($doc) use ($getComputedStatus) {
-                $doc->computed_status = $getComputedStatus($doc);
-            });
-            
-            // Filter by status
-            $filteredDocs = $allDokumensForYears->filter(function($doc) use ($statusFilter) {
-                return $doc->computed_status === $statusFilter;
-            });
-            
-            // Extract unique years from created_at
-            $years = $filteredDocs->map(function($doc) {
-                return $doc->created_at ? (int)$doc->created_at->format('Y') : null;
-            })->filter()->unique()->toArray();
-            
-            $availableYears = $years;
+            // For other status, get years from created_at using direct query
+            try {
+                $availableYears = Dokumen::whereNotNull('nomor_agenda')
+                    ->selectRaw('DISTINCT YEAR(created_at) as year')
+                    ->whereNotNull('created_at')
+                    ->orderBy('year', 'desc')
+                    ->pluck('year')
+                    ->filter()
+                    ->toArray();
+            } catch (\Exception $e) {
+                \Log::warning('Error getting available years: ' . $e->getMessage());
+                $availableYears = [(int)date('Y')];
+            }
         }
         
         // Sort descending (newest first)
         rsort($availableYears);
-
-        // If no years found, add current year
+        
+        // Ensure availableYears is not empty - add current year if empty
         if (empty($availableYears)) {
-            $availableYears = [date('Y')];
+            $availableYears = [(int)date('Y')];
+        }
+        
+        // Ensure selectedYear is in availableYears, if not, use first available year or current year
+        if (!in_array((int)$selectedYear, $availableYears)) {
+            $selectedYear = !empty($availableYears) ? (int)$availableYears[0] : date('Y');
         }
 
         $data = [
@@ -2090,6 +2185,18 @@ class DashboardPembayaranController extends Controller
         ];
 
         return view('pembayaranNEW.analytics', $data);
+        
+        } catch (\Exception $e) {
+            Log::error('Error in analytics method: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            // Return error page or redirect with error message
+            return redirect()->route('pembayaran.rekapan')
+                ->with('error', 'Terjadi kesalahan saat memuat halaman analitik: ' . $e->getMessage());
+        }
     }
 }
 

@@ -3,7 +3,7 @@
 
 <style>
   h2 {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -13,11 +13,11 @@
   }
 
   .stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.1), 0 2px 8px rgba(200, 35, 51, 0.05);
-    border: 1px solid rgba(220, 53, 69, 0.08);
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -29,8 +29,8 @@
 
   .stat-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(220, 53, 69, 0.2), 0 4px 16px rgba(200, 35, 51, 0.1);
-    border-color: rgba(220, 53, 69, 0.15);
+    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
+    border-color: rgba(8, 62, 64, 0.15);
   }
 
   .stat-icon {
@@ -44,13 +44,13 @@
     color: white;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
   }
 
   .stat-value {
     font-size: 32px;
     font-weight: 700;
-    color: #dc3545;
+    color: #083E40;
     margin-bottom: 4px;
     line-height: 1;
   }
@@ -65,20 +65,20 @@
   }
 
   .filter-section {
-    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 30px;
     border-radius: 16px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.1), 0 2px 8px rgba(200, 35, 51, 0.05);
-    border: 1px solid rgba(220, 53, 69, 0.08);
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
   }
 
   .table-container {
-    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 30px;
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.1), 0 2px 8px rgba(200, 35, 51, 0.05);
-    border: 1px solid rgba(220, 53, 69, 0.08);
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
   }
 
   .table-responsive {
@@ -93,7 +93,7 @@
   }
 
   .table-responsive::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     border-radius: 6px;
     border: 2px solid #ffffff;
   }
@@ -105,11 +105,11 @@
 
   .table-responsive {
     scrollbar-width: thin;
-    scrollbar-color: #dc3545 #f1f1f1;
+    scrollbar-color: #083E40 #f1f1f1;
   }
 
   .table thead {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%) !important;
   }
 
   .table thead th {
@@ -133,14 +133,14 @@
   }
 
   .table tbody tr.clickable-row:hover {
-    background: linear-gradient(90deg, rgba(220, 53, 69, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #dc3545;
+    background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
+    border-left: 3px solid #889717;
     transform: scale(1.002);
   }
 
   .table tbody tr:hover {
-    background: linear-gradient(90deg, rgba(220, 53, 69, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #dc3545;
+    background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
+    border-left: 3px solid #889717;
     transform: scale(1.002);
   }
 
@@ -164,7 +164,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     color: white !important;
   }
 
@@ -189,7 +189,7 @@
   }
 
   .badge-returned {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     color: white !important;
   }
 
@@ -225,20 +225,20 @@
   }
 
   .pagination .page-link {
-    color: #dc3545;
+    color: #083E40;
     background: white;
-    border: 2px solid #dc3545;
+    border: 2px solid #083E40;
   }
 
   .pagination .page-link:hover {
-    background: #dc3545;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     color: white;
   }
 
   .pagination .active .page-link {
-    background: #dc3545;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     color: white;
-    border-color: #dc3545;
+    border-color: #083E40;
   }
 
   .handler-stats {
@@ -252,7 +252,7 @@
     background: white;
     padding: 16px;
     border-radius: 12px;
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid #889717;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 
@@ -267,7 +267,7 @@
   .handler-stat-value {
     font-size: 24px;
     font-weight: 700;
-    color: #dc3545;
+    color: #083E40;
   }
 </style>
 
@@ -330,7 +330,7 @@
       </div>
       <div class="col-md-2">
         <label class="form-label">&nbsp;</label>
-        <button type="submit" class="btn btn-danger w-100">
+        <button type="submit" class="btn w-100" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%); color: white; border: none;">
           <i class="fa-solid fa-search"></i> Filter
         </button>
       </div>

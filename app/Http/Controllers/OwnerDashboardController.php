@@ -419,20 +419,20 @@ class OwnerDashboardController extends Controller
     {
         $colorMap = [
             'draft' => '#6c757d', // Gray
-            'sedang diproses' => '#007bff', // Blue
-            'menunggu_verifikasi' => '#007bff', // Blue
+            'sedang diproses' => '#083E40', // Green (theme)
+            'menunggu_verifikasi' => '#083E40', // Green (theme)
             'pending_approval_ibub' => '#ffc107', // Yellow
-            'sent_to_ibub' => '#17a2b8', // Cyan
+            'sent_to_ibub' => '#0a4f52', // Dark green
             'proses_ibub' => '#ffc107', // Yellow
-            'sent_to_perpajakan' => '#17a2b8', // Cyan
-            'proses_perpajakan' => '#17a2b8', // Cyan
+            'sent_to_perpajakan' => '#0a4f52', // Dark green
+            'proses_perpajakan' => '#0a4f52', // Dark green
             'sent_to_akutansi' => '#6f42c1', // Purple
             'proses_akutansi' => '#6f42c1', // Purple
             'menunggu_approved_pengiriman' => '#fd7e14', // Orange
             'proses_pembayaran' => '#6f42c1', // Purple
-            'approved_data_sudah_terkirim' => '#28a745', // Green
+            'approved_data_sudah_terkirim' => '#889717', // Green (theme)
             'rejected_data_tidak_lengkap' => '#dc3545', // Red
-            'selesai' => '#28a745', // Green
+            'selesai' => '#889717', // Green (theme)
         ];
 
         return $colorMap[$status] ?? '#6c757d';
@@ -447,8 +447,8 @@ class OwnerDashboardController extends Controller
 
         if ($progress <= 30) return '#dc3545'; // Red
         if ($progress <= 60) return '#ffc107'; // Yellow
-        if ($progress <= 90) return '#17a2b8'; // Blue
-        return '#28a745'; // Green
+        if ($progress <= 90) return '#083E40'; // Green (theme)
+        return '#889717'; // Green (theme)
     }
 
     /**
