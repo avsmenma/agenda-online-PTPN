@@ -128,6 +128,27 @@ class ActivityLogHelper
             'nomor_miro' => 'Nomor MIRO',
             'status_pembayaran' => 'Status Pembayaran',
             'link_bukti_pembayaran' => 'Link Bukti Pembayaran',
+            'tanggal_dibayar' => 'Tanggal Dibayar',
+            // Field-field dari DokumenController
+            'nomor_agenda' => 'Nomor Agenda',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_spp' => 'Tanggal SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'kategori' => 'Kategori',
+            'jenis_dokumen' => 'Jenis Dokumen',
+            'jenis_sub_pekerjaan' => 'Jenis Sub Pekerjaan',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'kebun' => 'Kebun',
+            'bagian' => 'Bagian',
+            'nama_pengirim' => 'Nama Pengirim',
+            'no_berita_acara' => 'Nomor Berita Acara',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'no_spk' => 'Nomor SPK',
+            'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
         ];
 
         $fieldName = $fieldNames[$field] ?? $field;

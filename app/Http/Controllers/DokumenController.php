@@ -471,6 +471,29 @@ class DokumenController extends Controller
         try {
             DB::beginTransaction();
 
+            // Store old values for logging
+            $oldValues = [
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'bulan' => $dokumen->bulan,
+                'tahun' => $dokumen->tahun,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : null,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'kategori' => $dokumen->kategori,
+                'jenis_dokumen' => $dokumen->jenis_dokumen,
+                'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                'kebun' => $dokumen->kebun,
+                'bagian' => $dokumen->bagian,
+                'nama_pengirim' => $dokumen->nama_pengirim,
+                'no_berita_acara' => $dokumen->no_berita_acara,
+                'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
+                'no_spk' => $dokumen->no_spk,
+                'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
+                'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
+            ];
+
             // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
             $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
             if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
@@ -488,12 +511,15 @@ class DokumenController extends Controller
                 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
             ];
 
+            $newBulan = $bulanIndonesia[$tanggalSpp->month];
+            $newTahun = $tanggalSpp->year;
+
             // Update dokumen
             // IMPORTANT: Status is NOT updated here - it only changes via workflow (send, return, etc)
             $dokumen->update([
                 'nomor_agenda' => $request->nomor_agenda,
-                'bulan' => $bulanIndonesia[$tanggalSpp->month],
-                'tahun' => $tanggalSpp->year,
+                'bulan' => $newBulan,
+                'tahun' => $newTahun,
                 'tanggal_masuk' => $dokumen->tanggal_masuk, // Keep original creation timestamp
                 'nomor_spp' => $request->nomor_spp,
                 'tanggal_spp' => $request->tanggal_spp,
@@ -515,6 +541,63 @@ class DokumenController extends Controller
                 // 'status' => REMOVED - status should only change through workflow, not manual edit
                 // 'keterangan' => REMOVED - not used anymore
             ]);
+
+            $dokumen->refresh();
+
+            // Log changes for all edited fields
+            $fieldsToLog = [
+                'nomor_agenda' => 'Nomor Agenda',
+                'bulan' => 'Bulan',
+                'tahun' => 'Tahun',
+                'nomor_spp' => 'Nomor SPP',
+                'tanggal_spp' => 'Tanggal SPP',
+                'uraian_spp' => 'Uraian SPP',
+                'nilai_rupiah' => 'Nilai Rupiah',
+                'kategori' => 'Kategori',
+                'jenis_dokumen' => 'Jenis Dokumen',
+                'jenis_sub_pekerjaan' => 'Jenis Sub Pekerjaan',
+                'jenis_pembayaran' => 'Jenis Pembayaran',
+                'kebun' => 'Kebun',
+                'bagian' => 'Bagian',
+                'nama_pengirim' => 'Nama Pengirim',
+                'no_berita_acara' => 'Nomor Berita Acara',
+                'tanggal_berita_acara' => 'Tanggal Berita Acara',
+                'no_spk' => 'Nomor SPK',
+                'tanggal_spk' => 'Tanggal SPK',
+                'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            ];
+
+            foreach ($fieldsToLog as $field => $fieldName) {
+                $oldValue = $oldValues[$field];
+                $newValue = null;
+
+                if ($field === 'tanggal_spp' || $field === 'tanggal_berita_acara' || $field === 'tanggal_spk' || $field === 'tanggal_berakhir_spk') {
+                    $newValue = $dokumen->$field ? $dokumen->$field->format('Y-m-d') : null;
+                } elseif ($field === 'nilai_rupiah') {
+                    $newValue = number_format($dokumen->$field, 0, ',', '.');
+                    $oldValue = $oldValue ? number_format($oldValue, 0, ',', '.') : null;
+                } elseif ($field === 'tahun') {
+                    $newValue = (string)$dokumen->$field;
+                    $oldValue = $oldValue ? (string)$oldValue : null;
+                } else {
+                    $newValue = $dokumen->$field;
+                }
+
+                // Only log if value actually changed
+                if ($oldValue != $newValue) {
+                    try {
+                        ActivityLogHelper::logDataEdited(
+                            $dokumen,
+                            $field,
+                            $oldValue,
+                            $newValue,
+                            'ibuA'
+                        );
+                    } catch (\Exception $logException) {
+                        \Log::error('Failed to log data edit for ' . $field . ': ' . $logException->getMessage());
+                    }
+                }
+            }
 
             // Update PO numbers - delete existing and create new
             $dokumen->dokumenPos()->delete();
