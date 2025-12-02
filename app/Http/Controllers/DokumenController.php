@@ -568,23 +568,48 @@ class DokumenController extends Controller
             ];
 
             foreach ($fieldsToLog as $field => $fieldName) {
-                $oldValue = $oldValues[$field];
+                $oldValueRaw = $oldValues[$field];
+                $newValueRaw = $dokumen->$field;
+                $oldValue = null;
                 $newValue = null;
 
                 if ($field === 'tanggal_spp' || $field === 'tanggal_berita_acara' || $field === 'tanggal_spk' || $field === 'tanggal_berakhir_spk') {
-                    $newValue = $dokumen->$field ? $dokumen->$field->format('Y-m-d') : null;
+                    $oldValue = $oldValueRaw;
+                    $newValue = $newValueRaw ? $dokumen->$field->format('Y-m-d') : null;
                 } elseif ($field === 'nilai_rupiah') {
-                    $newValue = number_format($dokumen->$field, 0, ',', '.');
-                    $oldValue = $oldValue ? number_format($oldValue, 0, ',', '.') : null;
+                    // Compare numeric values first to ensure accuracy
+                    $oldNumeric = $oldValueRaw ? (float)$oldValueRaw : 0;
+                    $newNumeric = $newValueRaw ? (float)$newValueRaw : 0;
+                    
+                    // Format for display in log
+                    $oldValue = $oldValueRaw ? number_format($oldValueRaw, 0, ',', '.') : '0';
+                    $newValue = $newValueRaw ? number_format($newValueRaw, 0, ',', '.') : '0';
+                    
+                    // Use numeric comparison for accuracy
+                    if (abs($oldNumeric - $newNumeric) > 0.01) { // Allow for floating point precision
+                        try {
+                            ActivityLogHelper::logDataEdited(
+                                $dokumen,
+                                $field,
+                                $oldValue,
+                                $newValue,
+                                'ibuA'
+                            );
+                        } catch (\Exception $logException) {
+                            \Log::error('Failed to log data edit for ' . $field . ': ' . $logException->getMessage());
+                        }
+                    }
+                    continue; // Skip the general comparison below
                 } elseif ($field === 'tahun') {
-                    $newValue = (string)$dokumen->$field;
-                    $oldValue = $oldValue ? (string)$oldValue : null;
+                    $oldValue = $oldValueRaw ? (string)$oldValueRaw : null;
+                    $newValue = $newValueRaw ? (string)$newValueRaw : null;
                 } else {
-                    $newValue = $dokumen->$field;
+                    $oldValue = $oldValueRaw;
+                    $newValue = $newValueRaw;
                 }
 
-                // Only log if value actually changed
-                if ($oldValue != $newValue) {
+                // Only log if value actually changed (skip nilai_rupiah as it's handled above)
+                if ($field !== 'nilai_rupiah' && $oldValue != $newValue) {
                     try {
                         ActivityLogHelper::logDataEdited(
                             $dokumen,

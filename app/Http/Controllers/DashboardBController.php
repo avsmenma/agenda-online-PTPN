@@ -14,6 +14,7 @@ use App\Models\Bidang;
 use App\Models\DibayarKepada;
 use App\Events\DocumentReturned;
 use App\Helpers\SearchHelper;
+use App\Helpers\ActivityLogHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -347,6 +348,30 @@ class DashboardBController extends Controller
         try {
             \DB::beginTransaction();
 
+            // Store old values for logging
+            $oldValues = [
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'bulan' => $dokumen->bulan,
+                'tahun' => $dokumen->tahun,
+                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('Y-m-d H:i:s') : null,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : null,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'kategori' => $dokumen->kategori,
+                'jenis_dokumen' => $dokumen->jenis_dokumen,
+                'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                'kebun' => $dokumen->kebun,
+                'dibayar_kepada' => $dokumen->dibayar_kepada,
+                'no_berita_acara' => $dokumen->no_berita_acara,
+                'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
+                'no_spk' => $dokumen->no_spk,
+                'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
+                'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
+                'keterangan' => $dokumen->keterangan,
+            ];
+
             // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
             $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
             if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
@@ -408,6 +433,105 @@ class DashboardBController extends Controller
             }
 
             \DB::commit();
+
+            // Refresh dokumen after commit to get latest data
+            $dokumen->refresh();
+
+            // Log changes for all edited fields (AFTER commit to ensure data is saved)
+            $fieldsToLog = [
+                'nomor_agenda' => 'Nomor Agenda',
+                'bulan' => 'Bulan',
+                'tahun' => 'Tahun',
+                'tanggal_masuk' => 'Tanggal Masuk',
+                'nomor_spp' => 'Nomor SPP',
+                'tanggal_spp' => 'Tanggal SPP',
+                'uraian_spp' => 'Uraian SPP',
+                'nilai_rupiah' => 'Nilai Rupiah',
+                'kategori' => 'Kategori',
+                'jenis_dokumen' => 'Jenis Dokumen',
+                'jenis_sub_pekerjaan' => 'Jenis Sub Pekerjaan',
+                'jenis_pembayaran' => 'Jenis Pembayaran',
+                'kebun' => 'Kebun',
+                'dibayar_kepada' => 'Dibayar Kepada',
+                'no_berita_acara' => 'Nomor Berita Acara',
+                'tanggal_berita_acara' => 'Tanggal Berita Acara',
+                'no_spk' => 'Nomor SPK',
+                'tanggal_spk' => 'Tanggal SPK',
+                'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+                'keterangan' => 'Keterangan',
+            ];
+
+            $loggedFields = [];
+            foreach ($fieldsToLog as $field => $fieldName) {
+                $oldValueRaw = $oldValues[$field];
+                $newValueRaw = $dokumen->$field;
+                $oldValue = null;
+                $newValue = null;
+                $hasChanged = false;
+
+                if ($field === 'tanggal_spp' || $field === 'tanggal_berita_acara' || $field === 'tanggal_spk' || $field === 'tanggal_berakhir_spk') {
+                    $oldValue = $oldValueRaw;
+                    $newValue = $newValueRaw ? $dokumen->$field->format('Y-m-d') : null;
+                    $hasChanged = ($oldValue != $newValue);
+                } elseif ($field === 'tanggal_masuk') {
+                    $oldValue = $oldValueRaw;
+                    $newValue = $newValueRaw ? $dokumen->$field->format('Y-m-d H:i:s') : null;
+                    $hasChanged = ($oldValue != $newValue);
+                } elseif ($field === 'nilai_rupiah') {
+                    // Compare numeric values first to ensure accuracy
+                    $oldNumeric = $oldValueRaw ? (float)$oldValueRaw : 0;
+                    $newNumeric = $newValueRaw ? (float)$newValueRaw : 0;
+                    
+                    // Format for display in log
+                    $oldValue = $oldValueRaw ? number_format($oldValueRaw, 0, ',', '.') : '0';
+                    $newValue = $newValueRaw ? number_format($newValueRaw, 0, ',', '.') : '0';
+                    
+                    // Use numeric comparison for accuracy
+                    $hasChanged = (abs($oldNumeric - $newNumeric) > 0.01);
+                } elseif ($field === 'tahun') {
+                    $oldValue = $oldValueRaw ? (string)$oldValueRaw : null;
+                    $newValue = $newValueRaw ? (string)$newValueRaw : null;
+                    $hasChanged = ($oldValue != $newValue);
+                } else {
+                    $oldValue = $oldValueRaw;
+                    $newValue = $newValueRaw;
+                    $hasChanged = ($oldValue != $newValue);
+                }
+
+                // Log if value changed
+                if ($hasChanged) {
+                    try {
+                        ActivityLogHelper::logDataEdited(
+                            $dokumen,
+                            $field,
+                            $oldValue,
+                            $newValue,
+                            'ibuB'
+                        );
+                        $loggedFields[] = $field;
+                        \Log::info("Logged edit for field: {$field} in document {$dokumen->id}", [
+                            'field' => $field,
+                            'old' => $oldValue,
+                            'new' => $newValue
+                        ]);
+                    } catch (\Exception $logException) {
+                        \Log::error('Failed to log data edit for ' . $field . ': ' . $logException->getMessage(), [
+                            'field' => $field,
+                            'document_id' => $dokumen->id,
+                            'exception' => $logException->getTraceAsString()
+                        ]);
+                    }
+                }
+            }
+
+            // Log summary if any fields were logged
+            if (!empty($loggedFields)) {
+                \Log::info("Document edit logged for document {$dokumen->id} by ibuB", [
+                    'document_id' => $dokumen->id,
+                    'logged_fields' => $loggedFields,
+                    'total_fields' => count($loggedFields)
+                ]);
+            }
 
             // Check if document is returned document and redirect accordingly
             $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
