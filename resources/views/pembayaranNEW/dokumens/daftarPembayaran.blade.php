@@ -811,9 +811,9 @@
                 {{-- Kondisi A: Status = "Belum Siap Bayar" - Tampilkan icon mata untuk tracking --}}
                 <a href="{{ route('owner.workflow', $dokumen->id) }}" 
                    target="_blank"
-                   class="btn-action"
+                   class="btn-action workflow-link"
                    title="Lihat Tracking Workflow"
-                   onclick="event.stopPropagation();">
+                   data-workflow-id="{{ $dokumen->id }}">
                   <i class="fas fa-eye"></i>
                 </a>
               @elseif($paymentStatus === 'siap_bayar')
@@ -2034,6 +2034,50 @@ function submitEditPembayaran() {
         submitBtn.innerHTML = originalHTML;
     });
 }
+
+// Ensure workflow tracking links work correctly
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle workflow tracking links - use mousedown instead of click to prevent any interference
+    document.querySelectorAll('.workflow-link').forEach(function(link) {
+        // Use mousedown to capture event earlier
+        link.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        });
+        
+        // Also handle click as backup
+        link.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            console.log('Workflow link clicked, URL:', url);
+            if (url) {
+                window.open(url, '_blank');
+            }
+            return false;
+        }, true); // Use capture phase to intercept early
+    });
+    
+    // Prevent row click for non-clickable rows when clicking on action buttons
+    document.querySelectorAll('.non-clickable-row .action-buttons a, .non-clickable-row .action-buttons button').forEach(function(element) {
+        element.addEventListener('click', function(e) {
+            e.stopPropagation();
+        }, true); // Use capture phase
+    });
+    
+    // Prevent any row click behavior for non-clickable rows
+    document.querySelectorAll('.non-clickable-row').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            // Only prevent if clicking on the row itself, not on action buttons
+            if (e.target.closest('.action-buttons')) {
+                return; // Let action buttons handle their own clicks
+            }
+            // Prevent any navigation for non-clickable rows
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+});
 </script>
 
 @endsection
