@@ -653,6 +653,48 @@
       width: 95%;
     }
   }
+
+  /* Pagination Styles */
+  .btn-pagination {
+    transition: all 0.3s ease;
+  }
+
+  .btn-pagination:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+  }
+
+  .btn-pagination.active {
+    box-shadow: 0 2px 8px rgba(8, 62, 64, 0.3);
+  }
+
+  #perPageSelect:hover {
+    border-color: #889717;
+    box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+  }
+
+  #perPageSelect:focus {
+    outline: none;
+    border-color: #889717;
+    box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .pagination-wrapper {
+      padding: 15px !important;
+    }
+
+    .pagination-wrapper > div {
+      flex-direction: column;
+      align-items: stretch !important;
+      gap: 12px !important;
+    }
+
+    .pagination {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
 </style>
 
 <h2>{{ $title }}</h2>
@@ -754,7 +796,7 @@
           @endif
           data-dokumen-id="{{ $dokumen->id }}"
         >
-          <td class="col-no">{{ $index + 1 }}</td>
+          <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
             <td class="col-{{ $col }}">
@@ -856,6 +898,101 @@
     </table>
   </div>
 </div>
+
+<!-- Pagination Controls -->
+@if($dokumens->total() > 0)
+<div class="pagination-wrapper" style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 16px; box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1); border: 1px solid rgba(8, 62, 64, 0.08);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <!-- Info dan Per Page Selector -->
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+      <div class="text-muted" style="font-size: 13px; color: #083E40;">
+        Menampilkan <strong>{{ $dokumens->firstItem() ?: 0 }}</strong> - <strong>{{ $dokumens->lastItem() ?: 0 }}</strong> dari total <strong>{{ $dokumens->total() }}</strong> dokumen
+      </div>
+      
+      <!-- Per Page Selector -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="perPageSelect" style="font-size: 13px; color: #083E40; font-weight: 500; margin: 0;">Tampilkan per halaman:</label>
+        <select id="perPageSelect" onchange="changePerPage(this.value)" style="padding: 6px 12px; border: 2px solid rgba(8, 62, 64, 0.15); border-radius: 8px; background: white; color: #083E40; font-size: 13px; font-weight: 500; cursor: pointer;">
+          <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
+          <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
+          <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
+          <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Pagination Buttons -->
+    @if($dokumens->hasPages())
+    <div class="pagination" style="display: flex; gap: 8px; align-items: center;">
+      {{-- Previous Page Link --}}
+      @if($dokumens->onFirstPage())
+        <button class="btn-pagination" disabled style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: #e0e0e0; color: #9e9e9e; border-radius: 10px; cursor: not-allowed;">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      @else
+        <a href="{{ $dokumens->appends(request()->query())->previousPageUrl() }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+        </a>
+      @endif
+
+      {{-- Pagination Elements --}}
+      @php
+        $currentPage = $dokumens->currentPage();
+        $lastPage = $dokumens->lastPage();
+        $startPage = max(1, $currentPage - 2);
+        $endPage = min($lastPage, $currentPage + 2);
+      @endphp
+
+      {{-- First page --}}
+      @if($startPage > 1)
+        <a href="{{ $dokumens->appends(request()->query())->url(1) }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background-color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">1</button>
+        </a>
+        @if($startPage > 2)
+          <button disabled style="padding: 10px 16px; border: none; background: transparent; color: #999; cursor: default;">...</button>
+        @endif
+      @endif
+
+      {{-- Range of pages --}}
+      @for($i = $startPage; $i <= $endPage; $i++)
+        @if($currentPage == $i)
+          <button class="btn-pagination active" style="padding: 10px 16px; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">{{ $i }}</button>
+        @else
+          <a href="{{ $dokumens->appends(request()->query())->url($i) }}">
+            <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background-color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">{{ $i }}</button>
+          </a>
+        @endif
+      @endfor
+
+      {{-- Dots --}}
+      @if($endPage < $lastPage)
+        @if($endPage < $lastPage - 1)
+          <button disabled style="padding: 10px 16px; border: none; background: transparent; color: #999; cursor: default;">...</button>
+        @endif
+        <a href="{{ $dokumens->appends(request()->query())->url($lastPage) }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background-color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">{{ $lastPage }}</button>
+        </a>
+      @endif
+
+      {{-- Next Page Link --}}
+      @if($dokumens->hasMorePages())
+        <a href="{{ $dokumens->appends(request()->query())->nextPageUrl() }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </a>
+      @else
+        <button class="btn-pagination" disabled style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: #e0e0e0; color: #9e9e9e; border-radius: 10px; cursor: not-allowed;">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      @endif
+    </div>
+    @endif
+  </div>
+</div>
+@endif
 
 <!-- Modal: Edit Pembayaran -->
 <div class="modal fade" id="editPembayaranModal" tabindex="-1" aria-labelledby="editPembayaranModalLabel" aria-hidden="true">
@@ -1769,6 +1906,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Auto-navigate to filter URL while preserving search parameter
             const url = new URL(window.location);
             url.searchParams.set('status_filter', filter);
+            url.searchParams.delete('page'); // Reset to page 1 when changing filter
             
             // Preserve search parameter if exists
             const searchInput = document.getElementById('pembayaranSearchInput');
@@ -1776,6 +1914,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 url.searchParams.set('search', searchInput.value.trim());
             } else {
                 url.searchParams.delete('search');
+            }
+            
+            // Preserve per_page parameter
+            const perPageSelect = document.getElementById('perPageSelect');
+            if (perPageSelect && perPageSelect.value) {
+                url.searchParams.set('per_page', perPageSelect.value);
             }
             
             window.location.href = url.toString();
@@ -1869,6 +2013,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function performSearch() {
         const searchValue = searchInput.value.trim();
         const currentFilter = '{{ $statusFilter ?? "" }}';
+        const currentPerPage = '{{ $perPage ?? 10 }}';
         
         // Build URL with current filter and search
         const url = new URL(window.location.pathname, window.location.origin);
@@ -1880,11 +2025,19 @@ document.addEventListener('DOMContentLoaded', function() {
             url.searchParams.delete('search');
         }
         
+        // Reset to page 1 when searching
+        url.searchParams.delete('page');
+        
         // Preserve status filter
         if (currentFilter) {
             url.searchParams.set('status_filter', currentFilter);
         } else {
             url.searchParams.delete('status_filter');
+        }
+        
+        // Preserve per page setting
+        if (currentPerPage) {
+            url.searchParams.set('per_page', currentPerPage);
         }
         
         // Navigate to new URL
@@ -1905,6 +2058,7 @@ function clearSearch() {
         // Build URL without search parameter
         const url = new URL(window.location.pathname, window.location.origin);
         url.searchParams.delete('search');
+        url.searchParams.delete('page'); // Reset to page 1 when clearing search
         
         // Preserve status filter
         if (currentFilter) {
@@ -1916,6 +2070,14 @@ function clearSearch() {
         // Navigate to new URL
         window.location.href = url.toString();
     }
+}
+
+// Change per page function
+function changePerPage(perPage) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', perPage);
+    url.searchParams.delete('page'); // Reset to page 1 when changing per page
+    window.location.href = url.toString();
 }
 
 function openEditPembayaranModal(docId) {

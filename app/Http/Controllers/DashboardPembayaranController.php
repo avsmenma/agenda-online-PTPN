@@ -47,6 +47,9 @@ class DashboardPembayaranController extends Controller
         // Get status filter and search from request
         $statusFilter = $request->get('status_filter');
         $search = $request->get('search');
+        $perPage = $request->get('per_page', session('pembayaran_per_page', 10)); // Default 10, bisa diubah user
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int)$perPage : 10; // Validate per_page value
+        session(['pembayaran_per_page' => $perPage]); // Save to session
 
         // Build query for pembayaran documents
         // Include all documents with nomor_agenda (same as rekapan method)
@@ -110,8 +113,8 @@ class DashboardPembayaranController extends Controller
             return 'belum_siap_bayar';
         };
 
-        // Get documents with ordering and eager load relationships
-        $dokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+        // Get all documents with ordering and eager load relationships (before pagination)
+        $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
             ->orderByRaw("CASE
                 WHEN status IN ('processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran') OR current_handler = 'pembayaran' THEN 1
                 WHEN status IN ('sent_to_akutansi', 'processed_by_perpajakan', 'sent_to_perpajakan') THEN 2
@@ -122,7 +125,7 @@ class DashboardPembayaranController extends Controller
             ->get();
 
         // Add computed status to each document
-        $dokumens->each(function($doc) use ($getComputedStatus) {
+        $allDokumens->each(function($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
@@ -131,10 +134,30 @@ class DashboardPembayaranController extends Controller
         
         // Apply status filter if provided (for filtering between belum_siap_bayar, siap_bayar, dan sudah_dibayar)
         if ($statusFilter && in_array($statusFilter, ['belum_siap_bayar', 'siap_bayar', 'sudah_dibayar'])) {
-            $dokumens = $dokumens->filter(function($doc) use ($statusFilter) {
+            $allDokumens = $allDokumens->filter(function($doc) use ($statusFilter) {
                 return $doc->computed_status === $statusFilter;
             })->values(); // Re-index the collection
         }
+
+        // Paginate manually using LengthAwarePaginator
+        $currentPage = Paginator::resolveCurrentPage('page');
+        $total = $allDokumens->count();
+        $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        
+        // Get all query parameters except 'page' for pagination links
+        $queryParams = request()->query();
+        unset($queryParams['page']);
+        
+        $dokumens = new LengthAwarePaginator(
+            $currentItems,
+            $total,
+            $perPage,
+            $currentPage,
+            [
+                'path' => request()->url(),
+                'query' => $queryParams // Preserve all query parameters except page
+            ]
+        );
 
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
@@ -200,6 +223,7 @@ class DashboardPembayaranController extends Controller
             'search' => $search,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
+            'perPage' => $perPage,
         );
         return view('pembayaranNEW.dokumens.daftarPembayaran', $data);
     }
