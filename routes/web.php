@@ -327,6 +327,11 @@ Route::get('/rekapan-keterlambatan', [DashboardPembayaranController::class, 'rek
 Route::get('/rekapan-pembayaran', [DashboardPembayaranController::class, 'rekapan'])->name('pembayaran.rekapan');
 Route::get('/rekapan-pembayaran/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('pembayaran.rekapan.export');
 Route::get('/rekapan-tu-tk', [DashboardPembayaranController::class, 'rekapanTuTk'])->name('pembayaran.rekapanTuTk');
+Route::post('/rekapan-tu-tk/payment-installment', [DashboardPembayaranController::class, 'storePaymentInstallment'])->name('pembayaran.storePaymentInstallment');
+Route::get('/rekapan-tu-tk/payment-logs/{kontrol}', [DashboardPembayaranController::class, 'getPaymentLogs'])->name('pembayaran.getPaymentLogs');
+Route::get('/rekapan-tu-tk/position-timeline/{kontrol}', [DashboardPembayaranController::class, 'getPositionTimeline'])->name('pembayaran.getPositionTimeline');
+Route::post('/rekapan-tu-tk/update-position', [DashboardPembayaranController::class, 'updateDocumentPosition'])->name('pembayaran.updateDocumentPosition');
+Route::get('/rekapan-tu-tk/export', [DashboardPembayaranController::class, 'exportRekapanTuTk'])->name('pembayaran.exportRekapanTuTk');
 
 // Dashboard Pembayaran Routes
 Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {

@@ -6,33 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
-class TuTk extends Model
+class TuTkPupuk extends Model
 {
     use HasFactory;
 
     // Table name sesuai dengan database yang sudah ada
-    protected $table = 'tu_tk_2023';
+    protected $table = 'tu_tk_pupuk_2023';
 
-    // Primary key
-    protected $primaryKey = 'KONTROL';
+    // Primary key - menggunakan EXTRA_COL_0 atau kombinasi kolom
+    // Karena tidak ada primary key yang jelas, kita akan menggunakan kombinasi
+    protected $primaryKey = 'EXTRA_COL_0';
+    public $incrementing = false;
 
     // Disable timestamps karena tabel tidak memiliki created_at/updated_at
     public $timestamps = false;
 
     // Field yang bisa diisi secara mass assignment
     protected $fillable = [
-        'KONTROL',
+        'EXTRA_COL_0',
         'AGENDA',
         'TGL_SPP',
         'NO_SPP',
-        'KATEGORI',
+        'KEBUN',
         'VENDOR',
         'NO_KONTRAK',
-        'TGL_KONTRAK',
-        'TGL_KONTRAK_BERAKHIR',
-        'NO_BERITA_ACARA',
-        'TGL_BERITA_ACARA',
-        'TGL_FAKTUR_PAJAK',
+        'TGL__KONTRAK',
+        'TGL__KONTRAK_BERAKHIR',
+        'NO__BERITA_ACARA',
+        'TGL__BERITA_ACARA',
+        'TGL__FAKTUR_PAJAK',
         'HAL',
         'NILAI',
         'POSISI_DOKUMEN',
@@ -52,23 +54,23 @@ class TuTk extends Model
         'TGL_BUKU_TAHUN_2024',
         'JUMLAH',
         'TANGGAL_BAYAR_I',
-        'JUMLAH1',
+        'JUMLAH_1',
         'TANGGAL_BAYAR_II',
-        'JUMLAH2',
+        'JUMLAH_2',
         'TANGGAL_BAYAR_III',
-        'JUMLAH3',
+        'JUMLAH_3',
         'TANGGAL_BAYAR_IV',
-        'JUMLAH4',
+        'JUMLAH_4',
         'TANGGAL_BAYAR_V',
-        'JUMLAH5',
+        'JUMLAH_5',
         'TANGGAL_BAYAR_VI',
-        'JUMLAH6',
+        'JUMLAH_6',
         'TANGGAL_BAYAR_RAMPUNG',
         'JUMLAH_DIBAYAR',
-        'BELUM_DIBAYAR1',
+        'BELUM_DIBAYAR_1',
         'FILE_SPP',
-        'SUB_PEKERJAAN',
-        'TGL_INPUT',
+        'EXTRA_COL_46',
+        'EXTRA_COL_47',
         'UMUR_HUTANG_HARI',
         'UMUR_SPP',
         'UMUR_SPK_HARI',
@@ -85,27 +87,21 @@ class TuTk extends Model
         'BELUM_DIBAYAR' => 'decimal:2',
         'NILAI_SETELAH_VERIFIKASI' => 'decimal:2',
         'JUMLAH_DIBAYAR' => 'decimal:2',
-        'BELUM_DIBAYAR1' => 'decimal:2',
+        'BELUM_DIBAYAR_1' => 'decimal:2',
         'SALDO_HUTANG' => 'decimal:2',
         'UMUR_HUTANG_HARI' => 'integer',
-        'TANGGAL_BAYAR_I' => 'datetime',
-        'TANGGAL_BAYAR_II' => 'datetime',
-        'TANGGAL_BAYAR_III' => 'datetime',
-        'TANGGAL_BAYAR_IV' => 'datetime',
-        'TANGGAL_BAYAR_V' => 'datetime',
-        'TANGGAL_BAYAR_VI' => 'datetime',
     ];
 
     /**
      * Get status pembayaran
-     * Lunas: BELUM_DIBAYAR = 0 atau null
-     * Parsial: JUMLAH_DIBAYAR > 0 tapi BELUM_DIBAYAR > 0
-     * Belum Lunas: BELUM_DIBAYAR > 0 dan JUMLAH_DIBAYAR = 0
+     * Lunas: BELUM_DIBAYAR_1 = 0 atau null
+     * Parsial: JUMLAH_DIBAYAR > 0 tapi BELUM_DIBAYAR_1 > 0
+     * Belum Lunas: BELUM_DIBAYAR_1 > 0 dan JUMLAH_DIBAYAR = 0
      */
     public function getStatusPembayaranAttribute()
     {
         $dibayar = (float) ($this->JUMLAH_DIBAYAR ?? 0);
-        $belumDibayar = (float) ($this->BELUM_DIBAYAR ?? 0);
+        $belumDibayar = (float) ($this->BELUM_DIBAYAR_1 ?? 0);
         $nilai = (float) ($this->NILAI ?? 0);
 
         if ($belumDibayar <= 0 || ($dibayar > 0 && $belumDibayar <= 0)) {
@@ -158,14 +154,14 @@ class TuTk extends Model
         switch ($status) {
             case 'lunas':
                 return $query->where(function($q) {
-                    $q->whereRaw('COALESCE(BELUM_DIBAYAR, 0) <= 0')
-                      ->orWhereRaw('COALESCE(JUMLAH_DIBAYAR, 0) > 0 AND COALESCE(BELUM_DIBAYAR, 0) <= 0');
+                    $q->whereRaw('COALESCE(BELUM_DIBAYAR_1, 0) <= 0')
+                      ->orWhereRaw('COALESCE(JUMLAH_DIBAYAR, 0) > 0 AND COALESCE(BELUM_DIBAYAR_1, 0) <= 0');
                 });
             case 'parsial':
                 return $query->whereRaw('COALESCE(JUMLAH_DIBAYAR, 0) > 0')
-                             ->whereRaw('COALESCE(BELUM_DIBAYAR, 0) > 0');
+                             ->whereRaw('COALESCE(BELUM_DIBAYAR_1, 0) > 0');
             case 'belum_lunas':
-                return $query->whereRaw('COALESCE(BELUM_DIBAYAR, 0) > 0')
+                return $query->whereRaw('COALESCE(BELUM_DIBAYAR_1, 0) > 0')
                              ->whereRaw('COALESCE(JUMLAH_DIBAYAR, 0) = 0');
             default:
                 return $query;
@@ -189,17 +185,6 @@ class TuTk extends Model
             default:
                 return $query;
         }
-    }
-
-    /**
-     * Scope untuk filter kategori
-     */
-    public function scopeKategori($query, $kategori)
-    {
-        if ($kategori) {
-            return $query->where('KATEGORI', $kategori);
-        }
-        return $query;
     }
 
     /**
@@ -246,7 +231,8 @@ class TuTk extends Model
      */
     public function positionTrackings()
     {
-        return $this->hasMany(\App\Models\DocumentPositionTracking::class, 'tu_tk_kontrol', 'KONTROL')
+        return $this->hasMany(\App\Models\DocumentPositionTracking::class, 'tu_tk_kontrol', 'EXTRA_COL_0')
+                    ->where('data_source', 'input_pupuk')
                     ->orderBy('changed_at', 'desc');
     }
 
@@ -255,7 +241,8 @@ class TuTk extends Model
      */
     public function paymentLogs()
     {
-        return $this->hasMany(\App\Models\PaymentLog::class, 'tu_tk_kontrol', 'KONTROL')
+        return $this->hasMany(\App\Models\PaymentLog::class, 'tu_tk_kontrol', 'EXTRA_COL_0')
+                    ->where('data_source', 'input_pupuk')
                     ->orderBy('payment_sequence')
                     ->orderBy('tanggal_bayar');
     }

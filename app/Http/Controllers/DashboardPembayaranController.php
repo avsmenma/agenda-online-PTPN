@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
 use App\Models\TuTk;
+use App\Models\TuTkPupuk;
+use App\Models\PaymentLog;
+use App\Models\DocumentPositionTracking;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -567,6 +570,15 @@ class DashboardPembayaranController extends Controller
     }
 
     public function rekapanTuTk(Request $request){
+        // Get data source parameter (input_ks, input_pupuk, input_tan, input_vd)
+        // Prioritize request parameter over session
+        $dataSource = $request->get('data_source');
+        if (!$dataSource || !in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = session('tu_tk_data_source', 'input_ks');
+        }
+        $dataSource = in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd']) ? $dataSource : 'input_ks';
+        session(['tu_tk_data_source' => $dataSource]);
+
         // Get filter parameters
         $statusPembayaran = $request->get('status_pembayaran');
         $kategori = $request->get('kategori');
@@ -575,15 +587,33 @@ class DashboardPembayaranController extends Controller
         $posisiDokumen = $request->get('posisi_dokumen');
         $search = $request->get('search');
 
+        // Select model based on data source
+        $model = null;
+        $belumDibayarField = 'BELUM_DIBAYAR';
+        $jumlahDibayarField = 'JUMLAH_DIBAYAR';
+        
+        switch ($dataSource) {
+            case 'input_pupuk':
+                $model = TuTkPupuk::class;
+                $belumDibayarField = 'BELUM_DIBAYAR_1';
+                break;
+            case 'input_ks':
+            default:
+                $model = TuTk::class;
+                break;
+            // TODO: Add input_tan and input_vd when models are created
+        }
+
         // Base query
-        $query = TuTk::query();
+        $query = $model::query();
 
         // Apply filters
         if ($statusPembayaran) {
             $query->statusPembayaran($statusPembayaran);
         }
 
-        if ($kategori) {
+        // Kategori filter only for input_ks (tu_tk_2023 has KATEGORI column)
+        if ($kategori && $dataSource === 'input_ks') {
             $query->kategori($kategori);
         }
 
@@ -607,42 +637,42 @@ class DashboardPembayaranController extends Controller
         $allData = $query->get();
 
         // Calculate Dashboard Scorecards
-        $totalOutstanding = $allData->sum(function($item) {
-            return (float) ($item->BELUM_DIBAYAR ?? 0);
+        $totalOutstanding = $allData->sum(function($item) use ($belumDibayarField) {
+            return (float) ($item->{$belumDibayarField} ?? 0);
         });
 
-        $totalDokumenBelumLunas = $allData->filter(function($item) {
-            $belumDibayar = (float) ($item->BELUM_DIBAYAR ?? 0);
+        $totalDokumenBelumLunas = $allData->filter(function($item) use ($belumDibayarField) {
+            $belumDibayar = (float) ($item->{$belumDibayarField} ?? 0);
             return $belumDibayar > 0;
         })->count();
 
         // Calculate total terbayar tahun ini - sum of all JUMLAH_DIBAYAR
-        // Since date parsing might be complex, we'll use a simpler approach
-        // For now, we'll sum all JUMLAH_DIBAYAR that are not null and not zero
-        // This can be refined later when we understand the date format better
-        $totalTerbayarTahunIni = TuTk::whereNotNull('JUMLAH_DIBAYAR')
-            ->whereRaw('COALESCE(JUMLAH_DIBAYAR, 0) > 0')
-            ->sum('JUMLAH_DIBAYAR');
+        $totalTerbayarTahunIni = $model::whereNotNull($jumlahDibayarField)
+            ->whereRaw("COALESCE({$jumlahDibayarField}, 0) > 0")
+            ->sum($jumlahDibayarField);
 
         // Jatuh tempo minggu ini (umur hutang > 60 hari)
-        $jatuhTempoMingguIni = $allData->filter(function($item) {
+        $jatuhTempoMingguIni = $allData->filter(function($item) use ($belumDibayarField) {
             $umurHari = (int) ($item->UMUR_HUTANG_HARI ?? 0);
-            return $umurHari > 60 && (float) ($item->BELUM_DIBAYAR ?? 0) > 0;
+            return $umurHari > 60 && (float) ($item->{$belumDibayarField} ?? 0) > 0;
         })->count();
 
         // Get unique values for filter dropdowns
-        $kategoris = TuTk::distinct()->pluck('KATEGORI')->filter()->sort()->values();
-        $vendors = TuTk::distinct()->pluck('VENDOR')->filter()->sort()->values()->take(100); // Limit to 100 for performance
-        $posisiDokumens = TuTk::distinct()->pluck('POSISI_DOKUMEN')->filter()->sort()->values();
+        $kategoris = $dataSource === 'input_ks' ? $model::distinct()->pluck('KATEGORI')->filter()->sort()->values() : collect([]);
+        $vendors = $model::distinct()->pluck('VENDOR')->filter()->sort()->values()->take(100); // Limit to 100 for performance
+        $posisiDokumens = $model::distinct()->pluck('POSISI_DOKUMEN')->filter()->sort()->values();
 
         // Get 5 dokumen terlama belum dibayar for dashboard widget
-        $dokumenTerlama = TuTk::whereRaw('COALESCE(BELUM_DIBAYAR, 0) > 0')
+        $dokumenTerlama = $model::whereRaw("COALESCE({$belumDibayarField}, 0) > 0")
             ->orderBy('UMUR_HUTANG_HARI', 'desc')
             ->take(5)
             ->get();
 
         // Paginate results
-        $perPage = $request->get('per_page', 25);
+        $perPage = $request->get('per_page', session('tu_tk_per_page', 25));
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int)$perPage : 25;
+        session(['tu_tk_per_page' => $perPage]);
+        
         $dokumens = $query->orderBy('UMUR_HUTANG_HARI', 'desc')
                          ->orderBy('TANGGAL_MASUK_DOKUMEN', 'desc')
                          ->paginate($perPage)
@@ -654,6 +684,10 @@ class DashboardPembayaranController extends Controller
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuRekapanTuTk' => 'Active',
+            // Data source
+            'dataSource' => $dataSource,
+            'belumDibayarField' => $belumDibayarField,
+            'jumlahDibayarField' => $jumlahDibayarField,
             // Dashboard Scorecards
             'totalOutstanding' => $totalOutstanding,
             'totalDokumenBelumLunas' => $totalDokumenBelumLunas,
@@ -673,9 +707,344 @@ class DashboardPembayaranController extends Controller
             'vendor' => $vendor,
             'posisiDokumen' => $posisiDokumen,
             'search' => $search,
+            'perPage' => $perPage,
         );
 
         return view('pembayaranNEW.dokumens.rekapanTuTk', $data);
+    }
+
+    /**
+     * Store payment installment for TuTk document
+     */
+    public function storePaymentInstallment(Request $request)
+    {
+        $request->validate([
+            'kontrol' => 'required|exists:tu_tk_2023,KONTROL',
+            'payment_sequence' => 'required|integer|min:1|max:6',
+            'tanggal_bayar' => 'required|date',
+            'jumlah' => 'required|numeric|min:0.01',
+            'keterangan' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $tuTk = TuTk::findOrFail($request->kontrol);
+            
+            // Create payment log
+            $paymentLog = PaymentLog::create([
+                'tu_tk_kontrol' => $request->kontrol,
+                'payment_sequence' => $request->payment_sequence,
+                'tanggal_bayar' => $request->tanggal_bayar,
+                'jumlah' => $request->jumlah,
+                'keterangan' => $request->keterangan,
+                'created_by' => auth()->user()->name ?? 'System',
+            ]);
+
+            // Update TuTk fields based on payment sequence
+            $tanggalField = 'TANGGAL_BAYAR_' . $this->getRomanNumeral($request->payment_sequence);
+            // Field mapping: JUMLAH1, JUMLAH2, JUMLAH3, JUMLAH4, JUMLAH5, JUMLAH6
+            $jumlahField = 'JUMLAH' . ($request->payment_sequence == 1 ? '1' : $request->payment_sequence);
+
+            $tuTk->update([
+                $tanggalField => $request->tanggal_bayar,
+                $jumlahField => $request->jumlah,
+            ]);
+
+            // Recalculate total payment
+            $totalDibayar = (float)($tuTk->JUMLAH1 ?? 0) 
+                          + (float)($tuTk->JUMLAH2 ?? 0)
+                          + (float)($tuTk->JUMLAH3 ?? 0)
+                          + (float)($tuTk->JUMLAH4 ?? 0)
+                          + (float)($tuTk->JUMLAH5 ?? 0)
+                          + (float)($tuTk->JUMLAH6 ?? 0);
+
+            $belumDibayar = (float)($tuTk->NILAI ?? 0) - $totalDibayar;
+
+            // If fully paid, set completion date
+            if ($belumDibayar <= 0) {
+                $tuTk->update([
+                    'TANGGAL_BAYAR_RAMPUNG' => $request->tanggal_bayar,
+                ]);
+            }
+
+            $tuTk->update([
+                'JUMLAH_DIBAYAR' => $totalDibayar,
+                'BELUM_DIBAYAR1' => max(0, $belumDibayar),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran berhasil disimpan',
+                'payment_log' => $paymentLog,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan pembayaran: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get payment logs for a TuTk document
+     */
+    public function getPaymentLogs($kontrol)
+    {
+        $paymentLogs = PaymentLog::where('tu_tk_kontrol', $kontrol)
+            ->orderBy('payment_sequence')
+            ->orderBy('tanggal_bayar')
+            ->get();
+
+        return response()->json($paymentLogs);
+    }
+
+    /**
+     * Get position tracking timeline for a TuTk document
+     */
+    public function getPositionTimeline($kontrol)
+    {
+        $tuTk = TuTk::findOrFail($kontrol);
+        
+        // Get position tracking history
+        $positionTrackings = DocumentPositionTracking::where('tu_tk_kontrol', $kontrol)
+            ->orderBy('changed_at', 'desc')
+            ->get();
+
+        // Get payment logs for timeline
+        $paymentLogs = PaymentLog::where('tu_tk_kontrol', $kontrol)
+            ->orderBy('tanggal_bayar', 'desc')
+            ->get();
+
+        // Combine and sort by date
+        $timeline = collect();
+        
+        foreach ($positionTrackings as $tracking) {
+            $timeline->push([
+                'type' => 'position',
+                'date' => $tracking->changed_at,
+                'title' => 'Perubahan Posisi Dokumen',
+                'description' => $tracking->posisi_lama 
+                    ? "Dari: {$tracking->posisi_lama} → Ke: {$tracking->posisi_baru}"
+                    : "Posisi: {$tracking->posisi_baru}",
+                'changed_by' => $tracking->changed_by,
+                'keterangan' => $tracking->keterangan,
+                'icon' => 'fa-map-marker-alt',
+                'color' => '#083E40',
+            ]);
+        }
+
+        foreach ($paymentLogs as $log) {
+            $timeline->push([
+                'type' => 'payment',
+                'date' => $log->tanggal_bayar,
+                'title' => "Pembayaran ke-{$log->payment_sequence}",
+                'description' => "Jumlah: Rp " . number_format($log->jumlah, 0, ',', '.'),
+                'changed_by' => $log->created_by,
+                'keterangan' => $log->keterangan,
+                'icon' => 'fa-money-bill-wave',
+                'color' => '#889717',
+            ]);
+        }
+
+        // Sort by date descending
+        $timeline = $timeline->sortByDesc('date')->values();
+
+        return response()->json([
+            'tu_tk' => $tuTk,
+            'timeline' => $timeline,
+        ]);
+    }
+
+    /**
+     * Update document position
+     */
+    public function updateDocumentPosition(Request $request)
+    {
+        $request->validate([
+            'kontrol' => 'required|exists:tu_tk_2023,KONTROL',
+            'posisi_baru' => 'required|string|max:255',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $tuTk = TuTk::findOrFail($request->kontrol);
+            $posisiLama = $tuTk->POSISI_DOKUMEN;
+
+            // Log position change
+            DocumentPositionTracking::logPositionChange(
+                $request->kontrol,
+                $request->posisi_baru,
+                $posisiLama,
+                $request->keterangan,
+                auth()->user()->name ?? 'System'
+            );
+
+            // Update position
+            $tuTk->update([
+                'POSISI_DOKUMEN' => $request->posisi_baru,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Posisi dokumen berhasil diperbarui',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui posisi dokumen: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Export rekapan TuTk to Excel or PDF
+     */
+    public function exportRekapanTuTk(Request $request)
+    {
+        $exportType = $request->get('export', 'excel'); // excel or pdf
+        
+        // Get filters from request (same as rekapanTuTk method)
+        $selectedYear = $request->get('tahun', date('Y'));
+        $statusFilter = $request->get('status_pembayaran');
+        $kategoriFilter = $request->get('kategori');
+        $umurHutangFilter = $request->get('umur_hutang');
+        $vendorFilter = $request->get('vendor');
+        $posisiDokumenFilter = $request->get('posisi_dokumen');
+        $search = $request->get('search');
+
+        // Build query (same logic as rekapanTuTk)
+        $query = TuTk::query();
+
+        if ($statusFilter) {
+            $query->statusPembayaran($statusFilter);
+        }
+
+        if ($kategoriFilter) {
+            $query->kategori($kategoriFilter);
+        }
+
+        if ($umurHutangFilter) {
+            $query->umurHutang($umurHutangFilter);
+        }
+
+        if ($vendorFilter) {
+            $query->vendor($vendorFilter);
+        }
+
+        if ($posisiDokumenFilter) {
+            $query->posisiDokumen($posisiDokumenFilter);
+        }
+
+        if ($search) {
+            $query->search($search);
+        }
+
+        // Get all results (no pagination for export)
+        $dokumens = $query->orderBy('UMUR_HUTANG_HARI', 'desc')
+                         ->orderBy('TANGGAL_MASUK_DOKUMEN', 'desc')
+                         ->get();
+
+        if ($exportType === 'excel') {
+            return $this->exportTuTkToExcel($dokumens);
+        } else {
+            return $this->exportTuTkToPDF($dokumens);
+        }
+    }
+
+    /**
+     * Export TuTk to Excel
+     */
+    private function exportTuTkToExcel($dokumens)
+    {
+        $filename = 'Rekapan_TU_TK_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($dokumens) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Header row
+            fputcsv($file, [
+                'No',
+                'Agenda',
+                'No. SPP',
+                'Tgl SPP',
+                'Vendor',
+                'Kategori',
+                'Nilai',
+                'Dibayar',
+                'Belum Dibayar',
+                'Status Pembayaran',
+                'Persentase',
+                'Umur Hutang (Hari)',
+                'Posisi Dokumen',
+            ], ';');
+
+            // Data rows
+            foreach ($dokumens as $index => $dokumen) {
+                $status = $dokumen->status_pembayaran ?? 'belum_lunas';
+                $persentase = $dokumen->persentase_pembayaran ?? 0;
+                
+                fputcsv($file, [
+                    $index + 1,
+                    $dokumen->AGENDA ?? '-',
+                    $dokumen->NO_SPP ?? '-',
+                    $dokumen->TGL_SPP ?? '-',
+                    $dokumen->VENDOR ?? '-',
+                    $dokumen->KATEGORI ?? '-',
+                    number_format($dokumen->NILAI ?? 0, 0, ',', '.'),
+                    number_format($dokumen->JUMLAH_DIBAYAR ?? 0, 0, ',', '.'),
+                    number_format($dokumen->BELUM_DIBAYAR ?? 0, 0, ',', '.'),
+                    $status == 'lunas' ? 'Lunas' : ($status == 'parsial' ? 'Parsial' : 'Belum Lunas'),
+                    number_format($persentase, 2) . '%',
+                    $dokumen->UMUR_HUTANG_HARI ?? 0,
+                    $dokumen->POSISI_DOKUMEN ?? '-',
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export TuTk to PDF
+     */
+    private function exportTuTkToPDF($dokumens)
+    {
+        $data = [
+            'title' => 'Rekapan TU/TK',
+            'dokumens' => $dokumens,
+            'exportDate' => now()->format('d F Y H:i:s'),
+        ];
+
+        $pdf = \PDF::loadView('pembayaranNEW.dokumens.export-tu-tk-pdf', $data);
+        return $pdf->download('Rekapan_TU_TK_' . date('Y-m-d_His') . '.pdf');
+    }
+
+    /**
+     * Helper: Convert number to Roman numeral
+     */
+    private function getRomanNumeral($number)
+    {
+        $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI'];
+        return $romans[$number] ?? 'I';
     }
 
     /**
