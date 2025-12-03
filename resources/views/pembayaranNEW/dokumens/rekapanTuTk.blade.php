@@ -865,7 +865,7 @@
           <select name="data_source" class="form-control" id="dataSourceSelect" style="font-weight: 600; padding: 12px; border: 2px solid #083E40; border-radius: 8px;" onchange="this.form.submit()">
             <option value="input_ks" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_ks' ? 'selected' : '' }}>Input KS (tu_tk_2023)</option>
             <option value="input_pupuk" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_pupuk' ? 'selected' : '' }}>Input Pupuk (tu_tk_pupuk_2023)</option>
-            <option value="input_tan" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_tan' ? 'selected' : '' }} disabled>Input TAN (Coming Soon)</option>
+            <option value="input_tan" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_tan' ? 'selected' : '' }}>Input TAN (tu_tk_tan_2023)</option>
             <option value="input_vd" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_vd' ? 'selected' : '' }}>Input VD (tu_tk_vd_2023)</option>
           </select>
         </div>

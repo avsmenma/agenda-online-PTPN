@@ -7,6 +7,7 @@ use App\Models\Dokumen;
 use App\Models\TuTk;
 use App\Models\TuTkPupuk;
 use App\Models\TuTkVd;
+use App\Models\TuTkTan;
 use App\Models\PaymentLog;
 use App\Models\DocumentPositionTracking;
 use Illuminate\Support\Facades\Validator;
@@ -602,11 +603,14 @@ class DashboardPembayaranController extends Controller
                 $model = TuTkVd::class;
                 $belumDibayarField = 'BELUM_DIBAYAR_1';
                 break;
+            case 'input_tan':
+                $model = TuTkTan::class;
+                $belumDibayarField = 'BELUM_DIBAYAR_1';
+                break;
             case 'input_ks':
             default:
                 $model = TuTk::class;
                 break;
-            // TODO: Add input_tan when model is created
         }
 
         // Base query
@@ -617,8 +621,8 @@ class DashboardPembayaranController extends Controller
             $query->statusPembayaran($statusPembayaran);
         }
 
-        // Kategori filter only for input_ks and input_vd (tu_tk_2023 and tu_tk_vd_2023 have KATEGORI column)
-        if ($kategori && ($dataSource === 'input_ks' || $dataSource === 'input_vd')) {
+        // Kategori filter only for input_ks, input_vd, and input_tan (tu_tk_2023, tu_tk_vd_2023, and tu_tk_tan_2023 have KATEGORI column)
+        if ($kategori && ($dataSource === 'input_ks' || $dataSource === 'input_vd' || $dataSource === 'input_tan')) {
             $query->kategori($kategori);
         }
 
@@ -663,7 +667,7 @@ class DashboardPembayaranController extends Controller
         })->count();
 
         // Get unique values for filter dropdowns
-        $kategoris = ($dataSource === 'input_ks' || $dataSource === 'input_vd') 
+        $kategoris = ($dataSource === 'input_ks' || $dataSource === 'input_vd' || $dataSource === 'input_tan') 
             ? $model::distinct()->pluck('KATEGORI')->filter()->sort()->values() 
             : collect([]);
         $vendors = $model::distinct()->pluck('VENDOR')->filter()->sort()->values()->take(100); // Limit to 100 for performance
@@ -741,6 +745,11 @@ class DashboardPembayaranController extends Controller
             $model = TuTkVd::class;
             $primaryKey = 'KONTROL';
             $tableName = 'tu_tk_vd_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR_1';
+        } elseif ($dataSource === 'input_tan') {
+            $model = TuTkTan::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_tan_2023';
             $belumDibayarField = 'BELUM_DIBAYAR_1';
         } else {
             $model = TuTk::class;
@@ -859,6 +868,9 @@ class DashboardPembayaranController extends Controller
         } elseif ($dataSource === 'input_vd') {
             $model = TuTkVd::class;
             $primaryKey = 'KONTROL';
+        } elseif ($dataSource === 'input_tan') {
+            $model = TuTkTan::class;
+            $primaryKey = 'KONTROL';
         } else {
             $model = TuTk::class;
             $primaryKey = 'KONTROL';
@@ -938,6 +950,10 @@ class DashboardPembayaranController extends Controller
             $model = TuTkVd::class;
             $primaryKey = 'KONTROL';
             $tableName = 'tu_tk_vd_2023';
+        } elseif ($dataSource === 'input_tan') {
+            $model = TuTkTan::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_tan_2023';
         } else {
             $model = TuTk::class;
             $primaryKey = 'KONTROL';
@@ -1004,6 +1020,8 @@ class DashboardPembayaranController extends Controller
             $model = TuTkPupuk::class;
         } elseif ($dataSource === 'input_vd') {
             $model = TuTkVd::class;
+        } elseif ($dataSource === 'input_tan') {
+            $model = TuTkTan::class;
         } else {
             $model = TuTk::class;
         }
@@ -1024,8 +1042,8 @@ class DashboardPembayaranController extends Controller
             $query->statusPembayaran($statusFilter);
         }
 
-        // Kategori filter only for input_ks and input_vd
-        if ($kategoriFilter && ($dataSource === 'input_ks' || $dataSource === 'input_vd')) {
+        // Kategori filter only for input_ks, input_vd, and input_tan
+        if ($kategoriFilter && ($dataSource === 'input_ks' || $dataSource === 'input_vd' || $dataSource === 'input_tan')) {
             $query->kategori($kategoriFilter);
         }
 
