@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Dokumen;
 use App\Models\TuTk;
 use App\Models\TuTkPupuk;
+use App\Models\TuTkVd;
 use App\Models\PaymentLog;
 use App\Models\DocumentPositionTracking;
 use Illuminate\Support\Facades\Validator;
@@ -597,11 +598,15 @@ class DashboardPembayaranController extends Controller
                 $model = TuTkPupuk::class;
                 $belumDibayarField = 'BELUM_DIBAYAR_1';
                 break;
+            case 'input_vd':
+                $model = TuTkVd::class;
+                $belumDibayarField = 'BELUM_DIBAYAR_1';
+                break;
             case 'input_ks':
             default:
                 $model = TuTk::class;
                 break;
-            // TODO: Add input_tan and input_vd when models are created
+            // TODO: Add input_tan when model is created
         }
 
         // Base query
@@ -612,8 +617,8 @@ class DashboardPembayaranController extends Controller
             $query->statusPembayaran($statusPembayaran);
         }
 
-        // Kategori filter only for input_ks (tu_tk_2023 has KATEGORI column)
-        if ($kategori && $dataSource === 'input_ks') {
+        // Kategori filter only for input_ks and input_vd (tu_tk_2023 and tu_tk_vd_2023 have KATEGORI column)
+        if ($kategori && ($dataSource === 'input_ks' || $dataSource === 'input_vd')) {
             $query->kategori($kategori);
         }
 
@@ -658,7 +663,9 @@ class DashboardPembayaranController extends Controller
         })->count();
 
         // Get unique values for filter dropdowns
-        $kategoris = $dataSource === 'input_ks' ? $model::distinct()->pluck('KATEGORI')->filter()->sort()->values() : collect([]);
+        $kategoris = ($dataSource === 'input_ks' || $dataSource === 'input_vd') 
+            ? $model::distinct()->pluck('KATEGORI')->filter()->sort()->values() 
+            : collect([]);
         $vendors = $model::distinct()->pluck('VENDOR')->filter()->sort()->values()->take(100); // Limit to 100 for performance
         $posisiDokumens = $model::distinct()->pluck('POSISI_DOKUMEN')->filter()->sort()->values();
 
@@ -718,8 +725,32 @@ class DashboardPembayaranController extends Controller
      */
     public function storePaymentInstallment(Request $request)
     {
+        // Get data source from request
+        $dataSource = $request->get('data_source', 'input_ks');
+        if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = 'input_ks';
+        }
+
+        // Select model and primary key based on data source
+        if ($dataSource === 'input_pupuk') {
+            $model = TuTkPupuk::class;
+            $primaryKey = 'EXTRA_COL_0';
+            $tableName = 'tu_tk_pupuk_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR_1';
+        } elseif ($dataSource === 'input_vd') {
+            $model = TuTkVd::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_vd_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR_1';
+        } else {
+            $model = TuTk::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR1';
+        }
+
         $request->validate([
-            'kontrol' => 'required|exists:tu_tk_2023,KONTROL',
+            'kontrol' => "required|exists:{$tableName},{$primaryKey}",
             'payment_sequence' => 'required|integer|min:1|max:6',
             'tanggal_bayar' => 'required|date',
             'jumlah' => 'required|numeric|min:0.01',
@@ -729,11 +760,12 @@ class DashboardPembayaranController extends Controller
         try {
             DB::beginTransaction();
 
-            $tuTk = TuTk::findOrFail($request->kontrol);
+            $tuTk = $model::where($primaryKey, $request->kontrol)->firstOrFail();
             
-            // Create payment log
+            // Create payment log with data_source
             $paymentLog = PaymentLog::create([
                 'tu_tk_kontrol' => $request->kontrol,
+                'data_source' => $dataSource,
                 'payment_sequence' => $request->payment_sequence,
                 'tanggal_bayar' => $request->tanggal_bayar,
                 'jumlah' => $request->jumlah,
@@ -770,7 +802,7 @@ class DashboardPembayaranController extends Controller
 
             $tuTk->update([
                 'JUMLAH_DIBAYAR' => $totalDibayar,
-                'BELUM_DIBAYAR1' => max(0, $belumDibayar),
+                $belumDibayarField => max(0, $belumDibayar),
             ]);
 
             DB::commit();
@@ -792,9 +824,16 @@ class DashboardPembayaranController extends Controller
     /**
      * Get payment logs for a TuTk document
      */
-    public function getPaymentLogs($kontrol)
+    public function getPaymentLogs(Request $request, $kontrol)
     {
+        // Get data source from request
+        $dataSource = $request->get('data_source', 'input_ks');
+        if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = 'input_ks';
+        }
+
         $paymentLogs = PaymentLog::where('tu_tk_kontrol', $kontrol)
+            ->where('data_source', $dataSource)
             ->orderBy('payment_sequence')
             ->orderBy('tanggal_bayar')
             ->get();
@@ -805,17 +844,37 @@ class DashboardPembayaranController extends Controller
     /**
      * Get position tracking timeline for a TuTk document
      */
-    public function getPositionTimeline($kontrol)
+    public function getPositionTimeline(Request $request, $kontrol)
     {
-        $tuTk = TuTk::findOrFail($kontrol);
+        // Get data source from request
+        $dataSource = $request->get('data_source', 'input_ks');
+        if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = 'input_ks';
+        }
+
+        // Select model and primary key based on data source
+        if ($dataSource === 'input_pupuk') {
+            $model = TuTkPupuk::class;
+            $primaryKey = 'EXTRA_COL_0';
+        } elseif ($dataSource === 'input_vd') {
+            $model = TuTkVd::class;
+            $primaryKey = 'KONTROL';
+        } else {
+            $model = TuTk::class;
+            $primaryKey = 'KONTROL';
+        }
+
+        $tuTk = $model::where($primaryKey, $kontrol)->firstOrFail();
         
         // Get position tracking history
         $positionTrackings = DocumentPositionTracking::where('tu_tk_kontrol', $kontrol)
+            ->where('data_source', $dataSource)
             ->orderBy('changed_at', 'desc')
             ->get();
 
         // Get payment logs for timeline
         $paymentLogs = PaymentLog::where('tu_tk_kontrol', $kontrol)
+            ->where('data_source', $dataSource)
             ->orderBy('tanggal_bayar', 'desc')
             ->get();
 
@@ -864,8 +923,29 @@ class DashboardPembayaranController extends Controller
      */
     public function updateDocumentPosition(Request $request)
     {
+        // Get data source from request
+        $dataSource = $request->get('data_source', 'input_ks');
+        if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = 'input_ks';
+        }
+
+        // Select model and primary key based on data source
+        if ($dataSource === 'input_pupuk') {
+            $model = TuTkPupuk::class;
+            $primaryKey = 'EXTRA_COL_0';
+            $tableName = 'tu_tk_pupuk_2023';
+        } elseif ($dataSource === 'input_vd') {
+            $model = TuTkVd::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_vd_2023';
+        } else {
+            $model = TuTk::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_2023';
+        }
+
         $request->validate([
-            'kontrol' => 'required|exists:tu_tk_2023,KONTROL',
+            'kontrol' => "required|exists:{$tableName},{$primaryKey}",
             'posisi_baru' => 'required|string|max:255',
             'keterangan' => 'nullable|string|max:500',
         ]);
@@ -873,16 +953,17 @@ class DashboardPembayaranController extends Controller
         try {
             DB::beginTransaction();
 
-            $tuTk = TuTk::findOrFail($request->kontrol);
+            $tuTk = $model::where($primaryKey, $request->kontrol)->firstOrFail();
             $posisiLama = $tuTk->POSISI_DOKUMEN;
 
-            // Log position change
+            // Log position change with data_source
             DocumentPositionTracking::logPositionChange(
                 $request->kontrol,
                 $request->posisi_baru,
                 $posisiLama,
                 $request->keterangan,
-                auth()->user()->name ?? 'System'
+                auth()->user()->name ?? 'System',
+                $dataSource
             );
 
             // Update position
@@ -912,6 +993,21 @@ class DashboardPembayaranController extends Controller
     {
         $exportType = $request->get('export', 'excel'); // excel or pdf
         
+        // Get data source from request
+        $dataSource = $request->get('data_source', 'input_ks');
+        if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = 'input_ks';
+        }
+
+        // Select model based on data source
+        if ($dataSource === 'input_pupuk') {
+            $model = TuTkPupuk::class;
+        } elseif ($dataSource === 'input_vd') {
+            $model = TuTkVd::class;
+        } else {
+            $model = TuTk::class;
+        }
+        
         // Get filters from request (same as rekapanTuTk method)
         $selectedYear = $request->get('tahun', date('Y'));
         $statusFilter = $request->get('status_pembayaran');
@@ -922,13 +1018,14 @@ class DashboardPembayaranController extends Controller
         $search = $request->get('search');
 
         // Build query (same logic as rekapanTuTk)
-        $query = TuTk::query();
+        $query = $model::query();
 
         if ($statusFilter) {
             $query->statusPembayaran($statusFilter);
         }
 
-        if ($kategoriFilter) {
+        // Kategori filter only for input_ks and input_vd
+        if ($kategoriFilter && ($dataSource === 'input_ks' || $dataSource === 'input_vd')) {
             $query->kategori($kategoriFilter);
         }
 
@@ -954,38 +1051,48 @@ class DashboardPembayaranController extends Controller
                          ->get();
 
         if ($exportType === 'excel') {
-            return $this->exportTuTkToExcel($dokumens);
+            return $this->exportTuTkToExcel($dokumens, $dataSource);
         } else {
-            return $this->exportTuTkToPDF($dokumens);
+            return $this->exportTuTkToPDF($dokumens, $dataSource);
         }
     }
 
     /**
      * Export TuTk to Excel
      */
-    private function exportTuTkToExcel($dokumens)
+    private function exportTuTkToExcel($dokumens, $dataSource = 'input_ks')
     {
-        $filename = 'Rekapan_TU_TK_' . date('Y-m-d_His') . '.csv';
+        $sourceLabel = $dataSource === 'input_pupuk' ? 'Pupuk' : 'KS';
+        $filename = 'Rekapan_TU_TK_' . $sourceLabel . '_' . date('Y-m-d_His') . '.csv';
+        
+        $belumDibayarField = $dataSource === 'input_pupuk' ? 'BELUM_DIBAYAR_1' : 'BELUM_DIBAYAR1';
+        $hasKategori = $dataSource === 'input_ks';
         
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($dokumens) {
+        $callback = function() use ($dokumens, $belumDibayarField, $hasKategori) {
             $file = fopen('php://output', 'w');
             
             // Add BOM for UTF-8
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             
             // Header row
-            fputcsv($file, [
+            $headerRow = [
                 'No',
                 'Agenda',
                 'No. SPP',
                 'Tgl SPP',
                 'Vendor',
-                'Kategori',
+            ];
+            
+            if ($hasKategori) {
+                $headerRow[] = 'Kategori';
+            }
+            
+            $headerRow = array_merge($headerRow, [
                 'Nilai',
                 'Dibayar',
                 'Belum Dibayar',
@@ -993,28 +1100,40 @@ class DashboardPembayaranController extends Controller
                 'Persentase',
                 'Umur Hutang (Hari)',
                 'Posisi Dokumen',
-            ], ';');
+            ]);
+            
+            fputcsv($file, $headerRow, ';');
 
             // Data rows
             foreach ($dokumens as $index => $dokumen) {
                 $status = $dokumen->status_pembayaran ?? 'belum_lunas';
                 $persentase = $dokumen->persentase_pembayaran ?? 0;
                 
-                fputcsv($file, [
+                $row = [
                     $index + 1,
                     $dokumen->AGENDA ?? '-',
                     $dokumen->NO_SPP ?? '-',
                     $dokumen->TGL_SPP ?? '-',
                     $dokumen->VENDOR ?? '-',
-                    $dokumen->KATEGORI ?? '-',
+                ];
+                
+                if ($hasKategori) {
+                    $row[] = $dokumen->KATEGORI ?? '-';
+                }
+                
+                $belumDibayarValue = $dokumen->{$belumDibayarField} ?? 0;
+                
+                $row = array_merge($row, [
                     number_format($dokumen->NILAI ?? 0, 0, ',', '.'),
                     number_format($dokumen->JUMLAH_DIBAYAR ?? 0, 0, ',', '.'),
-                    number_format($dokumen->BELUM_DIBAYAR ?? 0, 0, ',', '.'),
+                    number_format($belumDibayarValue, 0, ',', '.'),
                     $status == 'lunas' ? 'Lunas' : ($status == 'parsial' ? 'Parsial' : 'Belum Lunas'),
                     number_format($persentase, 2) . '%',
                     $dokumen->UMUR_HUTANG_HARI ?? 0,
                     $dokumen->POSISI_DOKUMEN ?? '-',
-                ], ';');
+                ]);
+                
+                fputcsv($file, $row, ';');
             }
 
             fclose($file);
@@ -1026,16 +1145,22 @@ class DashboardPembayaranController extends Controller
     /**
      * Export TuTk to PDF
      */
-    private function exportTuTkToPDF($dokumens)
+    private function exportTuTkToPDF($dokumens, $dataSource = 'input_ks')
     {
+        $sourceLabel = $dataSource === 'input_pupuk' ? 'Pupuk' : 'KS';
+        $belumDibayarField = $dataSource === 'input_pupuk' ? 'BELUM_DIBAYAR_1' : 'BELUM_DIBAYAR1';
+        
         $data = [
-            'title' => 'Rekapan TU/TK',
+            'title' => 'Rekapan TU/TK - ' . $sourceLabel,
             'dokumens' => $dokumens,
             'exportDate' => now()->format('d F Y H:i:s'),
+            'dataSource' => $dataSource,
+            'belumDibayarField' => $belumDibayarField,
+            'hasKategori' => $dataSource === 'input_ks',
         ];
 
         $pdf = \PDF::loadView('pembayaranNEW.dokumens.export-tu-tk-pdf', $data);
-        return $pdf->download('Rekapan_TU_TK_' . date('Y-m-d_His') . '.pdf');
+        return $pdf->download('Rekapan_TU_TK_' . $sourceLabel . '_' . date('Y-m-d_His') . '.pdf');
     }
 
     /**

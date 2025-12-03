@@ -866,7 +866,7 @@
             <option value="input_ks" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_ks' ? 'selected' : '' }}>Input KS (tu_tk_2023)</option>
             <option value="input_pupuk" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_pupuk' ? 'selected' : '' }}>Input Pupuk (tu_tk_pupuk_2023)</option>
             <option value="input_tan" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_tan' ? 'selected' : '' }} disabled>Input TAN (Coming Soon)</option>
-            <option value="input_vd" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_vd' ? 'selected' : '' }} disabled>Input VD (Coming Soon)</option>
+            <option value="input_vd" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_vd' ? 'selected' : '' }}>Input VD (tu_tk_vd_2023)</option>
           </select>
         </div>
       </div>

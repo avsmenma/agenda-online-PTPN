@@ -20,7 +20,7 @@ class ImportTuTkData extends Command
      *
      * @var string
      */
-    protected $description = 'Import data from tu_tk_2023.sql file (skips CREATE TABLE statements)';
+    protected $description = 'Import data from SQL file (skips CREATE TABLE statements, supports tu_tk_2023, tu_tk_pupuk_2023, tu_tk_vd_2023, etc.)';
 
     /**
      * Execute the console command.
@@ -40,7 +40,7 @@ class ImportTuTkData extends Command
         // Read file content
         $content = File::get($filePath);
         
-        // Detect table name from file (tu_tk_2023 or tu_tk_pupuk_2023)
+        // Detect table name from file (tu_tk_2023, tu_tk_pupuk_2023, tu_tk_vd_2023, etc.)
         $tableName = 'tu_tk_2023'; // default
         if (preg_match('/CREATE\s+TABLE\s+[`"]?(\w+)[`"]?/i', $content, $matches)) {
             $tableName = $matches[1];
