@@ -40,35 +40,96 @@ class ImportTuTkData extends Command
         // Read file content
         $content = File::get($filePath);
         
-        // Split by semicolon to get individual statements
-        $statements = array_filter(
-            array_map('trim', explode(';', $content)),
-            fn($stmt) => !empty($stmt) && !preg_match('/^(--|SET|START|COMMIT|BEGIN|USE|\/\*|\*\/)/i', $stmt)
-        );
-
-        $this->info("📊 Menemukan " . count($statements) . " statements dalam file");
-
-        // Filter out CREATE TABLE statements and keep only INSERT statements
+        // Detect table name from file (tu_tk_2023 or tu_tk_pupuk_2023)
+        $tableName = 'tu_tk_2023'; // default
+        if (preg_match('/CREATE\s+TABLE\s+[`"]?(\w+)[`"]?/i', $content, $matches)) {
+            $tableName = $matches[1];
+        } elseif (preg_match('/INSERT\s+INTO\s+[`"]?(\w+)[`"]?/i', $content, $matches)) {
+            $tableName = $matches[1];
+        }
+        
+        $this->info("📋 Tabel target: {$tableName}");
+        
+        // Remove comments and clean content
+        $content = preg_replace('/--.*$/m', '', $content); // Remove line comments
+        $content = preg_replace('/\/\*.*?\*\//s', '', $content); // Remove block comments
+        
+        // Find INSERT statement - handle multi-line format
+        // Some SQL files have INSERT with VALUES spanning multiple lines
         $insertStatements = [];
-        foreach ($statements as $statement) {
-            $statement = trim($statement);
+        
+        // Split by line and reconstruct INSERT statement
+        $lines = explode("\n", $content);
+        $currentStatement = '';
+        $inInsert = false;
+        $foundValues = false;
+        
+        foreach ($lines as $line) {
+            $originalLine = $line;
+            $line = trim($line);
             
-            // Skip empty or comment lines
-            if (empty($statement) || str_starts_with($statement, '--')) {
+            // Skip comments and empty lines
+            if (empty($line) || str_starts_with($line, '--') || preg_match('/^\/\*/', $line)) {
                 continue;
             }
             
-            // Skip CREATE TABLE statements
-            if (preg_match('/^CREATE\s+TABLE/i', $statement)) {
+            // Skip CREATE TABLE
+            if (preg_match('/^CREATE\s+TABLE/i', $line)) {
                 $this->warn("⚠️  Melewati CREATE TABLE statement (tabel sudah ada)");
                 continue;
             }
             
-            // Only process INSERT statements
-            if (preg_match('/^INSERT\s+INTO/i', $statement)) {
-                $insertStatements[] = $statement;
+            // Skip COMMIT, SET, etc
+            if (preg_match('/^(COMMIT|SET\s+SQL_MODE|SET\s+time_zone|START\s+TRANSACTION|BEGIN|USE)/i', $line)) {
+                continue;
+            }
+            
+            // Detect start of INSERT
+            if (preg_match('/^INSERT\s+INTO/i', $line)) {
+                $inInsert = true;
+                $foundValues = false;
+                $currentStatement = $originalLine; // Keep original line to preserve formatting
+                // Check if VALUES is on same line
+                if (preg_match('/\bVALUES\b/i', $line)) {
+                    $foundValues = true;
+                }
+                continue;
+            }
+            
+            // Continue building INSERT statement
+            if ($inInsert) {
+                $currentStatement .= "\n" . $originalLine; // Keep original line
+                
+                // Check if we found VALUES keyword
+                if (preg_match('/\bVALUES\b/i', $line)) {
+                    $foundValues = true;
+                }
+                
+                // Check if statement ends (has semicolon at end of line)
+                if (preg_match('/;\s*$/', $line)) {
+                    if ($foundValues && preg_match('/INSERT\s+INTO/i', $currentStatement)) {
+                        $insertStatements[] = trim($currentStatement);
+                    }
+                    $currentStatement = '';
+                    $inInsert = false;
+                    $foundValues = false;
+                }
             }
         }
+        
+        // Handle case where last statement doesn't end with semicolon
+        if ($inInsert && !empty($currentStatement) && $foundValues) {
+            $currentStatement = trim($currentStatement);
+            if (!str_ends_with($currentStatement, ';')) {
+                // Remove trailing comma if exists
+                $currentStatement = rtrim($currentStatement, ',') . ';';
+            }
+            if (preg_match('/INSERT\s+INTO/i', $currentStatement)) {
+                $insertStatements[] = $currentStatement;
+            }
+        }
+
+        $this->info("📊 Menemukan " . count($insertStatements) . " INSERT statements dalam file");
 
         if (empty($insertStatements)) {
             $this->warn("⚠️  Tidak ada INSERT statements yang ditemukan dalam file");
@@ -79,7 +140,7 @@ class ImportTuTkData extends Command
         $this->newLine();
 
         // Count existing records
-        $existingCount = DB::table('tu_tk_2023')->count();
+        $existingCount = DB::table($tableName)->count();
         $this->info("📈 Data existing dalam tabel: {$existingCount} records");
 
         // Ask for confirmation if table is not empty
@@ -131,7 +192,7 @@ class ImportTuTkData extends Command
         $this->newLine(2);
 
         // Show results
-        $finalCount = DB::table('tu_tk_2023')->count();
+        $finalCount = DB::table($tableName)->count();
         $importedCount = $finalCount - $existingCount;
 
         $this->info("✅ Import selesai!");
