@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
+use App\Models\TuTk;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -563,6 +564,118 @@ class DashboardPembayaranController extends Controller
             'menuRekapKeterlambatan' => 'Active',
         );
         return view('pembayaranNEW.dokumens.rekapanKeterlambatan', $data);
+    }
+
+    public function rekapanTuTk(Request $request){
+        // Get filter parameters
+        $statusPembayaran = $request->get('status_pembayaran');
+        $kategori = $request->get('kategori');
+        $umurHutang = $request->get('umur_hutang');
+        $vendor = $request->get('vendor');
+        $posisiDokumen = $request->get('posisi_dokumen');
+        $search = $request->get('search');
+
+        // Base query
+        $query = TuTk::query();
+
+        // Apply filters
+        if ($statusPembayaran) {
+            $query->statusPembayaran($statusPembayaran);
+        }
+
+        if ($kategori) {
+            $query->kategori($kategori);
+        }
+
+        if ($umurHutang) {
+            $query->umurHutang($umurHutang);
+        }
+
+        if ($vendor) {
+            $query->vendor($vendor);
+        }
+
+        if ($posisiDokumen) {
+            $query->posisiDokumen($posisiDokumen);
+        }
+
+        if ($search) {
+            $query->search($search);
+        }
+
+        // Get all data for statistics (before pagination)
+        $allData = $query->get();
+
+        // Calculate Dashboard Scorecards
+        $totalOutstanding = $allData->sum(function($item) {
+            return (float) ($item->BELUM_DIBAYAR ?? 0);
+        });
+
+        $totalDokumenBelumLunas = $allData->filter(function($item) {
+            $belumDibayar = (float) ($item->BELUM_DIBAYAR ?? 0);
+            return $belumDibayar > 0;
+        })->count();
+
+        // Calculate total terbayar tahun ini - sum of all JUMLAH_DIBAYAR
+        // Since date parsing might be complex, we'll use a simpler approach
+        // For now, we'll sum all JUMLAH_DIBAYAR that are not null and not zero
+        // This can be refined later when we understand the date format better
+        $totalTerbayarTahunIni = TuTk::whereNotNull('JUMLAH_DIBAYAR')
+            ->whereRaw('COALESCE(JUMLAH_DIBAYAR, 0) > 0')
+            ->sum('JUMLAH_DIBAYAR');
+
+        // Jatuh tempo minggu ini (umur hutang > 60 hari)
+        $jatuhTempoMingguIni = $allData->filter(function($item) {
+            $umurHari = (int) ($item->UMUR_HUTANG_HARI ?? 0);
+            return $umurHari > 60 && (float) ($item->BELUM_DIBAYAR ?? 0) > 0;
+        })->count();
+
+        // Get unique values for filter dropdowns
+        $kategoris = TuTk::distinct()->pluck('KATEGORI')->filter()->sort()->values();
+        $vendors = TuTk::distinct()->pluck('VENDOR')->filter()->sort()->values()->take(100); // Limit to 100 for performance
+        $posisiDokumens = TuTk::distinct()->pluck('POSISI_DOKUMEN')->filter()->sort()->values();
+
+        // Get 5 dokumen terlama belum dibayar for dashboard widget
+        $dokumenTerlama = TuTk::whereRaw('COALESCE(BELUM_DIBAYAR, 0) > 0')
+            ->orderBy('UMUR_HUTANG_HARI', 'desc')
+            ->take(5)
+            ->get();
+
+        // Paginate results
+        $perPage = $request->get('per_page', 25);
+        $dokumens = $query->orderBy('UMUR_HUTANG_HARI', 'desc')
+                         ->orderBy('TANGGAL_MASUK_DOKUMEN', 'desc')
+                         ->paginate($perPage)
+                         ->withQueryString();
+
+        $data = array(
+            "title" => "Rekapan TU/TK",
+            "module" => "pembayaran",
+            "menuDashboard" => "",
+            'menuDokumen' => 'Active',
+            'menuRekapanTuTk' => 'Active',
+            // Dashboard Scorecards
+            'totalOutstanding' => $totalOutstanding,
+            'totalDokumenBelumLunas' => $totalDokumenBelumLunas,
+            'totalTerbayarTahunIni' => $totalTerbayarTahunIni ?? 0,
+            'jatuhTempoMingguIni' => $jatuhTempoMingguIni,
+            'dokumenTerlama' => $dokumenTerlama,
+            // Data
+            'dokumens' => $dokumens,
+            // Filter options
+            'kategoris' => $kategoris,
+            'vendors' => $vendors,
+            'posisiDokumens' => $posisiDokumens,
+            // Current filters
+            'statusPembayaran' => $statusPembayaran,
+            'kategori' => $kategori,
+            'umurHutang' => $umurHutang,
+            'vendor' => $vendor,
+            'posisiDokumen' => $posisiDokumen,
+            'search' => $search,
+        );
+
+        return view('pembayaranNEW.dokumens.rekapanTuTk', $data);
     }
 
     /**

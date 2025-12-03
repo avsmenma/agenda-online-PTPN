@@ -860,19 +860,19 @@
                 </a>
               @elseif($paymentStatus === 'siap_bayar')
                 {{-- Kondisi B: Status = "Siap Bayar" - Tampilkan button edit --}}
-                @php
-                  // Cek apakah kedua field sudah diisi
-                  $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
-                @endphp
-                @if($isComplete)
-                  <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
-                    <i class="fa-solid fa-check-circle"></i>
-                    Selesai
-                  </button>
-                @else
+              @php
+                // Cek apakah kedua field sudah diisi
+                $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
+              @endphp
+              @if($isComplete)
+                <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
+                  <i class="fa-solid fa-check-circle"></i>
+                  Selesai
+                </button>
+              @else
                   <button type="button" class="btn-action" onclick="event.stopPropagation(); openEditPembayaranModal({{ $dokumen->id }})">
-                    <i class="fa-solid fa-edit"></i>
-                    Edit
+                  <i class="fa-solid fa-edit"></i>
+                  Edit
                   </button>
                 @endif
               @elseif($paymentStatus === 'sudah_dibayar')

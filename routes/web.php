@@ -326,6 +326,7 @@ Route::get('/pengembalian-dokumensPembayaran', [DashboardPembayaranController::c
 Route::get('/rekapan-keterlambatan', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('rekapanKeterlambatan.index');
 Route::get('/rekapan-pembayaran', [DashboardPembayaranController::class, 'rekapan'])->name('pembayaran.rekapan');
 Route::get('/rekapan-pembayaran/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('pembayaran.rekapan.export');
+Route::get('/rekapan-tu-tk', [DashboardPembayaranController::class, 'rekapanTuTk'])->name('pembayaran.rekapanTuTk');
 
 // Dashboard Pembayaran Routes
 Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {

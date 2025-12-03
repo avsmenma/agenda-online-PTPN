@@ -978,20 +978,20 @@
   <div class="col-md-3 mb-3">
     <a href="{{ route('pembayaran.analytics') }}" style="text-decoration: none; color: inherit; display: block;">
       <div class="stat-card" style="cursor: pointer;">
-        <div class="stat-card-body">
-          <div class="stat-content">
-            <div class="stat-title">Sudah Dibayar</div>
-            <div class="stat-value">{{ $statistics['by_status']['sudah_dibayar'] }}</div>
-            <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+      <div class="stat-card-body">
+        <div class="stat-content">
+          <div class="stat-title">Sudah Dibayar</div>
+          <div class="stat-value">{{ $statistics['by_status']['sudah_dibayar'] }}</div>
+          <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
             <div style="font-size: 11px; color: #6c757d; margin-top: 8px; font-style: italic;">
               <i class="fa-solid fa-arrow-right me-1"></i>Klik untuk detail analitik
             </div>
-          </div>
-          <div class="stat-icon sudah">
-            <i class="fa-solid fa-check-circle"></i>
-          </div>
+        </div>
+        <div class="stat-icon sudah">
+          <i class="fa-solid fa-check-circle"></i>
         </div>
       </div>
+    </div>
     </a>
   </div>
 </div>

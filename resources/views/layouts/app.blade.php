@@ -773,6 +773,7 @@
           <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}"><i></i> Daftar Pembayaran</a>
           <a href="{{ route('pembayaran.rekapan') }}" class="{{ $menuRekapanDokumen ?? '' }}"><i></i> Rekapan Dokumen</a>
           <a href="{{ url($pengembalianUrl) }}" class="{{ $menuRekapKeterlambatan ?? '' }}"><i></i> Rekap Keterlambatan</a>
+          <a href="{{ route('pembayaran.rekapanTuTk') }}" class="{{ $menuRekapanTuTk ?? '' }}"><i></i> Rekapan TU/TK</a>
         @elseif($module === 'akutansi')
           <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
             <span class="menu-item-wrapper">

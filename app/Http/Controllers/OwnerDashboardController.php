@@ -672,7 +672,7 @@ class OwnerDashboardController extends Controller
             $module = 'pembayaran';
             $dashboardUrl = '/dashboardPembayaran';
         }
-        
+
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))
             ->with('title', 'Workflow Tracking - ' . $dokumen->nomor_agenda)
             ->with('module', $module)
