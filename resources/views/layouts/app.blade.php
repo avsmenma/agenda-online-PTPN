@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +17,13 @@
     body {
       font-family: 'Poppins', sans-serif;
       background-color: #F8FAFC;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Dark Mode Styles */
+    .dark body {
+      background-color: #0f172a; /* slate-900 */
+      color: #f1f5f9; /* slate-100 */
     }
 
     /* Sidebar - Expandable with Floating Drawer Effect */
@@ -32,11 +39,17 @@
       padding-top: 20px;
       display: flex;
       flex-direction: column;
-      transition: width 0.25s ease;
+      transition: width 0.25s ease, background-color 0.3s ease, border-color 0.3s ease;
       overflow: hidden;
       z-index: 1000;
       border-right: 1px solid #E2E8F0;
       box-shadow: none;
+    }
+
+    .dark .sidebar {
+      background: #1e293b; /* slate-800 */
+      border-right-color: #334155; /* slate-700 */
+      color: #cbd5e1; /* slate-300 */
     }
 
     /* Expanded state on hover - Simple extend without animations */
@@ -63,6 +76,10 @@
       position: relative;
     }
 
+    .dark .sidebar a {
+      color: #cbd5e1; /* slate-300 */
+    }
+
     /* Force hide text nodes when collapsed */
     .sidebar:not(:hover) a {
       font-size: 0;
@@ -83,6 +100,10 @@
       width: 20px;
       height: 20px;
       flex-shrink: 0;
+    }
+
+    .dark .sidebar:not(:hover) a i {
+      color: #cbd5e1; /* slate-300 */
     }
 
     /* Expanded state - restore text visibility, keep icon size consistent */
@@ -410,6 +431,11 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      transition: color 0.3s ease;
+    }
+
+    .dark .welcome-message {
+      color: #cbd5e1; /* slate-300 */
     }
 
     .welcome-message::before {
@@ -424,6 +450,67 @@
       z-index: auto;
       background-color: #F8FAFC;
       min-height: 100vh;
+      transition: background-color 0.3s ease;
+    }
+
+    .dark .content {
+      background-color: #0f172a; /* slate-900 */
+    }
+
+    /* Dark Mode Toggle Button */
+    .theme-toggle-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid #E2E8F0;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-right: 12px;
+      color: #666;
+    }
+
+    .theme-toggle-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      transform: scale(1.05);
+    }
+
+    .dark .theme-toggle-btn {
+      background: #1e293b;
+      border-color: #334155;
+      color: #fbbf24; /* amber-400 */
+    }
+
+    .dark .theme-toggle-btn:hover {
+      background: #334155;
+      border-color: #475569;
+    }
+
+    .theme-toggle-icon {
+      font-size: 18px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .theme-toggle-icon.sun {
+      display: none;
+    }
+
+    .dark .theme-toggle-icon.moon {
+      display: none;
+    }
+
+    .dark .theme-toggle-icon.sun {
+      display: block;
+      color: #fbbf24; /* amber-400 */
+    }
+
+    /* Dark mode icon colors in topbar */
+    .dark .topbar i {
+      color: #cbd5e1 !important; /* slate-300 */
     }
 
     .topbar {
@@ -437,6 +524,12 @@
       margin-left: 72px;
       padding-left: 30px;
       border-bottom: 1px solid #E2E8F0;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .dark .topbar {
+      background-color: #1e293b; /* slate-800 */
+      border-bottom-color: #334155; /* slate-700 */
     }
 
     .card-stat {
@@ -876,12 +969,59 @@
   
   <!-- Stack for additional styles from views -->
   @stack('styles')
+
+  <!-- Dark Mode Toggle Script - Run Immediately -->
+  <script>
+    (function() {
+      // Check localStorage for saved theme preference
+      const savedTheme = localStorage.getItem('theme');
+      const htmlElement = document.documentElement;
+      
+      // Apply saved theme or default to light
+      if (savedTheme === 'dark') {
+        htmlElement.classList.add('dark');
+      } else {
+        htmlElement.classList.remove('dark');
+        // Ensure light mode if no preference saved
+        if (!savedTheme) {
+          localStorage.setItem('theme', 'light');
+        }
+      }
+
+      // Theme toggle function
+      function toggleTheme() {
+        htmlElement.classList.toggle('dark');
+        const isDark = htmlElement.classList.contains('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      }
+
+      // Attach event listener to toggle button when DOM is ready
+      function initThemeToggle() {
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+          themeToggle.addEventListener('click', toggleTheme);
+        }
+      }
+
+      // Run immediately if DOM is already loaded
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initThemeToggle);
+      } else {
+        initThemeToggle();
+      }
+    })();
+  </script>
 </head>
 <body>
   <header>
        <div class="topbar mb-0 mt-0">
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
         <div class="d-flex align-items-center">
+          <!-- Dark Mode Toggle Button -->
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
+            <i class="fas fa-moon theme-toggle-icon moon"></i>
+            <i class="fas fa-sun theme-toggle-icon sun"></i>
+          </button>
           <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666;"></i>
           <i class="fa-solid fa-user" style="font-size: 18px; color: #666;"></i>
       </div>

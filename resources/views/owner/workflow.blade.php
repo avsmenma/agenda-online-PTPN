@@ -3,22 +3,31 @@
 @section('content')
 <style>
 :root {
-  --primary-color: #007bff;
+  --primary-color: #0f4c5c;
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
-  --info-color: #3b82f6;
+  --info-color: #1e7e8d;
   --secondary-color: #9ca3af;
   --light-bg: #f9fafb;
   --border-color: #e5e7eb;
   --text-primary: #111827;
   --text-secondary: #6b7280;
+  --teal-600: #0d9488;
+  --teal-700: #0f766e;
+  --emerald-500: #10b981;
+  --emerald-600: #059669;
 }
 
 body {
   background: #f3f4f6;
   min-height: 100vh;
   padding: 1.5rem 0;
+  transition: background-color 0.3s ease;
+}
+
+.dark body {
+  background: #0f172a; /* slate-900 */
 }
 
 .workflow-container {
@@ -36,6 +45,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.dark .workflow-header {
+  background: #1e293b; /* slate-800 */
 }
 
 .workflow-title-section h1 {
@@ -46,12 +60,22 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.dark .workflow-title-section h1 {
+  color: #f1f5f9; /* slate-100 */
 }
 
 .workflow-subtitle {
   color: var(--text-secondary);
   font-size: 0.875rem;
   margin: 0.25rem 0 0 0;
+  transition: color 0.3s ease;
+}
+
+.dark .workflow-subtitle {
+  color: #94a3b8; /* slate-400 */
 }
 
 .workflow-content {
@@ -60,286 +84,226 @@ body {
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   overflow-x: auto;
+  transition: background-color 0.3s ease;
 }
 
-.workflow-stages {
+.dark .workflow-content {
+  background: #1e293b; /* slate-800 */
+}
+
+/* Premium Card Style Workflow */
+.workflow-cards-container {
+  position: relative;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.workflow-cards-wrapper {
   display: flex;
   align-items: flex-start;
-  gap: 0;
+  gap: 2rem;
+  position: relative;
   min-width: fit-content;
-  padding: 1rem 0;
+  padding: 0 1rem;
 }
 
-.workflow-stage {
-  display: flex;
-  align-items: center;
-  gap: 0;
+/* Base Premium Workflow Card */
+.workflow-card {
   position: relative;
-  min-width: 200px;
-}
-
-.stage-card {
+  width: 240px;
+  min-width: 240px;
   background: white;
-  border-radius: 10px;
-  padding: 1.25rem;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: all 0.2s ease;
-  border: 2px solid var(--border-color);
-  position: relative;
-  width: 100%;
-  min-height: 180px;
+  border-radius: 0.75rem; /* rounded-xl */
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+  border: 1px solid transparent;
+}
+
+.dark .workflow-card {
+  background: #1e293b; /* slate-800 */
+}
+
+/* Completed Card Style - Solid & Clear */
+.workflow-card.completed {
+  border: 1px solid #e5e7eb;
+  opacity: 1;
+}
+
+.workflow-card.completed .card-header {
+  background: var(--emerald-500); /* bg-emerald-500 solid */
+  padding: 1.5rem;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
 }
 
-.stage-card.completed {
-  border-color: var(--success-color);
-  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-}
-
-.stage-card.processing {
-  border-color: var(--primary-color);
-  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
-  animation: subtle-pulse 2s ease-in-out infinite;
-}
-
-.stage-card.pending {
-  border-color: var(--border-color);
-  background: #fafafa;
-  opacity: 0.7;
-}
-
-.stage-card.returned {
-  border-color: var(--danger-color);
-  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
-  position: relative;
-}
-
-.stage-card.returned::after {
-  content: '↩️';
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: var(--danger-color);
-  color: white;
-  width: 24px;
-  height: 24px;
+.workflow-card.completed .card-header-icon {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 10;
+  color: white;
+  font-size: 24px;
 }
 
-.stage-card.has-cycle {
+.workflow-card.completed .card-body {
+  padding: 1.25rem;
+  background: white;
+  transition: background-color 0.3s ease;
+}
+
+.dark .workflow-card.completed .card-body {
+  background: #1e293b; /* slate-800 */
+}
+
+/* Active Card Style - The Hero with Glow Effect */
+.workflow-card.active {
+  transform: scale(1.05); /* scale-105 */
+  border: 2px solid var(--emerald-500); /* border-2 border-emerald-500 */
+  background: white;
+  box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.4); /* shadow-[0_10px_30px_-10px_rgba(16,185,129,0.4)] */
+  z-index: 10;
   position: relative;
 }
 
-.cycle-badge {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.cycle-info {
-  margin-top: 0.75rem;
-  padding: 0.5rem;
-  background: #fef3c7;
-  border-radius: 6px;
-  border-left: 3px solid var(--warning-color);
-  font-size: 0.7rem;
-  line-height: 1.4;
-}
-
-.cycle-info-item {
-  margin-bottom: 0.25rem;
-  color: var(--text-primary);
-}
-
-.cycle-info-item strong {
-  color: var(--warning-color);
-}
-
-@keyframes subtle-pulse {
-  0%, 100% {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-  50% {
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-  }
-}
-
-.stage-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 0.75rem;
-  border-radius: 12px;
+.workflow-card.active .card-header {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(13, 148, 136, 0.05) 100%);
+  padding: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  color: white;
-  background: var(--stage-color, #9ca3af);
-  transition: all 0.2s ease;
+  position: relative;
 }
 
-.stage-card.completed .stage-icon-wrapper {
-  background: var(--success-color);
-}
-
-.stage-card.processing .stage-icon-wrapper {
-  background: var(--primary-color);
-  animation: spin 3s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.stage-card.pending .stage-icon-wrapper {
-  background: var(--secondary-color);
-}
-
-.stage-card.returned .stage-icon-wrapper {
-  background: var(--danger-color);
-}
-
-.return-badge {
-  display: inline-flex;
+.workflow-card.active .card-header-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--danger-color);
+  justify-content: center;
   color: white;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
 }
 
-.return-info {
-  margin-top: 0.75rem;
-  padding: 0.5rem;
-  background: #fee2e2;
-  border-radius: 6px;
-  border-left: 3px solid var(--danger-color);
-  font-size: 0.7rem;
-  line-height: 1.4;
+.workflow-card.active .card-body {
+  padding: 1.25rem;
+  background: white;
+  transition: background-color 0.3s ease;
 }
 
-.return-info-item {
-  margin-bottom: 0.25rem;
-  color: var(--text-primary);
+.dark .workflow-card.active .card-body {
+  background: #1e293b; /* slate-800 */
 }
 
-.return-info-item strong {
-  color: var(--danger-color);
-}
-
-.stage-label {
-  font-size: 0.625rem;
+/* Current Position Badge - "Sedang Proses" dengan animate-pulse */
+.current-position-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.stage-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.stage-description {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.75rem;
-  min-height: 32px;
-  line-height: 1.4;
-}
-
-.stage-timestamp {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  padding: 0.375rem 0.5rem;
-  background: var(--light-bg);
-  border-radius: 6px;
-  margin-top: auto;
-}
-
-.stage-duration {
-  font-size: 0.7rem;
-  color: var(--success-color);
-  font-weight: 600;
-  margin-top: 0.375rem;
-}
-
-/* Connection Lines - Horizontal */
-.workflow-connector {
-  width: 60px;
-  height: 3px;
-  background: var(--border-color);
-  position: relative;
-  margin: 0 0.5rem;
-  flex-shrink: 0;
-  align-self: center;
-}
-
-.workflow-connector.completed {
-  background: var(--success-color);
-}
-
-.workflow-connector.processing {
-  background: linear-gradient(90deg, var(--success-color) 0%, var(--primary-color) 100%);
-  animation: flow-horizontal 2s ease-in-out infinite;
-}
-
-@keyframes flow-horizontal {
+@keyframes pulse {
   0%, 100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.7;
   }
 }
 
-.workflow-connector.pending {
-  background: var(--border-color);
-  opacity: 0.4;
+/* Pending Card Style - Dimmed */
+.workflow-card.pending {
+  background: #f8fafc; /* bg-slate-50 */
+  border: 1px dashed #cbd5e1; /* border dashed tipis */
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  opacity: 0.85;
 }
 
-.workflow-connector.returned {
-  background: var(--danger-color);
-  opacity: 0.6;
+.workflow-card.pending .card-header {
+  background: #f1f5f9;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.workflow-connector.has-return {
+.workflow-card.pending .card-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 20px;
+}
+
+.workflow-card.pending .card-body {
+  padding: 1.25rem;
+  background: #f8fafc;
+}
+
+.workflow-card.pending .card-label,
+.workflow-card.pending .card-name,
+.workflow-card.pending .card-description,
+.workflow-card.pending .card-timestamp {
+  color: #94a3b8; /* text-slate-400 */
+}
+
+/* Returned Card Style */
+.workflow-card.returned {
+  border: 2px solid var(--danger-color);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.workflow-card.returned .card-header {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-.workflow-connector.has-return::before {
+.workflow-card.returned .card-header-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--danger-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.workflow-card.returned .card-header-icon::after {
   content: '↩';
   position: absolute;
-  top: -12px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
   background: var(--danger-color);
   color: white;
   width: 20px;
@@ -350,29 +314,230 @@ body {
   justify-content: center;
   font-size: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 5;
 }
 
-.workflow-connector::after {
-  content: '';
+.workflow-card.returned .card-body {
+  padding: 1.25rem;
+  background: white;
+  border-bottom: 4px solid var(--danger-color);
+}
+
+/* Card Content */
+.card-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.workflow-card.completed .card-label,
+.workflow-card.active .card-label {
+  color: var(--text-primary);
+}
+
+.dark .workflow-card.completed .card-label,
+.dark .workflow-card.active .card-label {
+  color: #f1f5f9; /* slate-100 */
+}
+
+.dark .workflow-card.pending .card-label {
+  color: #94a3b8; /* slate-400 */
+}
+
+.card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.dark .workflow-card.completed .card-name,
+.dark .workflow-card.active .card-name {
+  color: #f1f5f9; /* slate-100 */
+}
+
+.dark .workflow-card.pending .card-name {
+  color: #94a3b8; /* slate-400 */
+}
+
+.card-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  text-align: center;
+  line-height: 1.5;
+  min-height: 36px;
+  transition: color 0.3s ease;
+}
+
+.dark .workflow-card.completed .card-description,
+.dark .workflow-card.active .card-description {
+  color: #cbd5e1; /* slate-300 */
+}
+
+/* User Avatar */
+.card-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal-600) 0%, var(--emerald-500) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 3px solid white;
+}
+
+.workflow-card.active .card-avatar {
+  width: 72px;
+  height: 72px;
+  font-size: 24px;
+  border: 4px solid var(--emerald-500);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+.workflow-card.pending .card-avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+  background: #e2e8f0;
+  color: #94a3b8;
+  border: 2px solid #cbd5e1;
+  box-shadow: none;
+}
+
+/* Card Timestamp */
+.card-timestamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .card-timestamp {
+  border-top-color: #334155; /* slate-700 */
+}
+
+.workflow-card.completed .card-timestamp,
+.workflow-card.active .card-timestamp {
+  color: var(--emerald-600);
+  font-weight: 600;
+}
+
+.dark .workflow-card.completed .card-timestamp,
+.dark .workflow-card.active .card-timestamp {
+  color: #34d399; /* emerald-400 */
+}
+
+.card-timestamp i {
+  font-size: 10px;
+}
+
+/* Connector Between Cards - Gradient dari Hijau ke Abu-abu */
+.workflow-connector {
+  position: relative;
+  width: 2rem;
+  height: 6px;
+  align-self: center;
+  flex-shrink: 0;
+  margin: 0 0.5rem;
+}
+
+.workflow-connector-line {
   position: absolute;
-  right: -6px;
   top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
   transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 6px solid;
-  border-left-color: inherit;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
 }
 
-/* Document Info Panel - Compact with Accordion */
+/* Connector untuk Completed ke Completed - Hijau Solid Tebal */
+.workflow-connector.completed .workflow-connector-line {
+  background: var(--emerald-500); /* Hijau Solid Tebal */
+  height: 6px;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Connector untuk Completed ke Active - Gradien Hijau ke Hijau Lebih Terang */
+.workflow-connector.completed-to-active .workflow-connector-line {
+  background: linear-gradient(90deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
+  height: 6px;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Connector untuk Active ke Pending - Gradien dari Hijau ke Abu-abu */
+.workflow-connector.active-to-pending .workflow-connector-line {
+  background: linear-gradient(90deg, var(--emerald-500) 0%, #94a3b8 100%);
+  height: 6px;
+}
+
+/* Connector untuk Completed ke Pending - Gradien dari Hijau ke Abu-abu */
+.workflow-connector.completed-to-pending .workflow-connector-line {
+  background: linear-gradient(90deg, var(--emerald-500) 0%, #94a3b8 100%);
+  height: 6px;
+}
+
+/* Connector untuk Pending ke Pending - Abu-abu */
+.workflow-connector.pending .workflow-connector-line {
+  background: #e5e7eb;
+  height: 4px;
+  opacity: 0.5;
+}
+
+/* Cycle Badge */
+.workflow-cycle-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, var(--warning-color) 0%, var(--danger-color) 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+/* Hover Effect */
+.workflow-card:hover {
+  transform: translateY(-4px);
+}
+
+.workflow-card.active:hover {
+  transform: scale(1.05) translateY(-4px);
+}
+
+/* Document Info Panel - Keep existing styles */
 .document-info-panel {
   background: var(--light-bg);
   border-radius: 10px;
   padding: 1.25rem;
   margin-top: 1.5rem;
+  transition: background-color 0.3s ease;
+}
+
+.dark .document-info-panel {
+  background: #0f172a; /* slate-900 */
 }
 
 .document-info-title {
@@ -383,9 +548,14 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: color 0.3s ease;
 }
 
-/* Accordion Styles */
+.dark .document-info-title {
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* Accordion Styles - Keep existing */
 .accordion-container {
   display: flex;
   flex-direction: column;
@@ -397,7 +567,12 @@ body {
   border-radius: 8px;
   border: 1px solid var(--border-color);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .accordion-item {
+  background: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
 }
 
 .accordion-item:hover {
@@ -411,12 +586,20 @@ body {
   justify-content: space-between;
   align-items: center;
   background: white;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, background-color 0.3s ease;
   user-select: none;
 }
 
 .accordion-header:hover {
   background: var(--light-bg);
+}
+
+.dark .accordion-header {
+  background: #1e293b; /* slate-800 */
+}
+
+.dark .accordion-header:hover {
+  background: #0f172a; /* slate-900 */
 }
 
 .accordion-title {
@@ -426,6 +609,11 @@ body {
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.dark .accordion-title {
+  color: #f1f5f9; /* slate-100 */
 }
 
 .accordion-title i {
@@ -446,8 +634,12 @@ body {
 .accordion-content {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: max-height 0.3s ease, background-color 0.3s ease;
   background: var(--light-bg);
+}
+
+.dark .accordion-content {
+  background: #0f172a; /* slate-900 */
 }
 
 .accordion-item.active .accordion-content {
@@ -466,7 +658,11 @@ body {
   padding: 0.75rem;
   border-radius: 8px;
   border-left: 3px solid var(--primary-color);
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease;
+}
+
+.dark .document-info-item {
+  background: #1e293b; /* slate-800 */
 }
 
 .document-info-item:hover {
@@ -485,6 +681,11 @@ body {
   letter-spacing: 0.3px;
   margin-bottom: 0.25rem;
   font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.dark .document-info-label {
+  color: #94a3b8; /* slate-400 */
 }
 
 .document-info-value {
@@ -492,6 +693,11 @@ body {
   font-weight: 500;
   color: var(--text-primary);
   word-break: break-word;
+  transition: color 0.3s ease;
+}
+
+.dark .document-info-value {
+  color: #f1f5f9; /* slate-100 */
 }
 
 .empty-field {
@@ -549,7 +755,6 @@ body {
   font-weight: 500;
 }
 
-/* Back Button - Compact */
 .back-button {
   display: inline-flex;
   align-items: center;
@@ -573,26 +778,22 @@ body {
   border-color: var(--primary-color);
 }
 
-/* Scrollbar Styling */
-.workflow-content::-webkit-scrollbar {
-  height: 8px;
-}
-
-.workflow-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.workflow-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.workflow-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
 /* Responsive */
+@media (max-width: 1024px) {
+  .workflow-cards-wrapper {
+    gap: 1.5rem;
+  }
+  
+  .workflow-card {
+    width: 220px;
+    min-width: 220px;
+  }
+  
+  .workflow-card.active {
+    transform: scale(1.03);
+  }
+}
+
 @media (max-width: 768px) {
   .workflow-container {
     padding: 1rem;
@@ -601,18 +802,39 @@ body {
   .workflow-content {
     padding: 1rem;
   }
-
-  .workflow-stage {
-    min-width: 160px;
+  
+  .workflow-cards-container {
+    padding: 1.5rem 0;
   }
-
-  .stage-card {
-    min-height: 160px;
-    padding: 1rem;
+  
+  .workflow-cards-wrapper {
+    gap: 1rem;
+    padding: 0 0.5rem;
   }
-
+  
+  .workflow-card {
+    width: 200px;
+    min-width: 200px;
+  }
+  
+  .workflow-card.active {
+    transform: scale(1.02);
+  }
+  
   .workflow-connector {
-    width: 40px;
+    width: 1.5rem;
+  }
+  
+  .card-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+  }
+  
+  .workflow-card.active .card-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 20px;
   }
 }
 </style>
@@ -633,119 +855,113 @@ body {
   </div>
 
   <div class="workflow-content">
-    <div class="workflow-stages">
-      @foreach($workflowStages as $index => $stage)
-        <div class="workflow-stage">
-          <div class="stage-card {{ $stage['status'] }} {{ isset($stage['hasCycle']) && $stage['hasCycle'] ? 'has-cycle' : '' }}" style="--stage-color: {{ $stage['color'] }}" data-stage-id="{{ $stage['id'] }}">
+    <!-- Premium Card Style Workflow -->
+    <div class="workflow-cards-container">
+      <div class="workflow-cards-wrapper">
+        @foreach($workflowStages as $index => $stage)
+          @php
+            $stageLogs = isset($activityLogsByStage) && $activityLogsByStage->has($stage['id']) 
+                ? $activityLogsByStage[$stage['id']] 
+                : collect();
+            
+            $cardStatus = 'pending';
+            if($stage['status'] === 'completed') {
+              $cardStatus = 'completed';
+            } elseif($stage['status'] === 'processing' || $stage['status'] === 'active') {
+              $cardStatus = 'active';
+            } elseif($stage['status'] === 'returned') {
+              $cardStatus = 'returned';
+            }
+            
+            // Get first letter of name for avatar
+            $avatarInitial = substr($stage['name'], 0, 1);
+          @endphp
+          
+          <!-- Workflow Card -->
+          <div class="workflow-card {{ $cardStatus }}">
+            @if($cardStatus === 'active')
+              <div class="current-position-badge">Sedang Proses</div>
+            @endif
+            
             @if(isset($stage['hasCycle']) && $stage['hasCycle'] && isset($stage['cycleInfo']['attemptCount']) && $stage['cycleInfo']['attemptCount'] > 1)
-              <div class="cycle-badge">
-                <i class="fas fa-redo"></i> Attempt {{ $stage['cycleInfo']['attemptCount'] }}
+              <div class="workflow-cycle-badge">
+                <i class="fas fa-redo"></i> {{ $stage['cycleInfo']['attemptCount'] }}x
               </div>
             @endif
-            <div>
-              <div class="stage-icon-wrapper" style="background: {{ $stage['color'] }}">
-                <i class="fas {{ $stage['icon'] }}"></i>
-              </div>
-              <div class="stage-label">{{ $stage['label'] }}</div>
-              <div class="stage-name">{{ $stage['name'] }}</div>
-              <div class="stage-description">{{ $stage['description'] }}</div>
-            </div>
-            <div>
-              @if($stage['timestamp'])
-                <div class="stage-timestamp">
-                  <i class="far fa-clock"></i> {{ $stage['timestamp']->format('d M Y, H:i') }}
-                </div>
-              @endif
-              @if(isset($stage['duration']))
-                <div class="stage-duration">
-                  <i class="fas fa-hourglass-half"></i> {{ $stage['duration'] }}
-                </div>
-              @endif
-              
-              @php
-                $stageLogs = isset($activityLogsByStage) && $activityLogsByStage->has($stage['id']) 
-                    ? $activityLogsByStage[$stage['id']] 
-                    : collect();
-              @endphp
-              <div class="activity-logs" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e5e7eb;">
-                <div style="font-size: 0.65rem; font-weight: 600; color: #6b7280; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <i class="fas fa-list"></i> Logs Aktivitas:
-                </div>
-                @if($stageLogs->count() > 0)
-                  <a href="javascript:void(0)" 
-                     onclick="openActivityLogsModal('{{ $stage['id'] }}', '{{ $stage['name'] }}')" 
-                     class="view-logs-link"
-                     style="display: inline-block; font-size: 0.75rem; color: {{ $stage['color'] }}; text-decoration: none; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px; transition: all 0.2s;"
-                     onmouseover="this.style.backgroundColor='{{ $stage['color'] }}20'; this.style.textDecoration='underline';"
-                     onmouseout="this.style.backgroundColor='transparent'; this.style.textDecoration='none';">
-                    <i class="fas fa-eye"></i> Klik untuk melihat aktivitas ({{ $stageLogs->count() }})
-                  </a>
-                  
-                  <!-- Hidden data for modal -->
-                  <div id="logs-data-{{ $stage['id'] }}" style="display: none;" data-stage-color="{{ $stage['color'] }}">
-                    @foreach($stageLogs as $log)
-                      <div class="log-item" 
-                           data-action="{{ $log->action }}" 
-                           data-description="{{ htmlspecialchars($log->action_description, ENT_QUOTES, 'UTF-8') }}" 
-                           data-timestamp="{{ $log->action_at->format('d-m-Y H:i:s') }}" 
-                           data-timestamp-date="{{ $log->action_at->format('d-m-Y') }}" 
-                           data-timestamp-time="{{ $log->action_at->format('H:i:s') }}"></div>
-                    @endforeach
-                  </div>
+            
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="card-header-icon">
+                @if($cardStatus === 'completed')
+                  <i class="fas fa-check"></i>
                 @else
-                  <div style="font-size: 0.7rem; color: #9ca3af; font-style: italic;">
-                    Belum ada aktivitas yang tercatat
-                  </div>
+                  <i class="fas {{ $stage['icon'] }}"></i>
                 @endif
               </div>
-              @if($stage['hasReturn'] && $stage['returnInfo'])
-                <div class="return-badge">
-                  <i class="fas fa-undo"></i> Dikembalikan
+            </div>
+            
+            <!-- Card Body -->
+            <div class="card-body">
+              <div class="card-label">{{ $stage['label'] }}</div>
+              
+              <!-- User Avatar -->
+              <div class="card-avatar">
+                {{ $avatarInitial }}
+              </div>
+              
+              <div class="card-name">{{ $stage['name'] }}</div>
+              <div class="card-description">{{ $stage['description'] }}</div>
+              
+              <!-- Timestamp -->
+              @if($stage['timestamp'])
+                <div class="card-timestamp">
+                  <i class="far fa-clock"></i>
+                  <span>{{ $stage['timestamp']->format('d M Y') }}</span>
+                  <span>•</span>
+                  <span>{{ $stage['timestamp']->format('H:i') }}</span>
                 </div>
-                <div class="return-info">
-                  <div class="return-info-item">
-                    <strong>Dikembalikan ke:</strong> {{ $stage['returnInfo']['returned_to'] }}
-                  </div>
-                  <div class="return-info-item">
-                    <strong>Pada:</strong> {{ $stage['returnInfo']['timestamp']->format('d M Y, H:i') }}
-                  </div>
-                  <div class="return-info-item">
-                    <strong>Alasan:</strong> {{ Str::limit($stage['returnInfo']['reason'], 50) }}
-                  </div>
-                </div>
-              @endif
-              @if(isset($stage['hasCycle']) && $stage['hasCycle'] && isset($stage['cycleInfo']['isResend']) && $stage['cycleInfo']['isResend'])
-                <div class="cycle-info">
-                  <div class="cycle-info-item">
-                    <strong>🔄 Dikirim Kembali:</strong> {{ $stage['cycleInfo']['resendTimestamp']->format('d M Y, H:i') }}
-                  </div>
-                  @if($stage['cycleInfo']['returnTimestamp'])
-                    <div class="cycle-info-item">
-                      <strong>↩️ Dikembalikan:</strong> {{ $stage['cycleInfo']['returnTimestamp']->format('d M Y, H:i') }}
-                    </div>
-                  @endif
-                  <div class="cycle-info-item">
-                    <strong>📊 Total Attempt:</strong> {{ $stage['cycleInfo']['attemptCount'] }}x
-                  </div>
+              @else
+                <div class="card-timestamp" style="color: #94a3b8;">
+                  <i class="far fa-clock"></i>
+                  <span>Menunggu</span>
                 </div>
               @endif
             </div>
           </div>
-        </div>
-
-        @if($index < count($workflowStages) - 1)
-          @php
-            $nextStage = $workflowStages[$index + 1];
-            $connectorStatus = $stage['status'];
-            // If current stage is returned, show returned connector
-            if ($stage['status'] === 'returned') {
-              $connectorStatus = 'returned';
-            }
-          @endphp
-          <div class="workflow-connector {{ $connectorStatus }} {{ $stage['hasReturn'] ? 'has-return' : '' }}">
-          </div>
-        @endif
-      @endforeach
+          
+          <!-- Connector -->
+          @if($index < count($workflowStages) - 1)
+            @php
+              $nextStage = $workflowStages[$index + 1];
+              $nextStatus = 'pending';
+              if($nextStage['status'] === 'completed') {
+                $nextStatus = 'completed';
+              } elseif($nextStage['status'] === 'processing' || $nextStage['status'] === 'active') {
+                $nextStatus = 'active';
+              }
+              
+              // Determine connector class based on current and next status
+              $connectorClass = '';
+              if($cardStatus === 'completed' && $nextStatus === 'completed') {
+                $connectorClass = 'completed'; // Hijau solid tebal
+              } elseif($cardStatus === 'completed' && $nextStatus === 'active') {
+                $connectorClass = 'completed-to-active'; // Gradien hijau ke hijau
+              } elseif($cardStatus === 'active' && $nextStatus === 'pending') {
+                $connectorClass = 'active-to-pending'; // Gradien hijau ke abu-abu
+              } elseif($cardStatus === 'completed' && $nextStatus === 'pending') {
+                $connectorClass = 'completed-to-pending'; // Gradien hijau ke abu-abu
+              } elseif($cardStatus === 'pending' && $nextStatus === 'pending') {
+                $connectorClass = 'pending'; // Abu-abu
+              } else {
+                $connectorClass = ''; // Default abu-abu
+              }
+            @endphp
+            <div class="workflow-connector {{ $connectorClass }}">
+              <div class="workflow-connector-line"></div>
+            </div>
+          @endif
+        @endforeach
+      </div>
     </div>
 
     <!-- Document Info Panel with Accordion -->
@@ -1059,19 +1275,6 @@ body {
 </div>
 
 <script>
-// Smooth hover effects
-document.querySelectorAll('.stage-card').forEach(card => {
-  card.addEventListener('mouseenter', function() {
-    this.style.transform = 'translateY(-2px)';
-    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-  });
-  
-  card.addEventListener('mouseleave', function() {
-    this.style.transform = 'translateY(0)';
-    this.style.boxShadow = '';
-  });
-});
-
 // Accordion Toggle Function
 function toggleAccordion(id) {
   const item = document.querySelector(`#content-${id}`).closest('.accordion-item');
@@ -1087,157 +1290,6 @@ function toggleAccordion(id) {
     item.classList.add('active');
   }
 }
-
-// Activity Logs Modal Functions
-function openActivityLogsModal(stageId, stageName) {
-  const modal = document.getElementById('activityLogsModal');
-  const modalTitle = document.getElementById('activityLogsModalTitle');
-  const modalContent = document.getElementById('activityLogsModalContent');
-  const logsData = document.getElementById('logs-data-' + stageId);
-  
-  if (!logsData) return;
-  
-  // Set modal title
-  modalTitle.textContent = 'Logs Aktivitas - ' + stageName;
-  
-  // Clear previous content
-  modalContent.innerHTML = '';
-  
-  // Get stage color from logs data element
-  let stageColor = logsData.getAttribute('data-stage-color') || '#3b82f6';
-  
-  // Build logs HTML
-  const logItems = logsData.querySelectorAll('.log-item');
-  if (logItems.length === 0) {
-    modalContent.innerHTML = '<div style="text-align: center; padding: 2rem; color: #9ca3af; font-style: italic;">Belum ada aktivitas yang tercatat</div>';
-  } else {
-    logItems.forEach((item, index) => {
-      const action = item.getAttribute('data-action');
-      const description = item.getAttribute('data-description');
-      const timestampDate = item.getAttribute('data-timestamp-date');
-      const timestampTime = item.getAttribute('data-timestamp-time');
-      const timestamp = item.getAttribute('data-timestamp');
-      
-      const logDiv = document.createElement('div');
-      logDiv.className = 'modal-log-item';
-      logDiv.style.cssText = 'margin-bottom: 0.75rem; padding: 0.75rem; background: #f9fafb; border-left: 3px solid ' + stageColor + '; border-radius: 4px;';
-      
-      let logText = '';
-      if (action === 'received' || action === 'deadline_set') {
-        logText = '• ' + description + ' ' + timestampDate + ' jam ' + timestampTime;
-      } else {
-        logText = '• ' + description + ' pada tanggal ' + timestamp;
-      }
-      
-      logDiv.innerHTML = '<div style="font-size: 0.875rem; color: #374151; line-height: 1.6;">' + logText + '</div>';
-      modalContent.appendChild(logDiv);
-    });
-  }
-  
-  // Show modal
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-function closeActivityLogsModal() {
-  const modal = document.getElementById('activityLogsModal');
-  modal.style.display = 'none';
-  document.body.style.overflow = 'auto';
-}
-
-// Close modal when clicking outside
-window.onclick = function(event) {
-  const modal = document.getElementById('activityLogsModal');
-  if (event.target === modal) {
-    closeActivityLogsModal();
-  }
-}
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Escape') {
-    closeActivityLogsModal();
-  }
-});
 </script>
 
-<!-- Activity Logs Modal -->
-<div id="activityLogsModal" class="activity-logs-modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; animation: fadeIn 0.2s ease-in-out;">
-  <div class="activity-logs-modal-content" style="background-color: white; margin: auto; padding: 0; border-radius: 12px; width: 90%; max-width: 700px; max-height: 80vh; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; animation: slideUp 0.3s ease-out;">
-    <div class="activity-logs-modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0;">
-      <h3 id="activityLogsModalTitle" style="margin: 0; font-size: 1.125rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 0.5rem;">
-        <i class="fas fa-list"></i> <span>Logs Aktivitas</span>
-      </h3>
-      <button onclick="closeActivityLogsModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.5rem; font-weight: bold; cursor: pointer; padding: 0.25rem 0.75rem; border-radius: 6px; transition: all 0.2s; line-height: 1;" onmouseover="this.style.background='rgba(255,255,255,0.3)';" onmouseout="this.style.background='rgba(255,255,255,0.2)';">
-        <span>&times;</span>
-      </button>
-    </div>
-    <div id="activityLogsModalContent" class="activity-logs-modal-body" style="padding: 1.5rem; overflow-y: auto; flex: 1; max-height: calc(80vh - 80px);">
-      <!-- Logs will be inserted here -->
-    </div>
-  </div>
-</div>
-
-<style>
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { 
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to { 
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.activity-logs-modal {
-  backdrop-filter: blur(4px);
-}
-
-.activity-logs-modal-content {
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.activity-logs-modal-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.activity-logs-modal-body::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.activity-logs-modal-body::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.activity-logs-modal-body::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-.modal-log-item {
-  transition: all 0.2s;
-}
-
-.modal-log-item:hover {
-  background: #f3f4f6 !important;
-  transform: translateX(4px);
-}
-
-.view-logs-link {
-  font-weight: 500;
-}
-
-.view-logs-link i {
-  margin-right: 0.25rem;
-}
-</style>
-
 @endsection
-

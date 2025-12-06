@@ -19,6 +19,12 @@
 body {
   background: var(--bg-light) !important;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+  background: #0f172a !important; /* slate-900 */
+  color: #f1f5f9; /* slate-100 */
 }
 
 /* Dashboard Header - Modern Gradient & Pattern - Flush Left Alignment */
@@ -159,6 +165,10 @@ body {
   margin-bottom: 2rem;
 }
 
+.dark .smart-analytics-grid {
+  gap: 1.5rem;
+}
+
 @media (max-width: 1200px) {
   .smart-analytics-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -177,9 +187,14 @@ body {
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+.dark .smart-stat-card {
+  background: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
 }
 
 .smart-stat-card:hover {
@@ -221,6 +236,11 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.dark .smart-stat-label {
+  color: #94a3b8; /* slate-400 */
 }
 
 .smart-stat-value {
@@ -229,6 +249,11 @@ body {
   color: var(--text-primary);
   line-height: 1.2;
   margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.dark .smart-stat-value {
+  color: #f1f5f9; /* slate-100 */
 }
 
 .smart-stat-trend {
@@ -316,6 +341,12 @@ body {
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .control-bar {
+  background: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
 }
 
 .control-bar-left {
@@ -339,7 +370,15 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  background: white;
+  color: var(--text-primary);
+}
+
+.dark .search-input-modern {
+  background: #0f172a; /* slate-900 */
+  border-color: #334155; /* slate-700 */
+  color: #f1f5f9; /* slate-100 */
 }
 
 .search-input-modern:focus {
@@ -406,6 +445,10 @@ body {
   gap: 1.5rem;
 }
 
+.dark .card-view-container {
+  gap: 1.5rem;
+}
+
 @media (max-width: 768px) {
   .card-view-container {
     grid-template-columns: 1fr;
@@ -418,10 +461,15 @@ body {
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
+}
+
+.dark .smart-document-card {
+  background: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
 }
 
 .smart-document-card:hover {
@@ -471,11 +519,21 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.dark .smart-card-title {
+  color: #f1f5f9; /* slate-100 */
 }
 
 .smart-card-subtitle {
   font-size: 13px;
   color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.dark .smart-card-subtitle {
+  color: #94a3b8; /* slate-400 */
 }
 
 .smart-card-value {
@@ -604,6 +662,12 @@ body {
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .table-view-container {
+  background: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
 }
 
 .modern-table {
@@ -614,6 +678,12 @@ body {
 .modern-table thead {
   background: var(--bg-light);
   border-bottom: 2px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .modern-table thead {
+  background: #0f172a; /* slate-900 */
+  border-bottom-color: #334155; /* slate-700 */
 }
 
 .modern-table th {
@@ -624,6 +694,11 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.dark .modern-table th {
+  color: #94a3b8; /* slate-400 */
 }
 
 .modern-table td {
@@ -631,6 +706,12 @@ body {
   border-bottom: 1px solid var(--border-color);
   font-size: 14px;
   color: var(--text-primary);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .modern-table td {
+  color: #f1f5f9; /* slate-100 */
+  border-bottom-color: #334155; /* slate-700 */
 }
 
 .modern-table tbody tr {
@@ -639,6 +720,11 @@ body {
 
 .modern-table tbody tr:hover {
   background: var(--bg-light);
+  transition: background-color 0.2s ease;
+}
+
+.dark .modern-table tbody tr:hover {
+  background: #0f172a; /* slate-900 */
 }
 
 .modern-table tbody tr.overdue-row {
@@ -728,6 +814,11 @@ body {
   background: white;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease;
+}
+
+.dark .empty-state {
+  background: #1e293b; /* slate-800 */
 }
 
 .empty-state-icon {
@@ -741,12 +832,22 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.dark .empty-state-title {
+  color: #f1f5f9; /* slate-100 */
 }
 
 .empty-state-text {
   font-size: 14px;
   color: var(--text-muted);
   margin-bottom: 1.5rem;
+  transition: color 0.3s ease;
+}
+
+.dark .empty-state-text {
+  color: #94a3b8; /* slate-400 */
 }
 
 /* Pagination Footer */
@@ -762,6 +863,12 @@ body {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .pagination-footer {
+  background: #1e293b; /* slate-800 */
+  border-color: #334155; /* slate-700 */
 }
 
 .pagination-footer-left {
@@ -780,6 +887,11 @@ body {
   font-size: 14px;
   color: var(--text-secondary);
   white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.dark .pagination-label {
+  color: #94a3b8; /* slate-400 */
 }
 
 .pagination-select {
@@ -790,12 +902,19 @@ body {
   background: white;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 12px;
+}
+
+.dark .pagination-select {
+  background: #0f172a; /* slate-900 */
+  border-color: #334155; /* slate-700 */
+  color: #f1f5f9; /* slate-100 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%94a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
 }
 
 .pagination-select:focus {
@@ -808,6 +927,11 @@ body {
   font-size: 14px;
   color: var(--text-secondary);
   white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.dark .pagination-summary {
+  color: #94a3b8; /* slate-400 */
 }
 
 .pagination-nav {
@@ -826,10 +950,16 @@ body {
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.dark .pagination-btn {
+  background: #0f172a; /* slate-900 */
+  border-color: #334155; /* slate-700 */
+  color: #94a3b8; /* slate-400 */
 }
 
 .pagination-btn:hover:not(:disabled) {
@@ -862,6 +992,14 @@ body {
   font-size: 14px;
   text-align: center;
   color: var(--text-primary);
+  background: white;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.dark .pagination-page-input {
+  background: #0f172a; /* slate-900 */
+  border-color: #334155; /* slate-700 */
+  color: #f1f5f9; /* slate-100 */
 }
 
 .pagination-page-input:focus {
@@ -875,6 +1013,11 @@ body {
   color: var(--text-muted);
   white-space: nowrap;
   margin-left: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.dark .pagination-total-pages {
+  color: #94a3b8; /* slate-400 */
 }
 
 @media (max-width: 768px) {
