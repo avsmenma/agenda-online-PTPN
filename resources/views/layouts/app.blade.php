@@ -16,56 +16,146 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f8f9fc;
+      background-color: #F8FAFC;
     }
 
-    /* Sidebar */
+    /* Sidebar - Expandable with Floating Drawer Effect */
     .sidebar {
-      width: 240px;
+      width: 72px;
       height: 100vh;
       position: fixed;
       left: 0;
       top: 0;
-      /* background: linear-gradient(180deg, #1a4d3e 0%, #0d2621 100%); */
-      background: white;
+      background: #FFFFFF;
       color: #01545A;
       font-weight: 600;
       padding-top: 20px;
       display: flex;
       flex-direction: column;
+      transition: width 0.25s ease;
+      overflow: hidden;
+      z-index: 1000;
+      border-right: 1px solid #E2E8F0;
+      box-shadow: none;
+    }
+
+    /* Expanded state on hover - Simple extend without animations */
+    .sidebar:hover {
+      width: 240px;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+      z-index: 1001;
     }
 
     .sidebar a {
       color: #666666;
       text-decoration: none;
-      display: block;
-      padding: 12px 20px;
-      border-radius: 20px 0 0 20px;
-      margin-left: 30px ;
-      margin-top:20px;
-      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-left: 8px;
+      margin-right: 8px;
+      margin-top: 8px;
+      transition: none;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
     }
-    
-    .sidebar a .badge.right {
-      margin-left: 10px;
-      padding: 2px 10px;
-      border-radius: 999px;
-      background: #083E40;
-      color: #ffffff;
+
+    /* Force hide text nodes when collapsed */
+    .sidebar:not(:hover) a {
+      font-size: 0;
+      line-height: 0;
+      color: transparent;
+      padding: 12px 0;
+      justify-content: center;
+    }
+
+    /* Keep icon visible when collapsed - consistent size */
+    .sidebar:not(:hover) a i {
+      font-size: 18px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #666666;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Expanded state - restore text visibility, keep icon size consistent */
+    .sidebar:hover a {
+      justify-content: flex-start;
+      padding: 12px 16px;
+      margin-left: 12px;
+      margin-right: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #666666;
+    }
+
+    .sidebar:hover a i {
+      font-size: 18px;
+      margin-right: 12px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Badge handling - simple show/hide */
+    .sidebar:not(:hover) a .badge.right {
+      display: none;
+    }
+
+    .sidebar:hover a .badge.right {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #F1F5F9;
+      color: #475569;
       font-weight: 600;
-      font-size: 12px;
+      font-size: 11px;
       border: none;
     }
 
-    .sidebar a:hover .badge.right,
-    .sidebar a.active .badge.right {
-      background: #ffffff;
-      color: #083E40;
+    .sidebar:hover a:hover .badge.right,
+    .sidebar:hover a.active .badge.right {
+      background: #0369A1;
+      color: #ffffff;
     }
 
-    .sidebar a:hover, .sidebar a.active {
-      background-color: #083E40;
-      color: #FFFFFF;
+    /* Collapsed state hover */
+    .sidebar:not(:hover) a:hover {
+      background-color: #F1F5F9;
+    }
+
+    .sidebar:not(:hover) a:hover i {
+      color: #01545A;
+    }
+
+    /* Active menu item - Collapsed state */
+    .sidebar:not(:hover) a.active {
+      background-color: #E0F2FE;
+    }
+
+    .sidebar:not(:hover) a.active i {
+      color: #0369A1;
+    }
+
+    /* Expanded state hover */
+    .sidebar:hover a:hover {
+      background-color: #F1F5F9;
+      color: #01545A;
+    }
+
+    /* Active menu item - Expanded state */
+    .sidebar:hover a.active {
+      background-color: #E0F2FE;
+      color: #0369A1;
+      font-weight: 600;
     }
 
     /* .sidebar .dropdown-menu-custom {
@@ -77,35 +167,125 @@
       color: #666666;
       text-decoration: none;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      padding: 12px 20px;
-      border-radius: 20px 0 0 20px;
-      margin-left: 30px;
-      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-left: 8px;
+      margin-right: 8px;
+      margin-top: 8px;
       cursor: pointer;
-
-      transition: all 0.3s;
+      transition: none;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+      font-size: 14px;
     }
 
-    .sidebar .dropdown-toggle:hover {
-      background-color: #083E40;
-      color: #FFFFFF;
+    /* Collapsed state dropdown */
+    .sidebar:not(:hover) .dropdown-toggle {
+      font-size: 0;
+      color: transparent;
+      padding: 12px 0;
+      justify-content: center;
     }
 
-    .sidebar .dropdown-toggle.active {
-      background-color: #083E40;
-      color: #FFFFFF;
+    .sidebar:not(:hover) .dropdown-toggle i {
+      font-size: 18px;
+      color: #666666;
+    }
+
+    /* Expanded state dropdown */
+    .sidebar:hover .dropdown-toggle {
+      justify-content: space-between;
+      padding: 12px 16px;
+      margin-left: 12px;
+      margin-right: 12px;
+      font-size: 14px;
+      color: #666666;
+    }
+
+    /* Hide dropdown text when collapsed */
+    .sidebar:not(:hover) .dropdown-toggle {
+      font-size: 0;
+    }
+
+    .sidebar:not(:hover) .dropdown-toggle i {
+      font-size: 18px;
+      color: #666666;
+    }
+
+    /* Show dropdown text when expanded */
+    .sidebar:hover .dropdown-toggle {
+      font-size: 14px;
+    }
+
+    /* Hide dropdown chevron icon when collapsed */
+    .sidebar:not(:hover) .dropdown-toggle .dropdown-icon {
+      display: none;
+    }
+
+    /* Show dropdown chevron icon when expanded */
+    .sidebar:hover .dropdown-toggle .dropdown-icon {
+      display: inline-block;
+      font-size: 12px;
+    }
+
+    /* Collapsed state dropdown hover */
+    .sidebar:not(:hover) .dropdown-toggle:hover {
+      background-color: #F1F5F9;
+    }
+
+    .sidebar:not(:hover) .dropdown-toggle:hover i {
+      color: #01545A;
+    }
+
+    /* Collapsed state dropdown active */
+    .sidebar:not(:hover) .dropdown-toggle.active {
+      background-color: #E0F2FE;
+    }
+
+    .sidebar:not(:hover) .dropdown-toggle.active i {
+      color: #0369A1;
+    }
+
+    /* Expanded state dropdown hover */
+    .sidebar:hover .dropdown-toggle:hover {
+      background-color: #F1F5F9;
+      color: #01545A;
+    }
+
+    /* Expanded state dropdown active */
+    .sidebar:hover .dropdown-toggle.active {
+      background-color: #E0F2FE;
+      color: #0369A1;
+      font-weight: 600;
     }
 
     .sidebar .dropdown-content {
       display: none;
       margin-left: 20px;
       margin-top: 10px;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.3s ease, max-height 0.3s ease;
     }
 
     .sidebar .dropdown-content.show {
       display: block;
+      opacity: 1;
+      max-height: 500px;
+    }
+
+    /* Hide dropdown content text when sidebar is collapsed */
+    .sidebar:not(:hover) .dropdown-content.show {
+      opacity: 0;
+    }
+
+    /* Show dropdown content when sidebar is expanded */
+    .sidebar:hover .dropdown-content.show {
+      opacity: 1;
     }
 
     .sidebar .dropdown-content a {
@@ -117,7 +297,7 @@
     }
 
     .sidebar .dropdown-icon {
-      transition: transform 0.3s;
+      transition: transform 0.2s ease;
     }
 
     .sidebar .dropdown-icon.rotate {
@@ -125,8 +305,104 @@
     }
 
     .sidebar hr.sidebar-divider {
-  margin: 0 1rem 1rem;
-}
+      margin: 0 1rem 1rem;
+    }
+
+    /* Sidebar title - show only icon when collapsed */
+    .sidebar h4 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 16px 0;
+      padding: 0 16px;
+      color: #01545A;
+      font-size: 16px;
+      font-weight: 600;
+      transition: none;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* Icon in title - consistent size */
+    .sidebar h4 i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #01545A;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Hide title text when collapsed */
+    .sidebar:not(:hover) h4 {
+      justify-content: center;
+      font-size: 0;
+      line-height: 0;
+      padding: 0;
+    }
+
+    .sidebar:not(:hover) h4 i {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* Show full title when expanded */
+    .sidebar:hover h4 {
+      justify-content: flex-start;
+      text-align: left;
+      padding: 0 16px;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .sidebar:hover h4 i {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+
+    /* Hide hr completely when collapsed */
+    .sidebar:not(:hover) hr {
+      display: none;
+    }
+
+    /* Show hr when expanded */
+    .sidebar:hover hr {
+      display: block;
+      opacity: 1;
+      border-color: #E2E8F0;
+      margin: 0 12px 16px;
+    }
+
+    /* Logout link styling */
+    .sidebar .logout-link {
+      margin-top: auto;
+      margin-bottom: 20px;
+    }
+
+    .sidebar:not(:hover) .logout-link {
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .sidebar:hover .logout-link {
+      margin-left: 12px;
+      margin-right: 12px;
+    }
+
+    /* Badge positioning */
+    .sidebar a .badge.right {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+      transition: opacity 0.2s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar:hover a .badge.right {
+      opacity: 1;
+      width: auto;
+    }
 
     .welcome-message {
       color: #01545A;
@@ -142,25 +418,25 @@
     }
 
     .content {
-      margin-left: 250px;
+      margin-left: 72px;
       padding: 20px;
-      /* Ensure content stays in normal document flow */
       position: relative;
       z-index: auto;
+      background-color: #F8FAFC;
+      min-height: 100vh;
     }
 
     .topbar {
       background-color: white;
-      /* border-radius: 8px; */
       padding: 25px 40px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 5px;
-      margin-left: 16%;
+      margin-left: 72px;
       padding-left: 30px;
-      /* width: 100%; */
+      border-bottom: 1px solid #E2E8F0;
     }
 
     .card-stat {
@@ -681,7 +957,7 @@
                 </a>
             </div>
             <div style="margin-top: auto; padding-bottom: 20px;">
-                <a href="{{ url('/logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();" style="display: block; margin-left: 30px; margin-top: 20px;">
+                <a href="{{ url('/logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();" class="logout-link">
                     <i class="fa-solid fa-sign-out-alt"></i> Keluar
                 </a>
                 <form id="logout-form-owner" action="{{ url('/logout') }}" method="POST" style="display: none;">
@@ -932,18 +1208,23 @@
     document.addEventListener('DOMContentLoaded', function() {
       const dropdownToggle = document.getElementById('dokumenDropdown');
       const dropdownContent = document.getElementById('dokumenContent');
-      const dropdownIcon = dropdownToggle.querySelector('.dropdown-icon');
+      const dropdownIcon = dropdownToggle ? dropdownToggle.querySelector('.dropdown-icon') : null;
 
-      dropdownToggle.addEventListener('click', function() {
-        // Toggle dropdown content
-        dropdownContent.classList.toggle('show');
+      if (dropdownToggle && dropdownIcon) {
+        dropdownToggle.addEventListener('click', function() {
+          // Toggle dropdown content
+          dropdownContent.classList.toggle('show');
 
-        // Rotate icon
-        dropdownIcon.classList.toggle('rotate');
+          // Rotate icon
+          dropdownIcon.classList.toggle('rotate');
 
-        // Toggle active state
-        dropdownToggle.classList.toggle('active');
-      });
+          // Toggle active state
+          dropdownToggle.classList.toggle('active');
+        });
+      }
+
+      // Sidebar now uses floating drawer effect - no need to adjust margins
+      // Content stays fixed at 72px margin, sidebar overlays on hover
     });
   </script>
 

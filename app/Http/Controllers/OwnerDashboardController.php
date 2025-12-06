@@ -16,10 +16,76 @@ class OwnerDashboardController extends Controller
      */
     public function index(Request $request)
     {
-        // Get all documents with latest status and apply search filter
-        $documents = $this->getDocumentsWithTracking($request);
+        // Get paginated documents with latest status and apply search filter
+        $perPage = $request->get('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int)$perPage : 10;
+        
+        $documents = $this->getDocumentsWithTracking($request, $perPage);
 
-        return view('owner.dashboard', compact('documents'))
+        // Calculate dashboard statistics
+        $totalDokumen = Dokumen::count();
+        
+        // Dokumen Selesai: status completed atau status_pembayaran = sudah_dibayar
+        $dokumenSelesai = Dokumen::where(function($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+              ->orWhere('status_pembayaran', 'sudah_dibayar');
+        })->count();
+        
+        // Dokumen Proses: dokumen yang belum selesai (tidak termasuk status selesai)
+        $dokumenProses = Dokumen::where(function($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+              ->where(function($subQ) {
+                  $subQ->whereNull('status_pembayaran')
+                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+              });
+        })->count();
+        
+        // Total Nilai (Rp)
+        $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
+
+        // Calculate trend indicators (compare with last week)
+        $oneWeekAgo = Carbon::now()->subWeek();
+        
+        $totalDokumenLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->count();
+        $totalDokumenTrend = $totalDokumenLastWeek > 0 
+            ? round((($totalDokumen - $totalDokumenLastWeek) / $totalDokumenLastWeek) * 100, 1)
+            : 0;
+
+        $dokumenSelesaiLastWeek = Dokumen::where(function($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+              ->orWhere('status_pembayaran', 'sudah_dibayar');
+        })->where('updated_at', '<=', $oneWeekAgo)->count();
+        $dokumenSelesaiTrend = $dokumenSelesaiLastWeek > 0
+            ? round((($dokumenSelesai - $dokumenSelesaiLastWeek) / $dokumenSelesaiLastWeek) * 100, 1)
+            : ($dokumenSelesai > 0 ? 100 : 0);
+
+        $dokumenProsesLastWeek = Dokumen::where(function($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+              ->where(function($subQ) {
+                  $subQ->whereNull('status_pembayaran')
+                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+              });
+        })->where('created_at', '<=', $oneWeekAgo)->count();
+        $dokumenProsesTrend = $dokumenProsesLastWeek > 0
+            ? round((($dokumenProses - $dokumenProsesLastWeek) / $dokumenProsesLastWeek) * 100, 1)
+            : ($dokumenProses > 0 ? 100 : 0);
+
+        $totalNilaiLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->sum('nilai_rupiah') ?? 0;
+        $totalNilaiTrend = $totalNilaiLastWeek > 0
+            ? round((($totalNilai - $totalNilaiLastWeek) / $totalNilaiLastWeek) * 100, 1)
+            : ($totalNilai > 0 ? 100 : 0);
+
+        return view('owner.dashboard', compact(
+            'documents', 
+            'totalDokumen', 
+            'dokumenProses', 
+            'dokumenSelesai', 
+            'totalNilai',
+            'totalDokumenTrend',
+            'dokumenSelesaiTrend',
+            'dokumenProsesTrend',
+            'totalNilaiTrend'
+        ))
             ->with('title', 'Dashboard Owner - Pusat Komando')
             ->with('module', 'owner')
             ->with('menuDashboard', 'active')
@@ -69,9 +135,28 @@ class OwnerDashboardController extends Controller
     /**
      * Get documents with their latest tracking status
      */
-    private function getDocumentsWithTracking(Request $request = null)
+    private function getDocumentsWithTracking(Request $request = null, $perPage = 10)
     {
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Apply status filter if provided
+        if ($request && $request->has('status') && !empty($request->status)) {
+            $status = $request->status;
+            if ($status === 'proses') {
+                $query->where(function($q) {
+                    $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                      ->where(function($subQ) {
+                          $subQ->whereNull('status_pembayaran')
+                               ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                      });
+                });
+            } elseif ($status === 'selesai') {
+                $query->where(function($q) {
+                    $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                      ->orWhere('status_pembayaran', 'sudah_dibayar');
+                });
+            }
+        }
 
         // Apply search filter if provided
         if ($request && $request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
@@ -114,27 +199,34 @@ class OwnerDashboardController extends Controller
             });
         }
 
-        return $query->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($dokumen) {
-                return [
-                    'id' => $dokumen->id,
-                    'nomor_agenda' => $dokumen->nomor_agenda,
-                    'nomor_spp' => $dokumen->nomor_spp,
-                    'uraian_spp' => $dokumen->uraian_spp,
-                    'nilai_rupiah' => $dokumen->nilai_rupiah,
-                    'status' => $dokumen->status,
-                    'status_display' => $this->getStatusDisplayName($dokumen->status),
-                    'current_handler' => $dokumen->current_handler,
-                    'current_handler_display' => $this->getRoleDisplayName($dokumen->current_handler),
-                    'created_at' => $dokumen->created_at->format('d M Y H:i'),
-                    'progress_percentage' => $this->calculateProgress($dokumen),
-                    'status_badge_color' => $this->getStatusBadgeColor($dokumen->status),
-                    'progress_color' => $this->getProgressColor($dokumen->status),
-                    'is_overdue' => $this->isDocumentOverdue($dokumen),
-                    'deadline_info' => $this->getDeadlineInfo($dokumen),
-                ];
-            });
+        // Paginate the query
+        $paginatedDocuments = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString(); // Preserve query parameters (search, status, etc.)
+
+        // Map the paginated collection
+        $paginatedDocuments->getCollection()->transform(function ($dokumen) {
+            return [
+                'id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'status' => $dokumen->status,
+                'status_display' => $this->getStatusDisplayName($dokumen->status),
+                'current_handler' => $dokumen->current_handler,
+                'current_handler_display' => $this->getRoleDisplayName($dokumen->current_handler),
+                'created_at' => $dokumen->created_at->format('d M Y H:i'),
+                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d M Y') : $dokumen->created_at->format('d M Y'),
+                'progress_percentage' => $this->calculateProgress($dokumen),
+                'status_badge_color' => $this->getStatusBadgeColor($dokumen->status),
+                'progress_color' => $this->getProgressColor($dokumen->status),
+                'is_overdue' => $this->isDocumentOverdue($dokumen),
+                'deadline_info' => $this->getDeadlineInfo($dokumen),
+            ];
+        });
+
+        return $paginatedDocuments;
     }
 
     /**
@@ -473,13 +565,19 @@ class OwnerDashboardController extends Controller
         $deadline = Carbon::parse($dokumen->deadline_at);
 
         if ($now->greaterThan($deadline)) {
+            // Calculate days overdue: use diff to get exact difference, then get days
+            $diff = $now->diff($deadline);
+            $daysOverdue = (int) $diff->days;
             return [
-                'text' => 'Terlambat ' . $now->diffInDays($deadline) . ' hari',
+                'text' => 'Terlambat ' . $daysOverdue . ' hari',
                 'class' => 'overdue'
             ];
         } else {
+            // Calculate days remaining: use diff to get exact difference, then get days
+            $diff = $deadline->diff($now);
+            $daysRemaining = (int) $diff->days;
             return [
-                'text' => $now->diffInDays($deadline) . ' hari lagi',
+                'text' => $daysRemaining . ' hari lagi',
                 'class' => 'on-time'
             ];
         }
