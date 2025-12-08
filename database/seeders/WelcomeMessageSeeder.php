@@ -41,7 +41,7 @@ final class WelcomeMessageSeeder extends Seeder
             ],
             [
                 'module' => 'pembayaran',
-                'message' => '{greeting}, Team Pembayaran! Semangat untuk memproses pembayaran hari ini.',
+                'message' => '{greeting}, Team Pembayaran!',
                 'type' => WelcomeMessage::TYPE_TEAM,
                 'is_active' => true,
             ],

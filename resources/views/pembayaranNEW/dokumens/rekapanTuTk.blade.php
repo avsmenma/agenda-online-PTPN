@@ -1,6 +1,9 @@
 @extends('layouts/app')
 @section('content')
 
+<!-- Tailwind CSS CDN for responsive utilities -->
+<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
   h2 {
     background: linear-gradient(135deg, #083E40 0%, #889717 100%);
@@ -16,13 +19,14 @@
   .scorecard {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 20px;
-    padding: 28px;
+    padding: 20px 24px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
     border: none;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
-    height: 160px;
+    min-height: auto;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -102,14 +106,15 @@
     z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
   }
 
   .scorecard-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 15px;
+    min-width: 0;
   }
 
   .scorecard-icon {
@@ -124,6 +129,17 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     flex-shrink: 0;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-width: 48px; /* Prevent icon from shrinking too much */
+  }
+
+  /* Responsive icon size */
+  @media (max-width: 768px) {
+    .scorecard-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+      min-width: 40px;
+    }
   }
 
   .scorecard:hover .scorecard-icon {
@@ -159,47 +175,73 @@
   .scorecard-content {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
   }
 
   .scorecard-value {
-    font-size: 24px;
+    font-size: 18px; /* Base: Mobile */
     font-weight: 700;
     color: #083E40;
     line-height: 1.2;
     margin: 0;
-    word-break: break-word;
     letter-spacing: -0.5px;
-    overflow-wrap: break-word;
   }
 
-  /* Handle long numbers */
-  .scorecard-value.long-number {
-    font-size: 20px;
-  }
-
-  @media (max-width: 1200px) {
+  /* Responsive font sizes */
+  @media (min-width: 640px) {
     .scorecard-value {
-      font-size: 20px;
+      font-size: 20px; /* md: Tablet */
     }
-    
+  }
+
+  @media (min-width: 1024px) {
+    .scorecard-value {
+      font-size: 22px; /* lg: Laptop */
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .scorecard-value {
+      font-size: 24px; /* 2xl: Large Monitor */
+    }
+  }
+
+  /* Handle long numbers - Responsive */
+  .scorecard-value.long-number {
+    font-size: 16px; /* Base: Mobile */
+  }
+
+  @media (min-width: 640px) {
     .scorecard-value.long-number {
-      font-size: 18px;
+      font-size: 18px; /* md: Tablet */
     }
+  }
+
+  @media (min-width: 1024px) {
+    .scorecard-value.long-number {
+      font-size: 20px; /* lg: Laptop */
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .scorecard-value.long-number {
+      font-size: 22px; /* 2xl: Large Monitor */
+    }
+  }
+
+  /* Prevent text wrapping for long numbers */
+  .scorecard-value.whitespace-nowrap {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   @media (max-width: 768px) {
     .scorecard {
-      height: auto;
-      min-height: 140px;
-    }
-    
-    .scorecard-value {
-      font-size: 20px;
-    }
-    
-    .scorecard-value.long-number {
-      font-size: 16px;
+      padding: 16px 20px;
     }
     
     .scorecard-icon {
@@ -214,6 +256,9 @@
     color: #889717;
     font-weight: 500;
     margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
   }
 
   /* Filter Section */
@@ -223,6 +268,9 @@
     padding: 24px;
     margin-bottom: 30px;
     box-shadow: 0 4px 16px rgba(8, 62, 64, 0.08);
+    position: relative;
+    z-index: 1;
+    overflow: visible;
   }
 
   .filter-row {
@@ -235,6 +283,13 @@
   .filter-group {
     flex: 1;
     min-width: 200px;
+  }
+
+  /* Responsive adjustments for action toolbar */
+  @media (max-width: 768px) {
+    .filter-row:last-child {
+      flex-direction: column;
+    }
   }
 
   .filter-group label {
@@ -253,6 +308,31 @@
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;
+    height: 42px;
+    box-sizing: border-box;
+    background-color: white;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Custom dropdown arrow for select - remove default arrow */
+  .filter-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23083E40' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 40px;
+    overflow: visible;
+  }
+
+  /* Ensure select text is visible and not overlapped */
+  .filter-group select option {
+    padding: 10px 12px;
+    background-color: white;
+    color: #083E40;
   }
 
   .filter-group select:focus,
@@ -260,6 +340,19 @@
     outline: none;
     border-color: #889717;
     box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+    z-index: 2;
+  }
+
+  /* Fix for data source select specifically */
+  #dataSourceSelect {
+    padding-right: 40px !important;
+    overflow: visible !important;
+    text-overflow: ellipsis;
+  }
+
+  #dataSourceSelect option {
+    padding: 10px 12px;
+    white-space: normal;
   }
 
   .btn-filter {
@@ -271,6 +364,11 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    height: 42px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-filter:hover {
@@ -287,6 +385,12 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    height: 42px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
   }
 
   .btn-reset:hover {
@@ -785,68 +889,67 @@
 <div class="container-fluid">
   <h2>Rekapan TU/TK</h2>
 
-  <!-- Dashboard Scorecards -->
-  <div class="row mb-4">
-    <div class="col-md-3 mb-3">
-      <div class="scorecard merah">
-        <div class="scorecard-body">
-          <div class="scorecard-header">
-            <div class="scorecard-content" style="flex: 1;">
-              <div class="scorecard-title">Total Outstanding</div>
-              <div class="scorecard-value long-number">Rp {{ number_format($totalOutstanding ?? 0, 0, ',', '.') }}</div>
-              <div class="scorecard-label">Belum dibayar</div>
-            </div>
-            <div class="scorecard-icon">
-              <i class="fa-solid fa-money-bill-wave"></i>
-            </div>
+  <!-- Dashboard Scorecards - Responsive Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4 mb-4">
+    <!-- Card 1: Total Outstanding -->
+    <div class="scorecard merah">
+      <div class="scorecard-body">
+        <div class="scorecard-header">
+          <div class="scorecard-content" style="flex: 1; min-width: 0;">
+            <div class="scorecard-title">Total Outstanding</div>
+            <div class="scorecard-value long-number whitespace-nowrap overflow-hidden text-ellipsis" title="Rp {{ number_format($totalOutstanding ?? 0, 0, ',', '.') }}">Rp {{ number_format($totalOutstanding ?? 0, 0, ',', '.') }}</div>
+            <div class="scorecard-label">Belum dibayar</div>
+          </div>
+          <div class="scorecard-icon flex-shrink-0">
+            <i class="fa-solid fa-money-bill-wave"></i>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
-      <div class="scorecard kuning">
-        <div class="scorecard-body">
-          <div class="scorecard-header">
-            <div class="scorecard-content" style="flex: 1;">
-              <div class="scorecard-title">Dokumen Belum Lunas</div>
-              <div class="scorecard-value">{{ number_format($totalDokumenBelumLunas ?? 0, 0, ',', '.') }}</div>
-              <div class="scorecard-label">Dokumen</div>
-            </div>
-            <div class="scorecard-icon">
-              <i class="fa-solid fa-file-invoice"></i>
-            </div>
+    
+    <!-- Card 2: Dokumen Belum Lunas -->
+    <div class="scorecard kuning">
+      <div class="scorecard-body">
+        <div class="scorecard-header">
+          <div class="scorecard-content" style="flex: 1; min-width: 0;">
+            <div class="scorecard-title">Dokumen Belum Lunas</div>
+            <div class="scorecard-value">{{ number_format($totalDokumenBelumLunas ?? 0, 0, ',', '.') }}</div>
+            <div class="scorecard-label">Dokumen</div>
+          </div>
+          <div class="scorecard-icon flex-shrink-0">
+            <i class="fa-solid fa-file-invoice"></i>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
-      <div class="scorecard hijau">
-        <div class="scorecard-body">
-          <div class="scorecard-header">
-            <div class="scorecard-content" style="flex: 1;">
-              <div class="scorecard-title">Total Terbayar Tahun Ini</div>
-              <div class="scorecard-value long-number">Rp {{ number_format($totalTerbayarTahunIni ?? 0, 0, ',', '.') }}</div>
-              <div class="scorecard-label">Tahun {{ date('Y') }}</div>
-            </div>
-            <div class="scorecard-icon">
-              <i class="fa-solid fa-check-circle"></i>
-            </div>
+    
+    <!-- Card 3: Total Terbayar Tahun Ini -->
+    <div class="scorecard hijau">
+      <div class="scorecard-body">
+        <div class="scorecard-header">
+          <div class="scorecard-content" style="flex: 1; min-width: 0;">
+            <div class="scorecard-title">Total Terbayar Tahun Ini</div>
+            <div class="scorecard-value long-number whitespace-nowrap overflow-hidden text-ellipsis" title="Rp {{ number_format($totalTerbayarTahunIni ?? 0, 0, ',', '.') }}">Rp {{ number_format($totalTerbayarTahunIni ?? 0, 0, ',', '.') }}</div>
+            <div class="scorecard-label">Tahun {{ date('Y') }}</div>
+          </div>
+          <div class="scorecard-icon flex-shrink-0">
+            <i class="fa-solid fa-check-circle"></i>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
-      <div class="scorecard biru">
-        <div class="scorecard-body">
-          <div class="scorecard-header">
-            <div class="scorecard-content" style="flex: 1;">
-              <div class="scorecard-title">Jatuh Tempo Minggu Ini</div>
-              <div class="scorecard-value">{{ number_format($jatuhTempoMingguIni ?? 0, 0, ',', '.') }}</div>
-              <div class="scorecard-label">Dokumen kritis</div>
-            </div>
-            <div class="scorecard-icon">
-              <i class="fa-solid fa-clock"></i>
-            </div>
+    
+    <!-- Card 4: Jatuh Tempo Minggu Ini -->
+    <div class="scorecard biru">
+      <div class="scorecard-body">
+        <div class="scorecard-header">
+          <div class="scorecard-content" style="flex: 1; min-width: 0;">
+            <div class="scorecard-title">Jatuh Tempo Minggu Ini</div>
+            <div class="scorecard-value">{{ number_format($jatuhTempoMingguIni ?? 0, 0, ',', '.') }}</div>
+            <div class="scorecard-label">Dokumen kritis</div>
+          </div>
+          <div class="scorecard-icon flex-shrink-0">
+            <i class="fa-solid fa-clock"></i>
           </div>
         </div>
       </div>
@@ -858,11 +961,11 @@
     <form method="GET" action="{{ route('pembayaran.rekapanTuTk') }}" id="filterForm">
       <!-- Data Source Selector -->
       <div class="filter-row" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #e9ecef;">
-        <div class="filter-group" style="flex: 1;">
-          <label style="font-weight: 700; color: #083E40; font-size: 14px;">
+        <div class="filter-group" style="flex: 1; position: relative;">
+          <label style="font-weight: 700; color: #083E40; font-size: 14px; display: block; margin-bottom: 8px;">
             <i class="fa-solid fa-database me-2"></i>Pilih Sumber Data
           </label>
-          <select name="data_source" class="form-control" id="dataSourceSelect" style="font-weight: 600; padding: 12px; border: 2px solid #083E40; border-radius: 8px;" onchange="this.form.submit()">
+          <select name="data_source" class="form-control" id="dataSourceSelect" style="font-weight: 600; padding: 12px 40px 12px 12px; border: 2px solid #083E40; border-radius: 8px; width: 100%; background-color: white; position: relative; z-index: 1; overflow: visible;" onchange="this.form.submit()">
             <option value="input_ks" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_ks' ? 'selected' : '' }}>Input KS (tu_tk_2023)</option>
             <option value="input_pupuk" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_pupuk' ? 'selected' : '' }}>Input Pupuk (tu_tk_pupuk_2023)</option>
             <option value="input_tan" {{ (request('data_source', $dataSource ?? 'input_ks')) == 'input_tan' ? 'selected' : '' }}>Input TAN (tu_tk_tan_2023)</option>
@@ -911,19 +1014,30 @@
           </select>
         </div>
       </div>
-      <div class="filter-row">
-        <div class="filter-group" style="flex: 2;">
-          <label>Search (Agenda, No. SPP, Vendor, No. Kontrak)</label>
-          <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Cari...">
+      <div class="flex flex-wrap items-end justify-between gap-4 w-full">
+        <!-- Search Input - Full width on mobile, flex-grow on desktop -->
+        <div class="w-full md:flex-1 min-w-0">
+          <label class="block mb-2" style="font-weight: 600; color: #083E40; font-size: 14px;">Search (Agenda, No. SPP, Vendor, No. Kontrak)</label>
+          <input type="text" name="search" class="form-control w-full" value="{{ request('search') }}" placeholder="Cari...">
         </div>
-        <div class="filter-group" style="display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;">
-          <button type="submit" class="btn-filter">Filter</button>
-          <a href="{{ route('pembayaran.rekapanTuTk') }}" class="btn-reset">Reset</a>
-          <div style="display: flex; gap: 8px;">
-            <a href="{{ route('pembayaran.exportRekapanTuTk', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn-export" style="padding: 8px 16px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+        
+        <!-- Action Buttons Group -->
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <!-- Primary Actions: Filter & Reset -->
+          <div class="flex gap-2 flex-shrink-0">
+            <button type="submit" class="btn-filter" style="white-space: nowrap;">Filter</button>
+            <a href="{{ route('pembayaran.rekapanTuTk') }}" class="btn-reset" style="white-space: nowrap;">Reset</a>
+          </div>
+          
+          <!-- Divider (hidden on mobile) -->
+          <div class="h-6 w-px bg-gray-300 mx-1 hidden md:block"></div>
+          
+          <!-- Export Actions: Excel & PDF -->
+          <div class="flex gap-2 flex-shrink-0">
+            <a href="{{ route('pembayaran.exportRekapanTuTk', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn-export" style="padding: 10px 16px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; box-sizing: border-box;">
               <i class="fa-solid fa-file-excel"></i> Excel
             </a>
-            <a href="{{ route('pembayaran.exportRekapanTuTk', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn-export" style="padding: 8px 16px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="{{ route('pembayaran.exportRekapanTuTk', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn-export" style="padding: 10px 16px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; box-sizing: border-box;">
               <i class="fa-solid fa-file-pdf"></i> PDF
             </a>
           </div>

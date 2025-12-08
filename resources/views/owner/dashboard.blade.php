@@ -465,6 +465,10 @@ body {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  user-select: text; /* Allow text selection */
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .dark .smart-document-card {
@@ -484,7 +488,7 @@ body {
 }
 
 .smart-document-card.overdue::after {
-  content: 'OVERDUE';
+  content: 'TERLAMBAT';
   position: absolute;
   top: 12px;
   right: 12px;
@@ -520,6 +524,8 @@ body {
   color: var(--text-primary);
   margin-bottom: 0.25rem;
   transition: color 0.3s ease;
+  cursor: text; /* Show text cursor on title */
+  user-select: text;
 }
 
 .dark .smart-card-title {
@@ -530,6 +536,8 @@ body {
   font-size: 13px;
   color: var(--text-muted);
   transition: color 0.3s ease;
+  cursor: text; /* Show text cursor on subtitle */
+  user-select: text;
 }
 
 .dark .smart-card-subtitle {
@@ -541,6 +549,11 @@ body {
   font-weight: 700;
   color: var(--success-color);
   margin: 1rem 0;
+  cursor: text; /* Show text cursor on value */
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .smart-card-info-row {
@@ -550,6 +563,14 @@ body {
   margin-bottom: 0.75rem;
   font-size: 14px;
   color: var(--text-secondary);
+}
+
+.smart-card-info-row span:not(.user-avatar) {
+  cursor: text; /* Show text cursor on info text */
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .smart-card-info-row i {
@@ -1164,7 +1185,7 @@ body {
         </button>
         @if(isset($search) && !empty($search))
         <a href="{{ url('/owner/dashboard') }}" class="action-btn" style="background: var(--text-muted);">
-          <i class="fas fa-times me-1"></i> Reset
+          <i class="fas fa-times me-1"></i> Atur Ulang
         </a>
         @endif
       </form>
@@ -1172,10 +1193,10 @@ body {
     <div class="control-bar-right">
       <div class="view-switcher">
         <button class="view-switcher-btn active" data-view="card" onclick="switchView('card')">
-          <i class="fas fa-th"></i> Card
+          <i class="fas fa-th"></i> Kartu
         </button>
         <button class="view-switcher-btn" data-view="table" onclick="switchView('table')">
-          <i class="fas fa-table"></i> Table
+          <i class="fas fa-table"></i> Tabel
         </button>
       </div>
     </div>
@@ -1201,7 +1222,8 @@ body {
       <div class="card-view-container">
         @foreach($documents as $dokumen)
           <div class="smart-document-card {{ $dokumen['is_overdue'] ? 'overdue' : '' }}"
-               onclick="window.location.href='{{ url('/owner/workflow/' . $dokumen['id']) }}'">
+               data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
+               onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')">
             
             <div class="smart-card-header">
               <div>
@@ -1230,7 +1252,7 @@ body {
             @if($dokumen['deadline_info'])
             <div class="smart-card-info-row">
               <i class="fas fa-clock"></i>
-              <span>Deadline:</span>
+              <span>Batas Waktu:</span>
               <span class="text-{{ $dokumen['deadline_info']['class'] }}" style="font-weight: 600;">
                 {{ $dokumen['deadline_info']['text'] }}
               </span>
@@ -1239,7 +1261,7 @@ body {
 
             <!-- Workflow Stepper -->
             <div class="workflow-stepper">
-              <div class="stepper-label">Progress Workflow</div>
+              <div class="stepper-label">Progres Alur Kerja</div>
               <div class="stepper-steps">
                 @php
                   $progress = $dokumen['progress_percentage'] ?? 0;
@@ -1298,14 +1320,15 @@ body {
               <th>Nilai (Rp)</th>
               <th>Posisi</th>
               <th>Status</th>
-              <th>Progress</th>
-              <th>Action</th>
+              <th>Progres</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
             @foreach($documents as $dokumen)
               <tr class="{{ $dokumen['is_overdue'] ? 'overdue-row' : '' }}" 
-                  onclick="window.location.href='{{ url('/owner/workflow/' . $dokumen['id']) }}'"
+                  data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
+                  onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')"
                   style="cursor: pointer;">
                 <td>
                   <div style="font-weight: 600; color: var(--text-primary);">{{ $dokumen['nomor_agenda'] }}</div>
@@ -1361,6 +1384,46 @@ body {
 </div>
 
 <script>
+/**
+ * Smart Click Handler untuk Card Dokumen
+ * Mencegah navigasi jika user sedang melakukan text selection
+ */
+function handleCardClick(event, url) {
+  // Cek apakah ada text yang sedang diseleksi
+  const selection = window.getSelection();
+  const selectedText = selection.toString().trim();
+  
+  // Jika ada text yang diseleksi, jangan lakukan navigasi
+  if (selectedText.length > 0) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+  
+  // Cek apakah ini adalah double-click (biasanya untuk select word)
+  if (event.detail === 2) {
+    // Double-click biasanya untuk select word, tunggu sebentar
+    setTimeout(() => {
+      const newSelection = window.getSelection();
+      if (newSelection.toString().trim().length > 0) {
+        // User berhasil select text, jangan navigasi
+        return false;
+      }
+    }, 50);
+    return false;
+  }
+  
+  // Cek juga apakah user sedang drag (mouse drag selection)
+  if (event.detail === 0 || event.which === 0) {
+    // Ini adalah programmatic click atau drag, jangan navigasi
+    return false;
+  }
+  
+  // Jika tidak ada selection, lakukan navigasi
+  window.location.href = url;
+  return true;
+}
+
 function switchView(view) {
   // Update buttons
   document.querySelectorAll('.view-switcher-btn').forEach(btn => {
@@ -1380,6 +1443,43 @@ function switchView(view) {
 document.addEventListener('DOMContentLoaded', function() {
   const savedView = localStorage.getItem('dashboardView') || 'card';
   switchView(savedView);
+  
+  // Tambahkan event listener untuk mencegah navigasi saat text selection
+  // Gunakan mousedown untuk deteksi awal selection
+  document.querySelectorAll('.smart-document-card, .modern-table tbody tr').forEach(card => {
+    let isSelecting = false;
+    let startX = 0;
+    let startY = 0;
+    
+    card.addEventListener('mousedown', function(e) {
+      isSelecting = false;
+      startX = e.clientX;
+      startY = e.clientY;
+    });
+    
+    card.addEventListener('mousemove', function(e) {
+      // Jika mouse bergerak lebih dari 3px, kemungkinan user sedang drag select
+      const deltaX = Math.abs(e.clientX - startX);
+      const deltaY = Math.abs(e.clientY - startY);
+      if (deltaX > 3 || deltaY > 3) {
+        isSelecting = true;
+      }
+    });
+    
+    card.addEventListener('mouseup', function(e) {
+      // Jika user melakukan drag, set flag
+      if (isSelecting) {
+        setTimeout(() => {
+          const selection = window.getSelection();
+          if (selection.toString().trim().length > 0) {
+            // User sedang melakukan text selection, jangan navigasi
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, 10);
+      }
+    });
+  });
 });
 </script>
 

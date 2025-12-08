@@ -13,7 +13,7 @@
 <div class="pagination-footer">
   <!-- Left Section: Rows per page & Summary -->
   <div class="pagination-footer-left">
-    <label class="pagination-label">Rows per page:</label>
+    <label class="pagination-label">Baris per halaman:</label>
     <select class="pagination-select" onchange="changePerPage(this.value)">
       <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
       <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
@@ -22,7 +22,7 @@
     </select>
     
     <span class="pagination-summary">
-      Showing {{ $from ?? 0 }} - {{ $to ?? 0 }} of {{ number_format($total, 0, ',', '.') }} results
+      Menampilkan {{ $from ?? 0 }} - {{ $to ?? 0 }} dari {{ number_format($total, 0, ',', '.') }} hasil
     </span>
   </div>
 
@@ -32,7 +32,7 @@
     <button class="pagination-btn" 
             onclick="goToPage({{ $currentPage - 1 }})"
             {{ $currentPage == 1 ? 'disabled' : '' }}
-            title="Previous page">
+            title="Halaman sebelumnya">
       <i class="fas fa-chevron-left"></i>
     </button>
 
@@ -45,13 +45,13 @@
            onchange="goToPage(this.value)"
            onkeypress="if(event.key === 'Enter') goToPage(this.value)">
     
-    <span class="pagination-total-pages">of {{ $lastPage }} page{{ $lastPage > 1 ? 's' : '' }}</span>
+    <span class="pagination-total-pages">dari {{ $lastPage }} halaman</span>
 
     <!-- Next Button -->
     <button class="pagination-btn" 
             onclick="goToPage({{ $currentPage + 1 }})"
             {{ $currentPage >= $lastPage ? 'disabled' : '' }}
-            title="Next page">
+            title="Halaman berikutnya">
       <i class="fas fa-chevron-right"></i>
     </button>
   </div>

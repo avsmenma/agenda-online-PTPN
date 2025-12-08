@@ -1,6 +1,9 @@
 @extends('layouts/app')
 @section('content')
 
+<!-- Tailwind CSS CDN for responsive utilities -->
+<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
   h2 {
     background: linear-gradient(135deg, #083E40 0%, #889717 100%);
@@ -16,13 +19,14 @@
   .stat-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
-    padding: 24px;
+    padding: 20px 24px;
     box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
     border: 1px solid rgba(8, 62, 64, 0.08);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    height: 140px;
+    min-height: auto;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -52,14 +56,15 @@
 
   .stat-card-body {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 20px;
+    gap: 15px;
+    min-width: 0;
   }
 
   .stat-icon {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -67,6 +72,7 @@
     font-size: 24px;
     color: white;
     flex-shrink: 0;
+    min-width: 48px;
   }
 
   .stat-icon.total { background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); }
@@ -74,23 +80,87 @@
   .stat-icon.siap { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
   .stat-icon.sudah { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
 
+  .stat-content {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .stat-title {
     font-size: 13px;
     font-weight: 600;
     color: #6c757d;
     text-transform: uppercase;
+    margin-bottom: 6px;
   }
 
   .stat-value {
-    font-size: 28px;
+    font-size: 24px; /* Base: Mobile */
     font-weight: 700;
     color: #2c3e50;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  /* Responsive font sizes */
+  @media (min-width: 640px) {
+    .stat-value {
+      font-size: 26px; /* md: Tablet */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .stat-value {
+      font-size: 28px; /* lg: Laptop */
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .stat-value {
+      font-size: 32px; /* 2xl: Large Monitor */
+    }
   }
 
   .stat-nilai {
     font-size: 13px;
     font-weight: 600;
     color: #28a745;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+  }
+
+  /* Handle long numbers in stat-nilai */
+  .stat-nilai.long-number {
+    font-size: 12px; /* Base: Mobile */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (min-width: 640px) {
+    .stat-nilai.long-number {
+      font-size: 13px; /* md: Tablet */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .stat-nilai.long-number {
+      font-size: 13px; /* lg: Laptop */
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stat-card {
+      padding: 16px 20px;
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+      min-width: 40px;
+    }
   }
 
   /* Filter Section - Modern Redesign */
@@ -116,6 +186,7 @@
     flex: 1;
     flex-wrap: wrap;
     min-width: 0;
+    width: 100%;
   }
 
   .filter-item {
@@ -126,6 +197,30 @@
   .filter-item.filter-search {
     flex: 1.5;
     min-width: 200px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .filter-inputs {
+      flex-direction: column;
+    }
+    
+    .filter-item,
+    .filter-item.filter-search {
+      width: 100%;
+      min-width: 100%;
+      flex: 1 1 100%;
+    }
+    
+    .filter-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+    
+    .btn-filter-primary,
+    .btn-filter-reset {
+      flex: 1;
+    }
   }
 
   .filter-label {
@@ -145,6 +240,8 @@
     background: #ffffff;
     color: #111827;
     transition: all 0.2s ease;
+    height: 42px;
+    box-sizing: border-box;
   }
 
   .form-select-modern:focus, .form-control-modern:focus {
@@ -174,6 +271,14 @@
     display: flex;
     gap: 10px;
     flex-shrink: 0;
+    align-items: flex-end;
+  }
+
+  @media (max-width: 768px) {
+    .filter-actions {
+      width: 100%;
+      margin-top: 12px;
+    }
   }
 
   .btn-filter-primary {
@@ -188,6 +293,10 @@
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    height: 42px;
+    box-sizing: border-box;
+    white-space: nowrap;
   }
 
   .btn-filter-primary:hover {
@@ -203,6 +312,12 @@
     border-radius: 8px;
     padding: 10px 20px;
     font-weight: 600;
+    height: 42px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -931,69 +1046,78 @@
 
 <h2>{{ $title }}</h2>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-  <div class="col-md-3 mb-3">
-    <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-content">
-          <div class="stat-title">Total Dokumen</div>
-          <div class="stat-value">{{ $statistics['total_documents'] }}</div>
-          <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
-        </div>
-        <div class="stat-icon total">
-          <i class="fa-solid fa-file-invoice-dollar"></i>
-        </div>
+<!-- Statistics Cards - Responsive Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4 mb-4">
+  <!-- Card 1: Total Dokumen -->
+  <div class="stat-card">
+    <div class="stat-card-body">
+      <div class="stat-content" style="flex: 1; min-width: 0;">
+        <div class="stat-title">Total Dokumen</div>
+        <div class="stat-value">{{ $statistics['total_documents'] }}</div>
+        <div class="stat-nilai long-number" title="Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
+      </div>
+      <div class="stat-icon total flex-shrink-0">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
       </div>
     </div>
   </div>
-  <div class="col-md-3 mb-3">
-    <div class="stat-card">
+  
+  <!-- Card 2: Belum Siap Bayar -->
+  <a href="{{ route('pembayaran.analytics', ['status' => 'belum_siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+    <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
-        <div class="stat-content">
+        <div class="stat-content" style="flex: 1; min-width: 0;">
           <div class="stat-title">Belum Siap Bayar</div>
           <div class="stat-value">{{ $statistics['by_status']['belum_dibayar'] }}</div>
-          <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-nilai long-number" title="Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}">Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
+          <div style="font-size: 11px; color: #6c757d; margin-top: 8px; font-style: italic;">
+            <i class="fa-solid fa-arrow-right me-1"></i>Klik untuk detail analitik
+          </div>
         </div>
-        <div class="stat-icon belum">
+        <div class="stat-icon belum flex-shrink-0">
           <i class="fa-solid fa-clock"></i>
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-md-3 mb-3">
-    <div class="stat-card">
+  </a>
+  
+  <!-- Card 3: Siap Dibayar -->
+  <a href="{{ route('pembayaran.analytics', ['status' => 'siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+    <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
-        <div class="stat-content">
+        <div class="stat-content" style="flex: 1; min-width: 0;">
           <div class="stat-title">Siap Dibayar</div>
           <div class="stat-value">{{ $statistics['by_status']['siap_dibayar'] }}</div>
-          <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-nilai long-number" title="Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}">Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
+          <div style="font-size: 11px; color: #6c757d; margin-top: 8px; font-style: italic;">
+            <i class="fa-solid fa-arrow-right me-1"></i>Klik untuk detail analitik
+          </div>
         </div>
-        <div class="stat-icon siap">
+        <div class="stat-icon siap flex-shrink-0">
           <i class="fa-solid fa-hourglass-half"></i>
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-md-3 mb-3">
-    <a href="{{ route('pembayaran.analytics') }}" style="text-decoration: none; color: inherit; display: block;">
-      <div class="stat-card" style="cursor: pointer;">
+  </a>
+  
+  <!-- Card 4: Sudah Dibayar -->
+  <a href="{{ route('pembayaran.analytics', ['status' => 'sudah_dibayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+    <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
-        <div class="stat-content">
+        <div class="stat-content" style="flex: 1; min-width: 0;">
           <div class="stat-title">Sudah Dibayar</div>
           <div class="stat-value">{{ $statistics['by_status']['sudah_dibayar'] }}</div>
-          <div class="stat-nilai">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
-            <div style="font-size: 11px; color: #6c757d; margin-top: 8px; font-style: italic;">
-              <i class="fa-solid fa-arrow-right me-1"></i>Klik untuk detail analitik
-            </div>
+          <div class="stat-nilai long-number" title="Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+          <div style="font-size: 11px; color: #6c757d; margin-top: 8px; font-style: italic;">
+            <i class="fa-solid fa-arrow-right me-1"></i>Klik untuk detail analitik
+          </div>
         </div>
-        <div class="stat-icon sudah">
+        <div class="stat-icon sudah flex-shrink-0">
           <i class="fa-solid fa-check-circle"></i>
         </div>
       </div>
     </div>
-    </a>
-  </div>
+  </a>
 </div>
 
 <!-- Filter Section -->

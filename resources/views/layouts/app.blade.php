@@ -46,6 +46,13 @@
       box-shadow: none;
     }
 
+    /* Expanded state on hover - Simple extend without animations */
+    .sidebar:hover {
+      width: 240px;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+      z-index: 1001;
+    }
+
     .dark .sidebar {
       background: #1e293b; /* slate-800 */
       border-right-color: #334155; /* slate-700 */
@@ -177,6 +184,35 @@
       background-color: #E0F2FE;
       color: #0369A1;
       font-weight: 600;
+    }
+
+    /* Active state for menu trigger (when secondary sidebar is open) */
+    .sidebar-menu-trigger.active,
+    .sidebar-menu-trigger[aria-expanded="true"] {
+      background-color: #E0F2FE !important;
+      color: #0369A1 !important;
+      font-weight: 600;
+    }
+
+    .sidebar:not(:hover) .sidebar-menu-trigger.active i,
+    .sidebar:not(:hover) .sidebar-menu-trigger[aria-expanded="true"] i {
+      color: #0369A1;
+    }
+
+    .sidebar:hover .sidebar-menu-trigger.active,
+    .sidebar:hover .sidebar-menu-trigger[aria-expanded="true"] {
+      background-color: #E0F2FE;
+      color: #0369A1;
+    }
+
+    /* Cursor pointer untuk menu trigger */
+    .sidebar-menu-trigger {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sidebar-menu-trigger:hover {
+      background-color: #F1F5F9;
     }
 
     /* .sidebar .dropdown-menu-custom {
@@ -443,6 +479,116 @@
       font-size: 1.2em;
     }
 
+    /* Secondary Sidebar (Submenu Panel) - Mekari Style */
+    .secondary-sidebar {
+      position: fixed;
+      left: 72px;
+      top: 0;
+      width: 240px;
+      height: 100vh;
+      background: #FFFFFF;
+      border-right: 1px solid #E2E8F0;
+      z-index: 5; /* Lower than topbar (z-index: 10) */
+      display: none;
+      flex-direction: column;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .secondary-sidebar.active {
+      display: flex;
+    }
+
+    .dark .secondary-sidebar {
+      background: #1e293b; /* slate-800 */
+      border-right-color: #334155; /* slate-700 */
+    }
+
+    .secondary-sidebar-header {
+      padding: 20px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748B;
+      background: #F8FAFC;
+    }
+
+    .dark .secondary-sidebar-header {
+      background: #0f172a; /* slate-900 */
+      border-bottom-color: #334155; /* slate-700 */
+      color: #94a3b8; /* slate-400 */
+    }
+
+    .secondary-sidebar-content {
+      flex: 1;
+      padding: 12px 0;
+      overflow-y: auto;
+    }
+
+    .secondary-sidebar a {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: #475569;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+      position: relative;
+      margin: 2px 8px;
+      border-radius: 8px;
+    }
+
+    .secondary-sidebar a i {
+      width: 18px;
+      text-align: center;
+      margin-right: 12px;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .secondary-sidebar a:hover {
+      background: #F1F5F9;
+      color: #0369A1;
+    }
+
+    .secondary-sidebar a.active {
+      background: linear-gradient(135deg, #E0F2FE 0%, #DBEAFE 100%);
+      color: #0369A1;
+      border-left-color: #0369A1;
+      border-left-width: 4px;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(3, 105, 161, 0.1);
+    }
+
+    .secondary-sidebar a.active i {
+      color: #0369A1;
+    }
+
+    .dark .secondary-sidebar a {
+      color: #cbd5e1; /* slate-300 */
+    }
+
+    .dark .secondary-sidebar a:hover {
+      background: #0f172a; /* slate-900 */
+      color: #60a5fa; /* blue-400 */
+    }
+
+    .dark .secondary-sidebar a.active {
+      background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%); /* blue-900 gradient */
+      color: #60a5fa; /* blue-400 */
+      border-left-color: #60a5fa;
+      border-left-width: 4px;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(96, 165, 250, 0.2);
+    }
+
+    .dark .secondary-sidebar a.active i {
+      color: #60a5fa; /* blue-400 */
+    }
+
     .content {
       margin-left: 72px;
       padding: 20px;
@@ -450,11 +596,38 @@
       z-index: auto;
       background-color: #F8FAFC;
       min-height: 100vh;
-      transition: background-color 0.3s ease;
+      transition: margin-left 0.3s ease, background-color 0.3s ease;
+    }
+
+    .content.with-secondary-sidebar {
+      margin-left: 312px; /* 72px (primary) + 240px (secondary) */
     }
 
     .dark .content {
       background-color: #0f172a; /* slate-900 */
+    }
+
+    /* Responsive: Hide secondary sidebar on mobile */
+    @media (max-width: 768px) {
+      .secondary-sidebar {
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .secondary-sidebar.active {
+        transform: translateX(0);
+      }
+
+      .content.with-secondary-sidebar {
+        margin-left: 72px; /* Only primary sidebar on mobile */
+      }
+    }
+
+    /* Smooth transition for secondary sidebar */
+    @media (min-width: 769px) {
+      .secondary-sidebar {
+        transform: translateX(0);
+      }
     }
 
     /* Dark Mode Toggle Button */
@@ -524,7 +697,13 @@
       margin-left: 72px;
       padding-left: 30px;
       border-bottom: 1px solid #E2E8F0;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
+      transition: background-color 0.3s ease, border-color 0.3s ease, margin-left 0.3s ease;
+      position: relative;
+      z-index: 10;
+    }
+
+    .topbar.with-secondary-sidebar {
+      margin-left: 312px; /* 72px (primary) + 240px (secondary) */
     }
 
     .dark .topbar {
@@ -1013,8 +1192,45 @@
   </script>
 </head>
 <body>
+  @php
+    // Pre-calculate shouldShowSecondarySidebar for header
+    $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
+    $isSubmenuPageForHeader = false;
+    if(isset($module)) {
+      if($module === 'pembayaran') {
+        $isSubmenuPageForHeader = request()->routeIs('dokumensPembayaran.*') || 
+                                 request()->routeIs('pembayaran.*') || 
+                                 request()->routeIs('rekapanKeterlambatan.*') ||
+                                 request()->is('*dokumensPembayaran*') ||
+                                 request()->is('*rekapan-pembayaran*') ||
+                                 request()->is('*rekapan-keterlambatan*') ||
+                                 request()->is('*rekapan-tu-tk*') ||
+                                 request()->is('*pengembalian-dokumensPembayaran*');
+      } elseif($module === 'akutansi') {
+        $isSubmenuPageForHeader = request()->routeIs('dokumensAkutansi.*') || 
+                                  request()->routeIs('akutansi.*') ||
+                                  request()->is('*dokumensAkutansi*') ||
+                                  request()->is('*rekapan-akutansi*');
+      } elseif($module === 'perpajakan') {
+        $isSubmenuPageForHeader = request()->routeIs('dokumensPerpajakan.*') || 
+                                  request()->routeIs('perpajakan.*') ||
+                                  request()->is('*dokumensPerpajakan*') ||
+                                  request()->is('*rekapan-perpajakan*');
+      } elseif($module === 'ibub') {
+        $isSubmenuPageForHeader = request()->routeIs('dokumensB.*') || 
+                                  request()->routeIs('ibub.*') ||
+                                  request()->is('*dokumensB*') ||
+                                  request()->is('*rekapan-ibuB*');
+      } else {
+        $isSubmenuPageForHeader = request()->is('*dokumens*') || 
+                                  request()->is('*rekapan*') || 
+                                  request()->is('*pengembalian*');
+      }
+    }
+    $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader;
+  @endphp
   <header>
-       <div class="topbar mb-0 mt-0">
+       <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
         <div class="d-flex align-items-center">
           <!-- Dark Mode Toggle Button -->
@@ -1106,70 +1322,102 @@
             </div>
         @else
             <!-- Regular Menu for other roles -->
-            <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
 
-            <!-- Owner Dashboard - Only for Admin users -->
-            @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
-                <a href="{{ url('/owner/dashboard') }}" class="nav-link">
-                    <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
-                </a>
-            @endif
+                <!-- Owner Dashboard - Only for Admin users -->
+                @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
+                    <a href="{{ url('/owner/dashboard') }}" class="nav-link">
+                        <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
+                    </a>
+                @endif
 
-            <!-- Inbox Menu - Untuk IbuB, Perpajakan, Akutansi -->
-    @php
-        $currentUserRole = 'IbuA'; // Default
-        if (auth()->check()) {
-            $user = auth()->user();
-            if (isset($user->name)) {
-                $nameToRole = [
-                    'Ibu A' => 'ibuA',
-                    'IbuA' => 'ibuA',
-                    'IbuB' => 'ibuB',
-                    'Ibu B' => 'ibuB',
-                    'Perpajakan' => 'perpajakan',
-                    'Akutansi' => 'akutansi',
-                    'Pembayaran' => 'pembayaran'
-                ];
-                $currentUserRole = $nameToRole[$user->name] ?? 'IbuA';
-            } elseif (isset($user->role)) {
-                $currentUserRole = $user->role;
-            }
-        }
-        
-        $inboxRoles = ['ibuB', 'IbuB', 'Perpajakan', 'perpajakan', 'Akutansi', 'akutansi'];
-        $showInbox = in_array($currentUserRole, $inboxRoles);
-        $inboxRoleForQuery = 'IbuB';
-        if (in_array($currentUserRole, ['Perpajakan', 'perpajakan'])) {
-            $inboxRoleForQuery = 'Perpajakan';
-        } elseif (in_array($currentUserRole, ['Akutansi', 'akutansi'])) {
-            $inboxRoleForQuery = 'Akutansi';
-        }
-    @endphp
-    
-    @if($showInbox)
-        <a href="{{ url('/inbox') }}" class="{{ request()->routeIs('inbox.*') ? 'active' : '' }}">
-            <i class="fa-solid fa-inbox"></i>
-            Inbox
-            @php
-                try {
-                    $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
-                        ->where('inbox_approval_status', 'pending')
-                        ->count();
-                } catch (\Exception $e) {
-                    $inboxCount = 0;
+                <!-- Inbox Menu - Untuk IbuB, Perpajakan, Akutansi -->
+        @php
+            $currentUserRole = 'IbuA'; // Default
+            if (auth()->check()) {
+                $user = auth()->user();
+                if (isset($user->name)) {
+                    $nameToRole = [
+                        'Ibu A' => 'ibuA',
+                        'IbuA' => 'ibuA',
+                        'IbuB' => 'ibuB',
+                        'Ibu B' => 'ibuB',
+                        'Perpajakan' => 'perpajakan',
+                        'Akutansi' => 'akutansi',
+                        'Pembayaran' => 'pembayaran'
+                    ];
+                    $currentUserRole = $nameToRole[$user->name] ?? 'IbuA';
+                } elseif (isset($user->role)) {
+                    $currentUserRole = $user->role;
                 }
-            @endphp
-            @if($inboxCount > 0)
-                <span class="badge badge-danger right">{{ $inboxCount }}</span>
-            @endif
-        </a>
-    @endif
-    
-    @unless($isOwner)
-    <!-- Dropdown Menu Dokumen - Customized per Module -->
-    <div class="dropdown-menu-custom">
-      <div class="dropdown-toggle {{ $menuDokumen ?? '' }}" id="dokumenDropdown">
-        <span><i class="fa-solid fa-file-lines {{ $menuDokumen ?? '' }}"></i> 
+            }
+            
+            $inboxRoles = ['ibuB', 'IbuB', 'Perpajakan', 'perpajakan', 'Akutansi', 'akutansi'];
+            $showInbox = in_array($currentUserRole, $inboxRoles);
+            $inboxRoleForQuery = 'IbuB';
+            if (in_array($currentUserRole, ['Perpajakan', 'perpajakan'])) {
+                $inboxRoleForQuery = 'Perpajakan';
+            } elseif (in_array($currentUserRole, ['Akutansi', 'akutansi'])) {
+                $inboxRoleForQuery = 'Akutansi';
+            }
+        @endphp
+        
+        @if($showInbox)
+            <a href="{{ url('/inbox') }}" class="{{ request()->routeIs('inbox.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-inbox"></i>
+                Inbox
+                @php
+                    try {
+                        $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
+                            ->where('inbox_approval_status', 'pending')
+                            ->count();
+                    } catch (\Exception $e) {
+                        $inboxCount = 0;
+                    }
+                @endphp
+                @if($inboxCount > 0)
+                    <span class="badge badge-danger right">{{ $inboxCount }}</span>
+                @endif
+            </a>
+        @endif
+        
+        @unless($isOwner)
+        <!-- Menu Dokumen - Direct Link dengan Auto-Open State -->
+        @php
+          // Determine route based on module
+          $menuRoute = match($module) {
+            'pembayaran' => route('dokumensPembayaran.index'),
+            'akutansi' => url($dokumenUrl),
+            'perpajakan' => url($dokumenUrl),
+            'ibub' => url($dokumenUrl),
+            default => url($dokumenUrl)
+          };
+          
+          // Check if current route is within this module
+          $isModuleActive = match($module) {
+            'pembayaran' => request()->routeIs('dokumensPembayaran.*') || 
+                           request()->routeIs('pembayaran.*') || 
+                           request()->routeIs('rekapanKeterlambatan.*') ||
+                           request()->is('*dokumensPembayaran*') ||
+                           request()->is('*rekapan-pembayaran*') ||
+                           request()->is('*rekapan-keterlambatan*') ||
+                           request()->is('*rekapan-tu-tk*'),
+            'akutansi' => request()->routeIs('dokumensAkutansi.*') || 
+                          request()->routeIs('akutansi.*'),
+            'perpajakan' => request()->routeIs('dokumensPerpajakan.*') || 
+                           request()->routeIs('perpajakan.*'),
+            'ibub' => request()->routeIs('dokumensB.*') || 
+                     request()->routeIs('ibub.*'),
+            default => false
+          };
+        @endphp
+        <a href="{{ $menuRoute }}" 
+           class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger" 
+           data-submenu="dokumen"
+           id="btn-pembayaran"
+           aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
+          <i class="fa-solid fa-file-lines"></i> 
           @if($module === 'pembayaran')
             Pembayaran
           @elseif($module === 'akutansi')
@@ -1181,88 +1429,178 @@
           @else
             Dokumen
           @endif
-        </span>
-        <i class="fa-solid fa-chevron-down dropdown-icon"></i>
-      </div>
-      <div class="dropdown-content {{ ($menuDokumen ?? '') ? 'show' : '' }}" id="dokumenContent">
-        @if($module === 'pembayaran')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}"><i></i> Daftar Pembayaran</a>
-          <a href="{{ route('pembayaran.rekapan') }}" class="{{ $menuRekapanDokumen ?? '' }}"><i></i> Rekapan Dokumen</a>
-          <a href="{{ url($pengembalianUrl) }}" class="{{ $menuRekapKeterlambatan ?? '' }}"><i></i> Rekap Keterlambatan</a>
-          <a href="{{ route('pembayaran.rekapanTuTk') }}" class="{{ $menuRekapanTuTk ?? '' }}"><i></i> Rekapan TU/TK</a>
-        @elseif($module === 'akutansi')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-            <span class="menu-item-wrapper">
-              <i></i> Daftar Akutansi
-              <span class="menu-notification-badge" id="akutansi-notification-badge" style="display: none;">0</span>
-            </span>
-          </a>
-          <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}"><i></i> Daftar Pengembalian Akutansi</a>
-          <a href="{{ route('akutansi.rekapan') }}" class="{{ $menuRekapan ?? '' }}"><i></i> Rekapan Akutansi</a>
-        @elseif($module === 'perpajakan')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-            <span class="menu-item-wrapper">
-              <i></i> Daftar Perpajakan
-              <span class="menu-notification-badge" id="perpajakan-notification-badge" style="display: none;">0</span>
-            </span>
-          </a>
-          <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}"><i></i> Daftar Pengembalian Perpajakan</a>
-          <a href="{{ url('/rekapan-perpajakan') }}" class="{{ $menuRekapan ?? '' }}">
-            <span class="menu-item-wrapper">
-              <i></i> Rekapan
-            </span>
-          </a>
-        @elseif($module === 'ibub')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-            <span class="menu-item-wrapper">
-              <i></i> Daftar Dokumen
-              <span class="menu-notification-badge" id="notification-badge" style="display: none;">0</span>
-            </span>
-          </a>
-          <a href="{{ url('/pengembalian-dokumens-ke-bidang') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
-            <span class="menu-item-wrapper">
-              <i></i> Pengembalian ke Bidang
-              <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge" style="display: none;">0</span>
-            </span>
-          </a>
-          <a href="{{ url('/pengembalian-dokumensB') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-            <span class="menu-item-wrapper">
-              <i></i> Pengembalian dari Bagian
-              <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge" style="display: none;">0</span>
-            </span>
-          </a>
-          <a href="{{ url('/rekapan-ibuB') }}" class="{{ $menuRekapan ?? '' }}">
-            <span class="menu-item-wrapper">
-              <i></i> Rekapan
-            </span>
-          </a>
-        @else
-          <!-- IbuA -->
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}"><i></i> Daftar Dokumen</a>
-          @if($tambahDokumenUrl)
-          <a href="{{ url($tambahDokumenUrl) }}" class="{{ $menuTambahDokumen ?? '' }}"><i></i> Tambah Dokumen</a>
-          @endif
-          <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}"><i class="fa-solid fa-chart-pie"></i> Rekapan</a>
-        @endif
-      </div>
-    </div>
+        </a>
 
-    <a href="{{ url($diagramUrl) }}" class="{{ $menuDiagram ?? '' }}"><i class="fa-solid fa-chart-simple"></i> Diagram</a>
-    @endunless
-
-    @unless($isOwner)
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-      @csrf
-    </form>
-    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-      <i class="fa-solid fa-right-from-bracket"></i> Logout
-    </a>
-    @endunless
+        <a href="{{ url($diagramUrl) }}" class="{{ $menuDiagram ?? '' }}"><i class="fa-solid fa-chart-simple"></i> Diagram</a>
+        @endunless
+            </div>
+            
+            <!-- Logout Button - Pindahkan ke paling bawah -->
+            @unless($isOwner)
+            <div style="margin-top: auto; padding-bottom: 20px;">
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                  @csrf
+                </form>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="logout-link">
+                  <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            </div>
+            @endunless
         @endif
   </div>
 
+  <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
+  @unless($isOwner)
+  @php
+    // Check if user is on a submenu page or menu dokumen is active
+    $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
+    
+    // Enhanced detection for pembayaran module
+    $isSubmenuPage = false;
+    if($module === 'pembayaran') {
+      $isSubmenuPage = request()->routeIs('dokumensPembayaran.*') || 
+                       request()->routeIs('pembayaran.*') || 
+                       request()->routeIs('rekapanKeterlambatan.*') ||
+                       request()->is('*dokumensPembayaran*') ||
+                       request()->is('*rekapan-pembayaran*') ||
+                       request()->is('*rekapan-keterlambatan*') ||
+                       request()->is('*rekapan-tu-tk*') ||
+                       request()->is('*pengembalian-dokumensPembayaran*');
+    } elseif($module === 'akutansi') {
+      $isSubmenuPage = request()->routeIs('dokumensAkutansi.*') || 
+                       request()->routeIs('akutansi.*') ||
+                       request()->is('*dokumensAkutansi*') ||
+                       request()->is('*rekapan-akutansi*');
+    } elseif($module === 'perpajakan') {
+      $isSubmenuPage = request()->routeIs('dokumensPerpajakan.*') || 
+                       request()->routeIs('perpajakan.*') ||
+                       request()->is('*dokumensPerpajakan*') ||
+                       request()->is('*rekapan-perpajakan*');
+    } elseif($module === 'ibub') {
+      $isSubmenuPage = request()->routeIs('dokumensB.*') || 
+                       request()->routeIs('ibub.*') ||
+                       request()->is('*dokumensB*') ||
+                       request()->is('*rekapan-ibuB*');
+    } else {
+      $isSubmenuPage = request()->is('*dokumens*') || 
+                       request()->is('*rekapan*') || 
+                       request()->is('*pengembalian*');
+    }
+    
+    $shouldShowSecondarySidebar = $hasSubmenu || $isSubmenuPage;
+    
+    $submenuTitle = '';
+    if($module === 'pembayaran') {
+      $submenuTitle = 'MENU PEMBAYARAN';
+    } elseif($module === 'akutansi') {
+      $submenuTitle = 'MENU AKUTANSI';
+    } elseif($module === 'perpajakan') {
+      $submenuTitle = 'MENU PERPAJAKAN';
+    } elseif($module === 'ibub') {
+      $submenuTitle = 'MENU DOKUMEN';
+    } else {
+      $submenuTitle = 'MENU DOKUMEN';
+    }
+  @endphp
+  <div class="secondary-sidebar {{ $shouldShowSecondarySidebar ? 'active' : '' }}" 
+       id="sidebar-pembayaran"
+       role="complementary"
+       aria-label="Submenu Panel">
+    <div class="secondary-sidebar-header">
+      {{ $submenuTitle }}
+    </div>
+    <div class="secondary-sidebar-content">
+      @if($module === 'pembayaran')
+        @php
+          // Determine active state for each submenu item (combine controller class + route detection)
+          $isDaftarActive = ($menuDaftarDokumen ?? '') === 'Active' || 
+                           request()->routeIs('dokumensPembayaran.*') || 
+                           request()->routeIs('dokumensPembayaran.index') ||
+                           request()->is('*dokumensPembayaran*');
+          $isRekapanActive = ($menuRekapanDokumen ?? '') === 'Active' ||
+                             request()->routeIs('pembayaran.rekapan') ||
+                             request()->is('*rekapan-pembayaran*');
+          $isKeterlambatanActive = ($menuRekapKeterlambatan ?? '') === 'Active' ||
+                                   request()->routeIs('rekapanKeterlambatan.*') ||
+                                   request()->is('*rekapan-keterlambatan*');
+          $isTuTkActive = ($menuRekapanTuTk ?? '') === 'Active' ||
+                          request()->routeIs('pembayaran.rekapanTuTk') ||
+                          request()->is('*rekapan-tu-tk*');
+        @endphp
+        <a href="{{ url($dokumenUrl) }}" 
+           class="{{ $isDaftarActive ? 'active' : '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Pembayaran
+        </a>
+        <a href="{{ route('pembayaran.rekapan') }}" 
+           class="{{ $isRekapanActive ? 'active' : '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Dokumen
+        </a>
+        <a href="{{ url($pengembalianUrl) }}" 
+           class="{{ $isKeterlambatanActive ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
+        </a>
+        <a href="{{ route('pembayaran.rekapanTuTk') }}" 
+           class="{{ $isTuTkActive ? 'active' : '' }}">
+          <i class="fa-solid fa-file-invoice me-2"></i> Rekapan TU/TK
+        </a>
+      @elseif($module === 'akutansi')
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
+          <i class="fa-solid fa-list me-2"></i> Daftar Akutansi
+          <span class="menu-notification-badge" id="akutansi-notification-badge" style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+          <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Akutansi
+        </a>
+        <a href="{{ route('akutansi.rekapan') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
+        </a>
+      @elseif($module === 'perpajakan')
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
+          <i class="fa-solid fa-list me-2"></i> Daftar Perpajakan
+          <span class="menu-notification-badge" id="perpajakan-notification-badge" style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+          <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Perpajakan
+        </a>
+        <a href="{{ url('/rekapan-perpajakan') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
+        </a>
+      @elseif($module === 'ibub')
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
+          <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url('/pengembalian-dokumens-ke-bidang') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
+          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian ke Bidang
+          <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge" style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url('/pengembalian-dokumensB') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+          <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian dari Bagian
+          <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge" style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url('/rekapan-ibuB') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
+        </a>
+      @else
+        <!-- IbuA -->
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
+        </a>
+        @if($tambahDokumenUrl)
+        <a href="{{ url($tambahDokumenUrl) }}" class="{{ $menuTambahDokumen ?? '' }}">
+          <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
+        </a>
+        @endif
+        <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+        </a>
+      @endif
+    </div>
+  </div>
+  @endunless
+
   <!-- Content -->
-  <div class="content">
+  <div class="content {{ ($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '' }}">
     <!-- Notifikasi Success/Error -->
     @if(session('success'))
       <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
@@ -2861,6 +3199,219 @@
         }
     }
 })();
+</script>
+
+<!-- Secondary Sidebar Toggle Script -->
+<script>
+// Define functions in global scope immediately
+(function() {
+  'use strict';
+  
+  /**
+   * Toggle Secondary Sidebar (Mekari Style)
+   * Menampilkan/menyembunyikan secondary sidebar tanpa reload halaman
+   */
+  window.toggleSecondarySidebar = function() {
+    console.log('toggleSecondarySidebar called');
+    const secondarySidebar = document.getElementById('sidebar-pembayaran');
+    const content = document.querySelector('.content');
+    const topbar = document.querySelector('.topbar');
+    const menuTrigger = document.getElementById('btn-pembayaran');
+    
+    if (!secondarySidebar) {
+      console.error('Secondary sidebar not found');
+      return;
+    }
+    
+    if (!content) {
+      console.error('Content not found');
+      return;
+    }
+    
+    // Toggle active state
+    const isActive = secondarySidebar.classList.contains('active');
+    console.log('Secondary sidebar isActive:', isActive);
+    
+    if (isActive) {
+      // Hide secondary sidebar
+      secondarySidebar.classList.remove('active');
+      content.classList.remove('with-secondary-sidebar');
+      if (topbar) {
+        topbar.classList.remove('with-secondary-sidebar');
+      }
+      
+      // Update menu trigger state
+      if (menuTrigger) {
+        menuTrigger.classList.remove('active');
+        menuTrigger.setAttribute('aria-expanded', 'false');
+      }
+      console.log('Secondary sidebar hidden');
+    } else {
+      // Show secondary sidebar
+      secondarySidebar.classList.add('active');
+      content.classList.add('with-secondary-sidebar');
+      if (topbar) {
+        topbar.classList.add('with-secondary-sidebar');
+      }
+      
+      // Update menu trigger state
+      if (menuTrigger) {
+        menuTrigger.classList.add('active');
+        menuTrigger.setAttribute('aria-expanded', 'true');
+      }
+      console.log('Secondary sidebar shown');
+    }
+  };
+  
+  /**
+   * Show Secondary Sidebar (without toggle)
+   */
+  window.showSecondarySidebar = function() {
+    const secondarySidebar = document.getElementById('sidebar-pembayaran');
+    const content = document.querySelector('.content');
+    const topbar = document.querySelector('.topbar');
+    const menuTrigger = document.getElementById('btn-pembayaran');
+    
+    if (secondarySidebar && content) {
+      secondarySidebar.classList.add('active');
+      content.classList.add('with-secondary-sidebar');
+      if (topbar) {
+        topbar.classList.add('with-secondary-sidebar');
+      }
+      
+      if (menuTrigger) {
+        menuTrigger.classList.add('active');
+        menuTrigger.setAttribute('aria-expanded', 'true');
+      }
+    }
+  };
+  
+  /**
+   * Hide Secondary Sidebar
+   */
+  window.hideSecondarySidebar = function() {
+    const secondarySidebar = document.getElementById('sidebar-pembayaran');
+    const content = document.querySelector('.content');
+    const topbar = document.querySelector('.topbar');
+    const menuTrigger = document.getElementById('btn-pembayaran');
+    
+    if (secondarySidebar && content) {
+      secondarySidebar.classList.remove('active');
+      content.classList.remove('with-secondary-sidebar');
+      if (topbar) {
+        topbar.classList.remove('with-secondary-sidebar');
+      }
+      
+      if (menuTrigger) {
+        menuTrigger.classList.remove('active');
+        menuTrigger.setAttribute('aria-expanded', 'false');
+      }
+    }
+  };
+})();
+
+
+// Auto-show secondary sidebar jika menu dokumen aktif atau user berada di halaman submenu
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOMContentLoaded - Setting up secondary sidebar');
+  
+  const secondarySidebar = document.getElementById('sidebar-pembayaran');
+  const content = document.querySelector('.content');
+  const menuTrigger = document.getElementById('btn-pembayaran');
+  
+  console.log('Elements found:', {
+    secondarySidebar: !!secondarySidebar,
+    content: !!content,
+    menuTrigger: !!menuTrigger
+  });
+  
+  // Check if user is on a submenu page (any page that should show secondary sidebar)
+  const currentPath = window.location.pathname;
+  const isSubmenuPage = currentPath.includes('/dokumens') || 
+                        currentPath.includes('/rekapan') || 
+                        currentPath.includes('/pengembalian') ||
+                        currentPath.includes('/rekapan-tu-tk');
+  
+  console.log('State check:', {
+    isSubmenuPage,
+    currentPath
+  });
+  
+  // Show secondary sidebar if user is on submenu page
+  if (isSubmenuPage) {
+    if (secondarySidebar) {
+      secondarySidebar.classList.add('active');
+    }
+    if (content) {
+      content.classList.add('with-secondary-sidebar');
+    }
+    if (menuTrigger) {
+      menuTrigger.classList.add('active');
+      menuTrigger.setAttribute('aria-expanded', 'true');
+    }
+    console.log('Secondary sidebar auto-shown');
+  }
+  
+  // Ensure secondary sidebar is visible if it has active class on page load
+  if (secondarySidebar && secondarySidebar.classList.contains('active')) {
+    if (content) {
+      content.classList.add('with-secondary-sidebar');
+    }
+    if (menuTrigger) {
+      menuTrigger.classList.add('active');
+      menuTrigger.setAttribute('aria-expanded', 'true');
+    }
+  }
+  
+  // Auto-open secondary sidebar based on current route
+  // No need for click handler since menu is now a direct link
+  
+  // Check if we're on a submenu page and auto-open sidebar
+  const currentPath = window.location.pathname;
+  const isSubmenuPage = currentPath.includes('/dokumensPembayaran') || 
+                        currentPath.includes('/rekapan-pembayaran') || 
+                        currentPath.includes('/rekapan-keterlambatan') ||
+                        currentPath.includes('/rekapan-tu-tk') ||
+                        currentPath.includes('/pengembalian-dokumensPembayaran') ||
+                        currentPath.includes('/dokumensAkutansi') ||
+                        currentPath.includes('/rekapan-akutansi') ||
+                        currentPath.includes('/dokumensPerpajakan') ||
+                        currentPath.includes('/rekapan-perpajakan') ||
+                        currentPath.includes('/dokumensB') ||
+                        currentPath.includes('/rekapan-ibuB');
+  
+  const topbar = document.querySelector('.topbar');
+  
+  if (isSubmenuPage && secondarySidebar) {
+    secondarySidebar.classList.add('active');
+    if (content) {
+      content.classList.add('with-secondary-sidebar');
+    }
+    if (topbar) {
+      topbar.classList.add('with-secondary-sidebar');
+    }
+    if (menuTrigger) {
+      menuTrigger.classList.add('active');
+      menuTrigger.setAttribute('aria-expanded', 'true');
+    }
+    console.log('Secondary sidebar auto-opened for submenu page');
+  }
+  
+  // Update menu trigger active state based on current route
+  if (menuTrigger && isSubmenuPage) {
+    menuTrigger.classList.add('active');
+    menuTrigger.setAttribute('aria-expanded', 'true');
+  }
+  
+  // Ensure topbar has correct class if secondary sidebar is already active on page load
+  if (secondarySidebar && secondarySidebar.classList.contains('active')) {
+    if (topbar) {
+      topbar.classList.add('with-secondary-sidebar');
+    }
+  }
+  
+  console.log('Secondary sidebar setup complete');
+});
 </script>
 
 </body>
