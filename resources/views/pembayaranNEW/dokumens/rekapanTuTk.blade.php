@@ -884,6 +884,239 @@
       font-size: 12px;
     }
   }
+
+  /* Pagination Footer Styles - Match Dashboard Admin */
+  .pagination-footer {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  .dark .pagination-footer {
+    background: #1e293b; /* slate-800 */
+    border-color: #334155; /* slate-700 */
+  }
+
+  .pagination-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .pagination-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .pagination-label {
+    font-size: 14px;
+    color: #4a5568;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+  }
+
+  .dark .pagination-label {
+    color: #94a3b8; /* slate-400 */
+  }
+
+  .pagination-select {
+    padding: 6px 32px 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    color: #1a202c;
+    cursor: pointer;
+    transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+  }
+
+  .dark .pagination-select {
+    background: #0f172a; /* slate-900 */
+    border-color: #334155; /* slate-700 */
+    color: #f1f5f9; /* slate-100 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%94a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  }
+
+  .pagination-select:focus {
+    outline: none;
+    border-color: #083E40;
+    box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.1);
+  }
+
+  .pagination-summary {
+    font-size: 14px;
+    color: #4a5568;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+  }
+
+  .dark .pagination-summary {
+    color: #94a3b8; /* slate-400 */
+  }
+
+  .pagination-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    color: #4a5568;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dark .pagination-btn {
+    background: #0f172a; /* slate-900 */
+    border-color: #334155; /* slate-700 */
+    color: #94a3b8; /* slate-400 */
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    background: #f7fafc;
+    border-color: #083E40;
+    color: #083E40;
+  }
+
+  .dark .pagination-btn:hover:not(:disabled) {
+    background: #1e293b; /* slate-800 */
+    border-color: #60a5fa; /* blue-400 */
+    color: #60a5fa; /* blue-400 */
+  }
+
+  .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f7fafc;
+    border-color: #e2e8f0;
+    color: #a0aec0;
+  }
+
+  .dark .pagination-btn:disabled {
+    background: #1e293b; /* slate-800 */
+    border-color: #334155; /* slate-700 */
+    color: #475569; /* slate-600 */
+  }
+
+  .pagination-page-input {
+    width: 60px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+    background: white;
+    color: #1a202c;
+    transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  .dark .pagination-page-input {
+    background: #0f172a; /* slate-900 */
+    border-color: #334155; /* slate-700 */
+    color: #f1f5f9; /* slate-100 */
+  }
+
+  .pagination-page-input:focus {
+    outline: none;
+    border-color: #083E40;
+    box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.1);
+  }
+
+  .pagination-total-pages {
+    font-size: 14px;
+    color: #4a5568;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+  }
+
+  .dark .pagination-total-pages {
+    color: #94a3b8; /* slate-400 */
+  }
+
+  /* Responsive Pagination Footer */
+  @media (max-width: 768px) {
+    .pagination-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .pagination-footer-left,
+    .pagination-footer-right {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Excel-Like Modal Styles */
+  .excel-modal-header {
+    font-family: 'Courier New', monospace;
+  }
+
+  .excel-grid-table {
+    border-collapse: collapse;
+  }
+
+  .excel-header-cell {
+    background: #00FF00 !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+  }
+
+  .excel-label-cell {
+    background: #f0f0f0;
+    user-select: none;
+  }
+
+  .excel-input-cell {
+    padding: 0 !important;
+  }
+
+  .excel-input {
+    transition: background-color 0.15s ease;
+  }
+
+  .excel-input:focus {
+    outline: none;
+    background: #fffacd !important; /* Light yellow like Excel */
+    box-shadow: inset 0 0 0 2px #083E40;
+  }
+
+  .excel-row-clickable:hover {
+    background-color: #f0f9ff !important;
+  }
+
+  /* Prevent text selection on table rows */
+  .excel-row-clickable td:not(:last-child) {
+    user-select: none;
+  }
+
+  /* Excel-like input styling */
+  .excel-input::placeholder {
+    color: #999;
+    opacity: 0.6;
+  }
 </style>
 
 <div class="container-fluid">
@@ -1097,16 +1330,29 @@
           $warnaUmur = $dokumen->warna_umur_hutang ?? 'hijau';
           $rowClass = 'row-' . $warnaUmur;
         @endphp
-        <tr class="{{ $rowClass }}">
+        @php
+          $currentDataSource = request('data_source', $dataSource ?? 'input_ks');
+          $kontrolId = $currentDataSource == 'input_ks' ? ($dokumen->KONTROL ?? null) : ($dokumen->EXTRA_COL_0 ?? null);
+          $belumDibayarValue = $currentDataSource == 'input_ks' ? ($dokumen->BELUM_DIBAYAR ?? 0) : ($dokumen->BELUM_DIBAYAR_1 ?? 0);
+          $agenda = $dokumen->AGENDA ?? '-';
+          $noSpp = $dokumen->NO_SPP ?? '-';
+          $vendor = Str::limit($dokumen->VENDOR ?? '-', 50);
+          $nilai = $dokumen->NILAI ?? 0;
+        @endphp
+        <tr class="{{ $rowClass }} excel-row-clickable" 
+            onclick="openExcelPaymentModal('{{ $kontrolId }}', '{{ $agenda }}', '{{ $noSpp }}', '{{ $vendor }}', {{ $nilai }}, {{ $dokumen->JUMLAH_DIBAYAR ?? 0 }}, {{ $belumDibayarValue }}, '{{ $currentDataSource }}')"
+            style="cursor: pointer; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#f0f9ff'" 
+            onmouseout="this.style.backgroundColor=''">
           <td>{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
-          <td><strong>{{ $dokumen->AGENDA ?? '-' }}</strong></td>
-          <td>{{ $dokumen->NO_SPP ?? '-' }}</td>
+          <td><strong>{{ $agenda }}</strong></td>
+          <td>{{ $noSpp }}</td>
           <td>{{ $dokumen->TGL_SPP ?? '-' }}</td>
           <td>{{ Str::limit($dokumen->VENDOR ?? '-', 30) }}</td>
           @if((request('data_source', $dataSource ?? 'input_ks')) == 'input_ks')
           <td>{{ $dokumen->KATEGORI ?? '-' }}</td>
           @endif
-          <td><strong>Rp {{ number_format($dokumen->NILAI ?? 0, 0, ',', '.') }}</strong></td>
+          <td><strong>Rp {{ number_format($nilai, 0, ',', '.') }}</strong></td>
           <td>
             @if($status == 'lunas')
               <span class="badge-status badge-lunas">Lunas</span>
@@ -1123,10 +1369,6 @@
               </div>
             </div>
             <div style="font-size: 11px; color: #6c757d; margin-top: 4px;">
-              @php
-                $currentDataSource = request('data_source', $dataSource ?? 'input_ks');
-                $belumDibayarValue = $currentDataSource == 'input_ks' ? ($dokumen->BELUM_DIBAYAR ?? 0) : ($dokumen->BELUM_DIBAYAR_1 ?? 0);
-              @endphp
               Dibayar: Rp {{ number_format($dokumen->JUMLAH_DIBAYAR ?? 0, 0, ',', '.') }} | 
               Sisa: Rp {{ number_format($belumDibayarValue, 0, ',', '.') }}
             </div>
@@ -1136,16 +1378,11 @@
           </td>
           <td>{{ $dokumen->POSISI_DOKUMEN ?? '-' }}</td>
           <td>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              @php
-                $currentDataSource = request('data_source', $dataSource ?? 'input_ks');
-                $kontrolId = $currentDataSource == 'input_ks' ? ($dokumen->KONTROL ?? null) : ($dokumen->EXTRA_COL_0 ?? null);
-                $belumDibayarValue = $currentDataSource == 'input_ks' ? ($dokumen->BELUM_DIBAYAR ?? 0) : ($dokumen->BELUM_DIBAYAR_1 ?? 0);
-              @endphp
-              <button class="btn-input-payment" onclick="openPaymentModal('{{ $kontrolId }}', {{ $dokumen->NILAI ?? 0 }}, {{ $dokumen->JUMLAH_DIBAYAR ?? 0 }}, {{ $belumDibayarValue }}, '{{ $currentDataSource }}')" style="padding: 6px 12px; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+              <button class="btn-input-payment" onclick="event.stopPropagation(); openPaymentModal('{{ $kontrolId }}', {{ $nilai }}, {{ $dokumen->JUMLAH_DIBAYAR ?? 0 }}, {{ $belumDibayarValue }}, '{{ $currentDataSource }}')" style="padding: 6px 12px; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease;">
                 <i class="fa-solid fa-money-bill-wave me-1"></i> Input Pembayaran
               </button>
-              <button class="btn-timeline" onclick="openTimelineModal('{{ $kontrolId }}', '{{ $currentDataSource }}')" style="padding: 6px 12px; background: linear-gradient(135deg, #889717 0%, #a0b02a 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease;">
+              <button class="btn-timeline" onclick="event.stopPropagation(); openTimelineModal('{{ $kontrolId }}', '{{ $currentDataSource }}')" style="padding: 6px 12px; background: linear-gradient(135deg, #889717 0%, #a0b02a 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease;">
                 <i class="fa-solid fa-history me-1"></i> Timeline
               </button>
             </div>
@@ -1165,95 +1402,14 @@
     </div>
   </div>
 
-    <!-- Pagination -->
+    <!-- Pagination Footer -->
     @if($dokumens->hasPages())
-    <div class="pagination-wrapper">
-      <div class="text-muted" style="font-size: 13px; color: #083E40;">
-        Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }} dokumen
-      </div>
-
-      <!-- Per Page Selector -->
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <label for="perPageSelect" style="font-size: 13px; color: #083E40; font-weight: 500; margin: 0;">Tampilkan per halaman:</label>
-        <select id="perPageSelect" onchange="changePerPage(this.value)" style="padding: 6px 12px; border: 2px solid rgba(8, 62, 64, 0.15); border-radius: 8px; background: white; color: #083E40; font-size: 13px; font-weight: 500; cursor: pointer;">
-          <option value="10" {{ ($perPage ?? request('per_page', 25)) == 10 ? 'selected' : '' }}>10</option>
-          <option value="25" {{ ($perPage ?? request('per_page', 25)) == 25 ? 'selected' : '' }}>25</option>
-          <option value="50" {{ ($perPage ?? request('per_page', 25)) == 50 ? 'selected' : '' }}>50</option>
-          <option value="100" {{ ($perPage ?? request('per_page', 25)) == 100 ? 'selected' : '' }}>100</option>
-        </select>
-      </div>
-
-      <div class="pagination">
-        {{-- Previous Page Link --}}
-        @if($dokumens->onFirstPage())
-          <button class="btn-chevron" disabled>
-            <i class="fa-solid fa-chevron-left"></i>
-          </button>
-        @else
-          <a href="{{ $dokumens->previousPageUrl() }}">
-            <button class="btn-chevron">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-          </a>
-        @endif
-
-        {{-- Pagination Elements --}}
-        @if($dokumens->hasPages())
-          {{-- First page --}}
-          @if($dokumens->currentPage() > 3)
-            <a href="{{ $dokumens->url(1) }}">
-              <button>1</button>
-            </a>
-          @endif
-
-          {{-- Dots --}}
-          @if($dokumens->currentPage() > 4)
-            <button disabled>...</button>
-          @endif
-
-          {{-- Range of pages --}}
-          @for($i = max(1, $dokumens->currentPage() - 2); $i <= min($dokumens->lastPage(), $dokumens->currentPage() + 2); $i++)
-            @if($dokumens->currentPage() == $i)
-              <button class="active">{{ $i }}</button>
-            @else
-              <a href="{{ $dokumens->url($i) }}">
-                <button>{{ $i }}</button>
-              </a>
-            @endif
-          @endfor
-
-          {{-- Dots --}}
-          @if($dokumens->currentPage() < $dokumens->lastPage() - 3)
-            <button disabled>...</button>
-          @endif
-
-          {{-- Last page --}}
-          @if($dokumens->currentPage() < $dokumens->lastPage() - 2)
-            <a href="{{ $dokumens->url($dokumens->lastPage()) }}">
-              <button>{{ $dokumens->lastPage() }}</button>
-            </a>
-          @endif
-        @endif
-
-        {{-- Next Page Link --}}
-        @if($dokumens->hasMorePages())
-          <a href="{{ $dokumens->nextPageUrl() }}">
-            <button class="btn-chevron">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-          </a>
-        @else
-          <button class="btn-chevron" disabled>
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-        @endif
-      </div>
-    </div>
+      @include('owner.partials.pagination-footer', ['paginator' => $dokumens])
     @endif
   </div>
 </div>
 
-<!-- Modal: Input Pembayaran Bertahap -->
+<!-- Modal: Input Pembayaran Bertahap (Old Style - Keep for button trigger) -->
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -1328,6 +1484,183 @@
   </div>
 </div>
 
+<!-- Modal: Excel-Like Payment Input -->
+<div class="modal fade" id="excelPaymentModal" tabindex="-1" aria-labelledby="excelPaymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content" style="border-radius: 0; border: 2px solid #000;">
+      <!-- Header: Document Info (Gray Background) -->
+      <div class="excel-modal-header" style="background: #d3d3d3; padding: 12px 16px; border-bottom: 2px solid #000;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex gap-4" style="font-family: 'Courier New', monospace; font-size: 13px; font-weight: 600; color: #000;">
+            <div><strong>No. Agenda:</strong> <span id="excelAgenda">-</span></div>
+            <div><strong>No. SPP:</strong> <span id="excelNoSpp">-</span></div>
+            <div><strong>Vendor:</strong> <span id="excelVendor">-</span></div>
+            <div><strong>Total Nilai:</strong> <span id="excelTotalNilai">Rp 0</span></div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.7;"></button>
+        </div>
+      </div>
+
+      <!-- Body: Excel Grid -->
+      <div class="modal-body p-0">
+        <div class="excel-grid-container" style="overflow-x: auto;">
+          <table class="excel-grid-table" style="width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace;">
+            <!-- Header Row (Green Neon Background) -->
+            <thead>
+              <tr>
+                <th class="excel-header-cell" style="background: #00FF00; color: #000; font-weight: 700; padding: 8px; border: 1px solid #000; text-align: center; font-size: 12px;">TAHAP</th>
+                <th class="excel-header-cell" style="background: #00FF00; color: #000; font-weight: 700; padding: 8px; border: 1px solid #000; text-align: center; font-size: 12px;">NOMINAL (Rp)</th>
+                <th class="excel-header-cell" style="background: #00FF00; color: #000; font-weight: 700; padding: 8px; border: 1px solid #000; text-align: center; font-size: 12px;">TANGGAL BAYAR</th>
+                <th class="excel-header-cell" style="background: #00FF00; color: #000; font-weight: 700; padding: 8px; border: 1px solid #000; text-align: center; font-size: 12px;">KETERANGAN</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row 1: Tahap 1 -->
+              <tr>
+                <td class="excel-label-cell" style="background: #f0f0f0; padding: 6px 12px; border: 1px solid #000; font-weight: 600; font-size: 12px; text-align: center; width: 100px;">Tahap 1</td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input nominal-input" 
+                         id="nominal_1" 
+                         name="payments[1][nominal]"
+                         tabindex="1"
+                         placeholder="0"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; text-align: right; background: #fff;"
+                         oninput="formatCurrency(this)"
+                         onfocus="this.select()">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="date" 
+                         class="excel-input date-input" 
+                         id="tanggal_1" 
+                         name="payments[1][tanggal]"
+                         tabindex="2"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input keterangan-input" 
+                         id="keterangan_1" 
+                         name="payments[1][keterangan]"
+                         tabindex="3"
+                         placeholder="Opsional"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+              </tr>
+              <!-- Row 2: Tahap 2 -->
+              <tr>
+                <td class="excel-label-cell" style="background: #f0f0f0; padding: 6px 12px; border: 1px solid #000; font-weight: 600; font-size: 12px; text-align: center;">Tahap 2</td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input nominal-input" 
+                         id="nominal_2" 
+                         name="payments[2][nominal]"
+                         tabindex="4"
+                         placeholder="0"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; text-align: right; background: #fff;"
+                         oninput="formatCurrency(this)"
+                         onfocus="this.select()">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="date" 
+                         class="excel-input date-input" 
+                         id="tanggal_2" 
+                         name="payments[2][tanggal]"
+                         tabindex="5"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input keterangan-input" 
+                         id="keterangan_2" 
+                         name="payments[2][keterangan]"
+                         tabindex="6"
+                         placeholder="Opsional"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+              </tr>
+              <!-- Row 3: Tahap 3 -->
+              <tr>
+                <td class="excel-label-cell" style="background: #f0f0f0; padding: 6px 12px; border: 1px solid #000; font-weight: 600; font-size: 12px; text-align: center;">Tahap 3</td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input nominal-input" 
+                         id="nominal_3" 
+                         name="payments[3][nominal]"
+                         tabindex="7"
+                         placeholder="0"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; text-align: right; background: #fff;"
+                         oninput="formatCurrency(this)"
+                         onfocus="this.select()">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="date" 
+                         class="excel-input date-input" 
+                         id="tanggal_3" 
+                         name="payments[3][tanggal]"
+                         tabindex="8"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input keterangan-input" 
+                         id="keterangan_3" 
+                         name="payments[3][keterangan]"
+                         tabindex="9"
+                         placeholder="Opsional"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+              </tr>
+              <!-- Row 4: Tahap 4 -->
+              <tr>
+                <td class="excel-label-cell" style="background: #f0f0f0; padding: 6px 12px; border: 1px solid #000; font-weight: 600; font-size: 12px; text-align: center;">Tahap 4</td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input nominal-input" 
+                         id="nominal_4" 
+                         name="payments[4][nominal]"
+                         tabindex="10"
+                         placeholder="0"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; text-align: right; background: #fff;"
+                         oninput="formatCurrency(this)"
+                         onfocus="this.select()">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="date" 
+                         class="excel-input date-input" 
+                         id="tanggal_4" 
+                         name="payments[4][tanggal]"
+                         tabindex="11"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+                <td class="excel-input-cell" style="padding: 0; border: 1px solid #000;">
+                  <input type="text" 
+                         class="excel-input keterangan-input" 
+                         id="keterangan_4" 
+                         name="payments[4][keterangan]"
+                         tabindex="12"
+                         placeholder="Opsional"
+                         style="width: 100%; border: none; padding: 6px 8px; font-size: 12px; font-family: 'Courier New', monospace; background: #fff;">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer: Save Button -->
+      <div class="modal-footer" style="background: #f5f5f5; padding: 12px 16px; border-top: 2px solid #000; justify-content: flex-end;">
+        <input type="hidden" id="excelPaymentKontrol" name="kontrol">
+        <input type="hidden" id="excelPaymentDataSource" name="data_source">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 8px 16px; font-size: 13px; border-radius: 0;">Batal</button>
+        <button type="button" class="btn btn-primary" onclick="submitExcelPayment()" style="background: #083E40; border: none; padding: 8px 24px; font-size: 13px; font-weight: 600; border-radius: 0;">
+          <i class="fa-solid fa-save me-2"></i>Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function changePerPage(value) {
     const url = new URL(window.location.href);
@@ -1341,6 +1674,254 @@ let currentNilai = 0;
 let currentDibayar = 0;
 let currentBelumDibayar = 0;
 let currentDataSource = 'input_ks';
+let currentRowData = null; // Store row data for Excel modal
+
+// Excel-Like Modal Function
+function openExcelPaymentModal(kontrol, agenda, noSpp, vendor, nilai, dibayar, belumDibayar, dataSource = 'input_ks') {
+    currentKontrol = kontrol;
+    currentNilai = parseFloat(nilai) || 0;
+    currentDibayar = parseFloat(dibayar) || 0;
+    currentBelumDibayar = parseFloat(belumDibayar) || 0;
+    currentDataSource = dataSource || 'input_ks';
+    
+    // Store row data
+    currentRowData = {
+        kontrol: kontrol,
+        agenda: agenda,
+        noSpp: noSpp,
+        vendor: vendor,
+        nilai: currentNilai,
+        dibayar: currentDibayar,
+        belumDibayar: currentBelumDibayar,
+        dataSource: currentDataSource
+    };
+
+    // Set header info
+    document.getElementById('excelAgenda').textContent = agenda;
+    document.getElementById('excelNoSpp').textContent = noSpp;
+    document.getElementById('excelVendor').textContent = vendor;
+    document.getElementById('excelTotalNilai').textContent = 'Rp ' + formatNumber(currentNilai);
+    
+    // Set hidden inputs
+    document.getElementById('excelPaymentKontrol').value = kontrol;
+    document.getElementById('excelPaymentDataSource').value = currentDataSource;
+    
+    // Clear all inputs
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById('nominal_' + i).value = '';
+        document.getElementById('tanggal_' + i).value = '';
+        document.getElementById('keterangan_' + i).value = '';
+    }
+    
+    // Load existing payment data if any
+    loadExcelPaymentHistory(kontrol);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('excelPaymentModal'));
+    modal.show();
+    
+    // Focus first input
+    setTimeout(() => {
+        document.getElementById('nominal_1').focus();
+    }, 300);
+}
+
+function loadExcelPaymentHistory(kontrol) {
+    const dataSource = currentDataSource || 'input_ks';
+    fetch(`/rekapan-tu-tk/payment-logs/${kontrol}?data_source=${dataSource}`)
+        .then(response => response.json())
+        .then(data => {
+            // Populate inputs with existing payment data
+            data.forEach((log, index) => {
+                const tahap = index + 1;
+                if (tahap <= 4) {
+                    document.getElementById('nominal_' + tahap).value = formatNumber(log.jumlah);
+                    document.getElementById('tanggal_' + tahap).value = log.tanggal_bayar ? log.tanggal_bayar.split(' ')[0] : '';
+                    document.getElementById('keterangan_' + tahap).value = log.keterangan || '';
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading payment history:', error);
+        });
+}
+
+function formatCurrency(input) {
+    // Remove non-numeric characters
+    let value = input.value.replace(/[^\d]/g, '');
+    
+    // Format with thousand separators
+    if (value) {
+        value = parseInt(value).toLocaleString('id-ID');
+        input.value = value;
+    } else {
+        input.value = '';
+    }
+}
+
+// Enhanced keyboard navigation for Excel-like modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Enter key to move to next field
+    const excelInputs = document.querySelectorAll('#excelPaymentModal .excel-input');
+    excelInputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const nextIndex = index + 1;
+                if (nextIndex < excelInputs.length) {
+                    excelInputs[nextIndex].focus();
+                    excelInputs[nextIndex].select();
+                } else {
+                    // If last input, focus save button
+                    document.querySelector('#excelPaymentModal .btn-primary').focus();
+                }
+            }
+            
+            // Handle Arrow keys for navigation
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const currentRow = parseInt(input.id.split('_')[1]);
+                const currentType = input.id.split('_')[0];
+                if (currentRow < 4) {
+                    const nextInput = document.getElementById(currentType + '_' + (currentRow + 1));
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select();
+                    }
+                }
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const currentRow = parseInt(input.id.split('_')[1]);
+                const currentType = input.id.split('_')[0];
+                if (currentRow > 1) {
+                    const prevInput = document.getElementById(currentType + '_' + (currentRow - 1));
+                    if (prevInput) {
+                        prevInput.focus();
+                        prevInput.select();
+                    }
+                }
+            }
+        });
+    });
+    
+    // Auto-focus first input when modal is shown
+    const excelModal = document.getElementById('excelPaymentModal');
+    if (excelModal) {
+        excelModal.addEventListener('shown.bs.modal', function() {
+            const firstInput = document.getElementById('nominal_1');
+            if (firstInput) {
+                setTimeout(() => {
+                    firstInput.focus();
+                    firstInput.select();
+                }, 100);
+            }
+        });
+    }
+});
+
+function getNumericValue(input) {
+    // Remove all non-numeric characters (including dots and commas from formatting)
+    const cleaned = input.value.replace(/[^\d]/g, '');
+    return parseInt(cleaned) || 0;
+}
+
+function submitExcelPayment() {
+    const submitBtn = event.target;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
+    
+    // Collect payment data
+    const payments = [];
+    for (let i = 1; i <= 4; i++) {
+        const nominalInput = document.getElementById('nominal_' + i);
+        const tanggalInput = document.getElementById('tanggal_' + i);
+        const keteranganInput = document.getElementById('keterangan_' + i);
+        
+        const nominal = getNumericValue(nominalInput);
+        const tanggal = tanggalInput.value ? tanggalInput.value.trim() : '';
+        const keterangan = keteranganInput.value ? keteranganInput.value.trim() : '';
+        
+        // Only include payments with nominal > 0
+        // Tanggal is optional but recommended
+        if (nominal > 0) {
+            payments.push({
+                sequence: i,
+                nominal: nominal,
+                tanggal: tanggal || null, // Send null if empty
+                keterangan: keterangan || ''
+            });
+        }
+    }
+    
+    if (payments.length === 0) {
+        alert('Minimal isi 1 tahap pembayaran dengan nominal dan tanggal!');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
+    // Submit each payment via AJAX
+    let completed = 0;
+    let hasError = false;
+    
+    payments.forEach((payment, index) => {
+        const data = {
+            kontrol: currentKontrol,
+            data_source: currentDataSource,
+            payment_sequence: payment.sequence,
+            jumlah: payment.nominal,
+            tanggal_bayar: payment.tanggal || null, // Send null if empty string
+            keterangan: payment.keterangan || null
+        };
+        
+        fetch('/rekapan-tu-tk/payment-installment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            completed++;
+            if (!result.success) {
+                hasError = true;
+                console.error('Error saving payment:', result.message);
+            }
+            
+            // If all payments saved, close modal and reload
+            if (completed === payments.length) {
+                if (hasError) {
+                    alert('Beberapa pembayaran gagal disimpan. Silakan cek kembali.');
+                } else {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('excelPaymentModal'));
+                    modal.hide();
+                    
+                    // Reload page to update table
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            completed++;
+            hasError = true;
+            console.error('Error:', error);
+            if (completed === payments.length) {
+                alert('Terjadi kesalahan saat menyimpan pembayaran');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+    });
+}
 
 function openPaymentModal(kontrol, nilai, dibayar, belumDibayar, dataSource = 'input_ks') {
     currentKontrol = kontrol;

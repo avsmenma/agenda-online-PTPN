@@ -727,6 +727,52 @@ class DashboardPembayaranController extends Controller
     /**
      * Store payment installment for TuTk document
      */
+    /**
+     * Helper method: Parse tanggal with strict null check (Anti 1969 Error)
+     * Returns null if empty, or converted value based on data source
+     */
+    private function parseTanggalBayar($rawDate, $dataSource)
+    {
+        // STRICT NULL CHECK: Check if tanggal is truly empty
+        if (empty($rawDate) || $rawDate === 'null' || trim($rawDate) === '') {
+            return null; // FORCE NULL IF EMPTY
+        }
+
+        try {
+            if ($dataSource === 'input_ks') {
+                // For tu_tk_2023: Convert date to Excel serial number (double)
+                $date = Carbon::parse($rawDate);
+                $excelEpoch = Carbon::create(1899, 12, 30);
+                $daysDiff = $date->diffInDays($excelEpoch);
+                return (double) $daysDiff;
+            } else {
+                // For other tables: Format as YYYY-MM-DD (text)
+                return Carbon::parse($rawDate)->format('Y-m-d');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to parse tanggal_bayar: ' . $e->getMessage() . ' | Value: ' . $rawDate);
+            return null; // Fallback to NULL if parsing fails
+        }
+    }
+
+    /**
+     * Helper method: Sanitize nominal (Remove Rp/Titik/Koma)
+     * Returns 0 if empty, or cleaned numeric value
+     */
+    private function sanitizeNominal($rawAmount)
+    {
+        if (empty($rawAmount) || $rawAmount === 'null' || trim($rawAmount) === '') {
+            return 0;
+        }
+
+        // Remove all non-numeric characters
+        if (is_string($rawAmount)) {
+            $rawAmount = preg_replace('/[^0-9]/', '', $rawAmount);
+        }
+
+        return (float) ($rawAmount ?? 0);
+    }
+
     public function storePaymentInstallment(Request $request)
     {
         // Get data source from request
@@ -758,10 +804,11 @@ class DashboardPembayaranController extends Controller
             $belumDibayarField = 'BELUM_DIBAYAR1';
         }
 
+        // Strict validation with sanitization
         $request->validate([
             'kontrol' => "required|exists:{$tableName},{$primaryKey}",
             'payment_sequence' => 'required|integer|min:1|max:6',
-            'tanggal_bayar' => 'required|date',
+            'tanggal_bayar' => 'nullable|date',
             'jumlah' => 'required|numeric|min:0.01',
             'keterangan' => 'nullable|string|max:255',
         ]);
@@ -771,26 +818,62 @@ class DashboardPembayaranController extends Controller
 
             $tuTk = $model::where($primaryKey, $request->kontrol)->firstOrFail();
             
-            // Create payment log with data_source
-            $paymentLog = PaymentLog::create([
-                'tu_tk_kontrol' => $request->kontrol,
-                'data_source' => $dataSource,
-                'payment_sequence' => $request->payment_sequence,
-                'tanggal_bayar' => $request->tanggal_bayar,
-                'jumlah' => $request->jumlah,
-                'keterangan' => $request->keterangan,
-                'created_by' => auth()->user()->name ?? 'System',
-            ]);
+            // ============================================
+            // Use Helper Methods for DRY Approach
+            // ============================================
+            $rawTanggal = $request->input('tanggal_bayar');
+            $rawJumlah = $request->input('jumlah');
+            
+            // Parse tanggal using helper (returns null if empty)
+            $tanggalValue = $this->parseTanggalBayar($rawTanggal, $dataSource);
+            
+            // Sanitize nominal using helper
+            $jumlah = $this->sanitizeNominal($rawJumlah);
+            
+            // Validate jumlah after sanitization
+            if ($jumlah <= 0) {
+                throw new \Exception('Nominal pembayaran harus lebih dari 0.');
+            }
+            
+            // ============================================
+            // Create Payment Log (ONLY if tanggal is NOT empty)
+            // ============================================
+            $paymentLog = null;
+            
+            if ($tanggalValue !== null && !empty($rawTanggal)) {
+                try {
+                    $tanggalBayarParsed = Carbon::parse($rawTanggal);
+                    
+                    $paymentLog = PaymentLog::create([
+                        'tu_tk_kontrol' => $request->kontrol,
+                        'data_source' => $dataSource,
+                        'payment_sequence' => $request->payment_sequence,
+                        'tanggal_bayar' => $tanggalBayarParsed->format('Y-m-d'),
+                        'jumlah' => $jumlah,
+                        'keterangan' => $request->keterangan ?? null,
+                        'created_by' => auth()->user()->name ?? 'System',
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to create payment log due to invalid date: ' . $e->getMessage() . ' | Value: ' . $rawTanggal);
+                }
+            }
 
-            // Update TuTk fields based on payment sequence
+            // ============================================
+            // Update TuTk Fields
+            // ============================================
             $tanggalField = 'TANGGAL_BAYAR_' . $this->getRomanNumeral($request->payment_sequence);
             // Field mapping: JUMLAH1, JUMLAH2, JUMLAH3, JUMLAH4, JUMLAH5, JUMLAH6
             $jumlahField = 'JUMLAH' . ($request->payment_sequence == 1 ? '1' : $request->payment_sequence);
 
-            $tuTk->update([
-                $tanggalField => $request->tanggal_bayar,
-                $jumlahField => $request->jumlah,
-            ]);
+            // Prepare update data with sanitized values
+            // IMPORTANT: tanggalValue can be NULL - database column MUST be nullable
+            $updateData = [
+                $jumlahField => $jumlah, // Use sanitized jumlah
+                $tanggalField => $tanggalValue, // NULL if empty, or converted value if not empty
+            ];
+
+            // Execute update
+            $tuTk->update($updateData);
 
             // Recalculate total payment
             $totalDibayar = (float)($tuTk->JUMLAH1 ?? 0) 
@@ -802,11 +885,24 @@ class DashboardPembayaranController extends Controller
 
             $belumDibayar = (float)($tuTk->NILAI ?? 0) - $totalDibayar;
 
-            // If fully paid, set completion date
+            // ============================================
+            // If fully paid, set completion date (STRICT NULL CHECK)
+            // ============================================
             if ($belumDibayar <= 0) {
-                $tuTk->update([
-                    'TANGGAL_BAYAR_RAMPUNG' => $request->tanggal_bayar,
-                ]);
+                // Use helper method to parse tanggal
+                $tanggalRampungValue = $this->parseTanggalBayar($rawTanggal, $dataSource);
+                
+                // For TANGGAL_BAYAR_RAMPUNG, always use YYYY-MM-DD format (text)
+                if ($tanggalRampungValue !== null && !empty($rawTanggal)) {
+                    try {
+                        $tanggalRampungValue = Carbon::parse($rawTanggal)->format('Y-m-d');
+                        $tuTk->update([
+                            'TANGGAL_BAYAR_RAMPUNG' => $tanggalRampungValue,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to parse tanggal_bayar for TANGGAL_BAYAR_RAMPUNG: ' . $e->getMessage());
+                    }
+                }
             }
 
             $tuTk->update([
@@ -1184,6 +1280,221 @@ class DashboardPembayaranController extends Controller
     /**
      * Helper: Convert number to Roman numeral
      */
+    /**
+     * Store multiple payment installments in batch (Excel-like modal)
+     * Handles 4 stages at once with DRY looping approach
+     */
+    public function storePaymentInstallmentBatch(Request $request)
+    {
+        // Get data source from request
+        $dataSource = $request->get('data_source', 'input_ks');
+        if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
+            $dataSource = 'input_ks';
+        }
+
+        // Select model and primary key based on data source
+        if ($dataSource === 'input_pupuk') {
+            $model = TuTkPupuk::class;
+            $primaryKey = 'EXTRA_COL_0';
+            $tableName = 'tu_tk_pupuk_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR_1';
+        } elseif ($dataSource === 'input_vd') {
+            $model = TuTkVd::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_vd_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR_1';
+        } elseif ($dataSource === 'input_tan') {
+            $model = TuTkTan::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_tan_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR_1';
+        } else {
+            $model = TuTk::class;
+            $primaryKey = 'KONTROL';
+            $tableName = 'tu_tk_2023';
+            $belumDibayarField = 'BELUM_DIBAYAR1';
+        }
+
+        // Validate kontrol exists
+        $request->validate([
+            'kontrol' => "required|exists:{$tableName},{$primaryKey}",
+            'data_source' => 'required|in:input_ks,input_pupuk,input_tan,input_vd',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $tuTk = $model::where($primaryKey, $request->kontrol)->firstOrFail();
+
+            // ============================================
+            // DRY APPROACH: Define Stage Mapping
+            // ============================================
+            $stages = [
+                1 => [
+                    'col_date' => 'TANGGAL_BAYAR_I',
+                    'col_amount' => 'JUMLAH1',
+                    'input_date' => 'tanggal_bayar_1',
+                    'input_amount' => 'jumlah1',
+                    'roman' => 'I'
+                ],
+                2 => [
+                    'col_date' => 'TANGGAL_BAYAR_II',
+                    'col_amount' => 'JUMLAH2',
+                    'input_date' => 'tanggal_bayar_2',
+                    'input_amount' => 'jumlah2',
+                    'roman' => 'II'
+                ],
+                3 => [
+                    'col_date' => 'TANGGAL_BAYAR_III',
+                    'col_amount' => 'JUMLAH3',
+                    'input_date' => 'tanggal_bayar_3',
+                    'input_amount' => 'jumlah3',
+                    'roman' => 'III'
+                ],
+                4 => [
+                    'col_date' => 'TANGGAL_BAYAR_IV',
+                    'col_amount' => 'JUMLAH4',
+                    'input_date' => 'tanggal_bayar_4',
+                    'input_amount' => 'jumlah4',
+                    'roman' => 'IV'
+                ],
+            ];
+
+            $updateData = [];
+            $paymentLogs = [];
+
+            // ============================================
+            // LOOP: Process Each Stage with Same Logic
+            // ============================================
+            foreach ($stages as $stageNum => $stage) {
+                // A. Get Input Values
+                $rawDate = $request->input($stage['input_date']);
+                $rawAmount = $request->input($stage['input_amount']);
+                $rawKeterangan = $request->input('keterangan_' . $stageNum, null);
+
+                // B. STRICT NULL CHECK: Validate Tanggal (Anti 1969 Error)
+                // DO NOT parse empty strings - Force NULL if empty
+                if (empty($rawDate) || $rawDate === 'null' || trim($rawDate) === '') {
+                    $updateData[$stage['col_date']] = null; // FORCE NULL IF EMPTY
+                } else {
+                    try {
+                        if ($dataSource === 'input_ks') {
+                            // For tu_tk_2023: Convert date to Excel serial number (double)
+                            $date = Carbon::parse($rawDate);
+                            $excelEpoch = Carbon::create(1899, 12, 30);
+                            $daysDiff = $date->diffInDays($excelEpoch);
+                            $updateData[$stage['col_date']] = (double) $daysDiff;
+                        } else {
+                            // For other tables: Format as YYYY-MM-DD (text)
+                            $updateData[$stage['col_date']] = Carbon::parse($rawDate)->format('Y-m-d');
+                        }
+                        
+                        // Create payment log if tanggal is valid and amount > 0
+                        if ($rawAmount && (float) preg_replace('/[^0-9]/', '', $rawAmount) > 0) {
+                            $paymentLogs[] = [
+                                'tu_tk_kontrol' => $request->kontrol,
+                                'data_source' => $dataSource,
+                                'payment_sequence' => $stageNum,
+                                'tanggal_bayar' => Carbon::parse($rawDate)->format('Y-m-d'),
+                                'jumlah' => (float) preg_replace('/[^0-9]/', '', $rawAmount),
+                                'keterangan' => $rawKeterangan,
+                                'created_by' => auth()->user()->name ?? 'System',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                        // If parsing fails, set to null and log error
+                        Log::warning('Failed to parse tanggal_bayar for stage ' . $stageNum . ': ' . $e->getMessage() . ' | Value: ' . $rawDate);
+                        $updateData[$stage['col_date']] = null; // Fallback to NULL
+                    }
+                }
+
+                // C. STRICT NULL CHECK: Sanitize Nominal (Remove Rp/Titik/Koma)
+                // If empty set 0, if exists clean non-numeric characters
+                if (empty($rawAmount) || $rawAmount === 'null' || trim($rawAmount) === '') {
+                    $cleanAmount = 0;
+                } else {
+                    $cleanAmount = preg_replace('/[^0-9]/', '', $rawAmount);
+                    $cleanAmount = (float) ($cleanAmount ?? 0);
+                }
+                $updateData[$stage['col_amount']] = $cleanAmount;
+            }
+
+            // ============================================
+            // Execute Single Update Query
+            // ============================================
+            $tuTk->update($updateData);
+
+            // ============================================
+            // Create Payment Logs (Batch Insert)
+            // ============================================
+            if (!empty($paymentLogs)) {
+                PaymentLog::insert($paymentLogs);
+            }
+
+            // ============================================
+            // Recalculate Total Payment
+            // ============================================
+            $tuTk->refresh(); // Reload from database
+            $totalDibayar = (float)($tuTk->JUMLAH1 ?? 0) 
+                          + (float)($tuTk->JUMLAH2 ?? 0)
+                          + (float)($tuTk->JUMLAH3 ?? 0)
+                          + (float)($tuTk->JUMLAH4 ?? 0)
+                          + (float)($tuTk->JUMLAH5 ?? 0)
+                          + (float)($tuTk->JUMLAH6 ?? 0);
+
+            $belumDibayar = (float)($tuTk->NILAI ?? 0) - $totalDibayar;
+
+            // Update JUMLAH_DIBAYAR and BELUM_DIBAYAR
+            $tuTk->update([
+                'JUMLAH_DIBAYAR' => $totalDibayar,
+                $belumDibayarField => max(0, $belumDibayar),
+            ]);
+
+            // ============================================
+            // If Fully Paid, Set Completion Date
+            // ============================================
+            if ($belumDibayar <= 0) {
+                // Get the latest valid tanggal from stages
+                $latestTanggal = null;
+                for ($i = 4; $i >= 1; $i--) {
+                    $rawDate = $request->input('tanggal_bayar_' . $i);
+                    if (!empty($rawDate) && $rawDate !== 'null' && trim($rawDate) !== '') {
+                        try {
+                            $latestTanggal = Carbon::parse($rawDate)->format('Y-m-d');
+                            break;
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+                }
+                
+                if ($latestTanggal !== null) {
+                    $tuTk->update([
+                        'TANGGAL_BAYAR_RAMPUNG' => $latestTanggal,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran berhasil disimpan',
+                'total_dibayar' => $totalDibayar,
+                'belum_dibayar' => $belumDibayar,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to save payment batch: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan pembayaran: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     private function getRomanNumeral($number)
     {
         $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI'];
