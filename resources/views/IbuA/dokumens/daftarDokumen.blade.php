@@ -837,7 +837,10 @@
   .table-enhanced .col-tanggal { width: 160px; min-width: 140px; }
   .table-enhanced .col-nilai { width: 120px; min-width: 120px; }
   .table-enhanced .col-mirror { width: 120px; min-width: 120px; }
-  .table-enhanced .col-status { width: 120px; min-width: 100px; }
+  .table-enhanced .col-status { width: 120px; min-width: 100px; text-align: center; }
+  .table-enhanced th.col-status { text-align: center; }
+  .table-enhanced td.col-status { text-align: center; }
+  .table-enhanced .col-status .badge-status { margin: 0 auto; display: inline-flex; }
   .table-enhanced .col-keterangan { width: 150px; min-width: 130px; }
   .table-enhanced .col-action { width: 140px; min-width: 140px; }
 
@@ -1369,23 +1372,25 @@
     height: 100px;
   }
 
-  /* Action button types with enhanced gradients */
+  /* Action button types with dark teal-green color (matching badge Terkirim) */
   .btn-edit {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #48bb78 100%);
+    background: #083E40;
     color: white;
   }
 
   .btn-edit:hover {
-    background: linear-gradient(135deg, #20c997 0%, #48bb78 50%, #38a169 100%);
+    background: #0a4f52;
+    color: white;
   }
 
   .btn-send {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #48bb78 100%);
+    background: #083E40;
     color: white;
   }
 
   .btn-send:hover {
-    background: linear-gradient(135deg, #20c997 0%, #48bb78 50%, #38a169 100%);
+    background: #0a4f52;
+    color: white;
   }
 
   .btn-send:disabled {
@@ -1804,6 +1809,42 @@
       </div>
       <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
     </div>
+    <div class="status-dropdown-wrapper" style="position: relative;">
+      <button type="button" class="btn-year-select" id="statusSelectBtn">
+        <span id="statusSelectText">
+          @php
+            $statusFilter = request('status_filter');
+            $statusLabels = [
+              '' => 'Semua Status',
+              'belum_dikirim' => 'Belum Dikirim',
+              'menunggu_approval' => 'Menunggu Approval',
+              'terkirim' => 'Terkirim',
+              'dikembalikan' => 'Dikembalikan'
+            ];
+          @endphp
+          {{ $statusLabels[$statusFilter] ?? 'Semua Status' }}
+        </span>
+        <i class="fa-solid fa-chevron-down ms-2"></i>
+      </button>
+      <div class="year-dropdown-menu" id="statusDropdownMenu" style="display: none;">
+        <a href="#" class="year-dropdown-item {{ !request('status_filter') ? 'active' : '' }}" data-status="">
+          Semua Status
+        </a>
+        <a href="#" class="year-dropdown-item {{ request('status_filter') == 'belum_dikirim' ? 'active' : '' }}" data-status="belum_dikirim">
+          Belum Dikirim
+        </a>
+        <a href="#" class="year-dropdown-item {{ request('status_filter') == 'menunggu_approval' ? 'active' : '' }}" data-status="menunggu_approval">
+          Menunggu Approval
+        </a>
+        <a href="#" class="year-dropdown-item {{ request('status_filter') == 'terkirim' ? 'active' : '' }}" data-status="terkirim">
+          Terkirim
+        </a>
+        <a href="#" class="year-dropdown-item {{ request('status_filter') == 'dikembalikan' ? 'active' : '' }}" data-status="dikembalikan">
+          Dikembalikan
+        </a>
+      </div>
+      <input type="hidden" name="status_filter" id="statusSelect" value="{{ request('status_filter') }}">
+    </div>
     <button type="submit" class="btn-filter" id="filterBtn" onclick="handleFilterSubmit(event)">
       <i class="fa-solid fa-caret-down me-2"></i>Filter
     </button>
@@ -1854,7 +1895,7 @@
     </thead>
     <tbody>
       @forelse($dokumens as $index => $dokumen)
-      <tr class="main-row clickable-row" data-id="{{ $dokumen->id }}" onclick="loadDocumentDetail({{ $dokumen->id }})">
+      <tr class="main-row clickable-row" data-id="{{ $dokumen->id }}" onclick="handleRowClick(event, {{ $dokumen->id }})">
         <td class="col-no sticky-column">{{ $dokumens->firstItem() + $index }}</td>
         @foreach($selectedColumns as $col)
           <td class="col-{{ $col }}">
@@ -1863,14 +1904,19 @@
               <br>
               <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
             @elseif($col == 'nomor_spp')
-              {{ $dokumen->nomor_spp }}
+              <span class="select-text">{{ $dokumen->nomor_spp }}</span>
             @elseif($col == 'tanggal_masuk')
-              {{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d-m-Y H:i') : '-' }}
+              <span class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d-m-Y H:i') : '-' }}</span>
             @elseif($col == 'nilai_rupiah')
-              <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
+              <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah }}</strong>
             @elseif($col == 'nomor_mirror')
               {{ $dokumen->nomor_mirror ?? '-' }}
             @elseif($col == 'status')
+              @php
+                // Gunakan role-based status display untuk Ibu Tarapul (ibuA)
+                $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('ibuA');
+              @endphp
+              
               @if($dokumen->inbox_approval_status == 'rejected')
                 {{-- Dokumen ditolak dari inbox --}}
                 <span class="badge-status badge-dikembalikan" style="position: relative;">
@@ -1888,35 +1934,39 @@
                   <i class="fa-solid fa-file-lines me-1"></i>
                   <span>Belum Dikirim</span>
                 </span>
-              @elseif($dokumen->getIbuTarapulStatusDisplay() == 'Menunggu Approve Ibu Yuni')
-                <span class="badge-status badge-terkirim">
+              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'pending'))
+                {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
+                <span class="badge-status" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                   <i class="fa-solid fa-clock me-1"></i>
-                  <span>Waiting Approve</span>
+                  <span>Menunggu Approval</span>
                 </span>
-              @elseif($dokumen->getIbuTarapulStatusDisplay() == 'Document Approved')
-                <span class="badge-status badge-approved">
-                  <i class="fa-solid fa-check-circle me-1"></i>
-                  <span>Document Approved</span>
-                </span>
-              @elseif($dokumen->status == 'sent_to_ibub')
-                <span class="badge-status badge-terkirim">
-                  <i class="fa-solid fa-check me-1"></i>
-                  <span>Terkirim ke Ibu Yuni</span>
-                </span>
-              @elseif($dokumen->status == 'approved_data_sudah_terkirim')
+              @elseif($statusLabel == 'Terkirim' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved'))
+                {{-- Dokumen sudah di-approve oleh Ibu Yuni --}}
                 <span class="badge-status badge-terkirim">
                   <i class="fa-solid fa-check me-1"></i>
                   <span>Terkirim</span>
                 </span>
-              @elseif($dokumen->status == 'rejected_data_tidak_lengkap')
+              @elseif($statusLabel == 'Sedang Proses' || $statusLabel == 'Sedang Proses (Reviewer/Tax)' || $statusLabel == 'Sedang Proses (Reviewer/Accounting)')
+                {{-- Dokumen sedang diproses di tahap selanjutnya --}}
+                <span class="badge-status badge-proses">
+                  <i class="fa-solid fa-spinner me-1"></i>
+                  <span>{{ $statusLabel }}</span>
+                </span>
+              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_ibua')
                 <span class="badge-status badge-dikembalikan">
                   <i class="fa-solid fa-times me-1"></i>
-                  <span>Dikembalikan</span>
+                  <span>Dikembalikan untuk Revisi</span>
+                </span>
+              @elseif($statusLabel == 'Selesai' || $dokumen->status == 'selesai' || $dokumen->status == 'completed')
+                <span class="badge-status badge-selesai">
+                  <i class="fa-solid fa-check-circle me-1"></i>
+                  <span>Selesai</span>
                 </span>
               @else
+                {{-- Fallback: tampilkan status dari accessor --}}
                 <span class="badge-status badge-terkirim">
                   <i class="fa-solid fa-check me-1"></i>
-                  <span>Terikirim</span>
+                  <span>{{ $statusLabel }}</span>
                 </span>
               @endif
             @elseif($col == 'keterangan')
@@ -2012,79 +2062,7 @@
 </div>
 
 <!-- Pagination -->
-@if($dokumens->hasPages())
-<div class="pagination">
-    {{-- Previous Page Link --}}
-    @if($dokumens->onFirstPage())
-        <button class="btn-chevron" disabled>
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-    @else
-        <a href="{{ $dokumens->appends(request()->query())->previousPageUrl() }}">
-            <button class="btn-chevron">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-        </a>
-    @endif
-
-    {{-- Pagination Elements --}}
-    @if($dokumens->hasPages())
-        {{-- First page --}}
-        @if($dokumens->currentPage() > 3)
-            <a href="{{ $dokumens->appends(request()->query())->url(1) }}">
-                <button>1</button>
-            </a>
-        @endif
-
-        {{-- Dots --}}
-        @if($dokumens->currentPage() > 4)
-            <button disabled>...</button>
-        @endif
-
-        {{-- Range of pages --}}
-        @for($i = max(1, $dokumens->currentPage() - 2); $i <= min($dokumens->lastPage(), $dokumens->currentPage() + 2); $i++)
-            @if($dokumens->currentPage() == $i)
-                <button class="active">{{ $i }}</button>
-            @else
-                <a href="{{ $dokumens->appends(request()->query())->url($i) }}">
-                    <button>{{ $i }}</button>
-                </a>
-            @endif
-        @endfor
-
-        {{-- Dots --}}
-        @if($dokumens->currentPage() < $dokumens->lastPage() - 3)
-            <button disabled>...</button>
-        @endif
-
-        {{-- Last page --}}
-        @if($dokumens->currentPage() < $dokumens->lastPage() - 2)
-            <a href="{{ $dokumens->appends(request()->query())->url($dokumens->lastPage()) }}">
-                <button>{{ $dokumens->lastPage() }}</button>
-            </a>
-        @endif
-    @endif
-
-    {{-- Next Page Link --}}
-    @if($dokumens->hasMorePages())
-        <a href="{{ $dokumens->appends(request()->query())->nextPageUrl() }}">
-            <button class="btn-chevron">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </a>
-    @else
-        <button class="btn-chevron" disabled>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-    @endif
-</div>
-
-<div class="text-center mt-3">
-    <small class="text-muted">
-        Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari total {{ $dokumens->total() }} dokumen
-    </small>
-</div>
-@endif
+@include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 {{-- Modal untuk menampilkan alasan reject dari inbox --}}
 @if(isset($dokumens))
@@ -2473,6 +2451,44 @@ function showSendSuccessModal(message) {
   shouldReloadAfterSendSuccess = true;
   const modal = new bootstrap.Modal(modalEl);
   modal.show();
+}
+
+// Wrapper function untuk handle row click dengan text selection check
+function handleRowClick(event, documentId) {
+  // Cek apakah user sedang menyeleksi teks
+  const selection = window.getSelection();
+  const selectedText = selection.toString().trim();
+  
+  if (selectedText.length > 0) {
+    // User sedang menyeleksi teks, jangan toggle detail
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+  
+  // Cek apakah yang diklik adalah link/tombol/input/select/textarea
+  const target = event.target;
+  const tagName = target.tagName.toLowerCase();
+  const isInteractiveElement = 
+    tagName === 'a' || 
+    tagName === 'button' || 
+    tagName === 'input' || 
+    tagName === 'select' || 
+    tagName === 'textarea' ||
+    target.closest('a') !== null ||
+    target.closest('button') !== null ||
+    target.closest('.btn') !== null ||
+    target.closest('.btn-action') !== null ||
+    target.closest('[role="button"]') !== null;
+  
+  if (isInteractiveElement) {
+    // User klik elemen interaktif, biarkan default behavior
+    return true;
+  }
+  
+  // Jika aman, panggil loadDocumentDetail
+  loadDocumentDetail(documentId);
+  return true;
 }
 
 // Load Document Detail with Lazy Loading
@@ -3091,6 +3107,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     url.searchParams.delete('year');
                 }
 
+                // Preserve status_filter
+                const statusInput = form.querySelector('input[name="status_filter"]');
+                if (statusInput && statusInput.value) {
+                    url.searchParams.set('status_filter', statusInput.value);
+                } else {
+                    url.searchParams.delete('status_filter');
+                }
+
+                // Preserve per_page
+                const perPage = new URLSearchParams(window.location.search).get('per_page');
+                if (perPage) {
+                    url.searchParams.set('per_page', perPage);
+                }
+
                 // Preserve column customization params
                 const columnInputs = form.querySelectorAll('input[name="columns[]"]');
                 columnInputs.forEach(input => {
@@ -3116,12 +3146,132 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Status Dropdown Handler
+    const statusSelectBtn = document.getElementById('statusSelectBtn');
+    const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+    const statusSelect = document.getElementById('statusSelect');
+    const statusSelectText = document.getElementById('statusSelectText');
+    const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
+
+    if (statusSelectBtn && statusDropdownMenu && statusSelect) {
+        // Toggle dropdown menu
+        statusSelectBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Status dropdown button clicked');
+
+            // Close year dropdown if open
+            if (yearDropdownMenu) {
+                yearDropdownMenu.style.display = 'none';
+                if (yearSelectBtn) yearSelectBtn.classList.remove('active');
+            }
+
+            // Toggle status dropdown visibility
+            if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
+                statusDropdownMenu.style.display = 'block';
+                statusSelectBtn.classList.add('active');
+            } else {
+                statusDropdownMenu.style.display = 'none';
+                statusSelectBtn.classList.remove('active');
+            }
+        });
+
+        // Handle status selection
+        statusDropdownItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Status item clicked:', this.getAttribute('data-status'));
+
+                const selectedStatus = this.getAttribute('data-status');
+
+                // Update hidden input
+                statusSelect.value = selectedStatus;
+
+                // Update button text
+                const statusLabels = {
+                    '': 'Semua Status',
+                    'belum_dikirim': 'Belum Dikirim',
+                    'menunggu_approval': 'Menunggu Approval',
+                    'terkirim': 'Terkirim',
+                    'dikembalikan': 'Dikembalikan'
+                };
+                statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
+
+                // Update active state
+                statusDropdownItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Close dropdown
+                statusDropdownMenu.style.display = 'none';
+                statusSelectBtn.classList.remove('active');
+
+                // Submit form to apply filter (preserve search and other params)
+                const form = document.getElementById('filterForm');
+                const searchInput = form.querySelector('input[name="search"]');
+                const searchValue = searchInput ? searchInput.value.trim() : '';
+
+                // Preserve search value in URL
+                const url = new URL(form.action);
+                if (searchValue) {
+                    url.searchParams.set('search', searchValue);
+                } else {
+                    url.searchParams.delete('search');
+                }
+
+                // Preserve year filter
+                const yearValue = yearSelect ? yearSelect.value : '';
+                if (yearValue) {
+                    url.searchParams.set('year', yearValue);
+                } else {
+                    url.searchParams.delete('year');
+                }
+
+                // Set status filter
+                if (selectedStatus) {
+                    url.searchParams.set('status_filter', selectedStatus);
+                } else {
+                    url.searchParams.delete('status_filter');
+                }
+
+                // Preserve column customization params
+                const columnInputs = form.querySelectorAll('input[name="columns[]"]');
+                columnInputs.forEach(input => {
+                    url.searchParams.append('columns[]', input.value);
+                });
+
+                // Preserve per_page
+                const perPage = new URLSearchParams(window.location.search).get('per_page');
+                if (perPage) {
+                    url.searchParams.set('per_page', perPage);
+                }
+
+                // Redirect to new URL
+                window.location.href = url.toString();
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
+                statusDropdownMenu.style.display = 'none';
+                statusSelectBtn.classList.remove('active');
+            }
+        });
+
+        // Prevent dropdown from closing when clicking inside
+        statusDropdownMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+
     // Handle filter form submit to preserve all parameters
     function handleFilterSubmit(event) {
         event.preventDefault();
         const form = document.getElementById('filterForm');
         const searchInput = form.querySelector('input[name="search"]');
         const yearInput = form.querySelector('input[name="year"]');
+        const statusInput = form.querySelector('input[name="status_filter"]');
         
         // Build URL with all parameters
         const url = new URL(form.action);
@@ -3138,6 +3288,19 @@ document.addEventListener('DOMContentLoaded', function() {
             url.searchParams.set('year', yearInput.value);
         } else {
             url.searchParams.delete('year');
+        }
+        
+        // Add status_filter parameter
+        if (statusInput && statusInput.value) {
+            url.searchParams.set('status_filter', statusInput.value);
+        } else {
+            url.searchParams.delete('status_filter');
+        }
+        
+        // Preserve per_page parameter
+        const perPage = new URLSearchParams(window.location.search).get('per_page');
+        if (perPage) {
+            url.searchParams.set('per_page', perPage);
         }
         
         // Preserve column customization params
@@ -3185,3 +3348,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 @endsection
+

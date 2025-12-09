@@ -130,6 +130,7 @@ class DashboardPerpajakanController extends Controller
             $query->where('tahun', $request->year);
         }
 
+        $perPage = $request->get('per_page', 10);
         $dokumens = $query->orderByRaw("CASE
                 WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
@@ -137,7 +138,7 @@ class DashboardPerpajakanController extends Controller
             END")
             ->orderByDesc('sent_to_perpajakan_at')
             ->orderByDesc('updated_at')
-            ->paginate(10);
+            ->paginate($perPage)->appends($request->query());
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
         $dokumens->getCollection()->transform(function ($dokumen) {
@@ -693,8 +694,9 @@ class DashboardPerpajakanController extends Controller
         $dokumens = Dokumen::whereNotNull('returned_from_perpajakan_at')
             ->where('status', 'returned_to_department')
             ->with(['dokumenPos', 'dokumenPrs'])
-            ->orderBy('returned_from_perpajakan_at', 'desc')
-            ->paginate(10);
+            ->orderBy('returned_from_perpajakan_at', 'desc');
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics
         $totalReturned = Dokumen::whereNotNull('returned_from_perpajakan_at')
@@ -981,7 +983,8 @@ class DashboardPerpajakanController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        $dokumens = $query->latest('tanggal_masuk')->paginate(10);
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get statistics
         $statistics = $this->getRekapanStatistics($selectedBagian);

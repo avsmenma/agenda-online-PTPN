@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
 use App\Http\Requests\SetDeadlineRequest;
 use App\Models\Dokumen;
 use App\Models\DokumenPO;
@@ -98,8 +99,14 @@ class DashboardBController extends Controller
         // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
         // Exclude pending approval documents (they should use daftar masuk dokumen)
         // Optimized query - only load essential columns for list view
+        // Base query - akan dimodifikasi oleh filter status jika ada
         $query = Dokumen::with('activityLogs')
-            ->where(function($q) {
+            ->where('status', '!=', 'returned_to_bidang');
+        
+        // Apply base filter only if no status filter is specified
+        // If status filter is specified, it will override base filter
+        if (!$request->has('status') || !$request->status) {
+            $query->where(function($q) {
                 $q->where('current_handler', 'ibuB')
                   ->orWhere(function($subQ) {
                       $subQ->where('status', 'sedang_diproses')
@@ -112,9 +119,10 @@ class DashboardBController extends Controller
                              ->whereIn('target_department', ['perpajakan', 'akutansi'])
                              ->where('current_handler', 'ibuB');
                   });
-            })
-            ->where('status', '!=', 'returned_to_bidang')
-            ->orderByRaw("
+            });
+        }
+        
+        $query->orderByRaw("
                 COALESCE(sent_to_ibub_at, created_at) DESC,
                 id DESC
             ")
@@ -164,12 +172,90 @@ class DashboardBController extends Controller
             $query->where('tahun', $request->year);
         }
 
+        // Filter by status - Apply strict filtering (override base filter)
+        if ($request->has('status') && $request->status) {
+            $statusFilter = $request->status;
+            switch ($statusFilter) {
+                case 'deadline':
+                    // Dokumen yang memiliki deadline (deadline_at tidak null) dan masih dalam scope Ibu Yuni
+                    $query->whereNotNull('deadline_at')
+                          ->where('current_handler', 'ibuB')
+                          // Pastikan bukan status terkirim atau selesai
+                          ->whereNotIn('status', [
+                              'sent_to_perpajakan',
+                              'sent_to_akutansi',
+                              'sent_to_pembayaran',
+                              'selesai',
+                              'completed'
+                          ]);
+                    break;
+                case 'sedang_proses':
+                    // Dokumen yang sedang diproses oleh Ibu Yuni - hanya status spesifik
+                    $query->where('current_handler', 'ibuB')
+                          ->where(function($q) {
+                              // Status yang termasuk "sedang diproses"
+                              $q->where('status', 'sedang diproses')
+                                ->orWhere('status', 'sedang_diproses')
+                                ->orWhere('status', 'waiting_reviewer_approval');
+                          })
+                          // Exclude dokumen yang sudah terkirim atau ditolak
+                          ->whereNotIn('status', [
+                              'sent_to_perpajakan', 
+                              'sent_to_akutansi', 
+                              'sent_to_pembayaran',
+                              'returned_to_department',
+                              'selesai', 
+                              'completed',
+                              'approved_ibub'
+                          ])
+                          // Exclude dokumen yang ditolak
+                          ->where(function($inboxQ) {
+                              $inboxQ->whereNull('inbox_approval_status')
+                                    ->orWhere('inbox_approval_status', '!=', 'rejected')
+                                    ->orWhere(function($approvedQ) {
+                                        $approvedQ->where('inbox_approval_status', 'pending')
+                                                 ->orWhere('inbox_approval_status', 'approved');
+                                    });
+                          });
+                    break;
+                case 'terkirim_perpajakan':
+                    // Dokumen yang terkirim ke perpajakan - hanya status ini saja
+                    $query->where('status', 'sent_to_perpajakan');
+                    break;
+                case 'terkirim_akutansi':
+                    // Dokumen yang terkirim ke akutansi - hanya status ini saja
+                    $query->where('status', 'sent_to_akutansi');
+                    break;
+                case 'ditolak':
+                    // Dokumen yang ditolak - hanya status ditolak saja
+                    $query->where(function($q) {
+                        $q->where(function($rejectQ) {
+                            $rejectQ->where('status', 'returned_to_department')
+                                   ->orWhere('inbox_approval_status', 'rejected')
+                                   ->orWhereNotNull('inbox_approval_reason');
+                        })
+                        ->where(function($handlerQ) {
+                            // Pastikan masih dalam scope Ibu Yuni
+                            $handlerQ->where('current_handler', 'ibuB')
+                                    ->orWhere(function($subQ) {
+                                        $subQ->where('status', 'returned_to_department')
+                                             ->whereIn('target_department', ['perpajakan', 'akutansi'])
+                                             ->where('current_handler', 'ibuB');
+                                    });
+                        });
+                    });
+                    break;
+            }
+        }
+
         // Use eager loading for relations to prevent N+1 queries
         $dokumens = $query->with(['dibayarKepadas'])
             ->withCount([
                 'dokumenPos',
                 'dokumenPrs'
-            ])->paginate(10);
+            ]);
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Cache statistics for better performance
         $cacheKey = 'ibub_stats_' . md5($request->fullUrl());
@@ -357,8 +443,20 @@ class DashboardBController extends Controller
             }
             $nilaiRupiah = (float) $nilaiRupiah;
 
-            // Update dokumen - IMPORTANT: Status is NOT updated here
-            $dokumen->update([
+            // Determine new status based on document state
+            $newStatus = $dokumen->status;
+            $resetInboxRejection = false;
+
+            // If document was rejected from inbox or returned, reset to "sedang diproses"
+            if ($dokumen->inbox_approval_status === 'rejected' || 
+                $dokumen->status === 'returned_to_department' ||
+                $dokumen->returned_from_perpajakan_at) {
+                $newStatus = 'sedang diproses';
+                $resetInboxRejection = true;
+            }
+
+            // Update dokumen
+            $updateData = [
                 'nomor_agenda' => $request->nomor_agenda,
                 'bulan' => $request->bulan,
                 'tahun' => $request->tahun,
@@ -372,15 +470,29 @@ class DashboardBController extends Controller
                 'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
                 'jenis_pembayaran' => $request->jenis_pembayaran,
                 'kebun' => $request->kebun,
+                'bagian' => $request->bagian,
+                'nama_pengirim' => $request->nama_pengirim,
                 'dibayar_kepada' => $request->dibayar_kepada,
                 'no_berita_acara' => $request->no_berita_acara,
                 'tanggal_berita_acara' => $request->tanggal_berita_acara,
                 'no_spk' => $request->no_spk,
                 'tanggal_spk' => $request->tanggal_spk,
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
-                // Status is NOT updated - only changes through workflow
+                'nomor_mirror' => $request->nomor_mirror,
+                'status' => $newStatus, // Reset status to "sedang diproses" if was rejected/returned
                 'keterangan' => $request->keterangan,
-            ]);
+            ];
+
+            // Reset inbox rejection status if needed
+            if ($resetInboxRejection) {
+                $updateData['inbox_approval_status'] = null;
+                $updateData['inbox_approval_reason'] = null;
+                $updateData['inbox_approval_responded_at'] = null;
+                $updateData['pengembalian_awaiting_fix'] = false;
+                $updateData['returned_from_perpajakan_at'] = null;
+            }
+
+            $dokumen->update($updateData);
 
             // Update PO numbers - delete existing and create new
             $dokumen->dokumenPos()->delete();
@@ -671,7 +783,7 @@ class DashboardBController extends Controller
     public function pengembalian(Request $request){
         // IbuB sees documents that were returned to department (unified return page)
         // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
-        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs'])
+        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas'])
             ->where(function($q) {
                 // Dokumen yang dikembalikan dari department/bagian
                 $q->where(function($subQ) {
@@ -721,7 +833,8 @@ class DashboardBController extends Controller
             });
         }
 
-        $dokumens = $query->paginate(10);
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
         $totalReturnedToDept = \App\Models\Dokumen::where(function($q) {
@@ -1358,7 +1471,9 @@ class DashboardBController extends Controller
             'id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah',
             'target_bidang', 'bidang_returned_at', 'bidang_return_reason',
             'created_at', 'updated_at', 'bulan', 'tahun'
-        ])->paginate(10);
+        ]);
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
         $totalReturned = Dokumen::where('current_handler', 'ibuB')
@@ -1896,7 +2011,8 @@ class DashboardBController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        $dokumens = $query->latest('tanggal_masuk')->paginate(10);
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get statistics
         $statistics = $this->getRekapanStatistics($selectedBagian);
@@ -1951,6 +2067,95 @@ class DashboardBController extends Controller
                 'returned_to_ibua' => $query->where('status', 'returned_to_ibua')->count(),
             ]
         ];
+    }
+
+    /**
+     * Display analytics page for Ibu Yuni (similar to Ibu Tarapul)
+     */
+    public function rekapanAnalytics(Request $request): View
+    {
+        // Get selected year and bagian from request
+        $selectedYear = $request->get('year', date('Y'));
+        $selectedBagian = $request->get('bagian', '');
+        $selectedMonth = $request->get('month', null);
+
+        // Validate year
+        if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
+            $selectedYear = date('Y');
+        }
+
+        // Base query for documents created by Ibu Tarapul (Ibu Yuni can see all documents from Ibu Tarapul)
+        $baseQuery = Dokumen::where('created_by', 'ibuA')
+            ->whereYear('tanggal_masuk', $selectedYear);
+
+        // Filter by bagian if selected
+        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
+            $baseQuery->where('bagian', $selectedBagian);
+        }
+
+        // Get yearly summary
+        $yearlySummary = [
+            'total_dokumen' => (clone $baseQuery)->count(),
+            'total_nominal' => (clone $baseQuery)->sum('nilai_rupiah') ?? 0,
+        ];
+
+        // Get monthly statistics
+        $monthlyStats = [];
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $monthQuery = (clone $baseQuery)->whereMonth('tanggal_masuk', $month);
+            $monthStats = [
+                'name' => $monthNames[$month],
+                'count' => $monthQuery->count(),
+                'total_nominal' => $monthQuery->sum('nilai_rupiah') ?? 0,
+            ];
+            $monthlyStats[$month] = $monthStats;
+        }
+
+        // Get documents for table (filter by month if selected)
+        $tableQuery = (clone $baseQuery);
+        if ($selectedMonth && $selectedMonth >= 1 && $selectedMonth <= 12) {
+            $tableQuery->whereMonth('tanggal_masuk', $selectedMonth);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 10);
+        $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
+
+        // Get available years
+        $availableYears = Dokumen::where('created_by', 'ibuA')
+            ->whereNotNull('tanggal_masuk')
+            ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->toArray();
+
+        if (empty($availableYears)) {
+            $availableYears = [(int)date('Y')];
+        }
+
+        $data = [
+            'title' => 'Analitik Dokumen',
+            'module' => 'ibuB',
+            'menuDokumen' => 'active',
+            'menuRekapan' => 'active',
+            'selectedYear' => (int)$selectedYear,
+            'selectedBagian' => $selectedBagian,
+            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'yearlySummary' => $yearlySummary,
+            'monthlyStats' => $monthlyStats,
+            'dokumens' => $tableDokumens,
+            'availableYears' => $availableYears,
+            'bagianList' => self::BAGIAN_LIST,
+        ];
+
+        return view('ibuB.dokumens.analytics', $data);
     }
 
     /**

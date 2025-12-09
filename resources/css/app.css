@@ -9,3 +9,76 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Custom Scrollbar Utility - Force Horizontal Scrollbar to Always Be Visible */
+.scrollbar-visible {
+    overflow-x: scroll !important; /* Force horizontal scrollbar */
+    overflow-y: hidden !important; /* Disable vertical scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9; /* Slate-300 thumb, Slate-100 track */
+}
+
+/* Horizontal Scrollbar Only - Webkit browsers */
+.scrollbar-visible::-webkit-scrollbar {
+    width: 0 !important; /* Hide vertical scrollbar */
+    height: 16px !important; /* Horizontal scrollbar height */
+    display: block !important; /* Paksa muncul */
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+    background: #f1f5f9 !important; /* Warna track abu-abu muda (Slate-100) */
+    border-radius: 8px;
+    margin: 0 10px;
+    border: 1px solid #e2e8f0;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1 !important; /* Warna thumb abu-abu jelas (Slate-300) */
+    border-radius: 8px;
+    border: 2px solid #f1f5f9; /* Border agar terlihat ada jarak */
+    min-height: 16px;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Hover state agar lebih gelap sedikit saat disentuh */
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8 !important; /* Slate-400 */
+}
+
+/* Active state */
+.scrollbar-visible::-webkit-scrollbar-thumb:active {
+    background-color: #64748b !important; /* Slate-500 */
+}
+
+/* Firefox scrollbar styling */
+.scrollbar-visible {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9; /* Slate-300 thumb, Slate-100 track */
+}
+
+/* Ensure horizontal scrollbar is always visible even when not hovering */
+.scrollbar-visible:not(:hover)::-webkit-scrollbar {
+    height: 16px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.scrollbar-visible:not(:hover)::-webkit-scrollbar-thumb {
+    opacity: 1 !important;
+    visibility: visible !important;
+    background-color: #cbd5e1 !important; /* Force visible color */
+}
+
+.scrollbar-visible:not(:hover)::-webkit-scrollbar-track {
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: #f1f5f9 !important; /* Force visible track */
+}

@@ -1,6 +1,10 @@
 @extends('layouts/app')
 @section('content')
 
+@php
+  use Illuminate\Support\Str;
+@endphp
+
 <style>
   /* Title Styles */
   h2 {
@@ -12,7 +16,7 @@
     font-weight: 700;
   }
 
-  /* Filter Year Section */
+  /* Filter Section */
   .filter-year-section {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 24px;
@@ -27,20 +31,27 @@
     gap: 20px;
   }
 
-  .year-select-wrapper {
+  .filter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
     display: flex;
     align-items: center;
     gap: 12px;
   }
 
-  .year-select-wrapper label {
+  .filter-group label {
     font-size: 14px;
     font-weight: 600;
     color: #083E40;
     margin: 0;
   }
 
-  .year-select-wrapper select {
+  .filter-group select {
     padding: 10px 16px;
     border: 2px solid rgba(8, 62, 64, 0.15);
     border-radius: 10px;
@@ -50,14 +61,15 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: 150px;
   }
 
-  .year-select-wrapper select:hover {
+  .filter-group select:hover {
     border-color: #889717;
     box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
   }
 
-  .year-select-wrapper select:focus {
+  .filter-group select:focus {
     outline: none;
     border-color: #889717;
     box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
@@ -124,7 +136,7 @@
     opacity: 0.8;
   }
 
-  /* Monthly Grid */
+  /* Monthly Grid Section */
   .monthly-grid-section {
     margin-bottom: 30px;
   }
@@ -260,6 +272,12 @@
     box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
     border: 1px solid rgba(8, 62, 64, 0.08);
     margin-top: 30px;
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    scrollbar-gutter: stable;
   }
 
   .table-container h6 {
@@ -283,7 +301,10 @@
   .table {
     margin-bottom: 0;
     width: 100%;
-    border-collapse: collapse;
+    min-width: 1200px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
   }
 
   .table thead {
@@ -304,11 +325,7 @@
     border-left: 3px solid transparent;
   }
 
-  .table tbody tr.clickable-row {
-    cursor: pointer;
-  }
-
-  .table tbody tr.clickable-row:hover {
+  .table tbody tr:hover {
     background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
     border-left: 3px solid #889717;
     transform: scale(1.001);
@@ -319,6 +336,78 @@
     font-size: 13px;
     vertical-align: middle;
     border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+  }
+
+  /* Table Scroll Container - Horizontal Scrollbar Only (Always Visible) */
+  .table-responsive {
+    overflow-x: scroll !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+  }
+
+  /* Horizontal Scrollbar Styling - Webkit browsers */
+  .table-responsive::-webkit-scrollbar {
+    height: 16px !important;
+    width: 0;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive::-webkit-scrollbar-track:horizontal {
+    background: #f1f5f9 !important;
+    border-radius: 8px;
+    margin: 0 10px;
+    border: 1px solid #e2e8f0;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb:horizontal {
+    background: #cbd5e1 !important;
+    border-radius: 8px;
+    border: 2px solid #f1f5f9;
+    min-height: 16px;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb:horizontal:hover {
+    background: #94a3b8 !important;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb:horizontal:active {
+    background: #64748b !important;
+  }
+
+  .table-responsive:not(:hover)::-webkit-scrollbar {
+    height: 16px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive:not(:hover)::-webkit-scrollbar-track:horizontal {
+    background: #f1f5f9 !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive:not(:hover)::-webkit-scrollbar-thumb:horizontal {
+    background: #cbd5e1 !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .empty-state {
@@ -345,6 +434,11 @@
     color: #999;
   }
 
+  .select-text {
+    cursor: text;
+    user-select: text;
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .big-summary-content {
@@ -365,24 +459,52 @@
       flex-direction: column;
       align-items: stretch;
     }
+
+    .filter-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filter-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filter-group select {
+      width: 100%;
+    }
   }
 </style>
 
-<h2>{{ $title }}</h2>
+<h2>Analitik Dokumen</h2>
 
-<!-- Filter Year Section -->
+<!-- Filter Section -->
 <div class="filter-year-section">
-  <div class="year-select-wrapper">
-    <label for="yearSelect">Pilih Tahun:</label>
-    <select id="yearSelect" onchange="changeYear(this.value)">
-      @foreach($availableYears as $year)
-        <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
-      @endforeach
-    </select>
+  <div class="filter-wrapper">
+    <div class="filter-group">
+      <label for="yearSelect">Pilih Tahun:</label>
+      <select id="yearSelect" onchange="changeFilter()">
+        @foreach($availableYears as $year)
+          <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+        @endforeach
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="bagianSelect">Pilih Bagian:</label>
+      <select id="bagianSelect" onchange="changeFilter()">
+        <option value="">Semua Bagian</option>
+        @foreach($bagianList as $code => $name)
+          <option value="{{ $code }}" {{ $selectedBagian == $code ? 'selected' : '' }}>{{ $name }}</option>
+        @endforeach
+      </select>
+    </div>
   </div>
   <div style="font-size: 14px; color: #6c757d; font-weight: 500;">
     <i class="fa-solid fa-calendar-alt me-2"></i>
     Data untuk tahun <strong>{{ $selectedYear }}</strong>
+    @if($selectedBagian)
+      - Bagian <strong>{{ $bagianList[$selectedBagian] ?? '' }}</strong>
+    @endif
   </div>
 </div>
 
@@ -392,7 +514,7 @@
     <div class="summary-item">
       <div class="summary-label">Total Nominal</div>
       <div class="summary-value">Rp {{ number_format($yearlySummary['total_nominal'] ?? 0, 0, ',', '.') }}</div>
-      <div class="summary-description">Total nilai pembayaran tahun {{ $selectedYear }}</div>
+      <div class="summary-description">Total nilai dokumen tahun {{ $selectedYear }}</div>
     </div>
     <div class="summary-item">
       <div class="summary-label">Total Jumlah Dokumen</div>
@@ -441,12 +563,15 @@
       @else
         Daftar Dokumen - Tahun {{ $selectedYear }}
       @endif
+      @if($selectedBagian)
+        - Bagian {{ $bagianList[$selectedBagian] ?? '' }}
+      @endif
     </span>
     <span style="font-size: 13px; color: #6c757d; font-weight: 500;">
-      Total: {{ $dokumens->count() }} dokumen
+      Total: {{ $dokumens->total() }} dokumen
     </span>
   </h6>
-  <div class="table-responsive">
+  <div class="table-responsive scrollbar-visible">
     <table class="table table-hover align-middle mb-0">
       <thead>
         <tr>
@@ -454,20 +579,19 @@
           <th>Nomor Agenda</th>
           <th>Bulan</th>
           <th>Tahun</th>
-          <th>Tanggal Dibayar</th>
+          <th>Tanggal Masuk</th>
           <th>Nomor SPP</th>
           <th>Uraian SPP</th>
           <th>Nilai Rupiah</th>
-          <th>Dibayar Kepada</th>
+          <th>Bagian</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody id="dokumenTableBody">
         @forelse($dokumens as $index => $dokumen)
-          <tr class="clickable-row" 
-              onclick="handleItemClick(event, '{{ route('dokumensPembayaran.detail', $dokumen->id) }}')"
-              title="Klik untuk melihat detail dokumen">
-            <td style="text-align: center;">{{ $index + 1 }}</td>
-            <td><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
+          <tr onclick="handleItemClick(event, '{{ route('dokumens.detail', $dokumen->id) }}')">
+            <td style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
+            <td class="select-text"><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
             <td>
               <span style="font-weight: 600; color: #083E40;">
                 {{ $dokumen->bulan ?? '-' }}
@@ -478,21 +602,49 @@
                 {{ $dokumen->tahun ?? '-' }}
               </span>
             </td>
-            <td class="select-text">{{ $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : '-' }}</td>
+            <td class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y') : '-' }}</td>
             <td class="select-text">{{ $dokumen->nomor_spp ?? '-' }}</td>
             <td class="select-text">{{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}</td>
-            <td><strong class="select-text">Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
+            <td class="select-text"><strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
             <td>
-              @if($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
-                {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
+              @if($dokumen->bagian)
+                <span class="badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  {{ $dokumen->bagian }}
+                </span>
               @else
-                {{ $dokumen->dibayar_kepada ?? '-' }}
+                <span class="text-muted">-</span>
+              @endif
+            </td>
+            <td>
+              @php
+                $statusLabel = $dokumen->status_for_user ?? ucfirst(str_replace('_', ' ', $dokumen->status));
+              @endphp
+              @if($statusLabel == 'Belum Dikirim' || in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+                <span class="badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  Belum Dikirim
+                </span>
+              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval')
+                <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  Menunggu Approval
+                </span>
+              @elseif($statusLabel == 'Terkirim')
+                <span class="badge" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  Terkirim
+                </span>
+              @elseif($statusLabel == 'Dikembalikan untuk Revisi')
+                <span class="badge" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  Dikembalikan
+                </span>
+              @else
+                <span class="badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  {{ $statusLabel }}
+                </span>
               @endif
             </td>
           </tr>
         @empty
           <tr>
-            <td colspan="9" class="empty-state">
+            <td colspan="10" class="empty-state">
               <i class="fa-solid fa-inbox"></i>
               <h5>Belum ada dokumen</h5>
               <p>Tidak ada dokumen untuk periode yang dipilih</p>
@@ -502,59 +654,62 @@
       </tbody>
     </table>
   </div>
+  
+  <!-- Pagination -->
+  @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 </div>
 
 <script>
-// Store current year and month from server
-const currentYear = {{ $selectedYear }};
-const currentMonth = {{ $selectedMonth ?? 'null' }};
-
-// Change year - reload page with new year
-function changeYear(year) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('year', year);
-    url.searchParams.delete('month'); // Reset month when changing year
-    window.location.href = url.toString();
+function changeFilter() {
+  const year = document.getElementById('yearSelect').value;
+  const bagian = document.getElementById('bagianSelect').value;
+  
+  const url = new URL(window.location.href);
+  url.searchParams.set('year', year);
+  if (bagian) {
+    url.searchParams.set('bagian', bagian);
+  } else {
+    url.searchParams.delete('bagian');
+  }
+  url.searchParams.delete('month');
+  url.searchParams.delete('page');
+  
+  window.location.href = url.toString();
 }
 
-// Filter by month - reload with smooth scroll to table
 function filterByMonth(month) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('month', month);
-    
-    // Smooth scroll to top then reload
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Small delay for smooth UX, then reload
-    setTimeout(() => {
-        window.location.href = url.toString();
-    }, 300);
+  const year = document.getElementById('yearSelect').value;
+  const bagian = document.getElementById('bagianSelect').value;
+  
+  const url = new URL(window.location.href);
+  url.searchParams.set('year', year);
+  url.searchParams.set('month', month);
+  if (bagian) {
+    url.searchParams.set('bagian', bagian);
+  } else {
+    url.searchParams.delete('bagian');
+  }
+  url.searchParams.delete('page');
+  
+  window.location.href = url.toString();
 }
 
-// Show all months - reset filter
 function showAllMonths() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('month');
-    
-    // Smooth scroll to top then reload
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Small delay for smooth UX, then reload
-    setTimeout(() => {
-        window.location.href = url.toString();
-    }, 300);
+  const year = document.getElementById('yearSelect').value;
+  const bagian = document.getElementById('bagianSelect').value;
+  
+  const url = new URL(window.location.href);
+  url.searchParams.set('year', year);
+  url.searchParams.delete('month');
+  if (bagian) {
+    url.searchParams.set('bagian', bagian);
+  } else {
+    url.searchParams.delete('bagian');
+  }
+  url.searchParams.delete('page');
+  
+  window.location.href = url.toString();
 }
-
-// Initialize: Set active month card if month is selected
-document.addEventListener('DOMContentLoaded', function() {
-    if (currentMonth) {
-        const monthCard = document.querySelector(`[data-month="${currentMonth}"]`);
-        if (monthCard) {
-            monthCard.classList.add('active');
-        }
-    }
-});
 </script>
 
 @endsection
-

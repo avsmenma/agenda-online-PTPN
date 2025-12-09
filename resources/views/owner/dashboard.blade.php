@@ -1326,17 +1326,17 @@ body {
           </thead>
           <tbody>
             @foreach($documents as $dokumen)
-              <tr class="{{ $dokumen['is_overdue'] ? 'overdue-row' : '' }}" 
+              <tr class="clickable-row {{ $dokumen['is_overdue'] ? 'overdue-row' : '' }}" 
                   data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
-                  onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')"
+                  onclick="handleItemClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')"
                   style="cursor: pointer;">
                 <td>
                   <div style="font-weight: 600; color: var(--text-primary);">{{ $dokumen['nomor_agenda'] }}</div>
-                  <div style="font-size: 12px; color: var(--text-muted);">{{ $dokumen['nomor_spp'] }}</div>
+                  <div class="select-text" style="font-size: 12px; color: var(--text-muted);">{{ $dokumen['nomor_spp'] }}</div>
                 </td>
-                <td style="color: var(--text-secondary);">{{ $dokumen['tanggal_masuk'] ?? ($dokumen['created_at'] ?? '-') }}</td>
+                <td class="select-text" style="color: var(--text-secondary);">{{ $dokumen['tanggal_masuk'] ?? ($dokumen['created_at'] ?? '-') }}</td>
                 <td>
-                  <div style="font-weight: 700; color: var(--success-color);">
+                  <div class="select-text" style="font-weight: 700; color: var(--success-color);">
                     Rp {{ number_format($dokumen['nilai_rupiah'], 0, ',', '.') }}
                   </div>
                 </td>

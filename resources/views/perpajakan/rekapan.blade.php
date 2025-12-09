@@ -571,44 +571,6 @@
 </div>
 
 <!-- Pagination -->
-@if($dokumens->hasPages())
-  <div class="d-flex justify-content-between align-items-center mt-4">
-    <div class="text-muted">
-      Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari total {{ $dokumens->total() }} dokumen
-    </div>
-    <div class="pagination">
-      @php
-        $currentPage = $dokumens->currentPage();
-        $lastPage = $dokumens->lastPage();
-        $startPage = max(1, $currentPage - 2);
-        $endPage = min($lastPage, $currentPage + 2);
-      @endphp
-
-      @if($startPage > 1)
-        <a href="{{ $dokumens->appends(request()->query())->url(1) }}" class="page-link">1</a>
-        @if($startPage > 2)
-          <span class="page-link" style="border: none; background: transparent; cursor: default;">...</span>
-        @endif
-      @endif
-
-      @for($i = $startPage; $i <= $endPage; $i++)
-        @if($i == $currentPage)
-          <span class="page-link active">{{ $i }}</span>
-        @else
-          <a href="{{ $dokumens->appends(request()->query())->url($i) }}" class="page-link">
-            {{ $i }}
-          </a>
-        @endif
-      @endfor
-
-      @if($endPage < $lastPage)
-        @if($endPage < $lastPage - 1)
-          <span class="page-link" style="border: none; background: transparent; cursor: default;">...</span>
-        @endif
-        <a href="{{ $dokumens->appends(request()->query())->url($lastPage) }}" class="page-link">{{ $lastPage }}</a>
-      @endif
-    </div>
-  </div>
-@endif
+@include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 @endsection

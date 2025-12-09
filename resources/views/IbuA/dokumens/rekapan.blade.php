@@ -286,35 +286,116 @@
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(26, 77, 62, 0.1), 0 2px 8px rgba(15, 61, 46, 0.05);
     border: 1px solid rgba(26, 77, 62, 0.08);
+    overflow-x: auto; /* Enable horizontal scroll */
+    overflow-y: visible; /* Allow vertical content */
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    /* Force scrollbar to always be visible when content overflows */
+    scrollbar-gutter: stable;
   }
 
+  /* Ensure scrollbar is always visible when needed */
+  .table-container:has(.table) {
+    overflow-x: scroll; /* Force scrollbar to appear */
+  }
+
+  /* Table Scroll Container - Horizontal Scrollbar Only (Always Visible) */
   .table-responsive {
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow-x: scroll !important; /* Force horizontal scrollbar to always appear */
+    overflow-y: hidden; /* Disable vertical scrollbar */
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9; /* Slate-300 thumb, Slate-100 track */
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
   }
 
-  /* Always visible scrollbar */
+  /* Horizontal Scrollbar Styling - Webkit browsers (Chrome, Safari, Edge) */
   .table-responsive::-webkit-scrollbar {
-    height: 12px;
-    -webkit-appearance: none;
+    height: 16px !important; /* Horizontal scrollbar height - Always visible */
+    width: 0; /* Hide vertical scrollbar */
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
-  .table-responsive::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
-    border-radius: 6px;
-    border: 2px solid #ffffff;
+  /* Horizontal Scrollbar Track - Always Visible */
+  .table-responsive::-webkit-scrollbar-track:horizontal {
+    background: #f1f5f9 !important; /* Slate-100 - Always visible */
+    border-radius: 8px;
+    margin: 0 10px;
+    border: 1px solid #e2e8f0;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
-  .table-responsive::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 6px;
+  /* Horizontal Scrollbar Thumb - Always Visible */
+  .table-responsive::-webkit-scrollbar-thumb:horizontal {
+    background: #cbd5e1 !important; /* Slate-300 - Always visible */
+    border-radius: 8px;
+    border: 2px solid #f1f5f9;
+    min-height: 16px;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
-  /* Firefox scrollbar - always visible */
+  /* Hover State - Slightly darker */
+  .table-responsive::-webkit-scrollbar-thumb:horizontal:hover {
+    background: #94a3b8 !important; /* Slate-400 */
+  }
+
+  /* Active State */
+  .table-responsive::-webkit-scrollbar-thumb:horizontal:active {
+    background: #64748b !important; /* Slate-500 */
+  }
+
+  /* Force horizontal scrollbar to always be visible - Override browser defaults */
+  .table-responsive:not(:hover)::-webkit-scrollbar {
+    height: 16px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive:not(:hover)::-webkit-scrollbar-track:horizontal {
+    background: #f1f5f9 !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .table-responsive:not(:hover)::-webkit-scrollbar-thumb:horizontal {
+    background: #cbd5e1 !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Firefox scrollbar styling - Horizontal only */
   .table-responsive {
     scrollbar-width: thin;
-    scrollbar-color: #1a4d3e #f1f1f1;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+
+  /* Ensure horizontal scrollbar is always visible on all browsers */
+  @supports (scrollbar-width: thin) {
+    .table-responsive {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+  }
+
+  /* Force scrollbar to always be visible - Override browser defaults */
+  .table-container .table-responsive {
+    overflow-x: scroll !important; /* Force horizontal scrollbar */
+    overflow-y: hidden; /* Disable vertical scrollbar */
+    -webkit-overflow-scrolling: touch;
   }
 
   .table-container h6 {
@@ -334,6 +415,11 @@
 
   .table {
     margin-bottom: 0;
+    width: 100%;
+    min-width: 1200px; /* Minimum width for horizontal scroll */
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto; /* Allow table to expand beyond container */
   }
 
   .table thead {
@@ -534,18 +620,20 @@
     </div>
   </div>
   <div class="col-xl-4 col-lg-6 mb-4">
-    <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-icon bagian">
-          <i class="fas fa-building"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-title">Total Bagian</div>
-          <div class="stat-value">{{ count(array_filter($statistics['by_bagian'], fn($b) => $b['total'] > 0)) }}</div>
-          <div class="stat-description">Bagian aktif</div>
+    <a href="{{ route('rekapan.analytics') }}" style="text-decoration: none; color: inherit;">
+      <div class="stat-card" style="cursor: pointer;">
+        <div class="stat-card-body">
+          <div class="stat-icon bagian">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-title">Total Dokumen Bagian</div>
+            <div class="stat-value">{{ number_format(array_sum(array_column($statistics['by_bagian'], 'total')), 0, ',', '.') }}</div>
+            <div class="stat-description">Klik untuk melihat analitik</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-xl-4 col-lg-6 mb-4">
     <div class="stat-card">
@@ -563,56 +651,6 @@
   </div>
 </div>
 
-<!-- Statistik per Bagian (Sesuai style rekapan-ibuB & rekapan-perpajakan) -->
-@if(!$selectedBagian)
-<div class="row mb-4">
-  <div class="col-12">
-    <h5 class="mb-3">Statistik per Bagian</h5>
-    <div class="bagian-stats">
-      @foreach($statistics['by_bagian'] as $code => $bagian)
-        @if($bagian['total'] > 0)
-          <div class="bagian-card">
-            <div class="bagian-name">{{ $bagian['name'] }}</div>
-            <div class="bagian-count">{{ $bagian['total'] }}</div>
-          </div>
-        @endif
-      @endforeach
-    </div>
-  </div>
-</div>
-@else
-<div class="row mb-4">
-  <div class="col-12">
-    <h5 class="mb-3">Statistik Bagian {{ $bagianList[$selectedBagian] ?? '' }}</h5>
-    <div class="row">
-      <div class="col-md-3 col-6 mb-3">
-        <div class="bagian-card">
-          <div class="bagian-name">Draft</div>
-          <div class="bagian-count">{{ $statistics['by_status']['draft'] }}</div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6 mb-3">
-        <div class="bagian-card">
-          <div class="bagian-name">Terkirim</div>
-          <div class="bagian-count">{{ $statistics['by_status']['sent_to_ibub'] }}</div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6 mb-3">
-        <div class="bagian-card">
-          <div class="bagian-name">Diproses</div>
-          <div class="bagian-count">{{ $statistics['by_status']['sedang diproses'] }}</div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6 mb-3">
-        <div class="bagian-card">
-          <div class="bagian-name">Selesai</div>
-          <div class="bagian-count">{{ $statistics['by_status']['selesai'] }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-@endif
 
 <!-- Filter Section -->
 <div class="filter-section">
@@ -664,7 +702,7 @@
     </div>
   @endif
 
-  <div class="table-responsive">
+  <div class="table-responsive scrollbar-visible">
     <table class="table table-hover align-middle mb-0">
       <thead>
         <tr>
@@ -703,62 +741,48 @@
               <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
             </td>
             <td>
-              @switch($dokumen->status)
-                @case('draft')
-                  <span class="badge badge-draft">
-                    <i class="fas fa-clock"></i> Draft
-                  </span>
-                  @break
-                @case('sent_to_ibub')
-                  <span class="badge badge-sent">
-                    <i class="fas fa-paper-plane"></i> Terkirim ke Ibu Yuni
-                  </span>
-                  @break
-                @case('sent_to_perpajakan')
-                  <span class="badge badge-sent">
-                    <i class="fas fa-paper-plane"></i> Terkirim ke Team Perpajakan
-                  </span>
-                  @break
-                @case('sent_to_akutansi')
-                  <span class="badge badge-sent">
-                    <i class="fas fa-paper-plane"></i> Terkirim ke Team Akutansi
-                  </span>
-                  @break
-                @case('sent_to_pembayaran')
-                  <span class="badge badge-sent">
-                    <i class="fas fa-paper-plane"></i> Terkirim ke Team Pembayaran
-                  </span>
-                  @break
-                @case('sedang diproses')
-                  <span class="badge badge-processing">
-                    <i class="fas fa-spinner"></i> Sedang Diproses
-                  </span>
-                  @break
-                @case('selesai')
-                  <span class="badge badge-completed">
-                    <i class="fas fa-check"></i> Selesai
-                  </span>
-                  @break
-                @case('returned_to_ibua')
-                  <span class="badge badge-returned">
-                    <i class="fas fa-undo"></i> Dikembalikan
-                  </span>
-                  @break
-                @case('returned_to_department')
-                  <span class="badge badge-returned">
-                    <i class="fas fa-undo"></i> Dikembalikan ke Bagian
-                  </span>
-                  @break
-                @case('returned_to_bidang')
-                  <span class="badge badge-returned">
-                    <i class="fas fa-undo"></i> Dikembalikan ke Bidang
-                  </span>
-                  @break
-                @default
-                  <span class="badge badge-unknown">
-                    <i class="fas fa-question"></i> {{ ucfirst(str_replace('_', ' ', $dokumen->status)) }}
-                  </span>
-              @endswitch
+              @php
+                // Gunakan role-based status display untuk Ibu Tarapul (ibuA)
+                $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('ibuA');
+              @endphp
+              
+              @if($dokumen->inbox_approval_status == 'rejected')
+                {{-- Dokumen ditolak dari inbox --}}
+                <span class="badge badge-returned">
+                  <i class="fas fa-times-circle"></i> Dokumen Ditolak
+                </span>
+              @elseif(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+                <span class="badge badge-draft">
+                  <i class="fas fa-file-lines"></i> Belum Dikirim
+                </span>
+              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'pending'))
+                {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
+                <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                  <i class="fas fa-clock"></i> Menunggu Approval
+                </span>
+              @elseif($statusLabel == 'Terkirim' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved'))
+                <span class="badge badge-sent">
+                  <i class="fas fa-check"></i> Terkirim
+                </span>
+              @elseif($statusLabel == 'Sedang Proses' || $statusLabel == 'Sedang Proses (Reviewer/Tax)' || $statusLabel == 'Sedang Proses (Reviewer/Accounting)')
+                {{-- Dokumen sedang diproses di tahap selanjutnya --}}
+                <span class="badge badge-processing">
+                  <i class="fas fa-spinner"></i> {{ $statusLabel }}
+                </span>
+              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_ibua')
+                <span class="badge badge-returned">
+                  <i class="fas fa-undo"></i> Dikembalikan untuk Revisi
+                </span>
+              @elseif($statusLabel == 'Selesai' || $dokumen->status == 'selesai' || $dokumen->status == 'completed')
+                <span class="badge badge-completed">
+                  <i class="fas fa-check-circle"></i> Selesai
+                </span>
+              @else
+                {{-- Fallback: tampilkan status dari accessor --}}
+                <span class="badge badge-sent">
+                  <i class="fas fa-check"></i> {{ $statusLabel }}
+                </span>
+              @endif
             </td>
           </tr>
         @empty
@@ -774,42 +798,7 @@
   </div>
 
   <!-- Pagination -->
-  @if($dokumens->hasPages())
-    <div class="d-flex justify-content-center mt-4">
-      <div class="pagination">
-        @php
-          $currentPage = $dokumens->currentPage();
-          $lastPage = $dokumens->lastPage();
-          $startPage = max(1, $currentPage - 2);
-          $endPage = min($lastPage, $currentPage + 2);
-        @endphp
-
-        @if($startPage > 1)
-          <a href="{{ $dokumens->appends(request()->query())->url(1) }}" class="page-link">1</a>
-          @if($startPage > 2)
-            <span class="page-link" style="border: none; background: transparent; cursor: default;">...</span>
-          @endif
-        @endif
-
-        @for($i = $startPage; $i <= $endPage; $i++)
-          @if($i == $currentPage)
-            <span class="page-link active">{{ $i }}</span>
-          @else
-            <a href="{{ $dokumens->appends(request()->query())->url($i) }}" class="page-link">
-              {{ $i }}
-            </a>
-          @endif
-        @endfor
-
-        @if($endPage < $lastPage)
-          @if($endPage < $lastPage - 1)
-            <span class="page-link" style="border: none; background: transparent; cursor: default;">...</span>
-          @endif
-          <a href="{{ $dokumens->appends(request()->query())->url($lastPage) }}" class="page-link">{{ $lastPage }}</a>
-        @endif
-      </div>
-    </div>
-  @endif
+  @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 </div>
 
 @endsection

@@ -59,7 +59,61 @@ class DokumenController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        $dokumens = $query->paginate(10);
+        // Filter by status
+        if ($request->has('status_filter') && $request->status_filter) {
+            $statusFilter = $request->status_filter;
+            
+            // Map filter status ke database status
+            switch ($statusFilter) {
+                case 'belum_dikirim':
+                    // Dokumen yang belum dikirim (draft atau returned yang belum dikirim ulang)
+                    $query->where(function($q) {
+                        $q->where('status', 'draft')
+                          ->orWhere(function($q2) {
+                              $q2->where('status', 'returned_to_ibua')
+                                 ->whereNull('sent_to_ibub_at');
+                          });
+                    });
+                    break;
+                case 'menunggu_approval':
+                    // Dokumen yang menunggu approval dari Reviewer
+                    $query->where(function($q) {
+                        $q->where('status', 'waiting_reviewer_approval')
+                          ->orWhere(function($q2) {
+                              $q2->where('inbox_approval_for', 'IbuB')
+                                 ->where('inbox_approval_status', 'pending');
+                          });
+                    });
+                    break;
+                case 'terkirim':
+                    // Dokumen yang sudah di-approve oleh Reviewer
+                    $query->where(function($q) {
+                        $q->where(function($q2) {
+                            $q2->where('inbox_approval_for', 'IbuB')
+                               ->where('inbox_approval_status', 'approved');
+                        })
+                        ->orWhere(function($q3) {
+                            $q3->where('status', 'sedang diproses')
+                               ->whereNotNull('sent_to_ibub_at')
+                               ->where(function($q4) {
+                                   $q4->whereNull('inbox_approval_status')
+                                      ->orWhere('inbox_approval_status', '!=', 'pending');
+                               });
+                        });
+                    });
+                    break;
+                case 'dikembalikan':
+                    // Dokumen yang dikembalikan untuk revisi
+                    $query->where(function($q) {
+                        $q->where('status', 'returned_to_ibua')
+                          ->orWhere('inbox_approval_status', 'rejected');
+                    });
+                    break;
+            }
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
         
         // Get suggestions if no results found
         $suggestions = [];
@@ -707,7 +761,8 @@ class DokumenController extends Controller
     }
 
     /**
-     * Send document to IbuB
+     * Send document to IbuB (Reviewer)
+     * Sets status to WAITING_REVIEWER_APPROVAL - Approval Gate Implementation
      */
     public function sendToIbuB(Dokumen $dokumen)
     {
@@ -735,7 +790,11 @@ class DokumenController extends Controller
 
             DB::beginTransaction();
 
-            // Kirim ke inbox Ibu Yuni untuk approval (sesuai approve_system.md)
+            // Kirim ke inbox Ibu Yuni untuk approval dengan status WAITING_REVIEWER_APPROVAL
+            // Method sendToInbox() akan set:
+            // - status ke 'waiting_reviewer_approval' untuk IbuB
+            // - current_stage ke 'reviewer'
+            // - last_action_status ke 'sent_to_ibub'
             $dokumen->sendToInbox('IbuB');
 
             $dokumen->refresh();
@@ -743,9 +802,10 @@ class DokumenController extends Controller
 
             // Broadcast event untuk inbox (DocumentSentToInbox sudah di-broadcast di method sendToInbox)
             try {
-                \Log::info('Document sent to inbox IbuB', [
+                \Log::info('Document sent to inbox IbuB with WAITING_REVIEWER_APPROVAL status', [
                     'document_id' => $dokumen->id,
                     'status' => $dokumen->status,
+                    'current_stage' => $dokumen->current_stage,
                     'inbox_approval_status' => $dokumen->inbox_approval_status
                 ]);
             } catch (\Exception $logException) {
@@ -759,12 +819,112 @@ class DokumenController extends Controller
 
         } catch (Exception $e) {
             DB::rollback();
-            \Log::error('Error sending document: ' . $e->getMessage());
+            \Log::error('Error sending document: ' . $e->getMessage(), [
+                'document_id' => $dokumen->id ?? null,
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat mengirim dokumen.'
+                'message' => 'Terjadi kesalahan saat mengirim dokumen: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Approve document by Reviewer (Ibu Yuni)
+     * This method is called when Reviewer clicks "Setujui" button
+     */
+    public function approveDocument(Dokumen $dokumen)
+    {
+        try {
+            $currentUser = auth()->user();
+            $userRole = $this->getUserRole($currentUser);
+
+            // Only IbuB (Reviewer) can approve documents waiting for reviewer approval
+            if ($userRole !== 'ibuB' && $userRole !== 'IbuB') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menyetujui dokumen ini.'
+                ], 403);
+            }
+
+            // Check if document is waiting for reviewer approval
+            if ($dokumen->status !== 'waiting_reviewer_approval' && 
+                !($dokumen->inbox_approval_for === 'IbuB' && $dokumen->inbox_approval_status === 'pending')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak sedang menunggu persetujuan reviewer.'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            // Approve from inbox
+            $dokumen->approveInbox();
+
+            // Update workflow tracking
+            $dokumen->current_stage = 'reviewer';
+            $dokumen->last_action_status = 'approved_by_reviewer';
+            $dokumen->status = 'sedang diproses'; // After approval, document is being processed
+            $dokumen->save();
+
+            $dokumen->refresh();
+            DB::commit();
+
+            \Log::info('Document approved by Reviewer', [
+                'document_id' => $dokumen->id,
+                'approved_by' => $userRole,
+                'status' => $dokumen->status,
+                'current_stage' => $dokumen->current_stage
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil disetujui dan telah masuk ke daftar dokumen Reviewer.'
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error approving document: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyetujui dokumen.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper untuk mendapatkan role user
+     */
+    private function getUserRole($user)
+    {
+        if (!$user) {
+            return null;
+        }
+
+        // Coba dengan field role langsung
+        if (isset($user->role)) {
+            return $user->role;
+        }
+
+        // Coba dengan field name
+        if (isset($user->name)) {
+            $nameToRole = [
+                'Ibu A' => 'ibuA',
+                'IbuB' => 'ibuB',
+                'Ibu B' => 'ibuB',
+                'Ibu Yuni' => 'ibuB',
+                'Perpajakan' => 'perpajakan',
+                'Akutansi' => 'akutansi',
+                'Pembayaran' => 'pembayaran'
+            ];
+
+            return $nameToRole[$user->name] ?? null;
+        }
+
+        return null;
     }
 
     /**

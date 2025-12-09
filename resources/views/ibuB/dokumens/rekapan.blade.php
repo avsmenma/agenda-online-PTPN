@@ -366,18 +366,20 @@
     </div>
   </div>
   <div class="col-md-4 mb-3">
-    <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-content">
-          <div class="stat-title">Status Aktif</div>
-          <div class="stat-value">{{ $statistics['by_status']['sent_to_ibub'] + $statistics['by_status']['sedang diproses'] }}</div>
-          <div class="stat-description">Dokumen yang sedang diproses</div>
-        </div>
-        <div class="stat-icon status">
-          <i class="fa-solid fa-clock"></i>
+    <a href="{{ route('dokumensB.rekapan.analytics') }}" style="text-decoration: none; display: block;">
+      <div class="stat-card" style="cursor: pointer;">
+        <div class="stat-card-body">
+          <div class="stat-content">
+            <div class="stat-title">Total Dokumen Bagian</div>
+            <div class="stat-value">{{ $statistics['total_documents'] }}</div>
+            <div class="stat-description">Klik untuk melihat analitik</div>
+          </div>
+          <div class="stat-icon bagian">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-md-4 mb-3">
     <div class="stat-card">
@@ -395,24 +397,6 @@
   </div>
 </div>
 
-<!-- Statistik per Bagian (Dipindahkan ke posisi 2) -->
-@if(!$selectedBagian)
-  <div class="row mb-4">
-    <div class="col-12">
-      <h5 class="mb-3">Statistik per Bagian</h5>
-      <div class="bagian-stats">
-        @foreach($statistics['by_bagian'] as $code => $bagian)
-          @if($bagian['total'] > 0)
-            <div class="bagian-card">
-              <div class="bagian-name">{{ $bagian['name'] }}</div>
-              <div class="bagian-count">{{ $bagian['total'] }}</div>
-            </div>
-          @endif
-        @endforeach
-      </div>
-    </div>
-  </div>
-@endif
 
 <!-- Filter Section (Dipindahkan ke posisi 3) -->
 <div class="filter-section">
@@ -571,44 +555,6 @@
 </div>
 
 <!-- Pagination -->
-@if($dokumens->hasPages())
-  <div class="d-flex justify-content-between align-items-center mt-4">
-    <div class="text-muted">
-      Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari total {{ $dokumens->total() }} dokumen
-    </div>
-    <div class="pagination">
-      @php
-        $currentPage = $dokumens->currentPage();
-        $lastPage = $dokumens->lastPage();
-        $startPage = max(1, $currentPage - 2);
-        $endPage = min($lastPage, $currentPage + 2);
-      @endphp
-
-      @if($startPage > 1)
-        <a href="{{ $dokumens->appends(request()->query())->url(1) }}" class="page-link">1</a>
-        @if($startPage > 2)
-          <span class="page-link" style="border: none; background: transparent; cursor: default;">...</span>
-        @endif
-      @endif
-
-      @for($i = $startPage; $i <= $endPage; $i++)
-        @if($i == $currentPage)
-          <span class="page-link active">{{ $i }}</span>
-        @else
-          <a href="{{ $dokumens->appends(request()->query())->url($i) }}" class="page-link">
-            {{ $i }}
-          </a>
-        @endif
-      @endfor
-
-      @if($endPage < $lastPage)
-        @if($endPage < $lastPage - 1)
-          <span class="page-link" style="border: none; background: transparent; cursor: default;">...</span>
-        @endif
-        <a href="{{ $dokumens->appends(request()->query())->url($lastPage) }}" class="page-link">{{ $lastPage }}</a>
-      @endif
-    </div>
-  </div>
-@endif
+@include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 @endsection

@@ -1141,6 +1141,45 @@
         background-color: rgba(220, 53, 69, 0.1);
       }
     }
+
+    /* Global UX Helper: Text Selection Styles */
+    .select-text,
+    .cursor-text {
+      cursor: text;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+    }
+
+    .select-text::selection,
+    .cursor-text::selection {
+      background-color: rgba(8, 62, 64, 0.2);
+      color: inherit;
+    }
+
+    /* Prevent text selection on clickable containers */
+    .clickable-row,
+    .clickable-card,
+    [onclick*="handleItemClick"],
+    [onclick*="handleCardClick"] {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    /* Allow text selection on specific elements inside clickable containers */
+    .clickable-row .select-text,
+    .clickable-card .select-text,
+    [onclick*="handleItemClick"] .select-text,
+    [onclick*="handleCardClick"] .select-text {
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      cursor: text;
+    }
   </style>
 
   <!-- Smart Autocomplete CSS -->
@@ -1645,6 +1684,75 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Global UX Helper: Prevent Navigation During Text Selection -->
+  <script>
+  /**
+   * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
+   * Digunakan pada Card dan Table Row yang bisa diklik
+   * 
+   * @param {Event} event - Click event
+   * @param {string} url - URL tujuan navigasi
+   */
+  window.handleItemClick = function(event, url) {
+    // 1. Cek apakah user sedang menyeleksi teks
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    if (selectedText.length > 0) {
+      // User sedang menyeleksi teks, jangan navigasi
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+    
+    // 2. Cek apakah yang diklik adalah link/tombol/input/select/textarea
+    const target = event.target;
+    const tagName = target.tagName.toLowerCase();
+    const isInteractiveElement = 
+      tagName === 'a' || 
+      tagName === 'button' || 
+      tagName === 'input' || 
+      tagName === 'select' || 
+      tagName === 'textarea' ||
+      target.closest('a') !== null ||
+      target.closest('button') !== null ||
+      target.closest('.btn') !== null ||
+      target.closest('[role="button"]') !== null;
+    
+    if (isInteractiveElement) {
+      // User klik elemen interaktif, biarkan default behavior
+      return true;
+    }
+    
+    // 3. Cek apakah ini adalah double-click (biasanya untuk select word)
+    if (event.detail === 2) {
+      // Double-click biasanya untuk select word, tunggu sebentar
+      setTimeout(() => {
+        const newSelection = window.getSelection();
+        if (newSelection.toString().trim().length > 0) {
+          // User berhasil select text, jangan navigasi
+          return false;
+        }
+      }, 50);
+      return false;
+    }
+    
+    // 4. Cek apakah user sedang drag (mouse drag selection)
+    if (event.detail === 0 || event.which === 0) {
+      // Ini adalah programmatic click atau drag, jangan navigasi
+      return false;
+    }
+    
+    // 5. Jika aman, lakukan navigasi
+    if (url) {
+      window.location.href = url;
+    }
+    return true;
+  };
+  </script>
 
   <!-- Pusher & Laravel Echo -->
   <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
@@ -3411,6 +3519,81 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   console.log('Secondary sidebar setup complete');
+});
+
+// Global Function: Format Rupiah Input (Auto format with dots)
+window.formatRupiahInput = function(input) {
+  if (!input) return;
+  
+  // Remove all non-numeric characters
+  let value = input.value.replace(/[^\d]/g, '');
+  
+  // Format with thousand separators (dots)
+  if (value) {
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    input.value = value;
+  } else {
+    input.value = '';
+  }
+};
+
+// Auto-apply format rupiah to all inputs with specific names/ids
+document.addEventListener('DOMContentLoaded', function() {
+  // List of common input names/ids for nilai rupiah
+  const rupiahInputSelectors = [
+    'input[name="nilai_rupiah"]',
+    'input[id*="nilai_rupiah"]',
+    'input[id*="nilai-rupiah"]',
+    'input[name*="nilai_rupiah"]',
+    'input[name*="nilai-rupiah"]',
+    '#nilai_rupiah',
+    '#nilai-rupiah',
+    '#edit-nilai-rupiah',
+    '#edit_nilai_rupiah'
+  ];
+  
+  rupiahInputSelectors.forEach(selector => {
+    const inputs = document.querySelectorAll(selector);
+    inputs.forEach(input => {
+      // Skip if already has event listener (check for data attribute)
+      if (input.dataset.rupiahFormatted === 'true') return;
+      
+      // Mark as formatted
+      input.dataset.rupiahFormatted = 'true';
+      
+      // Format on input
+      input.addEventListener('input', function() {
+        window.formatRupiahInput(this);
+      });
+      
+      // Format on paste
+      input.addEventListener('paste', function(e) {
+        setTimeout(() => {
+          window.formatRupiahInput(this);
+        }, 10);
+      });
+      
+      // Format initial value if exists
+      if (input.value) {
+        window.formatRupiahInput(input);
+      }
+    });
+  });
+  
+  // Auto-remove format from nilai_rupiah inputs before form submit
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      // Find all nilai rupiah inputs in this form
+      const rupiahInputs = form.querySelectorAll('input[name="nilai_rupiah"], input[id*="nilai_rupiah"], input[id*="nilai-rupiah"]');
+      rupiahInputs.forEach(input => {
+        // Remove dots before submit
+        if (input.value) {
+          input.value = input.value.replace(/[^\d]/g, '');
+        }
+      });
+    });
+  });
 });
 </script>
 

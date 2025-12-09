@@ -924,18 +924,18 @@
                 <!-- Documents List -->
                 <div class="documents-list" id="documentsList">
                     @foreach($documents as $dokumen)
-                    <div class="document-card" 
+                    <div class="document-card clickable-card" 
                          data-agenda="{{ strtolower($dokumen->nomor_agenda) }}" 
                          data-spp="{{ strtolower($dokumen->nomor_spp) }}" 
                          data-uraian="{{ strtolower($dokumen->uraian_spp ?? '') }}"
-                         onclick="window.location.href='{{ route('inbox.show', $dokumen) }}'">
+                         onclick="handleItemClick(event, '{{ route('inbox.show', $dokumen) }}')">
                         <div class="document-card-header">
                             <div class="document-number">
                                 <div class="document-agenda">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>{{ $dokumen->nomor_agenda }}</span>
                                 </div>
-                                <div class="document-spp">{{ $dokumen->nomor_spp }}</div>
+                                <div class="document-spp select-text">{{ $dokumen->nomor_spp }}</div>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 @php
@@ -982,7 +982,7 @@
                                 <div class="document-info-label">Nilai</div>
                                 <div class="document-info-value text-success">
                                     <i class="fas fa-money-bill-wave"></i>
-                                    <span>Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</span>
+                                    <span class="select-text">Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>

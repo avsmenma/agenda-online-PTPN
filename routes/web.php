@@ -235,7 +235,11 @@ Route::delete('/dokumens/{dokumen}', [DokumenController::class, 'destroy'])->nam
 Route::post('/dokumens/{dokumen}/send-to-ibub', [DokumenController::class, 'sendToIbuB'])
     ->middleware(['autologin', 'role:ibuA,admin'])
     ->name('dokumens.sendToIbuB');
+Route::post('/dokumens/{dokumen}/approve', [DokumenController::class, 'approveDocument'])
+    ->middleware(['autologin', 'role:ibuB,admin'])
+    ->name('dokumens.approve');
 Route::get('/rekapan', [DokumenRekapanController::class, 'index'])->name('rekapan.index');
+Route::get('/rekapan/analytics', [DokumenRekapanController::class, 'analytics'])->name('rekapan.analytics');
 
 // Autocomplete Routes
 Route::get('/api/autocomplete/payment-recipients', [AutocompleteController::class, 'getPaymentRecipients'])->name('autocomplete.payment-recipients');
@@ -249,6 +253,9 @@ Route::get('diagram', [diagramController::class, 'index']);
 // IbuB Routes
 Route::get('/dokumensB', [DashboardBController::class, 'dokumens'])->name('dokumensB.index');
 Route::get('/rekapan-ibuB', [DashboardBController::class, 'rekapan'])->name('dokumensB.rekapan');
+Route::get('/rekapan-ibuB/analytics', [DashboardBController::class, 'rekapanAnalytics'])
+    ->middleware(['autologin', 'role:ibuB,admin'])
+    ->name('dokumensB.rekapan.analytics');
 Route::get('/dokumensB/{dokumen}/edit', [DashboardBController::class, 'editDokumen'])->name('dokumensB.edit');
 Route::get('/dokumens/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('dokumens.detail');
 Route::put('/dokumensB/{dokumen}', [DashboardBController::class, 'updateDokumen'])->name('dokumensB.update');
@@ -330,6 +337,7 @@ Route::get('/rekapan-tu-tk', [DashboardPembayaranController::class, 'rekapanTuTk
 Route::post('/rekapan-tu-tk/payment-installment', [DashboardPembayaranController::class, 'storePaymentInstallment'])->name('pembayaran.storePaymentInstallment');
 Route::post('/rekapan-tu-tk/payment-installment-batch', [DashboardPembayaranController::class, 'storePaymentInstallmentBatch'])->name('pembayaran.storePaymentInstallmentBatch');
 Route::get('/rekapan-tu-tk/payment-logs/{kontrol}', [DashboardPembayaranController::class, 'getPaymentLogs'])->name('pembayaran.getPaymentLogs');
+Route::get('/rekapan-tu-tk/payment-logs-by-agenda/{agenda}', [DashboardPembayaranController::class, 'getPaymentLogsByAgenda'])->name('pembayaran.getPaymentLogsByAgenda');
 Route::get('/rekapan-tu-tk/position-timeline/{kontrol}', [DashboardPembayaranController::class, 'getPositionTimeline'])->name('pembayaran.getPositionTimeline');
 Route::post('/rekapan-tu-tk/update-position', [DashboardPembayaranController::class, 'updateDocumentPosition'])->name('pembayaran.updateDocumentPosition');
 Route::get('/rekapan-tu-tk/export', [DashboardPembayaranController::class, 'exportRekapanTuTk'])->name('pembayaran.exportRekapanTuTk');

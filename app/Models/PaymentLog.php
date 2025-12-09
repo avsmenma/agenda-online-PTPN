@@ -9,6 +9,7 @@ class PaymentLog extends Model
 {
     protected $fillable = [
         'tu_tk_kontrol',
+        'tu_tk_agenda', // CRITICAL: Use AGENDA (unique) instead of KONTROL (not unique)
         'data_source',
         'payment_sequence',
         'tanggal_bayar',

@@ -1807,7 +1807,7 @@
       </thead>
       <tbody>
       @forelse($dokumens as $index => $dokumen)
-        <tr class="main-row {{ $dokumen->lock_status_class }}" onclick="toggleDetail({{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
+        <tr class="main-row clickable-row {{ $dokumen->lock_status_class }}" onclick="handleRowClick(event, {{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
             <td style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
             @foreach($selectedColumns as $col)
               @if($col !== 'status')
@@ -1817,11 +1817,11 @@
                   <br>
                   <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
                 @elseif($col == 'nomor_spp')
-                  {{ $dokumen->nomor_spp }}
+                  <span class="select-text">{{ $dokumen->nomor_spp }}</span>
                 @elseif($col == 'tanggal_masuk')
-                  {{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}
+                  <span class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</span>
                 @elseif($col == 'nilai_rupiah')
-                  <strong>{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
+                  <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
                 @elseif($col == 'nomor_mirror')
                   {{ $dokumen->nomor_mirror ?? '-' }}
                 @elseif($col == 'tanggal_spp')
@@ -2000,71 +2000,7 @@
 </div>
 
 @if(isset($dokumens) && $dokumens->hasPages())
-<div class="pagination" style="margin-top: 24px; display: flex; justify-content: center; gap: 8px;">
-    {{-- Previous Page Link --}}
-    @if($dokumens->onFirstPage())
-        <button class="btn-chevron" disabled style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: #e0e0e0; color: #9e9e9e; border-radius: 10px; cursor: not-allowed;">
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-    @else
-        <a href="{{ $dokumens->appends(request()->query())->previousPageUrl() }}">
-            <button class="btn-chevron" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; border-radius: 10px; cursor: pointer;">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-        </a>
-    @endif
-
-    {{-- Pagination Elements --}}
-    @if($dokumens->hasPages())
-        {{-- First page --}}
-        @if($dokumens->currentPage() > 3)
-            <a href="{{ $dokumens->appends(request()->query())->url(1) }}">
-                <button style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background-color: white; border-radius: 10px; cursor: pointer;">1</button>
-            </a>
-        @endif
-
-        {{-- Dots --}}
-        @if($dokumens->currentPage() > 4)
-            <button disabled style="padding: 10px 16px; border: none; background: transparent; color: #999;">...</button>
-        @endif
-
-        {{-- Range of pages --}}
-        @for($i = max(1, $dokumens->currentPage() - 2); $i <= min($dokumens->lastPage(), $dokumens->currentPage() + 2); $i++)
-            @if($dokumens->currentPage() == $i)
-                <button class="active" style="padding: 10px 16px; background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%); color: white; border: none; border-radius: 10px; cursor: pointer;">{{ $i }}</button>
-            @else
-                <a href="{{ $dokumens->appends(request()->query())->url($i) }}">
-                    <button style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background-color: white; border-radius: 10px; cursor: pointer;">{{ $i }}</button>
-                </a>
-            @endif
-        @endfor
-
-        {{-- Dots --}}
-        @if($dokumens->currentPage() < $dokumens->lastPage() - 3)
-            <button disabled style="padding: 10px 16px; border: none; background: transparent; color: #999;">...</button>
-        @endif
-
-        {{-- Last page --}}
-        @if($dokumens->currentPage() < $dokumens->lastPage() - 2)
-            <a href="{{ $dokumens->appends(request()->query())->url($dokumens->lastPage()) }}">
-                <button style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background-color: white; border-radius: 10px; cursor: pointer;">{{ $dokumens->lastPage() }}</button>
-            </a>
-        @endif
-    @endif
-
-    {{-- Next Page Link --}}
-    @if($dokumens->hasMorePages())
-        <a href="{{ $dokumens->appends(request()->query())->nextPageUrl() }}">
-            <button class="btn-chevron" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; border-radius: 10px; cursor: pointer;">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </a>
-    @else
-        <button class="btn-chevron" disabled style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: #e0e0e0; color: #9e9e9e; border-radius: 10px; cursor: not-allowed;">
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-    @endif
-</div>
+    @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 @endif
 
 <!-- Modal Set Deadline -->
@@ -2145,6 +2081,44 @@
 </div>
 
 <script>
+// Wrapper function untuk handle row click dengan text selection check
+function handleRowClick(event, docId) {
+  // Cek apakah user sedang menyeleksi teks
+  const selection = window.getSelection();
+  const selectedText = selection.toString().trim();
+  
+  if (selectedText.length > 0) {
+    // User sedang menyeleksi teks, jangan toggle detail
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+  
+  // Cek apakah yang diklik adalah link/tombol/input/select/textarea
+  const target = event.target;
+  const tagName = target.tagName.toLowerCase();
+  const isInteractiveElement = 
+    tagName === 'a' || 
+    tagName === 'button' || 
+    tagName === 'input' || 
+    tagName === 'select' || 
+    tagName === 'textarea' ||
+    target.closest('a') !== null ||
+    target.closest('button') !== null ||
+    target.closest('.btn') !== null ||
+    target.closest('.btn-action') !== null ||
+    target.closest('[role="button"]') !== null;
+  
+  if (isInteractiveElement) {
+    // User klik elemen interaktif, biarkan default behavior
+    return true;
+  }
+  
+  // Jika aman, panggil toggleDetail
+  toggleDetail(docId);
+  return true;
+}
+
 // Toggle detail row
 function toggleDetail(docId) {
   const detailRow = document.getElementById('detail-' + docId);

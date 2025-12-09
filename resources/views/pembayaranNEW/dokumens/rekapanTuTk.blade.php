@@ -1332,15 +1332,28 @@
         @endphp
         @php
           $currentDataSource = request('data_source', $dataSource ?? 'input_ks');
-          $kontrolId = $currentDataSource == 'input_ks' ? ($dokumen->KONTROL ?? null) : ($dokumen->EXTRA_COL_0 ?? null);
+          
+          // CRITICAL FIX: Use AGENDA as unique identifier instead of KONTROL
+          // Because all documents have KONTROL = 1 in database (not unique)
+          // AGENDA is unique for each document (e.g., 676_2025, 677_2025, etc.)
+          $agenda = $dokumen->AGENDA ?? null;
+          
+          // Fallback: Still get kontrol for backward compatibility, but use AGENDA as primary identifier
+          if ($currentDataSource == 'input_ks') {
+              $kontrolId = $dokumen->KONTROL ?? null;
+          } else {
+              $kontrolId = $dokumen->EXTRA_COL_0 ?? null;
+          }
+          
           $belumDibayarValue = $currentDataSource == 'input_ks' ? ($dokumen->BELUM_DIBAYAR ?? 0) : ($dokumen->BELUM_DIBAYAR_1 ?? 0);
-          $agenda = $dokumen->AGENDA ?? '-';
           $noSpp = $dokumen->NO_SPP ?? '-';
           $vendor = Str::limit($dokumen->VENDOR ?? '-', 50);
           $nilai = $dokumen->NILAI ?? 0;
         @endphp
         <tr class="{{ $rowClass }} excel-row-clickable" 
-            onclick="openExcelPaymentModal('{{ $kontrolId }}', '{{ $agenda }}', '{{ $noSpp }}', '{{ $vendor }}', {{ $nilai }}, {{ $dokumen->JUMLAH_DIBAYAR ?? 0 }}, {{ $belumDibayarValue }}, '{{ $currentDataSource }}')"
+            onclick="openExcelPaymentModal('{{ $agenda }}', '{{ $agenda }}', '{{ $noSpp }}', '{{ $vendor }}', {{ $nilai }}, {{ $dokumen->JUMLAH_DIBAYAR ?? 0 }}, {{ $belumDibayarValue }}, '{{ $currentDataSource }}')"
+            data-agenda="{{ $agenda }}"
+            data-kontrol-id="{{ $kontrolId }}"
             style="cursor: pointer; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#f0f9ff'" 
             onmouseout="this.style.backgroundColor=''">
@@ -1669,7 +1682,8 @@ function changePerPage(value) {
     window.location.href = url.toString();
 }
 
-let currentKontrol = null;
+let currentKontrol = null; // Backward compatibility - stores agenda
+let currentAgenda = null; // New: Store agenda separately
 let currentNilai = 0;
 let currentDibayar = 0;
 let currentBelumDibayar = 0;
@@ -1677,8 +1691,24 @@ let currentDataSource = 'input_ks';
 let currentRowData = null; // Store row data for Excel modal
 
 // Excel-Like Modal Function
-function openExcelPaymentModal(kontrol, agenda, noSpp, vendor, nilai, dibayar, belumDibayar, dataSource = 'input_ks') {
-    currentKontrol = kontrol;
+// CRITICAL FIX: First parameter is now AGENDA (not kontrol) because all documents have KONTROL = 1
+function openExcelPaymentModal(agenda, agendaDisplay, noSpp, vendor, nilai, dibayar, belumDibayar, dataSource = 'input_ks') {
+    // CRITICAL: Validate agenda (now used as unique identifier)
+    if (!agenda || agenda === 'null' || agenda === '' || agenda === '-') {
+        console.error('Invalid agenda:', agenda);
+        alert('Error: Nomor Agenda tidak valid. Silakan refresh halaman dan coba lagi.');
+        return;
+    }
+    
+    console.log('=== Opening Excel Payment Modal ===');
+    console.log('Agenda (Identifier):', agenda);
+    console.log('Agenda (Display):', agendaDisplay);
+    console.log('No SPP:', noSpp);
+    console.log('DataSource:', dataSource);
+    
+    // Use AGENDA as the unique identifier
+    currentKontrol = agenda; // Store agenda as kontrol for backward compatibility
+    currentAgenda = agenda; // New: Store agenda separately
     currentNilai = parseFloat(nilai) || 0;
     currentDibayar = parseFloat(dibayar) || 0;
     currentBelumDibayar = parseFloat(belumDibayar) || 0;
@@ -1686,8 +1716,9 @@ function openExcelPaymentModal(kontrol, agenda, noSpp, vendor, nilai, dibayar, b
     
     // Store row data
     currentRowData = {
-        kontrol: kontrol,
-        agenda: agenda,
+        agenda: agenda, // Use AGENDA as primary identifier
+        kontrol: agenda, // For backward compatibility
+        agendaDisplay: agendaDisplay,
         noSpp: noSpp,
         vendor: vendor,
         nilai: currentNilai,
@@ -1697,24 +1728,35 @@ function openExcelPaymentModal(kontrol, agenda, noSpp, vendor, nilai, dibayar, b
     };
 
     // Set header info
-    document.getElementById('excelAgenda').textContent = agenda;
+    document.getElementById('excelAgenda').textContent = agendaDisplay;
     document.getElementById('excelNoSpp').textContent = noSpp;
     document.getElementById('excelVendor').textContent = vendor;
     document.getElementById('excelTotalNilai').textContent = 'Rp ' + formatNumber(currentNilai);
     
     // Set hidden inputs
-    document.getElementById('excelPaymentKontrol').value = kontrol;
+    // CRITICAL: Use AGENDA as identifier instead of KONTROL
+    document.getElementById('excelPaymentKontrol').value = agenda; // Store agenda in kontrol field
     document.getElementById('excelPaymentDataSource').value = currentDataSource;
     
-    // Clear all inputs
+    // Clear all inputs FIRST (CRITICAL: Clear before loading to prevent stale data)
     for (let i = 1; i <= 4; i++) {
-        document.getElementById('nominal_' + i).value = '';
-        document.getElementById('tanggal_' + i).value = '';
-        document.getElementById('keterangan_' + i).value = '';
+        const nominalInput = document.getElementById('nominal_' + i);
+        const tanggalInput = document.getElementById('tanggal_' + i);
+        const keteranganInput = document.getElementById('keterangan_' + i);
+        
+        if (nominalInput) nominalInput.value = '';
+        if (tanggalInput) tanggalInput.value = '';
+        if (keteranganInput) keteranganInput.value = '';
     }
     
+    console.log('Opening modal for agenda:', agenda, 'dataSource:', dataSource);
+    
     // Load existing payment data if any
-    loadExcelPaymentHistory(kontrol);
+    // CRITICAL: Pass AGENDA (not kontrol) as identifier
+    // Use setTimeout to ensure inputs are cleared before loading
+    setTimeout(() => {
+        loadExcelPaymentHistory(agenda, dataSource); // Use agenda as identifier
+    }, 100);
     
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('excelPaymentModal'));
@@ -1726,23 +1768,61 @@ function openExcelPaymentModal(kontrol, agenda, noSpp, vendor, nilai, dibayar, b
     }, 300);
 }
 
-function loadExcelPaymentHistory(kontrol) {
-    const dataSource = currentDataSource || 'input_ks';
-    fetch(`/rekapan-tu-tk/payment-logs/${kontrol}?data_source=${dataSource}`)
+function loadExcelPaymentHistory(agenda, dataSource) {
+    // Use provided dataSource or fallback to currentDataSource
+    const source = dataSource || currentDataSource || 'input_ks';
+    
+    console.log('Loading payment history for agenda:', agenda, 'dataSource:', source);
+    
+    // CRITICAL FIX: Use AGENDA as identifier instead of KONTROL
+    fetch(`/rekapan-tu-tk/payment-logs-by-agenda/${encodeURIComponent(agenda)}?data_source=${source}`)
         .then(response => response.json())
         .then(data => {
+            console.log('Loaded payment history for agenda', agenda, ':', data);
+            
             // Populate inputs with existing payment data
-            data.forEach((log, index) => {
-                const tahap = index + 1;
-                if (tahap <= 4) {
-                    document.getElementById('nominal_' + tahap).value = formatNumber(log.jumlah);
-                    document.getElementById('tanggal_' + tahap).value = log.tanggal_bayar ? log.tanggal_bayar.split(' ')[0] : '';
-                    document.getElementById('keterangan_' + tahap).value = log.keterangan || '';
+            // Use payment_sequence from data, not array index
+            data.forEach((log) => {
+                const tahap = log.payment_sequence; // Use sequence from data (1, 2, 3, or 4)
+                if (tahap >= 1 && tahap <= 4) {
+                    const nominalInput = document.getElementById('nominal_' + tahap);
+                    const tanggalInput = document.getElementById('tanggal_' + tahap);
+                    const keteranganInput = document.getElementById('keterangan_' + tahap);
+                    
+                    if (nominalInput) {
+                        if (log.jumlah && log.jumlah > 0) {
+                            // Format nominal with thousand separators
+                            nominalInput.value = formatNumber(log.jumlah);
+                            console.log(`Populated tahap ${tahap} - Nominal:`, log.jumlah);
+                        } else {
+                            nominalInput.value = '';
+                        }
+                    }
+                    
+                    if (tanggalInput) {
+                        if (log.tanggal_bayar) {
+                            // Extract date part (YYYY-MM-DD) from datetime string
+                            const dateStr = log.tanggal_bayar.split(' ')[0];
+                            tanggalInput.value = dateStr;
+                            console.log(`Populated tahap ${tahap} - Tanggal:`, dateStr);
+                        } else {
+                            tanggalInput.value = '';
+                        }
+                    }
+                    
+                    if (keteranganInput) {
+                        if (log.keterangan) {
+                            keteranganInput.value = log.keterangan;
+                            console.log(`Populated tahap ${tahap} - Keterangan:`, log.keterangan);
+                        } else {
+                            keteranganInput.value = '';
+                        }
+                    }
                 }
             });
         })
         .catch(error => {
-            console.error('Error loading payment history:', error);
+            console.error('Error loading payment history for agenda', agenda, ':', error);
         });
 }
 
@@ -1832,94 +1912,111 @@ function submitExcelPayment() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
     
-    // Collect payment data
-    const payments = [];
+    // Collect ALL payment data (including empty ones for batch update)
+    const batchData = {
+        kontrol: currentKontrol,
+        data_source: currentDataSource
+    };
+    
+    // Collect data for all 4 stages
     for (let i = 1; i <= 4; i++) {
         const nominalInput = document.getElementById('nominal_' + i);
         const tanggalInput = document.getElementById('tanggal_' + i);
         const keteranganInput = document.getElementById('keterangan_' + i);
         
         const nominal = getNumericValue(nominalInput);
-        const tanggal = tanggalInput.value ? tanggalInput.value.trim() : '';
-        const keterangan = keteranganInput.value ? keteranganInput.value.trim() : '';
         
-        // Only include payments with nominal > 0
-        // Tanggal is optional but recommended
-        if (nominal > 0) {
-            payments.push({
-                sequence: i,
-                nominal: nominal,
-                tanggal: tanggal || null, // Send null if empty
-                keterangan: keterangan || ''
-            });
+        // CRITICAL: For date input (type="date"), check if value exists
+        // Date input returns empty string "" if not filled, or "YYYY-MM-DD" if filled
+        let tanggal = null; // Default to null
+        if (tanggalInput && tanggalInput.value) {
+            const dateValue = tanggalInput.value.trim();
+            // Only set tanggal if it's a valid date string (YYYY-MM-DD format, at least 8 chars)
+            if (dateValue && dateValue.length >= 8 && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                tanggal = dateValue;
+            }
+        }
+        // If tanggalInput doesn't exist or value is empty/null, tanggal remains null
+        
+        const keterangan = keteranganInput && keteranganInput.value ? keteranganInput.value.trim() : null;
+        if (keterangan === '' || keterangan === 'Opsional') {
+            keterangan = null;
+        }
+        
+        // Always include all stages (even if empty) for batch update
+        // This ensures we can clear/reset stages that were previously filled
+        batchData['tanggal_bayar_' + i] = tanggal; // null if empty, or valid date string "YYYY-MM-DD"
+        batchData['jumlah' + i] = nominal;
+        batchData['keterangan_' + i] = keterangan;
+        
+        // Debug log
+        console.log(`Stage ${i}: tanggal=${tanggal}, jumlah=${nominal}, keterangan=${keterangan}`);
+    }
+    
+    // Validate: At least one stage must have nominal > 0
+    let hasValidPayment = false;
+    for (let i = 1; i <= 4; i++) {
+        if (batchData['jumlah' + i] > 0) {
+            hasValidPayment = true;
+            break;
         }
     }
     
-    if (payments.length === 0) {
-        alert('Minimal isi 1 tahap pembayaran dengan nominal dan tanggal!');
+    if (!hasValidPayment) {
+        alert('Minimal isi 1 tahap pembayaran dengan nominal!');
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
         return;
     }
     
-    // Submit each payment via AJAX
-    let completed = 0;
-    let hasError = false;
+    // Submit batch update via AJAX
+    // Use route() helper to generate URL from route name
+    const batchUrl = '{{ route("pembayaran.storePaymentInstallmentBatch") }}';
+    console.log('Submitting to:', batchUrl);
+    console.log('Batch data:', batchData);
     
-    payments.forEach((payment, index) => {
-        const data = {
-            kontrol: currentKontrol,
-            data_source: currentDataSource,
-            payment_sequence: payment.sequence,
-            jumlah: payment.nominal,
-            tanggal_bayar: payment.tanggal || null, // Send null if empty string
-            keterangan: payment.keterangan || null
-        };
-        
-        fetch('/rekapan-tu-tk/payment-installment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            completed++;
-            if (!result.success) {
-                hasError = true;
-                console.error('Error saving payment:', result.message);
-            }
+    fetch(batchUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        body: JSON.stringify(batchData)
+    })
+    .then(response => {
+        // Check if response is OK
+        if (!response.ok) {
+            // If response is not OK, try to get error message
+            return response.text().then(text => {
+                console.error('HTTP Error:', response.status, text);
+                throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+            });
+        }
+        // Try to parse as JSON
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('excelPaymentModal'));
+            modal.hide();
             
-            // If all payments saved, close modal and reload
-            if (completed === payments.length) {
-                if (hasError) {
-                    alert('Beberapa pembayaran gagal disimpan. Silakan cek kembali.');
-                } else {
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('excelPaymentModal'));
-                    modal.hide();
-                    
-                    // Reload page to update table
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
-                }
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        })
-        .catch(error => {
-            completed++;
-            hasError = true;
-            console.error('Error:', error);
-            if (completed === payments.length) {
-                alert('Terjadi kesalahan saat menyimpan pembayaran');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        });
+            // Reload page to update table
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            alert('Gagal menyimpan pembayaran: ' + (result.message || 'Unknown error'));
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan pembayaran: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     });
 }
 

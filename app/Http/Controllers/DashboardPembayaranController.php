@@ -688,6 +688,15 @@ class DashboardPembayaranController extends Controller
                          ->orderBy('TANGGAL_MASUK_DOKUMEN', 'desc')
                          ->paginate($perPage)
                          ->withQueryString();
+        
+        // DEBUG: Log kontrol IDs for first 5 documents
+        Log::info('=== RekapanTuTk Debug ===');
+        Log::info('Data Source: ' . $dataSource);
+        Log::info('Total Documents: ' . $dokumens->total());
+        foreach ($dokumens->take(5) as $idx => $doc) {
+            $kontrolId = $dataSource == 'input_ks' ? ($doc->KONTROL ?? 'NULL') : ($doc->EXTRA_COL_0 ?? 'NULL');
+            Log::info('Document ' . ($idx + 1) . ' - KONTROL: ' . $kontrolId . ' | AGENDA: ' . ($doc->AGENDA ?? 'N/A') . ' | NO_SPP: ' . ($doc->NO_SPP ?? 'N/A'));
+        }
 
         $data = array(
             "title" => "Rekapan TU/TK",
@@ -733,24 +742,52 @@ class DashboardPembayaranController extends Controller
      */
     private function parseTanggalBayar($rawDate, $dataSource)
     {
-        // STRICT NULL CHECK: Check if tanggal is truly empty
-        if (empty($rawDate) || $rawDate === 'null' || trim($rawDate) === '') {
-            return null; // FORCE NULL IF EMPTY
+        // STRICT NULL CHECK: Multiple explicit checks to prevent parsing empty strings
+        // DO NOT use empty() alone - be explicit with each check
+        if ($rawDate === null) {
+            return null; // FORCE NULL IF NULL
+        }
+        if ($rawDate === '') {
+            return null; // FORCE NULL IF EMPTY STRING
+        }
+        if ($rawDate === 'null') {
+            return null; // FORCE NULL IF STRING "null"
+        }
+        if (is_string($rawDate) && trim($rawDate) === '') {
+            return null; // FORCE NULL IF WHITESPACE ONLY
+        }
+        if (empty($rawDate) && $rawDate !== '0' && $rawDate !== 0) {
+            return null; // FORCE NULL IF EMPTY (but allow '0' and 0)
         }
 
+        // ONLY parse if tanggal is NOT empty
         try {
+            // Additional validation: Check if string is not just whitespace
+            if (is_string($rawDate) && trim($rawDate) === '') {
+                return null; // Double check for whitespace
+            }
+            
             if ($dataSource === 'input_ks') {
                 // For tu_tk_2023: Convert date to Excel serial number (double)
                 $date = Carbon::parse($rawDate);
-                $excelEpoch = Carbon::create(1899, 12, 30);
-                $daysDiff = $date->diffInDays($excelEpoch);
+                $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
+                // Calculate days difference correctly (epoch -> date)
+                // If date is after epoch, result is positive
+                $daysDiff = $excelEpoch->diffInDays($date, false);
+                
+                // Validate: Excel serial should be positive for dates >= 1900-01-01
+                if ($daysDiff < 0) {
+                    Log::warning('Excel serial number negatif: ' . $daysDiff . ' | Tanggal: ' . $date->format('Y-m-d'));
+                    return null;
+                }
+                
                 return (double) $daysDiff;
             } else {
                 // For other tables: Format as YYYY-MM-DD (text)
                 return Carbon::parse($rawDate)->format('Y-m-d');
             }
         } catch (\Exception $e) {
-            Log::warning('Failed to parse tanggal_bayar: ' . $e->getMessage() . ' | Value: ' . $rawDate);
+            Log::warning('Failed to parse tanggal_bayar: ' . $e->getMessage() . ' | Value: ' . var_export($rawDate, true));
             return null; // Fallback to NULL if parsing fails
         }
     }
@@ -805,12 +842,15 @@ class DashboardPembayaranController extends Controller
         }
 
         // Strict validation with sanitization
+        // Note: tanggal_bayar is nullable - validation will pass even if empty/null
         $request->validate([
             'kontrol' => "required|exists:{$tableName},{$primaryKey}",
             'payment_sequence' => 'required|integer|min:1|max:6',
-            'tanggal_bayar' => 'nullable|date',
+            'tanggal_bayar' => 'nullable|date', // nullable allows null/empty, date validates format only if provided
             'jumlah' => 'required|numeric|min:0.01',
             'keterangan' => 'nullable|string|max:255',
+        ], [
+            'tanggal_bayar.date' => 'Format tanggal tidak valid. Kosongkan jika tidak ingin mengisi tanggal.',
         ]);
 
         try {
@@ -824,8 +864,34 @@ class DashboardPembayaranController extends Controller
             $rawTanggal = $request->input('tanggal_bayar');
             $rawJumlah = $request->input('jumlah');
             
-            // Parse tanggal using helper (returns null if empty)
-            $tanggalValue = $this->parseTanggalBayar($rawTanggal, $dataSource);
+            // STRICT NULL CHECK: Check if tanggal is truly empty BEFORE parsing
+            // Multiple explicit checks to prevent parsing empty strings
+            // DO NOT use empty() alone - be explicit with each check
+            $isTanggalEmpty = false;
+            
+            if ($rawTanggal === null) {
+                $isTanggalEmpty = true;
+            } elseif ($rawTanggal === '') {
+                $isTanggalEmpty = true;
+            } elseif ($rawTanggal === 'null') {
+                $isTanggalEmpty = true;
+            } elseif (is_string($rawTanggal) && trim($rawTanggal) === '') {
+                $isTanggalEmpty = true;
+            } elseif (empty($rawTanggal) && $rawTanggal !== '0' && $rawTanggal !== 0) {
+                $isTanggalEmpty = true;
+            }
+            
+            // Parse tanggal using helper ONLY if not empty
+            $tanggalValue = null;
+            if (!$isTanggalEmpty) {
+                // Additional validation: Check if string is not just whitespace
+                if (is_string($rawTanggal) && trim($rawTanggal) !== '') {
+                    $tanggalValue = $this->parseTanggalBayar($rawTanggal, $dataSource);
+                } else {
+                    $tanggalValue = null; // Force null if empty string
+                }
+            }
+            // If empty, tanggalValue remains null (DO NOT PARSE)
             
             // Sanitize nominal using helper
             $jumlah = $this->sanitizeNominal($rawJumlah);
@@ -840,7 +906,8 @@ class DashboardPembayaranController extends Controller
             // ============================================
             $paymentLog = null;
             
-            if ($tanggalValue !== null && !empty($rawTanggal)) {
+            // STRICT CHECK: Only create log if tanggal is NOT empty
+            if (!$isTanggalEmpty && $tanggalValue !== null) {
                 try {
                     $tanggalBayarParsed = Carbon::parse($rawTanggal);
                     
@@ -889,18 +956,15 @@ class DashboardPembayaranController extends Controller
             // If fully paid, set completion date (STRICT NULL CHECK)
             // ============================================
             if ($belumDibayar <= 0) {
-                // Use helper method to parse tanggal
-                $tanggalRampungValue = $this->parseTanggalBayar($rawTanggal, $dataSource);
-                
-                // For TANGGAL_BAYAR_RAMPUNG, always use YYYY-MM-DD format (text)
-                if ($tanggalRampungValue !== null && !empty($rawTanggal)) {
+                // STRICT CHECK: Only set completion date if tanggal is NOT empty
+                if (!$isTanggalEmpty && !empty($rawTanggal)) {
                     try {
                         $tanggalRampungValue = Carbon::parse($rawTanggal)->format('Y-m-d');
                         $tuTk->update([
                             'TANGGAL_BAYAR_RAMPUNG' => $tanggalRampungValue,
                         ]);
                     } catch (\Exception $e) {
-                        Log::warning('Failed to parse tanggal_bayar for TANGGAL_BAYAR_RAMPUNG: ' . $e->getMessage());
+                        Log::warning('Failed to parse tanggal_bayar for TANGGAL_BAYAR_RAMPUNG: ' . $e->getMessage() . ' | Value: ' . $rawTanggal);
                     }
                 }
             }
@@ -927,9 +991,11 @@ class DashboardPembayaranController extends Controller
     }
 
     /**
-     * Get payment logs for a TuTk document
+     * Get payment logs for a TuTk document BY AGENDA
+     * CRITICAL FIX: Use AGENDA instead of KONTROL because all documents have KONTROL = 1
+     * Returns data from PaymentLog table AND direct from tu_tk table
      */
-    public function getPaymentLogs(Request $request, $kontrol)
+    public function getPaymentLogsByAgenda(Request $request, $agenda)
     {
         // Get data source from request
         $dataSource = $request->get('data_source', 'input_ks');
@@ -937,13 +1003,140 @@ class DashboardPembayaranController extends Controller
             $dataSource = 'input_ks';
         }
 
-        $paymentLogs = PaymentLog::where('tu_tk_kontrol', $kontrol)
+        // Select model based on data source
+        if ($dataSource === 'input_pupuk') {
+            $model = TuTkPupuk::class;
+        } elseif ($dataSource === 'input_vd') {
+            $model = TuTkVd::class;
+        } elseif ($dataSource === 'input_tan') {
+            $model = TuTkTan::class;
+        } else {
+            $model = TuTk::class;
+        }
+
+        // Log untuk debugging
+        Log::info('getPaymentLogsByAgenda called - agenda: ' . $agenda . ' | dataSource: ' . $dataSource);
+        
+        // CRITICAL: Get raw values from database to avoid Laravel casting DOUBLE to datetime
+        // Model TuTk has cast 'TANGGAL_BAYAR_I' => 'datetime' which converts DOUBLE to datetime
+        // We need raw DOUBLE value (Excel serial number) to convert back to date
+        $tableName = (new $model())->getTable();
+        $rawData = DB::table($tableName)
+            ->where('AGENDA', $agenda)
+            ->first();
+        
+        if (!$rawData) {
+            Log::warning('TuTk raw record not found - agenda: ' . $agenda . ' | dataSource: ' . $dataSource);
+            return response()->json([]);
+        }
+        
+        Log::info('TuTk record found - agenda: ' . $agenda . ' | KONTROL: ' . ($rawData->KONTROL ?? 'null') . ' | JUMLAH1: ' . ($rawData->JUMLAH1 ?? 'null') . ' | TANGGAL_BAYAR_I (raw DOUBLE): ' . ($rawData->TANGGAL_BAYAR_I ?? 'null'));
+
+        // Get payment logs from PaymentLog table using AGENDA (which is unique)
+        // PaymentLog now has tu_tk_agenda column for unique identification
+        $paymentLogs = PaymentLog::where('tu_tk_agenda', $agenda)
             ->where('data_source', $dataSource)
             ->orderBy('payment_sequence')
             ->orderBy('tanggal_bayar')
             ->get();
+        
+        // If PaymentLog has data, use it (includes keterangan)
+        if ($paymentLogs->isNotEmpty()) {
+            $paymentData = $paymentLogs->map(function($log) {
+                return [
+                    'payment_sequence' => $log->payment_sequence,
+                    'tanggal_bayar' => $log->tanggal_bayar ? $log->tanggal_bayar->format('Y-m-d') : null,
+                    'jumlah' => (float)$log->jumlah,
+                    'keterangan' => $log->keterangan,
+                ];
+            })->toArray();
+            
+            // Sort by payment_sequence to ensure correct order
+            usort($paymentData, function($a, $b) {
+                return $a['payment_sequence'] <=> $b['payment_sequence'];
+            });
+            
+            Log::info('Loaded payment logs from PaymentLog table for agenda: ' . $agenda . ' | Count: ' . count($paymentData));
+            return response()->json($paymentData);
+        }
+        
+        // If PaymentLog is empty, get data directly from tu_tk table (no keterangan available)
+        $paymentData = [];
+            
+            // Define stage mapping
+            $stages = [
+                1 => ['col_date' => 'TANGGAL_BAYAR_I', 'col_amount' => 'JUMLAH1'],
+                2 => ['col_date' => 'TANGGAL_BAYAR_II', 'col_amount' => 'JUMLAH2'],
+                3 => ['col_date' => 'TANGGAL_BAYAR_III', 'col_amount' => 'JUMLAH3'],
+                4 => ['col_date' => 'TANGGAL_BAYAR_IV', 'col_amount' => 'JUMLAH4'],
+            ];
 
-        return response()->json($paymentLogs);
+            foreach ($stages as $stageNum => $stage) {
+                // Use raw data to get actual DOUBLE value (not converted to datetime)
+                $tanggalBayar = $rawData->{$stage['col_date']} ?? null;
+                $jumlah = $rawData->{$stage['col_amount']} ?? 0;
+                
+                // Convert to float for comparison
+                $jumlahFloat = (float)$jumlah;
+
+                // Only include if there's data (tanggal exists OR jumlah > 0)
+                // Note: We include even if only jumlah exists (tanggal might be null for partial payments)
+                if ($jumlahFloat > 0) {
+                    // Convert Excel serial number back to date format
+                    $tanggalFormatted = null;
+                    if ($tanggalBayar !== null) {
+                        // CRITICAL: $tanggalBayar from raw query is already DOUBLE (Excel serial number)
+                        // For input_ks, it's stored as DOUBLE (Excel serial)
+                        // For other data sources, it might be TEXT (date string)
+                        if ($dataSource === 'input_ks') {
+                            // Check if it's numeric (Excel serial number)
+                            if (is_numeric($tanggalBayar)) {
+                                try {
+                                    $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
+                                    // Convert Excel serial number (DOUBLE) back to date
+                                    $tanggalFormatted = $excelEpoch->copy()->addDays((int)$tanggalBayar)->format('Y-m-d');
+                                    Log::info('Converted Excel serial ' . $tanggalBayar . ' to date: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
+                                } catch (\Exception $e) {
+                                    Log::warning('Failed to convert Excel serial to date: ' . $tanggalBayar . ' | Error: ' . $e->getMessage() . ' | agenda: ' . $agenda);
+                                }
+                            } else {
+                                // If not numeric, might be already a date string (shouldn't happen for input_ks)
+                                Log::warning('TANGGAL_BAYAR_I is not numeric for input_ks: ' . var_export($tanggalBayar, true) . ' | agenda: ' . $agenda);
+                            }
+                        } else {
+                            // For other data sources (input_tan, input_vd, input_pupuk), dates are stored as TEXT
+                            if (is_string($tanggalBayar) && !empty(trim($tanggalBayar))) {
+                                // Extract date part if it's a datetime string
+                                $tanggalFormatted = explode(' ', trim($tanggalBayar))[0];
+                                Log::info('Using date string: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
+                            } elseif (is_numeric($tanggalBayar)) {
+                                // Some tables might also use Excel serial numbers
+                                try {
+                                    $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
+                                    $tanggalFormatted = $excelEpoch->copy()->addDays((int)$tanggalBayar)->format('Y-m-d');
+                                    Log::info('Converted Excel serial (non-input_ks): ' . $tanggalBayar . ' to date: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
+                                } catch (\Exception $e) {
+                                    Log::warning('Failed to convert Excel serial (non-input_ks): ' . $tanggalBayar . ' | Error: ' . $e->getMessage() . ' | agenda: ' . $agenda);
+                                }
+                            }
+                        }
+                    }
+
+                    $paymentData[] = [
+                        'payment_sequence' => $stageNum,
+                        'tanggal_bayar' => $tanggalFormatted,
+                        'jumlah' => $jumlahFloat,
+                        'keterangan' => null, // Keterangan tidak tersedia di tabel tu_tk
+                    ];
+                }
+            }
+            
+            // Sort by payment_sequence to ensure correct order
+            usort($paymentData, function($a, $b) {
+                return $a['payment_sequence'] <=> $b['payment_sequence'];
+            });
+
+        return response()->json($paymentData);
     }
 
     /**
@@ -1315,16 +1508,62 @@ class DashboardPembayaranController extends Controller
             $belumDibayarField = 'BELUM_DIBAYAR1';
         }
 
-        // Validate kontrol exists
-        $request->validate([
-            'kontrol' => "required|exists:{$tableName},{$primaryKey}",
+        // CRITICAL FIX: Validate AGENDA exists (not KONTROL)
+        // Frontend sends agenda in 'kontrol' field
+        $agenda = $request->input('kontrol');
+        
+        if (!$agenda) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor Agenda tidak valid',
+            ], 400);
+        }
+
+        // Check if document exists by AGENDA
+        $tuTkExists = $model::where('AGENDA', $agenda)->exists();
+        
+        if (!$tuTkExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen tidak ditemukan dengan Agenda: ' . $agenda,
+            ], 404);
+        }
+
+        // Validate tanggal_bayar_* fields are optional - validation will pass even if empty/null
+        // Use sometimes() to only validate if field is present and not empty
+        $validator = Validator::make($request->all(), [
             'data_source' => 'required|in:input_ks,input_pupuk,input_tan,input_vd',
+            // Optional: Validate date format only if provided (nullable allows empty)
+            'tanggal_bayar_1' => 'nullable|sometimes|date',
+            'tanggal_bayar_2' => 'nullable|sometimes|date',
+            'tanggal_bayar_3' => 'nullable|sometimes|date',
+            'tanggal_bayar_4' => 'nullable|sometimes|date',
+            'jumlah1' => 'nullable|numeric|min:0',
+            'jumlah2' => 'nullable|numeric|min:0',
+            'jumlah3' => 'nullable|numeric|min:0',
+            'jumlah4' => 'nullable|numeric|min:0',
+        ], [
+            'tanggal_bayar_*.date' => 'Format tanggal tidak valid. Kosongkan jika tidak ingin mengisi tanggal.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();
 
-            $tuTk = $model::where($primaryKey, $request->kontrol)->firstOrFail();
+            // CRITICAL FIX: Use AGENDA to find document (not KONTROL)
+            $agenda = $request->input('kontrol'); // Frontend sends agenda in 'kontrol' field
+            $tuTk = $model::where('AGENDA', $agenda)->firstOrFail();
+            
+            // Get actual kontrol for payment logs
+            $actualKontrol = $dataSource === 'input_ks' ? ($tuTk->KONTROL ?? null) : ($tuTk->EXTRA_COL_0 ?? null);
+            Log::info('Found TuTk for batch payment - agenda: ' . $agenda . ' | kontrol: ' . $actualKontrol);
 
             // ============================================
             // DRY APPROACH: Define Stage Mapping
@@ -1361,76 +1600,286 @@ class DashboardPembayaranController extends Controller
             ];
 
             $updateData = [];
-            $paymentLogs = [];
+            // Note: We don't use PaymentLog table anymore because it uses KONTROL (not unique)
+            // Payment data is stored directly in tu_tk table columns (JUMLAH1, TANGGAL_BAYAR_I, etc.)
 
             // ============================================
             // LOOP: Process Each Stage with Same Logic
             // ============================================
             foreach ($stages as $stageNum => $stage) {
                 // A. Get Input Values
+                // Use json_decode to handle null values from JSON properly
                 $rawDate = $request->input($stage['input_date']);
                 $rawAmount = $request->input($stage['input_amount']);
                 $rawKeterangan = $request->input('keterangan_' . $stageNum, null);
+                
+                // CRITICAL: Normalize null values from JSON
+                // JSON null becomes PHP null, but empty string might also come through
+                // Convert empty string, 'null', or actual null to null
+                if ($rawDate === null || $rawDate === '' || $rawDate === 'null' || (is_string($rawDate) && trim($rawDate) === '')) {
+                    $rawDate = null;
+                }
+                
+                // DEBUG: Log raw input values
+                Log::info('Stage ' . $stageNum . ' - Raw date input: ' . var_export($rawDate, true) . ' | Type: ' . gettype($rawDate) . ' | Is null: ' . ($rawDate === null ? 'YES' : 'NO'));
 
                 // B. STRICT NULL CHECK: Validate Tanggal (Anti 1969 Error)
-                // DO NOT parse empty strings - Force NULL if empty
-                if (empty($rawDate) || $rawDate === 'null' || trim($rawDate) === '') {
-                    $updateData[$stage['col_date']] = null; // FORCE NULL IF EMPTY
+                // CRITICAL: Multiple explicit checks to prevent parsing empty strings
+                // DO NOT parse if empty - this prevents 1969-12-31 error
+                
+                // Helper function to check if date is empty
+                $isTanggalEmpty = function($date) {
+                    // Check 1: null (actual null)
+                    if ($date === null) return true;
+                    
+                    // Check 2: empty string
+                    if ($date === '') return true;
+                    
+                    // Check 3: string "null" (from JSON null)
+                    if ($date === 'null' || strtolower($date) === 'null') return true;
+                    
+                    // Check 4: if string, check trimmed
+                    if (is_string($date)) {
+                        $trimmed = trim($date);
+                        if ($trimmed === '') return true;
+                        if (strtolower($trimmed) === 'null') return true;
+                        if (strtolower($trimmed) === 'mm/dd/yyyy') return true;
+                        if (strtolower($trimmed) === 'dd/mm/yyyy') return true;
+                        if (strtolower($trimmed) === 'yyyy-mm-dd') return true;
+                        // Check if string is too short to be a valid date
+                        if (strlen($trimmed) < 8) return true;
+                    }
+                    
+                    // Check 5: empty() but allow '0' and 0
+                    if (empty($date) && $date !== '0' && $date !== 0 && $date !== false) return true;
+                    
+                    return false;
+                };
+                
+                // CRITICAL: DO NOT parse empty strings - Force NULL if empty
+                if ($isTanggalEmpty($rawDate)) {
+                    $updateData[$stage['col_date']] = null; // FORCE NULL IF EMPTY - DO NOT PARSE
+                    Log::info('Tanggal empty for stage ' . $stageNum . ', setting to NULL. Raw value: ' . var_export($rawDate, true));
                 } else {
+                    // ONLY parse if tanggal is NOT empty
                     try {
-                        if ($dataSource === 'input_ks') {
-                            // For tu_tk_2023: Convert date to Excel serial number (double)
-                            $date = Carbon::parse($rawDate);
-                            $excelEpoch = Carbon::create(1899, 12, 30);
-                            $daysDiff = $date->diffInDays($excelEpoch);
-                            $updateData[$stage['col_date']] = (double) $daysDiff;
-                        } else {
-                            // For other tables: Format as YYYY-MM-DD (text)
-                            $updateData[$stage['col_date']] = Carbon::parse($rawDate)->format('Y-m-d');
-                        }
+                        // Additional validation: Double check if string is not just whitespace
+                        $trimmedDate = is_string($rawDate) ? trim($rawDate) : $rawDate;
                         
-                        // Create payment log if tanggal is valid and amount > 0
-                        if ($rawAmount && (float) preg_replace('/[^0-9]/', '', $rawAmount) > 0) {
-                            $paymentLogs[] = [
-                                'tu_tk_kontrol' => $request->kontrol,
-                                'data_source' => $dataSource,
-                                'payment_sequence' => $stageNum,
-                                'tanggal_bayar' => Carbon::parse($rawDate)->format('Y-m-d'),
-                                'jumlah' => (float) preg_replace('/[^0-9]/', '', $rawAmount),
-                                'keterangan' => $rawKeterangan,
-                                'created_by' => auth()->user()->name ?? 'System',
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ];
+                        // Final check before parsing
+                        if ($isTanggalEmpty($trimmedDate)) {
+                            $updateData[$stage['col_date']] = null;
+                            Log::info('Tanggal trimmed empty for stage ' . $stageNum . ', setting to NULL.');
+                        } else {
+                            // Parse tanggal ONLY if it passes all checks
+                            // CRITICAL: Final check before parsing - ensure string is not empty
+                            $finalCheck = is_string($trimmedDate) ? trim($trimmedDate) : $trimmedDate;
+                            if (empty($finalCheck) || $finalCheck === '' || $finalCheck === 'null' || strlen($finalCheck) < 8) {
+                                // If still empty or too short, set to null
+                                Log::warning('Tanggal masih kosong setelah trim untuk stage ' . $stageNum . ': ' . var_export($trimmedDate, true));
+                                $updateData[$stage['col_date']] = null;
+                            } else {
+                                // Validate date format first (more lenient regex)
+                                $isValidFormat = preg_match('/^\d{4}-\d{2}-\d{2}$/', $finalCheck) || 
+                                                preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $finalCheck) ||
+                                                preg_match('/^\d{2}-\d{2}-\d{4}$/', $finalCheck) ||
+                                                preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $finalCheck);
+                                
+                                if (!$isValidFormat) {
+                                    // If doesn't match common date formats, might be invalid
+                                    Log::warning('Tanggal format tidak valid untuk stage ' . $stageNum . ': ' . var_export($finalCheck, true));
+                                    $updateData[$stage['col_date']] = null;
+                                } else {
+                                    // Parse tanggal ONLY if format looks valid AND not empty
+                                    try {
+                                        // CRITICAL: One more check before Carbon::parse()
+                                        if (empty($finalCheck) || strlen($finalCheck) < 8) {
+                                            $updateData[$stage['col_date']] = null;
+                                            Log::warning('Tanggal terlalu pendek untuk stage ' . $stageNum . ': ' . var_export($finalCheck, true));
+                                        } else {
+                                            // FINAL CHECK: Ensure $finalCheck is not empty before parsing
+                                            // This is the LAST line of defense before Carbon::parse()
+                                            $finalTrimmed = is_string($finalCheck) ? trim($finalCheck) : $finalCheck;
+                                            
+                                            if (empty($finalTrimmed) || 
+                                                $finalTrimmed === '' || 
+                                                $finalTrimmed === 'null' || 
+                                                strlen($finalTrimmed) < 8 ||
+                                                $isTanggalEmpty($finalTrimmed)) {
+                                                // Still empty after all checks - set to null
+                                                $updateData[$stage['col_date']] = null;
+                                                Log::warning('FINAL CHECK: Tanggal masih kosong untuk stage ' . $stageNum . ' setelah semua validasi. Value: ' . var_export($finalCheck, true));
+                                            } else {
+                                                // NOW safe to parse - all checks passed
+                                                try {
+                                                    if ($dataSource === 'input_ks') {
+                                                        // For tu_tk_2023: Convert date to Excel serial number (double)
+                                                        $date = Carbon::parse($finalTrimmed);
+                                                        // Validate that date is reasonable (not epoch) BEFORE using it
+                                                        if ($date->year < 1900 || $date->year > 2100) {
+                                                            Log::error('Tanggal tidak masuk akal (epoch?) untuk stage ' . $stageNum . ': ' . $date->format('Y-m-d') . ' | Original: ' . var_export($finalCheck, true));
+                                                            $updateData[$stage['col_date']] = null;
+                                                        } else {
+                                                            // Excel serial number: days since 1899-12-30 (Excel epoch)
+                                                            // Use diff() with absolute = false to get signed difference
+                                                            $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
+                                                            // Calculate days difference correctly
+                                                            // If date is after epoch, result is positive
+                                                            // If date is before epoch, result is negative
+                                                            $daysDiff = $excelEpoch->diffInDays($date, false);
+                                                            
+                                                            // Validate: Excel serial should be positive for dates >= 1900-01-01
+                                                            // Dates before 1900 will be negative, which MySQL might interpret as epoch
+                                                            if ($daysDiff < 0) {
+                                                                Log::error('Excel serial number negatif untuk stage ' . $stageNum . ': ' . $daysDiff . ' | Tanggal: ' . $date->format('Y-m-d'));
+                                                                $updateData[$stage['col_date']] = null;
+                                                            } else {
+                                                                $updateData[$stage['col_date']] = (double) $daysDiff;
+                                                                Log::info('✓ Parsed tanggal for stage ' . $stageNum . ': ' . $finalTrimmed . ' -> Excel serial: ' . $daysDiff);
+                                                                
+                                                                // SKIP PaymentLog creation because:
+                                                                // 1. PaymentLog uses tu_tk_kontrol (KONTROL) which is not unique (all = 1)
+                                                                // 2. All documents have KONTROL = 1, so payment logs would be shared across all documents
+                                                                // 3. Payment data is already stored in tu_tk table columns (JUMLAH1, TANGGAL_BAYAR_I, etc.)
+                                                                // 4. We retrieve payment data directly from tu_tk table using AGENDA (which is unique)
+                                                            }
+                                                        }
+                                                    } else {
+                                                        // For other tables: Format as YYYY-MM-DD (text)
+                                                        $date = Carbon::parse($finalTrimmed);
+                                                        // Validate that date is reasonable (not epoch) BEFORE using it
+                                                        if ($date->year < 1900 || $date->year > 2100) {
+                                                            Log::error('Tanggal tidak masuk akal (epoch?) untuk stage ' . $stageNum . ': ' . $date->format('Y-m-d') . ' | Original: ' . var_export($finalCheck, true));
+                                                            $updateData[$stage['col_date']] = null;
+                                                        } else {
+                                                            $updateData[$stage['col_date']] = $date->format('Y-m-d');
+                                                            Log::info('✓ Parsed tanggal for stage ' . $stageNum . ': ' . $finalTrimmed . ' -> ' . $updateData[$stage['col_date']]);
+                                                            
+                                                            // SKIP PaymentLog creation because:
+                                                            // 1. PaymentLog uses tu_tk_kontrol (KONTROL) which is not unique (all = 1)
+                                                            // 2. All documents have KONTROL = 1, so payment logs would be shared across all documents
+                                                            // 3. Payment data is already stored in tu_tk table columns (JUMLAH1, TANGGAL_BAYAR_I, etc.)
+                                                            // 4. We retrieve payment data directly from tu_tk table using AGENDA (which is unique)
+                                                        }
+                                                    }
+                                                } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+                                                    Log::error('Carbon parse exception untuk stage ' . $stageNum . ': ' . $e->getMessage() . ' | Value: ' . var_export($finalTrimmed, true));
+                                                    $updateData[$stage['col_date']] = null;
+                                                } catch (\Exception $e) {
+                                                    Log::error('Unexpected exception saat parse tanggal untuk stage ' . $stageNum . ': ' . $e->getMessage() . ' | Value: ' . var_export($finalTrimmed, true));
+                                                    $updateData[$stage['col_date']] = null;
+                                                }
+                                            }
+                                        }
+                                    } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+                                        Log::error('Carbon parse error untuk stage ' . $stageNum . ': ' . $e->getMessage() . ' | Value: ' . var_export($finalCheck, true));
+                                        $updateData[$stage['col_date']] = null;
+                                    }
+                                }
+                            }
                         }
                     } catch (\Exception $e) {
                         // If parsing fails, set to null and log error
-                        Log::warning('Failed to parse tanggal_bayar for stage ' . $stageNum . ': ' . $e->getMessage() . ' | Value: ' . $rawDate);
+                        Log::error('Failed to parse tanggal_bayar for stage ' . $stageNum . ': ' . $e->getMessage() . ' | Value: ' . var_export($rawDate, true));
                         $updateData[$stage['col_date']] = null; // Fallback to NULL
                     }
                 }
 
                 // C. STRICT NULL CHECK: Sanitize Nominal (Remove Rp/Titik/Koma)
-                // If empty set 0, if exists clean non-numeric characters
-                if (empty($rawAmount) || $rawAmount === 'null' || trim($rawAmount) === '') {
-                    $cleanAmount = 0;
-                } else {
-                    $cleanAmount = preg_replace('/[^0-9]/', '', $rawAmount);
-                    $cleanAmount = (float) ($cleanAmount ?? 0);
-                }
+                // Use helper method for consistency
+                $cleanAmount = $this->sanitizeNominal($rawAmount);
                 $updateData[$stage['col_amount']] = $cleanAmount;
             }
 
             // ============================================
             // Execute Single Update Query
+            // CRITICAL: Use DB::statement() to prevent MySQL from auto-converting DOUBLE to datetime
             // ============================================
-            $tuTk->update($updateData);
+            // Build SET clause manually to ensure DOUBLE values are not converted
+            $setClauses = [];
+            $bindings = [];
+            
+            foreach ($updateData as $column => $value) {
+                if ($value === null) {
+                    $setClauses[] = "`{$column}` = NULL";
+                } else {
+                    // Use CAST to ensure DOUBLE values are stored correctly
+                    if (in_array($column, ['TANGGAL_BAYAR_I', 'TANGGAL_BAYAR_II', 'TANGGAL_BAYAR_III', 'TANGGAL_BAYAR_IV', 'TANGGAL_BAYAR_V', 'TANGGAL_BAYAR_VI']) && is_numeric($value)) {
+                        // For date columns (DOUBLE), use CAST to ensure it's stored as DOUBLE
+                        $setClauses[] = "`{$column}` = CAST(? AS DECIMAL(20,6))";
+                        $bindings[] = $value;
+                    } else {
+                        $setClauses[] = "`{$column}` = ?";
+                        $bindings[] = $value;
+                    }
+                }
+            }
+            
+            if (!empty($setClauses)) {
+                // CRITICAL FIX: Use AGENDA in WHERE clause (not KONTROL)
+                $bindings[] = $agenda; // Use agenda for WHERE clause
+                $sql = "UPDATE `{$tableName}` SET " . implode(', ', $setClauses) . " WHERE `AGENDA` = ?";
+                DB::statement($sql, $bindings);
+                Log::info('Updated tu_tk record via raw SQL. AGENDA: ' . $agenda . ' | Columns updated: ' . implode(', ', array_keys($updateData)));
+                
+                // Refresh model to get updated data
+                $tuTk->refresh();
+            }
 
             // ============================================
             // Create Payment Logs (Batch Insert)
+            // CRITICAL: Now using tu_tk_agenda (unique) instead of tu_tk_kontrol (not unique)
+            // This allows us to store keterangan per payment stage
             // ============================================
+            // Delete existing payment logs for this agenda first (to avoid duplicates)
+            PaymentLog::where('tu_tk_agenda', $agenda)
+                ->where('data_source', $dataSource)
+                ->delete();
+            
+            // Create payment logs array
+            $paymentLogs = [];
+            
+            // Get actual kontrol for backward compatibility
+            $actualKontrol = $dataSource === 'input_ks' ? ($tuTk->KONTROL ?? null) : ($tuTk->EXTRA_COL_0 ?? null);
+            
+            // Loop through stages to create payment logs
+            foreach ($stages as $stageNum => $stage) {
+                $rawAmount = $request->input($stage['input_amount'], 0);
+                $rawTanggal = $request->input('tanggal_bayar_' . $stageNum, null);
+                $rawKeterangan = $request->input('keterangan_' . $stageNum, null);
+                
+                $cleanAmount = $this->sanitizeNominal($rawAmount);
+                
+                // Only create log if amount > 0
+                if ($cleanAmount > 0) {
+                    $tanggalBayar = null;
+                    if (!empty($rawTanggal)) {
+                        try {
+                            $tanggalBayar = Carbon::parse($rawTanggal)->format('Y-m-d');
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to parse tanggal_bayar_' . $stageNum . ': ' . $rawTanggal);
+                        }
+                    }
+                    
+                    $paymentLogs[] = [
+                        'tu_tk_kontrol' => $actualKontrol, // For backward compatibility
+                        'tu_tk_agenda' => $agenda, // CRITICAL: Use AGENDA (unique identifier)
+                        'data_source' => $dataSource,
+                        'payment_sequence' => $stageNum,
+                        'tanggal_bayar' => $tanggalBayar,
+                        'jumlah' => $cleanAmount,
+                        'keterangan' => !empty($rawKeterangan) ? $rawKeterangan : null,
+                        'created_by' => auth()->user()->name ?? 'System',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+            
+            // Insert payment logs if any
             if (!empty($paymentLogs)) {
                 PaymentLog::insert($paymentLogs);
+                Log::info('Created ' . count($paymentLogs) . ' payment logs for agenda: ' . $agenda);
             }
 
             // ============================================
@@ -2464,16 +2913,100 @@ class DashboardPembayaranController extends Controller
         $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
-            return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
         }
 
         // Load required relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
-        // Return HTML partial for detail view
-        $html = $this->generateDocumentDetailHtml($dokumen);
+        // Check if request wants JSON (for AJAX modal)
+        if (request()->wantsJson() || request()->ajax()) {
+            return $this->getDocumentDetailJson($dokumen);
+        }
 
+        // Return HTML partial for detail view (backward compatibility)
+        $html = $this->generateDocumentDetailHtml($dokumen);
         return response($html);
+    }
+
+    /**
+     * Get document detail as JSON for AJAX modal
+     */
+    private function getDocumentDetailJson(Dokumen $dokumen)
+    {
+        // Determine payment status
+        $paymentStatus = $dokumen->computed_status ?? 'belum_siap_bayar';
+        if (is_string($paymentStatus)) {
+            $statusUpper = strtoupper(trim($paymentStatus));
+            if ($statusUpper === 'SIAP_DIBAYAR' || $statusUpper === 'SIAP DIBAYAR') {
+                $paymentStatus = 'siap_bayar';
+            } elseif ($statusUpper === 'SUDAH_DIBAYAR' || $statusUpper === 'SUDAH DIBAYAR') {
+                $paymentStatus = 'sudah_dibayar';
+            } else {
+                $paymentStatus = 'belum_siap_bayar';
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'nilai_rupiah_formatted' => $dokumen->formatted_nilai_rupiah ?? 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.'),
+                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-',
+                'tanggal_masuk_date' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('Y-m-d') : null,
+                'tanggal_masuk_time' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('H:i:s') : null,
+                'bulan' => $dokumen->bulan,
+                'tahun' => $dokumen->tahun,
+                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-',
+                'tanggal_spp_date' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : null,
+                'kategori' => $dokumen->kategori ?? '-',
+                'jenis_dokumen' => $dokumen->jenis_dokumen ?? '-',
+                'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? '-',
+                'jenis_pembayaran' => $dokumen->jenis_pembayaran ?? '-',
+                'kebun' => $dokumen->kebun ?? '-',
+                'bagian' => $dokumen->bagian ?? '-',
+                'dibayar_kepada' => $dokumen->dibayarKepadas->count() > 0
+                    ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                    : ($dokumen->dibayar_kepada ?? '-'),
+                'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
+                'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
+                'tanggal_berita_acara_date' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
+                'no_spk' => $dokumen->no_spk ?? '-',
+                'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
+                'tanggal_spk_date' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
+                'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
+                'tanggal_berakhir_spk_date' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
+                'no_po' => $dokumen->dokumenPos->count() > 0 ? $dokumen->dokumenPos->pluck('nomor_po')->join(', ') : '-',
+                'no_pr' => $dokumen->dokumenPrs->count() > 0 ? $dokumen->dokumenPrs->pluck('nomor_pr')->join(', ') : '-',
+                'nomor_mirror' => $dokumen->nomor_mirror ?? '-',
+                'status' => $dokumen->status,
+                'payment_status' => $paymentStatus,
+                'tanggal_dibayar' => $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : '-',
+                'tanggal_dibayar_date' => $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('Y-m-d') : null,
+                'link_bukti_pembayaran' => $dokumen->link_bukti_pembayaran ?? '-',
+                // Perpajakan data
+                'npwp' => $dokumen->npwp ?? '-',
+                'status_perpajakan' => $dokumen->status_perpajakan ?? '-',
+                'no_faktur' => $dokumen->no_faktur ?? '-',
+                'tanggal_faktur' => $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-',
+                'tanggal_faktur_date' => $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('Y-m-d') : null,
+                'tanggal_selesai_verifikasi_pajak' => $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-',
+                'tanggal_selesai_verifikasi_pajak_date' => $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('Y-m-d') : null,
+                'jenis_pph' => $dokumen->jenis_pph ?? '-',
+                'dpp_pph' => $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '-',
+                'dpp_pph_raw' => $dokumen->dpp_pph,
+                'ppn_terhutang' => $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-',
+                'ppn_terhutang_raw' => $dokumen->ppn_terhutang,
+                'link_dokumen_pajak' => $dokumen->link_dokumen_pajak ?? '-',
+            ]
+        ]);
     }
 
     /**

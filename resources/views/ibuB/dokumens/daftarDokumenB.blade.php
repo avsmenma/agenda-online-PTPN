@@ -12,6 +12,70 @@
 
     console.log('🚀 Initializing critical functions...');
 
+    // Wrapper function untuk handle row click dengan text selection check
+    function handleRowClick(event, docId) {
+        // Cek apakah user sedang menyeleksi teks
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+        
+        // Jika ada text yang diseleksi, jangan toggle detail
+        if (selectedText.length > 0) {
+            console.log('Text selection detected, preventing detail toggle');
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+        
+        // Cek apakah ini adalah double-click (biasanya untuk select word)
+        if (event.detail === 2) {
+            // Double-click biasanya untuk select word, tunggu sebentar untuk cek selection
+            setTimeout(() => {
+                const newSelection = window.getSelection();
+                if (newSelection.toString().trim().length > 0) {
+                    console.log('Double-click text selection detected, preventing detail toggle');
+                    return false;
+                }
+            }, 50);
+            // Untuk double-click, kita biarkan default behavior (select word) dulu
+            return false;
+        }
+        
+        // Cek apakah yang diklik adalah link/tombol/input/select/textarea
+        const target = event.target;
+        const tagName = target.tagName.toLowerCase();
+        const isInteractiveElement = 
+            tagName === 'a' || 
+            tagName === 'button' || 
+            tagName === 'input' || 
+            tagName === 'select' || 
+            tagName === 'textarea' ||
+            target.closest('a') !== null ||
+            target.closest('button') !== null ||
+            target.closest('.btn') !== null ||
+            target.closest('.btn-action') !== null ||
+            target.closest('.status-button') !== null ||
+            target.closest('.status-dropdown') !== null ||
+            target.closest('.status-actions') !== null ||
+            target.closest('.action-buttons') !== null ||
+            target.closest('[role="button"]') !== null;
+        
+        if (isInteractiveElement) {
+            // User klik elemen interaktif, biarkan default behavior
+            return true;
+        }
+        
+        // Cek apakah user sedang melakukan drag (mouse drag selection)
+        // Jika event.which === 0, ini biasanya adalah programmatic click atau drag
+        if (event.detail === 0 || (event.which === 0 && event.button === 0)) {
+            console.log('Drag detected, preventing detail toggle');
+            return false;
+        }
+        
+        // Jika aman, panggil toggleDetail
+        toggleDetailImpl(event, docId);
+        return true;
+    }
+
     // Define functions immediately to prevent "is not defined" errors
     function toggleDetailImpl(event, docId) {
         console.log('🎯 toggleDetail called with docId:', docId, 'event:', event);
@@ -197,6 +261,7 @@
 
     // Assign functions to global window object immediately
     window.toggleDetail = toggleDetailImpl;
+    window.handleRowClick = handleRowClick;
     window.loadDocumentDetail = loadDocumentDetailImpl;
     window.showNotification = showNotificationImpl;
 
@@ -2526,11 +2591,19 @@ search-box .input-group {
       <input type="text" class="form-control" name="search" placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
     </div>
     <div class="filter-section">
-      <select name="year" class="form-select">
+      <select name="year" id="year-filter" class="form-select" onchange="this.form.submit()">
         <option value="">Semua Tahun</option>
         <option value="2025" {{ request('year') == '2025' ? 'selected' : '' }}>2025</option>
         <option value="2024" {{ request('year') == '2024' ? 'selected' : '' }}>2024</option>
         <option value="2023" {{ request('year') == '2023' ? 'selected' : '' }}>2023</option>
+      </select>
+      <select name="status" id="status-filter" class="form-select" onchange="this.form.submit()">
+        <option value="">Semua Status</option>
+        <option value="deadline" {{ request('status') == 'deadline' ? 'selected' : '' }}>Deadline</option>
+        <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
+        <option value="terkirim_perpajakan" {{ request('status') == 'terkirim_perpajakan' ? 'selected' : '' }}>Terkirim ke Perpajakan</option>
+        <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>Terkirim ke Akutansi</option>
+        <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
       </select>
     </div>
     <button type="submit" class="btn-filter">
@@ -2540,7 +2613,17 @@ search-box .input-group {
       <i class="fa-solid fa-table-columns me-2"></i>
       Kustomisasi Kolom Tabel
     </button>
-    <a href="#"><button class="btn-excel mr-2">Ekspor ke PDF</button></a>
+    <a href="#"><button type="button" class="btn-excel mr-2">Ekspor ke PDF</button></a>
+    
+    <!-- Preserve per_page and columns parameters -->
+    @if(request('per_page'))
+      <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+    @endif
+    @if(request('columns'))
+      @foreach(request('columns') as $column)
+        <input type="hidden" name="columns[]" value="{{ $column }}">
+      @endforeach
+    @endif
   </form>
 </div>
 
@@ -2606,19 +2689,19 @@ search-box .input-group {
           $isLocked = false;
         }
       @endphp
-      <tr class="main-row {{ $isLocked ? 'locked-row' : '' }}" onclick="toggleDetail(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen (bisa dibuka walau status sudah terkirim)" style="cursor: pointer;">
+      <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}" onclick="handleRowClick(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen (bisa dibuka walau status sudah terkirim)" style="cursor: pointer;">
         <td class="col-no" style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $loop->iteration }}</td>
         @foreach($selectedColumns as $col)
           @if($col !== 'status')
           <td class="col-{{ $col }}">
             @if($col == 'nomor_agenda')
-              {{ $dokumen->nomor_agenda }}
+              <span class="select-text">{{ $dokumen->nomor_agenda }}</span>
             @elseif($col == 'nomor_spp')
-              {{ $dokumen->nomor_spp }}
+              <span class="select-text">{{ $dokumen->nomor_spp }}</span>
             @elseif($col == 'tanggal_masuk')
-              {{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}
+              <span class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</span>
             @elseif($col == 'nilai_rupiah')
-              <strong>{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
+              <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
             @elseif($col == 'nomor_mirror')
               {{ $dokumen->nomor_mirror ?? '-' }}
             @elseif($col == 'tanggal_spp')
@@ -2795,71 +2878,7 @@ search-box .input-group {
 
 <!-- Pagination -->
 @if(isset($dokumens) && $dokumens->hasPages())
-<div class="pagination">
-    {{-- Previous Page Link --}}
-    @if($dokumens->onFirstPage())
-        <button class="btn-chevron" disabled>
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-    @else
-        <a href="{{ $dokumens->appends(request()->query())->previousPageUrl() }}">
-            <button class="btn-chevron">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-        </a>
-    @endif
-
-    {{-- Pagination Elements --}}
-    @if($dokumens->hasPages())
-        {{-- First page --}}
-        @if($dokumens->currentPage() > 3)
-            <a href="{{ $dokumens->appends(request()->query())->url(1) }}">
-                <button>1</button>
-            </a>
-        @endif
-
-        {{-- Dots --}}
-        @if($dokumens->currentPage() > 4)
-            <button disabled>...</button>
-        @endif
-
-        {{-- Range of pages --}}
-        @for($i = max(1, $dokumens->currentPage() - 2); $i <= min($dokumens->lastPage(), $dokumens->currentPage() + 2); $i++)
-            @if($dokumens->currentPage() == $i)
-                <button class="active">{{ $i }}</button>
-            @else
-                <a href="{{ $dokumens->appends(request()->query())->url($i) }}">
-                    <button>{{ $i }}</button>
-                </a>
-            @endif
-        @endfor
-
-        {{-- Dots --}}
-        @if($dokumens->currentPage() < $dokumens->lastPage() - 3)
-            <button disabled>...</button>
-        @endif
-
-        {{-- Last page --}}
-        @if($dokumens->currentPage() < $dokumens->lastPage() - 2)
-            <a href="{{ $dokumens->appends(request()->query())->url($dokumens->lastPage()) }}">
-                <button>{{ $dokumens->lastPage() }}</button>
-            </a>
-        @endif
-    @endif
-
-    {{-- Next Page Link --}}
-    @if($dokumens->hasMorePages())
-        <a href="{{ $dokumens->appends(request()->query())->nextPageUrl() }}">
-            <button class="btn-chevron">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </a>
-    @else
-        <button class="btn-chevron" disabled>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-    @endif
-</div>
+    @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 @endif
 
 <!-- Modal Alasan Pengembalian -->

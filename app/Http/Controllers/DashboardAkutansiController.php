@@ -625,23 +625,23 @@ class DashboardAkutansiController extends Controller
         return view('akutansi.dokumens.pengembalianAkutansi', $data);
     }
 
-    public function rekapan()
+    public function rekapan(Request $request)
     {
         // Base query - get documents created by IbuA
         $query = \App\Models\Dokumen::where('created_by', 'ibuA');
 
         // Apply filters
-        $selectedBagian = request('bagian');
+        $selectedBagian = $request->get('bagian');
         if ($selectedBagian) {
             $query->where('bagian', $selectedBagian);
         }
 
-        $year = request('year');
+        $year = $request->get('year');
         if ($year) {
             $query->where('tahun', $year);
         }
 
-        $search = request('search');
+        $search = $request->get('search');
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('nomor_agenda', 'like', "%{$search}%")
@@ -651,7 +651,8 @@ class DashboardAkutansiController extends Controller
         }
 
         // Get paginated results
-        $dokumens = $query->orderBy('tanggal_masuk', 'desc')->paginate(25);
+        $perPage = $request->get('per_page', 25);
+        $dokumens = $query->orderBy('tanggal_masuk', 'desc')->paginate($perPage)->appends($request->query());
 
         // Calculate statistics
         $statistics = [
