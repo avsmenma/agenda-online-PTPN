@@ -1604,6 +1604,9 @@
         <a href="{{ url('/rekapan-perpajakan') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
+        <a href="{{ route('perpajakan.export') }}" class="{{ request()->routeIs('perpajakan.export') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-export me-2"></i> Export Data
+        </a>
       @elseif($module === 'ibub')
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen

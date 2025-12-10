@@ -81,11 +81,11 @@ Route::get('/', function () {
 });
 
 // Test routes for welcome messages
-Route::get('/test-welcome/{module}', function($module) {
+Route::get('/test-welcome/{module}', function ($module) {
     return view('test-welcome', ['module' => $module, 'title' => 'Testing Welcome Messages']);
 });
 
-Route::get('/simple-test', function() {
+Route::get('/simple-test', function () {
     $service = app('App\Services\WelcomeMessageService');
     $message = $service->getWelcomeMessage('IbuA');
     return "Welcome Message: " . $message;
@@ -97,7 +97,7 @@ Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage
 Broadcast::routes(['middleware' => ['web']]);
 
 // API endpoint untuk cek update dokumen baru
-Route::get('/dokumensB/check-updates', function() {
+Route::get('/dokumensB/check-updates', function () {
     try {
         $lastChecked = request()->input('last_checked', 0);
 
@@ -114,7 +114,7 @@ Route::get('/dokumensB/check-updates', function() {
             'has_updates' => $newDocuments->count() > 0,
             'new_count' => $newDocuments->count(),
             'total_documents' => $totalDocuments,
-            'new_documents' => $newDocuments->map(function($doc) {
+            'new_documents' => $newDocuments->map(function ($doc) {
                 return [
                     'id' => $doc->id,
                     'nomor_agenda' => $doc->nomor_agenda,
@@ -142,7 +142,7 @@ Route::get('/pembayaran/check-updates', [DashboardPembayaranController::class, '
 
 
 // Dashboard routes with role protection
-Route::get('dashboard',[DashboardController::class, 'index'])
+Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware('autologin', 'role:admin,ibua')
     ->name('dashboard.main');
 
@@ -159,24 +159,24 @@ Route::get('/ibub/rejected/{dokumen}', [DashboardBController::class, 'showReject
     ->middleware('autologin', 'role:admin,ibub')
     ->name('ibub.rejected.show');
 
-Route::get('dashboardB',[DashboardBController::class, 'index'])
+Route::get('dashboardB', [DashboardBController::class, 'index'])
     ->middleware('autologin', 'role:admin,ibub')
     ->name('dashboard.ibub');
 
-Route::get('dashboardPembayaran',[DashboardPembayaranController::class, 'index'])
+Route::get('dashboardPembayaran', [DashboardPembayaranController::class, 'index'])
     ->middleware('autologin', 'role:admin,Pembayaran')
     ->name('dashboard.pembayaran');
 
-Route::get('dashboardAkutansi',[DashboardAkutansiController::class, 'index'])
+Route::get('dashboardAkutansi', [DashboardAkutansiController::class, 'index'])
     ->middleware('autologin', 'role:admin,akutansi')
     ->name('dashboard.akutansi');
 
-Route::get('dashboardPerpajakan',[DashboardPerpajakanController::class, 'index'])
+Route::get('dashboardPerpajakan', [DashboardPerpajakanController::class, 'index'])
     ->middleware('autologin', 'role:admin,perpajakan')
     ->name('dashboard.perpajakan');
 
 // Dashboard for Verifikasi role (future implementation)
-Route::get('dashboardVerifikasi', function() {
+Route::get('dashboardVerifikasi', function () {
     return view('verifikasi.dashboard');
 })->middleware('role:admin,verifikasi')
     ->name('dashboard.verifikasi');
@@ -379,9 +379,11 @@ Route::post('/dokumensPerpajakan/{dokumen}/return', [DashboardPerpajakanControll
 Route::get('/pengembalian-dokumensPerpajakan', [DashboardPerpajakanController::class, 'pengembalian'])->name('pengembalianPerpajakan.index');
 Route::get('/diagramPerpajakan', [DashboardPerpajakanController::class, 'diagram'])->name('diagramPerpajakan.index');
 Route::get('/rekapan-perpajakan', [DashboardPerpajakanController::class, 'rekapan'])->name('perpajakan.rekapan');
+Route::get('/export-perpajakan', [DashboardPerpajakanController::class, 'exportView'])->name('perpajakan.export');
+Route::get('/export-perpajakan/download', [DashboardPerpajakanController::class, 'exportData'])->name('perpajakan.export.download');
 
 // Test route for broadcasting (remove in production)
-Route::get('/test-broadcast', function() {
+Route::get('/test-broadcast', function () {
     $dokumen = \App\Models\Dokumen::where('current_handler', 'ibuB')
         ->orWhere('status', 'sent_to_ibub')
         ->latest()
@@ -412,7 +414,7 @@ Route::get('/test-broadcast', function() {
 });
 
 // Test route for returned documents broadcasting
-Route::get('/test-returned-broadcast', function() {
+Route::get('/test-returned-broadcast', function () {
     $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
         ->where('status', 'returned_to_ibua')
         ->latest()
@@ -443,7 +445,7 @@ Route::get('/test-returned-broadcast', function() {
 });
 
 // Test route to check broadcast authentication
-Route::get('/test-broadcast-auth', function() {
+Route::get('/test-broadcast-auth', function () {
     $user = auth()->user();
     return response()->json([
         'authenticated' => auth()->check(),
@@ -456,7 +458,7 @@ Route::get('/test-broadcast-auth', function() {
 })->middleware('autologin');
 
 // Simple test route to trigger notification without broadcast
-Route::get('/test-trigger-notification', function() {
+Route::get('/test-trigger-notification', function () {
     // Update an existing document to trigger notification
     $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
         ->where('status', 'returned_to_ibua')
@@ -485,7 +487,7 @@ Route::get('/test-trigger-notification', function() {
 // Role Switching Routes - untuk development/testing
 Route::middleware('autologin')->group(function () {
     // Quick role switching URLs
-    Route::get('/switch-role/{role}', function($role) {
+    Route::get('/switch-role/{role}', function ($role) {
         // Logout user yang sedang login
         Auth::logout();
 
@@ -500,7 +502,7 @@ Route::middleware('autologin')->group(function () {
     })->name('switch.role');
 
     // Development dashboard - auto-login berdasarkan parameter
-    Route::get('/dev-dashboard/{role?}', function($role = 'IbuA') {
+    Route::get('/dev-dashboard/{role?}', function ($role = 'IbuA') {
         $roleMap = [
             'IbuA' => '/dashboard',
             'ibuB' => '/dashboardB',
@@ -514,7 +516,7 @@ Route::middleware('autologin')->group(function () {
     })->name('dev.dashboard');
 
     // Master development route - semua dashboard dengan role switching
-    Route::get('/dev-all', function() {
+    Route::get('/dev-all', function () {
         return view('dev.role-switcher');
     })->name('dev.all');
 });

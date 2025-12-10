@@ -9,15 +9,17 @@ use App\Models\DokumenPR;
 use App\Models\DibayarKepada;
 use App\Helpers\SearchHelper;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Response;
 
 class DashboardPerpajakanController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         // Get all documents that perpajakan can see (same as dokumens() query)
         $perpajakanDocs = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                      ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             })
             ->get();
 
@@ -33,7 +35,7 @@ class DashboardPerpajakanController extends Controller
             ->count();
 
         $totalBelumDiproses = $perpajakanDocs
-            ->where(function($doc) {
+            ->where(function ($doc) {
                 return empty($doc->status_perpajakan) || $doc->status_perpajakan === '';
             })
             ->count();
@@ -55,7 +57,7 @@ class DashboardPerpajakanController extends Controller
         $dokumenTerbaru = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                      ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             })
             ->with(['dokumenPos', 'dokumenPrs'])
             ->orderByRaw("CASE
@@ -84,45 +86,46 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.dashboardPerpajakan', $data);
     }
 
-    public function dokumens(Request $request){
+    public function dokumens(Request $request)
+    {
         // Perpajakan sees:
         // 1. Documents with current_handler = perpajakan (active documents)
         // 2. Documents that were sent to akutansi (for tracking like dokumensB)
         $query = Dokumen::query()
             ->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                  ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             })
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
-            $search = trim((string)$request->search);
-            $query->where(function($q) use ($search) {
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
                 // Text fields
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
-                  ->orWhere('bagian', 'like', '%' . $search . '%')
-                  ->orWhere('kategori', 'like', '%' . $search . '%')
-                  ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
-                  ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
-                  ->orWhere('no_spk', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%')
-                  ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
-                
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                    ->orWhere('bagian', 'like', '%' . $search . '%')
+                    ->orWhere('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                    ->orWhere('no_spk', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
+
                 // Search in nilai_rupiah - handle various formats
                 $numericSearch = preg_replace('/[^0-9]/', '', $search);
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
             })
-            ->orWhereHas('dibayarKepadas', function($q) use ($search) {
-                $q->where('nama_penerima', 'like', '%' . $search . '%');
-            });
+                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
+                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+                });
         }
 
         // Filter by year
@@ -132,29 +135,23 @@ class DashboardPerpajakanController extends Controller
 
         // Filter by status
         if ($request->has('status') && $request->status) {
-            switch($request->status) {
+            switch ($request->status) {
                 case 'terkunci':
-                    // Dokumen yang memiliki deadline dan belum expired atau sudah expired tapi belum selesai
-                    $query->whereNotNull('deadline_at')
-                          ->where(function($q) {
-                              $q->where('deadline_at', '>', now())
-                                ->orWhere(function($subQ) {
-                                    $subQ->where('deadline_at', '<=', now())
-                                         ->where('status_perpajakan', '!=', 'selesai')
-                                         ->where('status', '!=', 'sent_to_akutansi');
-                                });
-                          });
+                    // Dokumen yang terkunci (belum set deadline)
+                    $query->whereNull('deadline_at')
+                        ->where('current_handler', 'perpajakan')
+                        ->where('status', 'sent_to_perpajakan');
                     break;
                 case 'sedang_diproses':
                     // Dokumen yang sedang diproses oleh perpajakan
                     $query->where('status_perpajakan', 'sedang_diproses')
-                          ->where('current_handler', 'perpajakan')
-                          ->where('status', '!=', 'sent_to_akutansi');
+                        ->where('current_handler', 'perpajakan')
+                        ->where('status', '!=', 'sent_to_akutansi');
                     break;
                 case 'selesai':
                     // Dokumen yang sudah selesai diproses oleh perpajakan
                     $query->where('status_perpajakan', 'selesai')
-                          ->where('status', '!=', 'sent_to_akutansi');
+                        ->where('status', '!=', 'sent_to_akutansi');
                     break;
                 case 'terkirim_akutansi':
                     // Dokumen yang sudah terkirim ke akutansi
@@ -162,13 +159,13 @@ class DashboardPerpajakanController extends Controller
                     break;
                 case 'belum_diproses':
                     // Dokumen yang belum diproses (status_perpajakan null atau empty)
-                    $query->where(function($q) {
+                    $query->where(function ($q) {
                         $q->whereNull('status_perpajakan')
-                          ->orWhere('status_perpajakan', '')
-                          ->orWhere('status_perpajakan', 'belum_diproses');
+                            ->orWhere('status_perpajakan', '')
+                            ->orWhere('status_perpajakan', 'belum_diproses');
                     })
-                    ->where('current_handler', 'perpajakan')
-                    ->where('status', '!=', 'sent_to_akutansi');
+                        ->where('current_handler', 'perpajakan')
+                        ->where('status', '!=', 'sent_to_akutansi');
                     break;
             }
         }
@@ -195,8 +192,8 @@ class DashboardPerpajakanController extends Controller
 
         // Get suggestions if no results found
         $suggestions = [];
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '' && $dokumens->total() == 0) {
-            $searchTerm = trim((string)$request->search);
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
+            $searchTerm = trim((string) $request->search);
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'perpajakan');
         }
 
@@ -233,13 +230,13 @@ class DashboardPerpajakanController extends Controller
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
-        
+
         // Filter out 'status' and 'keterangan' from selectedColumns if present
-        $selectedColumns = array_filter($selectedColumns, function($col) {
+        $selectedColumns = array_filter($selectedColumns, function ($col) {
             return $col !== 'status' && $col !== 'keterangan';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
-        
+
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
@@ -253,7 +250,7 @@ class DashboardPerpajakanController extends Controller
                 'nomor_mirror'
             ]);
             // Filter out 'status' and 'keterangan' if they exist in session
-            $selectedColumns = array_filter($selectedColumns, function($col) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
@@ -275,7 +272,8 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.dokumens.daftarPerpajakan', $data);
     }
 
-    public function editDokumen(Dokumen $dokumen){
+    public function editDokumen(Dokumen $dokumen)
+    {
         // Load relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs']);
 
@@ -296,7 +294,8 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.dokumens.editPerpajakan', $data);
     }
 
-    public function updateDokumen(Request $request, Dokumen $dokumen){
+    public function updateDokumen(Request $request, Dokumen $dokumen)
+    {
         $id = $dokumen->id;
 
         // Only allow if current_handler is perpajakan
@@ -520,7 +519,7 @@ class DashboardPerpajakanController extends Controller
             foreach ($perpajakanFields as $field => $fieldName) {
                 $oldValue = $oldValues[$field];
                 $newValue = null;
-                
+
                 if ($field === 'tanggal_faktur' || $field === 'tanggal_selesai_verifikasi_pajak') {
                     $newValue = $dokumen->$field ? $dokumen->$field->format('Y-m-d') : null;
                 } elseif ($field === 'dpp_pph' || $field === 'ppn_terhutang') {
@@ -623,8 +622,8 @@ class DashboardPerpajakanController extends Controller
 
             $deadlineDays = (int) $request->deadline_days;
             $deadlineAt = now()->addDays($deadlineDays);
-            $deadlineNote = isset($request->deadline_note) && trim($request->deadline_note) !== '' 
-                ? trim($request->deadline_note) 
+            $deadlineNote = isset($request->deadline_note) && trim($request->deadline_note) !== ''
+                ? trim($request->deadline_note)
                 : null;
 
             // Update both deadline_at (for locking) and deadline_perpajakan_at (for perpajakan-specific tracking)
@@ -709,8 +708,8 @@ class DashboardPerpajakanController extends Controller
                     'uraian_spp' => $dokumen->uraian_spp,
                     'nilai_rupiah' => $dokumen->nilai_rupiah,
                     'jenis_pembayaran' => $dokumen->jenis_pembayaran,
-                    'dibayar_kepada' => $dokumen->dibayarKepadas->count() > 0 
-                        ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') 
+                    'dibayar_kepada' => $dokumen->dibayarKepadas->count() > 0
+                        ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
                         : $dokumen->dibayar_kepada,
                     'kebun' => $dokumen->kebun,
                     'no_spk' => $dokumen->no_spk,
@@ -869,13 +868,15 @@ class DashboardPerpajakanController extends Controller
             return '<span class="empty-field">Belum diisi</span>';
         }
 
-        return sprintf('<a href="%s" target="_blank" class="tax-document-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
+        return sprintf(
+            '<a href="%s" target="_blank" class="tax-document-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
             htmlspecialchars($link),
             htmlspecialchars($link)
         );
     }
 
-    public function pengembalian(){
+    public function pengembalian()
+    {
         // Get all documents that have been returned by perpajakan
         $dokumens = Dokumen::whereNotNull('returned_from_perpajakan_at')
             ->where('status', 'returned_to_department')
@@ -968,13 +969,13 @@ class DashboardPerpajakanController extends Controller
                 // Clear sent timestamps
                 'sent_to_perpajakan_at' => null,
             ];
-            
+
             // Only set sent_to_ibub_at if it's null (first time entering IbuB)
             // This preserves the original entry time for consistent ordering
             if (is_null($dokumen->sent_to_ibub_at)) {
                 $updateData['sent_to_ibub_at'] = now();
             }
-            
+
             $dokumen->update($updateData);
 
             \DB::commit();
@@ -1031,10 +1032,10 @@ class DashboardPerpajakanController extends Controller
 
             // Simpan status original sebelum dikirim ke inbox
             $originalStatus = $dokumen->status;
-            
+
             // Kirim ke inbox Akutansi menggunakan sistem inbox yang sudah ada
             $dokumen->sendToInbox('Akutansi');
-            
+
             // Set tanggal selesai verifikasi pajak
             $dokumen->tanggal_selesai_verifikasi_pajak = now();
             $dokumen->save();
@@ -1059,7 +1060,8 @@ class DashboardPerpajakanController extends Controller
         }
     }
 
-    public function diagram(){
+    public function diagram()
+    {
         $data = array(
             "title" => "Diagram Perpajakan",
             "module" => "perpajakan",
@@ -1078,25 +1080,25 @@ class DashboardPerpajakanController extends Controller
             $lastChecked = $request->input('last_checked', 0);
 
             // Cek dokumen baru yang dikirim ke perpajakan
-            $newDocuments = Dokumen::where(function($query) {
-                    $query->where('current_handler', 'perpajakan')
-                          ->orWhere('status', 'sent_to_perpajakan');
-                })
+            $newDocuments = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'perpajakan')
+                    ->orWhere('status', 'sent_to_perpajakan');
+            })
                 ->where('sent_to_perpajakan_at', '>', date('Y-m-d H:i:s', $lastChecked))
                 ->latest('sent_to_perpajakan_at')
                 ->take(10)
                 ->get();
 
-            $totalDocuments = Dokumen::where(function($query) {
-                    $query->where('current_handler', 'perpajakan')
-                          ->orWhere('status', 'sent_to_perpajakan');
-                })->count();
+            $totalDocuments = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'perpajakan')
+                    ->orWhere('status', 'sent_to_perpajakan');
+            })->count();
 
             return response()->json([
                 'has_updates' => $newDocuments->count() > 0,
                 'new_count' => $newDocuments->count(),
                 'total_documents' => $totalDocuments,
-                'new_documents' => $newDocuments->map(function($doc) {
+                'new_documents' => $newDocuments->map(function ($doc) {
                     return [
                         'id' => $doc->id,
                         'nomor_agenda' => $doc->nomor_agenda,
@@ -1151,15 +1153,15 @@ class DashboardPerpajakanController extends Controller
         // Search functionality
         if ($request->has('search') && trim($request->search) !== '') {
             $search = trim($request->search);
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 // Always prioritize nomor agenda for exact-style lookup
                 $q->where('nomor_agenda', 'like', '%' . $search . '%');
 
                 // Only broaden search to other columns when the keyword contains non-numeric characters
                 if (preg_match('/\D/', $search)) {
                     $q->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                        ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                        ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
                 }
             });
         }
@@ -1233,25 +1235,37 @@ class DashboardPerpajakanController extends Controller
     private function getSearchSuggestions($searchTerm, $year = null, $handler = 'perpajakan'): array
     {
         $suggestions = [];
-        
+
         // Get all unique values from relevant fields
-        $baseQuery = Dokumen::where(function($q) use ($handler) {
+        $baseQuery = Dokumen::where(function ($q) use ($handler) {
             $q->where('current_handler', $handler)
-              ->orWhere('status', 'sent_to_akutansi');
+                ->orWhere('status', 'sent_to_akutansi');
         });
-        
+
         if ($year) {
             $baseQuery->where('tahun', $year);
         }
-        
+
         // Collect all searchable values
         $allValues = collect();
-        
+
         // Get from main fields
-        $fields = ['nomor_agenda', 'nomor_spp', 'uraian_spp', 'nama_pengirim', 'bagian', 
-                   'kategori', 'jenis_dokumen', 'no_berita_acara', 'no_spk', 
-                   'nomor_mirror', 'nomor_miro', 'keterangan', 'dibayar_kepada'];
-        
+        $fields = [
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nama_pengirim',
+            'bagian',
+            'kategori',
+            'jenis_dokumen',
+            'no_berita_acara',
+            'no_spk',
+            'nomor_mirror',
+            'nomor_miro',
+            'keterangan',
+            'dibayar_kepada'
+        ];
+
         foreach ($fields as $field) {
             $values = $baseQuery->whereNotNull($field)
                 ->distinct()
@@ -1260,33 +1274,389 @@ class DashboardPerpajakanController extends Controller
                 ->toArray();
             $allValues = $allValues->merge($values);
         }
-        
+
         // Get from dibayarKepadas relation
-        $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function($q) use ($handler, $year) {
-            $q->where(function($subQ) use ($handler) {
+        $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function ($q) use ($handler, $year) {
+            $q->where(function ($subQ) use ($handler) {
                 $subQ->where('current_handler', $handler)
-                     ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             });
             if ($year) {
                 $q->where('tahun', $year);
             }
         })
-        ->distinct()
-        ->pluck('nama_penerima')
-        ->filter()
-        ->toArray();
-        
+            ->distinct()
+            ->pluck('nama_penerima')
+            ->filter()
+            ->toArray();
+
         $allValues = $allValues->merge($dibayarKepadaValues);
-        
+
         // Remove duplicates and find suggestions
         $uniqueValues = $allValues->unique()->values()->toArray();
         $foundSuggestions = SearchHelper::findSuggestions($searchTerm, $uniqueValues, 60.0, 5);
-        
+
         // Format suggestions
         foreach ($foundSuggestions as $suggestion) {
             $suggestions[] = $suggestion['value'];
         }
-        
+
         return $suggestions;
     }
+
+    /**
+     * Export View for Perpajakan
+     * Mimmics Pembayaran Rekapan but for Perpajakan
+     */
+    public function exportView(Request $request)
+    {
+        $status = $request->get('status');
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $search = $request->get('search');
+        $mode = $request->get('mode', 'normal'); // normal or rekapan_table
+        $selectedColumns = $request->get('columns', []);
+
+        // Base query - only documents that reached Perpajakan
+        // Logic similar to dokumens() but broader
+        $query = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'perpajakan')
+                ->orWhere('status', 'sent_to_perpajakan')
+                ->orWhere('status', 'sedang diproses')
+                ->orWhere('status', 'selesai')
+                ->orWhere('status', 'sent_to_akutansi');
+        });
+
+        // Filter by Status
+        if ($status) {
+            switch ($status) {
+                case 'terkunci':
+                    // Dokumen yang terkunci (belum set deadline)
+                    $query->whereNull('deadline_at')
+                        ->where('current_handler', 'perpajakan')
+                        ->where('status', 'sent_to_perpajakan');
+                    break;
+                case 'sedang_diproses':
+                    // Dokumen yang sedang diproses (sudah set deadline)
+                    $query->whereNotNull('deadline_at')
+                        ->where('current_handler', 'perpajakan')
+                        ->whereNotIn('status', ['selesai', 'sent_to_akutansi']);
+                    break;
+                case 'selesai':
+                    // Dokumen selesai (internal perpajakan completion)
+                    $query->where('status', 'selesai')
+                        ->where('current_handler', 'perpajakan');
+                    break;
+                case 'terkirim_akutansi':
+                    // Sudah dikirim ke akutansi
+                    $query->where('status', 'sent_to_akutansi')
+                        ->orWhere('current_handler', 'akutansi');
+                    break;
+            }
+        }
+
+        if ($year) {
+            $query->whereYear('created_at', $year);
+        }
+
+        if ($month) {
+            $query->whereMonth('created_at', $month);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+            });
+        }
+
+        // Get documents for display (paginated)
+        $dokumens = $query->orderBy('created_at', 'desc')->paginate(15);
+        $dokumens->appends($request->all());
+
+        // Helper for stats
+
+        // Base Query for Stats (Respects Year/Month, ignores Status Filter to show breakdown)
+        $statsQuery = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'perpajakan')
+                ->orWhere('status', 'sent_to_perpajakan')
+                ->orWhere('status', 'sedang diproses')
+                ->orWhere('status', 'selesai')
+                ->orWhere('status', 'sent_to_akutansi');
+        });
+        if ($year)
+            $statsQuery->whereYear('created_at', $year);
+        if ($month)
+            $statsQuery->whereMonth('created_at', $month);
+
+        $countTotal = (clone $statsQuery)->count();
+        $countTerkunci = (clone $statsQuery)->whereNull('deadline_at')->where('current_handler', 'perpajakan')->where('status', 'sent_to_perpajakan')->count();
+        $countProses = (clone $statsQuery)->whereNotNull('deadline_at')->where('current_handler', 'perpajakan')->whereNotIn('status', ['selesai', 'sent_to_akutansi'])->count();
+        $countSelesai = (clone $statsQuery)->where(function ($q) {
+            $q->where('status', 'selesai')
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere('current_handler', 'akutansi');
+        })->count();
+
+        $statistics = [
+            'total_documents' => $countTotal,
+            'terkunci' => $countTerkunci,
+            'sedang_diproses' => $countProses,
+            'selesai' => $countSelesai
+        ];
+
+        // Available Years
+        $availableYears = Dokumen::selectRaw('YEAR(created_at) as year')->distinct()->orderBy('year', 'desc')->pluck('year');
+
+        // Column Definitions - Extended with all Perpajakan-specific fields
+        // Column Definitions - Extended with all Perpajakan-specific fields
+        $availableColumns = $this->getAvailableColumns('normal');
+
+        return view('perpajakan.export.index', [
+            'title' => 'Export Data Perpajakan',
+            'module' => 'perpajakan',
+            'dokumens' => $dokumens,
+            'statistics' => $statistics,
+            'selectedStatus' => $status,
+            'selectedYear' => $year,
+            'selectedMonth' => $month,
+            'search' => $search,
+            'availableYears' => $availableYears,
+            'availableColumns' => $availableColumns,
+            'selectedColumns' => $selectedColumns,
+            'mode' => $mode
+        ]);
+    }
+
+    /**
+     * Get available columns for export/view
+     */
+    private function getAvailableColumns($mode)
+    {
+        return [
+            // Basic Document Info
+            'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_spp' => 'Tanggal SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'kategori' => 'Kategori',
+            'jenis_dokumen' => 'Jenis Dokumen',
+            'jenis_sub_pekerjaan' => 'Jenis Sub Pekerjaan',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'kebun' => 'Kebun',
+            'bagian' => 'Bagian',
+            'nama_pengirim' => 'Nama Pengirim',
+            // Contract Info
+            'no_berita_acara' => 'No Berita Acara',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'no_spk' => 'No SPK',
+            'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'nomor_mirror' => 'Nomor Mirror',
+            'nomor_miro' => 'Nomor MIRO',
+            // Status & Workflow
+            'status' => 'Status',
+            'current_handler' => 'Handler Saat Ini',
+            'deadline_at' => 'Deadline',
+            'keterangan' => 'Keterangan',
+            // Perpajakan Specific Fields
+            'npwp' => 'NPWP',
+            'status_perpajakan' => 'Status Perpajakan',
+            'no_faktur' => 'No Faktur Pajak',
+            'tanggal_faktur' => 'Tanggal Faktur',
+            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
+            'jenis_pph' => 'Jenis PPh',
+            'dpp_pph' => 'DPP PPh',
+            'ppn_terhutang' => 'PPN Terhutang',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
+            'deadline_perpajakan_at' => 'Deadline Perpajakan',
+            // Perpajakan Extended Fields
+            'komoditi_perpajakan' => 'Komoditi Perpajakan',
+            'alamat_pembeli' => 'Alamat Pembeli',
+            'no_kontrak' => 'No Kontrak',
+            'no_invoice' => 'No Invoice',
+            'tanggal_invoice' => 'Tanggal Invoice',
+            'dpp_invoice' => 'DPP Invoice',
+            'ppn_invoice' => 'PPN Invoice',
+            'dpp_ppn_invoice' => 'DPP + PPN Invoice',
+            'tanggal_pengajuan_pajak' => 'Tanggal Pengajuan Pajak',
+            'dpp_faktur' => 'DPP Faktur',
+            'ppn_faktur' => 'PPN Faktur',
+            'selisih_pajak' => 'Selisih Pajak',
+            'keterangan_pajak' => 'Keterangan Pajak',
+            'penggantian_pajak' => 'Penggantian Pajak',
+            'dpp_penggantian' => 'DPP Penggantian',
+            'ppn_penggantian' => 'PPN Penggantian',
+            'selisih_ppn' => 'Selisih PPN',
+            // Timestamps
+            'created_at' => 'Tanggal Masuk',
+            'sent_to_perpajakan_at' => 'Tgl Masuk Perpajakan',
+            'processed_perpajakan_at' => 'Tgl Diproses Perpajakan',
+        ];
+    }
+
+    /**
+     * Build the query for export and view based on filters
+     */
+    private function buildQuery($mode, Request $request)
+    {
+        $status = $request->get('status');
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $search = $request->get('search');
+
+        // Base query - only documents that reached Perpajakan
+        $query = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'perpajakan')
+                ->orWhere('status', 'sent_to_perpajakan')
+                ->orWhere('status', 'sedang diproses')
+                ->orWhere('status', 'selesai')
+                ->orWhere('status', 'sent_to_akutansi');
+        });
+
+        // Filter by Status
+        if ($status) {
+            switch ($status) {
+                case 'terkunci':
+                    // Dokumen yang terkunci (belum set deadline)
+                    $query->whereNull('deadline_at')
+                        ->where('current_handler', 'perpajakan')
+                        ->where('status', 'sent_to_perpajakan');
+                    break;
+                case 'sedang_diproses':
+                    // Dokumen yang sedang diproses (sudah set deadline)
+                    $query->whereNotNull('deadline_at')
+                        ->where('current_handler', 'perpajakan')
+                        ->whereNotIn('status', ['selesai', 'sent_to_akutansi']);
+                    break;
+                case 'selesai':
+                    // Dokumen selesai (internal perpajakan completion)
+                    $query->where('status', 'selesai')
+                        ->where('current_handler', 'perpajakan');
+                    break;
+                case 'terkirim_akutansi':
+                    // Sudah dikirim ke akutansi
+                    $query->where('status', 'sent_to_akutansi')
+                        ->orWhere('current_handler', 'akutansi');
+                    break;
+            }
+        }
+
+        if ($year) {
+            $query->whereYear('created_at', $year);
+        }
+
+        if ($month) {
+            $query->whereMonth('created_at', $month);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
+    }
+
+    public function exportData(Request $request)
+    {
+        $mode = $request->query('mode', 'dashboard');
+        $query = $this->buildQuery($mode, $request);
+
+        $selectedColumns = $request->input('columns', '');
+        if ($selectedColumns) {
+            $columns = explode(',', $selectedColumns);
+        } else {
+            $columns = array_keys($this->getAvailableColumns($mode));
+        }
+
+        $columns = array_map('trim', $columns);
+        $docs = $query->orderBy('created_at', 'desc')->get();
+
+        if ($docs->isEmpty()) {
+            return back()->with('error', 'Tidak ada data untuk diexport dengan filter saat ini.');
+        }
+
+        $filename = 'export-perpajakan-' . date('Y-m-d-H-i-s') . '.xls';
+        $availableColumns = $this->getAvailableColumns($mode);
+
+        // Date, Currency, Text field definitions
+        $dateFields = ['tanggal_spp', 'tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_selesai_verifikasi_pajak', 'tanggal_invoice', 'tanggal_pengajuan_pajak', 'created_at', 'sent_to_perpajakan_at', 'processed_perpajakan_at', 'deadline_at', 'deadline_perpajakan_at'];
+        $currencyFields = ['nilai_rupiah', 'dpp_pph', 'ppn_terhutang', 'dpp_invoice', 'ppn_invoice', 'dpp_ppn_invoice', 'dpp_faktur', 'ppn_faktur', 'selisih_pajak', 'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'];
+        $textFields = ['npwp', 'no_faktur', 'no_invoice', 'no_kontrak', 'nomor_agenda', 'nomor_spp', 'no_berita_acara', 'no_spk'];
+
+        // Build HTML Table for Excel
+        $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
+        $html .= '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Data Perpajakan</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+        $html .= '<style>table { border-collapse: collapse; } th, td { border: 1px solid #000; padding: 5px; } th { background-color: #083E40; color: #FFFFFF; font-weight: bold; text-align: center; }</style>';
+        $html .= '</head><body><table>';
+
+        // Header row
+        $html .= '<tr>';
+        foreach ($columns as $col) {
+            $html .= '<th>' . strtoupper($availableColumns[$col] ?? ucwords(str_replace('_', ' ', $col))) . '</th>';
+        }
+        $html .= '</tr>';
+
+        // Data rows
+        foreach ($docs as $doc) {
+            $html .= '<tr>';
+            foreach ($columns as $col) {
+                $value = $doc->$col;
+
+                if (in_array($col, $textFields) && $value) {
+                    // Force text format in Excel
+                    $html .= '<td style="mso-number-format:\@">' . htmlspecialchars((string) $value) . '</td>';
+                } elseif (in_array($col, $dateFields) && $value) {
+                    $html .= '<td>' . $value->format('d/m/Y') . '</td>';
+                } elseif (in_array($col, $currencyFields) && is_numeric($value)) {
+                    $html .= '<td style="mso-number-format:#,##0">' . number_format((float) $value, 0, ',', '.') . '</td>';
+                } else {
+                    $html .= '<td>' . htmlspecialchars($value ?? '-') . '</td>';
+                }
+            }
+            $html .= '</tr>';
+        }
+
+        $html .= '</table></body></html>';
+
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    private function exportToPDF($dokumens, $columns)
+    {
+        // Create a simple view for PDF
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'Nomor SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'tanggal_spp' => 'Tanggal SPP',
+            'status' => 'Status',
+            'deadline_at' => 'Deadline',
+            'created_at' => 'Tanggal Masuk',
+        ];
+
+        $data = [
+            'dokumens' => $dokumens,
+            'columns' => $columns,
+            'availableColumns' => $availableColumns,
+            'title' => 'Export Data Perpajakan',
+            'date' => date('d/m/Y H:i')
+        ];
+        return view('perpajakan.export.pdf', $data);
+    }
 }
+

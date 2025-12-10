@@ -1,0 +1,902 @@
+@extends('layouts.app')
+
+@section('content')
+    <style>
+        h2 {
+            background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            font-weight: 700;
+            font-size: 28px;
+        }
+
+        /* Statistics Cards */
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+            border: 1px solid rgba(8, 62, 64, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
+        }
+
+        .stat-card-body {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.total {
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+        }
+
+        .stat-icon.terkunci {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .stat-icon.proses {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+        }
+
+        .stat-icon.selesai {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .stat-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1);
+            border: 1px solid rgba(8, 62, 64, 0.08);
+        }
+
+        /* Table */
+        .table-container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1);
+            border: 1px solid rgba(8, 62, 64, 0.08);
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 14px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        /* Table cell text clamping for long text */
+        .table tbody td {
+            vertical-align: middle;
+            max-width: 250px;
+            padding: 10px 12px;
+        }
+
+        .table tbody td .cell-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 230px;
+            line-height: 1.4;
+        }
+
+        .table tbody td .cell-text-long {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        /* Wider columns for specific fields */
+        .table tbody td[data-column="alamat_pembeli"],
+        .table tbody td[data-column="uraian_spp"],
+        .table tbody td[data-column="keterangan"],
+        .table tbody td[data-column="keterangan_pajak"] {
+            max-width: 300px;
+        }
+
+        /* Narrower columns for numbers/dates */
+        .table tbody td[data-column="nilai_rupiah"],
+        .table tbody td[data-column="dpp_pph"],
+        .table tbody td[data-column="ppn_terhutang"],
+        .table tbody td[data-column="tanggal_spp"],
+        .table tbody td[data-column="deadline_at"],
+        .table tbody td[data-column="no"] {
+            max-width: 150px;
+            white-space: nowrap;
+        }
+
+        /* Customize Button */
+        .btn-customize-columns {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: 2px solid rgba(8, 62, 64, 0.15);
+            background: white;
+            color: #083E40;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-customize-columns:hover {
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+            color: white;
+            border-color: #083E40;
+        }
+
+        /* Column Customization Modal */
+        .customization-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .customization-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content-custom {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 1200px; /* Widened as requested */
+            width: 95%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header-custom {
+            background: white;
+            color: #333;
+            padding: 20px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .modal-header-custom i {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .modal-header-custom h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-body-custom {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+            background: #fcfcfc;
+        }
+
+        .modal-footer-custom {
+            padding: 20px 25px;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-selection-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 25px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .section-header h5 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .column-selection-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-height: 280px; /* Approx 4 rows height (assuming ~60px per item + gap) */
+            overflow-y: auto;
+            padding-right: 5px; /* Space for scrollbar */
+        }
+
+        /* Custom scrollbar for column list */
+        .column-selection-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .column-selection-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .column-selection-list::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        .column-selection-list::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+
+        .column-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .column-item:hover {
+            border-color: #28a745;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .column-item.selected {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        /* Drag handle */
+        .column-drag-handle {
+            color: #adb5bd;
+            cursor: move;
+            font-size: 12px;
+        }
+
+        .column-item-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #28a745;
+        }
+
+        .column-item-label {
+            flex: 1;
+            font-weight: 500;
+            user-select: none;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .column-item-order {
+            font-size: 10px;
+            font-weight: 700;
+            background: #e9ecef;
+            color: #6c757d;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .column-item.selected .column-item-order {
+            background: #28a745;
+            color: white;
+        }
+
+        /* Preview Table */
+        .preview-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .preview-table-container {
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .preview-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .preview-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 1200px) {
+             /* Maintain 4 columns even on slightly smaller screens if possible, or fallback gracefully */
+             /* User explicitly asked for 4, so let's try to keep it unless very small */
+        }
+
+        @media (max-width: 992px) {
+            .column-selection-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .column-selection-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+
+    <div class="container-fluid" style="background-color: #f7f9f7; min-height: 100vh; padding: 30px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fa-solid fa-file-export me-3"></i>Export Data Perpajakan</h2>
+            <button type="button" class="btn-customize-columns" onclick="openColumnModal()">
+                <i class="fa-solid fa-table-columns"></i> Kustomisasi Kolom Tabel
+            </button>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-icon total"><i class="fa-solid fa-file-invoice"></i></div>
+                        <div>
+                            <div class="stat-title">Total Dokumen</div>
+                            <div class="stat-value">{{ number_format($statistics['total_documents'] ?? 0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-icon terkunci"><i class="fa-solid fa-lock"></i></div>
+                        <div>
+                            <div class="stat-title">Terkunci</div>
+                            <div class="stat-value">{{ number_format($statistics['terkunci'] ?? 0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-icon proses"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div>
+                            <div class="stat-title">Sedang Diproses</div>
+                            <div class="stat-value">{{ number_format($statistics['sedang_diproses'] ?? 0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-icon selesai"><i class="fa-solid fa-check-circle"></i></div>
+                        <div>
+                            <div class="stat-title">Selesai</div>
+                            <div class="stat-value">{{ number_format($statistics['selesai'] ?? 0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Export Section -->
+        <div class="filter-section">
+            <form action="{{ route('perpajakan.export') }}" method="GET" id="filterForm">
+                <input type="hidden" name="mode" value="{{ $mode }}">
+                <input type="hidden" name="columns" id="hiddenColumns" value="">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label">Tahun</label>
+                        <select name="year" class="form-select">
+                            <option value="">Semua Tahun</option>
+                            @foreach($availableYears as $year)
+                                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Bulan</label>
+                        <select name="month" class="form-select">
+                            <option value="">Semua Bulan</option>
+                            @foreach(range(1, 12) as $m)
+                                <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
+                                    {{ DateTime::createFromFormat('!m', $m)->format('F') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">Semua Status</option>
+                            <option value="terkunci" {{ $selectedStatus == 'terkunci' ? 'selected' : '' }}>Terkunci</option>
+                            <option value="sedang_diproses" {{ $selectedStatus == 'sedang_diproses' ? 'selected' : '' }}>
+                                Sedang Diproses</option>
+                            <option value="selesai" {{ $selectedStatus == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                            <option value="terkirim_akutansi" {{ $selectedStatus == 'terkirim_akutansi' ? 'selected' : '' }}>
+                                Terkirim Akutansi</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pencarian</label>
+                        <input type="text" name="search" class="form-control" placeholder="No Agenda/SPP/Vendor..."
+                            value="{{ $search }}">
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1"><i
+                                class="fa-solid fa-filter me-2"></i>Filter</button>
+                        <a href="{{ route('perpajakan.export') }}" class="btn btn-outline-secondary"><i
+                                class="fa-solid fa-arrows-rotate"></i></a>
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <div>
+                        <span class="text-muted"><i class="fa-solid fa-info-circle me-1"></i> Kolom yang dipilih: <strong
+                                id="selectedColumnsDisplay">Semua</strong></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" formaction="{{ route('perpajakan.export.download') }}" name="export"
+                            value="excel" class="btn btn-success">
+                            <i class="fa-solid fa-file-excel me-2"></i>Export Excel
+                        </button>
+                        <button type="submit" formaction="{{ route('perpajakan.export.download') }}" name="export"
+                            value="pdf" class="btn btn-danger">
+                            <i class="fa-solid fa-file-pdf me-2"></i>Export PDF
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="mainTable">
+                    <thead>
+                        <tr id="tableHeaderRow">
+                            <th data-column="no">No</th>
+                            @foreach($availableColumns as $key => $label)
+                                <th data-column="{{ $key }}">{{ $label }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        @forelse($dokumens as $index => $doc)
+                            <tr>
+                                <td data-column="no">{{ $dokumens->firstItem() + $index }}</td>
+                                @foreach($availableColumns as $key => $label)
+                                    @php
+                                        // Define text-heavy columns that need clamping
+                                        $longTextColumns = ['uraian_spp', 'alamat_pembeli', 'keterangan', 'keterangan_pajak', 'dibayar_kepada', 'komoditi_perpajakan'];
+                                        $isLongText = in_array($key, $longTextColumns);
+                                        
+                                        // Define date columns
+                                        $dateColumns = ['tanggal_spp', 'tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk',
+                                            'tanggal_faktur', 'tanggal_selesai_verifikasi_pajak', 'tanggal_invoice',
+                                            'tanggal_pengajuan_pajak', 'created_at', 'sent_to_perpajakan_at',
+                                            'processed_perpajakan_at', 'deadline_at', 'deadline_perpajakan_at'];
+                                        
+                                        // Define currency columns
+                                        $currencyColumns = ['nilai_rupiah', 'dpp_pph', 'ppn_terhutang', 'dpp_invoice', 'ppn_invoice',
+                                            'dpp_ppn_invoice', 'dpp_faktur', 'ppn_faktur', 'selisih_pajak',
+                                            'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'];
+                                        
+                                        // Get the raw value for tooltip
+                                        $rawValue = $doc->$key ?? '-';
+                                        if (in_array($key, $dateColumns) && $rawValue && $rawValue !== '-') {
+                                            $rawValue = $rawValue->format('d/m/Y');
+                                        } elseif (in_array($key, $currencyColumns) && $rawValue && $rawValue !== '-') {
+                                            $rawValue = 'Rp ' . number_format($rawValue, 0, ',', '.');
+                                        }
+                                    @endphp
+                                    <td data-column="{{ $key }}" title="{{ is_string($rawValue) ? $rawValue : '' }}">
+                                        @if($key == 'nilai_rupiah')
+                                            <span class="cell-text">Rp {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</span>
+                                        @elseif($key == 'status')
+                                            <span class="badge {{ match($doc->status) {
+                                                'selesai' => 'bg-success',
+                                                'terkunci' => 'bg-danger',
+                                                'sedang diproses' => 'bg-warning',
+                                                default => 'bg-secondary'
+                                            } }}">{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span>
+                                        @elseif(in_array($key, $dateColumns))
+                                            {{ $doc->$key ? $doc->$key->format('d/m/Y') : '-' }}
+                                        @elseif(in_array($key, $currencyColumns))
+                                            <span class="cell-text">{{ $doc->$key ? 'Rp ' . number_format($doc->$key, 0, ',', '.') : '-' }}</span>
+                                        @elseif($isLongText)
+                                            <span class="cell-text-long">{{ $doc->$key ?? '-' }}</span>
+                                        @else
+                                            <span class="cell-text">{{ $doc->$key ?? '-' }}</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ count($availableColumns) + 1 }}" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fa-solid fa-folder-open fa-3x mb-3"></i>
+                                        <p>Tidak ada data ditemukan</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3">
+                {{ $dokumens->links() }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Customization Modal -->
+    <div class="customization-modal" id="columnModal">
+        <div class="modal-content-custom">
+            <!-- Header -->
+            <div class="modal-header-custom">
+                <i class="fa-solid fa-table-columns"></i>
+                <h3>Kustomisasi Kolom Tabel</h3>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body-custom">
+                <!-- Column Selection Section -->
+                <div class="column-selection-section">
+                    <div class="section-header">
+                        <input type="checkbox" id="selectAllCheckbox" class="column-item-checkbox" onchange="toggleSelectAll(this)"> 
+                        <h5>Pilih Kolom</h5>
+                    </div>
+                    
+                    <p class="text-muted mb-3 small">Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.</p>
+
+                    <div class="column-selection-list" id="columnSelectionList">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="preview-section">
+                    <div class="preview-header">
+                        <i class="fa-solid fa-eye text-muted"></i>
+                        <span>Preview Hasil</span>
+                    </div>
+                    <p class="text-muted mb-3 small">Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.</p>
+                    
+                    <div class="preview-table-container">
+                        <div class="table-responsive">
+                            <table class="preview-table" id="previewTable">
+                                <thead>
+                                    <tr id="previewHeader"></tr>
+                                </thead>
+                                <tbody id="previewBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer-custom">
+                <div>
+                    <strong id="selectedColumnCount" class="text-success" style="font-size: 16px;">0</strong> <span class="text-muted">kolom dipilih</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="closeColumnModal()">Batal</button>
+                    <button type="button" class="btn btn-success" onclick="applyColumnCustomization()">
+                        <i class="fa-solid fa-check me-2"></i>Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Available columns from server
+        const availableColumns = @json($availableColumns);
+        @php
+        // Build sample data dynamically from availableColumns
+        $sampleDataArray = $dokumens->take(3)->map(function ($doc) use ($availableColumns) {
+            $row = [];
+            $dateFields = ['tanggal_spp', 'tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk',
+                'tanggal_faktur', 'tanggal_selesai_verifikasi_pajak', 'tanggal_invoice',
+                'tanggal_pengajuan_pajak', 'created_at', 'sent_to_perpajakan_at',
+                'processed_perpajakan_at', 'deadline_at', 'deadline_perpajakan_at'];
+            $currencyFields = ['nilai_rupiah', 'dpp_pph', 'ppn_terhutang', 'dpp_invoice', 'ppn_invoice',
+                'dpp_ppn_invoice', 'dpp_faktur', 'ppn_faktur', 'selisih_pajak',
+                'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'];
+            
+            foreach(array_keys($availableColumns) as $col) {
+                $value = $doc->$col ?? null;
+                if (in_array($col, $dateFields) && $value) {
+                    $row[$col] = $value->format('d/m/Y');
+                } elseif (in_array($col, $currencyFields) && $value) {
+                    $row[$col] = 'Rp ' . number_format($value, 0, ',', '.');
+                } else {
+                    $row[$col] = $value ?? '-';
+                }
+            }
+            return $row;
+        })->values()->toArray();
+        @endphp
+        const sampleData = @json($sampleDataArray);
+
+        // Selected columns in order
+        let selectedColumnsOrder = Object.keys(availableColumns);
+
+        // Load from localStorage
+        const savedColumns = localStorage.getItem('perpajakanExportColumns');
+        if (savedColumns) {
+            selectedColumnsOrder = JSON.parse(savedColumns);
+        }
+
+        function openColumnModal() {
+            document.getElementById('columnModal').classList.add('show');
+            generateColumnSelection();
+            updatePreview();
+        }
+
+        function closeColumnModal() {
+            document.getElementById('columnModal').classList.remove('show');
+        }
+
+        function generateColumnSelection() {
+            const list = document.getElementById('columnSelectionList');
+            list.innerHTML = '';
+
+            Object.keys(availableColumns).forEach((key) => {
+                const isSelected = selectedColumnsOrder.includes(key);
+                const order = selectedColumnsOrder.indexOf(key) + 1;
+
+                const item = document.createElement('div');
+                item.className = `column-item ${isSelected ? 'selected' : ''}`;
+                item.setAttribute('data-column', key);
+                item.onclick = (e) => {
+                    // Prevent triggering when clicking checkbox directly (handled by checkbox change)
+                    if (e.target.type !== 'checkbox') {
+                        toggleColumn(key);
+                    }
+                };
+
+                item.innerHTML = `
+                <i class="fa-solid fa-ellipsis-vertical column-drag-handle"></i>
+                <input type="checkbox" class="column-item-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleColumn('${key}')">
+                <span class="column-item-label" title="${availableColumns[key]}">${availableColumns[key]}</span>
+                <span class="column-item-order">${isSelected ? order : ''}</span>
+            `;
+
+                list.appendChild(item);
+            });
+
+            updateSelectedCount();
+            updateSelectAllCheckbox();
+        }
+
+        function updateSelectAllCheckbox() {
+             const allSelected = Object.keys(availableColumns).length === selectedColumnsOrder.length;
+             document.getElementById('selectAllCheckbox').checked = allSelected;
+        }
+
+        function toggleSelectAll(checkbox) {
+            if (checkbox.checked) {
+                selectAllColumns();
+            } else {
+                deselectAllColumns();
+            }
+        }
+
+        function toggleColumn(key) {
+            const index = selectedColumnsOrder.indexOf(key);
+            if (index > -1) {
+                selectedColumnsOrder.splice(index, 1);
+            } else {
+                selectedColumnsOrder.push(key);
+            }
+            generateColumnSelection();
+            updatePreview();
+        }
+
+        function selectAllColumns() {
+            selectedColumnsOrder = Object.keys(availableColumns);
+            generateColumnSelection();
+            updatePreview();
+        }
+
+        function deselectAllColumns() {
+            selectedColumnsOrder = [];
+            generateColumnSelection();
+            updatePreview();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
+        }
+
+        function updatePreview() {
+            const header = document.getElementById('previewHeader');
+            const body = document.getElementById('previewBody');
+
+            header.innerHTML = '<th>No</th>' + selectedColumnsOrder.map(key => `<th>${availableColumns[key]}</th>`).join('');
+
+            body.innerHTML = sampleData.map((row, idx) => {
+                return `<tr><td>${idx + 1}</td>${selectedColumnsOrder.map(key => `<td>${row[key] || '-'}</td>`).join('')}</tr>`;
+            }).join('');
+
+            if (sampleData.length === 0 || selectedColumnsOrder.length === 0) {
+                body.innerHTML = '<tr><td colspan="100" class="text-center text-muted py-3">Tidak ada preview tersedia</td></tr>';
+            }
+        }
+
+        function applyColumnCustomization() {
+            if (selectedColumnsOrder.length === 0) {
+                alert('Silakan pilih minimal 1 kolom untuk ditampilkan.');
+                return;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('perpajakanExportColumns', JSON.stringify(selectedColumnsOrder));
+
+            // Update hidden input for form submission
+            document.getElementById('hiddenColumns').value = selectedColumnsOrder.join(',');
+
+            // Update display text
+            if (selectedColumnsOrder.length === Object.keys(availableColumns).length) {
+                document.getElementById('selectedColumnsDisplay').textContent = 'Semua';
+            } else {
+                document.getElementById('selectedColumnsDisplay').textContent = selectedColumnsOrder.length + ' kolom';
+            }
+
+            // Apply to table
+            applyColumnsToTable();
+
+            // Close modal
+            closeColumnModal();
+        }
+
+        function applyColumnsToTable() {
+            // Hide all columns first
+            document.querySelectorAll('#mainTable th, #mainTable td').forEach(cell => {
+                const col = cell.getAttribute('data-column');
+                if (col && col !== 'no') {
+                    cell.style.display = selectedColumnsOrder.includes(col) ? '' : 'none';
+                }
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            applyColumnsToTable();
+
+            // Update display text
+            if (selectedColumnsOrder.length === Object.keys(availableColumns).length) {
+                document.getElementById('selectedColumnsDisplay').textContent = 'Semua';
+            } else {
+                document.getElementById('selectedColumnsDisplay').textContent = selectedColumnsOrder.length + ' kolom';
+            }
+
+            // Set hidden input
+            document.getElementById('hiddenColumns').value = selectedColumnsOrder.join(',');
+        });
+    </script>
+@endsection
