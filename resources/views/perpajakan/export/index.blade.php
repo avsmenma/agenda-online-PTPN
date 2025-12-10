@@ -1,115 +1,344 @@
 @extends('layouts.app')
 
 @section('content')
-    <style>
-        h2 {
-            background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 30px;
-            font-weight: 700;
-            font-size: 28px;
-        }
+<!-- Tailwind CSS CDN for responsive utilities -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-        /* Statistics Cards */
-        .stat-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-            border: 1px solid rgba(8, 62, 64, 0.08);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            height: 140px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
+<style>
+  h2 {
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 30px;
+    font-weight: 700;
+    font-size: 28px;
+    animation: fadeIn 0.5s ease;
+  }
 
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
-        }
+  /* Statistics Cards - Enhanced with smooth animations */
+  .stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: auto;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    animation: slideUp 0.4s ease backwards;
+  }
 
-        .stat-card-body {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; }
+  .stat-card:nth-child(4) { animation-delay: 0.4s; }
 
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            flex-shrink: 0;
-        }
+  .stat-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
+    border-color: rgba(136, 151, 23, 0.3);
+  }
 
-        .stat-icon.total {
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-        }
+  .stat-card-body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    min-width: 0;
+  }
 
-        .stat-icon.terkunci {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        }
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    flex-shrink: 0;
+    min-width: 48px;
+    transition: transform 0.3s ease;
+  }
 
-        .stat-icon.proses {
-            background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-        }
+  .stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+  }
 
-        .stat-icon.selesai {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
+  .stat-icon.total { background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); }
+  .stat-icon.terkunci { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+  .stat-icon.proses { background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); }
+  .stat-icon.selesai { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
 
-        .stat-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #6c757d;
-            text-transform: uppercase;
-        }
+  .stat-content {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
 
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
+  .stat-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
 
-        /* Filter Section */
-        .filter-section {
-            background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-            padding: 25px;
-            border-radius: 16px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1);
-            border: 1px solid rgba(8, 62, 64, 0.08);
-        }
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
 
-        /* Table */
-        .table-container {
-            background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1);
-            border: 1px solid rgba(8, 62, 64, 0.08);
-        }
+  /* Responsive font sizes */
+  @media (min-width: 640px) {
+    .stat-value {
+      font-size: 26px;
+    }
+  }
 
-        .table thead th {
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            color: white;
-            font-weight: 600;
-            border: none;
-            padding: 14px 12px;
-            font-size: 11px;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
+  @media (min-width: 1024px) {
+    .stat-value {
+      font-size: 28px;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .stat-value {
+      font-size: 32px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stat-card {
+      padding: 16px 20px;
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+      min-width: 40px;
+    }
+  }
+
+  /* Filter Section - Modern Redesign */
+  .filter-section {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    animation: slideUp 0.5s ease backwards;
+    animation-delay: 0.5s;
+  }
+
+  .main-filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-inputs {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    flex-wrap: wrap;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .filter-item {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .filter-item.filter-search {
+    flex: 1.5;
+    min-width: 200px;
+  }
+
+  .filter-label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .form-select-modern, .form-control-modern {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #111827;
+    transition: all 0.2s ease;
+    height: 42px;
+    box-sizing: border-box;
+  }
+
+  .form-select-modern:focus, .form-control-modern:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .search-input-wrapper {
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 14px;
+  }
+
+  .form-control-modern {
+    padding-left: 38px;
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    align-items: flex-end;
+  }
+
+  .btn-filter-primary {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  .btn-filter-primary:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-filter-reset {
+    background: #6b7280;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    width: 42px;
+    box-sizing: border-box;
+  }
+
+  .btn-filter-reset:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+  }
+
+  /* Export Buttons */
+  .export-buttons {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-export {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-export-excel {
+    background: linear-gradient(135deg, #217346 0%, #1e6b3f 100%);
+    color: white;
+  }
+
+  .btn-export-excel:hover {
+    background: linear-gradient(135deg, #1e6b3f 0%, #185a34 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 115, 70, 0.3);
+  }
+
+  .btn-export-pdf {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+
+  .btn-export-pdf:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  }
+
+  /* Table Container - Enhanced */
+  .table-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1);
+    border: 1px solid rgba(8, 62, 64, 0.08);
+    animation: slideUp 0.6s ease backwards;
+    animation-delay: 0.6s;
+  }
+
+  .table thead th {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 14px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background 0.3s ease;
+  }
+
+  .table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .table tbody tr:hover {
+    background-color: rgba(8, 62, 64, 0.03);
+    transform: scale(1.001);
+  }
 
         /* Table cell text clamping for long text */
         .table tbody td {
@@ -414,15 +643,50 @@
             border-bottom: none;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+  /* Animations */
+  @keyframes fadeIn {
+    from { 
+      opacity: 0; 
+    }
+    to { 
+      opacity: 1; 
+    }
+  }
 
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .filter-inputs {
+      flex-direction: column;
+    }
+    
+    .filter-item,
+    .filter-item.filter-search {
+      width: 100%;
+      min-width: 100%;
+      flex: 1 1 100%;
+    }
+    
+    .filter-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+    
+    .btn-filter-primary,
+    .btn-filter-reset {
+      flex: 1;
+    }
+  }
 
         @media (max-width: 1200px) {
              /* Maintain 4 columns even on slightly smaller screens if possible, or fallback gracefully */
@@ -450,49 +714,56 @@
             </button>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="row g-4 mb-4">
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-card-body">
-                        <div class="stat-icon total"><i class="fa-solid fa-file-invoice"></i></div>
-                        <div>
-                            <div class="stat-title">Total Dokumen</div>
-                            <div class="stat-value">{{ number_format($statistics['total_documents'] ?? 0) }}</div>
-                        </div>
+        <!-- Statistics Cards - Responsive Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4 mb-4">
+            <!-- Card 1: Total Dokumen -->
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-content" style="flex: 1; min-width: 0;">
+                        <div class="stat-title">Total Dokumen</div>
+                        <div class="stat-value">{{ number_format($statistics['total_documents'] ?? 0) }}</div>
+                    </div>
+                    <div class="stat-icon total flex-shrink-0">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-card-body">
-                        <div class="stat-icon terkunci"><i class="fa-solid fa-lock"></i></div>
-                        <div>
-                            <div class="stat-title">Terkunci</div>
-                            <div class="stat-value">{{ number_format($statistics['terkunci'] ?? 0) }}</div>
-                        </div>
+            
+            <!-- Card 2: Terkunci -->
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-content" style="flex: 1; min-width: 0;">
+                        <div class="stat-title">Terkunci</div>
+                        <div class="stat-value">{{ number_format($statistics['terkunci'] ?? 0) }}</div>
+                    </div>
+                    <div class="stat-icon terkunci flex-shrink-0">
+                        <i class="fa-solid fa-lock"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-card-body">
-                        <div class="stat-icon proses"><i class="fa-solid fa-hourglass-half"></i></div>
-                        <div>
-                            <div class="stat-title">Sedang Diproses</div>
-                            <div class="stat-value">{{ number_format($statistics['sedang_diproses'] ?? 0) }}</div>
-                        </div>
+            
+            <!-- Card 3: Sedang Diproses -->
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-content" style="flex: 1; min-width: 0;">
+                        <div class="stat-title">Sedang Diproses</div>
+                        <div class="stat-value">{{ number_format($statistics['sedang_diproses'] ?? 0) }}</div>
+                    </div>
+                    <div class="stat-icon proses flex-shrink-0">
+                        <i class="fa-solid fa-hourglass-half"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-card-body">
-                        <div class="stat-icon selesai"><i class="fa-solid fa-check-circle"></i></div>
-                        <div>
-                            <div class="stat-title">Selesai</div>
-                            <div class="stat-value">{{ number_format($statistics['selesai'] ?? 0) }}</div>
-                        </div>
+            
+            <!-- Card 4: Selesai -->
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-content" style="flex: 1; min-width: 0;">
+                        <div class="stat-title">Selesai</div>
+                        <div class="stat-value">{{ number_format($statistics['selesai'] ?? 0) }}</div>
+                    </div>
+                    <div class="stat-icon selesai flex-shrink-0">
+                        <i class="fa-solid fa-check-circle"></i>
                     </div>
                 </div>
             </div>
@@ -503,49 +774,43 @@
             <form action="{{ route('perpajakan.export') }}" method="GET" id="filterForm">
                 <input type="hidden" name="mode" value="{{ $mode }}">
                 <input type="hidden" name="columns" id="hiddenColumns" value="">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-2">
-                        <label class="form-label">Tahun</label>
-                        <select name="year" class="form-select">
-                            <option value="">Semua Tahun</option>
-                            @foreach($availableYears as $year)
-                                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
-                            @endforeach
-                        </select>
+                <div class="main-filter-row">
+                    <div class="filter-inputs">
+                        <div class="filter-item">
+                            <label class="filter-label">Tahun</label>
+                            <select name="year" class="form-select-modern">
+                                <option value="">Semua Tahun</option>
+                                @foreach($availableYears as $year)
+                                    <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label class="filter-label">Bulan</label>
+                            <select name="month" class="form-select-modern">
+                                <option value="">Semua Bulan</option>
+                                @foreach(range(1, 12) as $m)
+                                    <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
+                                        {{ DateTime::createFromFormat('!m', $m)->format('F') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-item filter-search">
+                            <label class="filter-label">Pencarian</label>
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" name="search" class="form-control-modern" placeholder="No Agenda/SPP/Vendor..." value="{{ $search }}">
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Bulan</label>
-                        <select name="month" class="form-select">
-                            <option value="">Semua Bulan</option>
-                            @foreach(range(1, 12) as $m)
-                                <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
-                                    {{ DateTime::createFromFormat('!m', $m)->format('F') }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="">Semua Status</option>
-                            <option value="terkunci" {{ $selectedStatus == 'terkunci' ? 'selected' : '' }}>Terkunci</option>
-                            <option value="sedang_diproses" {{ $selectedStatus == 'sedang_diproses' ? 'selected' : '' }}>
-                                Sedang Diproses</option>
-                            <option value="selesai" {{ $selectedStatus == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                            <option value="terkirim_akutansi" {{ $selectedStatus == 'terkirim_akutansi' ? 'selected' : '' }}>
-                                Terkirim Akutansi</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Pencarian</label>
-                        <input type="text" name="search" class="form-control" placeholder="No Agenda/SPP/Vendor..."
-                            value="{{ $search }}">
-                    </div>
-                    <div class="col-md-3 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1"><i
-                                class="fa-solid fa-filter me-2"></i>Filter</button>
-                        <a href="{{ route('perpajakan.export') }}" class="btn btn-outline-secondary"><i
-                                class="fa-solid fa-arrows-rotate"></i></a>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-filter-primary">
+                            <i class="fa-solid fa-filter me-2"></i>Filter
+                        </button>
+                        <a href="{{ route('perpajakan.export') }}" class="btn-filter-reset" title="Reset Filter">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </a>
                     </div>
                 </div>
 
@@ -555,14 +820,16 @@
                         <span class="text-muted"><i class="fa-solid fa-info-circle me-1"></i> Kolom yang dipilih: <strong
                                 id="selectedColumnsDisplay">Semua</strong></span>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="export-buttons">
                         <button type="submit" formaction="{{ route('perpajakan.export.download') }}" name="export"
-                            value="excel" class="btn btn-success">
-                            <i class="fa-solid fa-file-excel me-2"></i>Export Excel
+                            value="excel" class="btn-export btn-export-excel">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Export Excel</span>
                         </button>
                         <button type="submit" formaction="{{ route('perpajakan.export.download') }}" name="export"
-                            value="pdf" class="btn btn-danger">
-                            <i class="fa-solid fa-file-pdf me-2"></i>Export PDF
+                            value="pdf" class="btn-export btn-export-pdf">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span>Export PDF</span>
                         </button>
                     </div>
                 </div>
@@ -645,11 +912,103 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">
-                {{ $dokumens->links() }}
-            </div>
         </div>
     </div>
+
+<!-- Pagination Controls -->
+@if($dokumens->total() > 0)
+<div class="pagination-wrapper" style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 16px; box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1); border: 1px solid rgba(8, 62, 64, 0.08);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <!-- Info dan Per Page Selector -->
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+      <div class="text-muted" style="font-size: 13px; color: #083E40;">
+        Menampilkan <strong>{{ $dokumens->firstItem() ?: 0 }}</strong> - <strong>{{ $dokumens->lastItem() ?: 0 }}</strong> dari total <strong>{{ $dokumens->total() }}</strong> dokumen
+      </div>
+      
+      <!-- Per Page Selector -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="perPageSelect" style="font-size: 13px; color: #083E40; font-weight: 500; margin: 0;">Tampilkan per halaman:</label>
+        <select id="perPageSelect" onchange="changePerPage(this.value)" style="padding: 6px 12px; border: 2px solid rgba(8, 62, 64, 0.15); border-radius: 8px; background: white; color: #083E40; font-size: 13px; font-weight: 500; cursor: pointer;">
+          <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
+          <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
+          <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
+          <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Pagination Buttons -->
+    @if($dokumens->hasPages())
+    <div class="pagination" style="display: flex; gap: 8px; align-items: center;">
+      {{-- Previous Page Link --}}
+      @if($dokumens->onFirstPage())
+        <button class="btn-pagination" disabled style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: #e0e0e0; color: #9e9e9e; border-radius: 10px; cursor: not-allowed;">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      @else
+        <a href="{{ $dokumens->appends(request()->query())->previousPageUrl() }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+        </a>
+      @endif
+
+      {{-- Pagination Elements --}}
+      @php
+        $currentPage = $dokumens->currentPage();
+        $lastPage = $dokumens->lastPage();
+        $startPage = max(1, $currentPage - 2);
+        $endPage = min($lastPage, $currentPage + 2);
+      @endphp
+
+      {{-- First page --}}
+      @if($startPage > 1)
+        <a href="{{ $dokumens->appends(request()->query())->url(1) }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background-color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">1</button>
+        </a>
+        @if($startPage > 2)
+          <button disabled style="padding: 10px 16px; border: none; background: transparent; color: #999; cursor: default;">...</button>
+        @endif
+      @endif
+
+      {{-- Range of pages --}}
+      @for($i = $startPage; $i <= $endPage; $i++)
+        @if($currentPage == $i)
+          <button class="btn-pagination active" style="padding: 10px 16px; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">{{ $i }}</button>
+        @else
+          <a href="{{ $dokumens->appends(request()->query())->url($i) }}">
+            <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background-color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">{{ $i }}</button>
+          </a>
+        @endif
+      @endfor
+
+      {{-- Dots --}}
+      @if($endPage < $lastPage)
+        @if($endPage < $lastPage - 1)
+          <button disabled style="padding: 10px 16px; border: none; background: transparent; color: #999; cursor: default;">...</button>
+        @endif
+        <a href="{{ $dokumens->appends(request()->query())->url($lastPage) }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background-color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">{{ $lastPage }}</button>
+        </a>
+      @endif
+
+      {{-- Next Page Link --}}
+      @if($dokumens->hasMorePages())
+        <a href="{{ $dokumens->appends(request()->query())->nextPageUrl() }}">
+          <button class="btn-pagination" style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.15); background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </a>
+      @else
+        <button class="btn-pagination" disabled style="padding: 10px 16px; border: 2px solid rgba(8, 62, 64, 0.1); background: #e0e0e0; color: #9e9e9e; border-radius: 10px; cursor: not-allowed;">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      @endif
+    </div>
+    @endif
+  </div>
+</div>
+@endif
 
     <!-- Column Customization Modal -->
     <div class="customization-modal" id="columnModal">
@@ -885,6 +1244,13 @@
         }
 
         // Initialize on page load
+        function changePerPage(perPage) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', perPage);
+            url.searchParams.delete('page'); // Reset to page 1 when changing per page
+            window.location.href = url.toString();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             applyColumnsToTable();
 

@@ -187,7 +187,7 @@
   }
 
   /* Column Widths - Enhanced from perpajakan */
-  .table-enhanced .col-no {
+  .table-enhanced .col-number {
     width: 60px;
     min-width: 60px;
     text-align: center;
@@ -238,6 +238,9 @@
     width: 180px;
     min-width: 180px;
     text-align: center;
+    overflow: visible;
+    position: relative;
+    box-sizing: border-box;
   }
 
   .table-enhanced tbody tr {
@@ -254,18 +257,7 @@
     position: relative;
     border-left: 4px solid #ffc107 !important;
   }
-
-  .table-enhanced tbody tr.locked-row::before {
-    content: '🔒';
-    position: absolute;
-    top: 50%;
-    left: -2px;
-    transform: translateY(-50%);
-    font-size: 16px;
-    z-index: 2;
-    opacity: 0.7;
-  }
-
+  
   .table-enhanced tbody tr.locked-row:hover {
     background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
     border-left: 4px solid #ffc107 !important;
@@ -299,7 +291,7 @@
   }
 
   /* Custom centering for specific column content */
-  .table-enhanced .col-no,
+  .table-enhanced .col-number,
   .table-enhanced .col-agenda,
   .table-enhanced .col-nilai,
   .table-enhanced .col-tanggal-spp,
@@ -768,6 +760,10 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    max-width: 100%;
   }
 
   .action-row {
@@ -784,21 +780,24 @@
     padding: 8px 12px;
     border: none;
     border-radius: 8px;
+    width: auto !important;
+    flex: 0 0 auto;
+    white-space: nowrap;
     cursor: pointer;
     font-size: 11px;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     text-decoration: none;
     user-select: none;
-    flex: 1;
     max-width: 140px;
+    box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
@@ -1072,7 +1071,7 @@
       min-width: 1600px; /* Still allow horizontal scroll on very small screens */
     }
 
-    .table-enhanced .col-no { min-width: 60px; font-weight: 600; }
+    .table-enhanced .col-number { min-width: 60px; font-weight: 600; }
     .table-enhanced .col-agenda { min-width: 130px; }
     .table-enhanced .col-tanggal { min-width: 130px; font-weight: 600; }
     .table-enhanced .col-spp { min-width: 140px; font-weight: 600; }
@@ -1794,7 +1793,7 @@
     <table class="table table-enhanced mb-0">
       <thead>
         <tr>
-          <th class="col-no">No</th>
+          <th class="col-number">No</th>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
             <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
@@ -1808,7 +1807,12 @@
       <tbody>
       @forelse($dokumens as $index => $dokumen)
         <tr class="main-row clickable-row {{ $dokumen->lock_status_class }}" onclick="handleRowClick(event, {{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
-            <td style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
+            <td class="col-number">
+              @if($dokumen->is_locked)
+                <i class="fa-solid fa-lock text-warning me-1" style="font-size: 0.8em;" title="Terkunci: {{ $dokumen->lock_status_message }}"></i>
+              @endif
+              {{ $dokumens->firstItem() + $index }}
+            </td>
             @foreach($selectedColumns as $col)
               @if($col !== 'status')
               <td class="col-{{ $col }}">
@@ -1882,7 +1886,7 @@
               </td>
               @endif
             @endforeach
-            <td>
+            <td class="col-deadline">
               @if($dokumen->deadline_at)
                 <div class="deadline-card" data-deadline="{{ $dokumen->deadline_at->format('Y-m-d H:i:s') }}">
                   <div class="deadline-time">
@@ -1904,13 +1908,13 @@
                 </div>
               @endif
             </td>
-            <td style="text-align: center;">
-              @if($dokumen->status == 'selesai')
+            <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
+              @if($dokumen->is_locked)
+                <span class="badge-status badge-locked">🔒 Terkunci</span>
+              @elseif($dokumen->status == 'selesai')
                 <span class="badge-status badge-selesai">✓ Selesai</span>
               @elseif($dokumen->status == 'sedang diproses' && $dokumen->current_handler == 'akutansi')
                 <span class="badge-status badge-proses">⏳ Diproses</span>
-              @elseif($dokumen->is_locked)
-                <span class="badge-status badge-locked">🔒 Terkunci</span>
               @elseif($dokumen->status == 'sent_to_akutansi')
                 <span class="badge-status badge-belum">⏳ Belum Diproses</span>
               @elseif(in_array($dokumen->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']))
@@ -1919,7 +1923,7 @@
                 <span class="badge-status badge-proses">{{ $dokumen->status }}</span>
               @endif
             </td>
-            <td onclick="event.stopPropagation()">
+            <td class="col-action" onclick="event.stopPropagation()">
               <div class="action-buttons">
                 @php
                   $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
@@ -1927,52 +1931,46 @@
                 @if($dokumen->is_locked)
                   <!-- Locked state - hanya tampilkan Set Deadline dan Return -->
                   @unless($isSentToPembayaran)
-                    <div class="action-row">
-                      <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>Set Deadline</span>
-                      </button>
-                    </div>
-                    <div class="action-row">
-                      <button type="button" class="btn-action btn-return" onclick="openReturnToPerpajakanModal({{ $dokumen->id }})" title="Kembalikan ke Perpajakan">
-                        <i class="fa-solid fa-undo"></i>
-                        <span>Return</span>
-                      </button>
-                    </div>
+                    <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
+                      <i class="fa-solid fa-clock"></i>
+                      <span>Set Deadline</span>
+                    </button>
+                    <button type="button" class="btn-action btn-return" onclick="openReturnToPerpajakanModal({{ $dokumen->id }})" title="Kembalikan ke Perpajakan">
+                      <i class="fa-solid fa-undo"></i>
+                      <span>Return</span>
+                    </button>
                   @endunless
                 @else
                   <!-- Unlocked state - buttons enabled -->
-                  <div class="action-row">
-                    @unless($isSentToPembayaran)
-                      @if($dokumen->can_edit)
-                        <a href="{{ route('dokumensAkutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="text-decoration: none;">
-                          <button class="btn-action btn-edit">
-                            <i class="fa-solid fa-pen"></i>
-                            <span>Edit</span>
-                          </button>
-                        </a>
-                      @endif
+                  @unless($isSentToPembayaran)
+                    @if($dokumen->can_edit)
+                      <a href="{{ route('dokumensAkutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="text-decoration: none;">
+                        <button class="btn-action btn-edit">
+                          <i class="fa-solid fa-pen"></i>
+                          <span>Edit</span>
+                        </button>
+                      </a>
+                    @endif
+                  @endunless
+                  @php
+                    $hasNomorMiro = !empty($dokumen->nomor_miro);
+                    $canSend = !$isSentToPembayaran && 
+                               $dokumen->status == 'sedang diproses' && 
+                               $dokumen->current_handler == 'akutansi' &&
+                               $hasNomorMiro;
+                  @endphp
+                  <button
+                    type="button"
+                    class="btn-action btn-send {{ !$canSend ? 'locked' : '' }}"
+                    title="{{ $isSentToPembayaran ? 'Dokumen sudah dikirim ke Team Pembayaran' : (!$hasNomorMiro ? 'Nomor MIRO harus diisi terlebih dahulu' : 'Kirim ke Team Pembayaran') }}"
+                    @if($isSentToPembayaran || !$canSend) disabled @endif
+                    @unless($isSentToPembayaran || !$canSend)
+                      onclick="sendToPembayaran({{ $dokumen->id }})"
                     @endunless
-                    @php
-                      $hasNomorMiro = !empty($dokumen->nomor_miro);
-                      $canSend = !$isSentToPembayaran && 
-                                 $dokumen->status == 'sedang diproses' && 
-                                 $dokumen->current_handler == 'akutansi' &&
-                                 $hasNomorMiro;
-                    @endphp
-                    <button
-                      type="button"
-                      class="btn-action btn-send {{ !$canSend ? 'locked' : '' }}"
-                      title="{{ $isSentToPembayaran ? 'Dokumen sudah dikirim ke Team Pembayaran' : (!$hasNomorMiro ? 'Nomor MIRO harus diisi terlebih dahulu' : 'Kirim ke Team Pembayaran') }}"
-                      @if($isSentToPembayaran || !$canSend) disabled @endif
-                      @unless($isSentToPembayaran || !$canSend)
-                        onclick="sendToPembayaran({{ $dokumen->id }})"
-                      @endunless
-                    >
-                      <i class="fa-solid fa-paper-plane"></i>
-                      <span>Kirim</span>
-                    </button>
-                  </div>
+                  >
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Kirim</span>
+                  </button>
                 @endif
               </div>
             </td>
