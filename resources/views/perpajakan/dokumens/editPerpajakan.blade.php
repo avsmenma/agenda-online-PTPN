@@ -557,16 +557,24 @@
             <ul style="margin: 8px 0 0 20px; font-size: 13px;">
               <li>Semua field di bawah ini <strong>opsional</strong> (tidak wajib diisi)</li>
               <li>Isi sesuai dengan dokumen pajak yang tersedia</li>
-              <li>Untuk <strong>DPP PPh</strong> dan <strong>PPN Terhutang</strong>: masukkan angka saja (contoh: 1000000), sistem akan memformat otomatis</li>
+              <li>Untuk field angka (DPP, PPN, dll): masukkan angka saja (contoh: 1000000), sistem akan memformat otomatis</li>
               <li>Jika field tidak diisi, nilai yang sudah ada sebelumnya akan tetap dipertahankan</li>
             </ul>
           </div>
+
+          <!-- Row 1: Komoditi & Status -->
           <div class="form-row">
             <div class="form-group">
-              <label for="npwp">
-                <i class="fa-solid fa-id-card me-1"></i>NPWP
+              <label for="komoditi_perpajakan">
+                <i class="fa-solid fa-boxes-stacked me-1"></i>Komoditi
               </label>
-              <input type="text" id="npwp" name="npwp" value="{{ old('npwp', $dokumen->npwp) }}" placeholder="00.000.000.0-000.000">
+              <select id="komoditi_perpajakan" name="komoditi_perpajakan">
+                <option value="">Pilih Komoditi</option>
+                <option value="CPO" {{ old('komoditi_perpajakan', $dokumen->komoditi_perpajakan) == 'CPO' ? 'selected' : '' }}>CPO</option>
+                <option value="PK" {{ old('komoditi_perpajakan', $dokumen->komoditi_perpajakan) == 'PK' ? 'selected' : '' }}>PK</option>
+                <option value="Karet" {{ old('komoditi_perpajakan', $dokumen->komoditi_perpajakan) == 'Karet' ? 'selected' : '' }}>Karet</option>
+                <option value="Lainnya" {{ old('komoditi_perpajakan', $dokumen->komoditi_perpajakan) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="status_perpajakan">
@@ -580,6 +588,84 @@
             </div>
           </div>
 
+          <!-- Row 2: NPWP Pembeli & Alamat -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="npwp">
+                <i class="fa-solid fa-id-card me-1"></i>NPWP Pembeli
+              </label>
+              <input type="text" id="npwp" name="npwp" value="{{ old('npwp', $dokumen->npwp) }}" placeholder="00.000.000.0-000.000">
+            </div>
+            <div class="form-group">
+              <label for="alamat_pembeli">
+                <i class="fa-solid fa-location-dot me-1"></i>Alamat
+              </label>
+              <input type="text" id="alamat_pembeli" name="alamat_pembeli" value="{{ old('alamat_pembeli', $dokumen->alamat_pembeli) }}" placeholder="Alamat lengkap pembeli">
+            </div>
+          </div>
+
+          <!-- Row 3: No Kontrak & No Invoice -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="no_kontrak">
+                <i class="fa-solid fa-file-contract me-1"></i>No Kontrak
+              </label>
+              <input type="text" id="no_kontrak" name="no_kontrak" value="{{ old('no_kontrak', $dokumen->no_kontrak) }}" placeholder="Nomor kontrak">
+            </div>
+            <div class="form-group">
+              <label for="no_invoice">
+                <i class="fa-solid fa-file-invoice me-1"></i>No Invoice
+              </label>
+              <input type="text" id="no_invoice" name="no_invoice" value="{{ old('no_invoice', $dokumen->no_invoice) }}" placeholder="Nomor invoice">
+            </div>
+          </div>
+
+          <!-- Row 4: Tanggal Invoice & DPP Invoice & PPN Invoice -->
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="tanggal_invoice">
+                <i class="fa-solid fa-calendar me-1"></i>Tanggal Invoice
+              </label>
+              <input type="date" id="tanggal_invoice" name="tanggal_invoice" value="{{ old('tanggal_invoice', $dokumen->tanggal_invoice ? $dokumen->tanggal_invoice->format('Y-m-d') : '') }}">
+            </div>
+            <div class="form-group">
+              <label for="dpp_invoice">
+                <i class="fa-solid fa-money-bill me-1"></i>DPP Invoice
+              </label>
+              <input type="text" id="dpp_invoice" name="dpp_invoice" value="{{ old('dpp_invoice', $dokumen->dpp_invoice ? number_format($dokumen->dpp_invoice, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+            <div class="form-group">
+              <label for="ppn_invoice">
+                <i class="fa-solid fa-percent me-1"></i>PPN Invoice
+              </label>
+              <input type="text" id="ppn_invoice" name="ppn_invoice" value="{{ old('ppn_invoice', $dokumen->ppn_invoice ? number_format($dokumen->ppn_invoice, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+          </div>
+
+          <!-- Row 5: DPP+PPN Invoice & Tanggal Pengajuan -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dpp_ppn_invoice">
+                <i class="fa-solid fa-calculator me-1"></i>DPP + PPN Invoice
+              </label>
+              <input type="text" id="dpp_ppn_invoice" name="dpp_ppn_invoice" value="{{ old('dpp_ppn_invoice', $dokumen->dpp_ppn_invoice ? number_format($dokumen->dpp_ppn_invoice, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+            <div class="form-group">
+              <label for="tanggal_pengajuan_pajak">
+                <i class="fa-solid fa-calendar-check me-1"></i>Tanggal Pengajuan
+              </label>
+              <input type="date" id="tanggal_pengajuan_pajak" name="tanggal_pengajuan_pajak" value="{{ old('tanggal_pengajuan_pajak', $dokumen->tanggal_pengajuan_pajak ? $dokumen->tanggal_pengajuan_pajak->format('Y-m-d') : '') }}">
+            </div>
+          </div>
+
+          <!-- Divider: Data Faktur -->
+          <div style="border-top: 2px dashed #ffc107; margin: 24px 0; padding-top: 16px;">
+            <h6 style="color: #ffc107; font-weight: 600; margin-bottom: 16px;">
+              <i class="fa-solid fa-receipt me-2"></i>Data Faktur Pajak
+            </h6>
+          </div>
+
+          <!-- Row 6: No Faktur & Tanggal Faktur -->
           <div class="form-row">
             <div class="form-group">
               <label for="no_faktur">
@@ -595,35 +681,116 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="tanggal_selesai_verifikasi_pajak">
-              <i class="fa-solid fa-check-circle me-1"></i>Tanggal Selesai Verifikasi Pajak
-            </label>
-            <input type="date" id="tanggal_selesai_verifikasi_pajak" name="tanggal_selesai_verifikasi_pajak" value="{{ old('tanggal_selesai_verifikasi_pajak', $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('Y-m-d') : '') }}">
-          </div>
-
+          <!-- Row 7: DPP Faktur & PPN Faktur & Selisih -->
           <div class="form-row-3">
             <div class="form-group">
+              <label for="dpp_faktur">
+                <i class="fa-solid fa-money-bill-wave me-1"></i>DPP Faktur
+              </label>
+              <input type="text" id="dpp_faktur" name="dpp_faktur" value="{{ old('dpp_faktur', $dokumen->dpp_faktur ? number_format($dokumen->dpp_faktur, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+            <div class="form-group">
+              <label for="ppn_faktur">
+                <i class="fa-solid fa-percent me-1"></i>PPN Faktur
+              </label>
+              <input type="text" id="ppn_faktur" name="ppn_faktur" value="{{ old('ppn_faktur', $dokumen->ppn_faktur ? number_format($dokumen->ppn_faktur, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+            <div class="form-group">
+              <label for="selisih_pajak">
+                <i class="fa-solid fa-scale-balanced me-1"></i>Selisih
+              </label>
+              <input type="text" id="selisih_pajak" name="selisih_pajak" value="{{ old('selisih_pajak', $dokumen->selisih_pajak ? number_format($dokumen->selisih_pajak, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+          </div>
+
+          <!-- Row 8: Keterangan -->
+          <div class="form-group">
+            <label for="keterangan_pajak">
+              <i class="fa-solid fa-clipboard me-1"></i>Keterangan
+            </label>
+            <textarea id="keterangan_pajak" name="keterangan_pajak" rows="2" placeholder="Keterangan tambahan (opsional)">{{ old('keterangan_pajak', $dokumen->keterangan_pajak) }}</textarea>
+          </div>
+
+          <!-- Divider: Data Penggantian -->
+          <div style="border-top: 2px dashed #ffc107; margin: 24px 0; padding-top: 16px;">
+            <h6 style="color: #ffc107; font-weight: 600; margin-bottom: 16px;">
+              <i class="fa-solid fa-arrows-rotate me-2"></i>Data Penggantian
+            </h6>
+          </div>
+
+          <!-- Row 9: Penggantian & DPP Penggantian -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="penggantian_pajak">
+                <i class="fa-solid fa-money-bill-transfer me-1"></i>Penggantian
+              </label>
+              <input type="text" id="penggantian_pajak" name="penggantian_pajak" value="{{ old('penggantian_pajak', $dokumen->penggantian_pajak ? number_format($dokumen->penggantian_pajak, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+            <div class="form-group">
+              <label for="dpp_penggantian">
+                <i class="fa-solid fa-money-bill-wave me-1"></i>DPP Penggantian
+              </label>
+              <input type="text" id="dpp_penggantian" name="dpp_penggantian" value="{{ old('dpp_penggantian', $dokumen->dpp_penggantian ? number_format($dokumen->dpp_penggantian, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+          </div>
+
+          <!-- Row 10: PPN Penggantian & Selisih PPN -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ppn_penggantian">
+                <i class="fa-solid fa-percent me-1"></i>PPN Penggantian
+              </label>
+              <input type="text" id="ppn_penggantian" name="ppn_penggantian" value="{{ old('ppn_penggantian', $dokumen->ppn_penggantian ? number_format($dokumen->ppn_penggantian, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+            <div class="form-group">
+              <label for="selisih_ppn">
+                <i class="fa-solid fa-scale-balanced me-1"></i>Selisih PPN
+              </label>
+              <input type="text" id="selisih_ppn" name="selisih_ppn" value="{{ old('selisih_ppn', $dokumen->selisih_ppn ? number_format($dokumen->selisih_ppn, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+            </div>
+          </div>
+
+          <!-- Divider: Data Lainnya -->
+          <div style="border-top: 2px dashed #ffc107; margin: 24px 0; padding-top: 16px;">
+            <h6 style="color: #ffc107; font-weight: 600; margin-bottom: 16px;">
+              <i class="fa-solid fa-folder-open me-2"></i>Data Lainnya
+            </h6>
+          </div>
+
+          <!-- Row 11: Tanggal Selesai Verifikasi & Jenis PPh -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tanggal_selesai_verifikasi_pajak">
+                <i class="fa-solid fa-check-circle me-1"></i>Tanggal Selesai Verifikasi Pajak
+              </label>
+              <input type="date" id="tanggal_selesai_verifikasi_pajak" name="tanggal_selesai_verifikasi_pajak" value="{{ old('tanggal_selesai_verifikasi_pajak', $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('Y-m-d') : '') }}">
+            </div>
+            <div class="form-group">
               <label for="jenis_pph">
-                <i class="fa-solid fa-percent me-1"></i>Jenis PPh
+                <i class="fa-solid fa-tag me-1"></i>Jenis PPh
               </label>
               <input type="text" id="jenis_pph" name="jenis_pph" value="{{ old('jenis_pph', $dokumen->jenis_pph) }}" placeholder="PPh 21, PPh 22, PPh 23, dll">
             </div>
+          </div>
+
+          <!-- Row 12: DPP PPh & PPN Terhutang -->
+          <div class="form-row">
             <div class="form-group">
               <label for="dpp_pph">
                 <i class="fa-solid fa-money-bill-wave me-1"></i>DPP PPh
               </label>
-              <input type="text" id="dpp_pph" name="dpp_pph" value="{{ old('dpp_pph', $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '') }}" placeholder="0">
+              <input type="text" id="dpp_pph" name="dpp_pph" value="{{ old('dpp_pph', $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
               <small class="text-muted">Dasar Pengenaan Pajak</small>
             </div>
             <div class="form-group">
               <label for="ppn_terhutang">
                 <i class="fa-solid fa-calculator me-1"></i>PPN Terhutang
               </label>
-              <input type="text" id="ppn_terhutang" name="ppn_terhutang" value="{{ old('ppn_terhutang', $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '') }}" placeholder="0">
+              <input type="text" id="ppn_terhutang" name="ppn_terhutang" value="{{ old('ppn_terhutang', $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
             </div>
           </div>
 
+          <!-- Row 13: Link Dokumen Pajak -->
           <div class="form-group">
             <label for="link_dokumen_pajak">
               <i class="fa-solid fa-link me-1"></i>Link Dokumen Pajak
@@ -697,8 +864,13 @@ function removeField(button) {
   button.parentElement.remove();
 }
 
-// Format rupiah input
-const rupiahInputs = ['nilai_rupiah', 'dpp_pph', 'ppn_terhutang'];
+// Format rupiah input - all currency fields
+const rupiahInputs = [
+  'nilai_rupiah', 'dpp_pph', 'ppn_terhutang',
+  'dpp_invoice', 'ppn_invoice', 'dpp_ppn_invoice',
+  'dpp_faktur', 'ppn_faktur', 'selisih_pajak',
+  'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'
+];
 rupiahInputs.forEach(id => {
   const input = document.getElementById(id);
   if (input) {
@@ -708,6 +880,23 @@ rupiahInputs.forEach(id => {
     });
   }
 });
+
+// Auto-calculate DPP + PPN Invoice
+const dppInvoice = document.getElementById('dpp_invoice');
+const ppnInvoice = document.getElementById('ppn_invoice');
+const dppPpnInvoice = document.getElementById('dpp_ppn_invoice');
+
+function calculateDppPpnInvoice() {
+  const dpp = parseFloat((dppInvoice?.value || '0').replace(/\./g, '')) || 0;
+  const ppn = parseFloat((ppnInvoice?.value || '0').replace(/\./g, '')) || 0;
+  const total = dpp + ppn;
+  if (dppPpnInvoice) {
+    dppPpnInvoice.value = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+}
+
+if (dppInvoice) dppInvoice.addEventListener('input', calculateDppPpnInvoice);
+if (ppnInvoice) ppnInvoice.addEventListener('input', calculateDppPpnInvoice);
 </script>
 
 @endsection

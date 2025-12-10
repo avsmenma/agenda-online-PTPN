@@ -134,16 +134,6 @@
     border-left: 4px solid #ffc107 !important;
   }
 
-  .table-enhanced tbody tr.locked-row::before {
-    content: '🔒';
-    position: absolute;
-    top: 50%;
-    left: -2px;
-    transform: translateY(-50%);
-    font-size: 16px;
-    z-index: 2;
-    opacity: 0.7;
-  }
 
   .table-enhanced td {
     padding: 14px 12px;
@@ -162,7 +152,6 @@
   .table-enhanced .col-spp,
   .table-enhanced .col-nilai,
   .table-enhanced .col-status,
-  .table-enhanced .col-deadline,
   .table-enhanced .col-action {
     text-align: center;
   }
@@ -606,19 +595,25 @@
   .table-enhanced .col-status {
     width: 160px;
     min-width: 160px;
+    max-width: 160px;
     text-align: center;
+    overflow: visible;
+    padding: 8px 4px;
+    box-sizing: border-box;
+    position: relative;
   }
-  .table-enhanced .col-deadline {
-    width: 140px;
-    min-width: 140px;
-    text-align: center;
+  
+  .table-enhanced .col-status .badge-status {
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .table-enhanced .col-action {
     width: 180px;
     min-width: 180px;
     max-width: 180px;
     text-align: center;
-    overflow: hidden;
+    overflow: visible;
     padding: 8px 4px;
     box-sizing: border-box;
     position: relative;
@@ -632,33 +627,19 @@
   .table-enhanced .col-action .action-buttons {
     max-width: 100% !important;
     width: 100% !important;
-  }
-  
-  .table-enhanced .col-action .action-row {
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-  
-  .table-enhanced .col-action .btn-action {
-    max-width: 100% !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-  
-  .table-enhanced .col-action .action-buttons {
-    max-width: 100%;
-    width: 100%;
-  }
-  
-  .table-enhanced .col-action .action-row {
-    max-width: 100%;
-    width: 100%;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
   }
   
   .table-enhanced .col-action .btn-action {
     max-width: 100% !important;
-    width: 100% !important;
+    width: auto !important;
     box-sizing: border-box !important;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .table-dokumen tbody tr.main-row {
@@ -676,102 +657,6 @@
   .table-dokumen tbody tr.main-row.selected {
     background: linear-gradient(90deg, rgba(26, 77, 62, 0.15) 0%, transparent 100%);
     border-left: 3px solid #1a4d3e;
-  }
-
-  /* Detail Row Styles */
-  .detail-row {
-    display: none;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  }
-
-  .detail-row.show {
-    display: table-row;
-    animation: slideDown 0.3s ease;
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .detail-content {
-    padding: 20px;
-    border-top: 2px solid rgba(8, 62, 64, 0.1);
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    width: 100%;
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
-
-  /* Detail Grid - 5 Column Layout from dokumensB */
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* Responsive Detail Grid - 5 columns on desktop */
-  @media (min-width: 1400px) {
-    .detail-grid {
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-    }
-  }
-
-  @media (min-width: 1200px) and (max-width: 1399px) {
-    .detail-grid {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-    }
-  }
-
-  @media (max-width: 1199px) {
-    .detail-grid {
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .detail-content {
-      padding: 16px;
-    }
-
-    .detail-grid {
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
-    }
-
-    .detail-item {
-      padding: 10px;
-    }
-
-    .detail-label {
-      font-size: 10px;
-    }
-
-    .detail-value {
-      font-size: 12px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .detail-grid {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    .detail-item {
-      padding: 8px;
-    }
   }
 
   .detail-item {
@@ -1112,29 +997,14 @@
   /* Enhanced Action Buttons matching dokumensB */
   .action-buttons {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     justify-content: center;
-    align-items: center;
-    width: 100%;
-    overflow: hidden; /* Prevent content from spilling out */
-    box-sizing: border-box;
-  }
-
-  .action-row {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
   }
 
   .btn-action {
     min-width: 44px;
     min-height: 44px;
-    padding: 8px 10px;
+    padding: 8px 12px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -1150,10 +1020,8 @@
     gap: 4px;
     text-decoration: none;
     user-select: none;
-    flex: 1;
-    max-width: 100% !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+    white-space: nowrap;
+    box-sizing: border-box;
   }
 
   .btn-action span {
@@ -1162,20 +1030,6 @@
     white-space: nowrap;
   }
 
-  /* Lock info styling - ensure it stays within action container */
-  .lock-info {
-    font-size: 10px;
-    color: #6b7280;
-    text-align: center;
-    margin-top: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background: rgba(107, 114, 128, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-  }
 
   .btn-action:hover {
     transform: translateY(-2px);
@@ -1497,7 +1351,6 @@
     .table-enhanced .col-nilai { min-width: 140px; }
     .table-enhanced .col-uraian { min-width: 280px; }
     .table-enhanced .col-status { min-width: 140px; }
-    .table-enhanced .col-deadline { min-width: 130px; }
     .table-enhanced .col-action { min-width: 160px; }
   }
 
@@ -1872,7 +1725,7 @@
 
 <!-- Enhanced Search & Filter Box -->
 <div class="search-box">
-  <form action="{{ route('dokumensPerpajakan.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
+  <form action="{{ route('dokumensPerpajakan.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3" id="filterForm">
     <div class="input-group" style="flex: 1; min-width: 300px;">
       <span class="input-group-text">
         <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -1880,16 +1733,32 @@
       <input type="text" class="form-control" name="search" placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
     </div>
     <div class="filter-section">
-      <select name="year" class="form-select">
+      <select name="year" class="form-select" onchange="this.form.submit()">
         <option value="">Semua Tahun</option>
         <option value="2025" {{ request('year') == '2025' ? 'selected' : '' }}>2025</option>
         <option value="2024" {{ request('year') == '2024' ? 'selected' : '' }}>2024</option>
         <option value="2023" {{ request('year') == '2023' ? 'selected' : '' }}>2023</option>
       </select>
     </div>
-    <button type="submit" class="btn-filter">
-      <i class="fa-solid fa-filter me-2"></i>Filter
-    </button>
+    <div class="filter-section">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">Semua Status</option>
+        <option value="terkunci" {{ request('status') == 'terkunci' ? 'selected' : '' }}>🔒 Terkunci</option>
+        <option value="sedang_diproses" {{ request('status') == 'sedang_diproses' ? 'selected' : '' }}>⏳ Sedang Diproses</option>
+        <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>✓ Selesai</option>
+        <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>📤 Terkirim ke Akutansi</option>
+        <option value="belum_diproses" {{ request('status') == 'belum_diproses' ? 'selected' : '' }}>⏳ Belum Diproses</option>
+      </select>
+    </div>
+    <!-- Preserve per_page and columns parameters -->
+    @if(request('per_page'))
+      <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+    @endif
+    @if(request('columns'))
+      @foreach(request('columns') as $column)
+        <input type="hidden" name="columns[]" value="{{ $column }}">
+      @endforeach
+    @endif
     <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
       <i class="fa-solid fa-table-columns me-2"></i>
       Kustomisasi Kolom Tabel
@@ -1955,7 +1824,6 @@
           @endif
         @endforeach
         <th class="col-status">Status</th>
-        <th class="col-deadline">Deadline</th>
         <th class="col-action">Aksi</th>
       </tr>
     </thead>
@@ -2000,7 +1868,7 @@
           }
         @endphp
         <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}" onclick="handleRowClick(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen">
-          <td style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
+          <td class="col-no" style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
             <td class="col-{{ $col }}">
@@ -2074,97 +1942,62 @@
             </td>
             @endif
           @endforeach
-          <td style="text-align: center;">
-            @if($dokumen->status == 'sent_to_akutansi')
+          <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
+            @if($isLocked)
+              <span class="badge-status badge-locked">🔒 Terkunci</span>
+            @elseif($dokumen->status == 'sent_to_akutansi')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
             @elseif($dokumen->status_perpajakan == 'selesai')
               <span class="badge-status badge-selesai">✓ Selesai</span>
             @elseif($dokumen->status_perpajakan == 'sedang_diproses')
               <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @else
-              @if($isLocked)
-                <span class="badge-status badge-locked">🔒 Terkunci</span>
-              @else
-                <span class="badge-status badge-proses">⏳ Belum Diproses</span>
-              @endif
+              <span class="badge-status badge-proses">⏳ Belum Diproses</span>
             @endif
           </td>
-          <td>
-            @if($dokumen->deadline_at)
-              <div class="deadline-card" data-deadline="{{ $dokumen->deadline_at->format('Y-m-d H:i:s') }}" data-sent="{{ $isSentToAkutansi ? 'true' : 'false' }}">
-                <div class="deadline-time">
-                  <i class="fa-solid fa-clock"></i>
-                  <span>{{ $dokumen->deadline_at->format('d M Y, H:i') }}</span>
-                </div>
-                <div class="deadline-indicator">
-                  <i class="fa-solid"></i>
-                  <span class="status-text">AMAN</span>
-                </div>
-                @if($dokumen->deadline_note)
-                  <div class="deadline-note">{{ Str::limit($dokumen->deadline_note, 50) }}</div>
-                @endif
-              </div>
-            @else
-              <span style="color: #9ca3af;">-</span>
-            @endif
-          </td>
-          <td onclick="event.stopPropagation()">
+          <td class="col-action" onclick="event.stopPropagation()">
             <div class="action-buttons">
               @if($isLocked)
-                <!-- Locked state - hanya tampilkan Set Deadline dengan keterangan -->
+                <!-- Locked state - tampilkan button Set Deadline -->
                 @unless($isSentToAkutansi)
-                  <div class="action-row">
-                    <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Dokumen terkunci - Tetapkan Deadline untuk membuka editing">
-                      <i class="fa-solid fa-lock"></i>
-                      <span>Set Deadline</span>
-                    </button>
-                  </div>
-                  <div class="lock-info">
-                    <i class="fa-solid fa-info-circle"></i> Dokumen dikunci
-                  </div>
+                  <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>Set Deadline</span>
+                  </button>
                 @endunless
+              @elseif($isSentToAkutansi)
+                <!-- Document already sent - show sent status -->
+                <button class="btn-action btn-edit locked" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
+                  <i class="fa-solid fa-check-circle"></i>
+                  <span>Terkirim</span>
+                </button>
               @else
                 <!-- Unlocked state - buttons enabled -->
-                @unless($isSentToAkutansi)
-                  <div class="action-row">
-                    <a href="{{ route('dokumensPerpajakan.edit', $dokumen->id) }}" title="Edit Dokumen" style="text-decoration: none;">
-                      <button class="btn-action btn-edit">
-                        <i class="fa-solid fa-pen"></i>
-                        <span>Edit</span>
-                      </button>
-                    </a>
-                  </div>
-                @endunless
-                <div class="action-row">
-                  <button
-                    type="button"
-                    class="btn-action btn-send"
-                    onclick="handleSendToAkutansi({{ $dokumen->id }})"
-                    data-doc-id="{{ $dokumen->id }}"
-                    data-missing-fields="{{ e(implode('||', $missingPerpajakanFields)) }}"
-                    title="{{ $sendButtonTooltip }}"
-                    @if(!$canSendToAkutansi) disabled @endif
-                  >
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Kirim</span>
+                <a href="{{ route('dokumensPerpajakan.edit', $dokumen->id) }}" title="Edit Dokumen">
+                  <button class="btn-action btn-edit">
+                    <i class="fa-solid fa-pen"></i>
+                    <span>Edit</span>
                   </button>
-                </div>
+                </a>
+                <button
+                  type="button"
+                  class="btn-action btn-send"
+                  onclick="handleSendToAkutansi({{ $dokumen->id }})"
+                  data-doc-id="{{ $dokumen->id }}"
+                  data-missing-fields="{{ e(implode('||', $missingPerpajakanFields)) }}"
+                  title="{{ $sendButtonTooltip }}"
+                  @if(!$canSendToAkutansi) disabled @endif
+                >
+                  <i class="fa-solid fa-paper-plane"></i>
+                  <span>Kirim</span>
+                </button>
               @endif
-            </div>
-          </td>
-        </tr>
-        <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-          <td colspan="{{ count($selectedColumns) + 4 }}">
-            <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
-              <div class="text-center p-4">
-                <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-              </div>
             </div>
           </td>
         </tr>
       @empty
         <tr>
-          <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center" style="padding: 40px;">
+          <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center" style="padding: 40px;">
             <i class="fa-solid fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 16px;"></i>
             <p style="color: #999; font-size: 14px;">Belum ada dokumen</p>
           </td>
@@ -2514,7 +2347,7 @@ function handleRowClick(event, docId) {
   const selectedText = selection.toString().trim();
   
   if (selectedText.length > 0) {
-    // User sedang menyeleksi teks, jangan toggle detail
+    // User sedang menyeleksi teks, jangan buka modal
     event.preventDefault();
     event.stopPropagation();
     return false;
@@ -2540,75 +2373,141 @@ function handleRowClick(event, docId) {
     return true;
   }
   
-  // Jika aman, panggil toggleDetail
-  toggleDetail(docId);
+  // Buka modal view detail dokumen
+  openViewDocumentModal(docId);
   return true;
 }
 
-// Toggle detail row
-function toggleDetail(docId) {
-  const detailRow = document.getElementById('detail-' + docId);
-  const mainRow = event.currentTarget;
-
-  // Close all other detail rows first
-  const allDetailRows = document.querySelectorAll('.detail-row.show');
-  const allMainRows = document.querySelectorAll('.main-row.selected');
-
-  allDetailRows.forEach(row => {
-    if (row.id !== 'detail-' + docId) {
-      row.classList.remove('show');
+// Open View Document Modal
+function openViewDocumentModal(docId) {
+  // Set document ID
+  document.getElementById('view-dokumen-id').value = docId;
+  
+  // Set edit button URL
+  document.getElementById('view-edit-btn').href = `/dokumensPerpajakan/${docId}/edit`;
+  
+  // Load document data via AJAX
+  fetch(`/dokumensPerpajakan/${docId}/detail`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
     }
-  });
-
-  allMainRows.forEach(row => {
-    if (row !== mainRow) {
-      row.classList.remove('selected');
-    }
-  });
-
-  // Toggle current detail row
-  const isShowing = detailRow.classList.contains('show');
-
-  if (isShowing) {
-    detailRow.classList.remove('show');
-    mainRow.classList.remove('selected');
-  } else {
-    loadDocumentDetail(docId);
-    detailRow.classList.add('show');
-    mainRow.classList.add('selected');
-
-    setTimeout(() => {
-      detailRow.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      });
-    }, 100);
-  }
-}
-
-// Load document detail via AJAX
-function loadDocumentDetail(docId) {
-  const detailContent = document.getElementById('detail-content-' + docId);
-
-  detailContent.innerHTML = `
-    <div class="text-center p-4">
-      <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-    </div>
-  `;
-
-  fetch(`/dokumensPerpajakan/${docId}/detail`)
-    .then(response => response.text())
-    .then(html => {
-      detailContent.innerHTML = html;
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.dokumen) {
+        const dok = data.dokumen;
+        
+        // Identitas Dokumen
+        document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
+        document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
+        document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
+        document.getElementById('view-bulan').textContent = dok.bulan || '-';
+        document.getElementById('view-tahun').textContent = dok.tahun || '-';
+        document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
+        document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
+        document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
+        document.getElementById('view-kategori').textContent = dok.kategori || '-';
+        
+        // Detail Keuangan & Vendor
+        document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
+        document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+        document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+        document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
+        document.getElementById('view-kebun').textContent = dok.kebun || '-';
+        
+        // Referensi Pendukung
+        document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
+        document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
+        document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
+        document.getElementById('view-nomor-mirror').textContent = dok.nomor_mirror || '-';
+        document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
+        document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+        
+        // Nomor PO & PR
+        const poNumbers = dok.dokumen_pos ? dok.dokumen_pos.map(po => po.nomor_po).join(', ') : '-';
+        const prNumbers = dok.dokumen_prs ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ') : '-';
+        document.getElementById('view-nomor-po').textContent = poNumbers || '-';
+        document.getElementById('view-nomor-pr').textContent = prNumbers || '-';
+        
+        // Informasi Perpajakan
+        document.getElementById('view-komoditi-perpajakan').textContent = dok.komoditi_perpajakan || '-';
+        document.getElementById('view-status-perpajakan').textContent = formatStatusPerpajakan(dok.status_perpajakan);
+        document.getElementById('view-npwp').textContent = dok.npwp || '-';
+        document.getElementById('view-alamat-pembeli').textContent = dok.alamat_pembeli || '-';
+        document.getElementById('view-no-kontrak').textContent = dok.no_kontrak || '-';
+        document.getElementById('view-no-invoice').textContent = dok.no_invoice || '-';
+        
+        // Data Invoice
+        document.getElementById('view-tanggal-invoice').textContent = dok.tanggal_invoice ? formatDate(dok.tanggal_invoice) : '-';
+        document.getElementById('view-dpp-invoice').textContent = dok.dpp_invoice ? formatNumber(dok.dpp_invoice) : '-';
+        document.getElementById('view-ppn-invoice').textContent = dok.ppn_invoice ? formatNumber(dok.ppn_invoice) : '-';
+        document.getElementById('view-dpp-ppn-invoice').textContent = dok.dpp_ppn_invoice ? formatNumber(dok.dpp_ppn_invoice) : '-';
+        document.getElementById('view-tanggal-pengajuan-pajak').textContent = dok.tanggal_pengajuan_pajak ? formatDate(dok.tanggal_pengajuan_pajak) : '-';
+        
+        // Data Faktur
+        document.getElementById('view-no-faktur').textContent = dok.no_faktur || '-';
+        document.getElementById('view-tanggal-faktur').textContent = dok.tanggal_faktur ? formatDate(dok.tanggal_faktur) : '-';
+        document.getElementById('view-dpp-faktur').textContent = dok.dpp_faktur ? formatNumber(dok.dpp_faktur) : '-';
+        document.getElementById('view-ppn-faktur').textContent = dok.ppn_faktur ? formatNumber(dok.ppn_faktur) : '-';
+        document.getElementById('view-selisih-pajak').textContent = dok.selisih_pajak ? formatNumber(dok.selisih_pajak) : '-';
+        document.getElementById('view-keterangan-pajak').textContent = dok.keterangan_pajak || '-';
+        
+        // Data Penggantian
+        document.getElementById('view-penggantian-pajak').textContent = dok.penggantian_pajak ? formatNumber(dok.penggantian_pajak) : '-';
+        document.getElementById('view-dpp-penggantian').textContent = dok.dpp_penggantian ? formatNumber(dok.dpp_penggantian) : '-';
+        document.getElementById('view-ppn-penggantian').textContent = dok.ppn_penggantian ? formatNumber(dok.ppn_penggantian) : '-';
+        document.getElementById('view-selisih-ppn').textContent = dok.selisih_ppn ? formatNumber(dok.selisih_ppn) : '-';
+        
+        // Data Lainnya
+        document.getElementById('view-tanggal-selesai-verifikasi-pajak').textContent = dok.tanggal_selesai_verifikasi_pajak ? formatDate(dok.tanggal_selesai_verifikasi_pajak) : '-';
+        document.getElementById('view-jenis-pph').textContent = dok.jenis_pph || '-';
+        document.getElementById('view-dpp-pph').textContent = dok.dpp_pph ? formatNumber(dok.dpp_pph) : '-';
+        document.getElementById('view-ppn-terhutang').textContent = dok.ppn_terhutang ? formatNumber(dok.ppn_terhutang) : '-';
+        
+        // Link Dokumen Pajak
+        const linkEl = document.getElementById('view-link-dokumen-pajak');
+        if (dok.link_dokumen_pajak) {
+          linkEl.innerHTML = `<a href="${dok.link_dokumen_pajak}" target="_blank" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-external-link me-1"></i>${dok.link_dokumen_pajak}</a>`;
+        } else {
+          linkEl.textContent = '-';
+        }
+      }
     })
     .catch(error => {
-      console.error('Error:', error);
-      detailContent.innerHTML = `
-        <div class="text-center p-4 text-danger">
-          <i class="fa-solid fa-exclamation-triangle me-2"></i> Gagal memuat detail dokumen.
-        </div>
-      `;
+      console.error('Error loading document:', error);
     });
+  
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+  modal.show();
+}
+
+// Helper functions for formatting
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatNumber(num) {
+  if (!num) return '-';
+  return new Intl.NumberFormat('id-ID').format(num);
+}
+
+function formatStatusPerpajakan(status) {
+  if (!status) return '-';
+  switch(status) {
+    case 'sedang_diproses': return 'Sedang Diproses';
+    case 'selesai': return 'Selesai';
+    default: return status;
+  }
 }
 
 function openSetDeadlineModal(docId) {
@@ -3473,5 +3372,470 @@ document.addEventListener('click', function(e) {
   }
 });
 </script>
+
+<!-- Modal View Document Detail -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
+    <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+      <!-- Sticky Header -->
+      <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+        <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-file-lines me-2"></i>
+          Detail Dokumen Lengkap
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Scrollable Body -->
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+        <input type="hidden" id="view-dokumen-id">
+        
+        <!-- Section 1: Identitas Dokumen -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-id-card"></i>
+              IDENTITAS DOKUMEN
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Nomor Agenda</label>
+                <div class="detail-value" id="view-nomor-agenda">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Nomor SPP</label>
+                <div class="detail-value" id="view-nomor-spp">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal SPP</label>
+                <div class="detail-value" id="view-tanggal-spp">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Bulan</label>
+                <div class="detail-value" id="view-bulan">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tahun</label>
+                <div class="detail-value" id="view-tahun">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Masuk</label>
+                <div class="detail-value" id="view-tanggal-masuk">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Jenis Dokumen</label>
+                <div class="detail-value" id="view-jenis-dokumen">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Sub-Bagian Pekerjaan</label>
+                <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Kategori Investasi</label>
+                <div class="detail-value" id="view-kategori">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Detail Keuangan & Vendor -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-money-bill-wave"></i>
+              DETAIL KEUANGAN & VENDOR
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="detail-item">
+                <label class="detail-label">Uraian SPP</label>
+                <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nilai Rupiah</label>
+                <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Jenis Pembayaran</label>
+                <div class="detail-value" id="view-jenis-pembayaran">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Dibayar Kepada (Vendor)</label>
+                <div class="detail-value" id="view-dibayar-kepada">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Kebun / Unit Kerja</label>
+                <div class="detail-value" id="view-kebun">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Referensi Pendukung -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-file-contract"></i>
+              REFERENSI PENDUKUNG
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">No. SPK</label>
+                <div class="detail-value" id="view-no-spk">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal SPK</label>
+                <div class="detail-value" id="view-tanggal-spk">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Berakhir SPK</label>
+                <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">No. Mirror</label>
+                <div class="detail-value" id="view-nomor-mirror">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No. Berita Acara</label>
+                <div class="detail-value" id="view-no-berita-acara">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Berita Acara</label>
+                <div class="detail-value" id="view-tanggal-berita-acara">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Nomor PO & PR -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-hashtag"></i>
+              NOMOR PO & PR
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nomor PO</label>
+                <div class="detail-value" id="view-nomor-po">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nomor PR</label>
+                <div class="detail-value" id="view-nomor-pr">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Informasi Perpajakan -->
+        <div class="form-section mb-4" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 20px; border: 2px solid #ffc107;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #92400e; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+              INFORMASI PERPAJAKAN
+              <span style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">KHUSUS PERPAJAKAN</span>
+            </h6>
+          </div>
+          
+          <!-- Row 1: Komoditi & Status -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Komoditi</label>
+                <div class="detail-value" id="view-komoditi-perpajakan">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Status Team Perpajakan</label>
+                <div class="detail-value" id="view-status-perpajakan">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: NPWP & Alamat -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">NPWP Pembeli</label>
+                <div class="detail-value" id="view-npwp">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Alamat</label>
+                <div class="detail-value" id="view-alamat-pembeli">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: No Kontrak & No Invoice -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No Kontrak</label>
+                <div class="detail-value" id="view-no-kontrak">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No Invoice</label>
+                <div class="detail-value" id="view-no-invoice">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Invoice Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-file-invoice me-2"></i>Data Invoice
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Invoice</label>
+                <div class="detail-value" id="view-tanggal-invoice">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP Invoice</label>
+                <div class="detail-value" id="view-dpp-invoice">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">PPN Invoice</label>
+                <div class="detail-value" id="view-ppn-invoice">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP + PPN Invoice</label>
+                <div class="detail-value" id="view-dpp-ppn-invoice">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Pengajuan</label>
+                <div class="detail-value" id="view-tanggal-pengajuan-pajak">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Faktur Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-receipt me-2"></i>Data Faktur Pajak
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No Faktur</label>
+                <div class="detail-value" id="view-no-faktur">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Faktur</label>
+                <div class="detail-value" id="view-tanggal-faktur">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">DPP Faktur</label>
+                <div class="detail-value" id="view-dpp-faktur">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">PPN Faktur</label>
+                <div class="detail-value" id="view-ppn-faktur">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Selisih</label>
+                <div class="detail-value" id="view-selisih-pajak">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <div class="detail-item">
+                <label class="detail-label">Keterangan</label>
+                <div class="detail-value" id="view-keterangan-pajak" style="white-space: pre-wrap;">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Penggantian Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-arrows-rotate me-2"></i>Data Penggantian
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Penggantian</label>
+                <div class="detail-value" id="view-penggantian-pajak">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP Penggantian</label>
+                <div class="detail-value" id="view-dpp-penggantian">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">PPN Penggantian</label>
+                <div class="detail-value" id="view-ppn-penggantian">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Selisih PPN</label>
+                <div class="detail-value" id="view-selisih-ppn">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Lainnya Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-folder-open me-2"></i>Data Lainnya
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Selesai Verifikasi Pajak</label>
+                <div class="detail-value" id="view-tanggal-selesai-verifikasi-pajak">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Jenis PPh</label>
+                <div class="detail-value" id="view-jenis-pph">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">DPP PPh</label>
+                <div class="detail-value" id="view-dpp-pph">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">PPN Terhutang</label>
+                <div class="detail-value" id="view-ppn-terhutang">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="detail-item">
+                <label class="detail-label">Link Dokumen Pajak</label>
+                <div class="detail-value" id="view-link-dokumen-pajak">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sticky Footer -->
+      <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+        <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
+          <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Detail Item Styles for View Modal */
+.detail-item {
+  margin-bottom: 8px;
+}
+
+.detail-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #1f2937;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+</style>
 
 @endsection

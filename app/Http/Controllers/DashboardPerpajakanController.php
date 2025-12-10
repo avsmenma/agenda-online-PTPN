@@ -130,6 +130,49 @@ class DashboardPerpajakanController extends Controller
             $query->where('tahun', $request->year);
         }
 
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            switch($request->status) {
+                case 'terkunci':
+                    // Dokumen yang memiliki deadline dan belum expired atau sudah expired tapi belum selesai
+                    $query->whereNotNull('deadline_at')
+                          ->where(function($q) {
+                              $q->where('deadline_at', '>', now())
+                                ->orWhere(function($subQ) {
+                                    $subQ->where('deadline_at', '<=', now())
+                                         ->where('status_perpajakan', '!=', 'selesai')
+                                         ->where('status', '!=', 'sent_to_akutansi');
+                                });
+                          });
+                    break;
+                case 'sedang_diproses':
+                    // Dokumen yang sedang diproses oleh perpajakan
+                    $query->where('status_perpajakan', 'sedang_diproses')
+                          ->where('current_handler', 'perpajakan')
+                          ->where('status', '!=', 'sent_to_akutansi');
+                    break;
+                case 'selesai':
+                    // Dokumen yang sudah selesai diproses oleh perpajakan
+                    $query->where('status_perpajakan', 'selesai')
+                          ->where('status', '!=', 'sent_to_akutansi');
+                    break;
+                case 'terkirim_akutansi':
+                    // Dokumen yang sudah terkirim ke akutansi
+                    $query->where('status', 'sent_to_akutansi');
+                    break;
+                case 'belum_diproses':
+                    // Dokumen yang belum diproses (status_perpajakan null atau empty)
+                    $query->where(function($q) {
+                        $q->whereNull('status_perpajakan')
+                          ->orWhere('status_perpajakan', '')
+                          ->orWhere('status_perpajakan', 'belum_diproses');
+                    })
+                    ->where('current_handler', 'perpajakan')
+                    ->where('status', '!=', 'sent_to_akutansi');
+                    break;
+            }
+        }
+
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->orderByRaw("CASE
                 WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
@@ -331,6 +374,67 @@ class DashboardPerpajakanController extends Controller
                 $ppnTerhutang = !empty($ppnTerhutang) ? (float) $ppnTerhutang : null;
             }
 
+            // Format new perpajakan extended fields (remove formatting dots)
+            $dppInvoice = null;
+            if (!empty($request->dpp_invoice)) {
+                $dppInvoice = preg_replace('/[^0-9]/', '', $request->dpp_invoice);
+                $dppInvoice = !empty($dppInvoice) ? (float) $dppInvoice : null;
+            }
+
+            $ppnInvoice = null;
+            if (!empty($request->ppn_invoice)) {
+                $ppnInvoice = preg_replace('/[^0-9]/', '', $request->ppn_invoice);
+                $ppnInvoice = !empty($ppnInvoice) ? (float) $ppnInvoice : null;
+            }
+
+            $dppPpnInvoice = null;
+            if (!empty($request->dpp_ppn_invoice)) {
+                $dppPpnInvoice = preg_replace('/[^0-9]/', '', $request->dpp_ppn_invoice);
+                $dppPpnInvoice = !empty($dppPpnInvoice) ? (float) $dppPpnInvoice : null;
+            }
+
+            $dppFaktur = null;
+            if (!empty($request->dpp_faktur)) {
+                $dppFaktur = preg_replace('/[^0-9]/', '', $request->dpp_faktur);
+                $dppFaktur = !empty($dppFaktur) ? (float) $dppFaktur : null;
+            }
+
+            $ppnFaktur = null;
+            if (!empty($request->ppn_faktur)) {
+                $ppnFaktur = preg_replace('/[^0-9]/', '', $request->ppn_faktur);
+                $ppnFaktur = !empty($ppnFaktur) ? (float) $ppnFaktur : null;
+            }
+
+            $selisihPajak = null;
+            if (!empty($request->selisih_pajak)) {
+                $selisihPajak = preg_replace('/[^0-9]/', '', $request->selisih_pajak);
+                $selisihPajak = !empty($selisihPajak) ? (float) $selisihPajak : null;
+            }
+
+            $penggantianPajak = null;
+            if (!empty($request->penggantian_pajak)) {
+                $penggantianPajak = preg_replace('/[^0-9]/', '', $request->penggantian_pajak);
+                $penggantianPajak = !empty($penggantianPajak) ? (float) $penggantianPajak : null;
+            }
+
+            $dppPenggantian = null;
+            if (!empty($request->dpp_penggantian)) {
+                $dppPenggantian = preg_replace('/[^0-9]/', '', $request->dpp_penggantian);
+                $dppPenggantian = !empty($dppPenggantian) ? (float) $dppPenggantian : null;
+            }
+
+            $ppnPenggantian = null;
+            if (!empty($request->ppn_penggantian)) {
+                $ppnPenggantian = preg_replace('/[^0-9]/', '', $request->ppn_penggantian);
+                $ppnPenggantian = !empty($ppnPenggantian) ? (float) $ppnPenggantian : null;
+            }
+
+            $selisihPpn = null;
+            if (!empty($request->selisih_ppn)) {
+                $selisihPpn = preg_replace('/[^0-9]/', '', $request->selisih_ppn);
+                $selisihPpn = !empty($selisihPpn) ? (float) $selisihPpn : null;
+            }
+
             // Update dokumen
             // Note: kategori and jenis_dokumen are required fields, so use existing value if not provided
             $updateData = [
@@ -364,6 +468,24 @@ class DashboardPerpajakanController extends Controller
                 'dpp_pph' => $dppPph,
                 'ppn_terhutang' => $ppnTerhutang,
                 'link_dokumen_pajak' => $request->link_dokumen_pajak,
+                // Perpajakan Extended Fields
+                'komoditi_perpajakan' => $request->komoditi_perpajakan,
+                'alamat_pembeli' => $request->alamat_pembeli,
+                'no_kontrak' => $request->no_kontrak,
+                'no_invoice' => $request->no_invoice,
+                'tanggal_invoice' => $request->tanggal_invoice,
+                'dpp_invoice' => $dppInvoice,
+                'ppn_invoice' => $ppnInvoice,
+                'dpp_ppn_invoice' => $dppPpnInvoice,
+                'tanggal_pengajuan_pajak' => $request->tanggal_pengajuan_pajak,
+                'dpp_faktur' => $dppFaktur,
+                'ppn_faktur' => $ppnFaktur,
+                'selisih_pajak' => $selisihPajak,
+                'keterangan_pajak' => $request->keterangan_pajak,
+                'penggantian_pajak' => $penggantianPajak,
+                'dpp_penggantian' => $dppPenggantian,
+                'ppn_penggantian' => $ppnPenggantian,
+                'selisih_ppn' => $selisihPpn,
             ];
 
             // Store old values for logging
@@ -560,13 +682,77 @@ class DashboardPerpajakanController extends Controller
         $allowedStatuses = ['sent_to_perpajakan', 'returned_to_department', 'sent_to_akutansi'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+            }
             return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
         }
 
         // Load required relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
-        // Return HTML partial for detail view
+        // If request wants JSON (for modal view)
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'dokumen' => [
+                    'id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'nomor_spp' => $dokumen->nomor_spp,
+                    'tanggal_spp' => $dokumen->tanggal_spp,
+                    'bulan' => $dokumen->bulan,
+                    'tahun' => $dokumen->tahun,
+                    'tanggal_masuk' => $dokumen->tanggal_masuk,
+                    'jenis_dokumen' => $dokumen->jenis_dokumen,
+                    'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                    'kategori' => $dokumen->kategori,
+                    'uraian_spp' => $dokumen->uraian_spp,
+                    'nilai_rupiah' => $dokumen->nilai_rupiah,
+                    'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                    'dibayar_kepada' => $dokumen->dibayarKepadas->count() > 0 
+                        ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') 
+                        : $dokumen->dibayar_kepada,
+                    'kebun' => $dokumen->kebun,
+                    'no_spk' => $dokumen->no_spk,
+                    'tanggal_spk' => $dokumen->tanggal_spk,
+                    'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
+                    'nomor_mirror' => $dokumen->nomor_mirror,
+                    'no_berita_acara' => $dokumen->no_berita_acara,
+                    'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
+                    'dokumen_pos' => $dokumen->dokumenPos->map(fn($po) => ['nomor_po' => $po->nomor_po]),
+                    'dokumen_prs' => $dokumen->dokumenPrs->map(fn($pr) => ['nomor_pr' => $pr->nomor_pr]),
+                    // Perpajakan fields
+                    'komoditi_perpajakan' => $dokumen->komoditi_perpajakan,
+                    'status_perpajakan' => $dokumen->status_perpajakan,
+                    'npwp' => $dokumen->npwp,
+                    'alamat_pembeli' => $dokumen->alamat_pembeli,
+                    'no_kontrak' => $dokumen->no_kontrak,
+                    'no_invoice' => $dokumen->no_invoice,
+                    'tanggal_invoice' => $dokumen->tanggal_invoice,
+                    'dpp_invoice' => $dokumen->dpp_invoice,
+                    'ppn_invoice' => $dokumen->ppn_invoice,
+                    'dpp_ppn_invoice' => $dokumen->dpp_ppn_invoice,
+                    'tanggal_pengajuan_pajak' => $dokumen->tanggal_pengajuan_pajak,
+                    'no_faktur' => $dokumen->no_faktur,
+                    'tanggal_faktur' => $dokumen->tanggal_faktur,
+                    'dpp_faktur' => $dokumen->dpp_faktur,
+                    'ppn_faktur' => $dokumen->ppn_faktur,
+                    'selisih_pajak' => $dokumen->selisih_pajak,
+                    'keterangan_pajak' => $dokumen->keterangan_pajak,
+                    'penggantian_pajak' => $dokumen->penggantian_pajak,
+                    'dpp_penggantian' => $dokumen->dpp_penggantian,
+                    'ppn_penggantian' => $dokumen->ppn_penggantian,
+                    'selisih_ppn' => $dokumen->selisih_ppn,
+                    'tanggal_selesai_verifikasi_pajak' => $dokumen->tanggal_selesai_verifikasi_pajak,
+                    'jenis_pph' => $dokumen->jenis_pph,
+                    'dpp_pph' => $dokumen->dpp_pph,
+                    'ppn_terhutang' => $dokumen->ppn_terhutang,
+                    'link_dokumen_pajak' => $dokumen->link_dokumen_pajak,
+                ]
+            ]);
+        }
+
+        // Return HTML partial for detail view (legacy)
         $html = $this->generateDocumentDetailHtml($dokumen);
 
         return response($html);
