@@ -10,6 +10,7 @@ use App\Models\DibayarKepada;
 use App\Helpers\SearchHelper;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardPerpajakanController extends Controller
 {
@@ -237,24 +238,48 @@ class DashboardPerpajakanController extends Controller
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
 
-        // If columns are provided in request, save to session
+        // If columns are provided in request, save to database and session
         if ($request->has('columns') && !empty($selectedColumns)) {
+            // Save to database (permanent)
+            $user = Auth::user();
+            if ($user) {
+                $preferences = $user->table_columns_preferences ?? [];
+                $preferences['perpajakan'] = $selectedColumns;
+                $user->table_columns_preferences = $preferences;
+                $user->save();
+            }
+            // Also save to session for backward compatibility
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         } else {
-            // Load from session if available, and filter out 'status'
-            $selectedColumns = session('perpajakan_dokumens_table_columns', [
+            // Load from database first (permanent), then fallback to session, then default
+            $user = Auth::user();
+            $defaultColumns = [
                 'nomor_agenda',
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
                 'nomor_mirror'
-            ]);
-            // Filter out 'status' and 'keterangan' if they exist in session
+            ];
+            
+            if ($user && isset($user->table_columns_preferences['perpajakan'])) {
+                $selectedColumns = $user->table_columns_preferences['perpajakan'];
+            } else {
+                // Fallback to session if available
+                $selectedColumns = session('perpajakan_dokumens_table_columns', $defaultColumns);
+            }
+            
+            // Filter out 'status' and 'keterangan' if they exist
             $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
-            // Update session to remove 'status' if it was present
+            
+            // If empty after filtering, use default
+            if (empty($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
+            
+            // Update session to keep it in sync
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         }
 
@@ -1318,13 +1343,32 @@ class DashboardPerpajakanController extends Controller
         $selectedColumns = $request->get('columns', []);
 
         // Base query - only documents that reached Perpajakan
-        // Logic similar to dokumens() but broader
+        // Only show documents where current_handler is 'perpajakan' OR 
+        // documents that have been sent to perpajakan (status = 'sent_to_perpajakan' AND current_handler is not 'ibuB')
+        // OR documents that have been processed by perpajakan and moved forward
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-                ->orWhere('status', 'sent_to_perpajakan')
-                ->orWhere('status', 'sedang diproses')
-                ->orWhere('status', 'selesai')
-                ->orWhere('status', 'sent_to_akutansi');
+                ->orWhere(function($subQ) {
+                    // Documents sent to perpajakan (not still at ibuB)
+                    $subQ->where('status', 'sent_to_perpajakan')
+                         ->where('current_handler', '!=', 'ibuB')
+                         ->whereNotNull('sent_to_perpajakan_at');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents being processed by perpajakan
+                    $subQ->where('status', 'sedang diproses')
+                         ->where('current_handler', 'perpajakan');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents that have been processed by perpajakan and moved forward
+                    $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
+                         ->whereNotNull('processed_perpajakan_at');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents returned from perpajakan (for tracking)
+                    $subQ->where('status', 'returned_to_department')
+                         ->whereNotNull('returned_from_perpajakan_at');
+                });
         });
 
         if ($year) {
@@ -1365,12 +1409,30 @@ class DashboardPerpajakanController extends Controller
         // Helper for stats
 
         // Base Query for Stats (Respects Year/Month, ignores Status Filter to show breakdown)
+        // Same logic as main query to ensure consistency
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-                ->orWhere('status', 'sent_to_perpajakan')
-                ->orWhere('status', 'sedang diproses')
-                ->orWhere('status', 'selesai')
-                ->orWhere('status', 'sent_to_akutansi');
+                ->orWhere(function($subQ) {
+                    // Documents sent to perpajakan (not still at ibuB)
+                    $subQ->where('status', 'sent_to_perpajakan')
+                         ->where('current_handler', '!=', 'ibuB')
+                         ->whereNotNull('sent_to_perpajakan_at');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents being processed by perpajakan
+                    $subQ->where('status', 'sedang diproses')
+                         ->where('current_handler', 'perpajakan');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents that have been processed by perpajakan and moved forward
+                    $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
+                         ->whereNotNull('processed_perpajakan_at');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents returned from perpajakan (for tracking)
+                    $subQ->where('status', 'returned_to_department')
+                         ->whereNotNull('returned_from_perpajakan_at');
+                });
         });
         if ($year) {
             // Filter by year using tanggal_invoice if available, otherwise fallback to created_at
@@ -1411,6 +1473,29 @@ class DashboardPerpajakanController extends Controller
         // Column Definitions - Extended with all Perpajakan-specific fields
         // Column Definitions - Extended with all Perpajakan-specific fields
         $availableColumns = $this->getAvailableColumns('normal');
+        
+        // Filter out nomor_mirror and nomor_miro from selectedColumns if present
+        if (is_array($selectedColumns)) {
+            $selectedColumns = array_filter($selectedColumns, function($col) {
+                return $col !== 'nomor_mirror' && $col !== 'nomor_miro';
+            });
+            $selectedColumns = array_values($selectedColumns);
+        } elseif (is_string($selectedColumns) && !empty($selectedColumns)) {
+            $columns = explode(',', $selectedColumns);
+            $columns = array_map('trim', $columns);
+            $selectedColumns = array_filter($columns, function($col) {
+                return $col !== 'nomor_mirror' && $col !== 'nomor_miro';
+            });
+            $selectedColumns = array_values($selectedColumns);
+        }
+        
+        // Ensure selectedColumns only contains valid columns from availableColumns
+        if (is_array($selectedColumns)) {
+            $selectedColumns = array_filter($selectedColumns, function($col) use ($availableColumns) {
+                return isset($availableColumns[$col]);
+            });
+            $selectedColumns = array_values($selectedColumns);
+        }
 
         return view('perpajakan.export.index', [
             'title' => 'Export Data Perpajakan',
@@ -1454,8 +1539,6 @@ class DashboardPerpajakanController extends Controller
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'Tanggal SPK',
             'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
-            'nomor_mirror' => 'Nomor Mirror',
-            'nomor_miro' => 'Nomor MIRO',
             // Status & Workflow
             'status' => 'Status',
             'current_handler' => 'Handler Saat Ini',
@@ -1551,15 +1634,22 @@ class DashboardPerpajakanController extends Controller
         $mode = $request->query('mode', 'dashboard');
         $query = $this->buildQuery($mode, $request);
 
+        // Handle columns from request - can be array or comma-separated string
         $selectedColumns = $request->input('columns', '');
         $availableColumns = $this->getAvailableColumns($mode);
         
         if ($selectedColumns) {
-            $columns = explode(',', $selectedColumns);
-            $columns = array_map('trim', $columns);
-            // Filter out invalid columns - only keep columns that exist in availableColumns
+            // Handle both array and string formats
+            if (is_array($selectedColumns)) {
+                $columns = $selectedColumns;
+            } else {
+                $columns = explode(',', $selectedColumns);
+                $columns = array_map('trim', $columns);
+            }
+            
+            // Filter out invalid columns and nomor_mirror/nomor_miro
             $columns = array_filter($columns, function($col) use ($availableColumns) {
-                return isset($availableColumns[$col]);
+                return isset($availableColumns[$col]) && $col !== 'nomor_mirror' && $col !== 'nomor_miro';
             });
             // Re-index array
             $columns = array_values($columns);
@@ -1668,6 +1758,31 @@ class DashboardPerpajakanController extends Controller
         }
 
         $html .= '</table></body></html>';
+
+        $exportType = $request->input('export', 'excel');
+        
+        if ($exportType === 'pdf') {
+            // Get filter values for PDF
+            $year = $request->get('year');
+            $month = $request->get('month');
+            $search = $request->get('search');
+            
+            // Prepare data for PDF view
+            $pdfData = [
+                'dokumens' => $docs,
+                'columns' => $columns,
+                'availableColumns' => $availableColumns,
+                'title' => 'Export Data Perpajakan',
+                'year' => $year,
+                'month' => $month,
+                'search' => $search,
+                'dateFields' => $dateFields,
+                'currencyFields' => $currencyFields,
+            ];
+            
+            // Return view that can be printed as PDF using browser print
+            return view('perpajakan.export.pdf', $pdfData);
+        }
 
         return response($html)
             ->header('Content-Type', 'application/vnd.ms-excel')

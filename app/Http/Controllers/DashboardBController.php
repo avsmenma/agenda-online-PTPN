@@ -311,24 +311,48 @@ class DashboardBController extends Controller
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
         
-        // If columns are provided in request, save to session
+        // If columns are provided in request, save to database and session
         if ($request->has('columns') && !empty($selectedColumns)) {
+            // Save to database (permanent)
+            $user = Auth::user();
+            if ($user) {
+                $preferences = $user->table_columns_preferences ?? [];
+                $preferences['ibub'] = $selectedColumns;
+                $user->table_columns_preferences = $preferences;
+                $user->save();
+            }
+            // Also save to session for backward compatibility
             session(['ibub_dokumens_table_columns' => $selectedColumns]);
         } else {
-            // Load from session if available, and filter out 'status'
-            $selectedColumns = session('ibub_dokumens_table_columns', [
+            // Load from database first (permanent), then fallback to session, then default
+            $user = Auth::user();
+            $defaultColumns = [
                 'nomor_agenda',
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
                 'nomor_mirror'
-            ]);
-            // Filter out 'status' and 'keterangan' if they exist in session
+            ];
+            
+            if ($user && isset($user->table_columns_preferences['ibub'])) {
+                $selectedColumns = $user->table_columns_preferences['ibub'];
+            } else {
+                // Fallback to session if available
+                $selectedColumns = session('ibub_dokumens_table_columns', $defaultColumns);
+            }
+            
+            // Filter out 'status' and 'keterangan' if they exist
             $selectedColumns = array_filter($selectedColumns, function($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
-            // Update session to remove 'status' if it was present
+            
+            // If empty after filtering, use default
+            if (empty($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
+            
+            // Update session to keep it in sync
             session(['ibub_dokumens_table_columns' => $selectedColumns]);
         }
 
@@ -552,42 +576,84 @@ class DashboardBController extends Controller
     /**
      * Get document detail for AJAX request
      */
-    public function getDocumentDetail(Dokumen $dokumen): \Illuminate\Http\Response
+    public function getDocumentDetail(Dokumen $dokumen)
     {
         try {
             Log::info('Accessing document detail', [
                 'document_id' => $dokumen->id,
-                'current_handler' => $dokumen->current_handler,
-                'status' => $dokumen->status,
+                'current_handler' => $dokumen->current_handler ?? 'null',
+                'status' => $dokumen->status ?? 'null',
                 'user_agent' => request()->userAgent(),
+                'wants_json' => request()->wantsJson(),
+                'is_ajax' => request()->ajax(),
             ]);
 
             // Allow access if document was handled by ibuB or sent from ibuB
             // Juga allow untuk dokumen yang di-reject dari inbox IbuB
             $allowedHandlers = ['ibuB', 'perpajakan', 'akutansi', 'ibuA'];
             $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'approved_ibub', 'returned_to_department', 'returned_to_bidang', 'returned_to_ibua'];
-            $isInboxRejected = $dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'rejected';
+            $isInboxRejected = ($dokumen->inbox_approval_for ?? null) == 'IbuB' && ($dokumen->inbox_approval_status ?? null) == 'rejected';
 
-            if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses) && !$isInboxRejected) {
+            if (!in_array($dokumen->current_handler ?? '', $allowedHandlers) && !in_array($dokumen->status ?? '', $allowedStatuses) && !$isInboxRejected) {
                 Log::warning('Access denied for document detail', [
                     'document_id' => $dokumen->id,
-                    'current_handler' => $dokumen->current_handler,
-                    'status' => $dokumen->status,
+                    'current_handler' => $dokumen->current_handler ?? 'null',
+                    'status' => $dokumen->status ?? 'null',
                 ]);
 
+                if (request()->wantsJson() || request()->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+                }
                 return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
             }
 
-            // Load required relationships with error handling
+            // Load required relationships
             try {
-                $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs']);
+                $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
             } catch (\Exception $e) {
-                Log::error('Failed to load document relationships', [
+                Log::error('Failed to load relationships', [
                     'document_id' => $dokumen->id,
                     'error' => $e->getMessage(),
                 ]);
+                // Continue anyway, relationships might be optional
+            }
 
-                return response('<div class="text-center p-4 text-danger">Error loading document data</div>', 500);
+            // If request wants JSON (for modal view)
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'dokumen' => [
+                        'id' => $dokumen->id,
+                        'nomor_agenda' => $dokumen->nomor_agenda,
+                        'nomor_spp' => $dokumen->nomor_spp,
+                        'tanggal_spp' => $dokumen->tanggal_spp,
+                        'bulan' => $dokumen->bulan,
+                        'tahun' => $dokumen->tahun,
+                        'tanggal_masuk' => $dokumen->tanggal_masuk,
+                        'jenis_dokumen' => $dokumen->jenis_dokumen,
+                        'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                        'kategori' => $dokumen->kategori,
+                        'uraian_spp' => $dokumen->uraian_spp,
+                        'nilai_rupiah' => $dokumen->nilai_rupiah,
+                        'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                        'dibayar_kepada' => ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
+                            ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                            : ($dokumen->dibayar_kepada ?? null),
+                        'kebun' => $dokumen->kebun,
+                        'no_spk' => $dokumen->no_spk,
+                        'tanggal_spk' => $dokumen->tanggal_spk,
+                        'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
+                        'nomor_mirror' => $dokumen->nomor_mirror,
+                        'no_berita_acara' => $dokumen->no_berita_acara,
+                        'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
+                        'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function($po) {
+                            return ['nomor_po' => $po->nomor_po ?? ''];
+                        })->values() : [],
+                        'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function($pr) {
+                            return ['nomor_pr' => $pr->nomor_pr ?? ''];
+                        })->values() : [],
+                    ]
+                ]);
             }
 
             // Generate HTML with error handling
@@ -615,8 +681,17 @@ class DashboardBController extends Controller
                 'document_id' => $dokumen->id ?? 'unknown',
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unexpected error occurred: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return response('<div class="text-center p-4 text-danger">Unexpected error occurred</div>', 500);
         }
     }

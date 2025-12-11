@@ -256,6 +256,7 @@ Route::get('/rekapan-ibuB', [DashboardBController::class, 'rekapan'])->name('dok
 Route::get('/rekapan-ibuB/analytics', [DashboardBController::class, 'rekapanAnalytics'])
     ->middleware(['autologin', 'role:ibuB,admin'])
     ->name('dokumensB.rekapan.analytics');
+Route::get('/dokumensB/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('dokumensB.detail');
 Route::get('/dokumensB/{dokumen}/edit', [DashboardBController::class, 'editDokumen'])->name('dokumensB.edit');
 Route::get('/dokumens/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('dokumens.detail');
 Route::put('/dokumensB/{dokumen}', [DashboardBController::class, 'updateDokumen'])->name('dokumensB.update');

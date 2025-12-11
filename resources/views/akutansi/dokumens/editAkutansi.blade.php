@@ -201,6 +201,29 @@
     font-size: 12px;
     opacity: 0.8;
   }
+
+  .perpajakan-section {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.02) 100%);
+    border: 2px solid rgba(255, 193, 7, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .perpajakan-section .section-title {
+    border-left-color: #ffc107;
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+  }
+
+  .read-only-field {
+    background-color: #f5f5f5 !important;
+    cursor: not-allowed !important;
+    opacity: 0.8;
+  }
+
+  .read-only-field:hover {
+    border-color: rgba(8, 62, 64, 0.1) !important;
+  }
 </style>
 
 
@@ -416,60 +439,128 @@
       <button type="button" class="add-field-btn">+</button>
     </div>
 
-    <!-- SECTION KHUSUS AKUTANSI (sama seperti perpajakan) -->
-    <div class="section-title">Informasi Team Akutansi</div>
+    <!-- SECTION INFORMASI PERPAJAKAN (Jika dokumen pernah ke perpajakan) -->
+    @if($hasPerpajakanData)
+    <div class="perpajakan-section">
+      <div class="section-title" style="background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%); border-left-color: #ffc107;">
+        <i class="fa-solid fa-file-invoice-dollar me-2" style="color: #ffc107;"></i>
+        Informasi Team Perpajakan
+        <span style="background: #ffc107; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; margin-left: 8px;">DATA DARI PERPAJAKAN</span>
+      </div>
 
     <div class="form-row">
       <div class="form-group">
-        <label>Status Team Perpajakan</label>
-        <select>
-          <option>Pilih Status</option>
-          <option selected>Sedang Diproses</option>
-          <option>Selesai Verifikasi</option>
-          <option>Menunggu Dokumen</option>
-          <option>Selesai</option>
+        <label>Status Perpajakan</label>
+        <select name="status_perpajakan" disabled class="read-only-field">
+          <option value="">Pilih Status</option>
+          <option value="sedang_diproses" {{ old('status_perpajakan', $dokumen->status_perpajakan) == 'sedang_diproses' ? 'selected' : '' }}>Sedang Diproses</option>
+          <option value="selesai" {{ old('status_perpajakan', $dokumen->status_perpajakan) == 'selesai' ? 'selected' : '' }}>Selesai Verifikasi</option>
         </select>
+        <small class="text-muted" style="font-size: 11px;">
+          <i class="fa-solid fa-info-circle me-1"></i>
+          Data ini berasal dari Team Perpajakan (read-only)
+        </small>
       </div>
       <div class="form-group">
-        <label>No Faktur</label>
-        <input type="text" placeholder="Masukkan nomor faktur" value="010.000-25.00000001">
+        <label>NPWP</label>
+        <input type="text" value="{{ old('npwp', $dokumen->npwp ?? '') }}" disabled class="read-only-field">
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group">
-        <label>Tanggal Faktur</label>
-        <input type="date" value="2025-01-15">
+        <label>No Faktur</label>
+        <input type="text" value="{{ old('no_faktur', $dokumen->no_faktur ?? '') }}" disabled class="read-only-field">
       </div>
       <div class="form-group">
+        <label>Tanggal Faktur</label>
+        <input type="date" value="{{ old('tanggal_faktur', $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('Y-m-d') : '') }}" disabled class="read-only-field">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
         <label>Tgl. Selesai Verifikasi Pajak</label>
-        <input type="date" value="2025-01-20">
+        <input type="date" value="{{ old('tanggal_selesai_verifikasi_pajak', $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('Y-m-d') : '') }}" disabled class="read-only-field">
+      </div>
+      <div class="form-group">
+        <label>No Invoice</label>
+        <input type="text" value="{{ old('no_invoice', $dokumen->no_invoice ?? '') }}" disabled class="read-only-field">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tanggal Invoice</label>
+        <input type="date" value="{{ old('tanggal_invoice', $dokumen->tanggal_invoice ? $dokumen->tanggal_invoice->format('Y-m-d') : '') }}" disabled class="read-only-field">
+      </div>
+      <div class="form-group">
+        <label>No Kontrak</label>
+        <input type="text" value="{{ old('no_kontrak', $dokumen->no_kontrak ?? '') }}" disabled class="read-only-field">
       </div>
     </div>
 
     <div class="form-row-3">
       <div class="form-group">
         <label>Jenis PPh</label>
-        <select>
-          <option>Pilih Jenis PPh</option>
-          <option selected>PPh 21</option>
-          <option>PPh 22</option>
-          <option>PPh 23</option>
-          <option>PPh 25</option>
-          <option>PPh 26</option>
-          <option>PPh 29</option>
-          <option>PPh Final</option>
+        <select name="jenis_pph" disabled class="read-only-field">
+          <option value="">Pilih Jenis PPh</option>
+          <option value="PPh 21" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh 21' ? 'selected' : '' }}>PPh 21</option>
+          <option value="PPh 22" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh 22' ? 'selected' : '' }}>PPh 22</option>
+          <option value="PPh 23" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh 23' ? 'selected' : '' }}>PPh 23</option>
+          <option value="PPh 25" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh 25' ? 'selected' : '' }}>PPh 25</option>
+          <option value="PPh 26" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh 26' ? 'selected' : '' }}>PPh 26</option>
+          <option value="PPh 29" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh 29' ? 'selected' : '' }}>PPh 29</option>
+          <option value="PPh Final" {{ old('jenis_pph', $dokumen->jenis_pph) == 'PPh Final' ? 'selected' : '' }}>PPh Final</option>
         </select>
       </div>
       <div class="form-group">
         <label>DPP PPh</label>
-        <input type="text" placeholder="Rp. 0" value="Rp. 4.500.000">
+        <input type="text" value="{{ old('dpp_pph', $dokumen->dpp_pph ? 'Rp. ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '') }}" disabled class="read-only-field">
       </div>
       <div class="form-group">
         <label>PPh Terhutang</label>
-        <input type="text" placeholder="Rp. 0" value="Rp. 225.000">
+        <input type="text" value="{{ old('ppn_terhutang', $dokumen->ppn_terhutang ? 'Rp. ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '') }}" disabled class="read-only-field">
       </div>
     </div>
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>DPP Invoice</label>
+        <input type="text" value="{{ old('dpp_invoice', $dokumen->dpp_invoice ? 'Rp. ' . number_format($dokumen->dpp_invoice, 0, ',', '.') : '') }}" disabled class="read-only-field">
+      </div>
+      <div class="form-group">
+        <label>PPN Invoice</label>
+        <input type="text" value="{{ old('ppn_invoice', $dokumen->ppn_invoice ? 'Rp. ' . number_format($dokumen->ppn_invoice, 0, ',', '.') : '') }}" disabled class="read-only-field">
+      </div>
+      <div class="form-group">
+        <label>DPP + PPN Invoice</label>
+        <input type="text" value="{{ old('dpp_ppn_invoice', $dokumen->dpp_ppn_invoice ? 'Rp. ' . number_format($dokumen->dpp_ppn_invoice, 0, ',', '.') : '') }}" disabled class="read-only-field">
+      </div>
+    </div>
+
+    @if($dokumen->link_dokumen_pajak)
+    <div class="form-group">
+      <label>Link Dokumen Pajak</label>
+      <div style="padding: 12px 16px; border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 10px; background-color: #f5f5f5;">
+        <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" style="color: #889717; text-decoration: none;">
+          <i class="fa-solid fa-external-link me-2"></i>{{ $dokumen->link_dokumen_pajak }}
+        </a>
+      </div>
+    </div>
+    @endif
+
+    @if($dokumen->alamat_pembeli)
+    <div class="form-group">
+      <label>Alamat Pembeli</label>
+      <textarea disabled class="read-only-field">{{ old('alamat_pembeli', $dokumen->alamat_pembeli) }}</textarea>
+    </div>
+    @endif
+    </div>
+    @endif
+
+    <!-- SECTION KHUSUS AKUTANSI -->
+    <div class="section-title">Informasi Team Akutansi</div>
 
     <!-- MIRO Section - Khusus Team Akutansi -->
     <div class="form-row">

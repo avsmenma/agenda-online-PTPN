@@ -46,6 +46,7 @@ final class User extends Authenticatable
         'email',
         'password',
         'role',
+        'table_columns_preferences',
     ];
 
     /**
@@ -68,6 +69,7 @@ final class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'table_columns_preferences' => 'array',
         ];
     }
 

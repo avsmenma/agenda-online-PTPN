@@ -259,24 +259,48 @@ class DashboardAkutansiController extends Controller
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
         
-        // If columns are provided in request, save to session
+        // If columns are provided in request, save to database and session
         if ($request->has('columns') && !empty($selectedColumns)) {
+            // Save to database (permanent)
+            $user = Auth::user();
+            if ($user) {
+                $preferences = $user->table_columns_preferences ?? [];
+                $preferences['akutansi'] = $selectedColumns;
+                $user->table_columns_preferences = $preferences;
+                $user->save();
+            }
+            // Also save to session for backward compatibility
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         } else {
-            // Load from session if available, and filter out 'status'
-            $selectedColumns = session('akutansi_dokumens_table_columns', [
+            // Load from database first (permanent), then fallback to session, then default
+            $user = Auth::user();
+            $defaultColumns = [
                 'nomor_agenda',
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
                 'nomor_mirror'
-            ]);
-            // Filter out 'status' and 'keterangan' if they exist in session
+            ];
+            
+            if ($user && isset($user->table_columns_preferences['akutansi'])) {
+                $selectedColumns = $user->table_columns_preferences['akutansi'];
+            } else {
+                // Fallback to session if available
+                $selectedColumns = session('akutansi_dokumens_table_columns', $defaultColumns);
+            }
+            
+            // Filter out 'status' and 'keterangan' if they exist
             $selectedColumns = array_filter($selectedColumns, function($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
-            // Update session to remove 'status' if it was present
+            
+            // If empty after filtering, use default
+            if (empty($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
+            
+            // Update session to keep it in sync
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         }
 
@@ -323,13 +347,20 @@ class DashboardAkutansiController extends Controller
         // Load document relationships if needed
         $dokumen->load(['dokumenPos', 'dokumenPrs']);
 
+        // Check if document has been to perpajakan
+        $hasPerpajakanData = !empty($dokumen->sent_to_perpajakan_at) || 
+                            !empty($dokumen->processed_perpajakan_at) ||
+                            !empty($dokumen->no_faktur) ||
+                            !empty($dokumen->npwp);
+
         $data = array(
             "title" => "Edit Akutansi",
             "module" => "akutansi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
-            'dokumen' => $dokumen, // Added missing document data
+            'dokumen' => $dokumen,
+            'hasPerpajakanData' => $hasPerpajakanData, // Flag untuk menampilkan section perpajakan
         );
         return view('akutansi.dokumens.editAkutansi', $data);
     }
@@ -538,13 +569,13 @@ class DashboardAkutansiController extends Controller
             }
 
             $validated = $request->validate([
-                'deadline_days' => 'required|integer|min:1|max:14',
+                'deadline_days' => 'required|integer|min:1|max:3',
                 'deadline_note' => 'nullable|string|max:500',
             ], [
                 'deadline_days.required' => 'Periode deadline wajib dipilih.',
                 'deadline_days.integer' => 'Periode deadline harus berupa angka.',
                 'deadline_days.min' => 'Deadline minimal 1 hari.',
-                'deadline_days.max' => 'Deadline maksimal 14 hari.',
+                'deadline_days.max' => 'Deadline maksimal 3 hari.',
                 'deadline_note.max' => 'Catatan maksimal 500 karakter.',
             ]);
 
@@ -728,16 +759,82 @@ class DashboardAkutansiController extends Controller
     {
         // Allow access if document is handled by akutansi or sent to akutansi
         $allowedHandlers = ['akutansi', 'perpajakan', 'ibuB'];
-        $allowedStatuses = ['sent_to_akutansi', 'sedang diproses', 'selesai'];
+        $allowedStatuses = ['sent_to_akutansi', 'sedang diproses', 'selesai', 'sent_to_pembayaran'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+            }
             return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
         }
 
         // Load required relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
-        // Return HTML partial for detail view
+        // If request wants JSON (for modal view)
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'dokumen' => [
+                    'id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'nomor_spp' => $dokumen->nomor_spp,
+                    'tanggal_spp' => $dokumen->tanggal_spp,
+                    'bulan' => $dokumen->bulan,
+                    'tahun' => $dokumen->tahun,
+                    'tanggal_masuk' => $dokumen->tanggal_masuk,
+                    'jenis_dokumen' => $dokumen->jenis_dokumen,
+                    'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                    'kategori' => $dokumen->kategori,
+                    'uraian_spp' => $dokumen->uraian_spp,
+                    'nilai_rupiah' => $dokumen->nilai_rupiah,
+                    'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                    'dibayar_kepada' => $dokumen->dibayarKepadas->count() > 0
+                        ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                        : $dokumen->dibayar_kepada,
+                    'kebun' => $dokumen->kebun,
+                    'no_spk' => $dokumen->no_spk,
+                    'tanggal_spk' => $dokumen->tanggal_spk,
+                    'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
+                    'nomor_mirror' => $dokumen->nomor_mirror,
+                    'no_berita_acara' => $dokumen->no_berita_acara,
+                    'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
+                    'dokumen_pos' => $dokumen->dokumenPos->map(fn($po) => ['nomor_po' => $po->nomor_po]),
+                    'dokumen_prs' => $dokumen->dokumenPrs->map(fn($pr) => ['nomor_pr' => $pr->nomor_pr]),
+                    // Perpajakan fields
+                    'komoditi_perpajakan' => $dokumen->komoditi_perpajakan,
+                    'status_perpajakan' => $dokumen->status_perpajakan,
+                    'npwp' => $dokumen->npwp,
+                    'alamat_pembeli' => $dokumen->alamat_pembeli,
+                    'no_kontrak' => $dokumen->no_kontrak,
+                    'no_invoice' => $dokumen->no_invoice,
+                    'tanggal_invoice' => $dokumen->tanggal_invoice,
+                    'dpp_invoice' => $dokumen->dpp_invoice,
+                    'ppn_invoice' => $dokumen->ppn_invoice,
+                    'dpp_ppn_invoice' => $dokumen->dpp_ppn_invoice,
+                    'tanggal_pengajuan_pajak' => $dokumen->tanggal_pengajuan_pajak,
+                    'no_faktur' => $dokumen->no_faktur,
+                    'tanggal_faktur' => $dokumen->tanggal_faktur,
+                    'dpp_faktur' => $dokumen->dpp_faktur,
+                    'ppn_faktur' => $dokumen->ppn_faktur,
+                    'selisih_pajak' => $dokumen->selisih_pajak,
+                    'keterangan_pajak' => $dokumen->keterangan_pajak,
+                    'penggantian_pajak' => $dokumen->penggantian_pajak,
+                    'dpp_penggantian' => $dokumen->dpp_penggantian,
+                    'ppn_penggantian' => $dokumen->ppn_penggantian,
+                    'selisih_ppn' => $dokumen->selisih_ppn,
+                    'tanggal_selesai_verifikasi_pajak' => $dokumen->tanggal_selesai_verifikasi_pajak,
+                    'jenis_pph' => $dokumen->jenis_pph,
+                    'dpp_pph' => $dokumen->dpp_pph,
+                    'ppn_terhutang' => $dokumen->ppn_terhutang,
+                    'link_dokumen_pajak' => $dokumen->link_dokumen_pajak,
+                    // Akutansi fields
+                    'nomor_miro' => $dokumen->nomor_miro,
+                ]
+            ]);
+        }
+
+        // Return HTML partial for detail view (legacy)
         $html = $this->generateDocumentDetailHtml($dokumen);
 
         return response($html);

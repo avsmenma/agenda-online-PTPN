@@ -7,53 +7,60 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 1cm;
+            margin: 0.5cm;
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 7px;
             margin: 0;
-            padding: 10px;
+            padding: 5px;
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border-bottom: 2px solid #083E40;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
         .header h1 {
             margin: 0;
             color: #083E40;
-            font-size: 18px;
+            font-size: 14px;
         }
         .header p {
-            margin: 5px 0;
+            margin: 3px 0;
             color: #666;
-            font-size: 11px;
+            font-size: 8px;
         }
         .filter-info {
-            margin-bottom: 15px;
-            font-size: 9px;
+            margin-bottom: 8px;
+            font-size: 7px;
             color: #666;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 5px;
+            table-layout: auto;
         }
         th {
             background-color: #083E40;
             color: white;
-            padding: 8px;
+            padding: 4px 3px;
             text-align: center;
             font-weight: bold;
             border: 1px solid #ddd;
-            font-size: 9px;
+            font-size: 7px;
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 1.2;
         }
         td {
-            padding: 6px;
+            padding: 3px 2px;
             border: 1px solid #ddd;
-            font-size: 9px;
+            font-size: 7px;
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 1.2;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
@@ -78,16 +85,32 @@
         }
         .grand-total-row td {
             border-top: 3px solid #28a745;
-            padding: 10px 6px;
-            font-size: 10px;
+            padding: 5px 3px;
+            font-size: 8px;
         }
         .footer {
-            margin-top: 20px;
+            margin-top: 10px;
             text-align: center;
-            font-size: 9px;
+            font-size: 7px;
             color: #666;
             border-top: 1px solid #ddd;
-            padding-top: 10px;
+            padding-top: 5px;
+        }
+        /* Ensure table fits within page width */
+        table {
+            max-width: 100%;
+            overflow: hidden;
+        }
+        /* Make text in cells more compact - allow wrapping for long text */
+        td {
+            max-width: 150px;
+            overflow: hidden;
+        }
+        /* Special handling for long text columns like uraian_spp */
+        td:first-child + td + td + td + td + td + td + td {
+            max-width: 200px;
+            white-space: normal;
+            word-break: break-word;
         }
         @media print {
             body {
@@ -129,7 +152,7 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 30px;">No</th>
+                <th style="width: 25px; min-width: 25px;">No</th>
                 @foreach($columns as $col)
                     <th>
                         @if($col === 'sent_to_pembayaran_at')
@@ -292,7 +315,7 @@
 
                     <!-- Subtotal Row -->
                     <tr class="subtotal-row">
-                        <td colspan="{{ $colspanCount }}" class="text-right" style="border-top: 2px solid #dee2e6; border-bottom: 2px solid #dee2e6;">
+                        <td colspan="{{ $colspanCount }}" class="text-right" style="border-top: 2px solid #dee2e6; border-bottom: 2px solid #dee2e6; font-size: 7px; padding: 4px 3px;">
                             <strong>Subtotal {{ Str::limit($vendorData['vendor'], 30) }}:</strong>
                         </td>
                         @foreach($columns as $idx => $col)
@@ -317,19 +340,19 @@
 
                 <!-- Grand Total Row -->
                 <tr class="grand-total-row">
-                    <td colspan="{{ $colspanCount }}" class="text-right" style="border-top: 3px solid #28a745; padding: 10px 6px;">
-                        <strong style="font-size: 11px;">GRAND TOTAL:</strong>
+                    <td colspan="{{ $colspanCount }}" class="text-right" style="border-top: 3px solid #28a745; padding: 5px 3px;">
+                        <strong style="font-size: 8px;">GRAND TOTAL:</strong>
                     </td>
                     @foreach($columns as $idx => $col)
                         @if($firstValueIndex !== null && $idx >= $firstValueIndex)
                             @if($col == 'nilai_rupiah')
-                                <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalNilai ?? 0, 0, ',', '.') }}</strong></td>
+                                <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalNilai ?? 0, 0, ',', '.') }}</strong></td>
                             @elseif($col == 'nilai_belum_siap_bayar')
-                                <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalBelum ?? 0, 0, ',', '.') }}</strong></td>
+                                <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalBelum ?? 0, 0, ',', '.') }}</strong></td>
                             @elseif($col == 'nilai_siap_bayar')
-                                <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalSiap ?? 0, 0, ',', '.') }}</strong></td>
+                                <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalSiap ?? 0, 0, ',', '.') }}</strong></td>
                             @elseif($col == 'nilai_sudah_dibayar')
-                                <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalSudah ?? 0, 0, ',', '.') }}</strong></td>
+                                <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalSudah ?? 0, 0, ',', '.') }}</strong></td>
                             @elseif(in_array($col, ['umur_dokumen_tanggal_masuk', 'umur_dokumen_tanggal_spp', 'umur_dokumen_tanggal_ba']))
                                 <td style="border-top: 3px solid #28a745; padding: 10px 6px;">-</td>
                             @else
@@ -482,19 +505,19 @@
                 @if($dokumens->count() > 0)
                     <!-- Grand Total Row for normal mode -->
                     <tr class="grand-total-row">
-                        <td colspan="{{ $colspanCount ?? count($columns) + 1 }}" class="text-right" style="border-top: 3px solid #28a745; padding: 10px 6px;">
-                            <strong style="font-size: 11px;">GRAND TOTAL:</strong>
+                        <td colspan="{{ $colspanCount ?? count($columns) + 1 }}" class="text-right" style="border-top: 3px solid #28a745; padding: 5px 3px;">
+                            <strong style="font-size: 8px;">GRAND TOTAL:</strong>
                         </td>
                         @foreach($columns as $idx => $col)
                             @if(isset($firstValueIndex) && $firstValueIndex !== null && $idx >= $firstValueIndex)
                                 @if($col == 'nilai_rupiah')
-                                    <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalNilai ?? 0, 0, ',', '.') }}</strong></td>
+                                    <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalNilai ?? 0, 0, ',', '.') }}</strong></td>
                                 @elseif($col == 'nilai_belum_siap_bayar')
-                                    <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalBelum ?? 0, 0, ',', '.') }}</strong></td>
+                                    <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalBelum ?? 0, 0, ',', '.') }}</strong></td>
                                 @elseif($col == 'nilai_siap_bayar')
-                                    <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalSiap ?? 0, 0, ',', '.') }}</strong></td>
+                                    <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalSiap ?? 0, 0, ',', '.') }}</strong></td>
                                 @elseif($col == 'nilai_sudah_dibayar')
-                                    <td style="border-top: 3px solid #28a745; padding: 10px 6px;"><strong style="font-size: 11px;">Rp {{ number_format($grandTotalSudah ?? 0, 0, ',', '.') }}</strong></td>
+                                    <td style="border-top: 3px solid #28a745; padding: 5px 3px;"><strong style="font-size: 8px;">Rp {{ number_format($grandTotalSudah ?? 0, 0, ',', '.') }}</strong></td>
                                 @elseif(in_array($col, ['umur_dokumen_tanggal_masuk', 'umur_dokumen_tanggal_spp', 'umur_dokumen_tanggal_ba']))
                                     <td style="border-top: 3px solid #28a745; padding: 10px 6px;">-</td>
                                 @else

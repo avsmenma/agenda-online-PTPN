@@ -1392,7 +1392,7 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
-    max-width: 900px;
+    max-width: 90%;
     width: 90%;
     max-height: 90vh;
     display: flex;
@@ -2026,9 +2026,6 @@
             <option value="1">1 hari</option>
             <option value="2">2 hari</option>
             <option value="3">3 hari</option>
-            <option value="5">5 hari</option>
-            <option value="7">7 hari</option>
-            <option value="14">14 hari</option>
           </select>
         </div>
 
@@ -2112,8 +2109,8 @@ function handleRowClick(event, docId) {
     return true;
   }
   
-  // Jika aman, panggil toggleDetail
-  toggleDetail(docId);
+  // Buka modal view detail dokumen
+  openViewDocumentModal(docId);
   return true;
 }
 
@@ -2285,8 +2282,8 @@ function confirmSetDeadline() {
     return;
   }
 
-  if (deadlineDays < 1 || deadlineDays > 14) {
-    showWarningModal('Periode deadline harus antara 1-14 hari!');
+  if (deadlineDays < 1 || deadlineDays > 3) {
+    showWarningModal('Periode deadline harus antara 1-3 hari!');
     return;
   }
 
@@ -2461,11 +2458,11 @@ function updateDeadlineCard(card) {
     // Create late info with enhanced styling
     let lateText;
     if (diffDays >= 1) {
-      lateText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} telat`;
+      lateText = `${diffDays} HARI TELAT`;
     } else if (diffHours >= 1) {
-      lateText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} telat`;
+      lateText = `${diffHours} JAM TELAT`;
     } else {
-      lateText = 'Baru saja terlambat';
+      lateText = 'BARU SAJA TELAT';
     }
 
     const lateInfo = document.createElement('div');
@@ -3013,6 +3010,618 @@ document.addEventListener('click', function(e) {
     closeColumnCustomizationModal();
   }
 });
+
+// Open View Document Modal
+function openViewDocumentModal(docId) {
+  // Set document ID
+  document.getElementById('view-dokumen-id').value = docId;
+  
+  // Set edit button URL
+  document.getElementById('view-edit-btn').href = `/dokumensAkutansi/${docId}/edit`;
+  
+  // Load document data via AJAX
+  fetch(`/dokumensAkutansi/${docId}/detail`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.dokumen) {
+        const dok = data.dokumen;
+        
+        // Identitas Dokumen
+        document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
+        document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
+        document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
+        document.getElementById('view-bulan').textContent = dok.bulan || '-';
+        document.getElementById('view-tahun').textContent = dok.tahun || '-';
+        document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
+        document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
+        document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
+        document.getElementById('view-kategori').textContent = dok.kategori || '-';
+        
+        // Detail Keuangan & Vendor
+        document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
+        document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+        document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+        document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
+        document.getElementById('view-kebun').textContent = dok.kebun || '-';
+        
+        // Referensi Pendukung
+        document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
+        document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
+        document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
+        document.getElementById('view-nomor-mirror').textContent = dok.nomor_mirror || '-';
+        document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
+        document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+        
+        // Nomor PO & PR
+        const poNumbers = dok.dokumen_pos ? dok.dokumen_pos.map(po => po.nomor_po).join(', ') : '-';
+        const prNumbers = dok.dokumen_prs ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ') : '-';
+        document.getElementById('view-nomor-po').textContent = poNumbers || '-';
+        document.getElementById('view-nomor-pr').textContent = prNumbers || '-';
+        
+        // Informasi Perpajakan (jika ada)
+        if (dok.npwp || dok.no_faktur || dok.status_perpajakan) {
+          document.getElementById('view-komoditi-perpajakan').textContent = dok.komoditi_perpajakan || '-';
+          document.getElementById('view-status-perpajakan').textContent = formatStatusPerpajakan(dok.status_perpajakan);
+          document.getElementById('view-npwp').textContent = dok.npwp || '-';
+          document.getElementById('view-alamat-pembeli').textContent = dok.alamat_pembeli || '-';
+          document.getElementById('view-no-kontrak').textContent = dok.no_kontrak || '-';
+          document.getElementById('view-no-invoice').textContent = dok.no_invoice || '-';
+          
+          // Data Invoice
+          document.getElementById('view-tanggal-invoice').textContent = dok.tanggal_invoice ? formatDate(dok.tanggal_invoice) : '-';
+          document.getElementById('view-dpp-invoice').textContent = dok.dpp_invoice ? formatNumber(dok.dpp_invoice) : '-';
+          document.getElementById('view-ppn-invoice').textContent = dok.ppn_invoice ? formatNumber(dok.ppn_invoice) : '-';
+          document.getElementById('view-dpp-ppn-invoice').textContent = dok.dpp_ppn_invoice ? formatNumber(dok.dpp_ppn_invoice) : '-';
+          document.getElementById('view-tanggal-pengajuan-pajak').textContent = dok.tanggal_pengajuan_pajak ? formatDate(dok.tanggal_pengajuan_pajak) : '-';
+          
+          // Data Faktur
+          document.getElementById('view-no-faktur').textContent = dok.no_faktur || '-';
+          document.getElementById('view-tanggal-faktur').textContent = dok.tanggal_faktur ? formatDate(dok.tanggal_faktur) : '-';
+          document.getElementById('view-dpp-faktur').textContent = dok.dpp_faktur ? formatNumber(dok.dpp_faktur) : '-';
+          document.getElementById('view-ppn-faktur').textContent = dok.ppn_faktur ? formatNumber(dok.ppn_faktur) : '-';
+          document.getElementById('view-selisih-pajak').textContent = dok.selisih_pajak ? formatNumber(dok.selisih_pajak) : '-';
+          document.getElementById('view-keterangan-pajak').textContent = dok.keterangan_pajak || '-';
+          
+          // Data Penggantian
+          document.getElementById('view-penggantian-pajak').textContent = dok.penggantian_pajak ? formatNumber(dok.penggantian_pajak) : '-';
+          document.getElementById('view-dpp-penggantian').textContent = dok.dpp_penggantian ? formatNumber(dok.dpp_penggantian) : '-';
+          document.getElementById('view-ppn-penggantian').textContent = dok.ppn_penggantian ? formatNumber(dok.ppn_penggantian) : '-';
+          document.getElementById('view-selisih-ppn').textContent = dok.selisih_ppn ? formatNumber(dok.selisih_ppn) : '-';
+          
+          // Data Lainnya
+          document.getElementById('view-tanggal-selesai-verifikasi-pajak').textContent = dok.tanggal_selesai_verifikasi_pajak ? formatDate(dok.tanggal_selesai_verifikasi_pajak) : '-';
+          document.getElementById('view-jenis-pph').textContent = dok.jenis_pph || '-';
+          document.getElementById('view-dpp-pph').textContent = dok.dpp_pph ? formatNumber(dok.dpp_pph) : '-';
+          document.getElementById('view-ppn-terhutang').textContent = dok.ppn_terhutang ? formatNumber(dok.ppn_terhutang) : '-';
+          
+          // Link Dokumen Pajak
+          const linkEl = document.getElementById('view-link-dokumen-pajak');
+          if (dok.link_dokumen_pajak) {
+            linkEl.innerHTML = `<a href="${dok.link_dokumen_pajak}" target="_blank" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-external-link me-1"></i>${dok.link_dokumen_pajak}</a>`;
+          } else {
+            linkEl.textContent = '-';
+          }
+          
+          // Show perpajakan section
+          document.getElementById('perpajakan-section').style.display = 'block';
+        } else {
+          // Hide perpajakan section if no data
+          document.getElementById('perpajakan-section').style.display = 'none';
+        }
+        
+        // Informasi Akutansi
+        document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading document:', error);
+    });
+  
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+  modal.show();
+}
+
+// Helper functions for formatting
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatNumber(num) {
+  if (!num) return '-';
+  return new Intl.NumberFormat('id-ID').format(num);
+}
+
+function formatStatusPerpajakan(status) {
+  if (!status) return '-';
+  switch(status) {
+    case 'sedang_diproses': return 'Sedang Diproses';
+    case 'selesai': return 'Selesai';
+    default: return status;
+  }
+}
 </script>
+
+<!-- Modal View Document Detail -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
+    <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+      <!-- Sticky Header -->
+      <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+        <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-file-lines me-2"></i>
+          Detail Dokumen Lengkap
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Scrollable Body -->
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+        <input type="hidden" id="view-dokumen-id">
+        
+        <!-- Section 1: Identitas Dokumen -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-id-card"></i>
+              IDENTITAS DOKUMEN
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Nomor Agenda</label>
+                <div class="detail-value" id="view-nomor-agenda">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Nomor SPP</label>
+                <div class="detail-value" id="view-nomor-spp">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal SPP</label>
+                <div class="detail-value" id="view-tanggal-spp">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Bulan</label>
+                <div class="detail-value" id="view-bulan">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tahun</label>
+                <div class="detail-value" id="view-tahun">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Masuk</label>
+                <div class="detail-value" id="view-tanggal-masuk">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Jenis Dokumen</label>
+                <div class="detail-value" id="view-jenis-dokumen">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Sub-Bagian Pekerjaan</label>
+                <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Kategori Investasi</label>
+                <div class="detail-value" id="view-kategori">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Detail Keuangan & Vendor -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-money-bill-wave"></i>
+              DETAIL KEUANGAN & VENDOR
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="detail-item">
+                <label class="detail-label">Uraian SPP</label>
+                <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nilai Rupiah</label>
+                <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Jenis Pembayaran</label>
+                <div class="detail-value" id="view-jenis-pembayaran">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Dibayar Kepada (Vendor)</label>
+                <div class="detail-value" id="view-dibayar-kepada">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Kebun / Unit Kerja</label>
+                <div class="detail-value" id="view-kebun">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Referensi Pendukung -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-file-contract"></i>
+              REFERENSI PENDUKUNG
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">No. SPK</label>
+                <div class="detail-value" id="view-no-spk">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal SPK</label>
+                <div class="detail-value" id="view-tanggal-spk">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Berakhir SPK</label>
+                <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">No. Mirror</label>
+                <div class="detail-value" id="view-nomor-mirror">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No. Berita Acara</label>
+                <div class="detail-value" id="view-no-berita-acara">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Berita Acara</label>
+                <div class="detail-value" id="view-tanggal-berita-acara">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Nomor PO & PR -->
+        <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-hashtag"></i>
+              NOMOR PO & PR
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nomor PO</label>
+                <div class="detail-value" id="view-nomor-po">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nomor PR</label>
+                <div class="detail-value" id="view-nomor-pr">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Informasi Perpajakan (Jika ada) -->
+        <div class="form-section mb-4" id="perpajakan-section" style="display: none; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 20px; border: 2px solid #ffc107;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #92400e; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+              INFORMASI PERPAJAKAN
+              <span style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DATA DARI PERPAJAKAN</span>
+            </h6>
+          </div>
+          
+          <!-- Row 1: Komoditi & Status -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Komoditi</label>
+                <div class="detail-value" id="view-komoditi-perpajakan">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Status Team Perpajakan</label>
+                <div class="detail-value" id="view-status-perpajakan">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: NPWP & Alamat -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">NPWP Pembeli</label>
+                <div class="detail-value" id="view-npwp">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Alamat</label>
+                <div class="detail-value" id="view-alamat-pembeli">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: No Kontrak & No Invoice -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No Kontrak</label>
+                <div class="detail-value" id="view-no-kontrak">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">No Invoice</label>
+                <div class="detail-value" id="view-no-invoice">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Invoice Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-file-invoice me-2"></i>Data Invoice
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Invoice</label>
+                <div class="detail-value" id="view-tanggal-invoice">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP Invoice</label>
+                <div class="detail-value" id="view-dpp-invoice">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">PPN Invoice</label>
+                <div class="detail-value" id="view-ppn-invoice">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP + PPN Invoice</label>
+                <div class="detail-value" id="view-dpp-ppn-invoice">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Pengajuan</label>
+                <div class="detail-value" id="view-tanggal-pengajuan-pajak">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Faktur Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-receipt me-2"></i>Data Faktur
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">No Faktur</label>
+                <div class="detail-value" id="view-no-faktur">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Faktur</label>
+                <div class="detail-value" id="view-tanggal-faktur">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP Faktur</label>
+                <div class="detail-value" id="view-dpp-faktur">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">PPN Faktur</label>
+                <div class="detail-value" id="view-ppn-faktur">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Selisih Pajak</label>
+                <div class="detail-value" id="view-selisih-pajak">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Keterangan Pajak</label>
+                <div class="detail-value" id="view-keterangan-pajak">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Penggantian Section -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-exchange-alt me-2"></i>Data Penggantian
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Penggantian Pajak</label>
+                <div class="detail-value" id="view-penggantian-pajak">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">DPP Penggantian</label>
+                <div class="detail-value" id="view-dpp-penggantian">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">PPN Penggantian</label>
+                <div class="detail-value" id="view-ppn-penggantian">-</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="detail-item">
+                <label class="detail-label">Selisih PPN</label>
+                <div class="detail-value" id="view-selisih-ppn">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Lainnya -->
+          <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
+            <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
+              <i class="fa-solid fa-info-circle me-2"></i>Data Lainnya
+            </h6>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal Selesai Verifikasi Pajak</label>
+                <div class="detail-value" id="view-tanggal-selesai-verifikasi-pajak">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Jenis PPh</label>
+                <div class="detail-value" id="view-jenis-pph">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">DPP PPh</label>
+                <div class="detail-value" id="view-dpp-pph">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">PPN Terhutang</label>
+                <div class="detail-value" id="view-ppn-terhutang">-</div>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="detail-item">
+                <label class="detail-label">Link Dokumen Pajak</label>
+                <div class="detail-value" id="view-link-dokumen-pajak">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6: Informasi Akutansi -->
+        <div class="form-section mb-4" style="background: linear-gradient(135deg, #f0f4f0 0%, #e8ede8 100%); border-radius: 12px; padding: 20px; border: 2px solid #889717;">
+          <div class="section-header mb-3">
+            <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-calculator"></i>
+              INFORMASI AKUTANSI
+              <span style="background: #889717; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">KHUSUS AKUTANSI</span>
+            </h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Nomor MIRO</label>
+                <div class="detail-value" id="view-nomor-miro" style="font-weight: 700; color: #083E40;">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 1px solid #dee2e6; flex-shrink: 0;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+        <a id="view-edit-btn" href="#" class="btn btn-primary">
+          <i class="fa-solid fa-edit me-2"></i>Edit Dokumen
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .detail-label {
+    font-weight: 600;
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 4px;
+    display: block;
+  }
+  
+  .detail-value {
+    font-size: 14px;
+    color: #083E40;
+    word-wrap: break-word;
+  }
+  
+  .detail-item {
+    margin-bottom: 16px;
+  }
+</style>
 
 @endsection

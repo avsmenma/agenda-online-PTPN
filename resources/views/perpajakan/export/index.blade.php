@@ -478,6 +478,48 @@
             align-items: center;
         }
 
+        .btn-shortcut {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        
+        .btn-shortcut-select {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .btn-shortcut-select:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ea080 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-shortcut-deselect {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-shortcut-deselect:hover {
+            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+        
+        .btn-shortcut i {
+            font-size: 11px;
+        }
+
         .column-selection-section {
             background: white;
             padding: 20px;
@@ -826,8 +868,7 @@
                             <i class="fa-solid fa-file-excel"></i>
                             <span>Export Excel</span>
                         </button>
-                        <button type="submit" formaction="{{ route('perpajakan.export.download') }}" name="export"
-                            value="pdf" class="btn-export btn-export-pdf">
+                        <button type="button" onclick="exportToPDF()" class="btn-export btn-export-pdf">
                             <i class="fa-solid fa-file-pdf"></i>
                             <span>Export PDF</span>
                         </button>
@@ -881,12 +922,41 @@
                                         @if($key == 'nilai_rupiah')
                                             <span class="cell-text">Rp {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</span>
                                         @elseif($key == 'status')
-                                            <span class="badge {{ match($doc->status) {
-                                                'selesai' => 'bg-success',
-                                                'terkunci' => 'bg-danger',
-                                                'sedang diproses' => 'bg-warning',
-                                                default => 'bg-secondary'
-                                            } }}">{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span>
+                                            @php
+                                                $statusMap = [
+                                                    'selesai' => 'Selesai',
+                                                    'terkunci' => 'Terkunci',
+                                                    'sedang diproses' => 'Sedang Diproses',
+                                                    'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
+                                                    'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
+                                                    'returned_to_department' => 'Dikembalikan ke Department',
+                                                    'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
+                                                    'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
+                                                    'proses_perpajakan' => 'Diproses Team Perpajakan',
+                                                    'proses_akutansi' => 'Diproses Team Akutansi',
+                                                    'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
+                                                    'proses_ibub' => 'Diproses Ibu Yuni',
+                                                    'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+                                                    'menunggu_verifikasi' => 'Menunggu Verifikasi',
+                                                    'draft' => 'Draft',
+                                                ];
+                                                $statusDisplay = $statusMap[$doc->status] ?? ucwords(str_replace('_', ' ', $doc->status));
+                                                
+                                                // Determine badge class
+                                                $badgeClass = 'bg-secondary';
+                                                if ($doc->status == 'selesai') {
+                                                    $badgeClass = 'bg-success';
+                                                } elseif ($doc->status == 'terkunci') {
+                                                    $badgeClass = 'bg-danger';
+                                                } elseif ($doc->status == 'sedang diproses') {
+                                                    $badgeClass = 'bg-warning';
+                                                } elseif (in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi'])) {
+                                                    $badgeClass = 'bg-info';
+                                                } elseif (in_array($doc->status, ['returned_to_department', 'returned_from_akutansi', 'returned_from_perpajakan'])) {
+                                                    $badgeClass = 'bg-warning';
+                                                }
+                                            @endphp
+                                            <span class="badge {{ $badgeClass }}">{{ $statusDisplay }}</span>
                                         @elseif(in_array($key, $dateColumns))
                                             {{ $doc->$key ? $doc->$key->format('d/m/Y') : '-' }}
                                         @elseif(in_array($key, $currencyColumns))
@@ -1024,8 +1094,20 @@
                 <!-- Column Selection Section -->
                 <div class="column-selection-section">
                     <div class="section-header">
-                        <input type="checkbox" id="selectAllCheckbox" class="column-item-checkbox" onchange="toggleSelectAll(this)"> 
-                        <h5>Pilih Kolom</h5>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="selectAllCheckbox" class="column-item-checkbox" onchange="toggleSelectAll(this)"> 
+                            <h5 style="margin: 0; flex: 1;">Pilih Kolom</h5>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" onclick="selectAllColumns()" class="btn-shortcut btn-shortcut-select" title="Pilih Semua Kolom">
+                                    <i class="fa-solid fa-check-double"></i>
+                                    <span>Pilih Semua</span>
+                                </button>
+                                <button type="button" onclick="deselectAllColumns()" class="btn-shortcut btn-shortcut-deselect" title="Hapus Semua Pilihan">
+                                    <i class="fa-solid fa-xmark"></i>
+                                    <span>Hapus Semua</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <p class="text-muted mb-3 small">Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.</p>
@@ -1108,6 +1190,12 @@
         const savedColumns = localStorage.getItem('perpajakanExportColumns');
         if (savedColumns) {
             selectedColumnsOrder = JSON.parse(savedColumns);
+            // Filter out nomor_mirror and nomor_miro if present
+            selectedColumnsOrder = selectedColumnsOrder.filter(col => 
+                col !== 'nomor_mirror' && col !== 'nomor_miro'
+            );
+            // Update hidden input with saved columns
+            document.getElementById('hiddenColumns').value = selectedColumnsOrder.join(',');
         }
 
         function openColumnModal() {
@@ -1178,14 +1266,20 @@
 
         function selectAllColumns() {
             selectedColumnsOrder = Object.keys(availableColumns);
+            // Update select all checkbox
+            document.getElementById('selectAllCheckbox').checked = true;
             generateColumnSelection();
             updatePreview();
+            updateSelectedCount();
         }
 
         function deselectAllColumns() {
             selectedColumnsOrder = [];
+            // Update select all checkbox
+            document.getElementById('selectAllCheckbox').checked = false;
             generateColumnSelection();
             updatePreview();
+            updateSelectedCount();
         }
 
         function updateSelectedCount() {
@@ -1264,5 +1358,39 @@
             // Set hidden input
             document.getElementById('hiddenColumns').value = selectedColumnsOrder.join(',');
         });
+
+        // Function to export PDF in new window
+        function exportToPDF() {
+            // Get form element
+            const form = document.getElementById('filterForm');
+            if (!form) {
+                alert('Form tidak ditemukan!');
+                return;
+            }
+
+            // Get all form data
+            const formData = new FormData(form);
+            
+            // Add export type
+            formData.append('export', 'pdf');
+            
+            // Ensure columns are set
+            const hiddenColumns = document.getElementById('hiddenColumns').value;
+            if (hiddenColumns) {
+                formData.set('columns', hiddenColumns);
+            }
+
+            // Build URL with all parameters
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+            
+            // Open in new window
+            const url = '{{ route("perpajakan.export.download") }}?' + params.toString();
+            window.open(url, '_blank');
+        }
     </script>
 @endsection

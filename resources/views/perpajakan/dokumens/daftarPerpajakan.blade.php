@@ -582,6 +582,11 @@
     min-width: 140px;
     text-align: center;
   }
+  .table-enhanced .col-deadline {
+    width: 180px;
+    min-width: 180px;
+    text-align: center;
+  }
   .table-enhanced .col-nilai {
     width: 150px;
     min-width: 150px;
@@ -1400,7 +1405,7 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
-    max-width: 900px;
+    max-width: 90%;
     width: 90%;
     max-height: 90vh;
     display: flex;
@@ -1823,6 +1828,7 @@
           <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
           @endif
         @endforeach
+        <th class="col-deadline">Deadline</th>
         <th class="col-status">Status</th>
         <th class="col-action">Aksi</th>
       </tr>
@@ -1942,6 +1948,29 @@
             </td>
             @endif
           @endforeach
+          <!-- Kolom Deadline -->
+          <td class="col-deadline">
+            @if($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at)
+              <div class="deadline-card" data-deadline="{{ ($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at)->format('Y-m-d H:i:s') }}">
+                <div class="deadline-time">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>{{ ($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at)->format('d M Y, H:i') }}</span>
+                </div>
+                <div class="deadline-indicator">
+                  <i class="fa-solid"></i>
+                  <span class="status-text">AMAN</span>
+                </div>
+                @if($dokumen->deadline_note)
+                  <div class="deadline-note">{{ Str::limit($dokumen->deadline_note, 50) }}</div>
+                @endif
+              </div>
+            @else
+              <div class="no-deadline">
+                <i class="fa-solid fa-clock"></i>
+                <span>Belum ada deadline</span>
+              </div>
+            @endif
+          </td>
           <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
             @if($isLocked)
               <span class="badge-status badge-locked">🔒 Terkunci</span>
@@ -2666,11 +2695,11 @@ function updateDeadlineCard(card) {
       // Create late info with enhanced styling
       let lateText;
       if (diffDays >= 1) {
-        lateText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} telat`;
+        lateText = `${diffDays} HARI TELAT`;
       } else if (diffHours >= 1) {
-        lateText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} telat`;
+        lateText = `${diffHours} JAM TELAT`;
       } else {
-        lateText = 'Baru saja terlambat';
+        lateText = 'BARU SAJA TELAT';
       }
 
       const lateInfo = document.createElement('div');
