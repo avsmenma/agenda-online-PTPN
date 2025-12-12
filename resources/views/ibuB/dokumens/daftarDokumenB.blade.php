@@ -328,6 +328,51 @@ search-box .input-group {
     overflow: hidden;
   }
 
+  /* Table Container Header with Statistics */
+  .table-container-header {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px 12px 0 0;
+    margin: -30px -30px 20px -30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .table-container-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .table-container-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    opacity: 0.8;
+    text-transform: uppercase;
+  }
+
   /* Horizontal Scroll Container */
   .table-responsive {
     overflow-x: auto;
@@ -2675,6 +2720,32 @@ search-box .input-group {
 
 <!-- Tabel Dokumen -->
 <div class="table-dokumen">
+  <div class="table-container-header">
+    <h3 class="table-container-title">
+      <i class="fa-solid fa-file-lines"></i>
+      Daftar Dokumen B
+    </h3>
+    <div class="table-container-stats">
+      <div class="stat-item">
+        <span class="stat-value">{{ count($dokumens) }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ $dokumens->whereIn('status', ['selesai', 'approved_ibub', 'sent_to_perpajakan', 'sent_to_akutansi'])->count() }}</span>
+        <span class="stat-label">Selesai</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ $dokumens->filter(function($dokumen) {
+          return is_null($dokumen->deadline_at) 
+                 && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses']) 
+                 && is_null($dokumen->returned_to_department_at) 
+                 && is_null($dokumen->returned_to_bidang_at)
+                 && $dokumen->inbox_approval_status !== 'rejected';
+        })->count() }}</span>
+        <span class="stat-label">Terkunci</span>
+      </div>
+    </div>
+  </div>
   <div class="table-responsive table-container">
     <table class="table table-enhanced mb-0">
     <thead>

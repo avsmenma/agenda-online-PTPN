@@ -621,10 +621,12 @@ class DashboardPerpajakanController extends Controller
             return response()->json(['success' => false, 'message' => 'Access denied'], 403);
         }
 
-        // Validate
+        // Validate - maksimal 3 hari untuk dokumen baru masuk
         $validator = Validator::make($request->all(), [
-            'deadline_days' => 'required|integer|min:1|max:30',
+            'deadline_days' => 'required|integer|min:1|max:3',
             'deadline_note' => 'nullable|string|max:1000',
+        ], [
+            'deadline_days.max' => 'Deadline maksimal 3 hari untuk dokumen baru masuk.',
         ]);
 
         if ($validator->fails()) {
@@ -1167,72 +1169,154 @@ class DashboardPerpajakanController extends Controller
      */
     public function rekapan(Request $request)
     {
-        $query = Dokumen::where('created_by', 'ibuA')
-            ->with(['dokumenPos', 'dokumenPrs']);
-
-        // Filter by bagian
+        // Get selected year and bagian from request
+        $selectedYear = $request->get('year', date('Y'));
         $selectedBagian = $request->get('bagian', '');
+        $selectedMonth = $request->get('month', null);
+
+        // Validate year
+        if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
+            $selectedYear = date('Y');
+        }
+
+        // Base query - only documents that have reached Perpajakan
+        // Same filter logic as index() method
+        $baseQuery = Dokumen::query()
+            ->where(function ($q) {
+                $q->where('current_handler', 'perpajakan')
+                    ->orWhere('status', 'sent_to_akutansi');
+            })
+            ->whereYear('tanggal_masuk', $selectedYear);
+
+        // Filter by bagian if selected
         if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
-            $query->where('bagian', $selectedBagian);
+            $baseQuery->where('bagian', $selectedBagian);
         }
 
-        // Search functionality
-        if ($request->has('search') && trim($request->search) !== '') {
-            $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                // Always prioritize nomor agenda for exact-style lookup
-                $q->where('nomor_agenda', 'like', '%' . $search . '%');
+        // Get yearly summary
+        $yearlySummary = [
+            'total_dokumen' => (clone $baseQuery)->count(),
+            'total_nominal' => (clone $baseQuery)->sum('nilai_rupiah') ?? 0,
+        ];
 
-                // Only broaden search to other columns when the keyword contains non-numeric characters
-                if (preg_match('/\D/', $search)) {
-                    $q->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                        ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                        ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
-                }
-            });
+        // Get monthly statistics
+        $monthlyStats = [];
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $monthQuery = (clone $baseQuery)->whereMonth('tanggal_masuk', $month);
+            $monthStats = [
+                'name' => $monthNames[$month],
+                'count' => $monthQuery->count(),
+                'total_nominal' => $monthQuery->sum('nilai_rupiah') ?? 0,
+            ];
+            $monthlyStats[$month] = $monthStats;
         }
 
-        // Filter by year
-        if ($request->has('year') && $request->year) {
-            $query->where('tahun', $request->year);
+        // Get documents for table (filter by month if selected)
+        $tableQuery = (clone $baseQuery);
+        if ($selectedMonth && $selectedMonth >= 1 && $selectedMonth <= 12) {
+            $tableQuery->whereMonth('tanggal_masuk', $selectedMonth);
         }
 
+        // Pagination
         $perPage = $request->get('per_page', 10);
-        $dokumens = $query->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
+        $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
-        // Get statistics
-        $statistics = $this->getRekapanStatistics($selectedBagian);
+        // Get available years (only for documents that reached perpajakan)
+        $availableYears = Dokumen::query()
+            ->where(function ($q) {
+                $q->where('current_handler', 'perpajakan')
+                    ->orWhere('status', 'sent_to_akutansi');
+            })
+            ->whereNotNull('tanggal_masuk')
+            ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->toArray();
 
-        $data = array(
-            "title" => "Rekapan Dokumen",
-            "module" => "perpajakan",
-            "menuDokumen" => "active",
-            "menuRekapan" => "active",
-            "menuDaftarDokumen" => "",
-            "menuDaftarDokumenDikembalikan" => "",
-            "menuDashboard" => "",
-            "dokumens" => $dokumens,
-            "statistics" => $statistics,
-            "bagianList" => self::BAGIAN_LIST,
-            "selectedBagian" => $selectedBagian,
-        );
+        if (empty($availableYears)) {
+            $availableYears = [(int)date('Y')];
+        }
 
-        return view('perpajakan.rekapan', $data);
+        // Get document count per bagian for the selected year (only documents that reached perpajakan)
+        $bagianCounts = [];
+        foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
+            $countQuery = Dokumen::query()
+                ->where(function ($q) {
+                    $q->where('current_handler', 'perpajakan')
+                        ->orWhere('status', 'sent_to_akutansi');
+                })
+                ->whereYear('tanggal_masuk', $selectedYear)
+                ->where('bagian', $bagianCode);
+            $bagianCounts[$bagianCode] = $countQuery->count();
+        }
+
+        $data = [
+            'title' => 'Analitik Dokumen',
+            'module' => 'perpajakan',
+            'menuDokumen' => 'active',
+            'menuRekapan' => 'active',
+            'selectedYear' => (int)$selectedYear,
+            'selectedBagian' => $selectedBagian,
+            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'yearlySummary' => $yearlySummary,
+            'monthlyStats' => $monthlyStats,
+            'dokumens' => $tableDokumens,
+            'availableYears' => $availableYears,
+            'bagianList' => self::BAGIAN_LIST,
+            'bagianCounts' => $bagianCounts,
+        ];
+
+        return view('perpajakan.analytics', $data);
     }
 
     /**
-     * Get statistics for rekapan documents (same as IbuB)
+     * Get statistics for rekapan documents (same as exportView)
      */
     private function getRekapanStatistics(string $filterBagian = ''): array
     {
-        $query = Dokumen::where('created_by', 'ibuA');
+        // Base Query for Stats - same logic as exportView
+        $statsQuery = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'perpajakan')
+                ->orWhere(function($subQ) {
+                    // Documents sent to perpajakan (not still at ibuB)
+                    $subQ->where('status', 'sent_to_perpajakan')
+                         ->where('current_handler', '!=', 'ibuB')
+                         ->whereNotNull('sent_to_perpajakan_at');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents being processed by perpajakan
+                    $subQ->where('status', 'sedang diproses')
+                         ->where('current_handler', 'perpajakan');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents that have been processed by perpajakan and moved forward
+                    $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
+                         ->whereNotNull('processed_perpajakan_at');
+                })
+                ->orWhere(function($subQ) {
+                    // Documents returned from perpajakan (for tracking)
+                    $subQ->where('status', 'returned_to_department')
+                         ->whereNotNull('returned_from_perpajakan_at');
+                });
+        });
 
-        if ($filterBagian && in_array($filterBagian, array_keys(self::BAGIAN_LIST))) {
-            $query->where('bagian', $filterBagian);
-        }
+        $countTotal = (clone $statsQuery)->count();
+        $countTerkunci = (clone $statsQuery)->whereNull('deadline_at')->where('current_handler', 'perpajakan')->where('status', 'sent_to_perpajakan')->count();
+        $countProses = (clone $statsQuery)->whereNotNull('deadline_at')->where('current_handler', 'perpajakan')->whereNotIn('status', ['selesai', 'sent_to_akutansi'])->count();
+        $countSelesai = (clone $statsQuery)->where(function ($q) {
+            $q->where('status', 'selesai')
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere('current_handler', 'akutansi');
+        })->count();
 
-        $total = $query->count();
-
+        // Get bagian stats for backward compatibility
         $bagianStats = [];
         foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
             $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagianCode);
@@ -1243,14 +1327,17 @@ class DashboardPerpajakanController extends Controller
         }
 
         return [
-            'total_documents' => $total,
+            'total_documents' => $countTotal,
+            'terkunci' => $countTerkunci,
+            'sedang_diproses' => $countProses,
+            'selesai' => $countSelesai,
             'by_bagian' => $bagianStats,
             'by_status' => [
-                'draft' => $query->where('status', 'draft')->count(),
-                'sent_to_ibub' => $query->where('status', 'sent_to_ibub')->count(),
-                'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
-                'selesai' => $query->where('status', 'selesai')->count(),
-                'returned_to_ibua' => $query->where('status', 'returned_to_ibua')->count(),
+                'draft' => Dokumen::where('created_by', 'ibuA')->where('status', 'draft')->count(),
+                'sent_to_ibub' => Dokumen::where('created_by', 'ibuA')->where('status', 'sent_to_ibub')->count(),
+                'sedang diproses' => Dokumen::where('created_by', 'ibuA')->where('status', 'sedang diproses')->count(),
+                'selesai' => Dokumen::where('created_by', 'ibuA')->where('status', 'selesai')->count(),
+                'returned_to_ibua' => Dokumen::where('created_by', 'ibuA')->where('status', 'returned_to_ibua')->count(),
             ]
         ];
     }

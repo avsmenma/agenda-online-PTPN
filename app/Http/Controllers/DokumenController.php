@@ -128,9 +128,7 @@ class DokumenController extends Controller
             'nomor_spp' => 'Nomor SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Miro',
             'status' => 'Status',
-            'keterangan' => 'Keterangan',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kategori',
@@ -149,6 +147,12 @@ class DokumenController extends Controller
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
         
+        // Remove deprecated columns if they exist
+        $selectedColumns = array_filter($selectedColumns, function($col) {
+            return $col !== 'nomor_mirror' && $col !== 'keterangan';
+        });
+        $selectedColumns = array_values($selectedColumns); // Re-index array
+        
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
             session(['dokumens_table_columns' => $selectedColumns]);
@@ -159,10 +163,17 @@ class DokumenController extends Controller
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_mirror',
-                'status',
-                'keterangan'
+                'status'
             ]);
+            
+            // Remove deprecated columns if they exist in session
+            $selectedColumns = array_filter($selectedColumns, function($col) {
+                return $col !== 'nomor_mirror' && $col !== 'keterangan';
+            });
+            $selectedColumns = array_values($selectedColumns); // Re-index array
+            
+            // Update session with cleaned columns
+            session(['dokumens_table_columns' => $selectedColumns]);
         }
 
         $data = array(
@@ -213,6 +224,59 @@ class DokumenController extends Controller
         $html = view('IbuA.dokumens.partials.document_detail', compact('dokumen'))->render();
 
         return response($html);
+    }
+
+    /**
+     * Get document detail for modal popup (JSON format)
+     */
+    public function getDocumentDetail(Dokumen $dokumen)
+    {
+        // Only allow if created by ibuA
+        if ($dokumen->created_by !== 'ibuA') {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        // Load relationships
+        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Return JSON for modal view
+        return response()->json([
+            'success' => true,
+            'dokumen' => [
+                'id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : null,
+                'bulan' => $dokumen->bulan,
+                'tahun' => $dokumen->tahun,
+                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('Y-m-d H:i:s') : null,
+                'jenis_dokumen' => $dokumen->jenis_dokumen,
+                'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                'kategori' => $dokumen->kategori,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                'dibayar_kepada' => ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
+                    ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                    : ($dokumen->dibayar_kepada ?? null),
+                'kebun' => $dokumen->kebun,
+                'bagian' => $dokumen->bagian,
+                'nama_pengirim' => $dokumen->nama_pengirim,
+                'no_spk' => $dokumen->no_spk,
+                'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
+                'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
+                'nomor_mirror' => $dokumen->nomor_mirror,
+                'nomor_miro' => $dokumen->nomor_miro,
+                'no_berita_acara' => $dokumen->no_berita_acara,
+                'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
+                'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function($po) {
+                    return ['nomor_po' => $po->nomor_po ?? ''];
+                })->values() : [],
+                'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function($pr) {
+                    return ['nomor_pr' => $pr->nomor_pr ?? ''];
+                })->values() : [],
+            ]
+        ]);
     }
 
     /**

@@ -452,6 +452,65 @@
               @enderror
             </div>
           </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Dibayar Kepada</label>
+              @php
+                // Get dibayar_kepada from relationship if available, otherwise use direct field
+                $dibayarKepadaValue = old('dibayar_kepada');
+                if (!$dibayarKepadaValue) {
+                  if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
+                    $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
+                  } else {
+                    $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '';
+                  }
+                }
+              @endphp
+              <input type="text" name="dibayar_kepada" value="{{ $dibayarKepadaValue }}" placeholder="Nama penerima">
+              @error('dibayar_kepada')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>No Berita Acara</label>
+              <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024" value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
+              @error('no_berita_acara')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal Berita Acara</label>
+              <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
+              @error('tanggal_berita_acara')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>No SPK</label>
+              <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk', $dokumen->no_spk) }}">
+              @error('no_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal SPK</label>
+              <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
+              @error('tanggal_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal Berakhir SPK</label>
+              <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
+              @error('tanggal_berakhir_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -600,70 +659,7 @@
       </div>
     </div>
 
-    <!-- Section 4: Detail Tambahan -->
-    <div class="accordion-section">
-      <div class="accordion-header" onclick="toggleAccordion(this)">
-        <div class="accordion-title">
-          <i class="fa-solid fa-circle-info"></i>
-          <span>Detail Tambahan</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Opsional</span>
-        </div>
-        <i class="fa-solid fa-chevron-down accordion-icon"></i>
-      </div>
-      <div class="accordion-content">
-        <div class="accordion-body">
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>Dibayar Kepada</label>
-              <input type="text" name="dibayar_kepada" value="{{ old('dibayar_kepada', $dokumen->dibayar_kepada) }}" placeholder="Nama penerima">
-              @error('dibayar_kepada')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>No Berita Acara</label>
-              <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024" value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
-              @error('no_berita_acara')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>Tanggal Berita Acara</label>
-              <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
-              @error('tanggal_berita_acara')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-          </div>
-
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>No SPK</label>
-              <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk', $dokumen->no_spk) }}">
-              @error('no_spk')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>Tanggal SPK</label>
-              <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
-              @error('tanggal_spk')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>Tanggal Berakhir SPK</label>
-              <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
-              @error('tanggal_berakhir_spk')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 5: Nomor PO & PR -->
+    <!-- Section 4: Nomor PO & PR -->
     <div class="accordion-section">
       <div class="accordion-header" onclick="toggleAccordion(this)">
         <div class="accordion-title">
@@ -720,7 +716,7 @@
       </div>
     </div>
 
-    <!-- Section 6: Keterangan -->
+    <!-- Section 5: Keterangan -->
     <div class="accordion-section">
       <div class="accordion-header" onclick="toggleAccordion(this)">
         <div class="accordion-title">

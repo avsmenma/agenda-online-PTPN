@@ -229,6 +229,7 @@ Route::get('/dokumens/create', [DokumenController::class, 'create'])->name('doku
 Route::post('/dokumens', [DokumenController::class, 'store'])->name('dokumens.store');
 Route::get('/dokumens/{dokumen}/edit', [DokumenController::class, 'edit'])->name('dokumens.edit');
 Route::get('/dokumens/{dokumen}/detail-ibua', [DokumenController::class, 'getDocumentDetailForIbuA'])->name('dokumens.detail-ibua');
+Route::get('/dokumens/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('dokumens.detail');
 Route::get('/dokumens/{dokumen}/progress-ibua', [DokumenController::class, 'getDocumentProgressForIbuA'])->name('dokumens.progress-ibua');
 Route::put('/dokumens/{dokumen}', [DokumenController::class, 'update'])->name('dokumens.update');
 Route::delete('/dokumens/{dokumen}', [DokumenController::class, 'destroy'])->name('dokumens.destroy');
@@ -258,7 +259,6 @@ Route::get('/rekapan-ibuB/analytics', [DashboardBController::class, 'rekapanAnal
     ->name('dokumensB.rekapan.analytics');
 Route::get('/dokumensB/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('dokumensB.detail');
 Route::get('/dokumensB/{dokumen}/edit', [DashboardBController::class, 'editDokumen'])->name('dokumensB.edit');
-Route::get('/dokumens/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('dokumens.detail');
 Route::put('/dokumensB/{dokumen}', [DashboardBController::class, 'updateDokumen'])->name('dokumensB.update');
 Route::post('/dokumensB/{dokumen}/return-to-department', [DashboardBController::class, 'returnToDepartment'])->name('dokumensB.returnToDepartment');
 Route::post('/dokumensB/{dokumen}/send-back-to-perpajakan', [DashboardBController::class, 'sendBackToPerpajakan'])->name('dokumensB.sendBackToPerpajakan');

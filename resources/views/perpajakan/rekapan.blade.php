@@ -1,5 +1,7 @@
 @extends('layouts/app')
 @section('content')
+<!-- Tailwind CSS CDN for responsive utilities -->
+<script src="https://cdn.tailwindcss.com"></script>
 
 <style>
   h2 {
@@ -12,80 +14,129 @@
     font-size: 28px;
   }
 
-  /* Statistics Cards */
+  /* Statistics Cards - Enhanced with smooth animations */
   .stat-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 8px 32px rgba(26, 77, 62, 0.1), 0 2px 8px rgba(15, 61, 46, 0.05);
-    border: 1px solid rgba(26, 77, 62, 0.08);
-    transition: all 0.3s ease;
+    padding: 20px 24px;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-    height: 140px;
+    min-height: auto;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    animation: slideUp 0.4s ease backwards;
   }
 
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; }
+  .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
   .stat-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(26, 77, 62, 0.2), 0 4px 16px rgba(15, 61, 46, 0.1);
-    border-color: rgba(26, 77, 62, 0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
+    border-color: rgba(136, 151, 23, 0.3);
   }
 
   .stat-card-body {
-    position: relative;
-    z-index: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 20px;
+    gap: 15px;
+    min-width: 0;
   }
 
   .stat-icon {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
     color: white;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
+    min-width: 48px;
+    transition: transform 0.3s ease;
   }
 
-  .stat-icon.total { background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%); }
-  .stat-icon.bagian { background: linear-gradient(135deg, #2d6a4f 0%, #1b5e3f 100%); }
-  .stat-icon.status { background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%); }
+  .stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  .stat-icon.total { background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); }
+  .stat-icon.terkunci { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+  .stat-icon.proses { background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); }
+  .stat-icon.selesai { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
 
   .stat-content {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
   }
 
   .stat-title {
     font-size: 13px;
     font-weight: 600;
     color: #6c757d;
-    margin-bottom: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin-bottom: 6px;
   }
 
   .stat-value {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
     color: #2c3e50;
+    line-height: 1.2;
     margin-bottom: 4px;
-    line-height: 1;
   }
 
-  .stat-description {
-    font-size: 11px;
-    color: #868e96;
-    opacity: 0.8;
+  /* Responsive font sizes */
+  @media (min-width: 640px) {
+    .stat-value {
+      font-size: 26px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .stat-value {
+      font-size: 28px;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .stat-value {
+      font-size: 32px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stat-card {
+      padding: 16px 20px;
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+      min-width: 40px;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Filter Section */
@@ -283,136 +334,70 @@
     cursor: default;
   }
 
-  /* Bagian Statistics */
-  .bagian-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-top: 20px;
-  }
-
-  .bagian-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    border: 1px solid rgba(26, 77, 62, 0.08);
-    transition: all 0.3s ease;
-  }
-
-  .bagian-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(26, 77, 62, 0.15);
-    border-color: rgba(26, 77, 62, 0.15);
-  }
-
-  .bagian-name {
-    font-weight: 700;
-    color: #1a4d3e;
-    margin-bottom: 8px;
-    font-size: 16px;
-  }
-
-  .bagian-count {
-    font-size: 24px;
-    font-weight: 700;
-    color: #40916c;
-  }
-
   /* Responsive Design */
   @media (max-width: 768px) {
-    .stat-card {
-      height: 120px;
-      padding: 20px;
-    }
-
-    .stat-icon {
-      width: 50px;
-      height: 50px;
-      font-size: 20px;
-    }
-
-    .stat-value {
-      font-size: 28px;
-    }
-
     .filter-section {
       padding: 20px;
-    }
-
-    .bagian-stats {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
     }
   }
 </style>
 
 <h2>Rekapan Dokumen</h2>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-  <div class="col-md-4 mb-3">
+<!-- Statistics Cards - Responsive Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4 mb-4">
+    <!-- Card 1: Total Dokumen -->
     <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-content">
-          <div class="stat-title">Total Dokumen</div>
-          <div class="stat-value">{{ $statistics['total_documents'] }}</div>
-          <div class="stat-description">Semua dokumen yang dibuat oleh Ibu Tarapul</div>
-        </div>
-        <div class="stat-icon total">
-          <i class="fa-solid fa-file-lines"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4 mb-3">
-    <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-content">
-          <div class="stat-title">Status Aktif</div>
-          <div class="stat-value">{{ $statistics['by_status']['sent_to_ibub'] + $statistics['by_status']['sedang diproses'] }}</div>
-          <div class="stat-description">Dokumen yang sedang diproses</div>
-        </div>
-        <div class="stat-icon status">
-          <i class="fa-solid fa-clock"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4 mb-3">
-    <div class="stat-card">
-      <div class="stat-card-body">
-        <div class="stat-content">
-          <div class="stat-title">Selesai</div>
-          <div class="stat-value">{{ $statistics['by_status']['selesai'] }}</div>
-          <div class="stat-description">Dokumen yang telah selesai diproses</div>
-        </div>
-        <div class="stat-icon bagian">
-          <i class="fa-solid fa-check-circle"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Statistik per Bagian (Dipindahkan ke posisi 2) -->
-@if(!$selectedBagian)
-  <div class="row mb-4">
-    <div class="col-12">
-      <h5 class="mb-3">Statistik per Bagian</h5>
-      <div class="bagian-stats">
-        @foreach($statistics['by_bagian'] as $code => $bagian)
-          @if($bagian['total'] > 0)
-            <div class="bagian-card">
-              <div class="bagian-name">{{ $bagian['name'] }}</div>
-              <div class="bagian-count">{{ $bagian['total'] }}</div>
+        <div class="stat-card-body">
+            <div class="stat-content" style="flex: 1; min-width: 0;">
+                <div class="stat-title">Total Dokumen</div>
+                <div class="stat-value">{{ number_format($statistics['total_documents'] ?? 0) }}</div>
             </div>
-          @endif
-        @endforeach
-      </div>
+            <div class="stat-icon total flex-shrink-0">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+        </div>
     </div>
-  </div>
-@endif
+    
+    <!-- Card 2: Terkunci -->
+    <div class="stat-card">
+        <div class="stat-card-body">
+            <div class="stat-content" style="flex: 1; min-width: 0;">
+                <div class="stat-title">Terkunci</div>
+                <div class="stat-value">{{ number_format($statistics['terkunci'] ?? 0) }}</div>
+            </div>
+            <div class="stat-icon terkunci flex-shrink-0">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 3: Sedang Diproses -->
+    <div class="stat-card">
+        <div class="stat-card-body">
+            <div class="stat-content" style="flex: 1; min-width: 0;">
+                <div class="stat-title">Sedang Diproses</div>
+                <div class="stat-value">{{ number_format($statistics['sedang_diproses'] ?? 0) }}</div>
+            </div>
+            <div class="stat-icon proses flex-shrink-0">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 4: Selesai -->
+    <div class="stat-card">
+        <div class="stat-card-body">
+            <div class="stat-content" style="flex: 1; min-width: 0;">
+                <div class="stat-title">Selesai</div>
+                <div class="stat-value">{{ number_format($statistics['selesai'] ?? 0) }}</div>
+            </div>
+            <div class="stat-icon selesai flex-shrink-0">
+                <i class="fa-solid fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Filter Section (Dipindahkan ke posisi 3) -->
 <div class="filter-section">
@@ -458,40 +443,6 @@
   </form>
 </div>
 
-<!-- Bagian Statistics -->
-@if($selectedBagian)
-  <div class="row mb-4">
-    <div class="col-12">
-      <h5 class="mb-3">Statistik Bagian {{ $bagianList[$selectedBagian] ?? '' }}</h5>
-      <div class="row">
-        <div class="col-md-3 col-6 mb-3">
-          <div class="bagian-card">
-            <div class="bagian-name">Draft</div>
-            <div class="bagian-count">{{ $statistics['by_status']['draft'] }}</div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="bagian-card">
-            <div class="bagian-name">Terkirim</div>
-            <div class="bagian-count">{{ $statistics['by_status']['sent_to_ibub'] }}</div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="bagian-card">
-            <div class="bagian-name">Diproses</div>
-            <div class="bagian-count">{{ $statistics['by_status']['sedang diproses'] }}</div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="bagian-card">
-            <div class="bagian-name">Selesai</div>
-            <div class="bagian-count">{{ $statistics['by_status']['selesai'] }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-@endif
 
 <!-- Documents Table -->
 <div class="table-container">

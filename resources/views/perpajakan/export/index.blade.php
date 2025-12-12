@@ -756,61 +756,6 @@
             </button>
         </div>
 
-        <!-- Statistics Cards - Responsive Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4 mb-4">
-            <!-- Card 1: Total Dokumen -->
-            <div class="stat-card">
-                <div class="stat-card-body">
-                    <div class="stat-content" style="flex: 1; min-width: 0;">
-                        <div class="stat-title">Total Dokumen</div>
-                        <div class="stat-value">{{ number_format($statistics['total_documents'] ?? 0) }}</div>
-                    </div>
-                    <div class="stat-icon total flex-shrink-0">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Card 2: Terkunci -->
-            <div class="stat-card">
-                <div class="stat-card-body">
-                    <div class="stat-content" style="flex: 1; min-width: 0;">
-                        <div class="stat-title">Terkunci</div>
-                        <div class="stat-value">{{ number_format($statistics['terkunci'] ?? 0) }}</div>
-                    </div>
-                    <div class="stat-icon terkunci flex-shrink-0">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Card 3: Sedang Diproses -->
-            <div class="stat-card">
-                <div class="stat-card-body">
-                    <div class="stat-content" style="flex: 1; min-width: 0;">
-                        <div class="stat-title">Sedang Diproses</div>
-                        <div class="stat-value">{{ number_format($statistics['sedang_diproses'] ?? 0) }}</div>
-                    </div>
-                    <div class="stat-icon proses flex-shrink-0">
-                        <i class="fa-solid fa-hourglass-half"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Card 4: Selesai -->
-            <div class="stat-card">
-                <div class="stat-card-body">
-                    <div class="stat-content" style="flex: 1; min-width: 0;">
-                        <div class="stat-title">Selesai</div>
-                        <div class="stat-value">{{ number_format($statistics['selesai'] ?? 0) }}</div>
-                    </div>
-                    <div class="stat-icon selesai flex-shrink-0">
-                        <i class="fa-solid fa-check-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Filter & Export Section -->
         <div class="filter-section">
             <form action="{{ route('perpajakan.export') }}" method="GET" id="filterForm">

@@ -8,7 +8,7 @@
 <style>
   /* Title Styles */
   h2 {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -22,8 +22,8 @@
     padding: 24px;
     border-radius: 16px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px rgba(26, 77, 62, 0.1), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid rgba(26, 77, 62, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -47,16 +47,16 @@
   .filter-group label {
     font-size: 14px;
     font-weight: 600;
-    color: #083E40;
+    color: #1a4d3e;
     margin: 0;
   }
 
   .filter-group select {
     padding: 10px 16px;
-    border: 2px solid rgba(8, 62, 64, 0.15);
+    border: 2px solid rgba(26, 77, 62, 0.15);
     border-radius: 10px;
     background: white;
-    color: #083E40;
+    color: #1a4d3e;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -65,14 +65,14 @@
   }
 
   .filter-group select:hover {
-    border-color: #889717;
-    box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+    border-color: #40916c;
+    box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.1);
   }
 
   .filter-group select:focus {
     outline: none;
-    border-color: #889717;
-    box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+    border-color: #40916c;
+    box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.1);
   }
 
   /* Big Summary Card */
@@ -144,10 +144,10 @@
   .section-title {
     font-size: 18px;
     font-weight: 700;
-    color: #083E40;
+    color: #1a4d3e;
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 3px solid #889717;
+    border-bottom: 3px solid #40916c;
   }
 
   .month-grid {
@@ -161,8 +161,8 @@
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 2px solid rgba(8, 62, 64, 0.1);
+    box-shadow: 0 4px 20px rgba(26, 77, 62, 0.08), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 2px solid rgba(26, 77, 62, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
@@ -176,15 +176,15 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(90deg, #1a4d3e 0%, #40916c 100%);
     transform: scaleX(0);
     transition: transform 0.3s ease;
   }
 
   .month-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.15), 0 4px 16px rgba(136, 151, 23, 0.1);
-    border-color: #889717;
+    box-shadow: 0 8px 32px rgba(26, 77, 62, 0.15), 0 4px 16px rgba(64, 145, 108, 0.1);
+    border-color: #40916c;
   }
 
   .month-card:hover::before {
@@ -192,32 +192,34 @@
   }
 
   .month-card.active {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border: 4px solid #dc3545;
-    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 2px 8px rgba(136, 151, 23, 0.05);
+    background: linear-gradient(135deg, #40916c 0%, #1a4d3e 100%);
+    color: white;
+    border-color: #40916c;
+    box-shadow: 0 8px 32px rgba(64, 145, 108, 0.3), 0 4px 16px rgba(26, 77, 62, 0.2);
   }
 
   .month-card.active::before {
-    transform: scaleX(0);
+    transform: scaleX(1);
+    background: white;
   }
 
   .month-card.active .month-name,
   .month-card.active .month-count,
   .month-card.active .month-total {
-    color: #083E40;
+    color: white;
   }
 
   .month-name {
     font-size: 16px;
     font-weight: 700;
-    color: #083E40;
+    color: #1a4d3e;
     margin-bottom: 12px;
   }
 
   .month-count {
     font-size: 24px;
     font-weight: 800;
-    color: #083E40;
+    color: #1a4d3e;
     margin-bottom: 8px;
   }
 
@@ -232,16 +234,13 @@
   .month-total {
     font-size: 14px;
     font-weight: 600;
-    color: #889717;
+    color: #40916c;
     margin-top: 8px;
   }
 
-  .month-card.active .month-count-label {
-    color: #6c757d;
-  }
-
+  .month-card.active .month-count-label,
   .month-card.active .month-total {
-    color: #889717;
+    color: rgba(255, 255, 255, 0.9);
   }
 
   .show-all-months-btn {
@@ -249,7 +248,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
     color: white;
     border: none;
     border-radius: 10px;
@@ -262,7 +261,7 @@
 
   .show-all-months-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.3);
+    box-shadow: 0 4px 16px rgba(26, 77, 62, 0.3);
   }
 
   /* Table Styles */
@@ -270,8 +269,8 @@
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 24px;
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px rgba(26, 77, 62, 0.1), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid rgba(26, 77, 62, 0.08);
     margin-top: 30px;
     overflow-x: auto;
     overflow-y: visible;
@@ -287,11 +286,11 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 2px solid rgba(8, 62, 64, 0.1);
+    border-bottom: 2px solid rgba(26, 77, 62, 0.1);
   }
 
   .table-container h6 span {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, #1a4d3e 0%, #40916c 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -309,11 +308,11 @@
   }
 
   .table thead {
-    background: #083E40 !important;
+    background: #1a4d3e !important;
   }
 
   .table thead th {
-    background: #083E40 !important;
+    background: #1a4d3e !important;
     color: white !important;
     font-weight: 600 !important;
     font-size: 14px !important;
@@ -327,8 +326,8 @@
   }
 
   .table tbody tr:hover {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #889717;
+    background: linear-gradient(90deg, rgba(64, 145, 108, 0.05) 0%, transparent 100%);
+    border-left: 3px solid #40916c;
     transform: scale(1.001);
   }
 
@@ -336,7 +335,7 @@
     padding: 14px 12px;
     font-size: 13px;
     vertical-align: middle;
-    border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+    border-bottom: 1px solid rgba(26, 77, 62, 0.05);
   }
 
   /* Table Scroll Container - Horizontal Scrollbar Only (Always Visible) */
@@ -592,16 +591,16 @@
       </thead>
       <tbody id="dokumenTableBody">
         @forelse($dokumens as $index => $dokumen)
-          <tr onclick="handleItemClick(event, '{{ route('dokumens.detail', $dokumen->id) }}')">
+          <tr>
             <td style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
             <td class="select-text"><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
             <td>
-              <span style="font-weight: 600; color: #083E40;">
+              <span style="font-weight: 600; color: #1a4d3e;">
                 {{ $dokumen->bulan ?? '-' }}
               </span>
             </td>
             <td>
-              <span style="font-weight: 600; color: #083E40;">
+              <span style="font-weight: 600; color: #1a4d3e;">
                 {{ $dokumen->tahun ?? '-' }}
               </span>
             </td>
@@ -620,27 +619,37 @@
             </td>
             <td>
               @php
-                $statusLabel = $dokumen->status_for_user ?? ucfirst(str_replace('_', ' ', $dokumen->status));
+                if ($dokumen->status == 'sent_to_pembayaran') {
+                  $statusDisplay = 'Terkirim ke Pembayaran';
+                } elseif ($dokumen->status == 'sent_to_akutansi') {
+                  $statusDisplay = 'Terkirim ke Akutansi';
+                } elseif ($dokumen->status == 'selesai') {
+                  $statusDisplay = 'Selesai';
+                } elseif ($dokumen->status == 'sedang diproses' && $dokumen->current_handler == 'akutansi') {
+                  $statusDisplay = 'Sedang Diproses';
+                } else {
+                  $statusDisplay = ucfirst(str_replace('_', ' ', $dokumen->status ?? ''));
+                }
               @endphp
-              @if($statusLabel == 'Belum Dikirim' || in_array($dokumen->status, ['draft', 'returned_to_ibua']))
-                <span class="badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                  Belum Dikirim
-                </span>
-              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval')
+              @if($statusDisplay == 'Sedang Diproses')
                 <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                  Menunggu Approval
+                  ⏳ Sedang Diproses
                 </span>
-              @elseif($statusLabel == 'Terkirim')
-                <span class="badge" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                  Terkirim
+              @elseif($statusDisplay == 'Selesai')
+                <span class="badge" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  ✓ Selesai
                 </span>
-              @elseif($statusLabel == 'Dikembalikan untuk Revisi')
-                <span class="badge" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                  Dikembalikan
+              @elseif($statusDisplay == 'Terkirim ke Akutansi')
+                <span class="badge" style="background: linear-gradient(135deg, #1a4d3e 0%, #40916c 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  📤 Terkirim ke Akutansi
+                </span>
+              @elseif($statusDisplay == 'Terkirim ke Pembayaran')
+                <span class="badge" style="background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  📤 Terkirim ke Pembayaran
                 </span>
               @else
                 <span class="badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                  {{ $statusLabel }}
+                  {{ $statusDisplay }}
                 </span>
               @endif
             </td>
@@ -716,3 +725,4 @@ function showAllMonths() {
 </script>
 
 @endsection
+

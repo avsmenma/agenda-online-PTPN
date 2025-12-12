@@ -2067,10 +2067,9 @@
             <option value="">Pilih periode deadline</option>
             <option value="1">1 hari</option>
             <option value="2">2 hari</option>
-            <option value="3">3 hari</option>
-            <option value="7">1 minggu</option>
-            <option value="14">2 minggu</option>
+            <option value="3">3 hari (maksimal)</option>
           </select>
+          <div class="form-text">Maksimal deadline adalah 3 hari untuk efisiensi proses</div>
         </div>
 
         <div class="mb-4">

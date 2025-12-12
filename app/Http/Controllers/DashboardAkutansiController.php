@@ -658,88 +658,125 @@ class DashboardAkutansiController extends Controller
 
     public function rekapan(Request $request)
     {
-        // Base query - get documents created by IbuA
-        $query = \App\Models\Dokumen::where('created_by', 'ibuA');
+        // Get selected year and bagian from request
+        $selectedYear = $request->get('year', date('Y'));
+        $selectedBagian = $request->get('bagian', '');
+        $selectedMonth = $request->get('month', null);
 
-        // Apply filters
-        $selectedBagian = $request->get('bagian');
-        if ($selectedBagian) {
-            $query->where('bagian', $selectedBagian);
+        // Validate year
+        if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
+            $selectedYear = date('Y');
         }
 
-        $year = $request->get('year');
-        if ($year) {
-            $query->where('tahun', $year);
-        }
+        // Base query - only documents that have reached Akutansi
+        // Same filter logic as dokumens() method
+        $baseQuery = Dokumen::query()
+            ->where(function ($q) {
+                $q->where('current_handler', 'akutansi')
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
+            })
+            ->whereYear('tanggal_masuk', $selectedYear);
 
-        $search = $request->get('search');
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('nomor_agenda', 'like', "%{$search}%")
-                  ->orWhere('nomor_spp', 'like', "%{$search}%")
-                  ->orWhere('uraian_spp', 'like', "%{$search}%");
-            });
-        }
-
-        // Get paginated results
-        $perPage = $request->get('per_page', 25);
-        $dokumens = $query->orderBy('tanggal_masuk', 'desc')->paginate($perPage)->appends($request->query());
-
-        // Calculate statistics
-        $statistics = [
-            'total_documents' => \App\Models\Dokumen::where('created_by', 'ibuA')->count(),
-            'by_status' => [
-                'draft' => \App\Models\Dokumen::where('created_by', 'ibuA')->where('status', 'draft')->count(),
-                'sent_to_ibub' => \App\Models\Dokumen::where('created_by', 'ibuA')->where('status', 'sent_to_ibub')->count(),
-                'sedang diproses' => \App\Models\Dokumen::where('created_by', 'ibuA')->where('status', 'sedang diproses')->count(),
-                'selesai' => \App\Models\Dokumen::where('created_by', 'ibuA')->where('status', 'selesai')->count(),
-            ],
-            'by_bagian' => []
-        ];
-
-        // Calculate statistics by bagian
+        // Filter by bagian if selected
         $bagianList = [
-            'DPM' => 'Divisi Pengadaan Material',
-            'SKH' => 'Sumber Daya Kesehatan Hewan',
-            'SDM' => 'Sumber Daya Manusia',
-            'TEP' => 'Teknik dan Pemeliharaan',
-            'KPL' => 'Keuangan dan Perencanaan',
-            'AKN' => 'Akuntansi',
-            'TAN' => 'Tanaman',
-            'PMO' => 'Project Management Office'
+            'DPM' => 'DPM',
+            'SKH' => 'SKH',
+            'SDM' => 'SDM',
+            'TEP' => 'TEP',
+            'KPL' => 'KPL',
+            'AKN' => 'AKN',
+            'TAN' => 'TAN',
+            'PMO' => 'PMO'
         ];
 
-        foreach ($bagianList as $code => $name) {
-            $statistics['by_bagian'][$code] = [
-                'name' => $name,
-                'total' => \App\Models\Dokumen::where('created_by', 'ibuA')->where('bagian', $code)->count(),
-            ];
+        if ($selectedBagian && in_array($selectedBagian, array_keys($bagianList))) {
+            $baseQuery->where('bagian', $selectedBagian);
         }
 
-        // Apply filter for statistics if bagian is selected
-        if ($selectedBagian) {
-            $baseQuery = \App\Models\Dokumen::where('created_by', 'ibuA')->where('bagian', $selectedBagian);
-            $statistics['by_status'] = [
-                'draft' => $baseQuery->clone()->where('status', 'draft')->count(),
-                'sent_to_ibub' => $baseQuery->clone()->where('status', 'sent_to_ibub')->count(),
-                'sedang diproses' => $baseQuery->clone()->where('status', 'sedang diproses')->count(),
-                'selesai' => $baseQuery->clone()->where('status', 'selesai')->count(),
+        // Get yearly summary
+        $yearlySummary = [
+            'total_dokumen' => (clone $baseQuery)->count(),
+            'total_nominal' => (clone $baseQuery)->sum('nilai_rupiah') ?? 0,
+        ];
+
+        // Get monthly statistics
+        $monthlyStats = [];
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $monthQuery = (clone $baseQuery)->whereMonth('tanggal_masuk', $month);
+            $monthStats = [
+                'name' => $monthNames[$month],
+                'count' => $monthQuery->count(),
+                'total_nominal' => $monthQuery->sum('nilai_rupiah') ?? 0,
             ];
+            $monthlyStats[$month] = $monthStats;
         }
 
-        $data = array(
-            "title" => "Rekapan Dokumen",
-            "module" => "akutansi",
-            "menuDashboard" => "",
-            'menuDokumen' => 'Active',
-            'menuRekapan' => 'Active',
-            'dokumens' => $dokumens,
-            'statistics' => $statistics,
-            'bagianList' => $bagianList,
+        // Get documents for table (filter by month if selected)
+        $tableQuery = (clone $baseQuery);
+        if ($selectedMonth && $selectedMonth >= 1 && $selectedMonth <= 12) {
+            $tableQuery->whereMonth('tanggal_masuk', $selectedMonth);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 10);
+        $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
+
+        // Get available years (only for documents that reached akutansi)
+        $availableYears = Dokumen::query()
+            ->where(function ($q) {
+                $q->where('current_handler', 'akutansi')
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'sent_to_pembayaran');
+            })
+            ->whereNotNull('tanggal_masuk')
+            ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->toArray();
+
+        if (empty($availableYears)) {
+            $availableYears = [(int)date('Y')];
+        }
+
+        // Get document count per bagian for the selected year (only documents that reached akutansi)
+        $bagianCounts = [];
+        foreach ($bagianList as $bagianCode => $bagianName) {
+            $countQuery = Dokumen::query()
+                ->where(function ($q) {
+                    $q->where('current_handler', 'akutansi')
+                        ->orWhere('status', 'sent_to_akutansi')
+                        ->orWhere('status', 'sent_to_pembayaran');
+                })
+                ->whereYear('tanggal_masuk', $selectedYear)
+                ->where('bagian', $bagianCode);
+            $bagianCounts[$bagianCode] = $countQuery->count();
+        }
+
+        $data = [
+            'title' => 'Analitik Dokumen',
+            'module' => 'akutansi',
+            'menuDokumen' => 'active',
+            'menuRekapan' => 'active',
+            'selectedYear' => (int)$selectedYear,
             'selectedBagian' => $selectedBagian,
-        );
+            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'yearlySummary' => $yearlySummary,
+            'monthlyStats' => $monthlyStats,
+            'dokumens' => $tableDokumens,
+            'availableYears' => $availableYears,
+            'bagianList' => $bagianList,
+            'bagianCounts' => $bagianCounts,
+        ];
 
-        return view('akutansi.dokumens.rekapan', $data);
+        return view('akutansi.analytics', $data);
     }
 
     public function diagram(){
