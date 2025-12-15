@@ -77,12 +77,21 @@ final class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-        if (! Auth::attempt($this->getCredentials(), $this->boolean('remember'))) {
+        $credentials = $this->getCredentials();
+        
+        // Find user by username instead of email
+        $user = User::where('username', $credentials['username'])->first();
+        
+        // Check if user exists and password matches
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'username' => __('auth.failed'),
             ]);
         }
-
+        
+        // Log in the user
+        Auth::login($user, $this->boolean('remember'));
+        
         session()->regenerate();
     }
 }
