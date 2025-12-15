@@ -287,13 +287,27 @@ class DashboardBController extends Controller
         }
 
         // Use eager loading for relations to prevent N+1 queries
-        $dokumens = $query->with(['dibayarKepadas'])
+        $dokumens = $query->with(['dibayarKepadas', 'roleData' => function($query) {
+                $query->where('role_code', 'ibub');
+            }])
             ->withCount([
                 'dokumenPos',
                 'dokumenPrs'
             ]);
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
+        
+        // Cast deadline_at from alias to Carbon if it's a string
+        $dokumens->getCollection()->transform(function($dokumen) {
+            if ($dokumen->deadline_at && is_string($dokumen->deadline_at)) {
+                try {
+                    $dokumen->deadline_at = \Carbon\Carbon::parse($dokumen->deadline_at);
+                } catch (\Exception $e) {
+                    $dokumen->deadline_at = null;
+                }
+            }
+            return $dokumen;
+        });
 
         // Cache statistics for better performance
         $cacheKey = 'ibub_stats_' . md5($request->fullUrl());

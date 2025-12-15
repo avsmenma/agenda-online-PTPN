@@ -2995,11 +2995,17 @@
           </div>
           <div class="stat-item">
             <span class="stat-value">{{ $dokumens->filter(function ($dokumen) {
-    return is_null($dokumen->deadline_at)
+    $roleData = $dokumen->getDataForRole('ibub');
+    $hasDeadline = ($roleData && $roleData->deadline_at) || $dokumen->deadline_at;
+    $isRejected = $dokumen->roleStatuses()
+      ->where('role_code', 'ibub')
+      ->where('status', 'rejected')
+      ->exists();
+    return !$hasDeadline
       && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses'])
       && is_null($dokumen->returned_to_department_at)
       && is_null($dokumen->returned_to_bidang_at)
-      && $dokumen->inbox_approval_status !== 'rejected';
+      && !$isRejected;
   })->count() }}</span>
             <span class="stat-label">Terkunci</span>
           </div>
@@ -3023,12 +3029,35 @@
           <tbody>
             @forelse($dokumens ?? [] as $dokumen)
                 @php
+                  // Get deadline from roleData relationship
+                  $roleData = $dokumen->getDataForRole('ibub');
+                  $hasDeadline = false;
+                  
+                  if ($roleData && $roleData->deadline_at) {
+                    $hasDeadline = true;
+                  } elseif ($dokumen->deadline_at) {
+                    // Fallback: check alias value
+                    $hasDeadline = !is_null($dokumen->deadline_at);
+                  }
+                  
+                  // Check rejection status from roleStatuses
+                  $isRejected = $dokumen->roleStatuses()
+                    ->where('role_code', 'ibub')
+                    ->where('status', 'rejected')
+                    ->exists();
+                  
+                  // Check pending status from roleStatuses
+                  $isPending = $dokumen->roleStatuses()
+                    ->where('role_code', 'ibub')
+                    ->where('status', 'pending')
+                    ->exists();
+                  
                   // Document is locked if:
                   // 1. It has NO deadline AND
                   // 2. Status is 'sent_to_ibub' OR 'sedang diproses' (newly approved from inbox) AND
                   // 3. It's not a returned document (from departments/bidangs)
                   // Documents returned from departments/bidangs should not be locked even if they have no deadline initially
-                  $isLocked = is_null($dokumen->deadline_at)
+                  $isLocked = !$hasDeadline
                     && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses'])
                     && is_null($dokumen->returned_to_department_at)
                     && is_null($dokumen->returned_to_bidang_at);
@@ -3036,7 +3065,7 @@
                   $isReturnedStatus = Str::startsWith($dokumen->status, 'returned_')
                     || in_array($dokumen->status, ['returned_to_department']);
 
-                  if ($isReturnedStatus || $dokumen->inbox_approval_status === 'rejected') {
+                  if ($isReturnedStatus || $isRejected) {
                     $isLocked = false;
                   }
                 @endphp
@@ -3099,18 +3128,36 @@
                   @endforeach
                   <!-- Kolom Deadline -->
                   <td class="col-deadline">
-                    @if($dokumen->deadline_at)
-                      <div class="deadline-card" data-deadline="{{ $dokumen->deadline_at->format('Y-m-d H:i:s') }}">
+                    @php
+                      // Get deadline from roleData relationship or from alias (fallback)
+                      $roleData = $dokumen->getDataForRole('ibub');
+                      $deadlineAt = null;
+                      $deadlineNote = null;
+                      
+                      if ($roleData && $roleData->deadline_at) {
+                        // Use Carbon instance from relationship
+                        $deadlineAt = $roleData->deadline_at;
+                        $deadlineNote = $roleData->deadline_note;
+                      } elseif ($dokumen->deadline_at) {
+                        // Fallback: if deadline_at is set as alias (string), convert to Carbon
+                        $deadlineAt = is_string($dokumen->deadline_at) 
+                          ? \Carbon\Carbon::parse($dokumen->deadline_at) 
+                          : $dokumen->deadline_at;
+                        $deadlineNote = $dokumen->deadline_note;
+                      }
+                    @endphp
+                    @if($deadlineAt)
+                      <div class="deadline-card" data-deadline="{{ $deadlineAt->format('Y-m-d H:i:s') }}">
                         <div class="deadline-time">
                           <i class="fa-solid fa-clock"></i>
-                          <span>{{ $dokumen->deadline_at->format('d M Y, H:i') }}</span>
+                          <span>{{ $deadlineAt->format('d M Y, H:i') }}</span>
                         </div>
                         <div class="deadline-indicator">
                           <i class="fa-solid"></i>
                           <span class="status-text">AMAN</span>
                         </div>
-                        @if($dokumen->deadline_note)
-                          <div class="deadline-note">{{ Str::limit($dokumen->deadline_note, 50) }}</div>
+                        @if($deadlineNote)
+                          <div class="deadline-note">{{ Str::limit($deadlineNote, 50) }}</div>
                         @endif
                       </div>
                     @else
@@ -3122,7 +3169,7 @@
                   </td>
                   <!-- Kolom Status: Menampilkan status badge -->
                   <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-                    @if($dokumen->inbox_approval_status == 'rejected')
+                    @if($isRejected)
                       {{-- Dokumen ditolak dari inbox --}}
                       <span class="badge-status badge-dikembalikan" style="position: relative;">
                         <i class="fa-solid fa-times-circle me-1"></i>
@@ -3144,7 +3191,7 @@
                       <span class="badge-status badge-sent">📤 Terkirim ke Team Perpajakan</span>
                     @elseif($dokumen->status == 'sent_to_akutansi')
                       <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
-                    @elseif($dokumen->status == 'menunggu_di_approve' && $dokumen->inbox_approval_status == 'pending')
+                    @elseif($dokumen->status == 'menunggu_di_approve' && $isPending)
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                         <i class="fa-solid fa-clock me-1"></i>
@@ -3198,7 +3245,7 @@
                           <i class="fa-solid fa-check-circle"></i>
                           <span>Terkirim</span>
                         </button>
-                      @elseif($dokumen->inbox_approval_status == 'rejected')
+                      @elseif($isRejected)
                         <!-- Dokumen ditolak dari inbox - tampilkan Kirim (full width), Edit dan Kembalikan di bawah -->
                         <button type="button" class="btn-action btn-kirim btn-full-width"
                           onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
