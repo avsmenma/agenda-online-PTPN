@@ -1874,8 +1874,7 @@
           // Use is_locked from controller (based on DokumenHelper logic)
           $isLocked = $dokumen->is_locked ?? false;
           $isSentToAkutansi = $dokumen->status == 'sent_to_akutansi';
-          $canSendToAkutansi = $dokumen->status_perpajakan == 'selesai'
-            && $dokumen->status != 'sent_to_akutansi'
+          $canSendToAkutansi = $dokumen->status != 'sent_to_akutansi'
             && $dokumen->current_handler == 'perpajakan';
           $perpajakanRequiredFields = [
             'npwp' => 'NPWP',
@@ -1899,12 +1898,10 @@
           if ($isSentToAkutansi) {
             $sendButtonTooltip = 'Dokumen sudah dikirim ke Team Akutansi';
           } elseif (!$canSendToAkutansi) {
-            if ($dokumen->status_perpajakan != 'selesai') {
-              $sendButtonTooltip = 'Status Team Perpajakan harus "Selesai" terlebih dahulu sebelum dapat dikirim ke Team Akutansi';
-            } elseif ($dokumen->current_handler != 'perpajakan') {
+            if ($dokumen->current_handler != 'perpajakan') {
               $sendButtonTooltip = 'Dokumen tidak sedang ditangani oleh perpajakan';
             } else {
-              $sendButtonTooltip = 'Status Team Perpajakan harus "Selesai" terlebih dahulu sebelum dapat dikirim ke Team Akutansi';
+              $sendButtonTooltip = 'Dokumen tidak dapat dikirim';
             }
           }
         @endphp
@@ -2068,12 +2065,8 @@
               <span class="badge-status badge-locked">🔒 Terkunci</span>
             @elseif($dokumen->status == 'sent_to_akutansi')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
-            @elseif($dokumen->status_perpajakan == 'selesai')
-              <span class="badge-status badge-selesai">✓ Selesai</span>
-            @elseif($dokumen->status_perpajakan == 'sedang_diproses')
-              <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @else
-              <span class="badge-status badge-proses">⏳ Belum Diproses</span>
+              <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @endif
           </td>
           <td class="col-action" onclick="event.stopPropagation()">
@@ -2819,6 +2812,10 @@ function updateDeadlineCard(card) {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    // Get original deadline_days from data attribute
+    const deadlineDays = parseInt(card.dataset.deadlineDays) || null;
+    const totalHoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
 
     // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning, terlambat = merah
     if (diffDays >= 1) {
@@ -2832,7 +2829,15 @@ function updateDeadlineCard(card) {
       if (!isSent) {
         const timeHint = document.createElement('div');
         timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
-        timeHint.textContent = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
+        
+        // Use deadlineDays to display correctly for 1-day deadlines
+        if (deadlineDays === 1 && totalHoursRemaining >= 12) {
+          timeHint.textContent = '1 hari lagi';
+        } else if (diffDays >= 1) {
+          timeHint.textContent = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
+        } else {
+          timeHint.textContent = `${totalHoursRemaining} jam lagi`;
+        }
         card.appendChild(timeHint);
       }
 
@@ -2847,7 +2852,11 @@ function updateDeadlineCard(card) {
       if (!isSent) {
         const timeHint = document.createElement('div');
         timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
-        if (diffHours >= 1) {
+        
+        // Use deadlineDays to display correctly for 1-day deadlines
+        if (deadlineDays === 1 && totalHoursRemaining >= 12) {
+          timeHint.textContent = '1 hari lagi';
+        } else if (diffHours >= 1) {
           timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
         } else {
           timeHint.textContent = `${diffMinutes} menit lagi`;

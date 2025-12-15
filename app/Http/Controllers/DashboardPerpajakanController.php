@@ -391,7 +391,6 @@ class DashboardPerpajakanController extends Controller
             'nomor_pr.*' => 'nullable|string',
             // Perpajakan fields
             'npwp' => 'nullable|string',
-            'status_perpajakan' => 'nullable|in:sedang_diproses,selesai',
             'no_faktur' => 'nullable|string',
             'tanggal_faktur' => 'nullable|date',
             'tanggal_selesai_verifikasi_pajak' => 'nullable|date',
@@ -520,7 +519,6 @@ class DashboardPerpajakanController extends Controller
                 'keterangan' => $request->keterangan,
                 // Perpajakan fields
                 'npwp' => $request->npwp,
-                'status_perpajakan' => $request->status_perpajakan,
                 'no_faktur' => $request->no_faktur,
                 'tanggal_faktur' => $request->tanggal_faktur,
                 'tanggal_selesai_verifikasi_pajak' => $request->tanggal_selesai_verifikasi_pajak,
@@ -551,7 +549,6 @@ class DashboardPerpajakanController extends Controller
             // Store old values for logging
             $oldValues = [
                 'npwp' => $dokumen->npwp,
-                'status_perpajakan' => $dokumen->status_perpajakan,
                 'no_faktur' => $dokumen->no_faktur,
                 'tanggal_faktur' => $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('Y-m-d') : null,
                 'tanggal_selesai_verifikasi_pajak' => $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('Y-m-d') : null,
@@ -567,7 +564,6 @@ class DashboardPerpajakanController extends Controller
             // Log changes for perpajakan-specific fields
             $perpajakanFields = [
                 'npwp' => 'NPWP',
-                'status_perpajakan' => 'Status Perpajakan',
                 'no_faktur' => 'No Faktur',
                 'tanggal_faktur' => 'Tanggal Faktur',
                 'tanggal_selesai_verifikasi_pajak' => 'Tanggal Selesai Verifikasi Pajak',
@@ -1097,14 +1093,6 @@ class DashboardPerpajakanController extends Controller
                 'success' => false,
                 'message' => 'Dokumen ini tidak dapat dikirim. Dokumen tidak sedang ditangani oleh perpajakan.'
             ], 403);
-        }
-
-        // Check if perpajakan status is selesai
-        if ($dokumen->status_perpajakan !== 'selesai') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Dokumen ini tidak dapat dikirim. Status Team Perpajakan harus "Selesai" terlebih dahulu.'
-            ], 422);
         }
 
         try {

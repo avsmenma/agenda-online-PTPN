@@ -576,16 +576,6 @@
                 <option value="Lainnya" {{ old('komoditi_perpajakan', $dokumen->komoditi_perpajakan) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="status_perpajakan">
-                <i class="fa-solid fa-info-circle me-1"></i>Status Team Perpajakan
-              </label>
-              <select id="status_perpajakan" name="status_perpajakan">
-                <option value="">Pilih Status</option>
-                <option value="sedang_diproses" {{ old('status_perpajakan', $dokumen->status_perpajakan) == 'sedang_diproses' ? 'selected' : '' }}>Sedang Diproses</option>
-                <option value="selesai" {{ old('status_perpajakan', $dokumen->status_perpajakan) == 'selesai' ? 'selected' : '' }}>Selesai</option>
-              </select>
-            </div>
           </div>
 
           <!-- Row 2: NPWP Pembeli & Alamat -->
