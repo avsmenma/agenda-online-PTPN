@@ -100,11 +100,20 @@ Broadcast::routes(['middleware' => ['web']]);
 Route::get('/dokumensB/check-updates', function () {
     try {
         $lastChecked = request()->input('last_checked', 0);
+        $lastCheckedDate = $lastChecked > 0 
+            ? \Carbon\Carbon::createFromTimestamp($lastChecked)
+            : \Carbon\Carbon::now()->subDays(1);
 
-        // Cek dokumen baru untuk IbuB
+        // Cek dokumen baru untuk IbuB menggunakan dokumen_role_data
         $newDocuments = \App\Models\Dokumen::where('current_handler', 'ibuB')
-            ->where('sent_to_ibub_at', '>', date('Y-m-d H:i:s', $lastChecked))
-            ->latest('sent_to_ibub_at')
+            ->whereHas('roleData', function($query) use ($lastCheckedDate) {
+                $query->where('role_code', 'ibub')
+                      ->where('received_at', '>', $lastCheckedDate);
+            })
+            ->with(['roleData' => function($query) {
+                $query->where('role_code', 'ibub');
+            }])
+            ->latest('updated_at')
             ->take(10)
             ->get();
 
@@ -115,6 +124,7 @@ Route::get('/dokumensB/check-updates', function () {
             'new_count' => $newDocuments->count(),
             'total_documents' => $totalDocuments,
             'new_documents' => $newDocuments->map(function ($doc) {
+                $roleData = $doc->roleData->firstWhere('role_code', 'ibub');
                 return [
                     'id' => $doc->id,
                     'nomor_agenda' => $doc->nomor_agenda,
@@ -122,13 +132,16 @@ Route::get('/dokumensB/check-updates', function () {
                     'uraian_spp' => $doc->uraian_spp,
                     'nilai_rupiah' => $doc->nilai_rupiah,
                     'status' => $doc->status,
-                    'sent_at' => $doc->sent_to_ibub_at?->format('d/m/Y H:i'),
+                    'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? '-',
                 ];
             }),
             'last_checked' => time()
         ]);
 
     } catch (\Exception $e) {
+        \Log::error('Error in dokumensB/check-updates: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
         return response()->json([
             'error' => true,
             'message' => 'Failed to check updates: ' . $e->getMessage()

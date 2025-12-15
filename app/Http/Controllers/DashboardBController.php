@@ -1222,28 +1222,25 @@ class DashboardBController extends Controller
 
             $updateData = [
                 'current_handler' => $request->next_handler,
-                'processed_at' => now(),
                 'status' => 'sent_to_' . $request->next_handler,
             ];
 
             // Set specific timestamp based on destination
             // Note: Deadline will be set by the destination department (perpajakan/akutansi) themselves
             if ($request->next_handler === 'perpajakan') {
-                $dokumen->setDataForRole('perpajakan', ['received_at' => now()]);
-                // Reset deadline_at to null so document will be locked until perpajakan sets deadline
-                $updateData['deadline_at'] = null;
-                $updateData['deadline_days'] = null;
-                $updateData['deadline_note'] = null;
-                // Also reset perpajakan-specific deadline fields
-                $updateData['deadline_perpajakan_at'] = null;
-                $updateData['deadline_perpajakan_days'] = null;
-                $updateData['deadline_perpajakan_note'] = null;
+                $dokumen->setDataForRole('perpajakan', [
+                    'received_at' => now(),
+                    'deadline_at' => null, // Reset deadline so document will be locked until perpajakan sets deadline
+                    'deadline_days' => null,
+                    'deadline_note' => null,
+                ]);
             } elseif ($request->next_handler === 'akutansi') {
-                $dokumen->setDataForRole('akutansi', ['received_at' => now()]);
-                // Reset deadline_at to null so document will be locked until akutansi sets deadline
-                $updateData['deadline_at'] = null;
-                $updateData['deadline_days'] = null;
-                $updateData['deadline_note'] = null;
+                $dokumen->setDataForRole('akutansi', [
+                    'received_at' => now(),
+                    'deadline_at' => null, // Reset deadline so document will be locked until akutansi sets deadline
+                    'deadline_days' => null,
+                    'deadline_note' => null,
+                ]);
             }
 
             $dokumen->update($updateData);
@@ -1304,11 +1301,13 @@ class DashboardBController extends Controller
 
         try {
             // Enhanced logging with user context
+            // Check deadline from dokumen_role_data
+            $roleData = $dokumen->getDataForRole('ibub');
             Log::info('=== SET DEADLINE REQUEST START ===', [
                 'document_id' => $dokumen->id,
                 'current_handler' => $dokumen->current_handler,
                 'current_status' => $dokumen->status,
-                'deadline_exists' => $dokumen->deadline_at ? true : false,
+                'deadline_exists' => $roleData && $roleData->deadline_at ? true : false,
                 'user_id' => Auth::id(),
                 'user_role' => Auth::user()?->role,
                 'request_data' => $validatedData
@@ -1333,10 +1332,12 @@ class DashboardBController extends Controller
                 ], 403);
             }
 
-            if ($dokumen->deadline_at) {
+            // Check deadline from dokumen_role_data instead of direct column
+            $roleData = $dokumen->getDataForRole('ibub');
+            if ($roleData && $roleData->deadline_at) {
                 Log::warning('Deadline set failed - Deadline already exists', [
                     'document_id' => $dokumen->id,
-                    'existing_deadline' => $dokumen->deadline_at,
+                    'existing_deadline' => $roleData->deadline_at,
                     'user_role' => Auth::user()?->role
                 ]);
 
@@ -1344,7 +1345,7 @@ class DashboardBController extends Controller
                     'success' => false,
                     'message' => 'Dokumen sudah memiliki deadline. Deadline tidak dapat diubah.',
                     'debug_info' => [
-                        'existing_deadline' => $dokumen->deadline_at
+                        'existing_deadline' => $roleData->deadline_at
                     ]
                 ], 403);
             }
@@ -1372,19 +1373,27 @@ class DashboardBController extends Controller
             // Prepare update data
             $deadlineDays = (int) $validatedData['deadline_days'];
             $deadlineNote = $validatedData['deadline_note'] ?? null;
-
-            $updateData = [
-                'deadline_at' => now()->addDays($deadlineDays),
-                'deadline_days' => $deadlineDays,
-                'deadline_note' => $deadlineNote,
-                'status' => 'sedang diproses',
-                'processed_at' => now(),
-            ];
+            $deadlineAt = now()->addDays($deadlineDays);
 
             // Update using transaction
-            DB::transaction(function () use ($dokumen, $updateData) {
-                $dokumen->update($updateData);
+            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
+                // Update dokumen_role_data with deadline
+                $dokumen->setDataForRole('ibub', [
+                    'deadline_at' => $deadlineAt,
+                    'deadline_days' => $deadlineDays,
+                    'deadline_note' => $deadlineNote,
+                    'received_at' => $dokumen->getDataForRole('ibub')?->received_at ?? now(),
+                ]);
+
+                // Update dokumen status
+                $dokumen->update([
+                    'status' => 'sedang diproses',
+                ]);
             });
+
+            // Refresh dokumen to get updated data
+            $dokumen->refresh();
+            $updatedRoleData = $dokumen->getDataForRole('ibub');
 
             // Log activity: deadline diatur oleh Ibu Yuni
             try {
@@ -1393,7 +1402,7 @@ class DashboardBController extends Controller
                     'ibuB',
                     [
                         'deadline_days' => $deadlineDays,
-                        'deadline_at' => $dokumen->fresh()->deadline_at?->format('Y-m-d H:i:s'),
+                        'deadline_at' => $updatedRoleData?->deadline_at?->format('Y-m-d H:i:s'),
                         'deadline_note' => $deadlineNote,
                     ]
                 );
@@ -1404,13 +1413,13 @@ class DashboardBController extends Controller
             Log::info('Deadline successfully set', [
                 'document_id' => $dokumen->id,
                 'deadline_days' => $deadlineDays,
-                'deadline_at' => $dokumen->fresh()->deadline_at,
+                'deadline_at' => $updatedRoleData?->deadline_at,
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => "Deadline berhasil ditetapkan ({$deadlineDays} hari). Dokumen sekarang terbuka untuk diproses.",
-                'deadline' => $dokumen->fresh()->deadline_at?->format('d-m-Y H:i'),
+                'deadline' => $updatedRoleData?->deadline_at?->format('d-m-Y H:i'),
             ]);
 
         } catch (QueryException $e) {
@@ -2593,21 +2602,36 @@ class DashboardBController extends Controller
             ]);
 
             // Cari dokumen yang di-reject dari inbox Perpajakan atau Akutansi dalam 24 jam terakhir
-            // Dokumen yang dikembalikan ke IbuB setelah di-reject dari inbox
+            // Menggunakan dokumen_statuses table yang baru
             $rejectedDocuments = Dokumen::where('current_handler', 'ibuB')
-                ->where('inbox_approval_status', 'rejected')
-                ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi'])
-                ->where('inbox_approval_responded_at', '>=', $checkFrom)
-                ->whereNotNull('inbox_approval_responded_at')
-                ->with('activityLogs')
-                ->orderBy('inbox_approval_responded_at', 'desc')
-                ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_responded_at', 'inbox_approval_reason', 'inbox_approval_for'])
-                ->get();
+                ->whereHas('roleStatuses', function($query) use ($checkFrom) {
+                    $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                          ->where('status', 'rejected')
+                          ->where('status_changed_at', '>=', $checkFrom);
+                })
+                ->with(['roleStatuses' => function($query) {
+                    $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                          ->where('status', 'rejected')
+                          ->latest('status_changed_at');
+                }, 'activityLogs'])
+                ->get()
+                ->filter(function($doc) {
+                    // Filter to only include documents with rejection status
+                    return $doc->roleStatuses->where('status', 'rejected')->isNotEmpty();
+                })
+                ->sortByDesc(function($doc) {
+                    $rejectedStatus = $doc->roleStatuses->where('status', 'rejected')->first();
+                    return $rejectedStatus?->status_changed_at ?? now();
+                })
+                ->take(50)
+                ->values();
 
             // Hitung total rejected
             $totalRejected = Dokumen::where('current_handler', 'ibuB')
-                ->where('inbox_approval_status', 'rejected')
-                ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi'])
+                ->whereHas('roleStatuses', function($query) {
+                    $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                          ->where('status', 'rejected');
+                })
                 ->count();
 
             return response()->json([
@@ -2615,15 +2639,27 @@ class DashboardBController extends Controller
                 'rejected_documents_count' => $rejectedDocuments->count(),
                 'total_rejected' => $totalRejected,
                 'rejected_documents' => $rejectedDocuments->map(function ($doc) {
+                    // Get rejected status from dokumen_statuses
+                    $rejectedStatus = $doc->roleStatuses
+                        ->where('status', 'rejected')
+                        ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                        ->sortByDesc('status_changed_at')
+                        ->first();
+
                     // Get rejected by name from activity log
                     $rejectLog = $doc->activityLogs()
-                        ->where('action', 'inbox_rejected')
+                        ->where('action', 'rejected')
+                        ->whereIn('stage', ['perpajakan', 'akutansi'])
                         ->latest('action_at')
                         ->first();
 
                     $rejectedBy = 'Unknown';
-                    if ($rejectLog) {
-                        $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
+                    $rejectionReason = '-';
+                    
+                    if ($rejectedStatus) {
+                        $rejectedBy = $rejectedStatus->changed_by ?? 'Unknown';
+                        $rejectionReason = $rejectedStatus->notes ?? '-';
+                        
                         // Map role to display name
                         $nameMap = [
                             'Perpajakan' => 'Team Perpajakan',
@@ -2631,13 +2667,17 @@ class DashboardBController extends Controller
                             'Akutansi' => 'Team Akutansi',
                             'akutansi' => 'Team Akutansi',
                         ];
-                        $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-                    } else if ($doc->inbox_approval_for) {
-                        $nameMap = [
-                            'Perpajakan' => 'Team Perpajakan',
-                            'Akutansi' => 'Team Akutansi',
-                        ];
-                        $rejectedBy = $nameMap[$doc->inbox_approval_for] ?? $doc->inbox_approval_for;
+                        $roleCode = $rejectedStatus->role_code;
+                        if (isset($nameMap[$roleCode])) {
+                            $rejectedBy = $nameMap[$roleCode];
+                        }
+                    }
+                    
+                    if ($rejectLog) {
+                        $rejectedBy = $rejectLog->performed_by ?? $rejectedBy;
+                        if (isset($rejectLog->details['rejection_reason'])) {
+                            $rejectionReason = $rejectLog->details['rejection_reason'];
+                        }
                     }
 
                     return [
@@ -2646,9 +2686,9 @@ class DashboardBController extends Controller
                         'nomor_spp' => $doc->nomor_spp,
                         'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 50),
                         'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
-                        'rejected_at' => $doc->inbox_approval_responded_at->format('d/m/Y H:i'),
+                        'rejected_at' => $rejectedStatus?->status_changed_at?->format('d/m/Y H:i') ?? '-',
                         'rejected_by' => $rejectedBy,
-                        'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
+                        'rejection_reason' => \Illuminate\Support\Str::limit($rejectionReason, 100),
                         'url' => route('ibub.rejected.show', $doc->id),
                     ];
                 }),

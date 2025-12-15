@@ -18,8 +18,13 @@ class DokumenHelper
             return false;
         }
 
+        // Get deadline from dokumen_role_data based on current handler
+        $roleCode = strtolower($dokumen->current_handler ?? '');
+        $roleData = $dokumen->getDataForRole($roleCode);
+        $hasDeadline = $roleData && $roleData->deadline_at;
+
         // Base condition: must be sent to department without deadline
-        $isLocked = is_null($dokumen->deadline_at) &&
+        $isLocked = !$hasDeadline &&
                    in_array($dokumen->status, [
                        'sent_to_ibub',
                        'sedang diproses', // Dokumen yang baru di-approve dari inbox IbuB
@@ -48,13 +53,12 @@ class DokumenHelper
 
         // Don't lock documents that were returned and repaired (only if they have been fixed)
         // Check if document was returned but has been fixed and re-sent
-        if ($dokumen->returned_from_perpajakan_at && $dokumen->returned_from_perpajakan_fixed_at) {
-            // Document was returned and fixed, don't lock
-            $isLocked = false;
-        }
-        if ($dokumen->department_returned_at && $dokumen->returned_from_perpajakan_fixed_at) {
-            // Document was returned from department and fixed, don't lock
-            $isLocked = false;
+        if ($dokumen->department_returned_at) {
+            // Document was returned from department, check if it has been fixed
+            // If it has a deadline set, it means it's been fixed and re-sent
+            if ($hasDeadline) {
+                $isLocked = false;
+            }
         }
 
         return $isLocked;
@@ -76,7 +80,10 @@ class DokumenHelper
             return "🔒 Dokumen terkunci - {$handlerName} harus menetapkan deadline terlebih dahulu";
         }
 
-        if ($dokumen->deadline_at && $dokumen->deadline_at->isPast()) {
+        // Check deadline from dokumen_role_data
+        $roleCode = strtolower($dokumen->current_handler ?? '');
+        $roleData = $dokumen->getDataForRole($roleCode);
+        if ($roleData && $roleData->deadline_at && $roleData->deadline_at->isPast()) {
             return '⏰ Deadline lewat - segera atur ulang';
         }
 
@@ -110,7 +117,10 @@ class DokumenHelper
             return 'locked-row';
         }
 
-        if ($dokumen->deadline_at && $dokumen->deadline_at->isPast()) {
+        // Check deadline from dokumen_role_data
+        $roleCode = strtolower($dokumen->current_handler ?? '');
+        $roleData = $dokumen->getDataForRole($roleCode);
+        if ($roleData && $roleData->deadline_at && $roleData->deadline_at->isPast()) {
             return 'overdue-row';
         }
 
@@ -122,15 +132,20 @@ class DokumenHelper
      */
     public static function canSetDeadline(Dokumen $dokumen): array
     {
+        // Get deadline from dokumen_role_data based on current handler
+        $roleCode = strtolower($dokumen->current_handler ?? '');
+        $roleData = $dokumen->getDataForRole($roleCode);
+        $deadlineAt = $roleData?->deadline_at;
+
         $debug = [
             'document_id' => $dokumen->id,
             'current_handler' => $dokumen->current_handler,
             'status' => $dokumen->status,
-            'deadline_exists' => $dokumen->deadline_at ? $dokumen->deadline_at->format('Y-m-d H:i:s') : 'null'
+            'deadline_exists' => $deadlineAt ? $deadlineAt->format('Y-m-d H:i:s') : 'null'
         ];
 
         // Check if document already has deadline
-        if ($dokumen->deadline_at) {
+        if ($deadlineAt) {
             return [
                 'can_set' => false,
                 'message' => 'Dokumen sudah memiliki deadline yang aktif.',
