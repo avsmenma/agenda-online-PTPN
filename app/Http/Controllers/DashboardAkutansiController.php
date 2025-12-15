@@ -221,9 +221,10 @@ class DashboardAkutansiController extends Controller
             }
         ]);
 
-        // Order by deadline status using subquery to avoid GROUP BY issues
-        // Priority: 1. Documents without deadline (locked), 2. Documents with deadline (unlocked), 3. Others
-        $dokumens = $query->orderByRaw("CASE
+        // Order by updated_at first (most recent first), then by deadline status
+        // This ensures documents that were just updated (e.g., deadline set) stay at the top
+        $dokumens = $query->orderByDesc('dokumens.updated_at')
+            ->orderByRaw("CASE
                 WHEN dokumens.current_handler = 'akutansi' AND dokumens.status = 'sent_to_akutansi' AND (
                     SELECT deadline_at FROM dokumen_role_data 
                     WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
@@ -236,7 +237,6 @@ class DashboardAkutansiController extends Controller
                 ) IS NOT NULL THEN 2
                 ELSE 3
             END")
-            ->orderByDesc('dokumens.updated_at')
             ->paginate(10);
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
