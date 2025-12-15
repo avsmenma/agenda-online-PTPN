@@ -290,12 +290,12 @@ class Dokumen extends Model
         switch ($roleCode) {
             case 'ibub':
                 $this->status = 'sedang diproses'; // Status expected by DashboardB (with space, not underscore)
-                $this->processed_at = now(); // Legacy timestamp for IbuB
+                // Note: processed_at column was removed in cleanup migration, timestamp is now in dokumen_role_data
                 break;
 
             case 'perpajakan':
                 $this->status = 'proses_perpajakan';
-                $this->processed_perpajakan_at = now(); // Legacy timestamp
+                // Note: processed_perpajakan_at column was removed in cleanup migration, timestamp is now in dokumen_role_data
                 break;
 
             case 'akutansi':
