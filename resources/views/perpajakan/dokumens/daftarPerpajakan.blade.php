@@ -1876,11 +1876,12 @@
           $isSentToAkutansi = $dokumen->status == 'sent_to_akutansi';
           $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
           $isPendingApprovalAkutansi = $dokumen->status == 'pending_approval_akutansi';
-          $isPendingApprovalPembayaran = $dokumen->status == 'pending_approval_pembayaran';
+          $isPendingApprovalPembayaran = $dokumen->status == 'pending_approval_pembayaran' || $dokumen->status == 'menunggu_di_approve';
           $canSend = $dokumen->status != 'sent_to_akutansi'
             && $dokumen->status != 'sent_to_pembayaran'
             && $dokumen->status != 'pending_approval_akutansi'
             && $dokumen->status != 'pending_approval_pembayaran'
+            && $dokumen->status != 'menunggu_di_approve'
             && $dokumen->current_handler == 'perpajakan';
           $perpajakanRequiredFields = [
             'npwp' => 'NPWP',
@@ -2075,7 +2076,7 @@
               <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
             @elseif($isPendingApprovalAkutansi)
               <span class="badge-status badge-warning">⏳ Menunggu Approval Akutansi</span>
-            @elseif($isPendingApprovalPembayaran)
+            @elseif($isPendingApprovalPembayaran || $dokumen->status == 'menunggu_di_approve')
               <span class="badge-status badge-warning">⏳ Menunggu Approval Pembayaran</span>
             @elseif($isLocked)
               <span class="badge-status badge-locked">🔒 Terkunci</span>
