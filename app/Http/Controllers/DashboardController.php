@@ -111,7 +111,16 @@ class DashboardController extends Controller
             // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
             // Ini memastikan bahwa dokumen yang di-reject dalam 24 jam terakhir selalu ditampilkan
             $checkFrom24Hours = now()->subHours(24);
-            $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
+            
+            try {
+                $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
+            } catch (\Exception $e) {
+                \Log::warning('Invalid last_check_time format, using 24 hours ago', [
+                    'last_check_time' => $lastCheckTime,
+                    'error' => $e->getMessage()
+                ]);
+                $checkFrom = $checkFrom24Hours;
+            }
 
             // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
             if ($checkFrom->gt($checkFrom24Hours)) {
@@ -145,38 +154,88 @@ class DashboardController extends Controller
                                 ->where('status_changed_at', '>=', $checkFrom);
                         });
                 })
-                ->with(['activityLogs', 'roleStatuses' => function ($q) {
-                    $q->where('status', 'rejected');
-                }])
+                ->with([
+                    'activityLogs' => function ($q) {
+                        $q->whereIn('action', ['rejected', 'inbox_rejected'])
+                            ->latest('action_at');
+                    },
+                    'roleStatuses' => function ($q) {
+                        $q->where('status', 'rejected')
+                            ->orderBy('status_changed_at', 'desc');
+                    }
+                ])
                 ->get()
                 ->filter(function ($doc) use ($checkFrom) {
-                    // Filter by the most recent rejection status change time
-                    $rejectedStatus = $doc->roleStatuses->first();
-                    return $rejectedStatus && $rejectedStatus->status_changed_at >= $checkFrom;
+                    try {
+                        // Filter by the most recent rejection status change time
+                        $rejectedStatus = $doc->roleStatuses->first();
+                        if (!$rejectedStatus) {
+                            return false;
+                        }
+                        return $rejectedStatus->status_changed_at && $rejectedStatus->status_changed_at >= $checkFrom;
+                    } catch (\Exception $e) {
+                        \Log::warning('Error filtering rejected document', [
+                            'doc_id' => $doc->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        return false;
+                    }
                 })
                 ->sortByDesc(function ($doc) {
-                    $rejectedStatus = $doc->roleStatuses->first();
-                    return $rejectedStatus ? $rejectedStatus->status_changed_at : null;
+                    try {
+                        $rejectedStatus = $doc->roleStatuses->first();
+                        return $rejectedStatus && $rejectedStatus->status_changed_at 
+                            ? $rejectedStatus->status_changed_at->timestamp 
+                            : 0;
+                    } catch (\Exception $e) {
+                        return 0;
+                    }
                 })
                 ->values()
                 ->map(function ($doc) {
-                    // Populate reason from log if needed, or other source
-                    // Get reason from status notes or activity log details
-                    $rejectLog = $doc->activityLogs()
-                        ->where('action', 'rejected')
-                        ->latest('action_at')
-                        ->first();
-                    
-                    $rejectedStatus = $doc->roleStatuses->first();
-                    $doc->inbox_approval_reason = $rejectedStatus->notes 
-                        ?? ($rejectLog && isset($rejectLog->details['rejection_reason']) ? $rejectLog->details['rejection_reason'] : null)
-                        ?? ($rejectLog && isset($rejectLog->details['reason']) ? $rejectLog->details['reason'] : null)
-                        ?? '';
-                    
-                    // Add status_changed_at for compatibility
-                    $doc->inbox_approval_responded_at = $rejectedStatus->status_changed_at ?? null;
-                    
-                    return $doc;
+                    try {
+                        // Populate reason from log if needed, or other source
+                        // Get reason from status notes or activity log details
+                        $rejectLog = null;
+                        try {
+                            $rejectLog = $doc->activityLogs()
+                                ->whereIn('action', ['rejected', 'inbox_rejected'])
+                                ->latest('action_at')
+                                ->first();
+                        } catch (\Exception $e) {
+                            \Log::warning('Error getting reject log', ['doc_id' => $doc->id, 'error' => $e->getMessage()]);
+                        }
+                        
+                        $rejectedStatus = $doc->roleStatuses->first();
+                        
+                        // Get rejection reason from multiple sources
+                        $reason = '';
+                        if ($rejectedStatus && $rejectedStatus->notes) {
+                            $reason = $rejectedStatus->notes;
+                        } elseif ($rejectLog) {
+                            $details = $rejectLog->details ?? [];
+                            $reason = $details['rejection_reason'] ?? $details['reason'] ?? '';
+                        }
+                        
+                        $doc->inbox_approval_reason = $reason;
+                        
+                        // Add status_changed_at for compatibility
+                        $doc->inbox_approval_responded_at = $rejectedStatus && $rejectedStatus->status_changed_at 
+                            ? $rejectedStatus->status_changed_at 
+                            : null;
+                        
+                        return $doc;
+                    } catch (\Exception $e) {
+                        \Log::error('Error mapping rejected document', [
+                            'doc_id' => $doc->id ?? 'unknown',
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        // Return doc with default values if mapping fails
+                        $doc->inbox_approval_reason = '';
+                        $doc->inbox_approval_responded_at = null;
+                        return $doc;
+                    }
                 });
 
             \Log::info('IbuA rejected documents found', [
@@ -207,42 +266,94 @@ class DashboardController extends Controller
                 'rejected_documents_count' => $rejectedDocuments->count(),
                 'total_rejected' => $totalRejected,
                 'rejected_documents' => $rejectedDocuments->map(function ($doc) {
-                    // Get rejected by name from status or activity log
-                    $rejectedStatus = $doc->roleStatuses->first();
-                    $rejectLog = $doc->activityLogs()
-                        ->where('action', 'rejected')
-                        ->latest('action_at')
-                        ->first();
+                    try {
+                        // Get rejected by name from status or activity log
+                        $rejectedStatus = $doc->roleStatuses->first();
+                        $rejectLog = null;
+                        try {
+                            $rejectLog = $doc->activityLogs()
+                                ->whereIn('action', ['rejected', 'inbox_rejected'])
+                                ->latest('action_at')
+                                ->first();
+                        } catch (\Exception $e) {
+                            \Log::warning('Error getting reject log in response mapping', [
+                                'doc_id' => $doc->id ?? 'unknown',
+                                'error' => $e->getMessage()
+                            ]);
+                        }
 
-                    $rejectedBy = 'Unknown';
-                    if ($rejectedStatus && $rejectedStatus->changed_by) {
-                        $rejectedBy = $rejectedStatus->changed_by;
-                    } elseif ($rejectLog) {
-                        $rejectedBy = $rejectLog->performed_by ?? ($rejectLog->details['rejected_by'] ?? 'Unknown');
+                        $rejectedBy = 'Unknown';
+                        if ($rejectedStatus && $rejectedStatus->changed_by) {
+                            $rejectedBy = $rejectedStatus->changed_by;
+                        } elseif ($rejectLog) {
+                            $rejectedBy = $rejectLog->performed_by ?? (is_array($rejectLog->details) && isset($rejectLog->details['rejected_by']) ? $rejectLog->details['rejected_by'] : 'Unknown');
+                        }
+                        
+                        // Map role to display name
+                        $nameMap = [
+                            'IbuB' => 'Ibu Yuni',
+                            'ibuB' => 'Ibu Yuni',
+                            'Perpajakan' => 'Team Perpajakan',
+                            'perpajakan' => 'Team Perpajakan',
+                        ];
+                        $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
+
+                        // Format nilai rupiah safely
+                        $nilaiRupiah = 'Rp 0';
+                        try {
+                            if (isset($doc->nilai_rupiah) && $doc->nilai_rupiah) {
+                                $nilaiRupiah = 'Rp ' . number_format((float)$doc->nilai_rupiah, 0, ',', '.');
+                            }
+                        } catch (\Exception $e) {
+                            \Log::warning('Error formatting nilai rupiah', ['doc_id' => $doc->id ?? 'unknown']);
+                        }
+
+                        // Format rejected_at safely
+                        $rejectedAt = '-';
+                        try {
+                            if ($doc->inbox_approval_responded_at) {
+                                if ($doc->inbox_approval_responded_at instanceof \Carbon\Carbon) {
+                                    $rejectedAt = $doc->inbox_approval_responded_at->format('d/m/Y H:i');
+                                } else {
+                                    $rejectedAt = \Carbon\Carbon::parse($doc->inbox_approval_responded_at)->format('d/m/Y H:i');
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            \Log::warning('Error formatting rejected_at', [
+                                'doc_id' => $doc->id ?? 'unknown',
+                                'rejected_at' => $doc->inbox_approval_responded_at ?? null
+                            ]);
+                        }
+
+                        return [
+                            'id' => $doc->id ?? 0,
+                            'nomor_agenda' => $doc->nomor_agenda ?? '-',
+                            'nomor_spp' => $doc->nomor_spp ?? '-',
+                            'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 50),
+                            'nilai_rupiah' => $nilaiRupiah,
+                            'rejected_at' => $rejectedAt,
+                            'rejected_by' => $rejectedBy,
+                            'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
+                            'url' => route('ibua.rejected.show', $doc->id ?? 0),
+                        ];
+                    } catch (\Exception $e) {
+                        \Log::error('Error formatting rejected document response', [
+                            'doc_id' => $doc->id ?? 'unknown',
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        return [
+                            'id' => $doc->id ?? 0,
+                            'nomor_agenda' => $doc->nomor_agenda ?? '-',
+                            'nomor_spp' => $doc->nomor_spp ?? '-',
+                            'uraian_spp' => '-',
+                            'nilai_rupiah' => 'Rp 0',
+                            'rejected_at' => '-',
+                            'rejected_by' => 'Unknown',
+                            'rejection_reason' => '-',
+                            'url' => '#',
+                        ];
                     }
-                    
-                    // Map role to display name
-                    $nameMap = [
-                        'IbuB' => 'Ibu Yuni',
-                        'ibuB' => 'Ibu Yuni',
-                        'Perpajakan' => 'Team Perpajakan',
-                        'perpajakan' => 'Team Perpajakan',
-                        'Akutansi' => 'Team Akutansi',
-                        'akutansi' => 'Team Akutansi',
-                    ];
-                    $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-
-                    return [
-                        'id' => $doc->id,
-                        'nomor_agenda' => $doc->nomor_agenda,
-                        'nomor_spp' => $doc->nomor_spp,
-                        'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 50),
-                        'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
-                        'rejected_at' => $doc->inbox_approval_responded_at ? $doc->inbox_approval_responded_at->format('d/m/Y H:i') : '-',
-                        'rejected_by' => $rejectedBy,
-                        'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
-                        'url' => route('ibua.rejected.show', $doc->id),
-                    ];
                 }),
                 'current_time' => now()->toIso8601String(),
             ]);
