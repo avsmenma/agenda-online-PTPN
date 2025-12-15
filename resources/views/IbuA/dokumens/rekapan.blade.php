@@ -744,9 +744,14 @@
               @php
                 // Gunakan role-based status display untuk Ibu Tarapul (ibuA)
                 $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('ibuA');
+                // Check approval status using new dokumen_statuses table
+                $ibuBStatus = $dokumen->getStatusForRole('ibub');
+                $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
+                $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
+                $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
               @endphp
               
-              @if($dokumen->inbox_approval_status == 'rejected')
+              @if($isRejected)
                 {{-- Dokumen ditolak dari inbox --}}
                 <span class="badge badge-returned">
                   <i class="fas fa-times-circle"></i> Dokumen Ditolak
@@ -755,12 +760,12 @@
                 <span class="badge badge-draft">
                   <i class="fas fa-file-lines"></i> Belum Dikirim
                 </span>
-              @elseif($statusLabel == 'Terkirim' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved'))
+              @elseif($statusLabel == 'Terkirim' || $isApproved)
                 {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
                 <span class="badge badge-sent">
                   <i class="fas fa-check"></i> Terkirim
                 </span>
-              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'pending'))
+              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || $isPending)
                 {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
                 <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                   <i class="fas fa-clock"></i> Menunggu Approval

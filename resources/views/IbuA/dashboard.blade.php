@@ -565,18 +565,23 @@
                     <i class="fas fa-clock"></i>
                     Belum Dikirim
                   </span>
-                @elseif($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved')
+                @php
+                  $ibuBStatus = $dokumen->getStatusForRole('ibub');
+                  $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
+                  $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
+                @endphp
+                @elseif($isApproved)
                   {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
                   <span class="badge badge-sent">
                     <i class="fas fa-check-circle"></i>
                     Terkirim
                   </span>
-                @elseif($dokumen->status == 'menunggu_di_approve' && $dokumen->inbox_approval_status == 'pending')
+                @elseif($dokumen->status == 'menunggu_di_approve' && $isPending)
                   <span class="badge badge-sent">
                     <i class="fas fa-check-circle"></i>
                     Terkirim, sedang menunggu approve
                   </span>
-                @elseif($dokumen->status == 'sent_to_ibub' && $dokumen->inbox_approval_status == 'approved')
+                @elseif($dokumen->status == 'sent_to_ibub' && $isApproved)
                   <span class="badge badge-sent">
                     <i class="fas fa-check-circle"></i>
                     Terkirim

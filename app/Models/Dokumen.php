@@ -841,12 +841,17 @@ class Dokumen extends Model
             // PRIORITY CHECK: If approved by reviewer (Ibu Yuni) - status becomes "Terkirim" for sender
             // This check must be done FIRST before any other status checks
             // to ensure documents approved by Ibu Yuni always show as "Terkirim" for Ibu Tarapul
-            if ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'approved') {
+            // Use new dokumen_statuses table instead of removed inbox_approval columns
+            $ibuBStatus = $this->getStatusForRole('ibub');
+            if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+                // Document was approved by Ibu Yuni - ALWAYS show as "Terkirim" for Ibu Tarapul
+                // regardless of current status (even if sent to perpajakan/akutansi)
                 return 'Terkirim';
             }
 
-            // Check if document has passed sender stage (milestone check)
-            if ($this->sent_to_ibub_at) {
+            // Check if document has been sent to IbuB (using roleData instead of removed sent_to_ibub_at)
+            $ibuBRoleData = $this->getDataForRole('ibub');
+            if ($ibuBRoleData && $ibuBRoleData->received_at) {
                 // Document has been sent to reviewer
                 // Check if there's a rejection from later stages
                 if ($this->last_action_status && strpos($this->last_action_status, 'rejected') !== false) {
@@ -860,23 +865,34 @@ class Dokumen extends Model
                 }
 
                 // If document is at reviewer stage waiting approval
-                if ($this->status === 'waiting_reviewer_approval' || ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'pending')) {
+                if ($this->status === 'waiting_reviewer_approval' || 
+                    ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)) {
                     return 'Menunggu Approval Reviewer';
                 }
 
                 // If moved to next stages (Tax/Accounting) after reviewer approval
-                if ($this->status === 'sent_to_perpajakan' || $this->status === 'sent_to_akutansi') {
+                // BUT: Only show "Sedang Proses" if NOT yet approved by Ibu Yuni
+                // (Approval check already done above, so if we reach here, it's not approved yet)
+                if ($this->status === 'sent_to_perpajakan' || 
+                    $this->status === 'sent_to_akutansi' || 
+                    $this->status === 'sent_to_pembayaran' ||
+                    $this->status === 'pending_approval_perpajakan' ||
+                    $this->status === 'pending_approval_akutansi' ||
+                    $this->status === 'pending_approval_pembayaran') {
+                    // Check again if approved (double check for safety)
+                    if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+                        return 'Terkirim';
+                    }
                     return 'Sedang Proses';
                 }
 
-                // If status is 'sedang diproses', check inbox status
-                // Note: This should not return 'Sedang Proses' if already approved (handled above)
+                // If status is 'sedang diproses', check approval status
                 if ($this->status === 'sedang diproses') {
-                    // Double check: if inbox was approved, it means reviewer already approved
-                    if ($this->inbox_approval_status === 'approved' && $this->inbox_approval_for === 'IbuB') {
+                    // Double check: if approved by Ibu Yuni, show as "Terkirim"
+                    if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
                         return 'Terkirim';
                     }
-                    // Only show 'Sedang Proses' if NOT yet approved
+                    // Only show 'Menunggu Approval Reviewer' if NOT yet approved
                     return 'Menunggu Approval Reviewer';
                 }
 
@@ -909,20 +925,19 @@ class Dokumen extends Model
 
             // For 'sedang diproses', check if it's after reviewer approval
             if ($this->status === 'sedang diproses') {
-                // If inbox was approved by Ibu Yuni, show as "Terkirim"
-                $ibuBStatus = $this->getStatusForRole('ibub');
-                if ($ibuBStatus && $ibuBStatus->status === 'approved') {
+                // If approved by Ibu Yuni, show as "Terkirim"
+                if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
                     return 'Terkirim';
                 }
                 // Otherwise, it's still waiting for approval
                 return 'Menunggu Approval Reviewer';
             }
 
-            // Final fallback: if document was sent to IbuB but status is unclear, check approval
-            if ($this->inbox_approval_for === 'IbuB') {
-                if ($this->inbox_approval_status === 'approved') {
+            // Final fallback: check approval status one more time
+            if ($ibuBStatus) {
+                if ($ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
                     return 'Terkirim';
-                } elseif ($this->inbox_approval_status === 'pending') {
+                } elseif ($ibuBStatus->status === DokumenStatus::STATUS_PENDING) {
                     return 'Menunggu Approval Reviewer';
                 }
             }
@@ -932,8 +947,10 @@ class Dokumen extends Model
 
         // REVIEWER VIEW (Ibu Yuni / ibuB)
         if ($userRole === 'ibuB') {
-            // Check if document is waiting for reviewer approval
-            if ($this->status === 'waiting_reviewer_approval' || ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'pending')) {
+            // Check if document is waiting for reviewer approval using new dokumen_statuses table
+            $ibuBStatus = $this->getStatusForRole('ibub');
+            if ($this->status === 'waiting_reviewer_approval' || 
+                ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)) {
                 return 'Menunggu Approval';
             }
 
@@ -966,8 +983,9 @@ class Dokumen extends Model
 
         // TAX VIEW (Perpajakan)
         if ($userRole === 'perpajakan') {
-            // Check if waiting approval
-            if ($this->inbox_approval_for === 'Perpajakan' && $this->inbox_approval_status === 'pending') {
+            // Check if waiting approval using new dokumen_statuses table
+            $perpajakanStatus = $this->getStatusForRole('perpajakan');
+            if ($perpajakanStatus && $perpajakanStatus->status === DokumenStatus::STATUS_PENDING) {
                 return 'Menunggu Approval';
             }
 
@@ -983,8 +1001,9 @@ class Dokumen extends Model
 
         // ACCOUNTING VIEW (Akutansi)
         if ($userRole === 'akutansi') {
-            // Check if waiting approval
-            if ($this->inbox_approval_for === 'Akutansi' && $this->inbox_approval_status === 'pending') {
+            // Check if waiting approval using new dokumen_statuses table
+            $akutansiStatus = $this->getStatusForRole('akutansi');
+            if ($akutansiStatus && $akutansiStatus->status === DokumenStatus::STATUS_PENDING) {
                 return 'Menunggu Approval';
             }
 

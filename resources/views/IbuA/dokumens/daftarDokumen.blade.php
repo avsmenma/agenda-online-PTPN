@@ -1923,9 +1923,14 @@
               @php
                 // Gunakan role-based status display untuk Ibu Tarapul (ibuA)
                 $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('ibuA');
+                // Check approval status using new dokumen_statuses table
+                $ibuBStatus = $dokumen->getStatusForRole('ibub');
+                $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
+                $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
+                $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
               @endphp
               
-              @if($dokumen->inbox_approval_status == 'rejected')
+              @if($isRejected)
                 {{-- Dokumen ditolak dari inbox --}}
                 <span class="badge-status badge-dikembalikan" style="position: relative;">
                   <i class="fa-solid fa-times-circle me-1"></i>
@@ -1942,14 +1947,14 @@
                   <i class="fa-solid fa-file-lines me-1"></i>
                   <span>Belum Dikirim</span>
                 </span>
-              @elseif($statusLabel == 'Terkirim' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved'))
+              @elseif($statusLabel == 'Terkirim' || $isApproved)
                 {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
                 {{-- Pengecekan ini dilakukan lebih awal untuk memastikan dokumen yang sudah di-approve selalu tampil sebagai Terkirim --}}
                 <span class="badge-status badge-terkirim">
                   <i class="fa-solid fa-check me-1"></i>
                   <span>Terkirim</span>
                 </span>
-              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'pending'))
+              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || $isPending)
                 {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
                 <span class="badge-status" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                   <i class="fa-solid fa-clock me-1"></i>
@@ -2084,7 +2089,12 @@
 {{-- Modal untuk menampilkan alasan reject dari inbox --}}
 @if(isset($dokumens))
   @foreach($dokumens as $dokumen)
-    @if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason)
+    @php
+      $ibuBStatus = $dokumen->getStatusForRole('ibub');
+      $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
+      $rejectReason = $ibuBStatus?->notes ?? null;
+    @endphp
+    @if($isRejected && $rejectReason)
     <div class="modal fade" id="rejectReasonModal{{ $dokumen->id }}" tabindex="-1" aria-labelledby="rejectReasonModalLabel{{ $dokumen->id }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -2118,9 +2128,9 @@
                     $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? null;
                   }
                   
-                  // Fallback ke inbox_approval_for jika masih ada
-                  if (!$rejectedBy && $dokumen->inbox_approval_for) {
-                    $rejectedBy = $dokumen->inbox_approval_for;
+                  // Fallback ke role dari dokumen_statuses
+                  if (!$rejectedBy && $ibuBStatus) {
+                    $rejectedBy = $ibuBStatus->changed_by ?? 'Ibu Yuni';
                   }
                   
                   // Format nama yang lebih ramah
@@ -2152,7 +2162,7 @@
             <div class="mb-0">
               <label class="form-label fw-bold">Alasan Penolakan:</label>
               <div class="alert alert-warning mb-0">
-                <p class="mb-0" style="white-space: pre-wrap;">{{ $dokumen->inbox_approval_reason }}</p>
+                <p class="mb-0" style="white-space: pre-wrap;">{{ $rejectReason ?? 'Tidak ada alasan yang dicatat' }}</p>
               </div>
             </div>
           </div>
