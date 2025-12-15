@@ -2069,23 +2069,29 @@
             @endif
           </td>
           <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-            @if($isPendingApprovalAkutansi)
+            @if($dokumen->status == 'sent_to_akutansi')
+              <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
+            @elseif($dokumen->status == 'sent_to_pembayaran')
+              <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
+            @elseif($isPendingApprovalAkutansi)
               <span class="badge-status badge-warning">⏳ Menunggu Approval Akutansi</span>
             @elseif($isPendingApprovalPembayaran)
               <span class="badge-status badge-warning">⏳ Menunggu Approval Pembayaran</span>
             @elseif($isLocked)
               <span class="badge-status badge-locked">🔒 Terkunci</span>
-            @elseif($dokumen->status == 'sent_to_akutansi')
-              <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
-            @elseif($dokumen->status == 'sent_to_pembayaran')
-              <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
             @else
               <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @endif
           </td>
           <td class="col-action" onclick="event.stopPropagation()">
             <div class="action-buttons-hybrid">
-              @if($isPendingApprovalAkutansi || $isPendingApprovalPembayaran)
+              @if($isSentToAkutansi || $isSentToPembayaran)
+                <!-- Document already sent - show sent status -->
+                <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
+                  <i class="fa-solid fa-check-circle"></i>
+                  <span>Terkirim</span>
+                </button>
+              @elseif($isPendingApprovalAkutansi || $isPendingApprovalPembayaran)
                 <!-- Document pending approval - show waiting status -->
                 <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sedang menunggu persetujuan">
                   <i class="fa-solid fa-hourglass-half"></i>
@@ -2093,17 +2099,9 @@
                 </button>
               @elseif($isLocked)
                 <!-- Locked state - tampilkan button Set Deadline -->
-                @unless($isSentToAkutansi || $isSentToPembayaran)
-                  <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>Set Deadline</span>
-                  </button>
-                @endunless
-              @elseif($isSentToAkutansi || $isSentToPembayaran)
-                <!-- Document already sent - show sent status -->
-                <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
-                  <i class="fa-solid fa-check-circle"></i>
-                  <span>Terkirim</span>
+                <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>Set Deadline</span>
                 </button>
               @else
                 <!-- Unlocked state - buttons enabled -->
