@@ -190,7 +190,15 @@ class Dokumen extends Model
      */
     public function getDataForRole(string $roleCode): ?DokumenRoleData
     {
-        return $this->roleData()->where('role_code', strtolower($roleCode))->first();
+        $roleCode = strtolower($roleCode);
+        
+        // If roleData relationship is already loaded, use it to avoid extra query
+        if ($this->relationLoaded('roleData')) {
+            return $this->roleData->firstWhere('role_code', $roleCode);
+        }
+        
+        // Otherwise, query the database
+        return $this->roleData()->where('role_code', $roleCode)->first();
     }
 
     /**

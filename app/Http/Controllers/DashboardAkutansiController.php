@@ -211,10 +211,15 @@ class DashboardAkutansiController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        // Eager load roleData for akutansi to access deadline_at
-        $query->with(['roleData' => function($q) {
-            $q->where('role_code', 'akutansi');
-        }]);
+        // Eager load roleData and roleStatuses for akutansi to access deadline_at and status
+        $query->with([
+            'roleData' => function($q) {
+                $q->where('role_code', 'akutansi');
+            },
+            'roleStatuses' => function($q) {
+                $q->where('role_code', 'akutansi');
+            }
+        ]);
 
         // Order by deadline status using subquery to avoid GROUP BY issues
         // Priority: 1. Documents without deadline (locked), 2. Documents with deadline (unlocked), 3. Others
@@ -236,6 +241,20 @@ class DashboardAkutansiController extends Controller
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
         $dokumens->getCollection()->transform(function ($dokumen) {
+            // Ensure roleData is loaded for akutansi - reload if not loaded or empty
+            if (!$dokumen->relationLoaded('roleData') || $dokumen->roleData->isEmpty()) {
+                $dokumen->load(['roleData' => function($q) {
+                    $q->where('role_code', 'akutansi');
+                }]);
+            }
+            
+            // Also ensure roleStatuses is loaded
+            if (!$dokumen->relationLoaded('roleStatuses')) {
+                $dokumen->load(['roleStatuses' => function($q) {
+                    $q->where('role_code', 'akutansi');
+                }]);
+            }
+            
             $dokumen->is_locked = DokumenHelper::isDocumentLocked($dokumen);
             $dokumen->lock_status_message = DokumenHelper::getLockedStatusMessage($dokumen);
             $dokumen->can_edit = DokumenHelper::canEditDocument($dokumen, 'akutansi');
@@ -640,8 +659,12 @@ class DashboardAkutansiController extends Controller
                 ]);
             });
 
-            // Refresh dokumen to get updated data
+            // Refresh dokumen to get updated data and reload relationships
             $dokumen->refresh();
+            // Reload roleData relationship to ensure getDataForRole() works correctly
+            $dokumen->load(['roleData' => function($q) {
+                $q->where('role_code', 'akutansi');
+            }]);
             $updatedRoleData = $dokumen->getDataForRole('akutansi');
 
             // Log activity: deadline diatur oleh Team Akutansi

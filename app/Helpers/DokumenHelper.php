@@ -57,17 +57,22 @@ class DokumenHelper
         switch ($dokumen->current_handler) {
             case 'ibuB':
                 // Lock dokumen dengan status 'sent_to_ibub' atau 'sedang diproses' (baru di-approve dari inbox)
-                $isLocked = $isLocked && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses']);
+                // TAPI hanya jika tidak punya deadline
+                $isLocked = !$hasDeadline && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses']);
                 break;
             case 'akutansi':
-                $isLocked = $isLocked && $dokumen->status === 'sent_to_akutansi';
+                // Lock dokumen dengan status 'sent_to_akutansi' TAPI hanya jika tidak punya deadline
+                // Setelah deadline di-set, status berubah menjadi 'sedang diproses', jadi tidak terkunci lagi
+                $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_akutansi';
                 break;
             case 'perpajakan':
                 // Lock dokumen dengan status 'sent_to_perpajakan' (baru di-approve dari inbox)
-                $isLocked = $isLocked && $dokumen->status === 'sent_to_perpajakan';
+                // TAPI hanya jika tidak punya deadline
+                $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_perpajakan';
                 break;
             case 'pembayaran':
-                $isLocked = $isLocked && $dokumen->status === 'sent_to_pembayaran';
+                // Lock dokumen dengan status 'sent_to_pembayaran' TAPI hanya jika tidak punya deadline
+                $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_pembayaran';
                 break;
         }
 
