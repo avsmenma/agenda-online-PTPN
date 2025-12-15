@@ -1348,7 +1348,7 @@
       }
 
       .table-dokumen tbody tr.main-row::after {
-        content: 'Klik untuk detail';
+        content: '';
         position: absolute;
         right: 10px;
         top: 50%;
@@ -1371,7 +1371,7 @@
       }
 
       .table-dokumen tbody tr.main-row:hover::after {
-        opacity: 1;
+        opacity: 0;
       }
 
       .table-dokumen tbody tr.main-row.highlight {
@@ -3078,7 +3078,6 @@
                 @endphp
                 <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
                   onclick="handleRowClick(event, {{ $dokumen->id }})"
-                  title="Klik untuk melihat detail lengkap dokumen (bisa dibuka walau status sudah terkirim)"
                   style="cursor: pointer;">
                   <td class="col-no" style="text-align: center;">
                     {{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $loop->iteration }}</td>
@@ -3277,7 +3276,7 @@
                           <button class="btn-action btn-edit locked btn-full-width" disabled
                             title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
                             <i class="fa-solid fa-check-circle"></i>
-                            <span>Sudah Di-approve {{ $isApprovedByPerpajakan ? 'Perpajakan' : 'Akutansi' }}</span>
+                            <span>Terkirim</span>
                           </button>
                         @else
                           <!-- Document waiting approval - show waiting status -->
@@ -3322,7 +3321,7 @@
                           <button class="btn-action btn-edit locked btn-full-width" disabled
                             title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
                             <i class="fa-solid fa-check-circle"></i>
-                            <span>Sudah Di-approve {{ $isApprovedByPerpajakan ? 'Perpajakan' : 'Akutansi' }}</span>
+                            <span>Terkirim</span>
                           </button>
                         @endif
                         <div class="action-row">
