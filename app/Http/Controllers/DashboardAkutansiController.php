@@ -216,20 +216,22 @@ class DashboardAkutansiController extends Controller
             $q->where('role_code', 'akutansi');
         }]);
 
-        // Order by deadline status using LEFT JOIN with dokumen_role_data
+        // Order by deadline status using subquery to avoid GROUP BY issues
         // Priority: 1. Documents without deadline (locked), 2. Documents with deadline (unlocked), 3. Others
-        $dokumens = $query->leftJoin('dokumen_role_data as akutansi_data', function($join) {
-                $join->on('dokumens.id', '=', 'akutansi_data.dokumen_id')
-                     ->where('akutansi_data.role_code', '=', 'akutansi');
-            })
-            ->select('dokumens.*')
-            ->orderByRaw("CASE
-                WHEN dokumens.current_handler = 'akutansi' AND dokumens.status = 'sent_to_akutansi' AND akutansi_data.deadline_at IS NULL THEN 1
-                WHEN dokumens.current_handler = 'akutansi' AND akutansi_data.deadline_at IS NOT NULL THEN 2
+        $dokumens = $query->orderByRaw("CASE
+                WHEN dokumens.current_handler = 'akutansi' AND dokumens.status = 'sent_to_akutansi' AND (
+                    SELECT deadline_at FROM dokumen_role_data 
+                    WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
+                    LIMIT 1
+                ) IS NULL THEN 1
+                WHEN dokumens.current_handler = 'akutansi' AND (
+                    SELECT deadline_at FROM dokumen_role_data 
+                    WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
+                    LIMIT 1
+                ) IS NOT NULL THEN 2
                 ELSE 3
             END")
             ->orderByDesc('dokumens.updated_at')
-            ->groupBy('dokumens.id') // Group by to avoid duplicate rows from JOIN
             ->paginate(10);
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
