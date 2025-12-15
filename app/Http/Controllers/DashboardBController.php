@@ -119,7 +119,7 @@ class DashboardBController extends Controller
                         })
                             ->where('current_handler', 'ibuB');
                     })
-                    ->orWhereIn('status', ['sent_to_perpajakan']) // FIX: Hanya status yang valid
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi
                     ->orWhere(function ($rejectQ) {
                         // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
                         $rejectQ->where('status', 'returned_to_department')
