@@ -1875,8 +1875,12 @@
           $isLocked = $dokumen->is_locked ?? false;
           $isSentToAkutansi = $dokumen->status == 'sent_to_akutansi';
           $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
+          $isPendingApprovalAkutansi = $dokumen->status == 'pending_approval_akutansi';
+          $isPendingApprovalPembayaran = $dokumen->status == 'pending_approval_pembayaran';
           $canSend = $dokumen->status != 'sent_to_akutansi'
             && $dokumen->status != 'sent_to_pembayaran'
+            && $dokumen->status != 'pending_approval_akutansi'
+            && $dokumen->status != 'pending_approval_pembayaran'
             && $dokumen->current_handler == 'perpajakan';
           $perpajakanRequiredFields = [
             'npwp' => 'NPWP',
@@ -2065,7 +2069,11 @@
             @endif
           </td>
           <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-            @if($isLocked)
+            @if($isPendingApprovalAkutansi)
+              <span class="badge-status badge-warning">⏳ Menunggu Approval Akutansi</span>
+            @elseif($isPendingApprovalPembayaran)
+              <span class="badge-status badge-warning">⏳ Menunggu Approval Pembayaran</span>
+            @elseif($isLocked)
               <span class="badge-status badge-locked">🔒 Terkunci</span>
             @elseif($dokumen->status == 'sent_to_akutansi')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
@@ -2077,7 +2085,13 @@
           </td>
           <td class="col-action" onclick="event.stopPropagation()">
             <div class="action-buttons-hybrid">
-              @if($isLocked)
+              @if($isPendingApprovalAkutansi || $isPendingApprovalPembayaran)
+                <!-- Document pending approval - show waiting status -->
+                <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sedang menunggu persetujuan">
+                  <i class="fa-solid fa-hourglass-half"></i>
+                  <span>Menunggu Approval</span>
+                </button>
+              @elseif($isLocked)
                 <!-- Locked state - tampilkan button Set Deadline -->
                 @unless($isSentToAkutansi || $isSentToPembayaran)
                   <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">

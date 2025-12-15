@@ -19,23 +19,43 @@ class DokumenHelper
         }
 
         // Dokumen yang sedang menunggu approval tidak bisa diedit
+        // TAPI untuk perpajakan, dokumen yang sudah dikirim ke akutansi/pembayaran tidak terkunci
         if (in_array($dokumen->status, [
             'menunggu_di_approve',
             'waiting_reviewer_approval',
             'pending_approval_ibub',
             'pending_approval_perpajakan',
-            'pending_approval_akutansi'
         ])) {
             return true; // Lock dokumen yang sedang menunggu approval
         }
+        
+        // Untuk pending_approval_akutansi dan pending_approval_pembayaran,
+        // hanya lock jika current_handler bukan perpajakan (artinya dokumen masih di perpajakan)
+        // Jika current_handler adalah perpajakan, berarti dokumen sudah dikirim dari perpajakan, jadi tidak lock
+        if (in_array($dokumen->status, ['pending_approval_akutansi', 'pending_approval_pembayaran'])) {
+            // Jika current_handler bukan perpajakan, berarti dokumen sudah pindah ke role lain, lock
+            if ($dokumen->current_handler !== 'perpajakan') {
+                return true;
+            }
+            // Jika current_handler masih perpajakan, berarti dokumen sudah dikirim, tidak lock
+            // (akan di-handle di switch case nanti)
+        }
 
         // Check if document has pending status in dokumen_statuses
+        // TAPI untuk perpajakan, jangan lock dokumen yang sudah dikirim ke akutansi/pembayaran
         $hasPendingStatus = $dokumen->roleStatuses()
             ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
             ->exists();
         
         if ($hasPendingStatus) {
-            return true; // Lock dokumen yang memiliki pending status
+            // Jika current_handler adalah perpajakan dan status adalah pending_approval_akutansi/pembayaran,
+            // berarti dokumen sudah dikirim dari perpajakan, jadi tidak lock
+            if ($dokumen->current_handler === 'perpajakan' && 
+                in_array($dokumen->status, ['pending_approval_akutansi', 'pending_approval_pembayaran'])) {
+                // Dokumen sudah dikirim, tidak lock (akan di-handle di switch case nanti)
+            } else {
+                return true; // Lock dokumen yang memiliki pending status
+            }
         }
 
         // Get deadline from dokumen_role_data based on current handler
@@ -68,11 +88,29 @@ class DokumenHelper
             case 'perpajakan':
                 // Lock dokumen dengan status 'sent_to_perpajakan' (baru di-approve dari inbox)
                 // TAPI hanya jika tidak punya deadline
-                $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_perpajakan';
+                // JANGAN lock dokumen yang sudah dikirim ke akutansi/pembayaran (status pending_approval_* atau sent_to_*)
+                if (in_array($dokumen->status, [
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran'
+                ])) {
+                    $isLocked = false; // Dokumen sudah dikirim, tidak terkunci
+                } else {
+                    $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_perpajakan';
+                }
                 break;
             case 'pembayaran':
                 // Lock dokumen dengan status 'sent_to_pembayaran' TAPI hanya jika tidak punya deadline
                 $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_pembayaran';
+                break;
+            default:
+                // Untuk dokumen yang current_handler bukan perpajakan tapi masih muncul di halaman perpajakan
+                // (karena query menampilkan dokumen dengan status sent_to_akutansi/pembayaran)
+                // Jangan lock dokumen ini karena sudah pindah ke role lain
+                if (in_array($dokumen->status, ['sent_to_akutansi', 'sent_to_pembayaran'])) {
+                    $isLocked = false;
+                }
                 break;
         }
 
