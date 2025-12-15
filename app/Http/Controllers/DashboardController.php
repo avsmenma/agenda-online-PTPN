@@ -7,11 +7,33 @@ use App\Models\Dokumen;
 
 class DashboardController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         // Redirect Admin/Owner to owner dashboard
         $user = auth()->user();
-        if ($user && (strtolower($user->role) === 'admin' || strtolower($user->role) === 'owner')) {
-            return redirect('/owner/dashboard');
+
+        if ($user) {
+            $role = strtolower($user->role);
+
+            if ($role === 'admin' || $role === 'owner') {
+                return redirect('/owner/dashboard');
+            }
+
+            if ($role === 'ibub' || $role === 'ibu b') {
+                return redirect()->route('dashboard.ibub');
+            }
+
+            if ($role === 'perpajakan') {
+                return redirect()->route('dashboard.perpajakan');
+            }
+
+            if ($role === 'akutansi') {
+                return redirect()->route('dashboard.akutansi');
+            }
+
+            if ($role === 'pembayaran') {
+                return redirect()->route('dashboard.pembayaran');
+            }
         }
 
         // Get statistics for IbuA (only documents created by ibuA)
@@ -19,13 +41,19 @@ class DashboardController extends Controller
 
         // Total dokumen belum dikirim = dokumen yang masih draft atau belum dikirim ke ibuB
         $totalBelumDikirim = Dokumen::where('created_by', 'ibuA')
-            ->whereNull('sent_to_ibub_at')
+            ->whereDoesntHave('roleData', function ($query) {
+                // If roleData for 'ibub' does NOT exist (or received_at is null) it hasn't been sent
+                $query->where('role_code', 'ibub');
+            })
             ->where('status', '!=', 'returned_to_ibua')
             ->count();
 
-        // Total dokumen sudah dikirim = dokumen yang sudah dikirim ke ibuB (sent_to_ibub_at tidak null)
+        // Total dokumen sudah dikirim = dokumen yang sudah dikirim ke ibuB
         $totalSudahDikirim = Dokumen::where('created_by', 'ibuA')
-            ->whereNotNull('sent_to_ibub_at')
+            ->whereHas('roleData', function ($query) {
+                // If roleData for 'ibub' exists, it has been sent
+                $query->where('role_code', 'ibub');
+            })
             ->where('status', '!=', 'returned_to_ibua')
             ->count();
 
@@ -33,7 +61,9 @@ class DashboardController extends Controller
         $totalDitolakInbox = Dokumen::where('created_by', 'ibuA')
             ->where('current_handler', 'ibuA')
             ->where('status', 'returned_to_ibua')
-            ->where('inbox_approval_status', 'rejected')
+            ->whereHas('roleStatuses', function ($query) {
+                $query->where('status', 'rejected');
+            })
             ->count();
 
         // Get latest documents (5 most recent) created by ibuA
@@ -55,7 +85,7 @@ class DashboardController extends Controller
             'totalDitolakInbox' => $totalDitolakInbox,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
-        return view('IbuA.dashboard',$data);
+        return view('IbuA.dashboard', $data);
     }
 
     /**
@@ -65,7 +95,7 @@ class DashboardController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Hanya allow IbuA
             if (!$user || strtolower($user->role) !== 'ibua') {
                 return response()->json([
@@ -76,13 +106,13 @@ class DashboardController extends Controller
 
             // Get last check time from request (dari localStorage client)
             $lastCheckTime = $request->input('last_check_time');
-            
+
             // Cari dokumen yang di-reject dalam 24 jam terakhir (untuk memastikan notifikasi selalu muncul)
             // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
             // Ini memastikan bahwa dokumen yang di-reject dalam 24 jam terakhir selalu ditampilkan
             $checkFrom24Hours = now()->subHours(24);
             $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
-            
+
             // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
             if ($checkFrom->gt($checkFrom24Hours)) {
                 $checkFrom = $checkFrom24Hours;
@@ -99,23 +129,35 @@ class DashboardController extends Controller
             // Cari dokumen yang di-reject dari inbox dalam 24 jam terakhir
             // FIX: Gunakan AND condition yang ketat untuk mencegah cross-interference
             // Hanya dokumen yang BENAR-BENAR dibuat oleh IbuA yang akan ditampilkan
-            $rejectedDocuments = Dokumen::where(function($query) {
-                    // Hanya dokumen yang dibuat oleh IbuA
-                    $query->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
-                          ->orWhere('created_by', 'ibuA')
-                          ->orWhere('created_by', 'IbuA');
-                })
-                ->where(function($query) {
+            $rejectedDocuments = Dokumen::where(function ($query) {
+                // Hanya dokumen yang dibuat oleh IbuA
+                $query->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
+                    ->orWhere('created_by', 'ibuA')
+                    ->orWhere('created_by', 'IbuA');
+            })
+                ->where(function ($query) {
                     // DAN status returned ke IbuA
                     $query->where('status', 'returned_to_ibua')
-                          ->where('inbox_approval_status', 'rejected');
+                        ->whereHas('roleStatuses', function ($q) {
+                        $q->where('status', 'rejected');
+                    });
                 })
                 ->where('inbox_approval_responded_at', '>=', $checkFrom)
                 ->whereNotNull('inbox_approval_responded_at')
                 ->with('activityLogs')
                 ->orderBy('inbox_approval_responded_at', 'desc')
-                ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_responded_at', 'inbox_approval_reason', 'inbox_approval_for'])
-                ->get();
+                ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_responded_at']) // Removed deleted columns
+                ->get()
+                ->map(function ($doc) {
+                    // Populate reason from log if needed, or other source
+                    // For now, let's try to get reason from last rejection log
+                    $rejectLog = $doc->activityLogs()
+                        ->where('action', 'inbox_rejected')
+                        ->latest('action_at')
+                        ->first();
+                    $doc->inbox_approval_reason = $rejectLog->details['reason'] ?? $doc->inbox_approval_reason ?? '';
+                    return $doc;
+                });
 
             \Log::info('IbuA rejected documents found', [
                 'count' => $rejectedDocuments->count(),
@@ -123,15 +165,15 @@ class DashboardController extends Controller
             ]);
 
             // Hitung total rejected (case-insensitive)
-            $totalRejected = Dokumen::where(function($query) {
-                    $query->whereRaw('LOWER(created_by) = ?', ['ibua'])
-                          ->orWhere('created_by', 'ibuA')
-                          ->orWhere('created_by', 'IbuA');
-                })
-                ->where(function($query) {
+            $totalRejected = Dokumen::where(function ($query) {
+                $query->whereRaw('LOWER(created_by) = ?', ['ibua'])
+                    ->orWhere('created_by', 'ibuA')
+                    ->orWhere('created_by', 'IbuA');
+            })
+                ->where(function ($query) {
                     $query->whereRaw('LOWER(current_handler) = ?', ['ibua'])
-                          ->orWhere('current_handler', 'ibuA')
-                          ->orWhere('current_handler', 'IbuA');
+                        ->orWhere('current_handler', 'ibuA')
+                        ->orWhere('current_handler', 'IbuA');
                 })
                 ->where('status', 'returned_to_ibua')
                 ->where('inbox_approval_status', 'rejected')
@@ -141,13 +183,13 @@ class DashboardController extends Controller
                 'success' => true,
                 'rejected_documents_count' => $rejectedDocuments->count(),
                 'total_rejected' => $totalRejected,
-                'rejected_documents' => $rejectedDocuments->map(function($doc) {
+                'rejected_documents' => $rejectedDocuments->map(function ($doc) {
                     // Get rejected by name from activity log
                     $rejectLog = $doc->activityLogs()
                         ->where('action', 'inbox_rejected')
                         ->latest('action_at')
                         ->first();
-                    
+
                     $rejectedBy = 'Unknown';
                     if ($rejectLog) {
                         $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
@@ -161,13 +203,9 @@ class DashboardController extends Controller
                             'akutansi' => 'Team Akutansi',
                         ];
                         $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-                    } else if ($doc->inbox_approval_for) {
-                        $nameMap = [
-                            'IbuB' => 'Ibu Yuni',
-                            'Perpajakan' => 'Team Perpajakan',
-                            'Akutansi' => 'Team Akutansi',
-                        ];
-                        $rejectedBy = $nameMap[$doc->inbox_approval_for] ?? $doc->inbox_approval_for;
+                    } else {
+                        // Fallback logic removed as inbox_approval_for is deleted
+                        $rejectedBy = 'Unknown';
                     }
 
                     return [
@@ -201,17 +239,24 @@ class DashboardController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Hanya allow IbuA
             if (!$user || strtolower($user->role) !== 'ibua') {
                 abort(403, 'Unauthorized access');
             }
 
             // Validasi: dokumen harus di-reject dan dikembalikan ke IbuA
-            if ($dokumen->status !== 'returned_to_ibua' || 
-                $dokumen->inbox_approval_status !== 'rejected' ||
+            // Check if rejected using new status system by checking if ANY role rejected it
+            $hasRejection = \App\Models\DokumenStatus::where('dokumen_id', $dokumen->id)
+                ->where('status', 'rejected')
+                ->exists();
+
+            if (
+                $dokumen->status !== 'returned_to_ibua' ||
+                !$hasRejection ||
                 strtolower($dokumen->created_by) !== 'ibua' ||
-                strtolower($dokumen->current_handler) !== 'ibua') {
+                strtolower($dokumen->current_handler) !== 'ibua'
+            ) {
                 abort(404, 'Dokumen tidak ditemukan atau tidak valid');
             }
 
@@ -220,7 +265,7 @@ class DashboardController extends Controller
                 ->where('action', 'inbox_rejected')
                 ->latest('action_at')
                 ->first();
-            
+
             $rejectedBy = 'Unknown';
             if ($rejectLog) {
                 $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
@@ -234,13 +279,10 @@ class DashboardController extends Controller
                     'akutansi' => 'Team Akutansi',
                 ];
                 $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-            } else if ($dokumen->inbox_approval_for) {
-                $nameMap = [
-                    'IbuB' => 'Ibu Yuni',
-                    'Perpajakan' => 'Team Perpajakan',
-                    'Akutansi' => 'Team Akutansi',
-                ];
-                $rejectedBy = $nameMap[$dokumen->inbox_approval_for] ?? $dokumen->inbox_approval_for;
+            } else {
+                // Fallback with activity log query if direct property is not available
+                // We rely on log or current state
+                $rejectedBy = 'Unknown';
             }
 
             $data = [

@@ -290,13 +290,10 @@ Route::middleware(['autologin', 'role:ibub,admin'])->group(function () {
 
 // Universal Approval Routes - Untuk semua user kecuali IbuA - dengan autologin
 Route::middleware(['autologin'])->group(function () {
-    Route::get('/daftar-masuk-dokumen', [\App\Http\Controllers\UniversalApprovalController::class, 'index'])
-        ->name('universal.approval.index');
-
-    Route::post('/universal-approval/{dokumen}/approve', [\App\Http\Controllers\UniversalApprovalController::class, 'approve'])
+    Route::post('/universal-approval/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])
         ->name('universal.approval.approve');
 
-    Route::post('/universal-approval/{dokumen}/reject', [\App\Http\Controllers\UniversalApprovalController::class, 'reject'])
+    Route::post('/universal-approval/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])
         ->name('universal.approval.reject');
 
     Route::get('/universal-approval/{dokumen}/detail', [\App\Http\Controllers\UniversalApprovalController::class, 'getDetail'])
@@ -306,8 +303,8 @@ Route::middleware(['autologin'])->group(function () {
         ->name('universal.approval.notifications');
 });
 
-// Inbox Routes - Untuk IbuB, Perpajakan, Akutansi
-Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,admin'])->group(function () {
+// Inbox Routes - Untuk IbuB, Perpajakan, Akutansi, Pembayaran
+Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,Pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show');
@@ -377,6 +374,7 @@ Route::get('/dokumensPerpajakan/{dokumen}/edit', [DashboardPerpajakanController:
 Route::put('/dokumensPerpajakan/{dokumen}', [DashboardPerpajakanController::class, 'updateDokumen'])->name('dokumensPerpajakan.update');
 Route::post('/dokumensPerpajakan/{dokumen}/send-to-akutansi', [DashboardPerpajakanController::class, 'sendToAkutansi'])->name('dokumensPerpajakan.sendToAkutansi');
 Route::post('/dokumensPerpajakan/{dokumen}/return', [DashboardPerpajakanController::class, 'returnDocument'])->name('dokumensPerpajakan.return');
+Route::post('/dokumensAkutansi/{dokumen}/return', [DashboardAkutansiController::class, 'returnDocument'])->name('dokumensAkutansi.return');
 Route::get('/pengembalian-dokumensPerpajakan', [DashboardPerpajakanController::class, 'pengembalian'])->name('pengembalianPerpajakan.index');
 Route::get('/diagramPerpajakan', [DashboardPerpajakanController::class, 'diagram'])->name('diagramPerpajakan.index');
 Route::get('/rekapan-perpajakan', [DashboardPerpajakanController::class, 'rekapan'])->name('perpajakan.rekapan');

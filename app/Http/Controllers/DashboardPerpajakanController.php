@@ -61,13 +61,18 @@ class DashboardPerpajakanController extends Controller
                     ->orWhere('status', 'sent_to_akutansi');
             })
             ->with(['dokumenPos', 'dokumenPrs'])
+            ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
+                $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
+                    ->where('perpajakan_data.role_code', '=', 'perpajakan');
+            })
+            ->select('dokumens.*')
             ->orderByRaw("CASE
                 WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
                 ELSE 3
             END")
-            ->orderByDesc('sent_to_perpajakan_at')
-            ->orderByDesc('updated_at')
+            ->orderByDesc('perpajakan_data.received_at')
+            ->orderByDesc('dokumens.updated_at')
             ->take(5)
             ->get();
 
@@ -172,12 +177,18 @@ class DashboardPerpajakanController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
-        $dokumens = $query->orderByRaw("CASE
+        $dokumens = $query
+            ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
+                $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
+                    ->where('perpajakan_data.role_code', '=', 'perpajakan');
+            })
+            ->select('dokumens.*')
+            ->orderByRaw("CASE
                 WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
                 ELSE 3
             END")
-            ->orderByDesc('sent_to_perpajakan_at')
+            ->orderByDesc('perpajakan_data.received_at')
             ->orderByDesc('updated_at')
             ->paginate($perPage)->appends($request->query());
 
@@ -260,25 +271,25 @@ class DashboardPerpajakanController extends Controller
                 'nilai_rupiah',
                 'nomor_mirror'
             ];
-            
+
             if ($user && isset($user->table_columns_preferences['perpajakan'])) {
                 $selectedColumns = $user->table_columns_preferences['perpajakan'];
             } else {
                 // Fallback to session if available
                 $selectedColumns = session('perpajakan_dokumens_table_columns', $defaultColumns);
             }
-            
+
             // Filter out 'status' and 'keterangan' if they exist
             $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
-            
+
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
                 $selectedColumns = $defaultColumns;
             }
-            
+
             // Update session to keep it in sync
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         }
@@ -909,7 +920,7 @@ class DashboardPerpajakanController extends Controller
             ->where('status', 'returned_to_department')
             ->with(['dokumenPos', 'dokumenPrs'])
             ->orderBy('returned_from_perpajakan_at', 'desc');
-        
+
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
@@ -1202,9 +1213,18 @@ class DashboardPerpajakanController extends Controller
         // Get monthly statistics
         $monthlyStats = [];
         $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
         ];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -1241,7 +1261,7 @@ class DashboardPerpajakanController extends Controller
             ->toArray();
 
         if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
+            $availableYears = [(int) date('Y')];
         }
 
         // Get document count per bagian for the selected year (only documents that reached perpajakan)
@@ -1262,9 +1282,9 @@ class DashboardPerpajakanController extends Controller
             'module' => 'perpajakan',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
-            'selectedYear' => (int)$selectedYear,
+            'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
-            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
@@ -1284,26 +1304,26 @@ class DashboardPerpajakanController extends Controller
         // Base Query for Stats - same logic as exportView
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents sent to perpajakan (not still at ibuB)
                     $subQ->where('status', 'sent_to_perpajakan')
-                         ->where('current_handler', '!=', 'ibuB')
-                         ->whereNotNull('sent_to_perpajakan_at');
+                        ->where('current_handler', '!=', 'ibuB')
+                        ->whereNotNull('sent_to_perpajakan_at');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents being processed by perpajakan
                     $subQ->where('status', 'sedang diproses')
-                         ->where('current_handler', 'perpajakan');
+                        ->where('current_handler', 'perpajakan');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents that have been processed by perpajakan and moved forward
                     $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
-                         ->whereNotNull('processed_perpajakan_at');
+                        ->whereNotNull('processed_perpajakan_at');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents returned from perpajakan (for tracking)
                     $subQ->where('status', 'returned_to_department')
-                         ->whereNotNull('returned_from_perpajakan_at');
+                        ->whereNotNull('returned_from_perpajakan_at');
                 });
         });
 
@@ -1435,37 +1455,37 @@ class DashboardPerpajakanController extends Controller
         // OR documents that have been processed by perpajakan and moved forward
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents sent to perpajakan (not still at ibuB)
                     $subQ->where('status', 'sent_to_perpajakan')
-                         ->where('current_handler', '!=', 'ibuB')
-                         ->whereNotNull('sent_to_perpajakan_at');
+                        ->where('current_handler', '!=', 'ibuB')
+                        ->whereNotNull('sent_to_perpajakan_at');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents being processed by perpajakan
                     $subQ->where('status', 'sedang diproses')
-                         ->where('current_handler', 'perpajakan');
+                        ->where('current_handler', 'perpajakan');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents that have been processed by perpajakan and moved forward
                     $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
-                         ->whereNotNull('processed_perpajakan_at');
+                        ->whereNotNull('processed_perpajakan_at');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents returned from perpajakan (for tracking)
                     $subQ->where('status', 'returned_to_department')
-                         ->whereNotNull('returned_from_perpajakan_at');
+                        ->whereNotNull('returned_from_perpajakan_at');
                 });
         });
 
         if ($year) {
             // Filter by year using tanggal_invoice if available, otherwise fallback to created_at
-            $query->where(function($q) use ($year) {
+            $query->where(function ($q) use ($year) {
                 $q->whereYear('tanggal_invoice', $year)
-                  ->orWhere(function($subQ) use ($year) {
-                      $subQ->whereNull('tanggal_invoice')
-                           ->whereYear('created_at', $year);
-                  });
+                    ->orWhere(function ($subQ) use ($year) {
+                        $subQ->whereNull('tanggal_invoice')
+                            ->whereYear('created_at', $year);
+                    });
             });
         }
 
@@ -1473,7 +1493,7 @@ class DashboardPerpajakanController extends Controller
             // Filter by month using tanggal_invoice
             // Only show documents that have tanggal_invoice and match the selected month
             $query->whereNotNull('tanggal_invoice')
-                  ->whereMonth('tanggal_invoice', $month);
+                ->whereMonth('tanggal_invoice', $month);
         }
 
         if ($search) {
@@ -1487,9 +1507,9 @@ class DashboardPerpajakanController extends Controller
 
         // Get documents for display (paginated)
         $perPage = $request->get('per_page', session('perpajakan_export_per_page', 10)); // Default 10, bisa diubah user
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int)$perPage : 10; // Validate per_page value
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10; // Validate per_page value
         session(['perpajakan_export_per_page' => $perPage]); // Save to session
-        
+
         $dokumens = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $dokumens->appends($request->all());
 
@@ -1499,43 +1519,43 @@ class DashboardPerpajakanController extends Controller
         // Same logic as main query to ensure consistency
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents sent to perpajakan (not still at ibuB)
                     $subQ->where('status', 'sent_to_perpajakan')
-                         ->where('current_handler', '!=', 'ibuB')
-                         ->whereNotNull('sent_to_perpajakan_at');
+                        ->where('current_handler', '!=', 'ibuB')
+                        ->whereNotNull('sent_to_perpajakan_at');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents being processed by perpajakan
                     $subQ->where('status', 'sedang diproses')
-                         ->where('current_handler', 'perpajakan');
+                        ->where('current_handler', 'perpajakan');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents that have been processed by perpajakan and moved forward
                     $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
-                         ->whereNotNull('processed_perpajakan_at');
+                        ->whereNotNull('processed_perpajakan_at');
                 })
-                ->orWhere(function($subQ) {
+                ->orWhere(function ($subQ) {
                     // Documents returned from perpajakan (for tracking)
                     $subQ->where('status', 'returned_to_department')
-                         ->whereNotNull('returned_from_perpajakan_at');
+                        ->whereNotNull('returned_from_perpajakan_at');
                 });
         });
         if ($year) {
             // Filter by year using tanggal_invoice if available, otherwise fallback to created_at
-            $statsQuery->where(function($q) use ($year) {
+            $statsQuery->where(function ($q) use ($year) {
                 $q->whereYear('tanggal_invoice', $year)
-                  ->orWhere(function($subQ) use ($year) {
-                      $subQ->whereNull('tanggal_invoice')
-                           ->whereYear('created_at', $year);
-                  });
+                    ->orWhere(function ($subQ) use ($year) {
+                        $subQ->whereNull('tanggal_invoice')
+                            ->whereYear('created_at', $year);
+                    });
             });
         }
         if ($month) {
             // Filter by month using tanggal_invoice
             // Only show documents that have tanggal_invoice and match the selected month
             $statsQuery->whereNotNull('tanggal_invoice')
-                       ->whereMonth('tanggal_invoice', $month);
+                ->whereMonth('tanggal_invoice', $month);
         }
 
         $countTotal = (clone $statsQuery)->count();
@@ -1560,25 +1580,25 @@ class DashboardPerpajakanController extends Controller
         // Column Definitions - Extended with all Perpajakan-specific fields
         // Column Definitions - Extended with all Perpajakan-specific fields
         $availableColumns = $this->getAvailableColumns('normal');
-        
+
         // Filter out nomor_mirror and nomor_miro from selectedColumns if present
         if (is_array($selectedColumns)) {
-            $selectedColumns = array_filter($selectedColumns, function($col) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'nomor_mirror' && $col !== 'nomor_miro';
             });
             $selectedColumns = array_values($selectedColumns);
         } elseif (is_string($selectedColumns) && !empty($selectedColumns)) {
             $columns = explode(',', $selectedColumns);
             $columns = array_map('trim', $columns);
-            $selectedColumns = array_filter($columns, function($col) {
+            $selectedColumns = array_filter($columns, function ($col) {
                 return $col !== 'nomor_mirror' && $col !== 'nomor_miro';
             });
             $selectedColumns = array_values($selectedColumns);
         }
-        
+
         // Ensure selectedColumns only contains valid columns from availableColumns
         if (is_array($selectedColumns)) {
-            $selectedColumns = array_filter($selectedColumns, function($col) use ($availableColumns) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
                 return isset($availableColumns[$col]);
             });
             $selectedColumns = array_values($selectedColumns);
@@ -1688,12 +1708,12 @@ class DashboardPerpajakanController extends Controller
 
         if ($year) {
             // Filter by year using tanggal_invoice if available, otherwise fallback to created_at
-            $query->where(function($q) use ($year) {
+            $query->where(function ($q) use ($year) {
                 $q->whereYear('tanggal_invoice', $year)
-                  ->orWhere(function($subQ) use ($year) {
-                      $subQ->whereNull('tanggal_invoice')
-                           ->whereYear('created_at', $year);
-                  });
+                    ->orWhere(function ($subQ) use ($year) {
+                        $subQ->whereNull('tanggal_invoice')
+                            ->whereYear('created_at', $year);
+                    });
             });
         }
 
@@ -1701,7 +1721,7 @@ class DashboardPerpajakanController extends Controller
             // Filter by month using tanggal_invoice
             // Only show documents that have tanggal_invoice and match the selected month
             $query->whereNotNull('tanggal_invoice')
-                  ->whereMonth('tanggal_invoice', $month);
+                ->whereMonth('tanggal_invoice', $month);
         }
 
         if ($search) {
@@ -1724,7 +1744,7 @@ class DashboardPerpajakanController extends Controller
         // Handle columns from request - can be array or comma-separated string
         $selectedColumns = $request->input('columns', '');
         $availableColumns = $this->getAvailableColumns($mode);
-        
+
         if ($selectedColumns) {
             // Handle both array and string formats
             if (is_array($selectedColumns)) {
@@ -1733,14 +1753,14 @@ class DashboardPerpajakanController extends Controller
                 $columns = explode(',', $selectedColumns);
                 $columns = array_map('trim', $columns);
             }
-            
+
             // Filter out invalid columns and nomor_mirror/nomor_miro
-            $columns = array_filter($columns, function($col) use ($availableColumns) {
+            $columns = array_filter($columns, function ($col) use ($availableColumns) {
                 return isset($availableColumns[$col]) && $col !== 'nomor_mirror' && $col !== 'nomor_miro';
             });
             // Re-index array
             $columns = array_values($columns);
-            
+
             // If no valid columns left, use all available columns
             if (empty($columns)) {
                 $columns = array_keys($availableColumns);
@@ -1751,8 +1771,8 @@ class DashboardPerpajakanController extends Controller
 
         // Load necessary relationships for export
         $docs = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
-                     ->orderBy('created_at', 'desc')
-                     ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         if ($docs->isEmpty()) {
             return back()->with('error', 'Tidak ada data untuk diexport dengan filter saat ini.');
@@ -1847,13 +1867,13 @@ class DashboardPerpajakanController extends Controller
         $html .= '</table></body></html>';
 
         $exportType = $request->input('export', 'excel');
-        
+
         if ($exportType === 'pdf') {
             // Get filter values for PDF
             $year = $request->get('year');
             $month = $request->get('month');
             $search = $request->get('search');
-            
+
             // Prepare data for PDF view
             $pdfData = [
                 'dokumens' => $docs,
@@ -1866,7 +1886,7 @@ class DashboardPerpajakanController extends Controller
                 'dateFields' => $dateFields,
                 'currencyFields' => $currencyFields,
             ];
-            
+
             // Return view that can be printed as PDF using browser print
             return view('perpajakan.export.pdf', $pdfData);
         }

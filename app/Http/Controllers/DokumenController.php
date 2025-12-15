@@ -25,33 +25,33 @@ class DokumenController extends Controller
             ->latest('tanggal_masuk');
 
         // Enhanced search functionality - search across all relevant fields
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
-            $search = trim((string)$request->search);
-            $query->where(function($q) use ($search) {
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
                 // Text fields
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
-                  ->orWhere('bagian', 'like', '%' . $search . '%')
-                  ->orWhere('kategori', 'like', '%' . $search . '%')
-                  ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
-                  ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
-                  ->orWhere('no_spk', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%')
-                  ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
-                
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                    ->orWhere('bagian', 'like', '%' . $search . '%')
+                    ->orWhere('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                    ->orWhere('no_spk', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
+
                 // Search in nilai_rupiah - handle various formats
                 $numericSearch = preg_replace('/[^0-9]/', '', $search);
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
             })
-            ->orWhereHas('dibayarKepadas', function($q) use ($search) {
-                $q->where('nama_penerima', 'like', '%' . $search . '%');
-            });
+                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
+                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+                });
         }
 
         // Filter by year
@@ -59,54 +59,45 @@ class DokumenController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        // Filter by status
+        // Filter by status using new dokumen_statuses table
         if ($request->has('status_filter') && $request->status_filter) {
             $statusFilter = $request->status_filter;
-            
-            // Map filter status ke database status
+
             switch ($statusFilter) {
                 case 'belum_dikirim':
-                    // Dokumen yang belum dikirim (draft atau returned yang belum dikirim ulang)
-                    $query->where(function($q) {
-                        $q->where('status', 'draft')
-                          ->orWhere(function($q2) {
-                              $q2->where('status', 'returned_to_ibua')
-                                 ->whereNull('sent_to_ibub_at');
-                          });
-                    });
+                    // Dokumen yang belum dikirim - no status record for ibuB exists
+                    $query->whereDoesntHave('roleStatuses', function ($q) {
+                        $q->where('role_code', 'ibub');
+                    })->where('status', 'draft');
                     break;
+
                 case 'menunggu_approval':
-                    // Dokumen yang menunggu approval dari Reviewer
-                    $query->where(function($q) {
-                        $q->where('status', 'waiting_reviewer_approval')
-                          ->orWhere(function($q2) {
-                              $q2->where('inbox_approval_for', 'IbuB')
-                                 ->where('inbox_approval_status', 'pending');
-                          });
+                    // Dokumen yang menunggu approval dari Reviewer (IbuB)
+                    $query->whereHas('roleStatuses', function ($q) {
+                        $q->where('role_code', 'ibub')
+                            ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
                     });
                     break;
+
                 case 'terkirim':
-                    // Dokumen yang sudah di-approve oleh Reviewer
-                    $query->where(function($q) {
-                        $q->where(function($q2) {
-                            $q2->where('inbox_approval_for', 'IbuB')
-                               ->where('inbox_approval_status', 'approved');
+                    // Dokumen yang sudah di-approve oleh Reviewer atau diteruskan ke department lain
+                    $query->where(function ($q) {
+                        // Approved by IbuB
+                        $q->whereHas('roleStatuses', function ($q2) {
+                            $q2->where('role_code', 'ibub')
+                                ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED);
                         })
-                        ->orWhere(function($q3) {
-                            $q3->where('status', 'sedang diproses')
-                               ->whereNotNull('sent_to_ibub_at')
-                               ->where(function($q4) {
-                                   $q4->whereNull('inbox_approval_status')
-                                      ->orWhere('inbox_approval_status', '!=', 'pending');
-                               });
-                        });
+                            // OR has status record for other departments (sent to them)
+                            ->orWhereHas('roleStatuses', function ($q3) {
+                                $q3->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
+                            });
                     });
                     break;
+
                 case 'dikembalikan':
-                    // Dokumen yang dikembalikan untuk revisi
-                    $query->where(function($q) {
-                        $q->where('status', 'returned_to_ibua')
-                          ->orWhere('inbox_approval_status', 'rejected');
+                    // Dokumen yang dikembalikan/rejected
+                    $query->whereHas('roleStatuses', function ($q) {
+                        $q->where('status', \App\Models\DokumenStatus::STATUS_REJECTED);
                     });
                     break;
             }
@@ -114,11 +105,11 @@ class DokumenController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
-        
+
         // Get suggestions if no results found
         $suggestions = [];
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '' && $dokumens->total() == 0) {
-            $searchTerm = trim((string)$request->search);
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
+            $searchTerm = trim((string) $request->search);
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year);
         }
 
@@ -146,13 +137,13 @@ class DokumenController extends Controller
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
-        
+
         // Remove deprecated columns if they exist
-        $selectedColumns = array_filter($selectedColumns, function($col) {
+        $selectedColumns = array_filter($selectedColumns, function ($col) {
             return $col !== 'nomor_mirror' && $col !== 'keterangan';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
-        
+
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
             session(['dokumens_table_columns' => $selectedColumns]);
@@ -165,13 +156,13 @@ class DokumenController extends Controller
                 'nilai_rupiah',
                 'status'
             ]);
-            
+
             // Remove deprecated columns if they exist in session
-            $selectedColumns = array_filter($selectedColumns, function($col) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'nomor_mirror' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns); // Re-index array
-            
+
             // Update session with cleaned columns
             session(['dokumens_table_columns' => $selectedColumns]);
         }
@@ -269,10 +260,10 @@ class DokumenController extends Controller
                 'nomor_miro' => $dokumen->nomor_miro,
                 'no_berita_acara' => $dokumen->no_berita_acara,
                 'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
-                'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function($po) {
+                'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {
                     return ['nomor_po' => $po->nomor_po ?? ''];
                 })->values() : [],
-                'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function($pr) {
+                'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function ($pr) {
                     return ['nomor_pr' => $pr->nomor_pr ?? ''];
                 })->values() : [],
             ]
@@ -471,9 +462,18 @@ class DokumenController extends Controller
             // Extract bulan dan tahun dari tanggal SPP
             $tanggalSpp = Carbon::parse($request->tanggal_spp);
             $bulanIndonesia = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'May', 6 => 'Juni', 7 => 'July', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                1 => 'Januari',
+                2 => 'Februari',
+                3 => 'Maret',
+                4 => 'April',
+                5 => 'May',
+                6 => 'Juni',
+                7 => 'July',
+                8 => 'Agustus',
+                9 => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember'
             ];
 
             // Create dokumen
@@ -624,9 +624,18 @@ class DokumenController extends Controller
             // Extract bulan dan tahun dari tanggal SPP untuk update
             $tanggalSpp = Carbon::parse($request->tanggal_spp);
             $bulanIndonesia = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'May', 6 => 'Juni', 7 => 'July', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                1 => 'Januari',
+                2 => 'Februari',
+                3 => 'Maret',
+                4 => 'April',
+                5 => 'May',
+                6 => 'Juni',
+                7 => 'July',
+                8 => 'Agustus',
+                9 => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember'
             ];
 
             $newBulan = $bulanIndonesia[$tanggalSpp->month];
@@ -696,13 +705,13 @@ class DokumenController extends Controller
                     $newValue = $newValueRaw ? $dokumen->$field->format('Y-m-d') : null;
                 } elseif ($field === 'nilai_rupiah') {
                     // Compare numeric values first to ensure accuracy
-                    $oldNumeric = $oldValueRaw ? (float)$oldValueRaw : 0;
-                    $newNumeric = $newValueRaw ? (float)$newValueRaw : 0;
-                    
+                    $oldNumeric = $oldValueRaw ? (float) $oldValueRaw : 0;
+                    $newNumeric = $newValueRaw ? (float) $newValueRaw : 0;
+
                     // Format for display in log
                     $oldValue = $oldValueRaw ? number_format($oldValueRaw, 0, ',', '.') : '0';
                     $newValue = $newValueRaw ? number_format($newValueRaw, 0, ',', '.') : '0';
-                    
+
                     // Use numeric comparison for accuracy
                     if (abs($oldNumeric - $newNumeric) > 0.01) { // Allow for floating point precision
                         try {
@@ -719,8 +728,8 @@ class DokumenController extends Controller
                     }
                     continue; // Skip the general comparison below
                 } elseif ($field === 'tahun') {
-                    $oldValue = $oldValueRaw ? (string)$oldValueRaw : null;
-                    $newValue = $newValueRaw ? (string)$newValueRaw : null;
+                    $oldValue = $oldValueRaw ? (string) $oldValueRaw : null;
+                    $newValue = $newValueRaw ? (string) $newValueRaw : null;
                 } else {
                     $oldValue = $oldValueRaw;
                     $newValue = $newValueRaw;
@@ -861,6 +870,9 @@ class DokumenController extends Controller
             // - last_action_status ke 'sent_to_ibub'
             $dokumen->sendToInbox('IbuB');
 
+            // Also create record in new dokumen_statuses table
+            $dokumen->sendToRoleInbox('ibub', 'ibuA');
+
             $dokumen->refresh();
             DB::commit();
 
@@ -870,7 +882,7 @@ class DokumenController extends Controller
                     'document_id' => $dokumen->id,
                     'status' => $dokumen->status,
                     'current_stage' => $dokumen->current_stage,
-                    'inbox_approval_status' => $dokumen->inbox_approval_status
+                    'inbox_approval_status' => $dokumen->getStatusForRole('ibub')->status ?? 'unknown',
                 ]);
             } catch (\Exception $logException) {
                 \Log::error('Failed to log document sent to inbox: ' . $logException->getMessage());
@@ -915,12 +927,14 @@ class DokumenController extends Controller
             }
 
             // Check if document is waiting for reviewer approval
-            if ($dokumen->status !== 'waiting_reviewer_approval' && 
-                !($dokumen->inbox_approval_for === 'IbuB' && $dokumen->inbox_approval_status === 'pending')) {
+            if (
+                $dokumen->status !== 'waiting_reviewer_approval' &&
+                !($dokumen->isWaitingApprovalFor('IbuB'))
+            ) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Dokumen tidak sedang menunggu persetujuan reviewer.'
-                ], 400);
+                    'message' => 'Dokumen belum disetujui oleh Ibu Yuni.'
+                ], 403);
             }
 
             DB::beginTransaction();
@@ -997,22 +1011,34 @@ class DokumenController extends Controller
     private function getSearchSuggestions($searchTerm, $year = null): array
     {
         $suggestions = [];
-        
+
         // Get all unique values from relevant fields
         $baseQuery = Dokumen::where('created_by', 'ibuA');
-        
+
         if ($year) {
             $baseQuery->where('tahun', $year);
         }
-        
+
         // Collect all searchable values
         $allValues = collect();
-        
+
         // Get from main fields
-        $fields = ['nomor_agenda', 'nomor_spp', 'uraian_spp', 'nama_pengirim', 'bagian', 
-                   'kategori', 'jenis_dokumen', 'no_berita_acara', 'no_spk', 
-                   'nomor_mirror', 'nomor_miro', 'keterangan', 'dibayar_kepada'];
-        
+        $fields = [
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nama_pengirim',
+            'bagian',
+            'kategori',
+            'jenis_dokumen',
+            'no_berita_acara',
+            'no_spk',
+            'nomor_mirror',
+            'nomor_miro',
+            'keterangan',
+            'dibayar_kepada'
+        ];
+
         foreach ($fields as $field) {
             $values = $baseQuery->whereNotNull($field)
                 ->distinct()
@@ -1021,30 +1047,30 @@ class DokumenController extends Controller
                 ->toArray();
             $allValues = $allValues->merge($values);
         }
-        
+
         // Get from dibayarKepadas relation
-        $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function($q) use ($year) {
+        $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function ($q) use ($year) {
             $q->where('created_by', 'ibuA');
             if ($year) {
                 $q->where('tahun', $year);
             }
         })
-        ->distinct()
-        ->pluck('nama_penerima')
-        ->filter()
-        ->toArray();
-        
+            ->distinct()
+            ->pluck('nama_penerima')
+            ->filter()
+            ->toArray();
+
         $allValues = $allValues->merge($dibayarKepadaValues);
-        
+
         // Remove duplicates and find suggestions
         $uniqueValues = $allValues->unique()->values()->toArray();
         $foundSuggestions = SearchHelper::findSuggestions($searchTerm, $uniqueValues, 60.0, 5);
-        
+
         // Format suggestions
         foreach ($foundSuggestions as $suggestion) {
             $suggestions[] = $suggestion['value'];
         }
-        
+
         return $suggestions;
     }
 }

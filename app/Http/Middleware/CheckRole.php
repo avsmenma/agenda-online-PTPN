@@ -45,16 +45,22 @@ final class CheckRole
         $userRole = strtolower($user->role);
         $requiredRoles = array_map('strtolower', $roles);
 
+        // DEBUG LOGGING
+        Log::info('CheckRole Debug:', [
+            'user_id' => $user->id,
+            'user_role_raw' => $user->role,
+            'user_role_lower' => $userRole,
+            'required_roles_raw' => $roles,
+            'required_roles_lower' => $requiredRoles,
+            'is_empty_roles' => empty($roles),
+            'in_array_check' => in_array($userRole, $requiredRoles, true),
+        ]);
+
         if (empty($roles) || !in_array($userRole, $requiredRoles, true)) {
-            Log::warning('Unauthorized access attempt', [
+            Log::warning('Unauthorized access attempt - FAILED CHECK', [
                 'user_id' => $user->id,
-                'username' => $user->username,
                 'user_role' => $user->role,
-                'user_role_lower' => $userRole,
                 'required_roles' => $roles,
-                'required_roles_lower' => $requiredRoles,
-                'path' => $request->path(),
-                'ip' => $request->ip(),
             ]);
 
             if ($request->expectsJson()) {

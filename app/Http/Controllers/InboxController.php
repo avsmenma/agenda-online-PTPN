@@ -12,6 +12,7 @@ class InboxController extends Controller
 {
     /**
      * Menampilkan daftar dokumen yang menunggu approval di inbox
+     * Updated to use new dokumen_statuses table
      */
     public function index()
     {
@@ -19,61 +20,54 @@ class InboxController extends Controller
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow IbuB, Perpajakan, Akutansi
-            if (!$userRole || !in_array($userRole, ['IbuB', 'Perpajakan', 'Akutansi'])) {
-                abort(403, 'Unauthorized access - Halaman ini hanya untuk IbuB, Perpajakan, dan Akutansi');
+            // Hanya allow IbuB, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            if (!$userRole || !in_array($userRole, $allowedRoles)) {
+                abort(403, 'Unauthorized access - Halaman ini hanya untuk IbuB, Perpajakan, Akutansi, dan Pembayaran');
             }
 
-            // Ambil dokumen yang menunggu approval di inbox untuk role user ini
-            // Debug logging
-            \Log::info('InboxController::index - Fetching documents', [
-                'user_id' => $user->id ?? null,
-                'user_role_raw' => $user->role ?? null,
-                'user_role_mapped' => $userRole,
-                'query_conditions' => [
-                    'inbox_approval_for' => $userRole,
-                    'inbox_approval_status' => 'pending',
-                ],
-            ]);
-            
-            $documents = Dokumen::with('activityLogs')
-                ->where('inbox_approval_for', $userRole)
-                ->where('inbox_approval_status', 'pending')
-                ->latest('inbox_approval_sent_at')
+            // Normalize role code for database query (lowercase)
+            $roleCode = strtolower($userRole);
+
+            // Query documents using new dokumen_statuses table
+            $documents = Dokumen::with(['activityLogs', 'roleStatuses'])
+                ->whereHas('roleStatuses', function ($query) use ($roleCode) {
+                    $query->where('role_code', $roleCode)
+                        ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
+                })
+                ->latest('created_at')
                 ->paginate(10);
-            
-            \Log::info('InboxController::index - Documents found', [
-                'user_role' => $userRole,
-                'documents_count' => $documents->count(),
-                'document_ids' => $documents->pluck('id')->toArray(),
-            ]);
 
-            // Hitung statistik
-            $pendingCount = Dokumen::where('inbox_approval_for', $userRole)
-                ->where('inbox_approval_status', 'pending')
+            // Count statistics using new table
+            $pendingCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
+                ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->count();
 
-            $approvedToday = Dokumen::where('inbox_approval_for', $userRole)
-                ->where('inbox_approval_status', 'approved')
-                ->whereDate('inbox_approval_responded_at', today())
+            $approvedToday = \App\Models\DokumenStatus::where('role_code', $roleCode)
+                ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED)
+                ->whereDate('status_changed_at', today())
                 ->count();
 
-            $totalProcessed = Dokumen::where('inbox_approval_for', $userRole)
-                ->whereIn('inbox_approval_status', ['approved', 'rejected'])
+            $totalProcessed = \App\Models\DokumenStatus::where('role_code', $roleCode)
+                ->whereIn('status', [
+                    \App\Models\DokumenStatus::STATUS_APPROVED,
+                    \App\Models\DokumenStatus::STATUS_REJECTED
+                ])
                 ->count();
 
-            // Normalize module untuk layout (harus lowercase untuk match statement)
+            // Normalize module untuk layout
             $moduleMap = [
                 'IbuB' => 'ibub',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
+                'Pembayaran' => 'pembayaran',
             ];
             $normalizedModule = $moduleMap[$userRole] ?? strtolower($userRole);
 
             // Hitung dokumen baru (masuk dalam 24 jam terakhir)
-            $newDocumentsCount = Dokumen::where('inbox_approval_for', $userRole)
-                ->where('inbox_approval_status', 'pending')
-                ->where('inbox_approval_sent_at', '>=', now()->subHours(24))
+            $newDocumentsCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
+                ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
+                ->where('status_changed_at', '>=', now()->subHours(24))
                 ->count();
 
             $data = [
@@ -108,13 +102,19 @@ class InboxController extends Controller
             $userRole = $this->getUserRole($user);
 
             // Validate user has access to this inbox
-            if ($dokumen->inbox_approval_for !== $userRole) {
-                abort(403, 'Unauthorized access');
-            }
+            // Note: This check logic is a bit complex due to unified model methods
+            // We check if there is a pending status for this role
+            if (!$dokumen->isPendingForRole(strtolower($userRole))) {
+                // Double check: maybe it WAS pending for this user but handled?
+                // If so, redirect to index with message
+                $status = $dokumen->getStatusForRole(strtolower($userRole));
+                if ($status && $status->status !== 'pending') {
+                    return redirect()->route('inbox.index')
+                        ->with('error', 'Dokumen ini sudah diproses');
+                }
 
-            if ($dokumen->inbox_approval_status !== 'pending') {
-                return redirect()->route('inbox.index')
-                    ->with('error', 'Dokumen ini sudah diproses');
+                // If not pending and not handled by this user ever (or cleared), then unauthorized
+                abort(403, 'Unauthorized access');
             }
 
             // Normalize module untuk layout (harus lowercase untuk match statement)
@@ -122,12 +122,13 @@ class InboxController extends Controller
                 'IbuB' => 'ibub',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
+                'Pembayaran' => 'pembayaran',
             ];
             $normalizedModule = $moduleMap[$userRole] ?? strtolower($userRole);
 
             // Load activity logs untuk getSenderDisplayName
             $dokumen->load('activityLogs');
-            
+
             $data = [
                 "title" => "Detail Dokumen - Inbox",
                 "module" => $normalizedModule,
@@ -148,22 +149,25 @@ class InboxController extends Controller
 
     /**
      * Approve dokumen dari inbox
+     * Updated to use new dokumen_statuses table
      */
     public function approve(Request $request, Dokumen $dokumen)
     {
         try {
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
+            $roleCode = strtolower($userRole);
 
-            // Validate user has access
-            if ($dokumen->inbox_approval_for !== $userRole || $dokumen->inbox_approval_status !== 'pending') {
+            // Validate user has access using new status table
+            if (!$dokumen->isPendingForRole($roleCode)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access atau dokumen sudah diproses'
                 ], 403);
             }
 
-            $dokumen->approveInbox();
+            // Use new approval method
+            $dokumen->approveFromRoleInbox($roleCode);
 
             return redirect()->route('inbox.index')
                 ->with('success', 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.');
@@ -176,6 +180,7 @@ class InboxController extends Controller
 
     /**
      * Reject dokumen dari inbox
+     * Updated to use new dokumen_statuses table
      */
     public function reject(Request $request, Dokumen $dokumen)
     {
@@ -189,16 +194,18 @@ class InboxController extends Controller
         try {
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
+            $roleCode = strtolower($userRole);
 
-            // Validate user has access
-            if ($dokumen->inbox_approval_for !== $userRole || $dokumen->inbox_approval_status !== 'pending') {
+            // Validate user has access using new status table
+            if (!$dokumen->isPendingForRole($roleCode)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access atau dokumen sudah diproses'
                 ], 403);
             }
 
-            $dokumen->rejectInbox($request->reason);
+            // Use new rejection method
+            $dokumen->rejectFromRoleInbox($roleCode, $request->reason);
 
             return redirect()->route('inbox.index')
                 ->with('success', 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason);
@@ -234,15 +241,17 @@ class InboxController extends Controller
                 'Perpajakan' => 'Perpajakan',
                 'akutansi' => 'Akutansi',
                 'Akutansi' => 'Akutansi',
+                'pembayaran' => 'Pembayaran',
+                'Pembayaran' => 'Pembayaran',
             ];
             $mappedRole = $roleMap[$role] ?? $role;
-            
+
             \Log::info('getUserRole: Mapped from role field', [
                 'user_id' => $user->id,
                 'original_role' => $role,
                 'mapped_role' => $mappedRole,
             ]);
-            
+
             return $mappedRole;
         }
 
@@ -264,23 +273,23 @@ class InboxController extends Controller
                 'perpajakan' => 'Perpajakan',
                 'Akutansi' => 'Akutansi',
                 'akutansi' => 'Akutansi',
-                'Pembayaran' => 'pembayaran'
+                'Pembayaran' => 'Pembayaran'
             ];
             $mappedRole = $nameToRole[$name] ?? null;
-            
+
             \Log::info('getUserRole: Mapped from name field', [
                 'user_id' => $user->id,
                 'user_name' => $name,
                 'mapped_role' => $mappedRole,
             ]);
-            
+
             return $mappedRole;
         }
 
         \Log::warning('getUserRole: No role or name field found', [
             'user_id' => $user->id ?? null,
         ]);
-        
+
         return null;
     }
 
@@ -301,7 +310,7 @@ class InboxController extends Controller
                 'allowed_roles' => ['IbuB', 'Perpajakan', 'Akutansi']
             ]);
 
-            if (!$userRole || !in_array($userRole, ['IbuB', 'Perpajakan', 'Akutansi'])) {
+            if (!$userRole || !in_array($userRole, ['IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
                 Log::warning('Unauthorized access to checkNewDocuments', [
                     'user_role' => $userRole,
                     'user_role_raw' => $user->role ?? null
@@ -317,16 +326,26 @@ class InboxController extends Controller
             $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : now()->subHours(24);
 
             // Cari dokumen baru yang masuk setelah last check
-            $newDocuments = Dokumen::where('inbox_approval_for', $userRole)
-                ->where('inbox_approval_status', 'pending')
-                ->where('inbox_approval_sent_at', '>', $checkFrom)
-                ->orderBy('inbox_approval_sent_at', 'desc')
-                ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_sent_at'])
-                ->get();
+            // Use DokumenStatus to find new pending documents
+            $newDocuments = Dokumen::whereHas('roleStatuses', function ($query) use ($userRole, $checkFrom) {
+                $query->where('role_code', strtolower($userRole))
+                    ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
+                    ->where('status_changed_at', '>', $checkFrom);
+            })
+                ->with(['activityLogs', 'roleStatuses']) // Eager load for access
+                ->get()
+                ->map(function ($doc) use ($userRole) {
+                    // Get the status record for date info
+                    $status = $doc->getStatusForRole($userRole);
+                    $doc->inbox_approval_sent_at = $status->status_changed_at;
+                    return $doc;
+                })
+                ->sortByDesc('inbox_approval_sent_at')
+                ->values();
 
             // Hitung total pending
-            $pendingCount = Dokumen::where('inbox_approval_for', $userRole)
-                ->where('inbox_approval_status', 'pending')
+            $pendingCount = \App\Models\DokumenStatus::where('role_code', strtolower($userRole))
+                ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->count();
 
             Log::info('checkNewDocuments result', [
@@ -340,7 +359,7 @@ class InboxController extends Controller
                 'success' => true,
                 'new_documents_count' => $newDocuments->count(),
                 'pending_count' => $pendingCount,
-                'new_documents' => $newDocuments->map(function($doc) {
+                'new_documents' => $newDocuments->map(function ($doc) {
                     return [
                         'id' => $doc->id,
                         'nomor_agenda' => $doc->nomor_agenda,

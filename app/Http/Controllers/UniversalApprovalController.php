@@ -24,13 +24,21 @@ class UniversalApprovalController extends Controller
             }
 
             // Ambil dokumen yang menunggu approval untuk role user ini
-            $waitingDocuments = Dokumen::where('universal_approval_for', $userRole)
-                ->where('status', 'menunggu_approved_pengiriman')
-                ->orderBy('universal_approval_sent_at', 'desc')
-                ->get();
+            // Menggunakan inbox_approval_for dan inbox_approval_status
+            // Refactored to use DokumenStatus
+            $waitingDocuments = Dokumen::whereHas('roleStatuses', function ($q) use ($userRole) {
+                $q->where('role_code', strtolower($userRole))
+                    ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
+            })
+                ->with(['activityLogs', 'roleStatuses'])
+                ->get()
+                ->sortByDesc(function ($doc) use ($userRole) {
+                    return $doc->getStatusForRole($userRole)->status_changed_at ?? $doc->created_at;
+                })
+                ->values();
 
             $data = array(
-                "title" => "Daftar Masuk Dokumen",
+                "title" => "Inbox",
                 "module" => $userRole,
                 "menuDokumen" => "",
                 "menuDaftarDokumen" => "",
@@ -64,20 +72,19 @@ class UniversalApprovalController extends Controller
 
             DB::beginTransaction();
 
-            // Update dokumen status - langsung masuk ke daftar dokumen
-            $dokumen->update([
-                'status' => 'sedang_diproses', // Status untuk dokumen yang sudah masuk ke daftar
-                'universal_approval_for' => $userRole, // Universal approval untuk user role ini
-                'current_handler' => $userRole, // Pindah ke handler yang approve
-                'updated_at' => now(), // Update timestamp untuk tracking
-            ]);
+            // Prepare update data
+            // $updateData removed as we delegate to approveFromRoleInbox
+
+            // Set status based on user role
+            // Use new approval method
+            $dokumen->approveFromRoleInbox($userRole);
 
             // Log activity
-            Log::info("Document approved and added to daftar dokumen", [
+            Log::info("Document approved via inbox and added to daftar dokumen (Legacy UniversalApprovalController)", [
                 'document_id' => $dokumen->id,
                 'approved_by' => $userRole,
                 'nomor_agenda' => $dokumen->nomor_agenda,
-                'module' => $userRole
+                'module' => $userRole,
             ]);
 
             DB::commit();
@@ -125,17 +132,17 @@ class UniversalApprovalController extends Controller
 
             DB::beginTransaction();
 
-            // Update dokumen status
+            // Update dokumen status - kembali ke pengirim dengan status rejected
             $dokumen->update([
-                'status' => 'rejected_data_tidak_lengkap',
-                'universal_approval_responded_at' => now(),
-                'universal_approval_responded_by' => $userRole,
-                'universal_approval_rejection_reason' => $request->rejection_reason,
+                'inbox_approval_status' => 'rejected',
+                'inbox_approval_responded_at' => now(),
+                'inbox_approval_reason' => $request->rejection_reason,
+                'status' => $dokumen->inbox_original_status ?? 'draft', // Ke balance ke status original
                 'current_handler' => $dokumen->created_by, // Kembali ke pengirim
             ]);
 
             // Log activity
-            Log::info("Document rejected", [
+            Log::info("Document rejected via inbox", [
                 'document_id' => $dokumen->id,
                 'rejected_by' => $userRole,
                 'rejection_reason' => $request->rejection_reason,
@@ -185,7 +192,7 @@ class UniversalApprovalController extends Controller
                     'uraian_spp' => $dokumen->uraian_spp,
                     'nilai_rupiah' => $dokumen->formatted_nilai_rupiah,
                     'pengirim' => $dokumen->getSenderDisplayName(),
-                    'dikirim_pada' => $dokumen->universal_approval_sent_at ? $dokumen->universal_approval_sent_at->format('d M Y H:i') : '-',
+                    'dikirim_pada' => $dokumen->inbox_approval_sent_at ? $dokumen->inbox_approval_sent_at->format('d M Y H:i') : '-',
                     'bagian' => $dokumen->bagian,
                     'kategori' => $dokumen->kategori,
                     'jenis_dokumen' => $dokumen->jenis_dokumen,

@@ -1942,17 +1942,18 @@
                   <i class="fa-solid fa-file-lines me-1"></i>
                   <span>Belum Dikirim</span>
                 </span>
+              @elseif($statusLabel == 'Terkirim' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved'))
+                {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
+                {{-- Pengecekan ini dilakukan lebih awal untuk memastikan dokumen yang sudah di-approve selalu tampil sebagai Terkirim --}}
+                <span class="badge-status badge-terkirim">
+                  <i class="fa-solid fa-check me-1"></i>
+                  <span>Terkirim</span>
+                </span>
               @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'pending'))
                 {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
                 <span class="badge-status" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                   <i class="fa-solid fa-clock me-1"></i>
                   <span>Menunggu Approval</span>
-                </span>
-              @elseif($statusLabel == 'Terkirim' || ($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved'))
-                {{-- Dokumen sudah di-approve oleh Ibu Yuni --}}
-                <span class="badge-status badge-terkirim">
-                  <i class="fa-solid fa-check me-1"></i>
-                  <span>Terkirim</span>
                 </span>
               @elseif($statusLabel == 'Sedang Proses' || $statusLabel == 'Sedang Proses (Reviewer/Tax)' || $statusLabel == 'Sedang Proses (Reviewer/Accounting)')
                 {{-- Dokumen sedang diproses di tahap selanjutnya --}}

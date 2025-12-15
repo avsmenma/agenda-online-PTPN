@@ -18,53 +18,53 @@ class OwnerDashboardController extends Controller
     {
         // Get paginated documents with latest status and apply search filter
         $perPage = $request->get('per_page', 10);
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int)$perPage : 10;
-        
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+
         $documents = $this->getDocumentsWithTracking($request, $perPage);
 
         // Calculate dashboard statistics
         $totalDokumen = Dokumen::count();
-        
+
         // Dokumen Selesai: status completed atau status_pembayaran = sudah_dibayar
-        $dokumenSelesai = Dokumen::where(function($q) {
+        $dokumenSelesai = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-              ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar');
         })->count();
-        
+
         // Dokumen Proses: dokumen yang belum selesai (tidak termasuk status selesai)
-        $dokumenProses = Dokumen::where(function($q) {
+        $dokumenProses = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-              ->where(function($subQ) {
-                  $subQ->whereNull('status_pembayaran')
-                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-              });
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                });
         })->count();
-        
+
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
         // Calculate trend indicators (compare with last week)
         $oneWeekAgo = Carbon::now()->subWeek();
-        
+
         $totalDokumenLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->count();
-        $totalDokumenTrend = $totalDokumenLastWeek > 0 
+        $totalDokumenTrend = $totalDokumenLastWeek > 0
             ? round((($totalDokumen - $totalDokumenLastWeek) / $totalDokumenLastWeek) * 100, 1)
             : 0;
 
-        $dokumenSelesaiLastWeek = Dokumen::where(function($q) {
+        $dokumenSelesaiLastWeek = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-              ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar');
         })->where('updated_at', '<=', $oneWeekAgo)->count();
         $dokumenSelesaiTrend = $dokumenSelesaiLastWeek > 0
             ? round((($dokumenSelesai - $dokumenSelesaiLastWeek) / $dokumenSelesaiLastWeek) * 100, 1)
             : ($dokumenSelesai > 0 ? 100 : 0);
 
-        $dokumenProsesLastWeek = Dokumen::where(function($q) {
+        $dokumenProsesLastWeek = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-              ->where(function($subQ) {
-                  $subQ->whereNull('status_pembayaran')
-                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-              });
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                });
         })->where('created_at', '<=', $oneWeekAgo)->count();
         $dokumenProsesTrend = $dokumenProsesLastWeek > 0
             ? round((($dokumenProses - $dokumenProsesLastWeek) / $dokumenProsesLastWeek) * 100, 1)
@@ -76,10 +76,10 @@ class OwnerDashboardController extends Controller
             : ($totalNilai > 0 ? 100 : 0);
 
         return view('owner.dashboard', compact(
-            'documents', 
-            'totalDokumen', 
-            'dokumenProses', 
-            'dokumenSelesai', 
+            'documents',
+            'totalDokumen',
+            'dokumenProses',
+            'dokumenSelesai',
             'totalNilai',
             'totalDokumenTrend',
             'dokumenSelesaiTrend',
@@ -110,7 +110,7 @@ class OwnerDashboardController extends Controller
      */
     public function getDocumentTimeline($id): JsonResponse
     {
-        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
             ->findOrFail($id);
 
         $timeline = $this->generateDocumentTimeline($dokumen);
@@ -137,66 +137,66 @@ class OwnerDashboardController extends Controller
      */
     private function getDocumentsWithTracking(Request $request = null, $perPage = 10)
     {
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData']);
 
         // Apply status filter if provided
         if ($request && $request->has('status') && !empty($request->status)) {
             $status = $request->status;
             if ($status === 'proses') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                      ->where(function($subQ) {
-                          $subQ->whereNull('status_pembayaran')
-                               ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                      });
+                        ->where(function ($subQ) {
+                            $subQ->whereNull('status_pembayaran')
+                                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                        });
                 });
             } elseif ($status === 'selesai') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                      ->orWhere('status_pembayaran', 'sudah_dibayar');
+                        ->orWhere('status_pembayaran', 'sudah_dibayar');
                 });
             }
         }
 
         // Apply search filter if provided
-        if ($request && $request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
-            $search = trim((string)$request->search);
-            $query->where(function($q) use ($search) {
+        if ($request && $request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
                 // Text fields
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
-                  ->orWhere('bagian', 'like', '%' . $search . '%')
-                  ->orWhere('kategori', 'like', '%' . $search . '%')
-                  ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
-                  ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
-                  ->orWhere('no_spk', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%')
-                  ->orWhere('dibayar_kepada', 'like', '%' . $search . '%')
-                  ->orWhere('npwp', 'like', '%' . $search . '%')
-                  ->orWhere('no_faktur', 'like', '%' . $search . '%')
-                  ->orWhere('jenis_pph', 'like', '%' . $search . '%')
-                  ->orWhere('status', 'like', '%' . $search . '%')
-                  ->orWhere('current_handler', 'like', '%' . $search . '%');
-                
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                    ->orWhere('bagian', 'like', '%' . $search . '%')
+                    ->orWhere('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                    ->orWhere('no_spk', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%')
+                    ->orWhere('npwp', 'like', '%' . $search . '%')
+                    ->orWhere('no_faktur', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_pph', 'like', '%' . $search . '%')
+                    ->orWhere('status', 'like', '%' . $search . '%')
+                    ->orWhere('current_handler', 'like', '%' . $search . '%');
+
                 // Search in nilai_rupiah - handle various formats
                 $numericSearch = preg_replace('/[^0-9]/', '', $search);
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
             })
-            ->orWhereHas('dibayarKepadas', function($q) use ($search) {
-                $q->where('nama_penerima', 'like', '%' . $search . '%');
-            })
-            ->orWhereHas('dokumenPos', function($q) use ($search) {
-                $q->where('nomor_po', 'like', '%' . $search . '%');
-            })
-            ->orWhereHas('dokumenPrs', function($q) use ($search) {
-                $q->where('nomor_pr', 'like', '%' . $search . '%');
-            });
+                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
+                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('dokumenPos', function ($q) use ($search) {
+                    $q->where('nomor_po', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('dokumenPrs', function ($q) use ($search) {
+                    $q->where('nomor_pr', 'like', '%' . $search . '%');
+                });
         }
 
         // Paginate the query
@@ -256,13 +256,15 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 2: Dikirim ke Ibu Yuni
-        if ($dokumen->sent_to_ibub_at) {
-            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->sent_to_ibub_at) : null;
+        $ibubData = $dokumen->getDataForRole('ibub');
+        if ($ibubData && $ibubData->received_at) {
+            $receivedAt = $ibubData->received_at;
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_ibub',
                 'icon' => '🚀',
                 'title' => 'Dikirim ke Ibu Yuni',
-                'timestamp' => $dokumen->sent_to_ibub_at->format('d M Y H:i'),
+                'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
                 'info' => [
                     'Pengirim' => 'Ibu Tarapul',
@@ -270,7 +272,7 @@ class OwnerDashboardController extends Controller
                     'Durasi dari dibuat' => $duration,
                 ]
             ];
-            $previousTime = $dokumen->sent_to_ibub_at;
+            $previousTime = $receivedAt;
         }
 
         // Event 3: Deadline Ditetapkan
@@ -307,13 +309,15 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 5: Dikirim ke Perpajakan
-        if ($dokumen->sent_to_perpajakan_at) {
-            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->sent_to_perpajakan_at) : null;
+        $perpajakanData = $dokumen->getDataForRole('perpajakan');
+        if ($perpajakanData && $perpajakanData->received_at) {
+            $receivedAt = $perpajakanData->received_at;
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_perpajakan',
                 'icon' => '🚀',
                 'title' => 'Dikirim ke Team Perpajakan',
-                'timestamp' => $dokumen->sent_to_perpajakan_at->format('d M Y H:i'),
+                'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
                 'info' => [
                     'Pengirim' => $this->getRoleDisplayName($dokumen->current_handler),
@@ -321,7 +325,7 @@ class OwnerDashboardController extends Controller
                     'Durasi dari step sebelumnya' => $duration,
                 ]
             ];
-            $previousTime = $dokumen->sent_to_perpajakan_at;
+            $previousTime = $receivedAt;
         }
 
         // Event 6: Diproses Perpajakan
@@ -343,13 +347,15 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 7: Dikirim ke Akutansi
-        if ($dokumen->sent_to_akutansi_at) {
-            $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->sent_to_akutansi_at) : null;
+        $akutansiData = $dokumen->getDataForRole('akutansi');
+        if ($akutansiData && $akutansiData->received_at) {
+            $receivedAt = $akutansiData->received_at;
+            $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_akutansi',
                 'icon' => '🚀',
                 'title' => 'Dikirim ke Team Akutansi',
-                'timestamp' => $dokumen->sent_to_akutansi_at->format('d M Y H:i'),
+                'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
                 'info' => [
                     'Pengirim' => 'Team Perpajakan',
@@ -357,7 +363,7 @@ class OwnerDashboardController extends Controller
                     'Durasi dari step sebelumnya' => $duration,
                 ]
             ];
-            $previousTime = $dokumen->sent_to_akutansi_at;
+            $previousTime = $receivedAt;
         }
 
         // Event 8: Dikembalikan
@@ -449,7 +455,7 @@ class OwnerDashboardController extends Controller
         // Calculate progress based on current_handler and status
         $handler = $dokumen->current_handler ?? 'ibuA';
         $status = $dokumen->status ?? 'draft';
-        
+
         // Get status_pembayaran from model or database
         $statusPembayaran = null;
         if (isset($dokumen->status_pembayaran)) {
@@ -535,11 +541,14 @@ class OwnerDashboardController extends Controller
      */
     private function getProgressColor($status)
     {
-        $progress = $this->calculateProgress((object)['status' => $status]);
+        $progress = $this->calculateProgress((object) ['status' => $status]);
 
-        if ($progress <= 30) return '#dc3545'; // Red
-        if ($progress <= 60) return '#ffc107'; // Yellow
-        if ($progress <= 90) return '#083E40'; // Green (theme)
+        if ($progress <= 30)
+            return '#dc3545'; // Red
+        if ($progress <= 60)
+            return '#ffc107'; // Yellow
+        if ($progress <= 90)
+            return '#083E40'; // Green (theme)
         return '#889717'; // Green (theme)
     }
 
@@ -548,10 +557,11 @@ class OwnerDashboardController extends Controller
      */
     private function isDocumentOverdue($dokumen)
     {
-        if (!$dokumen->deadline_at) return false;
+        if (!$dokumen->deadline_at)
+            return false;
 
         return Carbon::now()->greaterThan($dokumen->deadline_at) &&
-               !in_array($dokumen->status, ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap']);
+            !in_array($dokumen->status, ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap']);
     }
 
     /**
@@ -559,7 +569,8 @@ class OwnerDashboardController extends Controller
      */
     private function getDeadlineInfo($dokumen)
     {
-        if (!$dokumen->deadline_at) return null;
+        if (!$dokumen->deadline_at)
+            return null;
 
         $now = Carbon::now();
         $deadline = Carbon::parse($dokumen->deadline_at);
@@ -593,11 +604,16 @@ class OwnerDashboardController extends Controller
         $diff = $from->diff($to);
 
         $parts = [];
-        if ($diff->y > 0) $parts[] = $diff->y . ' tahun';
-        if ($diff->m > 0) $parts[] = $diff->m . ' bulan';
-        if ($diff->d > 0) $parts[] = $diff->d . ' hari';
-        if ($diff->h > 0) $parts[] = $diff->h . ' jam';
-        if ($diff->i > 0) $parts[] = $diff->i . ' menit';
+        if ($diff->y > 0)
+            $parts[] = $diff->y . ' tahun';
+        if ($diff->m > 0)
+            $parts[] = $diff->m . ' bulan';
+        if ($diff->d > 0)
+            $parts[] = $diff->d . ' hari';
+        if ($diff->h > 0)
+            $parts[] = $diff->h . ' jam';
+        if ($diff->i > 0)
+            $parts[] = $diff->i . ' menit';
 
         return empty($parts) ? 'kurang dari 1 menit' : implode(' ', $parts);
     }
@@ -623,9 +639,12 @@ class OwnerDashboardController extends Controller
      */
     private function getReturnDestination($dokumen)
     {
-        if ($dokumen->returned_to_ibua_at) return 'Ibu Tarapul';
-        if ($dokumen->department_returned_at) return 'Ibu Tarapul (Department)';
-        if ($dokumen->bidang_returned_at) return 'Ibu Yuni';
+        if ($dokumen->returned_to_ibua_at)
+            return 'Ibu Tarapul';
+        if ($dokumen->department_returned_at)
+            return 'Ibu Tarapul (Department)';
+        if ($dokumen->bidang_returned_at)
+            return 'Ibu Yuni';
         return 'Tidak Diketahui';
     }
 
@@ -673,7 +692,7 @@ class OwnerDashboardController extends Controller
             return '0 hari';
         }
 
-        $totalHours = $completedDocs->sum(function($doc) {
+        $totalHours = $completedDocs->sum(function ($doc) {
             return $doc->created_at->diffInHours($doc->updated_at);
         });
 
@@ -731,7 +750,7 @@ class OwnerDashboardController extends Controller
             return 999; // High number for departments with no completed docs
         }
 
-        $totalHours = $completedDocs->sum(function($doc) {
+        $totalHours = $completedDocs->sum(function ($doc) {
             return $doc->created_at->diffInHours($doc->updated_at);
         });
 
@@ -743,11 +762,11 @@ class OwnerDashboardController extends Controller
      */
     public function showWorkflow($id)
     {
-        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
             ->findOrFail($id);
 
         $workflowStages = $this->generateWorkflowStages($dokumen);
-        
+
         // Load activity logs for each stage
         try {
             $dokumen->load('activityLogs');
@@ -762,11 +781,13 @@ class OwnerDashboardController extends Controller
         $userRole = strtolower($user->role ?? $user->name ?? 'owner');
         $module = 'owner';
         $dashboardUrl = '/owner/dashboard';
-        
+
         // If user is Pembayaran accessing workflow, set module to pembayaran for proper layout
-        if (strtolower($userRole) === 'pembayaran' || 
+        if (
+            strtolower($userRole) === 'pembayaran' ||
             (isset($user->name) && strtolower($user->name) === 'pembayaran') ||
-            (isset($user->role) && strtolower($user->role) === 'pembayaran')) {
+            (isset($user->role) && strtolower($user->role) === 'pembayaran')
+        ) {
             $module = 'pembayaran';
             $dashboardUrl = '/dashboardPembayaran';
         }
@@ -818,11 +839,11 @@ class OwnerDashboardController extends Controller
         $reviewerReturnInfo = $this->getReturnInfoForStage($dokumen, 'reviewer', $returnEvents);
         $reviewerCycleInfo = $this->getCycleInfo($dokumen, 'reviewer');
 
-        if ($dokumen->sent_to_ibub_at) {
+        if ($dokumen->getDataForRole('ibub')?->received_at) {
             $reviewerStatus = 'completed';
-            $reviewerTimestamp = $dokumen->sent_to_ibub_at;
+            $reviewerTimestamp = $dokumen->getDataForRole('ibub')->received_at;
             $reviewerDescription = 'Dikirim ke Ibu Yuni';
-            
+
             // Check if this is a re-send after return
             if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
                 $reviewerDescription = 'Dikirim kembali ke Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
@@ -833,7 +854,7 @@ class OwnerDashboardController extends Controller
             $reviewerStatus = 'completed';
             $reviewerTimestamp = $dokumen->processed_at;
             $reviewerDescription = 'Diproses Ibu Yuni';
-            
+
             // Check if processed after return
             if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
                 $reviewerDescription = 'Diproses Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
@@ -844,7 +865,7 @@ class OwnerDashboardController extends Controller
         if ($reviewerReturnInfo && !$reviewerCycleInfo['isResend']) {
             $reviewerStatus = 'returned';
             if (!$reviewerTimestamp) {
-                $reviewerTimestamp = $dokumen->sent_to_ibub_at ?? $dokumen->created_at;
+                $reviewerTimestamp = $dokumen->getDataForRole('ibub')?->received_at ?? $dokumen->created_at;
             }
         }
 
@@ -858,7 +879,7 @@ class OwnerDashboardController extends Controller
             'color' => $reviewerStatus === 'completed' ? '#10b981' : ($reviewerStatus === 'processing' ? '#3b82f6' : ($reviewerStatus === 'returned' ? '#ef4444' : '#9ca3af')),
             'description' => $reviewerDescription,
             'details' => $reviewerTimestamp ? [
-                'Dikirim pada' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d M Y H:i') : '-',
+                'Dikirim pada' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d M Y H:i') : '-',
                 'Diproses pada' => $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-',
             ] : [],
             'hasReturn' => $reviewerReturnInfo !== null,
@@ -874,11 +895,11 @@ class OwnerDashboardController extends Controller
         $taxReturnInfo = $this->getReturnInfoForStage($dokumen, 'tax', $returnEvents);
         $taxCycleInfo = $this->getCycleInfo($dokumen, 'tax');
 
-        if ($dokumen->sent_to_perpajakan_at) {
+        if ($dokumen->getDataForRole('perpajakan')?->received_at) {
             $taxStatus = 'processing';
-            $taxTimestamp = $dokumen->sent_to_perpajakan_at;
+            $taxTimestamp = $dokumen->getDataForRole('perpajakan')->received_at;
             $taxDescription = 'Dikirim ke Team Perpajakan';
-            
+
             // Check if this is a re-send after return
             if ($taxCycleInfo && $taxCycleInfo['isResend']) {
                 $taxDescription = 'Dikirim kembali ke Team Perpajakan (Attempt ' . $taxCycleInfo['attemptCount'] . ')';
@@ -889,7 +910,7 @@ class OwnerDashboardController extends Controller
             $taxStatus = 'completed';
             $taxTimestamp = $dokumen->processed_perpajakan_at;
             $taxDescription = 'Diproses Team Perpajakan';
-            
+
             // Check if completed after return
             if ($taxCycleInfo && $taxCycleInfo['isResend']) {
                 $taxDescription = 'Diproses Team Perpajakan (Attempt ' . $taxCycleInfo['attemptCount'] . ')';
@@ -899,12 +920,15 @@ class OwnerDashboardController extends Controller
         // Check if returned from this stage (only if not re-sent)
         if ($taxReturnInfo && !$taxCycleInfo['isResend']) {
             // Only show as returned if not yet re-sent
-            if (!$dokumen->sent_to_perpajakan_at || 
-                ($dokumen->returned_from_perpajakan_at && 
-                 $dokumen->sent_to_perpajakan_at->lte($dokumen->returned_from_perpajakan_at))) {
+            $perpajakanReceivedAt = $dokumen->getDataForRole('perpajakan')?->received_at;
+            if (
+                !$perpajakanReceivedAt ||
+                ($dokumen->returned_from_perpajakan_at &&
+                    $perpajakanReceivedAt->lte($dokumen->returned_from_perpajakan_at))
+            ) {
                 $taxStatus = 'returned';
                 if (!$taxTimestamp) {
-                    $taxTimestamp = $dokumen->sent_to_perpajakan_at ?? $dokumen->processed_at;
+                    $taxTimestamp = $perpajakanReceivedAt ?? $dokumen->processed_at;
                 }
             }
         }
@@ -919,7 +943,7 @@ class OwnerDashboardController extends Controller
             'color' => $taxStatus === 'completed' ? '#10b981' : ($taxStatus === 'processing' ? '#3b82f6' : ($taxStatus === 'returned' ? '#ef4444' : '#9ca3af')),
             'description' => $taxDescription,
             'details' => $taxTimestamp ? [
-                'Dikirim pada' => $dokumen->sent_to_perpajakan_at ? $dokumen->sent_to_perpajakan_at->format('d M Y H:i') : '-',
+                'Dikirim pada' => $dokumen->getDataForRole('perpajakan')?->received_at ? $dokumen->getDataForRole('perpajakan')->received_at->format('d M Y H:i') : '-',
                 'Diproses pada' => $dokumen->processed_perpajakan_at ? $dokumen->processed_perpajakan_at->format('d M Y H:i') : '-',
                 'Status' => $dokumen->status_perpajakan ?? '-',
             ] : [],
@@ -945,9 +969,9 @@ class OwnerDashboardController extends Controller
         // Try to get sent_to_akutansi_at from database (might not exist in model fillable)
         $sentToAkutansiAt = null;
         try {
-            $sentToAkutansiAt = $dokumen->getAttribute('sent_to_akutansi_at') ?? 
-                               (\DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_akutansi_at') ? 
-                                \Carbon\Carbon::parse(\DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_akutansi_at')) : null);
+            $sentToAkutansiAt = $dokumen->getAttribute('sent_to_akutansi_at') ??
+                (\DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_akutansi_at') ?
+                    \Carbon\Carbon::parse(\DB::table('dokumens')->where('id', $dokumen->id)->value('sent_to_akutansi_at')) : null);
             if ($sentToAkutansiAt) {
                 $accountingStatus = 'processing';
                 $accountingTimestamp = $sentToAkutansiAt;
@@ -992,7 +1016,7 @@ class OwnerDashboardController extends Controller
         $paymentStatus = 'pending';
         $paymentTimestamp = null;
         $paymentDescription = 'Menunggu';
-        
+
         // Get sent_to_pembayaran_at from model or database
         $sentToPembayaranAt = null;
         if (isset($dokumen->sent_to_pembayaran_at)) {
@@ -1055,8 +1079,8 @@ class OwnerDashboardController extends Controller
 
         // Calculate durations between stages
         for ($i = 0; $i < count($stages); $i++) {
-            if ($i > 0 && $stages[$i]['timestamp'] && $stages[$i-1]['timestamp']) {
-                $stages[$i]['duration'] = $this->calculateDuration($stages[$i-1]['timestamp'], $stages[$i]['timestamp']);
+            if ($i > 0 && $stages[$i]['timestamp'] && $stages[$i - 1]['timestamp']) {
+                $stages[$i]['duration'] = $this->calculateDuration($stages[$i - 1]['timestamp'], $stages[$i]['timestamp']);
             }
         }
 
@@ -1153,10 +1177,13 @@ class OwnerDashboardController extends Controller
                 $attemptCount = 1;
 
                 // Check if sent back after return
-                if ($dokumen->sent_to_perpajakan_at && 
-                    $dokumen->sent_to_perpajakan_at->gt($dokumen->returned_from_perpajakan_at)) {
+                $perpajakanReceivedAt = $dokumen->getDataForRole('perpajakan')?->received_at;
+                if (
+                    $perpajakanReceivedAt &&
+                    $perpajakanReceivedAt->gt($dokumen->returned_from_perpajakan_at)
+                ) {
                     $isResend = true;
-                    $resendTimestamp = $dokumen->sent_to_perpajakan_at;
+                    $resendTimestamp = $perpajakanReceivedAt;
                     $attemptCount = 2;
 
                     // Check if there's a fixed_at timestamp (indicates re-send after fix)
@@ -1173,8 +1200,10 @@ class OwnerDashboardController extends Controller
                 $attemptCount = 1;
 
                 // Check if processed again after return from bidang
-                if ($dokumen->processed_at && 
-                    $dokumen->processed_at->gt($dokumen->bidang_returned_at)) {
+                if (
+                    $dokumen->processed_at &&
+                    $dokumen->processed_at->gt($dokumen->bidang_returned_at)
+                ) {
                     $isResend = true;
                     $resendTimestamp = $dokumen->processed_at;
                     $attemptCount = 2;
@@ -1189,11 +1218,14 @@ class OwnerDashboardController extends Controller
                 }
 
                 // Check if sent to Ibu B again after return
-                if ($dokumen->sent_to_ibub_at && 
-                    $dokumen->sent_to_ibub_at->gt($dokumen->returned_to_ibua_at)) {
+                $ibubReceivedAt = $dokumen->getDataForRole('ibub')?->received_at;
+                if (
+                    $ibubReceivedAt &&
+                    $ibubReceivedAt->gt($dokumen->returned_to_ibua_at)
+                ) {
                     $isResend = true;
-                    if (!$resendTimestamp || $dokumen->sent_to_ibub_at->gt($resendTimestamp)) {
-                        $resendTimestamp = $dokumen->sent_to_ibub_at;
+                    if (!$resendTimestamp || $ibubReceivedAt->gt($resendTimestamp)) {
+                        $resendTimestamp = $ibubReceivedAt;
                     }
                     $attemptCount = max($attemptCount, 2);
                 }
@@ -1224,13 +1256,13 @@ class OwnerDashboardController extends Controller
 
         // Search functionality
         if ($request->has('search') && $request->search) {
-            $search = trim((string)$request->search);
+            $search = trim((string) $request->search);
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                        ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                        ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
                 });
             }
         }
@@ -1244,18 +1276,18 @@ class OwnerDashboardController extends Controller
         $completionFilter = $request->get('completion_status', '');
         if ($completionFilter === 'selesai') {
             // Dokumen selesai: status completed atau status_pembayaran = sudah_dibayar
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
         } elseif ($completionFilter === 'belum_selesai') {
             // Dokumen belum selesai: tidak termasuk status selesai
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->where(function($subQ) {
-                      $subQ->whereNull('status_pembayaran')
-                           ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                  });
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    });
             });
         }
 
@@ -1287,46 +1319,46 @@ class OwnerDashboardController extends Controller
         $bagianCounts = [];
         foreach ($bagianList as $code => $name) {
             $countQuery = Dokumen::where('bagian', $code);
-            
+
             // Apply same filters as main query (year filter)
             if ($request->has('year') && $request->year) {
                 $countQuery->where('tahun', $request->year);
             }
-            
+
             // Apply search filter if exists
             if ($request->has('search') && $request->search) {
-                $search = trim((string)$request->search);
+                $search = trim((string) $request->search);
                 if (!empty($search)) {
-                    $countQuery->where(function($q) use ($search) {
+                    $countQuery->where(function ($q) use ($search) {
                         $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                          ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                          ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                          ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                            ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                            ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                            ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
                     });
                 }
             }
-            
+
             // Apply completion status filter if exists
             if ($completionFilter === 'selesai') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                      ->orWhere('status_pembayaran', 'sudah_dibayar');
+                        ->orWhere('status_pembayaran', 'sudah_dibayar');
                 });
             } elseif ($completionFilter === 'belum_selesai') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                      ->where(function($subQ) {
-                          $subQ->whereNull('status_pembayaran')
-                               ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                      });
+                        ->where(function ($subQ) {
+                            $subQ->whereNull('status_pembayaran')
+                                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                        });
                 });
             }
-            
+
             $bagianCounts[$code] = $countQuery->count();
         }
 
         $completionFilter = $request->get('completion_status', '');
-        
+
         return view('owner.rekapan', compact('dokumens', 'statistics', 'availableYears', 'bagianList', 'bagianCounts', 'selectedBagian', 'completionFilter'))
             ->with('title', 'Rekapan Dokumen - Owner')
             ->with('module', 'owner')
@@ -1359,37 +1391,37 @@ class OwnerDashboardController extends Controller
         // Filter by handler
         if ($handler === 'ibuA') {
             // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('current_handler', 'ibuA')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('status', 'draft')
-                           ->where(function($subSubQ) {
-                               $subSubQ->whereNull('current_handler')
-                                       ->orWhere('current_handler', 'ibuA');
-                           });
-                  });
+                    ->orWhere(function ($subQ) {
+                        $subQ->where('status', 'draft')
+                            ->where(function ($subSubQ) {
+                                $subSubQ->whereNull('current_handler')
+                                    ->orWhere('current_handler', 'ibuA');
+                            });
+                    });
             });
         } elseif ($handler === 'ibuB') {
             // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('current_handler', 'ibuB')
-                  ->orWhere('status', 'sent_to_ibub')
-                  ->orWhere('status', 'pending_approval_ibub')
-                  ->orWhere('status', 'proses_ibub');
+                    ->orWhere('status', 'sent_to_ibub')
+                    ->orWhere('status', 'pending_approval_ibub')
+                    ->orWhere('status', 'proses_ibub');
             });
         } elseif ($handler === 'perpajakan') {
             // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                  ->orWhere('status', 'sent_to_perpajakan')
-                  ->orWhere('status', 'proses_perpajakan');
+                    ->orWhere('status', 'sent_to_perpajakan')
+                    ->orWhere('status', 'proses_perpajakan');
             });
         } elseif ($handler === 'akutansi') {
             // Team Akutansi: dokumen dengan current_handler = 'akutansi' atau status sent_to_akutansi
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('current_handler', 'akutansi')
-                  ->orWhere('status', 'sent_to_akutansi')
-                  ->orWhere('status', 'proses_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'proses_akutansi');
             });
         }
 
@@ -1401,13 +1433,13 @@ class OwnerDashboardController extends Controller
 
         // Search functionality
         if ($request->has('search') && $request->search) {
-            $search = trim((string)$request->search);
+            $search = trim((string) $request->search);
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                        ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                        ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
                 });
             }
         }
@@ -1420,17 +1452,17 @@ class OwnerDashboardController extends Controller
         // Filter by completion status
         $completionFilter = $request->get('completion_status', '');
         if ($completionFilter === 'selesai') {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
         } elseif ($completionFilter === 'belum_selesai') {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->where(function($subQ) {
-                      $subQ->whereNull('status_pembayaran')
-                           ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                  });
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    });
             });
         }
 
@@ -1462,75 +1494,75 @@ class OwnerDashboardController extends Controller
         $bagianCounts = [];
         foreach ($bagianList as $code => $name) {
             $countQuery = Dokumen::where('bagian', $code);
-            
+
             // Apply handler filter
             if ($handler === 'ibuA') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->where('current_handler', 'ibuA')
-                      ->orWhere(function($subQ) {
-                          $subQ->where('status', 'draft')
-                               ->where(function($subSubQ) {
-                                   $subSubQ->whereNull('current_handler')
-                                           ->orWhere('current_handler', 'ibuA');
-                               });
-                      });
+                        ->orWhere(function ($subQ) {
+                            $subQ->where('status', 'draft')
+                                ->where(function ($subSubQ) {
+                                    $subSubQ->whereNull('current_handler')
+                                        ->orWhere('current_handler', 'ibuA');
+                                });
+                        });
                 });
             } elseif ($handler === 'ibuB') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->where('current_handler', 'ibuB')
-                      ->orWhere('status', 'sent_to_ibub')
-                      ->orWhere('status', 'pending_approval_ibub')
-                      ->orWhere('status', 'proses_ibub');
+                        ->orWhere('status', 'sent_to_ibub')
+                        ->orWhere('status', 'pending_approval_ibub')
+                        ->orWhere('status', 'proses_ibub');
                 });
             } elseif ($handler === 'perpajakan') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->where('current_handler', 'perpajakan')
-                      ->orWhere('status', 'sent_to_perpajakan')
-                      ->orWhere('status', 'proses_perpajakan');
+                        ->orWhere('status', 'sent_to_perpajakan')
+                        ->orWhere('status', 'proses_perpajakan');
                 });
             } elseif ($handler === 'akutansi') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->where('current_handler', 'akutansi')
-                      ->orWhere('status', 'sent_to_akutansi')
-                      ->orWhere('status', 'proses_akutansi');
+                        ->orWhere('status', 'sent_to_akutansi')
+                        ->orWhere('status', 'proses_akutansi');
                 });
             }
-            
+
             // Apply same filters as main query
             if ($request->has('year') && $request->year) {
                 $countQuery->where('tahun', $request->year);
             }
-            
+
             if ($request->has('search') && $request->search) {
-                $search = trim((string)$request->search);
+                $search = trim((string) $request->search);
                 if (!empty($search)) {
-                    $countQuery->where(function($q) use ($search) {
+                    $countQuery->where(function ($q) use ($search) {
                         $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                          ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                          ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                          ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                            ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                            ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                            ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
                     });
                 }
             }
-            
+
             if ($completionFilter === 'selesai') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                      ->orWhere('status_pembayaran', 'sudah_dibayar');
+                        ->orWhere('status_pembayaran', 'sudah_dibayar');
                 });
             } elseif ($completionFilter === 'belum_selesai') {
-                $countQuery->where(function($q) {
+                $countQuery->where(function ($q) {
                     $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                      ->where(function($subQ) {
-                          $subQ->whereNull('status_pembayaran')
-                               ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                      });
+                        ->where(function ($subQ) {
+                            $subQ->whereNull('status_pembayaran')
+                                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                        });
                 });
             }
-            
+
             $bagianCounts[$code] = $countQuery->count();
         }
-        
+
         return view('owner.rekapan', compact('dokumens', 'statistics', 'availableYears', 'bagianList', 'bagianCounts', 'selectedBagian', 'completionFilter', 'handler', 'handlerNames'))
             ->with('title', 'Rekapan Dokumen - ' . $handlerNames[$handler])
             ->with('module', 'owner')
@@ -1568,43 +1600,43 @@ class OwnerDashboardController extends Controller
             // All documents
         } elseif ($type === 'selesai') {
             // Completed documents
-            $baseQuery->where(function($q) {
+            $baseQuery->where(function ($q) {
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
         } elseif ($type === 'ibuA') {
             // Ibu Tarapul documents
-            $baseQuery->where(function($q) {
+            $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'ibuA')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('status', 'draft')
-                           ->where(function($subSubQ) {
-                               $subSubQ->whereNull('current_handler')
-                                       ->orWhere('current_handler', 'ibuA');
-                           });
-                  });
+                    ->orWhere(function ($subQ) {
+                        $subQ->where('status', 'draft')
+                            ->where(function ($subSubQ) {
+                                $subSubQ->whereNull('current_handler')
+                                    ->orWhere('current_handler', 'ibuA');
+                            });
+                    });
             });
         } elseif ($type === 'ibuB') {
             // Ibu Yuni documents
-            $baseQuery->where(function($q) {
+            $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'ibuB')
-                  ->orWhere('status', 'sent_to_ibub')
-                  ->orWhere('status', 'pending_approval_ibub')
-                  ->orWhere('status', 'proses_ibub');
+                    ->orWhere('status', 'sent_to_ibub')
+                    ->orWhere('status', 'pending_approval_ibub')
+                    ->orWhere('status', 'proses_ibub');
             });
         } elseif ($type === 'perpajakan') {
             // Team Perpajakan documents
-            $baseQuery->where(function($q) {
+            $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                  ->orWhere('status', 'sent_to_perpajakan')
-                  ->orWhere('status', 'proses_perpajakan');
+                    ->orWhere('status', 'sent_to_perpajakan')
+                    ->orWhere('status', 'proses_perpajakan');
             });
         } elseif ($type === 'akutansi') {
             // Team Akutansi documents
-            $baseQuery->where(function($q) {
+            $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'akutansi')
-                  ->orWhere('status', 'sent_to_akutansi')
-                  ->orWhere('status', 'proses_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'proses_akutansi');
             });
         }
 
@@ -1613,36 +1645,36 @@ class OwnerDashboardController extends Controller
         $totalDokumen = (clone $baseQuery)->count();
 
         // 2. Total Dokumen Selesai
-        $totalSelesai = (clone $baseQuery)->where(function($q) {
+        $totalSelesai = (clone $baseQuery)->where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-              ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar');
         })->count();
 
         // 3. Total Dokumen Proses (sedang diproses)
-        $totalProses = (clone $baseQuery)->where(function($q) {
+        $totalProses = (clone $baseQuery)->where(function ($q) {
             $q->where('status', 'sedang diproses')
-              ->orWhere('status', 'sent_to_ibub')
-              ->orWhere('status', 'sent_to_perpajakan')
-              ->orWhere('status', 'sent_to_akutansi')
-              ->orWhere('status', 'sent_to_pembayaran')
-              ->orWhere('status', 'proses_ibub')
-              ->orWhere('status', 'proses_perpajakan')
-              ->orWhere('status', 'proses_akutansi')
-              ->orWhere('status', 'pending_approval_ibub');
+                ->orWhere('status', 'sent_to_ibub')
+                ->orWhere('status', 'sent_to_perpajakan')
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere('status', 'sent_to_pembayaran')
+                ->orWhere('status', 'proses_ibub')
+                ->orWhere('status', 'proses_perpajakan')
+                ->orWhere('status', 'proses_akutansi')
+                ->orWhere('status', 'pending_approval_ibub');
         })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-          ->where(function($subQ) {
-              $subQ->whereNull('status_pembayaran')
-                   ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-          })->count();
+            ->where(function ($subQ) {
+                $subQ->whereNull('status_pembayaran')
+                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            })->count();
 
         // 4. Total Dokumen Terlambat (memiliki deadline dan sudah lewat deadline, belum selesai)
         $totalTerlambat = (clone $baseQuery)
             ->whereNotNull('deadline_at')
             ->where('deadline_at', '<', $now)
             ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-            ->where(function($subQ) {
+            ->where(function ($subQ) {
                 $subQ->whereNull('status_pembayaran')
-                     ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
             })->count();
 
         // Get documents list with pagination
@@ -1650,13 +1682,13 @@ class OwnerDashboardController extends Controller
 
         // Apply search filter if provided
         if ($request->has('search') && $request->search) {
-            $search = trim((string)$request->search);
+            $search = trim((string) $request->search);
             if (!empty($search)) {
-                $documentsQuery->where(function($q) use ($search) {
+                $documentsQuery->where(function ($q) use ($search) {
                     $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                      ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                      ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                        ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                        ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
                 });
             }
         }
@@ -1675,50 +1707,50 @@ class OwnerDashboardController extends Controller
         // Filter by completion status
         $completionFilter = $request->get('completion_status', '');
         if ($completionFilter === 'selesai') {
-            $documentsQuery->where(function($q) {
+            $documentsQuery->where(function ($q) {
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
         } elseif ($completionFilter === 'belum_selesai') {
-            $documentsQuery->where(function($q) {
+            $documentsQuery->where(function ($q) {
                 $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->where(function($subQ) {
-                      $subQ->whereNull('status_pembayaran')
-                           ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                  });
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    });
             });
         }
 
         // Filter by statistic card (total, selesai, proses, terlambat)
         $statFilter = $request->get('stat_filter', '');
         if ($statFilter === 'selesai') {
-            $documentsQuery->where(function($q) {
+            $documentsQuery->where(function ($q) {
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                  ->orWhere('status_pembayaran', 'sudah_dibayar');
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
         } elseif ($statFilter === 'proses') {
-            $documentsQuery->where(function($q) {
+            $documentsQuery->where(function ($q) {
                 $q->where('status', 'sedang diproses')
-                  ->orWhere('status', 'sent_to_ibub')
-                  ->orWhere('status', 'sent_to_perpajakan')
-                  ->orWhere('status', 'sent_to_akutansi')
-                  ->orWhere('status', 'sent_to_pembayaran')
-                  ->orWhere('status', 'proses_ibub')
-                  ->orWhere('status', 'proses_perpajakan')
-                  ->orWhere('status', 'proses_akutansi')
-                  ->orWhere('status', 'pending_approval_ibub');
+                    ->orWhere('status', 'sent_to_ibub')
+                    ->orWhere('status', 'sent_to_perpajakan')
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere('status', 'proses_ibub')
+                    ->orWhere('status', 'proses_perpajakan')
+                    ->orWhere('status', 'proses_akutansi')
+                    ->orWhere('status', 'pending_approval_ibub');
             })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-              ->where(function($subQ) {
-                  $subQ->whereNull('status_pembayaran')
-                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-              });
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                });
         } elseif ($statFilter === 'terlambat') {
             $documentsQuery->whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
                 ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                ->where(function($subQ) {
+                ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
-                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
                 });
         }
         // If stat_filter is 'total' or empty, show all documents (no additional filter)
@@ -1769,12 +1801,12 @@ class OwnerDashboardController extends Controller
 
         // Search functionality
         if ($request->has('search') && $request->search) {
-            $search = trim((string)$request->search);
+            $search = trim((string) $request->search);
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                      ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                      ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+                        ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('uraian_spp', 'like', '%' . $search . '%');
                 });
             }
         }
@@ -1850,10 +1882,10 @@ class OwnerDashboardController extends Controller
         if ($filterBagian) {
             $completedQuery->where('bagian', $filterBagian);
         }
-        $completedCount = $completedQuery->where(function($q) {
+        $completedCount = $completedQuery->where(function ($q) {
             $q->where('status', 'selesai')
-              ->orWhere('status', 'approved_data_sudah_terkirim')
-              ->orWhere('current_handler', 'pembayaran');
+                ->orWhere('status', 'approved_data_sudah_terkirim')
+                ->orWhere('current_handler', 'pembayaran');
         })->count();
 
         // Count documents by handler
@@ -1870,37 +1902,37 @@ class OwnerDashboardController extends Controller
         }
 
         // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
-        $ibuTarapulCount = $ibuTarapulQuery->where(function($q) {
+        $ibuTarapulCount = $ibuTarapulQuery->where(function ($q) {
             $q->where('current_handler', 'ibuA')
-              ->orWhere(function($subQ) {
-                  $subQ->where('status', 'draft')
-                       ->where(function($subSubQ) {
-                           $subSubQ->whereNull('current_handler')
-                                   ->orWhere('current_handler', 'ibuA');
-                       });
-              });
+                ->orWhere(function ($subQ) {
+                    $subQ->where('status', 'draft')
+                        ->where(function ($subSubQ) {
+                            $subSubQ->whereNull('current_handler')
+                                ->orWhere('current_handler', 'ibuA');
+                        });
+                });
         })->count();
 
         // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
-        $ibuYuniCount = $ibuYuniQuery->where(function($q) {
+        $ibuYuniCount = $ibuYuniQuery->where(function ($q) {
             $q->where('current_handler', 'ibuB')
-              ->orWhere('status', 'sent_to_ibub')
-              ->orWhere('status', 'pending_approval_ibub')
-              ->orWhere('status', 'proses_ibub');
+                ->orWhere('status', 'sent_to_ibub')
+                ->orWhere('status', 'pending_approval_ibub')
+                ->orWhere('status', 'proses_ibub');
         })->count();
 
         // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
-        $perpajakanCount = $perpajakanQuery->where(function($q) {
+        $perpajakanCount = $perpajakanQuery->where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-              ->orWhere('status', 'sent_to_perpajakan')
-              ->orWhere('status', 'proses_perpajakan');
+                ->orWhere('status', 'sent_to_perpajakan')
+                ->orWhere('status', 'proses_perpajakan');
         })->count();
 
         // Team Akutansi: dokumen dengan current_handler = 'akutansi' atau status sent_to_akutansi
-        $akutansiCount = $akutansiQuery->where(function($q) {
+        $akutansiCount = $akutansiQuery->where(function ($q) {
             $q->where('current_handler', 'akutansi')
-              ->orWhere('status', 'sent_to_akutansi')
-              ->orWhere('status', 'proses_akutansi');
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere('status', 'proses_akutansi');
         })->count();
 
         return [
@@ -1978,10 +2010,10 @@ class OwnerDashboardController extends Controller
         $html .= '</div>';
 
         // Check if document has perpajakan data
-        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) || 
-                             !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
-                             !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
-                             !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
+        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) ||
+            !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
+            !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
+            !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
 
         if ($hasPerpajakanData || $dokumen->status == 'sent_to_akutansi' || $dokumen->status == 'sent_to_pembayaran' || $dokumen->current_handler == 'akutansi' || $dokumen->current_handler == 'pembayaran') {
             // Visual Separator for Perpajakan Data
@@ -2060,7 +2092,7 @@ class OwnerDashboardController extends Controller
             // Get status_pembayaran and link_bukti_pembayaran from database if not in model
             $statusPembayaran = $dokumen->status_pembayaran ?? \DB::table('dokumens')->where('id', $dokumen->id)->value('status_pembayaran');
             $linkBuktiPembayaran = $dokumen->link_bukti_pembayaran ?? \DB::table('dokumens')->where('id', $dokumen->id)->value('link_bukti_pembayaran');
-            
+
             $html .= '<div class="detail-section-separator">
                 <div class="separator-content" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-left: 4px solid #28a745;">
                     <i class="fa-solid fa-money-bill-wave"></i>
@@ -2074,10 +2106,12 @@ class OwnerDashboardController extends Controller
 
             $pembayaranFields = [
                 'Status Pembayaran' => $statusPembayaran ? ucfirst(str_replace('_', ' ', $statusPembayaran)) : '<span class="empty-field">Belum diisi</span>',
-                'Link Bukti Pembayaran' => $linkBuktiPembayaran 
-                    ? sprintf('<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>', 
-                        htmlspecialchars($linkBuktiPembayaran), 
-                        htmlspecialchars($linkBuktiPembayaran))
+                'Link Bukti Pembayaran' => $linkBuktiPembayaran
+                    ? sprintf(
+                        '<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
+                        htmlspecialchars($linkBuktiPembayaran),
+                        htmlspecialchars($linkBuktiPembayaran)
+                    )
                     : '<span class="empty-field">Belum diisi</span>',
             ];
 
@@ -2123,7 +2157,8 @@ class OwnerDashboardController extends Controller
         }
 
         if (filter_var($link, FILTER_VALIDATE_URL)) {
-            return sprintf('<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
+            return sprintf(
+                '<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
                 htmlspecialchars($link),
                 htmlspecialchars($link)
             );

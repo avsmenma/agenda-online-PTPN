@@ -16,18 +16,23 @@ class DocumentApprovedInbox implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $dokumen;
+    public $targetRole;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Dokumen $dokumen)
+    public function __construct(Dokumen $dokumen, $targetRole = null)
     {
+        // Fallback if targetRole not provided (try to guess or use default - risky if column deleted)
+        // But for new calls we should provide it.
+        $this->targetRole = $targetRole;
+
         $this->dokumen = [
             'id' => $dokumen->id,
             'nomor_agenda' => $dokumen->nomor_agenda,
             'nomor_spp' => $dokumen->nomor_spp,
             'status' => $dokumen->status,
-            'inbox_approval_for' => $dokumen->inbox_approval_for,
+            'inbox_approval_for' => $targetRole, // Virtual field for frontend
         ];
     }
 
@@ -39,7 +44,7 @@ class DocumentApprovedInbox implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('inbox.' . strtolower($this->dokumen['inbox_approval_for'])),
+            new PrivateChannel('inbox.' . strtolower($this->targetRole)),
         ];
     }
 

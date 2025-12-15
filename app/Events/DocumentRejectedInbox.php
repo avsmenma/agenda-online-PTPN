@@ -17,18 +17,20 @@ class DocumentRejectedInbox implements ShouldBroadcast
 
     public $dokumen;
     public $reason;
+    public $targetRole;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Dokumen $dokumen, $reason)
+    public function __construct(Dokumen $dokumen, $reason, $targetRole = null)
     {
+        $this->targetRole = $targetRole;
         $this->dokumen = [
             'id' => $dokumen->id,
             'nomor_agenda' => $dokumen->nomor_agenda,
             'nomor_spp' => $dokumen->nomor_spp,
             'status' => $dokumen->status,
-            'inbox_approval_for' => $dokumen->inbox_approval_for,
+            'inbox_approval_for' => $targetRole, // Virtual field
         ];
         $this->reason = $reason;
     }
@@ -40,8 +42,18 @@ class DocumentRejectedInbox implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        // If targetRole is null, we might have a problem broadcasting to the right channel
+        // But rejecting usually goes back to sender or notifies the rejector?
+        // Wait, "Inbox" channel usually means the INBOX of the person causing the event?
+        // Or the INBOX of the person receiving the event?
+        // "new PrivateChannel('inbox.' . strtolower($this->dokumen['inbox_approval_for']))"
+        // This suggests it notifies the ROLE that WAS approving it (e.g. to remove from their list?)
+        // OR checks if it was for them.
+
+        // Let's assume we broadcast to the role associated with the inbox.
+        $channel = 'inbox.' . ($this->targetRole ? strtolower($this->targetRole) : 'unknown');
         return [
-            new PrivateChannel('inbox.' . strtolower($this->dokumen['inbox_approval_for'])),
+            new PrivateChannel($channel),
         ];
     }
 

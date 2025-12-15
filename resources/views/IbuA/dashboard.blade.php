@@ -565,6 +565,12 @@
                     <i class="fas fa-clock"></i>
                     Belum Dikirim
                   </span>
+                @elseif($dokumen->inbox_approval_for == 'IbuB' && $dokumen->inbox_approval_status == 'approved')
+                  {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
+                  <span class="badge badge-sent">
+                    <i class="fas fa-check-circle"></i>
+                    Terkirim
+                  </span>
                 @elseif($dokumen->status == 'menunggu_di_approve' && $dokumen->inbox_approval_status == 'pending')
                   <span class="badge badge-sent">
                     <i class="fas fa-check-circle"></i>
@@ -573,7 +579,7 @@
                 @elseif($dokumen->status == 'sent_to_ibub' && $dokumen->inbox_approval_status == 'approved')
                   <span class="badge badge-sent">
                     <i class="fas fa-check-circle"></i>
-                    Terkirim, dokumen diapprove
+                    Terkirim
                   </span>
                 @else
                   <span class="badge badge-sent">

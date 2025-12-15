@@ -12,6 +12,7 @@ class Dokumen extends Model
     use HasFactory;
 
     protected $fillable = [
+        // Core document fields
         'nomor_agenda',
         'bulan',
         'tahun',
@@ -38,30 +39,19 @@ class Dokumen extends Model
         'status',
         'keterangan',
         'alasan_pengembalian',
+        // Department/Bidang return fields
         'target_department',
         'department_returned_at',
         'department_return_reason',
         'target_bidang',
         'bidang_returned_at',
         'bidang_return_reason',
+        // Workflow tracking (kept for compatibility)
         'created_by',
         'current_handler',
         'current_stage',
         'last_action_status',
-        'sent_to_ibub_at',
-        'processed_at',
-        'returned_to_ibua_at',
-        'deadline_at',
-        'deadline_days',
-        'deadline_note',
-        'deadline_completed_at',
-        // Approval System fields
-        'pending_approval_for',
-        'pending_approval_at',
-        'approval_responded_at',
-        'approval_responded_by',
-        'approval_rejection_reason',
-        // Perpajakan fields
+        // Perpajakan fields (core data, kept in dokumens)
         'npwp',
         'status_perpajakan',
         'no_faktur',
@@ -71,13 +61,6 @@ class Dokumen extends Model
         'dpp_pph',
         'ppn_terhutang',
         'link_dokumen_pajak',
-        'deadline_perpajakan_at',
-        'deadline_perpajakan_days',
-        'deadline_perpajakan_note',
-        'sent_to_perpajakan_at',
-        'processed_perpajakan_at',
-        'returned_from_perpajakan_at',
-        'returned_from_akutansi_at',
         // Perpajakan Extended Fields
         'komoditi_perpajakan',
         'alamat_pembeli',
@@ -96,24 +79,10 @@ class Dokumen extends Model
         'dpp_penggantian',
         'ppn_penggantian',
         'selisih_ppn',
-        // Pembayaran fields
-        'sent_to_pembayaran_at',
+        // Pembayaran fields (core data)
         'status_pembayaran',
         'tanggal_dibayar',
         'link_bukti_pembayaran',
-        // Universal Approval System fields
-        'universal_approval_for',
-        'universal_approval_sent_at',
-        'universal_approval_responded_at',
-        'universal_approval_responded_by',
-        'universal_approval_rejection_reason',
-        // Inbox Approval System fields
-        'inbox_approval_for',
-        'inbox_approval_status',
-        'inbox_approval_sent_at',
-        'inbox_approval_responded_at',
-        'inbox_approval_reason',
-        'inbox_original_status',
         // CSV Import additional fields
         'nama_kebuns',
         'no_ba',
@@ -125,32 +94,21 @@ class Dokumen extends Model
     ];
 
     protected $casts = [
+        // Core document casts
         'tanggal_masuk' => 'datetime',
         'tanggal_spp' => 'datetime',
         'tanggal_berita_acara' => 'date',
         'tanggal_spk' => 'date',
         'tanggal_berakhir_spk' => 'date',
         'nilai_rupiah' => 'decimal:2',
-        'sent_to_ibub_at' => 'datetime',
-        'processed_at' => 'datetime',
-        'returned_to_ibua_at' => 'datetime',
+        // Department return casts
         'department_returned_at' => 'datetime',
         'bidang_returned_at' => 'datetime',
-        'deadline_at' => 'datetime',
-        'deadline_completed_at' => 'datetime',
-        // Approval System casts
-        'pending_approval_at' => 'datetime',
-        'approval_responded_at' => 'datetime',
         // Perpajakan casts
         'tanggal_faktur' => 'date',
         'tanggal_selesai_verifikasi_pajak' => 'date',
         'dpp_pph' => 'decimal:2',
         'ppn_terhutang' => 'decimal:2',
-        'deadline_perpajakan_at' => 'datetime',
-        'sent_to_perpajakan_at' => 'datetime',
-        'processed_perpajakan_at' => 'datetime',
-        'returned_from_perpajakan_at' => 'datetime',
-        'returned_from_akutansi_at' => 'datetime',
         // Perpajakan Extended casts
         'tanggal_invoice' => 'date',
         'tanggal_pengajuan_pajak' => 'date',
@@ -165,14 +123,7 @@ class Dokumen extends Model
         'ppn_penggantian' => 'decimal:2',
         'selisih_ppn' => 'decimal:2',
         // Pembayaran casts
-        'sent_to_pembayaran_at' => 'datetime',
         'tanggal_dibayar' => 'date',
-        // Universal Approval System casts
-        'universal_approval_sent_at' => 'datetime',
-        'universal_approval_responded_at' => 'datetime',
-        // Inbox Approval System casts
-        'inbox_approval_sent_at' => 'datetime',
-        'inbox_approval_responded_at' => 'datetime',
     ];
 
     public function dokumenPos(): HasMany
@@ -187,7 +138,7 @@ class Dokumen extends Model
 
     public function getFormattedNilaiRupiahAttribute()
     {
-        return 'Rp. ' . number_format($this->nilai_rupiah, 0, ',', '.');
+        return 'Rp. ' . number_format((float) $this->nilai_rupiah, 0, ',', '.');
     }
 
     public function getFormattedNomorAgendaAttribute()
@@ -208,6 +159,217 @@ class Dokumen extends Model
     public function documentTrackings(): HasMany
     {
         return $this->hasMany(DocumentTracking::class, 'document_id');
+    }
+
+    /**
+     * Get all role statuses for this document
+     */
+    public function roleStatuses(): HasMany
+    {
+        return $this->hasMany(DokumenStatus::class);
+    }
+
+    /**
+     * Get all role data for this document
+     */
+    public function roleData(): HasMany
+    {
+        return $this->hasMany(DokumenRoleData::class);
+    }
+
+    /**
+     * Get status for a specific role
+     */
+    public function getStatusForRole(string $roleCode): ?DokumenStatus
+    {
+        return $this->roleStatuses()->where('role_code', strtolower($roleCode))->first();
+    }
+
+    /**
+     * Get data for a specific role
+     */
+    public function getDataForRole(string $roleCode): ?DokumenRoleData
+    {
+        return $this->roleData()->where('role_code', strtolower($roleCode))->first();
+    }
+
+    /**
+     * Create or update status for a role
+     */
+    public function setStatusForRole(string $roleCode, string $status, ?string $changedBy = null, ?string $notes = null): DokumenStatus
+    {
+        $roleCode = strtolower($roleCode);
+        $changedBy = $changedBy ?? auth()->user()?->name ?? 'System';
+
+        return DokumenStatus::updateOrCreate(
+            ['dokumen_id' => $this->id, 'role_code' => $roleCode],
+            [
+                'status' => $status,
+                'status_changed_at' => now(),
+                'changed_by' => $changedBy,
+                'notes' => $notes,
+            ]
+        );
+    }
+
+    /**
+     * Create or update data for a role
+     */
+    public function setDataForRole(string $roleCode, array $data): DokumenRoleData
+    {
+        $roleCode = strtolower($roleCode);
+
+        return DokumenRoleData::updateOrCreate(
+            ['dokumen_id' => $this->id, 'role_code' => $roleCode],
+            $data
+        );
+    }
+
+    /**
+     * Send document to a role's inbox
+     */
+    public function sendToRoleInbox(string $targetRoleCode, ?string $senderRoleCode = null): DokumenStatus
+    {
+        $targetRoleCode = strtolower($targetRoleCode);
+        $senderRoleCode = $senderRoleCode ?? auth()->user()?->role ?? 'system';
+
+        // Set target role status to pending
+        $targetStatus = $this->setStatusForRole($targetRoleCode, DokumenStatus::STATUS_PENDING, $senderRoleCode);
+
+        // Update data for target role
+        $this->setDataForRole($targetRoleCode, [
+            'received_at' => now(),
+        ]);
+
+        // Log activity
+        DokumenActivityLog::create([
+            'dokumen_id' => $this->id,
+            'stage' => $targetRoleCode,
+            'action' => 'sent_to_inbox',
+            'action_description' => "Dokumen dikirim ke inbox {$targetRoleCode}",
+            'performed_by' => $senderRoleCode,
+            'action_at' => now(),
+            'details' => [
+                'sender_role' => $senderRoleCode,
+                'target_role' => $targetRoleCode,
+            ]
+        ]);
+
+        return $targetStatus;
+    }
+
+    /**
+     * Approve document from role's inbox
+     */
+    public function approveFromRoleInbox(string $roleCode): DokumenStatus
+    {
+        $roleCode = strtolower($roleCode);
+        $approvedBy = auth()->user()?->name ?? 'System';
+
+        // Update role status to approved
+        $status = $this->setStatusForRole($roleCode, DokumenStatus::STATUS_APPROVED, $approvedBy);
+
+        // Update processed time
+        $roleData = $this->getDataForRole($roleCode);
+        if ($roleData) {
+            $roleData->processed_at = now();
+            $roleData->save();
+        }
+
+        // === SYNC LEGACY COLUMNS ===
+        // Update legacy columns for backward compatibility with existing dashboards
+        $this->current_handler = $roleCode;
+
+        switch ($roleCode) {
+            case 'ibub':
+                $this->status = 'sedang_diproses'; // Status expected by DashboardB
+                $this->processed_at = now(); // Legacy timestamp for IbuB
+                break;
+
+            case 'perpajakan':
+                $this->status = 'proses_perpajakan';
+                $this->processed_perpajakan_at = now(); // Legacy timestamp
+                break;
+
+            case 'akutansi':
+                $this->status = 'proses_akutansi';
+                // sent_to_akutansi_at is removed, rely on generic status
+                break;
+
+            case 'pembayaran':
+                $this->status = 'proses_pembayaran';
+                if (!$this->status_pembayaran) {
+                    $this->status_pembayaran = 'pending';
+                }
+                break;
+        }
+
+        $this->save();
+        // === END SYNC LEGACY COLUMNS ===
+
+        // Log activity
+        DokumenActivityLog::create([
+            'dokumen_id' => $this->id,
+            'stage' => $roleCode,
+            'action' => 'approved',
+            'action_description' => "Dokumen disetujui oleh {$approvedBy}",
+            'performed_by' => $approvedBy,
+            'action_at' => now(),
+        ]);
+
+        // Fire event
+        event(new \App\Events\DocumentApprovedInbox($this, $roleCode));
+
+        return $status;
+    }
+
+    /**
+     * Reject document from role's inbox
+     */
+    public function rejectFromRoleInbox(string $roleCode, string $reason): DokumenStatus
+    {
+        $roleCode = strtolower($roleCode);
+        $rejectedBy = auth()->user()?->name ?? 'System';
+
+        // Update role status to rejected
+        $status = $this->setStatusForRole($roleCode, DokumenStatus::STATUS_REJECTED, $rejectedBy, $reason);
+
+        // Log activity
+        DokumenActivityLog::create([
+            'dokumen_id' => $this->id,
+            'stage' => $roleCode,
+            'action' => 'rejected',
+            'action_description' => "Dokumen ditolak: {$reason}",
+            'performed_by' => $rejectedBy,
+            'action_at' => now(),
+            'details' => ['rejection_reason' => $reason],
+        ]);
+
+        // Fire event
+        event(new \App\Events\DocumentRejectedInbox($this, $reason, $roleCode));
+
+        return $status;
+    }
+
+    /**
+     * Check if document is pending for a specific role
+     */
+    public function isPendingForRole(string $roleCode): bool
+    {
+        $status = $this->getStatusForRole($roleCode);
+        return $status && $status->status === DokumenStatus::STATUS_PENDING;
+    }
+
+    /**
+     * Get the current role that has the document (pending status)
+     */
+    public function getCurrentRoleHandler(): ?string
+    {
+        $pendingStatus = $this->roleStatuses()
+            ->where('status', DokumenStatus::STATUS_PENDING)
+            ->first();
+
+        return $pendingStatus?->role_code;
     }
 
     /**
@@ -257,137 +419,22 @@ class Dokumen extends Model
     }
 
     /**
-     * Helper methods untuk Universal Approval System
-     */
-
     /**
-     * Cek apakah dokumen sedang menunggu universal approval
-     */
-    public function isWaitingUniversalApproval(): bool
-    {
-        return $this->status === 'menunggu_approved_pengiriman' && !is_null($this->universal_approval_for);
-    }
-
-    /**
-     * Cek apakah dokumen menunggu approval untuk role tertentu
+     * Cek apakah dokumen menunggu approval untuk role tertentu (Inbox System)
      */
     public function isWaitingApprovalFor(string $role): bool
     {
-        return $this->isWaitingUniversalApproval() && $this->universal_approval_for === $role;
+        return $this->isPendingForRole($role);
     }
 
-    /**
-     * Cek apakah dokumen sudah di-approve universal
-     */
-    public function isUniversalApproved(): bool
-    {
-        return $this->status === 'approved_data_sudah_terkirim';
-    }
 
-    /**
-     * Cek apakah dokumen di-reject universal
-     */
-    public function isUniversalRejected(): bool
-    {
-        return $this->status === 'rejected_data_tidak_lengkap';
-    }
 
-    /**
-     * Get semua role yang bisa menerima universal approval
-     */
-    public static function getUniversalApprovalRoles(): array
-    {
-        return [
-            'ibuB' => 'Ibu B',
-            'perpajakan' => 'Perpajakan',
-            'akutansi' => 'Akutansi',
-            'pembayaran' => 'Pembayaran',
-        ];
-    }
-
-    /**
-     * Get status display untuk universal approval
-     */
-    public function getUniversalApprovalStatusDisplay(): string
-    {
-        $statusMap = [
-            'menunggu_approved_pengiriman' => 'Menunggu Approve Pengiriman',
-            'approved_data_sudah_terkirim' => 'Approve, Data Sudah Terkirim',
-            'rejected_data_tidak_lengkap' => 'Reject, Data Tidak Lengkap',
-        ];
-
-        return $statusMap[$this->status] ?? $this->status;
-    }
-
-    /**
-     * Get nama role yang lebih user-friendly
-     */
-    public function getUniversalApprovalForDisplay(): string
-    {
-        $roles = self::getUniversalApprovalRoles();
-        return $roles[$this->universal_approval_for] ?? $this->universal_approval_for;
-    }
 
     /**
      * Get user yang mengirim dokumen (creator display name)
      */
     public function getSenderDisplayName(): string
     {
-        // Jika dokumen masuk via inbox, cari pengirim dari activity log
-        if ($this->inbox_approval_status == 'pending' || $this->inbox_approval_sent_at) {
-            // Cari activity log untuk inbox_sent
-            $sentLog = $this->activityLogs()
-                ->where('action', 'inbox_sent')
-                ->where('stage', $this->inbox_approval_for)
-                ->latest('action_at')
-                ->first();
-            
-            if ($sentLog) {
-                $performedBy = $sentLog->performed_by ?? $sentLog->details['performed_by'] ?? null;
-                
-                // Map role/name ke display name
-                $nameMap = [
-                    'ibuA' => 'Ibu Tarapul',
-                    'IbuA' => 'Ibu Tarapul',
-                    'Ibu A' => 'Ibu Tarapul',
-                    'ibuB' => 'Ibu Yuni',
-                    'IbuB' => 'Ibu Yuni',
-                    'Ibu B' => 'Ibu Yuni',
-                    'Ibu Yuni' => 'Ibu Yuni',
-                    'perpajakan' => 'Team Perpajakan',
-                    'Perpajakan' => 'Team Perpajakan',
-                    'akutansi' => 'Team Akutansi',
-                    'Akutansi' => 'Team Akutansi',
-                ];
-                
-                if ($performedBy && isset($nameMap[$performedBy])) {
-                    return $nameMap[$performedBy];
-                }
-                
-                // Jika tidak ada di map, coba dari details
-                $recipientRole = $sentLog->details['recipient_role'] ?? null;
-                if ($recipientRole) {
-                    // Jika recipient adalah Perpajakan, sender kemungkinan IbuB
-                    if ($recipientRole === 'Perpajakan') {
-                        return 'Ibu Yuni';
-                    }
-                    // Jika recipient adalah Akutansi, sender kemungkinan Perpajakan
-                    if ($recipientRole === 'Akutansi') {
-                        return 'Team Perpajakan';
-                    }
-                }
-            }
-            
-            // Fallback: jika inbox_approval_for adalah Perpajakan, sender adalah IbuB
-            if ($this->inbox_approval_for === 'Perpajakan') {
-                return 'Ibu Yuni';
-            }
-            // Jika inbox_approval_for adalah Akutansi, sender adalah Perpajakan
-            if ($this->inbox_approval_for === 'Akutansi') {
-                return 'Team Perpajakan';
-            }
-        }
-        
         // Default: gunakan created_by
         $senderMap = [
             'ibuA' => 'Ibu Tarapul',
@@ -397,7 +444,7 @@ class Dokumen extends Model
             'pembayaran' => 'Team Pembayaran',
         ];
 
-        return $senderMap[$this->created_by] ?? $this->created_by;
+        return $senderMap[$this->created_by] ?? $this->created_by ?? 'Unknown';
     }
 
     /**
@@ -407,330 +454,201 @@ class Dokumen extends Model
     /**
      * Send document to inbox for approval
      */
+    /**
+     * Send document to inbox for approval
+     * Refactored to use new DokumenStatus system
+     */
     public function sendToInbox($recipientRole)
     {
-        // Normalize recipient role to match enum values (IbuB, Perpajakan, Akutansi)
+        // Normalize recipient role to match enum values
         $roleMap = [
-            'IbuB' => 'IbuB',
-            'ibuB' => 'IbuB',
-            'Ibu B' => 'IbuB',
-            'Ibu Yuni' => 'IbuB',
-            'Perpajakan' => 'Perpajakan',
-            'perpajakan' => 'Perpajakan',
-            'Akutansi' => 'Akutansi',
-            'akutansi' => 'Akutansi',
+            'IbuB' => 'ibuB', // Lowercase for internal code
+            'ibuB' => 'ibuB',
+            'Ibu B' => 'ibuB',
+            'Ibu Yuni' => 'ibuB',
+            'Perpajakan' => 'perpajakan',
+            'perpajakan' => 'perpajakan',
+            'Akutansi' => 'akutansi',
+            'akutansi' => 'akutansi',
+            'Pembayaran' => 'pembayaran',
+            'pembayaran' => 'pembayaran',
         ];
-        $normalizedRole = $roleMap[$recipientRole] ?? $recipientRole;
-        
-        \Log::info('sendToInbox called', [
-            'document_id' => $this->id,
-            'original_recipient_role' => $recipientRole,
-            'normalized_role' => $normalizedRole,
-            'current_status' => $this->status,
-        ]);
-        
-        $this->inbox_approval_for = $normalizedRole;
-        $this->inbox_approval_status = 'pending';
-        $this->inbox_approval_sent_at = now();
-        $this->inbox_original_status = $this->status;
+        $normalizedRole = $roleMap[$recipientRole] ?? strtolower($recipientRole);
 
-        // Set current_stage based on recipient role
+        // Use new method to create status record
+        // current_handler will be updated here if needed, or by the caller
+        $this->sendToRoleInbox($normalizedRole);
+
+        // Update legacy tracking columns if they still exist (for backward compat in views/logic)
+        // current_stage and last_action_status were KEPT in the cleanup
         $stageMap = [
-            'IbuB' => 'reviewer',
-            'Perpajakan' => 'tax',
-            'Akutansi' => 'accounting',
+            'ibuB' => 'reviewer',
+            'perpajakan' => 'tax',
+            'akutansi' => 'accounting',
+            'pembayaran' => 'payment',
         ];
-        $this->current_stage = $stageMap[$normalizedRole] ?? $this->current_stage;
-        // Set last_action_status based on normalized role
+
+        // Only update these if implicit stage transition is desired
+        if (isset($stageMap[$normalizedRole])) {
+            $this->current_stage = $stageMap[$normalizedRole];
+        }
+
         $actionStatusMap = [
-            'IbuB' => 'sent_to_reviewer',
-            'Perpajakan' => 'sent_to_tax',
-            'Akutansi' => 'sent_to_accounting',
+            'ibuB' => 'sent_to_reviewer',
+            'perpajakan' => 'sent_to_tax',
+            'akutansi' => 'sent_to_accounting',
+            'pembayaran' => 'sent_to_payment',
         ];
-        $this->last_action_status = $actionStatusMap[$normalizedRole] ?? 'sent_to_' . strtolower($normalizedRole);
 
-        // Set status based on recipient role (Approval Gate)
-        // For Reviewer (IbuB), status should be WAITING_REVIEWER_APPROVAL
-        // This will be set by sendToIbuB() method, but we set it here as fallback
-        if ($normalizedRole === 'IbuB' && $this->status !== 'waiting_reviewer_approval') {
-            // Only set if not already set by sendToIbuB()
+        if (isset($actionStatusMap[$normalizedRole])) {
+            $this->last_action_status = $actionStatusMap[$normalizedRole];
+        } else {
+            $this->last_action_status = 'sent_to_' . $normalizedRole;
+        }
+
+        // Set legacy status for IbuB/Reviewer flow
+        if ($normalizedRole === 'ibuB' && $this->status !== 'waiting_reviewer_approval') {
             $this->status = 'waiting_reviewer_approval';
-        } elseif ($normalizedRole === 'Perpajakan' || $normalizedRole === 'Akutansi') {
-            // For other roles, use menunggu_di_approve
-            // Don't overwrite milestone statuses
-            if (!in_array($this->status, ['approved_ibub', 'approved_data_sudah_terkirim', 'approved_perpajakan', 'approved_akutansi'])) {
-                $this->status = 'menunggu_di_approve';
-            }
         }
-        
-        // Clear rejection fields jika dokumen dikirim kembali ke inbox
-        // (dokumen yang sebelumnya di-reject sekarang dikirim ulang)
-        $this->inbox_approval_reason = null;
-        $this->inbox_approval_responded_at = null;
-        
+
         $this->save();
-        
-        \Log::info('sendToInbox completed', [
-            'document_id' => $this->id,
-            'inbox_approval_for' => $this->inbox_approval_for,
-            'inbox_approval_status' => $this->inbox_approval_status,
-            'inbox_approval_sent_at' => $this->inbox_approval_sent_at,
-            'status' => $this->status,
-        ]);
 
-        // Log activity
-        $performedBy = 'System';
-        if (auth()->check() && auth()->user()) {
-            $user = auth()->user();
-            $performedBy = $user->name ?? $user->role ?? 'System';
-        }
-        
-        DokumenActivityLog::create([
-            'dokumen_id' => $this->id,
-            'stage' => $recipientRole,
-            'action' => 'inbox_sent',
-            'action_description' => "Dokumen dikirim ke inbox {$recipientRole} menunggu persetujuan",
-            'performed_by' => $performedBy,
-            'action_at' => now(),
-            'details' => [
-                'recipient_role' => $recipientRole,
-                'original_status' => $this->inbox_original_status,
-            ]
-        ]);
-
-        // Fire event
+        // Event firing is likely handled by controller or redundant now, 
+        // but keeping it safe if listeners depend on it.
+        // CHECK if event uses deleted fields inside it.
         try {
-            \Log::info('Firing DocumentSentToInbox event', [
-                'document_id' => $this->id,
-                'recipient_role' => $recipientRole,
-                'inbox_approval_status' => $this->inbox_approval_status,
-                'inbox_approval_sent_at' => $this->inbox_approval_sent_at,
-            ]);
-
             event(new \App\Events\DocumentSentToInbox($this, $recipientRole));
-
-            \Log::info('DocumentSentToInbox event fired successfully', [
-                'document_id' => $this->id,
-                'recipient_role' => $recipientRole
-            ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to fire DocumentSentToInbox event: ' . $e->getMessage(), [
-                'document_id' => $this->id,
-                'recipient_role' => $recipientRole,
-                'trace' => $e->getTraceAsString()
-            ]);
+            \Log::error('Failed to fire DocumentSentToInbox event: ' . $e->getMessage());
         }
     }
 
     /**
      * Approve document from inbox
      */
+    /**
+     * Approve document from inbox
+     * Refactored to use new DokumenStatus system
+     */
     public function approveInbox()
     {
-        $this->inbox_approval_status = 'approved';
-        $this->inbox_approval_responded_at = now();
+        // Find pending status to determine which role is approving
+        $pendingStatus = $this->roleStatuses()
+            ->where('status', DokumenStatus::STATUS_PENDING)
+            ->first();
 
-        // Update current_handler berdasarkan recipient role
+        if (!$pendingStatus) {
+            \Log::warning('approveInbox called but no pending status found', ['dokumen_id' => $this->id]);
+            return;
+        }
+
+        $roleCode = $pendingStatus->role_code;
+
+        // Delegate to new method
+        $this->approveFromRoleInbox($roleCode);
+
+        // Update legacy tracking columns for backward compatibility if needed
+        // (This logic matches what was previously in sendToInbox/approveInbox)
         $handlerMap = [
-            'IbuB' => 'ibuB',
-            'Perpajakan' => 'perpajakan',
-            'Akutansi' => 'akutansi',
+            'ibub' => 'ibuB',
+            'perpajakan' => 'perpajakan',
+            'akutansi' => 'akutansi',
+            'pembayaran' => 'pembayaran',
         ];
-        
-        if (isset($handlerMap[$this->inbox_approval_for])) {
-            $this->current_handler = $handlerMap[$this->inbox_approval_for];
-            
-            // Update status sesuai dengan recipient role
-            // Untuk IbuB, setelah approve dari inbox, status menjadi 'sedang diproses' (bukan 'sent_to_ibub')
-            // Untuk Akutansi, gunakan alur yang sama dengan Perpajakan (fix: field sent_to_akutansi tidak ada)
+
+        if (isset($handlerMap[$roleCode])) {
+            $this->current_handler = $handlerMap[$roleCode];
+
+            // Map role code to status string expected by legacy views
             $statusMap = [
-                'IbuB' => 'sedang diproses',  // Ubah dari 'sent_to_ibub' ke 'sedang diproses'
-                'Perpajakan' => 'sent_to_perpajakan',
-                'Akutansi' => 'sent_to_perpajakan',  // FIX: Gunakan alur Perpajakan yang sudah valid
+                'ibub' => 'sedang diproses',
+                'perpajakan' => 'sent_to_perpajakan',
+                'akutansi' => 'sent_to_accounting',
+                'pembayaran' => 'sent_to_payment',
             ];
-            
-            $this->status = $statusMap[$this->inbox_approval_for] ?? $this->inbox_original_status ?? 'diterima';
-            
-            // Set timestamp sesuai recipient
-            if ($this->inbox_approval_for === 'IbuB') {
-                // Only set sent_to_ibub_at if it's null (first time entering IbuB)
-                // This preserves the original entry time for consistent ordering
-                if (is_null($this->sent_to_ibub_at)) {
-                    $this->sent_to_ibub_at = now();
-                }
-                // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
-                $this->deadline_at = null;
-                $this->deadline_days = null;
-                $this->deadline_note = null;
-                // Jangan set processed_at karena dokumen masih perlu diproses
-                // $this->processed_at = now();
-            } elseif ($this->inbox_approval_for === 'Perpajakan') {
-                $this->sent_to_perpajakan_at = now();
-                // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
-                $this->deadline_at = null;
-                $this->deadline_days = null;
-                $this->deadline_note = null;
-                $this->deadline_perpajakan_at = null;
-                $this->deadline_perpajakan_days = null;
-                $this->deadline_perpajakan_note = null;
-            } elseif ($this->inbox_approval_for === 'Akutansi') {
-                // FIX: Gunakan alur yang sama dengan Perpajakan (field valid)
-                $this->sent_to_perpajakan_at = now();
-                // Clear deadline untuk memastikan dokumen terlock sampai deadline di-set
-                $this->deadline_at = null;
-                $this->deadline_days = null;
-                $this->deadline_note = null;
-                $this->deadline_perpajakan_at = null;
-                $this->deadline_perpajakan_days = null;
-                $this->deadline_perpajakan_note = null;
+
+            if (isset($statusMap[$roleCode])) {
+                // Update status only if it makes sense (don't overwrite 'completed' etc)
+                // This is a loose fallback
+                $this->status = $statusMap[$roleCode];
             }
-        } else {
-            // Fallback ke status original jika role tidak dikenali
-            $this->status = $this->inbox_original_status ?? 'diterima';
         }
 
         $this->save();
 
-        // Log approval
-        $performedBy = 'System';
-        $approvedBy = 'System';
-        if (auth()->check() && auth()->user()) {
-            $user = auth()->user();
-            $performedBy = $user->name ?? $user->role ?? 'System';
-            $approvedBy = $user->name ?? $user->role ?? 'System';
-        }
-        
-        DokumenActivityLog::create([
-            'dokumen_id' => $this->id,
-            'stage' => $this->inbox_approval_for,
-            'action' => 'inbox_approved',
-            'action_description' => "Dokumen disetujui di inbox {$this->inbox_approval_for}",
-            'performed_by' => $performedBy,
-            'action_at' => now(),
-            'details' => [
-                'approved_by' => $approvedBy,
-            ]
-        ]);
-
-        // Fire event
-        event(new \App\Events\DocumentApprovedInbox($this));
+        // Fire event (might be redundant but safe)
+        // Removed here as it is fired in approveFromRoleInbox
+        // event(new \App\Events\DocumentApprovedInbox($this, $roleCode));
     }
 
     /**
      * Reject document from inbox
      * Updated to use last_action_status instead of overwriting global status
      */
+    /**
+     * Reject document from inbox
+     * Refactored to use new DokumenStatus system
+     */
     public function rejectInbox($reason)
     {
-        // Simpan recipient role sebelum di-clear
-        $inboxRecipient = $this->inbox_approval_for;
-        
-        $this->inbox_approval_status = 'rejected';
-        $this->inbox_approval_reason = $reason;
-        $this->inbox_approval_responded_at = now();
+        // Find pending status to determine which role is rejecting
+        $pendingStatus = $this->roleStatuses()
+            ->where('status', DokumenStatus::STATUS_PENDING)
+            ->first();
 
-        // Set last_action_status based on who rejected (for role-based visibility)
+        // If no pending status, check who is current_handler to guess who is rejecting
+        // This is a fallback
+        $roleCode = $pendingStatus ? $pendingStatus->role_code : strtolower($this->current_handler ?? 'unknown');
+
+        // Delegate to new method
+        // Note: rejectFromRoleInbox returns legacy struct, we ignore it here
+        // Corrected args: roleCode first, then reason
+        $this->rejectFromRoleInbox($roleCode, $reason);
+
+        // Update legacy columns for backward compatibility / visibility
         $rejectionStatusMap = [
-            'IbuB' => 'rejected_by_reviewer',
-            'Perpajakan' => 'rejected_by_tax',
-            'Akutansi' => 'rejected_by_accounting',
+            'ibub' => 'rejected_by_reviewer',
+            'perpajakan' => 'rejected_by_tax',
+            'akutansi' => 'rejected_by_accounting',
+            'pembayaran' => 'rejected',
         ];
-        $this->last_action_status = $rejectionStatusMap[$inboxRecipient] ?? 'rejected';
-        
-        // Update current_stage to reflect rejection
-        // Keep current_stage to show where rejection happened
+
+        $this->last_action_status = $rejectionStatusMap[$roleCode] ?? 'rejected';
+
+        // Update current_stage
         $stageMap = [
-            'IbuB' => 'reviewer',
-            'Perpajakan' => 'tax',
-            'Akutansi' => 'accounting',
+            'ibub' => 'reviewer',
+            'perpajakan' => 'tax',
+            'akutansi' => 'accounting',
+            'pembayaran' => 'payment',
         ];
-        $this->current_stage = $stageMap[$inboxRecipient] ?? $this->current_stage;
+        if (isset($stageMap[$roleCode])) {
+            $this->current_stage = $stageMap[$roleCode];
+        }
 
-        // Tentukan pengirim asli berdasarkan inbox_approval_for
-        // Jika ditolak dari IbuB, kembali ke IbuA
-        // Jika ditolak dari Perpajakan, kembali ke IbuB
-        // Jika ditolak dari Akutansi, kembali ke IbuB
-        $originalSender = null;
-        $returnStatus = null;
-        
-        if ($inboxRecipient === 'IbuB') {
-            // Ditolak dari IbuB, kembali ke IbuA
-            $originalSender = 'ibuA';
-            $returnStatus = 'returned_to_ibua';
-            $this->returned_to_ibua_at = now();
-        } elseif ($inboxRecipient === 'Perpajakan') {
-            // Ditolak dari Perpajakan, kembali ke IbuB
+        // Return logic (Legacy)
+        // IbuB -> IbuA
+        // Perpajakan -> IbuB
+        // Akutansi -> IbuB
+        $originalSender = 'ibuA';
+        $returnStatus = 'returned_to_ibua';
+
+        if ($roleCode === 'perpajakan' || $roleCode === 'akutansi') {
             $originalSender = 'ibuB';
             $returnStatus = 'returned_to_department';
             $this->department_returned_at = now();
-            $this->target_department = 'perpajakan';
+            $this->target_department = $roleCode;
             $this->department_return_reason = $reason;
-        } elseif ($inboxRecipient === 'Akutansi') {
-            // Ditolak dari Akutansi, kembali ke IbuB (pengirim asli)
-            $originalSender = 'ibuB';
-            $returnStatus = 'returned_to_department';
-            $this->department_returned_at = now();
-            $this->target_department = 'akutansi';
-            $this->department_return_reason = $reason;
-        } else {
-            // Fallback: gunakan created_by
-            $originalSender = $this->created_by ?? 'ibuA';
-            if ($originalSender === 'ibuA') {
-                $returnStatus = 'returned_to_ibua';
-                $this->returned_to_ibua_at = now();
-            } else {
-                $returnStatus = $this->inbox_original_status ?? 'draft';
-            }
-        }
-        
-        // Kembalikan ke pengirim dengan status yang sesuai
-        // IMPORTANT: Only update status if rejected by Reviewer (IbuB)
-        // For other rejections, keep the status but use last_action_status for visibility
-        if ($inboxRecipient === 'IbuB') {
-            // If Reviewer rejects, update status to returned_to_ibua
-            $this->current_handler = $originalSender;
-            $this->status = $returnStatus;
-        } else {
-            // If Tax/Accounting rejects, DON'T overwrite global status
-            // Use last_action_status for role-based visibility instead
-            // Only update current_handler to return to sender
-            $this->current_handler = $originalSender;
-            // Keep current status, but last_action_status will show rejection
-            // This way, Sender sees "Sedang Proses" while Reviewer sees "Ditolak Tax"
         }
 
-        // JANGAN clear inbox_approval_for dan inbox_approval_sent_at
-        // Biarkan tetap ada agar bisa ditampilkan sebagai "dokumen ditolak, alasan"
-        // Hanya clear jika dokumen dikirim kembali ke inbox (di method sendToInbox)
+        $this->current_handler = $originalSender;
+        $this->status = $returnStatus;
 
         $this->save();
 
-        // Log rejection
-        $performedBy = 'System';
-        $rejectedBy = 'System';
-        if (auth()->check() && auth()->user()) {
-            $user = auth()->user();
-            $performedBy = $user->name ?? $user->role ?? 'System';
-            $rejectedBy = $user->name ?? $user->role ?? 'System';
-        }
-        
-        DokumenActivityLog::create([
-            'dokumen_id' => $this->id,
-            'stage' => $inboxRecipient ?? 'inbox',
-            'action' => 'inbox_rejected',
-            'action_description' => "Dokumen ditolak di inbox {$inboxRecipient} dan dikembalikan ke {$originalSender}. Alasan: {$reason}",
-            'performed_by' => $performedBy,
-            'action_at' => now(),
-            'details' => [
-                'rejection_reason' => $reason,
-                'rejected_by' => $rejectedBy,
-                'returned_to' => $originalSender,
-                'original_inbox_recipient' => $inboxRecipient,
-            ]
-        ]);
-
-        // Fire event
-        event(new \App\Events\DocumentRejectedInbox($this, $reason));
+        // Event firing
+        // Removed here as it is fired in rejectFromRoleInbox
+        // event(new \App\Events\DocumentRejectedInbox($this, $reason, $roleCode));
     }
 
     /**
@@ -861,7 +779,7 @@ class Dokumen extends Model
         if (!$userRole && auth()->check()) {
             $user = auth()->user();
             $userRole = $user->role ?? null;
-            
+
             // Normalize role
             if ($userRole) {
                 $roleMap = [
@@ -890,6 +808,13 @@ class Dokumen extends Model
 
         // SENDER VIEW (Ibu Tarapul / ibuA)
         if ($userRole === 'ibuA') {
+            // PRIORITY CHECK: If approved by reviewer (Ibu Yuni) - status becomes "Terkirim" for sender
+            // This check must be done FIRST before any other status checks
+            // to ensure documents approved by Ibu Yuni always show as "Terkirim" for Ibu Tarapul
+            if ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'approved') {
+                return 'Terkirim';
+            }
+
             // Check if document has passed sender stage (milestone check)
             if ($this->sent_to_ibub_at) {
                 // Document has been sent to reviewer
@@ -903,42 +828,39 @@ class Dokumen extends Model
                         return 'Sedang Proses (Reviewer/Accounting)';
                     }
                 }
-                
+
                 // If document is at reviewer stage waiting approval
                 if ($this->status === 'waiting_reviewer_approval' || ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'pending')) {
                     return 'Menunggu Approval Reviewer';
                 }
-                
-                // If approved by reviewer (Ibu Yuni) - status becomes "Terkirim" for sender
-                if ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'approved') {
-                    return 'Terkirim';
-                }
-                
+
                 // If moved to next stages (Tax/Accounting) after reviewer approval
                 if ($this->status === 'sent_to_perpajakan' || $this->status === 'sent_to_akutansi') {
                     return 'Sedang Proses';
                 }
-                
-                // If status is 'sedang diproses' but not yet approved by reviewer, check inbox status
+
+                // If status is 'sedang diproses', check inbox status
+                // Note: This should not return 'Sedang Proses' if already approved (handled above)
                 if ($this->status === 'sedang diproses') {
-                    // If inbox was approved, it means reviewer already approved
+                    // Double check: if inbox was approved, it means reviewer already approved
                     if ($this->inbox_approval_status === 'approved' && $this->inbox_approval_for === 'IbuB') {
                         return 'Terkirim';
                     }
-                    return 'Sedang Proses';
+                    // Only show 'Sedang Proses' if NOT yet approved
+                    return 'Menunggu Approval Reviewer';
                 }
-                
+
                 // If returned to sender
                 if ($this->status === 'returned_to_ibua') {
                     return 'Dikembalikan untuk Revisi';
                 }
-                
+
                 // If completed
                 if ($this->status === 'selesai' || $this->status === 'completed') {
                     return 'Selesai';
                 }
             }
-            
+
             // Default status mapping for sender
             $senderStatusMap = [
                 'draft' => 'Draft',
@@ -949,20 +871,32 @@ class Dokumen extends Model
                 'selesai' => 'Selesai',
                 'completed' => 'Selesai',
             ];
-            
+
             // Check if status exists in map
             if (isset($senderStatusMap[$this->status])) {
                 return $senderStatusMap[$this->status];
             }
-            
+
             // For 'sedang diproses', check if it's after reviewer approval
             if ($this->status === 'sedang diproses') {
-                if ($this->inbox_approval_status === 'approved' && $this->inbox_approval_for === 'IbuB') {
+                // If inbox was approved by Ibu Yuni, show as "Terkirim"
+                $ibuBStatus = $this->getStatusForRole('ibub');
+                if ($ibuBStatus && $ibuBStatus->status === 'approved') {
                     return 'Terkirim';
                 }
-                return 'Sedang Proses';
+                // Otherwise, it's still waiting for approval
+                return 'Menunggu Approval Reviewer';
             }
-            
+
+            // Final fallback: if document was sent to IbuB but status is unclear, check approval
+            if ($this->inbox_approval_for === 'IbuB') {
+                if ($this->inbox_approval_status === 'approved') {
+                    return 'Terkirim';
+                } elseif ($this->inbox_approval_status === 'pending') {
+                    return 'Menunggu Approval Reviewer';
+                }
+            }
+
             return 'Sedang Proses';
         }
 
@@ -972,21 +906,21 @@ class Dokumen extends Model
             if ($this->status === 'waiting_reviewer_approval' || ($this->inbox_approval_for === 'IbuB' && $this->inbox_approval_status === 'pending')) {
                 return 'Menunggu Approval';
             }
-            
+
             // Check if there's rejection from later stages
             if ($this->last_action_status === 'rejected_by_tax') {
                 return 'Ditolak Tax (Perlu Revisi)';
             }
-            
+
             if ($this->last_action_status === 'rejected_by_accounting') {
                 return 'Ditolak Accounting (Perlu Revisi)';
             }
-            
+
             // If approved and moved forward
             if ($this->status === 'sedang diproses' || $this->status === 'sent_to_perpajakan' || $this->status === 'sent_to_akutansi') {
                 return 'Terkirim/Approved';
             }
-            
+
             // Reviewer-specific status mapping
             $reviewerStatusMap = [
                 'waiting_reviewer_approval' => 'Menunggu Approval',
@@ -996,7 +930,7 @@ class Dokumen extends Model
                 'sent_to_akutansi' => 'Terkirim ke Accounting',
                 'returned_to_ibub' => 'Dikembalikan',
             ];
-            
+
             return $reviewerStatusMap[$this->status] ?? $this->getStatusDisplay();
         }
 
@@ -1006,14 +940,14 @@ class Dokumen extends Model
             if ($this->inbox_approval_for === 'Perpajakan' && $this->inbox_approval_status === 'pending') {
                 return 'Menunggu Approval';
             }
-            
+
             // Tax-specific status mapping
             $taxStatusMap = [
                 'sent_to_perpajakan' => 'Sedang Diproses',
                 'sedang diproses' => 'Sedang Diproses',
                 'returned_to_department' => 'Dikembalikan',
             ];
-            
+
             return $taxStatusMap[$this->status] ?? $this->getStatusDisplay();
         }
 
@@ -1023,14 +957,14 @@ class Dokumen extends Model
             if ($this->inbox_approval_for === 'Akutansi' && $this->inbox_approval_status === 'pending') {
                 return 'Menunggu Approval';
             }
-            
+
             // Accounting-specific status mapping
             $accountingStatusMap = [
                 'sent_to_akutansi' => 'Sedang Diproses',
                 'sedang diproses' => 'Sedang Diproses',
                 'returned_to_department' => 'Dikembalikan',
             ];
-            
+
             return $accountingStatusMap[$this->status] ?? $this->getStatusDisplay();
         }
 
@@ -1048,11 +982,11 @@ class Dokumen extends Model
         }
 
         $user = auth()->user();
-        
+
         if (isset($user->role)) {
             return strtolower($user->role);
         }
-        
+
         return null;
     }
 

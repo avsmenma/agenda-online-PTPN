@@ -16,13 +16,14 @@ use App\Models\DocumentTracking;
 
 class DashboardAkutansiController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         // Get all documents that have been assigned to akutansi at any point
         // Include documents sent to pembayaran (they should still appear in akutansi list)
-        $akutansiDocs = Dokumen::where(function($query) {
+        $akutansiDocs = Dokumen::where(function ($query) {
             $query->where('current_handler', 'akutansi')
-                  ->orWhere('status', 'sent_to_akutansi')
-                  ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
         })->get();
 
         // Calculate accurate statistics based on actual workflow using existing fields
@@ -43,20 +44,20 @@ class DashboardAkutansiController extends Controller
             ->count();
 
         $totalDikembalikan = $akutansiDocs
-            ->where(function($doc) {
+            ->where(function ($doc) {
                 return in_array($doc->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']);
             })
             ->count();
 
         // Total Dikirim: Documents that have been completed and are no longer handled by akutansi
         $totalDikirim = Dokumen::where('status', 'selesai')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('current_handler', '!=', 'akutansi')
-                      ->orWhereNull('current_handler');
+                    ->orWhereNull('current_handler');
             })
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('status', 'sent_to_akutansi')
-                      ->orWhere('current_handler', 'akutansi');
+                    ->orWhere('current_handler', 'akutansi');
             })
             ->count();
 
@@ -90,41 +91,43 @@ class DashboardAkutansiController extends Controller
     {
         try {
             $lastChecked = $request->input('last_checked', 0);
-            
+
             // Convert timestamp to Carbon instance for proper comparison
             // If lastChecked is 0 or very old, use current time as baseline
             // This ensures we only show notifications for documents sent AFTER the page loads
-            $lastCheckedDate = $lastChecked > 0 
+            $lastCheckedDate = $lastChecked > 0
                 ? \Carbon\Carbon::createFromTimestamp($lastChecked)
                 : \Carbon\Carbon::now(); // Use current time as baseline for first load
 
             // Cek semua dokumen akutansi yang baru dikirim
             // Filter dokumen yang baru dikirim ke akutansi setelah lastChecked
             // Use updated_at for comparison since it's updated when document is sent
-            $newDocuments = Dokumen::where(function($query) {
-                    $query->where('current_handler', 'akutansi')
-                          ->where('status', 'sent_to_akutansi');
-                })
+            $newDocuments = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'akutansi')
+                    ->where('status', 'sent_to_akutansi');
+            })
                 ->where('updated_at', '>', $lastCheckedDate)
                 ->latest('updated_at')
+                ->with('roleData')
                 ->take(10)
                 ->get();
 
-            $totalDocuments = Dokumen::where(function($query) {
-                    $query->where('current_handler', 'akutansi')
-                          ->orWhere('status', 'sent_to_akutansi');
-                })->count();
+            $totalDocuments = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'akutansi')
+                    ->orWhere('status', 'sent_to_akutansi');
+            })->count();
 
             return response()->json([
                 'has_updates' => $newDocuments->count() > 0,
                 'new_count' => $newDocuments->count(),
                 'total_documents' => $totalDocuments,
-                'new_documents' => $newDocuments->map(function($doc) {
+                'new_documents' => $newDocuments->map(function ($doc) {
                     // Use sent_to_akutansi_at if available, otherwise use updated_at
-                    $sentAt = $doc->sent_to_akutansi_at 
-                        ? $doc->sent_to_akutansi_at->format('d/m/Y H:i')
+                    $roleData = $doc->getDataForRole('akutansi');
+                    $sentAt = $roleData?->received_at
+                        ? $roleData->received_at->format('d/m/Y H:i')
                         : $doc->updated_at->format('d/m/Y H:i');
-                    
+
                     return [
                         'id' => $doc->id,
                         'nomor_agenda' => $doc->nomor_agenda,
@@ -147,46 +150,47 @@ class DashboardAkutansiController extends Controller
         }
     }
 
-    public function dokumens(Request $request){
+    public function dokumens(Request $request)
+    {
         // Akutansi sees:
         // 1. Documents currently handled by Akutansi (active)
         // 2. Documents that have been sent to Akutansi (tracking)
         // 3. Documents that have been sent to Pembayaran (tetap muncul untuk tracking)
-        $query = Dokumen::where(function($q) {
-                $q->where('current_handler', 'akutansi')
-                  ->orWhere('status', 'sent_to_akutansi')
-                  ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
-            })
+        $query = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'akutansi')
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
+        })
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
-            $search = trim((string)$request->search);
-            $query->where(function($q) use ($search) {
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
                 // Text fields
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
-                  ->orWhere('bagian', 'like', '%' . $search . '%')
-                  ->orWhere('kategori', 'like', '%' . $search . '%')
-                  ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
-                  ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
-                  ->orWhere('no_spk', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%')
-                  ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
-                
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                    ->orWhere('bagian', 'like', '%' . $search . '%')
+                    ->orWhere('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                    ->orWhere('no_spk', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
+
                 // Search in nilai_rupiah - handle various formats
                 $numericSearch = preg_replace('/[^0-9]/', '', $search);
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
             })
-            ->orWhereHas('dibayarKepadas', function($q) use ($search) {
-                $q->where('nama_penerima', 'like', '%' . $search . '%');
-            });
+                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
+                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+                });
         }
 
         // Filter by year
@@ -214,8 +218,8 @@ class DashboardAkutansiController extends Controller
 
         // Get suggestions if no results found
         $suggestions = [];
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '' && $dokumens->total() == 0) {
-            $searchTerm = trim((string)$request->search);
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
+            $searchTerm = trim((string) $request->search);
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'akutansi');
         }
 
@@ -252,13 +256,13 @@ class DashboardAkutansiController extends Controller
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
-        
+
         // Filter out 'status' and 'keterangan' from selectedColumns if present
-        $selectedColumns = array_filter($selectedColumns, function($col) {
+        $selectedColumns = array_filter($selectedColumns, function ($col) {
             return $col !== 'status' && $col !== 'keterangan';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
-        
+
         // If columns are provided in request, save to database and session
         if ($request->has('columns') && !empty($selectedColumns)) {
             // Save to database (permanent)
@@ -281,25 +285,25 @@ class DashboardAkutansiController extends Controller
                 'nilai_rupiah',
                 'nomor_mirror'
             ];
-            
+
             if ($user && isset($user->table_columns_preferences['akutansi'])) {
                 $selectedColumns = $user->table_columns_preferences['akutansi'];
             } else {
                 // Fallback to session if available
                 $selectedColumns = session('akutansi_dokumens_table_columns', $defaultColumns);
             }
-            
+
             // Filter out 'status' and 'keterangan' if they exist
-            $selectedColumns = array_filter($selectedColumns, function($col) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
-            
+
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
                 $selectedColumns = $defaultColumns;
             }
-            
+
             // Update session to keep it in sync
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         }
@@ -318,7 +322,8 @@ class DashboardAkutansiController extends Controller
         return view('akutansi.dokumens.daftarAkutansi', $data);
     }
 
-    public function createDokumen(){
+    public function createDokumen()
+    {
         $data = array(
             "title" => "Tambah Akutansi",
             "module" => "akutansi",
@@ -329,12 +334,14 @@ class DashboardAkutansiController extends Controller
         return view('akutansi.dokumens.tambahAkutansi', $data);
     }
 
-    public function storeDokumen(Request $request){
+    public function storeDokumen(Request $request)
+    {
         // Implementation for storing document
         return redirect()->route('dokumensAkutansi.index')->with('success', 'Akutansi berhasil ditambahkan');
     }
 
-    public function editDokumen($id){
+    public function editDokumen($id)
+    {
         // Find the document
         $dokumen = Dokumen::findOrFail($id);
 
@@ -348,10 +355,11 @@ class DashboardAkutansiController extends Controller
         $dokumen->load(['dokumenPos', 'dokumenPrs']);
 
         // Check if document has been to perpajakan
-        $hasPerpajakanData = !empty($dokumen->sent_to_perpajakan_at) || 
-                            !empty($dokumen->processed_perpajakan_at) ||
-                            !empty($dokumen->no_faktur) ||
-                            !empty($dokumen->npwp);
+        $perpajakanData = $dokumen->getDataForRole('perpajakan');
+        $hasPerpajakanData = ($perpajakanData && $perpajakanData->received_at) ||
+            !empty($dokumen->processed_perpajakan_at) ||
+            !empty($dokumen->no_faktur) ||
+            !empty($dokumen->npwp);
 
         $data = array(
             "title" => "Edit Akutansi",
@@ -400,7 +408,7 @@ class DashboardAkutansiController extends Controller
             if (empty($request->nilai_rupiah)) {
                 $request->merge(['nilai_rupiah' => $dokumen->nilai_rupiah ?? 0]);
             }
-            
+
             // Merge request data with existing document data to ensure all required fields are present
             // Use existing document values as defaults for required fields if not provided
             if (empty($request->nomor_spp)) {
@@ -530,7 +538,8 @@ class DashboardAkutansiController extends Controller
         }
     }
 
-    public function destroyDokumen($id){
+    public function destroyDokumen($id)
+    {
         // Implementation for deleting document
         return redirect()->route('dokumensAkutansi.index')->with('success', 'Akutansi berhasil dihapus');
     }
@@ -580,8 +589,8 @@ class DashboardAkutansiController extends Controller
             ]);
 
             $deadlineDays = (int) $validated['deadline_days'];
-            $deadlineNote = isset($validated['deadline_note']) && trim($validated['deadline_note']) !== '' 
-                ? trim($validated['deadline_note']) 
+            $deadlineNote = isset($validated['deadline_note']) && trim($validated['deadline_note']) !== ''
+                ? trim($validated['deadline_note'])
                 : null;
 
             // Update using transaction
@@ -645,13 +654,43 @@ class DashboardAkutansiController extends Controller
         }
     }
 
-    public function pengembalian(){
+    public function pengembalian(Request $request)
+    {
+        // Get all documents that have been returned by akutansi
+        $query = Dokumen::whereNotNull('returned_from_akutansi_at')
+            ->where('status', 'returned_to_department')
+            ->with(['dokumenPos', 'dokumenPrs'])
+            ->orderBy('returned_from_akutansi_at', 'desc');
+
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
+
+        // Calculate statistics
+        $totalReturned = Dokumen::whereNotNull('returned_from_akutansi_at')
+            ->where('status', 'returned_to_department')
+            ->count();
+
+        $totalPending = Dokumen::where('current_handler', 'ibuB')
+            ->where('status', 'returned_to_department')
+            ->whereNotNull('returned_from_akutansi_at')
+            ->whereNull('processed_akutansi_at')
+            ->count();
+
+        $totalCompleted = Dokumen::whereNotNull('returned_from_akutansi_at')
+            ->where('status', 'returned_to_department')
+            ->whereNotNull('processed_akutansi_at')
+            ->count();
+
         $data = array(
-            "title" => "Daftar Pengembalian Akutansi",
+            "title" => "Daftar Pengembalian Dokumen Akutansi ke team verifikasi",
             "module" => "akutansi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuDaftarDokumenDikembalikan' => 'Active',
+            'dokumens' => $dokumens,
+            'totalReturned' => $totalReturned,
+            'totalPending' => $totalPending,
+            'totalCompleted' => $totalCompleted,
         );
         return view('akutansi.dokumens.pengembalianAkutansi', $data);
     }
@@ -703,9 +742,18 @@ class DashboardAkutansiController extends Controller
         // Get monthly statistics
         $monthlyStats = [];
         $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
         ];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -743,7 +791,7 @@ class DashboardAkutansiController extends Controller
             ->toArray();
 
         if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
+            $availableYears = [(int) date('Y')];
         }
 
         // Get document count per bagian for the selected year (only documents that reached akutansi)
@@ -765,9 +813,9 @@ class DashboardAkutansiController extends Controller
             'module' => 'akutansi',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
-            'selectedYear' => (int)$selectedYear,
+            'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
-            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
@@ -779,7 +827,8 @@ class DashboardAkutansiController extends Controller
         return view('akutansi.analytics', $data);
     }
 
-    public function diagram(){
+    public function diagram()
+    {
         $data = array(
             "title" => "Diagram Akutansi",
             "module" => "akutansi",
@@ -925,10 +974,10 @@ class DashboardAkutansiController extends Controller
         $html .= '</div>';
 
         // Check if document has perpajakan data
-        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) || 
-                             !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
-                             !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
-                             !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
+        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) ||
+            !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
+            !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
+            !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
 
         if ($hasPerpajakanData || $dokumen->status == 'sent_to_akutansi') {
             // Visual Separator for Perpajakan Data
@@ -1026,7 +1075,8 @@ class DashboardAkutansiController extends Controller
         }
 
         if (filter_var($link, FILTER_VALIDATE_URL)) {
-            return sprintf('<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
+            return sprintf(
+                '<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
                 htmlspecialchars($link),
                 htmlspecialchars($link)
             );
@@ -1102,7 +1152,7 @@ class DashboardAkutansiController extends Controller
                     'pembayaran',
                     'akutansi'
                 );
-                
+
                 // Log activity: dokumen masuk/diterima di stage pembayaran
                 \App\Helpers\ActivityLogHelper::logReceived(
                     $dokumen,
@@ -1146,25 +1196,37 @@ class DashboardAkutansiController extends Controller
     private function getSearchSuggestions($searchTerm, $year = null, $handler = 'akutansi'): array
     {
         $suggestions = [];
-        
+
         // Get all unique values from relevant fields
-        $baseQuery = Dokumen::where(function($q) use ($handler) {
+        $baseQuery = Dokumen::where(function ($q) use ($handler) {
             $q->where('current_handler', $handler)
-              ->orWhere('status', 'sent_to_akutansi');
+                ->orWhere('status', 'sent_to_akutansi');
         });
-        
+
         if ($year) {
             $baseQuery->where('tahun', $year);
         }
-        
+
         // Collect all searchable values
         $allValues = collect();
-        
+
         // Get from main fields
-        $fields = ['nomor_agenda', 'nomor_spp', 'uraian_spp', 'nama_pengirim', 'bagian', 
-                   'kategori', 'jenis_dokumen', 'no_berita_acara', 'no_spk', 
-                   'nomor_mirror', 'nomor_miro', 'keterangan', 'dibayar_kepada'];
-        
+        $fields = [
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nama_pengirim',
+            'bagian',
+            'kategori',
+            'jenis_dokumen',
+            'no_berita_acara',
+            'no_spk',
+            'nomor_mirror',
+            'nomor_miro',
+            'keterangan',
+            'dibayar_kepada'
+        ];
+
         foreach ($fields as $field) {
             $values = $baseQuery->whereNotNull($field)
                 ->distinct()
@@ -1173,34 +1235,126 @@ class DashboardAkutansiController extends Controller
                 ->toArray();
             $allValues = $allValues->merge($values);
         }
-        
+
         // Get from dibayarKepadas relation
-        $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function($q) use ($handler, $year) {
-            $q->where(function($subQ) use ($handler) {
+        $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function ($q) use ($handler, $year) {
+            $q->where(function ($subQ) use ($handler) {
                 $subQ->where('current_handler', $handler)
-                     ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             });
             if ($year) {
                 $q->where('tahun', $year);
             }
         })
-        ->distinct()
-        ->pluck('nama_penerima')
-        ->filter()
-        ->toArray();
-        
+            ->distinct()
+            ->pluck('nama_penerima')
+            ->filter()
+            ->toArray();
+
         $allValues = $allValues->merge($dibayarKepadaValues);
-        
+
         // Remove duplicates and find suggestions
         $uniqueValues = $allValues->unique()->values()->toArray();
         $foundSuggestions = SearchHelper::findSuggestions($searchTerm, $uniqueValues, 60.0, 5);
-        
+
         // Format suggestions
         foreach ($foundSuggestions as $suggestion) {
             $suggestions[] = $suggestion['value'];
         }
-        
+
         return $suggestions;
+    }
+
+    /**
+     * Return document to IbuB
+     */
+    public function returnDocument(Request $request, Dokumen $dokumen)
+    {
+        // Only allow if current_handler is akutansi
+        if ($dokumen->current_handler !== 'akutansi') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen ini tidak dapat dikembalikan.'
+            ], 403);
+        }
+
+        // Validate the return reason
+        $validator = Validator::make($request->all(), [
+            'return_reason' => 'required|string|min:10|max:500',
+        ], [
+            'return_reason.required' => 'Alasan pengembalian harus diisi.',
+            'return_reason.min' => 'Alasan pengembalian minimal 10 karakter.',
+            'return_reason.max' => 'Alasan pengembalian maksimal 500 karakter.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            // Log before update
+            \Log::info('Returning document from akutansi', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'current_handler' => $dokumen->current_handler,
+                'current_status' => $dokumen->status,
+                'return_reason_length' => strlen($request->return_reason)
+            ]);
+
+            // Update all fields in a single call to avoid multiple queries and potential issues
+            $updateData = [
+                'status' => 'returned_to_department',
+                'current_handler' => 'ibuB',
+                'returned_from_akutansi_at' => now(),
+                'alasan_pengembalian' => $request->return_reason,
+                // Reset akutansi status since document is being returned
+                'nomor_miro' => null,
+                'deadline_at' => null,
+                'deadline_days' => null,
+                'deadline_note' => null,
+                // Clear sent timestamps
+                'sent_to_akutansi_at' => null,
+            ];
+
+            // Only set sent_to_ibub_at if it's null (first time entering IbuB)
+            // This preserves the original entry time for consistent ordering
+            if (is_null($dokumen->sent_to_ibub_at)) {
+                $updateData['sent_to_ibub_at'] = now();
+            }
+
+            $dokumen->update($updateData);
+
+            \DB::commit();
+
+            \Log::info('Document successfully returned from akutansi', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil dikembalikan ke Ibu Yuni.'
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error returning document from akutansi', [
+                'document_id' => $dokumen->id ?? 'unknown',
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengembalikan dokumen: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
 

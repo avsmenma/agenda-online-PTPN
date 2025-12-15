@@ -1392,18 +1392,20 @@
                 }
             }
             
-            $inboxRoles = ['ibuB', 'IbuB', 'Perpajakan', 'perpajakan', 'Akutansi', 'akutansi'];
+            $inboxRoles = ['ibuB', 'IbuB', 'Perpajakan', 'perpajakan', 'Akutansi', 'akutansi', 'Pembayaran', 'pembayaran'];
             $showInbox = in_array($currentUserRole, $inboxRoles);
             $inboxRoleForQuery = 'IbuB';
             if (in_array($currentUserRole, ['Perpajakan', 'perpajakan'])) {
                 $inboxRoleForQuery = 'Perpajakan';
             } elseif (in_array($currentUserRole, ['Akutansi', 'akutansi'])) {
                 $inboxRoleForQuery = 'Akutansi';
+            } elseif (in_array($currentUserRole, ['Pembayaran', 'pembayaran'])) {
+                $inboxRoleForQuery = 'Pembayaran';
             }
         @endphp
         
         @if($showInbox)
-            <a href="{{ url('/inbox') }}" class="{{ request()->routeIs('inbox.*') ? 'active' : '' }}">
+            <a href="{{ url('/inbox') }}" class="{{ request()->is('inbox') || request()->routeIs('inbox.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-inbox"></i>
                 Inbox
                 @php

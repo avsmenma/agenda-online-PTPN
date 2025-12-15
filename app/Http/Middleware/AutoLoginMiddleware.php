@@ -37,13 +37,25 @@ class AutoLoginMiddleware
 
         $userData = $roleMap[$role] ?? $roleMap['IbuA'];
 
-        // Find or create user
-        $user = User::firstOrCreate(
+        // Normalize role casing to match User::ROLES
+        $normalizedRole = match ($role) {
+            'ibuB', 'IbuB', 'Ibu B' => 'IbuB',
+            'IbuA', 'ibuA', 'Ibu A' => 'IbuA',
+            'pembayaran', 'Pembayaran' => 'Pembayaran',
+            'perpajakan', 'Perpajakan' => 'Perpajakan',
+            'akutansi', 'Akutansi' => 'Akutansi',
+            'admin', 'Admin' => 'Admin',
+            default => $role
+        };
+
+        // Find or create user - use updateOrCreate to fix existing user roles
+        $user = User::updateOrCreate(
             ['email' => $userData['email']],
             [
                 'name' => $userData['name'],
+                'username' => strtolower(str_replace(' ', '', $userData['name'])), // Generate username from name
                 'password' => bcrypt('password'), // Default password
-                'role' => strtolower($role),
+                'role' => $normalizedRole,
             ]
         );
 
@@ -51,7 +63,7 @@ class AutoLoginMiddleware
         Auth::login($user);
 
         // Store current role in session for layout
-        session(['current_role' => $role]);
+        session(['current_role' => $normalizedRole]);
 
         return $next($request);
     }

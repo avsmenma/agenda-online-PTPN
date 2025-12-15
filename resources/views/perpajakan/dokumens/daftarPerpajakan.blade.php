@@ -1006,6 +1006,41 @@
     justify-content: center;
   }
 
+  /* Hybrid Layout: Full-width button on top, row buttons below */
+  .action-buttons-hybrid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .action-buttons-hybrid .btn-full-width {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .action-buttons-hybrid .action-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .action-buttons-hybrid .action-row .btn-action {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn-kembalikan {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+
+  .btn-kembalikan:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    color: white;
+  }
+
   .btn-action {
     min-width: 44px;
     min-height: 44px;
@@ -1985,32 +2020,26 @@
             @endif
           </td>
           <td class="col-action" onclick="event.stopPropagation()">
-            <div class="action-buttons">
+            <div class="action-buttons-hybrid">
               @if($isLocked)
                 <!-- Locked state - tampilkan button Set Deadline -->
                 @unless($isSentToAkutansi)
-                  <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+                  <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
                     <i class="fa-solid fa-clock"></i>
                     <span>Set Deadline</span>
                   </button>
                 @endunless
               @elseif($isSentToAkutansi)
                 <!-- Document already sent - show sent status -->
-                <button class="btn-action btn-edit locked" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
+                <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
                   <i class="fa-solid fa-check-circle"></i>
                   <span>Terkirim</span>
                 </button>
               @else
                 <!-- Unlocked state - buttons enabled -->
-                <a href="{{ route('dokumensPerpajakan.edit', $dokumen->id) }}" title="Edit Dokumen">
-                  <button class="btn-action btn-edit">
-                    <i class="fa-solid fa-pen"></i>
-                    <span>Edit</span>
-                  </button>
-                </a>
                 <button
                   type="button"
-                  class="btn-action btn-send"
+                  class="btn-action btn-send btn-full-width"
                   onclick="handleSendToAkutansi({{ $dokumen->id }})"
                   data-doc-id="{{ $dokumen->id }}"
                   data-missing-fields="{{ e(implode('||', $missingPerpajakanFields)) }}"
@@ -2018,8 +2047,20 @@
                   @if(!$canSendToAkutansi) disabled @endif
                 >
                   <i class="fa-solid fa-paper-plane"></i>
-                  <span>Kirim</span>
+                  <span>Kirim Data</span>
                 </button>
+                <div class="action-row">
+                  <a href="{{ route('dokumensPerpajakan.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
+                    <button class="btn-action btn-edit" style="width: 100%;">
+                      <i class="fa-solid fa-pen"></i>
+                      <span>Edit</span>
+                    </button>
+                  </a>
+                  <button type="button" class="btn-action btn-kembalikan" style="flex: 1;" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan Dokumen ke Ibu Yuni">
+                    <i class="fa-solid fa-undo"></i>
+                    <span>Balik</span>
+                  </button>
+                </div>
               @endif
             </div>
           </td>
@@ -2913,7 +2954,114 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
+
+  // Character counter for return reason
+  const returnReasonTextarea = document.getElementById('returnReason');
+  const returnCharCount = document.getElementById('returnCharCount');
+  if (returnReasonTextarea && returnCharCount) {
+    returnReasonTextarea.addEventListener('input', function() {
+      const length = this.value.length;
+      returnCharCount.textContent = length;
+      if (length > 500) {
+        returnCharCount.style.color = '#dc3545';
+      } else {
+        returnCharCount.style.color = '#6c757d';
+      }
+    });
+  }
 });
+
+// Open Return Modal
+function openReturnModal(docId) {
+  document.getElementById('returnDocId').value = docId;
+  document.getElementById('returnReason').value = '';
+  document.getElementById('returnCharCount').textContent = '0';
+  const modal = new bootstrap.Modal(document.getElementById('returnModal'));
+  modal.show();
+}
+
+// Confirm Return
+function confirmReturn() {
+  const docId = document.getElementById('returnDocId').value;
+  const returnReason = document.getElementById('returnReason').value.trim();
+
+  if (!returnReason) {
+    const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+    document.getElementById('returnValidationWarningTitle').textContent = 'Alasan Pengembalian Wajib Diisi';
+    document.getElementById('returnValidationWarningMessage').textContent = 'Mohon isi alasan pengembalian sebelum melanjutkan.';
+    warningModal.show();
+    return;
+  }
+
+  if (returnReason.length < 10) {
+    const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+    document.getElementById('returnValidationWarningTitle').textContent = 'Alasan Pengembalian Terlalu Pendek';
+    document.getElementById('returnValidationWarningMessage').textContent = 'Alasan pengembalian minimal 10 karakter.';
+    warningModal.show();
+    return;
+  }
+
+  // Show confirmation modal
+  document.getElementById('returnConfirmationReason').textContent = returnReason;
+  const returnModal = bootstrap.Modal.getInstance(document.getElementById('returnModal'));
+  returnModal.hide();
+  
+  const confirmationModal = new bootstrap.Modal(document.getElementById('returnConfirmationModal'));
+  confirmationModal.show();
+
+  // Handle confirm button click
+  const confirmBtn = document.getElementById('confirmReturnBtn');
+  confirmBtn.onclick = function() {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
+
+    // Send return request
+    fetch(`/dokumensPerpajakan/${docId}/return`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        return_reason: returnReason
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const confirmationModalInstance = bootstrap.Modal.getInstance(document.getElementById('returnConfirmationModal'));
+      confirmationModalInstance.hide();
+
+      if (data.success) {
+        const successModal = new bootstrap.Modal(document.getElementById('returnSuccessModal'));
+        successModal.show();
+        
+        successModal._element.addEventListener('hidden.bs.modal', function() {
+          location.reload();
+        });
+      } else {
+        const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+        document.getElementById('returnValidationWarningTitle').textContent = 'Gagal Mengembalikan Dokumen';
+        document.getElementById('returnValidationWarningMessage').textContent = data.message || 'Terjadi kesalahan saat mengembalikan dokumen.';
+        warningModal.show();
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan';
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      const confirmationModalInstance = bootstrap.Modal.getInstance(document.getElementById('returnConfirmationModal'));
+      confirmationModalInstance.hide();
+      
+      const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+      document.getElementById('returnValidationWarningTitle').textContent = 'Terjadi Kesalahan';
+      document.getElementById('returnValidationWarningMessage').textContent = 'Terjadi kesalahan saat mengembalikan dokumen. Silakan coba lagi.';
+      warningModal.show();
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan';
+    });
+  };
+}
 </script>
 
 <script>

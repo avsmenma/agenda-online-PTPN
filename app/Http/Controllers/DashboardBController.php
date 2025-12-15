@@ -21,17 +21,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
+use Exception;
 
 class DashboardBController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         // Get statistics for IbuB (only documents with current_handler = ibuB)
 
         // 1. Total dokumen - semua dokumen yang terlihat oleh ibuB (same as dokumens() query)
-        $totalDokumen = Dokumen::where(function($q) {
-                $q->where('current_handler', 'ibuB')
-                  ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
-            })
+        $totalDokumen = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'ibuB')
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+        })
             ->where('status', '!=', 'returned_to_bidang')
             ->count();
 
@@ -61,10 +63,10 @@ class DashboardBController extends Controller
             ->count();
 
         // Get latest documents (5 most recent) for ibuB - same logic as dokumens() method
-        $dokumenTerbaru = Dokumen::where(function($q) {
-                $q->where('current_handler', 'ibuB')
-                  ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
-            })
+        $dokumenTerbaru = Dokumen::where(function ($q) {
+            $q->where('current_handler', 'ibuB')
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+        })
             ->where('status', '!=', 'returned_to_bidang')
             ->orderByRaw("CASE
                 WHEN current_handler = 'ibuB' AND status IN ('sent_to_ibub', 'sedang diproses') THEN 1
@@ -91,80 +93,113 @@ class DashboardBController extends Controller
         return view('ibuB.dashboardB', $data);
     }
 
-    public function dokumens(Request $request){
+    public function dokumens(Request $request)
+    {
         // IbuB sees:
         // 1. Documents with current_handler = ibuB (active documents) - including approved via universal approval
         // 2. Documents with status sedang_diproses and current_handler = ibuB (from universal approval)
         // 3. Documents that were sent to perpajakan/akutansi (for tracking)
         // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
-        // Exclude pending approval documents (they should use daftar masuk dokumen)
+        // Exclude pending approval documents (they should use inbox)
         // Optimized query - only load essential columns for list view
         // Base query - akan dimodifikasi oleh filter status jika ada
         $query = Dokumen::with('activityLogs')
             ->where('status', '!=', 'returned_to_bidang');
-        
+
         // Apply base filter only if no status filter is specified
         // If status filter is specified, it will override base filter
         if (!$request->has('status') || !$request->status) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('current_handler', 'ibuB')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('status', 'sedang_diproses')
+                    ->orWhere(function ($subQ) {
+                        $subQ->where('status', 'sedang_diproses')
                             ->where('current_handler', 'ibuB');
-                  })
-                  ->orWhereIn('status', ['sent_to_perpajakan']) // FIX: Hanya status yang valid
-                  ->orWhere(function($rejectQ) {
-                      // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
-                      $rejectQ->where('status', 'returned_to_department')
-                             ->whereIn('target_department', ['perpajakan', 'akutansi'])
-                             ->where('current_handler', 'ibuB');
-                  });
+                    })
+                    ->orWhereIn('status', ['sent_to_perpajakan']) // FIX: Hanya status yang valid
+                    ->orWhere(function ($rejectQ) {
+                        // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
+                        $rejectQ->where('status', 'returned_to_department')
+                            ->whereIn('target_department', ['perpajakan', 'akutansi'])
+                            ->where('current_handler', 'ibuB');
+                    });
             });
         }
-        
-        $query->orderByRaw("
-                COALESCE(sent_to_ibub_at, created_at) DESC,
-                id DESC
+
+        $query->leftJoin('dokumen_role_data as ibub_data', function ($join) {
+            $join->on('dokumens.id', '=', 'ibub_data.dokumen_id')
+                ->where('ibub_data.role_code', '=', 'ibub');
+        })
+            ->select('dokumens.*')
+            ->orderByRaw("
+                COALESCE(ibub_data.received_at, dokumens.created_at) DESC,
+                dokumens.id DESC
             ")
             ->select([
-                'id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah',
-                'status', 'created_at', 'sent_to_ibub_at', 'tanggal_masuk', 'tanggal_spp',
-                'keterangan', 'alasan_pengembalian', 'deadline_at', 'deadline_days', 'deadline_note',
-                'current_handler', 'bulan', 'tahun', 'kategori', 'kebun', 'jenis_dokumen',
-                'updated_at', 'tanggal_spk', 'tanggal_berakhir_spk', 'no_spk', 'nomor_mirror',
-                'nama_pengirim', 'jenis_pembayaran', 'dibayar_kepada', 'no_berita_acara',
-                'tanggal_berita_acara', 'inbox_approval_status', 'inbox_approval_reason',
-                'inbox_approval_for', 'inbox_approval_responded_at', 'created_by'
+                'id',
+                'nomor_agenda',
+                'nomor_spp',
+                'uraian_spp',
+                'nilai_rupiah',
+                'status',
+                'created_at',
+                'tanggal_masuk',
+                'tanggal_spp',
+                'keterangan',
+                'alasan_pengembalian',
+                'deadline_at',
+                'deadline_days',
+                'deadline_note',
+                'current_handler',
+                'bulan',
+                'tahun',
+                'kategori',
+                'kebun',
+                'jenis_dokumen',
+                'updated_at',
+                'tanggal_spk',
+                'tanggal_berakhir_spk',
+                'no_spk',
+                'nomor_mirror',
+                'nama_pengirim',
+                'jenis_pembayaran',
+                'dibayar_kepada',
+                'no_berita_acara',
+                'tanggal_berita_acara',
+                'inbox_approval_responded_at',
+                // 'inbox_approval_reason', // REMOVED
+                // 'inbox_approval_for', // REMOVED
+                // 'inbox_approval_status', // REMOVED
+                'created_by'
             ]);
 
         // Enhanced search functionality - search across all relevant fields
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '') {
-            $search = trim((string)$request->search);
-            $query->where(function($q) use ($search) {
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
                 // Text fields
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
-                  ->orWhere('bagian', 'like', '%' . $search . '%')
-                  ->orWhere('kategori', 'like', '%' . $search . '%')
-                  ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
-                  ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
-                  ->orWhere('no_spk', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                  ->orWhere('keterangan', 'like', '%' . $search . '%')
-                  ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
-                
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                    ->orWhere('bagian', 'like', '%' . $search . '%')
+                    ->orWhere('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                    ->orWhere('no_spk', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
+
                 // Search in nilai_rupiah - handle various formats
                 $numericSearch = preg_replace('/[^0-9]/', '', $search);
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
             })
-            ->orWhereHas('dibayarKepadas', function($q) use ($search) {
-                $q->where('nama_penerima', 'like', '%' . $search . '%');
-            });
+                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
+                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+                });
         }
 
         // Filter by year
@@ -179,44 +214,42 @@ class DashboardBController extends Controller
                 case 'deadline':
                     // Dokumen yang memiliki deadline (deadline_at tidak null) dan masih dalam scope Ibu Yuni
                     $query->whereNotNull('deadline_at')
-                          ->where('current_handler', 'ibuB')
-                          // Pastikan bukan status terkirim atau selesai
-                          ->whereNotIn('status', [
-                              'sent_to_perpajakan',
-                              'sent_to_akutansi',
-                              'sent_to_pembayaran',
-                              'selesai',
-                              'completed'
-                          ]);
+                        ->where('current_handler', 'ibuB')
+                        // Pastikan bukan status terkirim atau selesai
+                        ->whereNotIn('status', [
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'sent_to_pembayaran',
+                            'selesai',
+                            'completed'
+                        ]);
                     break;
                 case 'sedang_proses':
                     // Dokumen yang sedang diproses oleh Ibu Yuni - hanya status spesifik
                     $query->where('current_handler', 'ibuB')
-                          ->where(function($q) {
-                              // Status yang termasuk "sedang diproses"
-                              $q->where('status', 'sedang diproses')
+                        ->where(function ($q) {
+                            // Status yang termasuk "sedang diproses"
+                            $q->where('status', 'sedang diproses')
                                 ->orWhere('status', 'sedang_diproses')
                                 ->orWhere('status', 'waiting_reviewer_approval');
-                          })
-                          // Exclude dokumen yang sudah terkirim atau ditolak
-                          ->whereNotIn('status', [
-                              'sent_to_perpajakan', 
-                              'sent_to_akutansi', 
-                              'sent_to_pembayaran',
-                              'returned_to_department',
-                              'selesai', 
-                              'completed',
-                              'approved_ibub'
-                          ])
-                          // Exclude dokumen yang ditolak
-                          ->where(function($inboxQ) {
-                              $inboxQ->whereNull('inbox_approval_status')
-                                    ->orWhere('inbox_approval_status', '!=', 'rejected')
-                                    ->orWhere(function($approvedQ) {
-                                        $approvedQ->where('inbox_approval_status', 'pending')
-                                                 ->orWhere('inbox_approval_status', 'approved');
-                                    });
-                          });
+                        })
+                        // Exclude dokumen yang sudah terkirim atau ditolak
+                        ->whereNotIn('status', [
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'sent_to_pembayaran',
+                            'returned_to_department',
+                            'selesai',
+                            'completed',
+                            'approved_ibub'
+                        ])
+                        // Exclude dokumen yang ditolak
+                        ->where(function ($inboxQ) {
+                            $inboxQ->whereDoesntHave('roleStatuses', function ($q) {
+                                // Exclude rejected by ibuB
+                                $q->where('role_code', 'ibub')->where('status', 'rejected');
+                            });
+                        });
                     break;
                 case 'terkirim_perpajakan':
                     // Dokumen yang terkirim ke perpajakan - hanya status ini saja
@@ -228,21 +261,22 @@ class DashboardBController extends Controller
                     break;
                 case 'ditolak':
                     // Dokumen yang ditolak - hanya status ditolak saja
-                    $query->where(function($q) {
-                        $q->where(function($rejectQ) {
+                    $query->where(function ($q) {
+                        $q->where(function ($rejectQ) {
                             $rejectQ->where('status', 'returned_to_department')
-                                   ->orWhere('inbox_approval_status', 'rejected')
-                                   ->orWhereNotNull('inbox_approval_reason');
+                                ->orWhereHas('roleStatuses', function ($rq) {
+                                    $rq->where('role_code', 'ibub')->where('status', 'rejected');
+                                });
                         })
-                        ->where(function($handlerQ) {
-                            // Pastikan masih dalam scope Ibu Yuni
-                            $handlerQ->where('current_handler', 'ibuB')
-                                    ->orWhere(function($subQ) {
-                                        $subQ->where('status', 'returned_to_department')
-                                             ->whereIn('target_department', ['perpajakan', 'akutansi'])
-                                             ->where('current_handler', 'ibuB');
-                                    });
-                        });
+                            ->where(function ($handlerQ) {
+                                // Pastikan masih dalam scope Ibu Yuni
+                                $handlerQ->where('current_handler', 'ibuB')
+                                    ->orWhere(function ($subQ) {
+                                    $subQ->where('status', 'returned_to_department')
+                                        ->whereIn('target_department', ['perpajakan', 'akutansi'])
+                                        ->where('current_handler', 'ibuB');
+                                });
+                            });
                     });
                     break;
             }
@@ -275,8 +309,8 @@ class DashboardBController extends Controller
 
         // Get suggestions if no results found
         $suggestions = [];
-        if ($request->has('search') && !empty($request->search) && trim((string)$request->search) !== '' && $dokumens->total() == 0) {
-            $searchTerm = trim((string)$request->search);
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
+            $searchTerm = trim((string) $request->search);
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'ibuB');
         }
 
@@ -304,13 +338,13 @@ class DashboardBController extends Controller
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
-        
+
         // Filter out 'status' and 'keterangan' from selectedColumns if present
-        $selectedColumns = array_filter($selectedColumns, function($col) {
+        $selectedColumns = array_filter($selectedColumns, function ($col) {
             return $col !== 'status' && $col !== 'keterangan';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
-        
+
         // If columns are provided in request, save to database and session
         if ($request->has('columns') && !empty($selectedColumns)) {
             // Save to database (permanent)
@@ -333,25 +367,25 @@ class DashboardBController extends Controller
                 'nilai_rupiah',
                 'nomor_mirror'
             ];
-            
+
             if ($user && isset($user->table_columns_preferences['ibub'])) {
                 $selectedColumns = $user->table_columns_preferences['ibub'];
             } else {
                 // Fallback to session if available
                 $selectedColumns = session('ibub_dokumens_table_columns', $defaultColumns);
             }
-            
+
             // Filter out 'status' and 'keterangan' if they exist
-            $selectedColumns = array_filter($selectedColumns, function($col) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'status' && $col !== 'keterangan';
             });
             $selectedColumns = array_values($selectedColumns);
-            
+
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
                 $selectedColumns = $defaultColumns;
             }
-            
+
             // Update session to keep it in sync
             session(['ibub_dokumens_table_columns' => $selectedColumns]);
         }
@@ -373,7 +407,8 @@ class DashboardBController extends Controller
         return view('ibuB.dokumens.daftarDokumenB', $data);
     }
 
-    public function createDokumen(){
+    public function createDokumen()
+    {
         $data = array(
             "title" => "Tambah Dokumen B",
             "module" => "ibuB",
@@ -384,12 +419,14 @@ class DashboardBController extends Controller
         return view('ibuB.dokumens.tambahDokumenB', $data);
     }
 
-    public function storeDokumen(Request $request){
+    public function storeDokumen(Request $request)
+    {
         // Implementation for storing document
         return redirect()->route('dokumensB.index')->with('success', 'Dokumen berhasil ditambahkan');
     }
 
-    public function editDokumen(Dokumen $dokumen){
+    public function editDokumen(Dokumen $dokumen)
+    {
         // Only allow editing if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
             return redirect()->route('dokumensB.index')
@@ -410,7 +447,8 @@ class DashboardBController extends Controller
         return view('ibuB.dokumens.editDokumenB', $data);
     }
 
-    public function updateDokumen(Request $request, Dokumen $dokumen){
+    public function updateDokumen(Request $request, Dokumen $dokumen)
+    {
         // Only allow updating if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
             return redirect()->route('dokumensB.index')
@@ -473,9 +511,14 @@ class DashboardBController extends Controller
             $resetInboxRejection = false;
 
             // If document was rejected from inbox or returned, reset to "sedang diproses"
-            if ($dokumen->inbox_approval_status === 'rejected' || 
+            $ibuBStatus = $dokumen->getStatusForRole('ibub');
+            $isRejectedByIbuB = $ibuBStatus && $ibuBStatus->status === 'rejected';
+
+            if (
+                $isRejectedByIbuB ||
                 $dokumen->status === 'returned_to_department' ||
-                $dokumen->returned_from_perpajakan_at) {
+                $dokumen->returned_from_perpajakan_at
+            ) {
                 $newStatus = 'sedang diproses';
                 $resetInboxRejection = true;
             }
@@ -510,11 +553,15 @@ class DashboardBController extends Controller
 
             // Reset inbox rejection status if needed
             if ($resetInboxRejection) {
-                $updateData['inbox_approval_status'] = null;
-                $updateData['inbox_approval_reason'] = null;
-                $updateData['inbox_approval_responded_at'] = null;
-                $updateData['pengembalian_awaiting_fix'] = false;
+                // Clear DokumenStatus rejection for IbuB if resetting
+                $dokumenStatus = \App\Models\DokumenStatus::updateOrCreate(
+                    ['dokumen_id' => $dokumen->id, 'role_code' => 'ibub'],
+                    ['status' => 'pending'] // Atau status awal lain, e.g. 'pending' atau NULL jika perlu dihapus
+                );
+
+                // Reset role status fields kept on dokumen table (legacy sync)
                 $updateData['returned_from_perpajakan_at'] = null;
+                $updateData['pengembalian_awaiting_fix'] = false;
             }
 
             $dokumen->update($updateData);
@@ -549,8 +596,8 @@ class DashboardBController extends Controller
 
             // Check if document is returned document and redirect accordingly
             $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
-                                 $dokumen->returned_from_perpajakan_at ||
-                                 $dokumen->department_returned_at);
+                $dokumen->returned_from_perpajakan_at ||
+                $dokumen->department_returned_at);
 
             // Also check referer to be more accurate
             $referer = request()->header('referer');
@@ -589,11 +636,15 @@ class DashboardBController extends Controller
                 'is_ajax' => request()->ajax(),
             ]);
 
-            // Allow access if document was handled by ibuB or sent from ibuB
-            // Juga allow untuk dokumen yang di-reject dari inbox IbuB
             $allowedHandlers = ['ibuB', 'perpajakan', 'akutansi', 'ibuA'];
             $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'approved_ibub', 'returned_to_department', 'returned_to_bidang', 'returned_to_ibua'];
-            $isInboxRejected = ($dokumen->inbox_approval_for ?? null) == 'IbuB' && ($dokumen->inbox_approval_status ?? null) == 'rejected';
+
+            // Allow if rejected by IbuB
+            $isInboxRejected = false;
+            $ibuBStatus = $dokumen->getStatusForRole('ibub');
+            if ($ibuBStatus && $ibuBStatus->status === 'rejected') {
+                $isInboxRejected = true;
+            }
 
             if (!in_array($dokumen->current_handler ?? '', $allowedHandlers) && !in_array($dokumen->status ?? '', $allowedStatuses) && !$isInboxRejected) {
                 Log::warning('Access denied for document detail', [
@@ -647,10 +698,10 @@ class DashboardBController extends Controller
                         'nomor_mirror' => $dokumen->nomor_mirror,
                         'no_berita_acara' => $dokumen->no_berita_acara,
                         'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
-                        'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function($po) {
+                        'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {
                             return ['nomor_po' => $po->nomor_po ?? ''];
                         })->values() : [],
-                        'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function($pr) {
+                        'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function ($pr) {
                             return ['nomor_pr' => $pr->nomor_pr ?? ''];
                         })->values() : [],
                     ]
@@ -692,7 +743,7 @@ class DashboardBController extends Controller
                     'message' => 'Unexpected error occurred: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return response('<div class="text-center p-4 text-danger">Unexpected error occurred</div>', 500);
         }
     }
@@ -803,7 +854,7 @@ class DashboardBController extends Controller
 
         // Dates
         $dates = [
-            'Tanggal Dikirim ke Ibu Yuni' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d-m-Y H:i') : null,
+            'Tanggal Dikirim ke Ibu Yuni' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d-m-Y H:i') : null,
             'Tanggal Diproses' => $dokumen->processed_at ? $dokumen->processed_at->format('d-m-Y H:i') : null,
             'Tanggal Dikembalikan' => $dokumen->returned_to_ibua_at ? $dokumen->returned_to_ibua_at->format('d-m-Y H:i') : null,
         ];
@@ -851,61 +902,67 @@ class DashboardBController extends Controller
         return $html;
     }
 
-        public function destroyDokumen($id){
+    public function destroyDokumen($id)
+    {
         // Implementation for deleting document
         return redirect()->route('dokumensB.index')->with('success', 'Dokumen berhasil dihapus');
     }
 
-    public function pengembalian(Request $request){
+    public function pengembalian(Request $request)
+    {
         // IbuB sees documents that were returned to department (unified return page)
         // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
         $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas'])
-            ->where(function($q) {
+            ->where(function ($q) {
                 // Dokumen yang dikembalikan dari department/bagian
-                $q->where(function($subQ) {
+                $q->where(function ($subQ) {
                     $subQ->where('current_handler', 'ibuB')
-                         ->where(function($statusQ) {
-                             $statusQ->where('status', 'returned_to_department')
-                                    ->orWhere(function($perpajakanQ) {
-                                        $perpajakanQ->whereNotNull('returned_from_perpajakan_at')
-                                                    ->where('pengembalian_awaiting_fix', true);
-                                    });
-                         });
+                        ->where(function ($statusQ) {
+                            $statusQ->where('status', 'returned_to_department')
+                                ->orWhere(function ($perpajakanQ) {
+                                    $perpajakanQ->whereNotNull('returned_from_perpajakan_at')
+                                        ->where('pengembalian_awaiting_fix', true);
+                                })
+                                ->orWhere(function ($akutansiQ) {
+                                    $akutansiQ->whereNotNull('returned_from_akutansi_at');
+                                });
+                        });
                 })
-                // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke IbuB
-                ->orWhere(function($inboxRejectQ) {
+                    // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke IbuB
+                    ->orWhere(function ($inboxRejectQ) {
                     $inboxRejectQ->where('current_handler', 'ibuB')
-                                ->where('inbox_approval_status', 'rejected')
-                                ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi']);
+                        ->where('inbox_approval_status', 'rejected')
+                        ->whereIn('inbox_approval_for', ['Perpajakan', 'Akutansi']);
                 });
             })
             ->orderByRaw('
                 CASE 
                     WHEN inbox_approval_status = "rejected" THEN inbox_approval_responded_at
                     WHEN returned_from_perpajakan_at IS NOT NULL THEN returned_from_perpajakan_at
+                    WHEN returned_from_akutansi_at IS NOT NULL THEN returned_from_akutansi_at
                     ELSE department_returned_at
                 END DESC
             ');
 
         // Filter by department (hanya untuk dokumen yang dikembalikan dari department, bukan dari inbox)
         if ($request->has('department') && $request->department) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('target_department', $request->department)
-                  ->orWhere(function($inboxQ) {
-                      // Dokumen yang di-reject dari inbox tidak memiliki target_department
-                      $inboxQ->where('inbox_approval_status', 'rejected')
+                    ->orWhere(function ($inboxQ) {
+                        // Dokumen yang di-reject dari inbox tidak memiliki target_department
+                        $inboxQ->where('inbox_approval_status', 'rejected')
                             ->where('inbox_approval_for', 'IbuB');
-                  });
+                    });
             });
         }
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%');
             });
         }
 
@@ -913,41 +970,48 @@ class DashboardBController extends Controller
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
-        $totalReturnedToDept = \App\Models\Dokumen::where(function($q) {
-                // Dokumen yang dikembalikan dari department/bagian
-                $q->where(function($subQ) {
-                    $subQ->where('current_handler', 'ibuB')
-                         ->where(function($statusQ) {
-                             $statusQ->where('status', 'returned_to_department')
-                                    ->orWhere(function($perpajakanQ) {
-                                        $perpajakanQ->whereNotNull('returned_from_perpajakan_at')
-                                                    ->where('pengembalian_awaiting_fix', true);
-                                    });
-                         });
-                })
-                // Dokumen yang di-reject dari inbox IbuB
-                ->orWhere(function($inboxRejectQ) {
-                    $inboxRejectQ->where('inbox_approval_for', 'IbuB')
-                                ->where('inbox_approval_status', 'rejected')
-                                ->where('status', 'returned_to_ibua');
-                });
+        $totalReturnedToDept = \App\Models\Dokumen::where(function ($q) {
+            // Dokumen yang dikembalikan dari department/bagian
+            $q->where(function ($subQ) {
+                $subQ->where('current_handler', 'ibuB')
+                    ->where(function ($statusQ) {
+                        $statusQ->where('status', 'returned_to_department')
+                            ->orWhere(function ($perpajakanQ) {
+                                $perpajakanQ->whereNotNull('returned_from_perpajakan_at')
+                                    ->where('pengembalian_awaiting_fix', true);
+                            });
+                    });
             })
+                // Dokumen yang di-reject dari inbox IbuB
+                ->orWhere(function ($inboxRejectQ) {
+                    $inboxRejectQ->where('inbox_approval_for', 'IbuB')
+                        ->where('inbox_approval_status', 'rejected')
+                        ->where('status', 'returned_to_ibua');
+                });
+        })
             ->count();
 
         $totalByDept = [
             'perpajakan' => \App\Models\Dokumen::where('current_handler', 'ibuB')
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->where('status', 'returned_to_department')
-                      ->where('target_department', 'perpajakan')
-                      ->orWhere(function($subQ) {
-                          $subQ->whereNotNull('returned_from_perpajakan_at')
-                              ->where('pengembalian_awaiting_fix', true);
-                      });
+                        ->where('target_department', 'perpajakan')
+                        ->orWhere(function ($subQ) {
+                            $subQ->whereNotNull('returned_from_perpajakan_at')
+                                ->where('pengembalian_awaiting_fix', true);
+                        });
                 })
                 ->count(),
             'akutansi' => \App\Models\Dokumen::where('current_handler', 'ibuB')
-                ->where('status', 'returned_to_department')
-                ->where('target_department', 'akutansi')
+                ->where(function ($q) {
+                    $q->where(function ($subQ) {
+                        $subQ->where('status', 'returned_to_department')
+                            ->where('target_department', 'akutansi');
+                    })
+                        ->orWhere(function ($subQ) {
+                            $subQ->whereNotNull('returned_from_akutansi_at');
+                        });
+                })
                 ->count(),
             'pembayaran' => \App\Models\Dokumen::where('current_handler', 'ibuB')
                 ->where('status', 'returned_to_department')
@@ -973,7 +1037,8 @@ class DashboardBController extends Controller
         return view('ibuB.dokumens.pengembalianKeBagianB', $data);
     }
 
-    public function diagram(){
+    public function diagram()
+    {
         $data = array(
             "title" => "Diagram B",
             "module" => "ibuB",
@@ -1013,7 +1078,7 @@ class DashboardBController extends Controller
                 'status' => 'sent_to_perpajakan', // Langsung kirim ke perpajakan
                 'pengembalian_awaiting_fix' => false, // Tidak lagi menunggu perbaikan
                 'returned_from_perpajakan_fixed_at' => now(), // Tandai sebagai sudah diperbaiki
-                'sent_to_perpajakan_at' => now(), // Tandai waktu pengiriman ke perpajakan
+                // 'sent_to_perpajakan_at' => now(), // REMOVED: Column deleted
                 'processed_at' => now(),
                 // Reset perpajakan deadline to null so document will be locked until perpajakan sets deadline
                 'deadline_perpajakan_at' => null,
@@ -1038,6 +1103,9 @@ class DashboardBController extends Controller
                 ],
                 'updated_at' => now()
             ]);
+
+            // Update role data for perpajakan
+            $dokumen->setDataForRole('perpajakan', ['received_at' => now()]);
 
             \DB::commit();
 
@@ -1073,7 +1141,7 @@ class DashboardBController extends Controller
 
             // Validate next handler
             $request->validate([
-                'next_handler' => 'required|in:perpajakan,akutansi'
+                'next_handler' => 'required|in:perpajakan,akutansi,pembayaran'
             ]);
 
             \DB::beginTransaction();
@@ -1082,23 +1150,30 @@ class DashboardBController extends Controller
             $inboxRoleMap = [
                 'perpajakan' => 'Perpajakan',
                 'akutansi' => 'Akutansi',
+                'pembayaran' => 'Pembayaran',
             ];
-            
+
             $inboxRole = $inboxRoleMap[$request->next_handler] ?? $request->next_handler;
-            
+
             // Simpan status original sebelum dikirim ke inbox
             $originalStatus = $dokumen->status;
-            
+
             // Kirim ke inbox menggunakan sistem inbox yang sudah ada
             $dokumen->sendToInbox($inboxRole);
-            
+
             // Set processed_at untuk tracking
             $dokumen->processed_at = now();
             $dokumen->save();
 
             \DB::commit();
 
-            $nextHandlerName = $request->next_handler === 'perpajakan' ? 'Team Perpajakan' : 'Team Akutansi';
+            // Map handler name for success message
+            $nextHandlerNameMap = [
+                'perpajakan' => 'Team Perpajakan',
+                'akutansi' => 'Team Akutansi',
+                'pembayaran' => 'Team Pembayaran',
+            ];
+            $nextHandlerName = $nextHandlerNameMap[$request->next_handler] ?? $request->next_handler;
 
             \Log::info("Document #{$dokumen->id} sent to inbox {$inboxRole} by ibuB");
 
@@ -1150,7 +1225,7 @@ class DashboardBController extends Controller
             // Set specific timestamp based on destination
             // Note: Deadline will be set by the destination department (perpajakan/akutansi) themselves
             if ($request->next_handler === 'perpajakan') {
-                $updateData['sent_to_perpajakan_at'] = now();
+                $dokumen->setDataForRole('perpajakan', ['received_at' => now()]);
                 // Reset deadline_at to null so document will be locked until perpajakan sets deadline
                 $updateData['deadline_at'] = null;
                 $updateData['deadline_days'] = null;
@@ -1160,7 +1235,7 @@ class DashboardBController extends Controller
                 $updateData['deadline_perpajakan_days'] = null;
                 $updateData['deadline_perpajakan_note'] = null;
             } elseif ($request->next_handler === 'akutansi') {
-                $updateData['sent_to_akutansi_at'] = now();
+                $dokumen->setDataForRole('akutansi', ['received_at' => now()]);
                 // Reset deadline_at to null so document will be locked until akutansi sets deadline
                 $updateData['deadline_at'] = null;
                 $updateData['deadline_days'] = null;
@@ -1178,7 +1253,7 @@ class DashboardBController extends Controller
                     $request->next_handler,
                     'ibuB'
                 );
-                
+
                 // Log activity: dokumen masuk/diterima di stage penerima
                 \App\Helpers\ActivityLogHelper::logReceived(
                     $dokumen->fresh(),
@@ -1461,8 +1536,8 @@ class DashboardBController extends Controller
 
             // Add deadline if provided
             if ($request->deadline_days) {
-                $updateData['deadline_at'] = now()->addDays((int)$request->deadline_days);
-                $updateData['deadline_days'] = (int)$request->deadline_days;
+                $updateData['deadline_at'] = now()->addDays((int) $request->deadline_days);
+                $updateData['deadline_days'] = (int) $request->deadline_days;
                 $updateData['deadline_note'] = $request->deadline_note;
             }
 
@@ -1535,18 +1610,27 @@ class DashboardBController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%');
             });
         }
 
         // Get paginated results
         $dokumens = $query->select([
-            'id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah',
-            'target_bidang', 'bidang_returned_at', 'bidang_return_reason',
-            'created_at', 'updated_at', 'bulan', 'tahun'
+            'id',
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nilai_rupiah',
+            'target_bidang',
+            'bidang_returned_at',
+            'bidang_return_reason',
+            'created_at',
+            'updated_at',
+            'bulan',
+            'tahun'
         ]);
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
@@ -1930,7 +2014,7 @@ class DashboardBController extends Controller
 
             // Broadcast event (opsional)
             try {
-                broadcast(new \App\Events\DocumentApprovedInbox($dokumen));
+                broadcast(new \App\Events\DocumentApprovedInbox($dokumen, 'ibub'));
             } catch (\Exception $e) {
                 \Log::error('Failed to broadcast acceptance: ' . $e->getMessage());
             }
@@ -1996,7 +2080,7 @@ class DashboardBController extends Controller
 
             // Broadcast event (opsional)
             try {
-                broadcast(new \App\Events\DocumentRejectedInbox($dokumen));
+                broadcast(new \App\Events\DocumentRejectedInbox($dokumen, $request->rejection_reason, 'ibub'));
             } catch (\Exception $e) {
                 \Log::error('Failed to broadcast rejection: ' . $e->getMessage());
             }
@@ -2090,9 +2174,18 @@ class DashboardBController extends Controller
         // Get monthly statistics
         $monthlyStats = [];
         $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
         ];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -2125,7 +2218,7 @@ class DashboardBController extends Controller
             ->toArray();
 
         if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
+            $availableYears = [(int) date('Y')];
         }
 
         // Get document count per bagian for the selected year
@@ -2142,9 +2235,9 @@ class DashboardBController extends Controller
             'module' => 'ibuB',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
-            'selectedYear' => (int)$selectedYear,
+            'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
-            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
@@ -2224,9 +2317,18 @@ class DashboardBController extends Controller
         // Get monthly statistics
         $monthlyStats = [];
         $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
         ];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -2259,7 +2361,7 @@ class DashboardBController extends Controller
             ->toArray();
 
         if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
+            $availableYears = [(int) date('Y')];
         }
 
         $data = [
@@ -2267,9 +2369,9 @@ class DashboardBController extends Controller
             'module' => 'ibuB',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
-            'selectedYear' => (int)$selectedYear,
+            'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
-            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
@@ -2294,10 +2396,10 @@ class DashboardBController extends Controller
                 ->where('action', 'inbox_rejected')
                 ->latest('action_at')
                 ->first();
-            
+
             if ($rejectLog) {
                 $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? null;
-                
+
                 if ($rejectedBy) {
                     $nameMap = [
                         'IbuB' => 'Ibu Yuni',
@@ -2310,7 +2412,7 @@ class DashboardBController extends Controller
                     return $nameMap[$rejectedBy] ?? $rejectedBy;
                 }
             }
-            
+
             // Fallback ke inbox_approval_for
             if ($dokumen->inbox_approval_for) {
                 $nameMap = [
@@ -2321,7 +2423,7 @@ class DashboardBController extends Controller
                 return $nameMap[$dokumen->inbox_approval_for] ?? $dokumen->inbox_approval_for;
             }
         }
-        
+
         return '-';
     }
 
@@ -2343,7 +2445,7 @@ class DashboardBController extends Controller
             }
 
             // Handle floating point numbers with proper formatting
-            return number_format($value, 2, '.', ',');
+            return number_format((float) $value, 2, '.', ',');
         }
 
         if (is_bool($value)) {
@@ -2369,30 +2471,42 @@ class DashboardBController extends Controller
     private function getSearchSuggestions($searchTerm, $year = null, $handler = 'ibuB'): array
     {
         $suggestions = [];
-        
+
         // Get all unique values from relevant fields
-        $baseQuery = Dokumen::where(function($q) use ($handler) {
+        $baseQuery = Dokumen::where(function ($q) use ($handler) {
             $q->where('current_handler', $handler)
-              ->orWhere(function($subQ) {
-                  $subQ->where('status', 'sedang_diproses')
+                ->orWhere(function ($subQ) {
+                    $subQ->where('status', 'sedang_diproses')
                         ->where('current_handler', 'ibuB');
-              })
-              ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+                })
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
         })
-        ->where('status', '!=', 'returned_to_bidang');
-        
+            ->where('status', '!=', 'returned_to_bidang');
+
         if ($year) {
             $baseQuery->where('tahun', $year);
         }
-        
+
         // Collect all searchable values
         $allValues = collect();
-        
+
         // Get from main fields
-        $fields = ['nomor_agenda', 'nomor_spp', 'uraian_spp', 'nama_pengirim', 'bagian', 
-                   'kategori', 'jenis_dokumen', 'no_berita_acara', 'no_spk', 
-                   'nomor_mirror', 'nomor_miro', 'keterangan', 'dibayar_kepada'];
-        
+        $fields = [
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nama_pengirim',
+            'bagian',
+            'kategori',
+            'jenis_dokumen',
+            'no_berita_acara',
+            'no_spk',
+            'nomor_mirror',
+            'nomor_miro',
+            'keterangan',
+            'dibayar_kepada'
+        ];
+
         foreach ($fields as $field) {
             $values = $baseQuery->whereNotNull($field)
                 ->distinct()
@@ -2401,40 +2515,40 @@ class DashboardBController extends Controller
                 ->toArray();
             $allValues = $allValues->merge($values);
         }
-        
+
         // Get from dibayarKepadas relation
-        $dibayarKepadaQuery = DibayarKepada::whereHas('dokumen', function($q) use ($handler, $year) {
-            $q->where(function($subQ) use ($handler) {
+        $dibayarKepadaQuery = DibayarKepada::whereHas('dokumen', function ($q) use ($handler, $year) {
+            $q->where(function ($subQ) use ($handler) {
                 $subQ->where('current_handler', $handler)
-                     ->orWhere(function($subSubQ) {
-                         $subSubQ->where('status', 'sedang_diproses')
-                               ->where('current_handler', 'ibuB');
-                     })
-                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+                    ->orWhere(function ($subSubQ) {
+                        $subSubQ->where('status', 'sedang_diproses')
+                            ->where('current_handler', 'ibuB');
+                    })
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
             })
-            ->where('status', '!=', 'returned_to_bidang');
+                ->where('status', '!=', 'returned_to_bidang');
             if ($year) {
                 $q->where('tahun', $year);
             }
         });
-        
+
         $dibayarKepadaValues = $dibayarKepadaQuery
             ->distinct()
             ->pluck('nama_penerima')
             ->filter()
             ->toArray();
-        
+
         $allValues = $allValues->merge($dibayarKepadaValues);
-        
+
         // Remove duplicates and find suggestions
         $uniqueValues = $allValues->unique()->values()->toArray();
         $foundSuggestions = SearchHelper::findSuggestions($searchTerm, $uniqueValues, 60.0, 5);
-        
+
         // Format suggestions
         foreach ($foundSuggestions as $suggestion) {
             $suggestions[] = $suggestion['value'];
         }
-        
+
         return $suggestions;
     }
 
@@ -2445,7 +2559,7 @@ class DashboardBController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Hanya allow IbuB
             if (!$user || !in_array(strtolower($user->role), ['ibub', 'ibu b', 'ibu yuni'])) {
                 return response()->json([
@@ -2456,12 +2570,12 @@ class DashboardBController extends Controller
 
             // Get last check time from request (dari localStorage client)
             $lastCheckTime = $request->input('last_check_time');
-            
+
             // Cari dokumen yang di-reject dalam 24 jam terakhir (untuk memastikan notifikasi selalu muncul)
             // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
             $checkFrom24Hours = now()->subHours(24);
             $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
-            
+
             // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
             if ($checkFrom->gt($checkFrom24Hours)) {
                 $checkFrom = $checkFrom24Hours;
@@ -2496,13 +2610,13 @@ class DashboardBController extends Controller
                 'success' => true,
                 'rejected_documents_count' => $rejectedDocuments->count(),
                 'total_rejected' => $totalRejected,
-                'rejected_documents' => $rejectedDocuments->map(function($doc) {
+                'rejected_documents' => $rejectedDocuments->map(function ($doc) {
                     // Get rejected by name from activity log
                     $rejectLog = $doc->activityLogs()
                         ->where('action', 'inbox_rejected')
                         ->latest('action_at')
                         ->first();
-                    
+
                     $rejectedBy = 'Unknown';
                     if ($rejectLog) {
                         $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
@@ -2553,16 +2667,18 @@ class DashboardBController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Hanya allow IbuB
             if (!$user || !in_array(strtolower($user->role), ['ibub', 'ibu b', 'ibu yuni'])) {
                 abort(403, 'Unauthorized access');
             }
 
             // Validasi: dokumen harus di-reject dari inbox Perpajakan/Akutansi dan dikembalikan ke IbuB
-            if ($dokumen->inbox_approval_status !== 'rejected' ||
+            if (
+                $dokumen->inbox_approval_status !== 'rejected' ||
                 !in_array($dokumen->inbox_approval_for, ['Perpajakan', 'Akutansi']) ||
-                strtolower($dokumen->current_handler) !== 'ibub') {
+                strtolower($dokumen->current_handler) !== 'ibub'
+            ) {
                 abort(404, 'Dokumen tidak ditemukan atau tidak valid');
             }
 
@@ -2571,7 +2687,7 @@ class DashboardBController extends Controller
                 ->where('action', 'inbox_rejected')
                 ->latest('action_at')
                 ->first();
-            
+
             $rejectedBy = 'Unknown';
             if ($rejectLog) {
                 $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';

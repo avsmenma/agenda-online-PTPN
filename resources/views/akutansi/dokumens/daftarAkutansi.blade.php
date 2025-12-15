@@ -766,6 +766,42 @@
     max-width: 100%;
   }
 
+  /* Hybrid Layout: Full-width button on top, row buttons below */
+  .action-buttons-hybrid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .action-buttons-hybrid .btn-full-width {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .action-buttons-hybrid .action-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .action-buttons-hybrid .action-row .btn-action {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn-kembalikan {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+
+  .btn-kembalikan:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    color: white;
+  }
+
   .action-row {
     display: flex;
     gap: 6px;
@@ -1924,53 +1960,54 @@
               @endif
             </td>
             <td class="col-action" onclick="event.stopPropagation()">
-              <div class="action-buttons">
+              <div class="action-buttons-hybrid">
                 @php
                   $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
                 @endphp
                 @if($dokumen->is_locked)
-                  <!-- Locked state - hanya tampilkan Set Deadline dan Return -->
+                  <!-- Locked state - hanya tampilkan Set Deadline -->
                   @unless($isSentToPembayaran)
-                    <button type="button" class="btn-action btn-set-deadline" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
+                    <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
                       <i class="fa-solid fa-clock"></i>
                       <span>Set Deadline</span>
-                    </button>
-                    <button type="button" class="btn-action btn-return" onclick="openReturnToPerpajakanModal({{ $dokumen->id }})" title="Kembalikan ke Perpajakan">
-                      <i class="fa-solid fa-undo"></i>
-                      <span>Return</span>
                     </button>
                   @endunless
                 @else
                   <!-- Unlocked state - buttons enabled -->
                   @unless($isSentToPembayaran)
-                    @if($dokumen->can_edit)
-                      <a href="{{ route('dokumensAkutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="text-decoration: none;">
-                        <button class="btn-action btn-edit">
+                    @php
+                      $hasNomorMiro = !empty($dokumen->nomor_miro);
+                      $canSend = !$isSentToPembayaran && 
+                                 $dokumen->status == 'sedang diproses' && 
+                                 $dokumen->current_handler == 'akutansi' &&
+                                 $hasNomorMiro;
+                    @endphp
+                    @if($canSend)
+                    <button
+                      type="button"
+                      class="btn-action btn-send btn-full-width"
+                      onclick="sendToPembayaran({{ $dokumen->id }})"
+                      title="Kirim ke Team Pembayaran"
+                    >
+                      <i class="fa-solid fa-paper-plane"></i>
+                      <span>Kirim Data</span>
+                    </button>
+                    @endif
+                    <div class="action-row">
+                      @if($dokumen->can_edit)
+                      <a href="{{ route('dokumensAkutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
+                        <button class="btn-action btn-edit" style="width: 100%;">
                           <i class="fa-solid fa-pen"></i>
                           <span>Edit</span>
                         </button>
                       </a>
-                    @endif
+                      @endif
+                      <button type="button" class="btn-action btn-kembalikan" style="flex: 1;" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan Dokumen ke Ibu Yuni">
+                        <i class="fa-solid fa-undo"></i>
+                        <span>Balik</span>
+                      </button>
+                    </div>
                   @endunless
-                  @php
-                    $hasNomorMiro = !empty($dokumen->nomor_miro);
-                    $canSend = !$isSentToPembayaran && 
-                               $dokumen->status == 'sedang diproses' && 
-                               $dokumen->current_handler == 'akutansi' &&
-                               $hasNomorMiro;
-                  @endphp
-                  <button
-                    type="button"
-                    class="btn-action btn-send {{ !$canSend ? 'locked' : '' }}"
-                    title="{{ $isSentToPembayaran ? 'Dokumen sudah dikirim ke Team Pembayaran' : (!$hasNomorMiro ? 'Nomor MIRO harus diisi terlebih dahulu' : 'Kirim ke Team Pembayaran') }}"
-                    @if($isSentToPembayaran || !$canSend) disabled @endif
-                    @unless($isSentToPembayaran || !$canSend)
-                      onclick="sendToPembayaran({{ $dokumen->id }})"
-                    @endunless
-                  >
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Kirim</span>
-                  </button>
                 @endif
               </div>
             </td>
@@ -2069,6 +2106,155 @@
       <div class="modal-footer border-0 justify-content-center">
         <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
           <i class="fa-solid fa-check me-2"></i>Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Return to IbuB -->
+<div class="modal fade" id="returnModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+        <h5 class="modal-title">
+          <i class="fa-solid fa-undo me-2"></i>Kembalikan Dokumen ke Ibu Yuni
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="returnDocId">
+
+        <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(200, 35, 51, 0.1) 100%); border-left: 4px solid #dc3545;">
+          <i class="fa-solid fa-exclamation-triangle me-2"></i>
+          <strong>Perhatian:</strong> Dokumen akan dikembalikan ke Ibu Yuni dan akan muncul di halaman pengembalian dokumen. Pastikan Anda telah mengisi alasan pengembalian dengan jelas.
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="returnReason" class="form-label">
+            <strong>Alasan Pengembalian <span class="text-danger">*</span></strong>
+          </label>
+          <textarea class="form-control" id="returnReason" rows="4" placeholder="Jelaskan kenapa dokumen ini dikembalikan ke Ibu Yuni..." maxlength="500" required></textarea>
+          <div class="form-text">
+            <small class="text-muted">Mohon isi alasan pengembalian secara detail dan jelas.</small><br>
+            <span id="returnCharCount">0</span>/500 karakter
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fa-solid fa-info-circle me-2"></i>
+          <strong>Informasi:</strong> Dokumen yang dikembalikan akan:
+          <ul class="mb-0 mt-2">
+            <li>Muncul di halaman "Pengembalian Dokumen Ibu Yuni"</li>
+            <li>Muncul di halaman "Pengembalian Dokumen Team Akutansi"</li>
+            <li>Hilang dari daftar dokumen aktif akutansi</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn btn-danger" onclick="confirmReturn()">
+          <i class="fa-solid fa-undo me-2"></i>Kembalikan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Return Confirmation -->
+<div class="modal fade" id="returnConfirmationModal" tabindex="-1" aria-labelledby="returnConfirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+        <h5 class="modal-title" id="returnConfirmationModalLabel">
+          <i class="fa-solid fa-question-circle me-2"></i>Konfirmasi Pengembalian
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-exclamation-triangle" style="font-size: 52px; color: #dc3545;"></i>
+        </div>
+        <h5 class="fw-bold mb-3 text-center">Apakah Anda yakin ingin mengembalikan dokumen ini ke Ibu Yuni?</h5>
+        <div class="alert alert-light border" style="background-color: #f8f9fa;">
+          <div class="d-flex align-items-start">
+            <i class="fa-solid fa-info-circle me-2 mt-1" style="color: #dc3545;"></i>
+            <div>
+              <strong>Alasan Pengembalian:</strong>
+              <p class="mb-0 mt-2" id="returnConfirmationReason" style="color: #495057; font-size: 14px;"></p>
+            </div>
+          </div>
+        </div>
+        <p class="text-muted mb-0 text-center small">
+          Dokumen akan dikembalikan ke Ibu Yuni dan akan muncul di halaman pengembalian dokumen.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn btn-danger px-4" id="confirmReturnBtn">
+          <i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Return Success -->
+<div class="modal fade" id="returnSuccessModal" tabindex="-1" aria-labelledby="returnSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+        <h5 class="modal-title" id="returnSuccessModalLabel">
+          <i class="fa-solid fa-circle-check me-2"></i>Pengembalian Berhasil
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #28a745;"></i>
+        </div>
+        <h5 class="fw-bold mb-3">Dokumen berhasil dikembalikan ke Ibu Yuni!</h5>
+        <p class="text-muted mb-0">
+          Dokumen akan muncul di:
+          <br>• Halaman "Pengembalian Dokumen Ibu Yuni"
+          <br>• Halaman "Pengembalian Dokumen Team Akutansi"
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-check me-2"></i>Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Return Validation Warning -->
+<div class="modal fade" id="returnValidationWarningModal" tabindex="-1" aria-labelledby="returnValidationWarningModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+        <h5 class="modal-title" id="returnValidationWarningModalLabel">
+          <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
+        </div>
+        <h5 class="fw-bold mb-3" id="returnValidationWarningTitle">Validasi Gagal</h5>
+        <p class="text-muted mb-0" id="returnValidationWarningMessage">
+          Terjadi kesalahan pada input data.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-check me-2"></i>Mengerti
         </button>
       </div>
     </div>
@@ -2528,7 +2714,114 @@ function updateDeadlineCard(card) {
 // Initialize deadlines system
 document.addEventListener('DOMContentLoaded', function() {
   initializeDeadlines();
+
+  // Character counter for return reason
+  const returnReasonTextarea = document.getElementById('returnReason');
+  const returnCharCount = document.getElementById('returnCharCount');
+  if (returnReasonTextarea && returnCharCount) {
+    returnReasonTextarea.addEventListener('input', function() {
+      const length = this.value.length;
+      returnCharCount.textContent = length;
+      if (length > 500) {
+        returnCharCount.style.color = '#dc3545';
+      } else {
+        returnCharCount.style.color = '#6c757d';
+      }
+    });
+  }
 });
+
+// Open Return Modal
+function openReturnModal(docId) {
+  document.getElementById('returnDocId').value = docId;
+  document.getElementById('returnReason').value = '';
+  document.getElementById('returnCharCount').textContent = '0';
+  const modal = new bootstrap.Modal(document.getElementById('returnModal'));
+  modal.show();
+}
+
+// Confirm Return
+function confirmReturn() {
+  const docId = document.getElementById('returnDocId').value;
+  const returnReason = document.getElementById('returnReason').value.trim();
+
+  if (!returnReason) {
+    const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+    document.getElementById('returnValidationWarningTitle').textContent = 'Alasan Pengembalian Wajib Diisi';
+    document.getElementById('returnValidationWarningMessage').textContent = 'Mohon isi alasan pengembalian sebelum melanjutkan.';
+    warningModal.show();
+    return;
+  }
+
+  if (returnReason.length < 10) {
+    const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+    document.getElementById('returnValidationWarningTitle').textContent = 'Alasan Pengembalian Terlalu Pendek';
+    document.getElementById('returnValidationWarningMessage').textContent = 'Alasan pengembalian minimal 10 karakter.';
+    warningModal.show();
+    return;
+  }
+
+  // Show confirmation modal
+  document.getElementById('returnConfirmationReason').textContent = returnReason;
+  const returnModal = bootstrap.Modal.getInstance(document.getElementById('returnModal'));
+  returnModal.hide();
+  
+  const confirmationModal = new bootstrap.Modal(document.getElementById('returnConfirmationModal'));
+  confirmationModal.show();
+
+  // Handle confirm button click
+  const confirmBtn = document.getElementById('confirmReturnBtn');
+  confirmBtn.onclick = function() {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
+
+    // Send return request
+    fetch(`/dokumensAkutansi/${docId}/return`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        return_reason: returnReason
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const confirmationModalInstance = bootstrap.Modal.getInstance(document.getElementById('returnConfirmationModal'));
+      confirmationModalInstance.hide();
+
+      if (data.success) {
+        const successModal = new bootstrap.Modal(document.getElementById('returnSuccessModal'));
+        successModal.show();
+        
+        successModal._element.addEventListener('hidden.bs.modal', function() {
+          location.reload();
+        });
+      } else {
+        const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+        document.getElementById('returnValidationWarningTitle').textContent = 'Gagal Mengembalikan Dokumen';
+        document.getElementById('returnValidationWarningMessage').textContent = data.message || 'Terjadi kesalahan saat mengembalikan dokumen.';
+        warningModal.show();
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan';
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      const confirmationModalInstance = bootstrap.Modal.getInstance(document.getElementById('returnConfirmationModal'));
+      confirmationModalInstance.hide();
+      
+      const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
+      document.getElementById('returnValidationWarningTitle').textContent = 'Terjadi Kesalahan';
+      document.getElementById('returnValidationWarningMessage').textContent = 'Terjadi kesalahan saat mengembalikan dokumen. Silakan coba lagi.';
+      warningModal.show();
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan';
+    });
+  };
+}
 
 </script>
 
