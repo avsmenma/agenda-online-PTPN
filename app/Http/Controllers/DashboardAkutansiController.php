@@ -1122,9 +1122,25 @@ class DashboardAkutansiController extends Controller
             $dokumen->update([
                 'status' => 'sent_to_pembayaran',
                 'current_handler' => 'pembayaran',
-                'universal_approval_for' => 'pembayaran', // For universal approval system
-                'sent_to_pembayaran_at' => now(), // Timestamp when sent to pembayaran
+                // Note: universal_approval_for and sent_to_pembayaran_at columns removed - now in dokumen_statuses and dokumen_role_data
             ]);
+            
+            // Set received_at in dokumen_role_data for pembayaran
+            $dokumen->setDataForRole('pembayaran', [
+                'received_at' => now(),
+            ]);
+            
+            // Set processed_at in dokumen_role_data for akutansi
+            $roleData = $dokumen->getDataForRole('akutansi');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                $dokumen->setDataForRole('akutansi', [
+                    'processed_at' => now(),
+                    'received_at' => now(),
+                ]);
+            }
 
             // Refresh dokumen setelah update
             $dokumen->refresh();

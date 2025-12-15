@@ -873,7 +873,7 @@ class DashboardBController extends Controller
         // Dates
         $dates = [
             'Tanggal Dikirim ke Ibu Yuni' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d-m-Y H:i') : null,
-            'Tanggal Diproses' => $dokumen->processed_at ? $dokumen->processed_at->format('d-m-Y H:i') : null,
+            'Tanggal Diproses' => $dokumen->getDataForRole('ibub')?->processed_at ? $dokumen->getDataForRole('ibub')->processed_at->format('d-m-Y H:i') : null,
             'Tanggal Dikembalikan' => $dokumen->returned_to_ibua_at ? $dokumen->returned_to_ibua_at->format('d-m-Y H:i') : null,
         ];
 
@@ -1096,12 +1096,7 @@ class DashboardBController extends Controller
                 'status' => 'sent_to_perpajakan', // Langsung kirim ke perpajakan
                 'pengembalian_awaiting_fix' => false, // Tidak lagi menunggu perbaikan
                 'returned_from_perpajakan_fixed_at' => now(), // Tandai sebagai sudah diperbaiki
-                // 'sent_to_perpajakan_at' => now(), // REMOVED: Column deleted
-                'processed_at' => now(),
-                // Reset perpajakan deadline to null so document will be locked until perpajakan sets deadline
-                'deadline_perpajakan_at' => null,
-                'deadline_perpajakan_days' => null,
-                'deadline_perpajakan_note' => null,
+                // Note: processed_at, sent_to_perpajakan_at, deadline_perpajakan_* columns removed - now in dokumen_role_data
                 'perpajakan_return_data' => [
                     'nomor_agenda' => $dokumen->nomor_agenda,
                     'nomor_spp' => $dokumen->nomor_spp,
@@ -1179,9 +1174,18 @@ class DashboardBController extends Controller
             // Kirim ke inbox menggunakan sistem inbox yang sudah ada
             $dokumen->sendToInbox($inboxRole);
 
-            // Set processed_at untuk tracking
-            $dokumen->processed_at = now();
-            $dokumen->save();
+            // Set processed_at untuk tracking di dokumen_role_data (ibuB)
+            $roleData = $dokumen->getDataForRole('ibub');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                // Create role data if it doesn't exist
+                $dokumen->setDataForRole('ibub', [
+                    'processed_at' => now(),
+                    'received_at' => $dokumen->getDataForRole('ibub')?->received_at ?? now(),
+                ]);
+            }
 
             \DB::commit();
 
@@ -1558,14 +1562,33 @@ class DashboardBController extends Controller
             $updateData = [
                 'current_handler' => $targetDepartment,
                 'status' => 'sent_to_' . $targetDepartment,
-                'processed_at' => now(),
             ];
 
-            // Add deadline if provided
+            // Set processed_at in dokumen_role_data for ibuB
+            $roleData = $dokumen->getDataForRole('ibub');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                $dokumen->setDataForRole('ibub', [
+                    'processed_at' => now(),
+                    'received_at' => now(),
+                ]);
+            }
+
+            // Set received_at for target department
+            $dokumen->setDataForRole($targetDepartment, [
+                'received_at' => now(),
+            ]);
+
+            // Add deadline if provided (in dokumen_role_data for target department)
             if ($request->deadline_days) {
-                $updateData['deadline_at'] = now()->addDays((int) $request->deadline_days);
-                $updateData['deadline_days'] = (int) $request->deadline_days;
-                $updateData['deadline_note'] = $request->deadline_note;
+                $dokumen->setDataForRole($targetDepartment, [
+                    'received_at' => now(),
+                    'deadline_at' => now()->addDays((int) $request->deadline_days),
+                    'deadline_days' => (int) $request->deadline_days,
+                    'deadline_note' => $request->deadline_note,
+                ]);
             }
 
             $dokumen->update($updateData);
@@ -1943,9 +1966,20 @@ class DashboardBController extends Controller
             // Prepare milestone data for approved documents
             $updateData = [
                 'status' => $newStatus,
-                'processed_at' => now(),
                 'updated_at' => now()
             ];
+            
+            // Set processed_at in dokumen_role_data for ibuB
+            $roleData = $dokumen->getDataForRole('ibub');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                $dokumen->setDataForRole('ibub', [
+                    'processed_at' => now(),
+                    'received_at' => now(),
+                ]);
+            }
 
             // Set milestone if approved
             if ($newStatus === 'approved_ibub') {
