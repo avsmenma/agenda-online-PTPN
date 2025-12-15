@@ -1413,15 +1413,13 @@ class OwnerDashboardController extends Controller
             // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
             $query->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_perpajakan')
-                    ->orWhere('status', 'proses_perpajakan');
+                    ->orWhere('status', 'sent_to_perpajakan');
             });
         } elseif ($handler === 'akutansi') {
             // Team Akutansi: dokumen dengan current_handler = 'akutansi' atau status sent_to_akutansi
             $query->where(function ($q) {
                 $q->where('current_handler', 'akutansi')
-                    ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'proses_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             });
         }
 
@@ -1517,14 +1515,12 @@ class OwnerDashboardController extends Controller
             } elseif ($handler === 'perpajakan') {
                 $countQuery->where(function ($q) {
                     $q->where('current_handler', 'perpajakan')
-                        ->orWhere('status', 'sent_to_perpajakan')
-                        ->orWhere('status', 'proses_perpajakan');
+                        ->orWhere('status', 'sent_to_perpajakan');
                 });
             } elseif ($handler === 'akutansi') {
                 $countQuery->where(function ($q) {
                     $q->where('current_handler', 'akutansi')
-                        ->orWhere('status', 'sent_to_akutansi')
-                        ->orWhere('status', 'proses_akutansi');
+                        ->orWhere('status', 'sent_to_akutansi');
                 });
             }
 
@@ -1628,15 +1624,13 @@ class OwnerDashboardController extends Controller
             // Team Perpajakan documents
             $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_perpajakan')
-                    ->orWhere('status', 'proses_perpajakan');
+                    ->orWhere('status', 'sent_to_perpajakan');
             });
         } elseif ($type === 'akutansi') {
             // Team Akutansi documents
             $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'akutansi')
-                    ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'proses_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi');
             });
         }
 
@@ -1658,8 +1652,8 @@ class OwnerDashboardController extends Controller
                 ->orWhere('status', 'sent_to_akutansi')
                 ->orWhere('status', 'sent_to_pembayaran')
                 ->orWhere('status', 'proses_ibub')
-                ->orWhere('status', 'proses_perpajakan')
-                ->orWhere('status', 'proses_akutansi')
+                ->orWhere('status', 'sent_to_perpajakan')
+                ->orWhere('status', 'sent_to_akutansi')
                 ->orWhere('status', 'pending_approval_ibub');
         })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
             ->where(function ($subQ) {
@@ -1736,8 +1730,8 @@ class OwnerDashboardController extends Controller
                     ->orWhere('status', 'sent_to_akutansi')
                     ->orWhere('status', 'sent_to_pembayaran')
                     ->orWhere('status', 'proses_ibub')
-                    ->orWhere('status', 'proses_perpajakan')
-                    ->orWhere('status', 'proses_akutansi')
+                    ->orWhere('status', 'sent_to_perpajakan')
+                    ->orWhere('status', 'sent_to_akutansi')
                     ->orWhere('status', 'pending_approval_ibub');
             })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {

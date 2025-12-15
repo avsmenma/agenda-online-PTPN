@@ -294,17 +294,17 @@ class Dokumen extends Model
                 break;
 
             case 'perpajakan':
-                $this->status = 'proses_perpajakan';
+                $this->status = 'sent_to_perpajakan'; // Use status that exists in enum
                 // Note: processed_perpajakan_at column was removed in cleanup migration, timestamp is now in dokumen_role_data
                 break;
 
             case 'akutansi':
-                $this->status = 'proses_akutansi';
+                $this->status = 'sent_to_akutansi'; // Use status that exists in enum
                 // sent_to_akutansi_at is removed, rely on generic status
                 break;
 
             case 'pembayaran':
-                $this->status = 'proses_pembayaran';
+                $this->status = 'sent_to_pembayaran'; // Use status that exists in enum
                 if (!$this->status_pembayaran) {
                     $this->status_pembayaran = 'pending';
                 }
@@ -592,11 +592,12 @@ class Dokumen extends Model
             $this->current_handler = $handlerMap[$roleCode];
 
             // Map role code to status string expected by legacy views
+            // Use status that exists in enum
             $statusMap = [
                 'ibub' => 'sedang diproses',
                 'perpajakan' => 'sent_to_perpajakan',
-                'akutansi' => 'sent_to_accounting',
-                'pembayaran' => 'sent_to_payment',
+                'akutansi' => 'sent_to_akutansi',
+                'pembayaran' => 'sent_to_pembayaran',
             ];
 
             if (isset($statusMap[$roleCode])) {
@@ -734,11 +735,8 @@ class Dokumen extends Model
             'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
             'proses_ibub' => 'Diproses Ibu Yuni',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
-            'proses_perpajakan' => 'Diproses Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
-            'proses_akutansi' => 'Diproses Team Akutansi',
             'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
-            'proses_pembayaran' => 'Diproses Team Pembayaran',
             'sent_to_pembayaran' => 'Terkirim ke Team Pembayaran',
             'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
             'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
