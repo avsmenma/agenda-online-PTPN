@@ -211,12 +211,25 @@ class DashboardAkutansiController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        $dokumens = $query->orderByRaw("CASE
-                WHEN current_handler = 'akutansi' AND status = 'sent_to_akutansi' AND deadline_at IS NULL THEN 1
-                WHEN current_handler = 'akutansi' AND deadline_at IS NOT NULL THEN 2
+        // Eager load roleData for akutansi to access deadline_at
+        $query->with(['roleData' => function($q) {
+            $q->where('role_code', 'akutansi');
+        }]);
+
+        // Order by deadline status using LEFT JOIN with dokumen_role_data
+        // Priority: 1. Documents without deadline (locked), 2. Documents with deadline (unlocked), 3. Others
+        $dokumens = $query->leftJoin('dokumen_role_data as akutansi_data', function($join) {
+                $join->on('dokumens.id', '=', 'akutansi_data.dokumen_id')
+                     ->where('akutansi_data.role_code', '=', 'akutansi');
+            })
+            ->select('dokumens.*')
+            ->orderByRaw("CASE
+                WHEN dokumens.current_handler = 'akutansi' AND dokumens.status = 'sent_to_akutansi' AND akutansi_data.deadline_at IS NULL THEN 1
+                WHEN dokumens.current_handler = 'akutansi' AND akutansi_data.deadline_at IS NOT NULL THEN 2
                 ELSE 3
             END")
-            ->orderByDesc('updated_at')
+            ->orderByDesc('dokumens.updated_at')
+            ->groupBy('dokumens.id') // Group by to avoid duplicate rows from JOIN
             ->paginate(10);
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
@@ -564,11 +577,12 @@ class DashboardAkutansiController extends Controller
     {
         try {
             // Enhanced logging with user context
+            $roleData = $dokumen->getDataForRole('akutansi');
             Log::info('=== SET DEADLINE AKUTANSI REQUEST START ===', [
                 'document_id' => $dokumen->id,
                 'current_handler' => $dokumen->current_handler,
                 'current_status' => $dokumen->status,
-                'deadline_exists' => $dokumen->deadline_at ? true : false,
+                'deadline_exists' => $roleData && $roleData->deadline_at ? true : false,
                 'user_id' => Auth::id(),
                 'user_role' => Auth::user()?->role,
                 'request_data' => $request->all()
@@ -607,15 +621,26 @@ class DashboardAkutansiController extends Controller
                 : null;
 
             // Update using transaction
-            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote) {
-                $dokumen->update([
-                    'deadline_at' => now()->addDays($deadlineDays),
+            $deadlineAt = now()->addDays($deadlineDays);
+            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
+                // Update dokumen_role_data with deadline
+                $dokumen->setDataForRole('akutansi', [
+                    'deadline_at' => $deadlineAt,
                     'deadline_days' => $deadlineDays,
                     'deadline_note' => $deadlineNote,
-                    'status' => 'sedang diproses',
+                    'received_at' => $dokumen->getDataForRole('akutansi')?->received_at ?? now(),
                     'processed_at' => now(),
                 ]);
+
+                // Update dokumen status
+                $dokumen->update([
+                    'status' => 'sedang diproses',
+                ]);
             });
+
+            // Refresh dokumen to get updated data
+            $dokumen->refresh();
+            $updatedRoleData = $dokumen->getDataForRole('akutansi');
 
             // Log activity: deadline diatur oleh Team Akutansi
             try {
@@ -624,7 +649,7 @@ class DashboardAkutansiController extends Controller
                     'akutansi',
                     [
                         'deadline_days' => $deadlineDays,
-                        'deadline_at' => $dokumen->fresh()->deadline_at?->format('Y-m-d H:i:s'),
+                        'deadline_at' => $updatedRoleData?->deadline_at?->format('Y-m-d H:i:s'),
                         'deadline_note' => $deadlineNote,
                     ]
                 );
@@ -635,13 +660,13 @@ class DashboardAkutansiController extends Controller
             \Log::info('Deadline successfully set for Akutansi', [
                 'document_id' => $dokumen->id,
                 'deadline_days' => $deadlineDays,
-                'deadline_at' => $dokumen->fresh()->deadline_at
+                'deadline_at' => $updatedRoleData?->deadline_at
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => "Deadline berhasil ditetapkan ({$deadlineDays} hari). Dokumen sekarang terbuka untuk diproses.",
-                'deadline' => $dokumen->fresh()->deadline_at->format('d M Y, H:i'),
+                'deadline' => $updatedRoleData?->deadline_at?->format('d M Y, H:i'),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error setting Akutansi deadline: ' . json_encode($e->errors()));
@@ -1343,12 +1368,18 @@ class DashboardAkutansiController extends Controller
                 'alasan_pengembalian' => $request->return_reason,
                 // Reset akutansi status since document is being returned
                 'nomor_miro' => null,
-                'deadline_at' => null,
-                'deadline_days' => null,
-                'deadline_note' => null,
-                // Clear sent timestamps
+                // Clear sent timestamps (these columns may have been removed, but safe to try)
                 'sent_to_akutansi_at' => null,
             ];
+            
+            // Clear deadline from dokumen_role_data for akutansi
+            $akutansiRoleData = $dokumen->getDataForRole('akutansi');
+            if ($akutansiRoleData) {
+                $akutansiRoleData->deadline_at = null;
+                $akutansiRoleData->deadline_days = null;
+                $akutansiRoleData->deadline_note = null;
+                $akutansiRoleData->save();
+            }
 
             // Only set sent_to_ibub_at if it's null (first time entering IbuB)
             // This preserves the original entry time for consistent ordering
