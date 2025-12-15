@@ -1985,18 +1985,75 @@
           @endforeach
           <!-- Kolom Deadline -->
           <td class="col-deadline">
-            @if($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at)
-              <div class="deadline-card" data-deadline="{{ ($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at)->format('Y-m-d H:i:s') }}">
+            @php
+              // Get deadline from roleData relationship for perpajakan
+              $roleData = $dokumen->getDataForRole('perpajakan');
+              $deadlineAt = null;
+              $deadlineNote = null;
+              
+              if ($roleData && $roleData->deadline_at) {
+                // Use Carbon instance from relationship
+                $deadlineAt = $roleData->deadline_at;
+                $deadlineNote = $roleData->deadline_note;
+              } elseif ($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at) {
+                // Fallback: if deadline_perpajakan_at or deadline_at is set, convert to Carbon
+                $deadlineAt = $dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at;
+                $deadlineAt = is_string($deadlineAt) ? \Carbon\Carbon::parse($deadlineAt) : $deadlineAt;
+                $deadlineNote = $dokumen->deadline_note;
+              }
+              
+              // Check if document is already sent to other roles (akutansi/pembayaran)
+              $isSent = in_array($dokumen->status, [
+                'sent_to_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran',
+              ]);
+              
+              // Check if document is completed
+              $isCompleted = in_array($dokumen->status, [
+                'selesai',
+                'completed',
+                'approved_data_sudah_terkirim',
+              ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
+              
+              // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
+              $deadlineType = 'active';
+              if ($isCompleted) {
+                $deadlineType = 'completed';
+              } elseif ($isSent) {
+                $deadlineType = 'sent';
+              }
+            @endphp
+            @if($deadlineAt)
+              @php
+                // Get deadline_days from roleData to determine original deadline period
+                $deadlineDays = $roleData?->deadline_days ?? null;
+              @endphp
+              <div class="deadline-card deadline-{{ $deadlineType }}" 
+                   data-deadline="{{ $deadlineAt->format('Y-m-d H:i:s') }}"
+                   data-deadline-days="{{ $deadlineDays ?? '' }}"
+                   data-sent="{{ $isSent ? 'true' : 'false' }}"
+                   data-completed="{{ $isCompleted ? 'true' : 'false' }}">
                 <div class="deadline-time">
                   <i class="fa-solid fa-clock"></i>
-                  <span>{{ ($dokumen->deadline_perpajakan_at ?? $dokumen->deadline_at)->format('d M Y, H:i') }}</span>
+                  <span>{{ $deadlineAt->format('d M Y, H:i') }}</span>
                 </div>
                 <div class="deadline-indicator">
                   <i class="fa-solid"></i>
                   <span class="status-text">AMAN</span>
                 </div>
-                @if($dokumen->deadline_note)
-                  <div class="deadline-note">{{ Str::limit($dokumen->deadline_note, 50) }}</div>
+                @if($deadlineNote)
+                  <div class="deadline-note">{{ Str::limit($deadlineNote, 50) }}</div>
+                @endif
+                @if($isSent)
+                  <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                    <i class="fa-solid fa-paper-plane"></i> Terkirim
+                  </div>
+                @elseif($isCompleted)
+                  <div class="deadline-label" style="font-size: 8px; color: #10b981; margin-top: 4px; font-weight: 600;">
+                    <i class="fa-solid fa-check-circle"></i> Selesai
+                  </div>
                 @endif
               </div>
             @else

@@ -192,8 +192,32 @@ class DashboardPerpajakanController extends Controller
             ->orderByDesc('updated_at')
             ->paginate($perPage)->appends($request->query());
 
+        // Eager load roleData and roleStatuses for perpajakan
+        $dokumens->loadMissing([
+            'roleData' => function($q) {
+                $q->where('role_code', 'perpajakan');
+            },
+            'roleStatuses' => function($q) {
+                $q->where('role_code', 'perpajakan');
+            }
+        ]);
+
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
         $dokumens->getCollection()->transform(function ($dokumen) {
+            // Ensure roleData is loaded for perpajakan - reload if not loaded or empty
+            if (!$dokumen->relationLoaded('roleData') || $dokumen->roleData->isEmpty()) {
+                $dokumen->load(['roleData' => function($q) {
+                    $q->where('role_code', 'perpajakan');
+                }]);
+            }
+            
+            // Also ensure roleStatuses is loaded
+            if (!$dokumen->relationLoaded('roleStatuses')) {
+                $dokumen->load(['roleStatuses' => function($q) {
+                    $q->where('role_code', 'perpajakan');
+                }]);
+            }
+            
             $dokumen->is_locked = \App\Helpers\DokumenHelper::isDocumentLocked($dokumen);
             $dokumen->lock_status_message = \App\Helpers\DokumenHelper::getLockedStatusMessage($dokumen);
             $dokumen->can_edit = \App\Helpers\DokumenHelper::canEditDocument($dokumen, 'perpajakan');
@@ -664,20 +688,30 @@ class DashboardPerpajakanController extends Controller
                 ? trim($request->deadline_note)
                 : null;
 
-            // Update both deadline_at (for locking) and deadline_perpajakan_at (for perpajakan-specific tracking)
-            // Set status tetap 'sent_to_perpajakan' untuk memastikan dokumen tidak terlock lagi setelah deadline di-set
-            // Status akan berubah saat dokumen selesai diproses atau dikirim ke akutansi
-            $dokumen->update([
-                'deadline_at' => $deadlineAt, // This unlocks the document
-                'deadline_days' => $deadlineDays,
-                'deadline_note' => $deadlineNote,
-                'deadline_perpajakan_at' => $deadlineAt,
-                'deadline_perpajakan_days' => $deadlineDays,
-                'deadline_perpajakan_note' => $deadlineNote,
-                // Jangan ubah status, biarkan tetap 'sent_to_perpajakan' agar dokumen tidak terlock lagi
-                // Status akan berubah saat dokumen selesai diproses atau dikirim
-                'processed_at' => now(),
-            ]);
+            // Update using transaction
+            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
+                // Update dokumen_role_data with deadline
+                $dokumen->setDataForRole('perpajakan', [
+                    'deadline_at' => $deadlineAt,
+                    'deadline_days' => $deadlineDays,
+                    'deadline_note' => $deadlineNote,
+                    'received_at' => $dokumen->getDataForRole('perpajakan')?->received_at ?? now(),
+                    'processed_at' => now(),
+                ]);
+
+                // Update dokumen status to 'sedang diproses' to unlock document
+                $dokumen->update([
+                    'status' => 'sedang diproses',
+                ]);
+            });
+
+            // Refresh dokumen to get updated data
+            $dokumen->refresh();
+            // Reload roleData relationship to ensure getDataForRole() works correctly
+            $dokumen->load(['roleData' => function($q) {
+                $q->where('role_code', 'perpajakan');
+            }]);
+            $updatedRoleData = $dokumen->getDataForRole('perpajakan');
 
             // Log activity: deadline diatur oleh Team Perpajakan
             try {
@@ -686,7 +720,7 @@ class DashboardPerpajakanController extends Controller
                     'perpajakan',
                     [
                         'deadline_days' => $deadlineDays,
-                        'deadline_at' => $deadlineAt->format('Y-m-d H:i:s'),
+                        'deadline_at' => $updatedRoleData?->deadline_at?->format('Y-m-d H:i:s'),
                         'deadline_note' => $deadlineNote,
                     ]
                 );
@@ -694,10 +728,16 @@ class DashboardPerpajakanController extends Controller
                 \Log::error('Failed to log deadline set: ' . $logException->getMessage());
             }
 
+            \Log::info('Deadline successfully set for Perpajakan', [
+                'document_id' => $dokumen->id,
+                'deadline_days' => $deadlineDays,
+                'deadline_at' => $updatedRoleData?->deadline_at
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => "Deadline berhasil ditetapkan ({$deadlineDays} hari). Dokumen sekarang terbuka untuk diproses.",
-                'deadline' => $deadlineAt->format('d M Y, H:i'),
+                'deadline' => $updatedRoleData?->deadline_at?->format('d M Y, H:i'),
             ]);
 
         } catch (\Exception $e) {
