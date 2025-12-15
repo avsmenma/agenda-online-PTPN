@@ -99,18 +99,28 @@ class DashboardAkutansiController extends Controller
                 ? \Carbon\Carbon::createFromTimestamp($lastChecked)
                 : \Carbon\Carbon::now(); // Use current time as baseline for first load
 
-            // Cek semua dokumen akutansi yang baru dikirim
-            // Filter dokumen yang baru dikirim ke akutansi setelah lastChecked
-            // Use updated_at for comparison since it's updated when document is sent
-            $newDocuments = Dokumen::where(function ($query) {
-                $query->where('current_handler', 'akutansi')
-                    ->where('status', 'sent_to_akutansi');
+            // Cek semua dokumen akutansi yang baru dikirim menggunakan dokumen_role_data
+            $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
+                $query->where(function($q) {
+                    $q->where('current_handler', 'akutansi')
+                      ->orWhere('status', 'sent_to_akutansi');
+                })
+                ->where(function($q) use ($lastCheckedDate) {
+                    // Check if received_at in roleData is newer
+                    $q->whereHas('roleData', function($subQ) use ($lastCheckedDate) {
+                        $subQ->where('role_code', 'akutansi')
+                             ->where('received_at', '>', $lastCheckedDate);
+                    })
+                    // Or check updated_at as fallback
+                    ->orWhere('updated_at', '>', $lastCheckedDate);
+                });
             })
-                ->where('updated_at', '>', $lastCheckedDate)
-                ->latest('updated_at')
-                ->with('roleData')
-                ->take(10)
-                ->get();
+            ->with(['roleData' => function($query) {
+                $query->where('role_code', 'akutansi');
+            }])
+            ->latest('updated_at')
+            ->take(10)
+            ->get();
 
             $totalDocuments = Dokumen::where(function ($query) {
                 $query->where('current_handler', 'akutansi')
@@ -143,6 +153,9 @@ class DashboardAkutansiController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error in akutansi/check-updates: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'error' => true,
                 'message' => 'Failed to check updates: ' . $e->getMessage()

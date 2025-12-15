@@ -1117,16 +1117,32 @@ class DashboardPerpajakanController extends Controller
     {
         try {
             $lastChecked = $request->input('last_checked', 0);
+            $lastCheckedDate = $lastChecked > 0
+                ? \Carbon\Carbon::createFromTimestamp($lastChecked)
+                : \Carbon\Carbon::now()->subDays(1);
 
-            // Cek dokumen baru yang dikirim ke perpajakan
-            $newDocuments = Dokumen::where(function ($query) {
-                $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_perpajakan');
+            // Cek dokumen baru yang dikirim ke perpajakan menggunakan dokumen_role_data
+            $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
+                $query->where(function($q) {
+                    $q->where('current_handler', 'perpajakan')
+                      ->orWhere('status', 'sent_to_perpajakan');
+                })
+                ->where(function($q) use ($lastCheckedDate) {
+                    // Check if received_at in roleData is newer
+                    $q->whereHas('roleData', function($subQ) use ($lastCheckedDate) {
+                        $subQ->where('role_code', 'perpajakan')
+                             ->where('received_at', '>', $lastCheckedDate);
+                    })
+                    // Or check updated_at as fallback
+                    ->orWhere('updated_at', '>', $lastCheckedDate);
+                });
             })
-                ->where('sent_to_perpajakan_at', '>', date('Y-m-d H:i:s', $lastChecked))
-                ->latest('sent_to_perpajakan_at')
-                ->take(10)
-                ->get();
+            ->with(['roleData' => function($query) {
+                $query->where('role_code', 'perpajakan');
+            }])
+            ->latest('updated_at')
+            ->take(10)
+            ->get();
 
             $totalDocuments = Dokumen::where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
@@ -1138,6 +1154,7 @@ class DashboardPerpajakanController extends Controller
                 'new_count' => $newDocuments->count(),
                 'total_documents' => $totalDocuments,
                 'new_documents' => $newDocuments->map(function ($doc) {
+                    $roleData = $doc->roleData->firstWhere('role_code', 'perpajakan');
                     return [
                         'id' => $doc->id,
                         'nomor_agenda' => $doc->nomor_agenda,
@@ -1146,14 +1163,17 @@ class DashboardPerpajakanController extends Controller
                         'nilai_rupiah' => $doc->nilai_rupiah,
                         'status' => $doc->status,
                         'status_perpajakan' => $doc->status_perpajakan,
-                        'sent_at' => $doc->sent_to_perpajakan_at?->format('d/m/Y H:i'),
-                        'deadline_at' => $doc->deadline_at?->format('d/m/Y H:i'),
+                        'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i'),
+                        'deadline_at' => $roleData?->deadline_at?->format('d/m/Y H:i'),
                     ];
                 }),
                 'last_checked' => time()
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error in perpajakan/check-updates: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'error' => true,
                 'message' => 'Failed to check updates: ' . $e->getMessage()

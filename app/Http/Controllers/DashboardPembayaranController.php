@@ -3271,15 +3271,28 @@ class DashboardPembayaranController extends Controller
                 ? \Carbon\Carbon::createFromTimestamp($lastChecked)
                 : \Carbon\Carbon::now();
 
-            // Cek dokumen baru yang dikirim ke pembayaran
-            $newDocuments = Dokumen::where(function($query) {
-                    $query->where('current_handler', 'pembayaran')
-                          ->where('status', 'sent_to_pembayaran');
+            // Cek dokumen baru yang dikirim ke pembayaran menggunakan dokumen_role_data
+            $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
+                $query->where(function($q) {
+                    $q->where('current_handler', 'pembayaran')
+                      ->orWhere('status', 'sent_to_pembayaran');
                 })
-                ->where('updated_at', '>', $lastCheckedDate)
-                ->latest('updated_at')
-                ->take(10)
-                ->get();
+                ->where(function($q) use ($lastCheckedDate) {
+                    // Check if received_at in roleData is newer
+                    $q->whereHas('roleData', function($subQ) use ($lastCheckedDate) {
+                        $subQ->where('role_code', 'pembayaran')
+                             ->where('received_at', '>', $lastCheckedDate);
+                    })
+                    // Or check updated_at as fallback
+                    ->orWhere('updated_at', '>', $lastCheckedDate);
+                });
+            })
+            ->with(['roleData' => function($query) {
+                $query->where('role_code', 'pembayaran');
+            }])
+            ->latest('updated_at')
+            ->take(10)
+            ->get();
 
             $totalDocuments = Dokumen::where(function($query) {
                     $query->where('current_handler', 'pembayaran')
@@ -3291,6 +3304,7 @@ class DashboardPembayaranController extends Controller
                 'new_count' => $newDocuments->count(),
                 'total_documents' => $totalDocuments,
                 'new_documents' => $newDocuments->map(function($doc) {
+                    $roleData = $doc->roleData->firstWhere('role_code', 'pembayaran');
                     return [
                         'id' => $doc->id,
                         'nomor_agenda' => $doc->nomor_agenda,
@@ -3298,7 +3312,7 @@ class DashboardPembayaranController extends Controller
                         'uraian_spp' => $doc->uraian_spp,
                         'nilai_rupiah' => $doc->nilai_rupiah,
                         'status' => $doc->status,
-                        'sent_at' => $doc->updated_at ? $doc->updated_at->format('d/m/Y H:i') : '-',
+                        'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? ($doc->updated_at ? $doc->updated_at->format('d/m/Y H:i') : '-'),
                         'sent_from' => 'Team Akutansi',
                     ];
                 }),
@@ -3306,6 +3320,9 @@ class DashboardPembayaranController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error in pembayaran/check-updates: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'error' => true,
                 'message' => 'Failed to check updates: ' . $e->getMessage()

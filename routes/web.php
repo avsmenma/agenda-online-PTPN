@@ -104,20 +104,31 @@ Route::get('/dokumensB/check-updates', function () {
             ? \Carbon\Carbon::createFromTimestamp($lastChecked)
             : \Carbon\Carbon::now()->subDays(1);
 
-        // Cek dokumen baru untuk IbuB menggunakan dokumen_role_data
-        $newDocuments = \App\Models\Dokumen::where('current_handler', 'ibuB')
-            ->whereHas('roleData', function($query) use ($lastCheckedDate) {
-                $query->where('role_code', 'ibub')
-                      ->where('received_at', '>', $lastCheckedDate);
+        // Cek dokumen yang berubah status setelah lastChecked
+        // Termasuk dokumen yang dikirim ke perpajakan/akutansi/pembayaran
+        $newDocuments = \App\Models\Dokumen::where(function($query) use ($lastCheckedDate) {
+                // Dokumen yang masih di ibuB dan updated setelah lastChecked
+                $query->where(function($q) use ($lastCheckedDate) {
+                    $q->where('current_handler', 'ibuB')
+                      ->where('updated_at', '>', $lastCheckedDate);
+                })
+                // Atau dokumen yang baru dikirim ke perpajakan/akutansi/pembayaran setelah lastChecked
+                ->orWhere(function($q) use ($lastCheckedDate) {
+                    $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
+                      ->where('updated_at', '>', $lastCheckedDate);
+                });
             })
             ->with(['roleData' => function($query) {
-                $query->where('role_code', 'ibub');
+                $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
             }])
             ->latest('updated_at')
             ->take(10)
             ->get();
 
-        $totalDocuments = \App\Models\Dokumen::where('current_handler', 'ibuB')->count();
+        $totalDocuments = \App\Models\Dokumen::where(function($query) {
+            $query->where('current_handler', 'ibuB')
+                  ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+        })->count();
 
         return response()->json([
             'has_updates' => $newDocuments->count() > 0,
@@ -132,7 +143,7 @@ Route::get('/dokumensB/check-updates', function () {
                     'uraian_spp' => $doc->uraian_spp,
                     'nilai_rupiah' => $doc->nilai_rupiah,
                     'status' => $doc->status,
-                    'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? '-',
+                    'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i'),
                 ];
             }),
             'last_checked' => time()
