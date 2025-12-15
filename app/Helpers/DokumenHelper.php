@@ -18,6 +18,26 @@ class DokumenHelper
             return false;
         }
 
+        // Dokumen yang sedang menunggu approval tidak bisa diedit
+        if (in_array($dokumen->status, [
+            'menunggu_di_approve',
+            'waiting_reviewer_approval',
+            'pending_approval_ibub',
+            'pending_approval_perpajakan',
+            'pending_approval_akutansi'
+        ])) {
+            return true; // Lock dokumen yang sedang menunggu approval
+        }
+
+        // Check if document has pending status in dokumen_statuses
+        $hasPendingStatus = $dokumen->roleStatuses()
+            ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
+            ->exists();
+        
+        if ($hasPendingStatus) {
+            return true; // Lock dokumen yang memiliki pending status
+        }
+
         // Get deadline from dokumen_role_data based on current handler
         $roleCode = strtolower($dokumen->current_handler ?? '');
         $roleData = $dokumen->getDataForRole($roleCode);
@@ -98,6 +118,26 @@ class DokumenHelper
         // If document is locked, cannot edit
         if (self::isDocumentLocked($dokumen)) {
             return false;
+        }
+
+        // Dokumen yang sedang menunggu approval tidak bisa diedit
+        if (in_array($dokumen->status, [
+            'menunggu_di_approve',
+            'waiting_reviewer_approval',
+            'pending_approval_ibub',
+            'pending_approval_perpajakan',
+            'pending_approval_akutansi'
+        ])) {
+            return false;
+        }
+
+        // Check if document has pending status in dokumen_statuses
+        $hasPendingStatus = $dokumen->roleStatuses()
+            ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
+            ->exists();
+        
+        if ($hasPendingStatus) {
+            return false; // Cannot edit document with pending status
         }
 
         // If user role is provided, check if they can edit

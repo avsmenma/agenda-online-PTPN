@@ -513,9 +513,34 @@ class Dokumen extends Model
             $this->last_action_status = 'sent_to_' . $normalizedRole;
         }
 
-        // Set legacy status for IbuB/Reviewer flow
-        if ($normalizedRole === 'ibuB' && $this->status !== 'waiting_reviewer_approval') {
-            $this->status = 'waiting_reviewer_approval';
+        // Update current_handler and status based on recipient role
+        // Map role code to proper handler format
+        $handlerMap = [
+            'ibub' => 'ibuB',
+            'perpajakan' => 'perpajakan',
+            'akutansi' => 'akutansi',
+            'pembayaran' => 'pembayaran',
+        ];
+        
+        // Update current_handler to show document is waiting for approval from target role
+        // But keep original handler until approved (so sender can still see it)
+        // Actually, we should update handler to show it's pending approval
+        // For now, keep current_handler as is, but update status
+        
+        // Set status based on recipient role
+        // Use status that exists in enum or pending_approval_* statuses
+        $statusMap = [
+            'ibub' => 'waiting_reviewer_approval',
+            'perpajakan' => 'pending_approval_perpajakan', // Use existing enum value
+            'akutansi' => 'pending_approval_akutansi', // Use existing enum value
+            'pembayaran' => 'menunggu_di_approve', // Use generic waiting approval for pembayaran
+        ];
+        
+        if (isset($statusMap[$normalizedRole])) {
+            $this->status = $statusMap[$normalizedRole];
+        } else {
+            // Fallback to generic waiting approval
+            $this->status = 'menunggu_di_approve';
         }
 
         $this->save();

@@ -287,9 +287,16 @@ class DashboardBController extends Controller
         }
 
         // Use eager loading for relations to prevent N+1 queries
-        $dokumens = $query->with(['dibayarKepadas', 'roleData' => function($query) {
-                $query->where('role_code', 'ibub');
-            }])
+        $dokumens = $query->with([
+                'dibayarKepadas', 
+                'roleData' => function($query) {
+                    $query->where('role_code', 'ibub');
+                },
+                'roleStatuses' => function($query) {
+                    // Load all role statuses to check for pending approvals
+                    $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
+                }
+            ])
             ->withCount([
                 'dokumenPos',
                 'dokumenPrs'
@@ -1173,6 +1180,9 @@ class DashboardBController extends Controller
 
             // Kirim ke inbox menggunakan sistem inbox yang sudah ada
             $dokumen->sendToInbox($inboxRole);
+            
+            // Refresh dokumen untuk mendapatkan status terbaru
+            $dokumen->refresh();
 
             // Set processed_at untuk tracking di dokumen_role_data (ibuB)
             $roleData = $dokumen->getDataForRole('ibub');

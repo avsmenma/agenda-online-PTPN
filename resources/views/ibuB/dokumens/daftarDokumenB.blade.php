@@ -3191,11 +3191,36 @@
                       <span class="badge-status badge-sent">📤 Terkirim ke Team Perpajakan</span>
                     @elseif($dokumen->status == 'sent_to_akutansi')
                       <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
-                    @elseif($dokumen->status == 'menunggu_di_approve' && $isPending)
+                    @elseif($dokumen->status == 'sent_to_pembayaran')
+                      <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
+                    @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub']) || $isPending)
+                      @php
+                        $approvalText = 'Menunggu Approval';
+                        if ($dokumen->status == 'pending_approval_perpajakan') {
+                          $approvalText = 'Menunggu Approval Perpajakan';
+                        } elseif ($dokumen->status == 'pending_approval_akutansi') {
+                          $approvalText = 'Menunggu Approval Akutansi';
+                        } elseif ($dokumen->status == 'pending_approval_ibub' || $dokumen->status == 'waiting_reviewer_approval') {
+                          $approvalText = 'Menunggu Approval Reviewer';
+                        } elseif ($isPending) {
+                          // Check which role is pending
+                          $pendingStatus = $dokumen->roleStatuses()->where('status', 'pending')->first();
+                          if ($pendingStatus) {
+                            $roleName = match($pendingStatus->role_code) {
+                              'perpajakan' => 'Perpajakan',
+                              'akutansi' => 'Akutansi',
+                              'pembayaran' => 'Pembayaran',
+                              'ibub' => 'Reviewer',
+                              default => 'Approval'
+                            };
+                            $approvalText = "Menunggu Approval {$roleName}";
+                          }
+                        }
+                      @endphp
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                         <i class="fa-solid fa-clock me-1"></i>
-                        <span>Waiting Approve</span>
+                        <span>{{ $approvalText }}</span>
                       </span>
                     @elseif($dokumen->status == 'sedang diproses' && $isLocked)
                       {{-- Dokumen yang baru di-approve dari inbox tapi belum di-set deadline --}}
@@ -3238,12 +3263,12 @@
                           <i class="fa-solid fa-clock"></i>
                           <span>Set Deadline</span>
                         </button>
-                      @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi']))
-                        <!-- Document already sent - show sent status -->
+                      @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub']) || $isPending)
+                        <!-- Document already sent or waiting approval - show status -->
                         <button class="btn-action btn-edit locked btn-full-width" disabled
-                          title="Dokumen sudah terkirim, tidak dapat diedit">
-                          <i class="fa-solid fa-check-circle"></i>
-                          <span>Terkirim</span>
+                          title="Dokumen sedang menunggu approval, tidak dapat diedit">
+                          <i class="fa-solid fa-clock"></i>
+                          <span>Menunggu Approval</span>
                         </button>
                       @elseif($isRejected)
                         <!-- Dokumen ditolak dari inbox - tampilkan Kirim (full width), Edit dan Kembalikan di bawah -->
