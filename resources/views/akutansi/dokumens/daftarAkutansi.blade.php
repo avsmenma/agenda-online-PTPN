@@ -2114,10 +2114,12 @@
                         </button>
                       </a>
                       @endif
+                      @if($dokumen->can_edit)
                       <button type="button" class="btn-action btn-kembalikan" style="flex: 1;" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan Dokumen ke Ibu Yuni">
                         <i class="fa-solid fa-undo"></i>
                         <span>Balik</span>
                       </button>
+                      @endif
                     </div>
                   @endunless
                 @endif

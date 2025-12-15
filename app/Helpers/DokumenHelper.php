@@ -78,10 +78,16 @@ class DokumenHelper
         $roleData = $dokumen->getDataForRole($roleCode);
         $hasDeadline = $roleData && $roleData->deadline_at;
 
-        // JANGAN lock dokumen yang sudah terkirim ke akutansi/pembayaran (untuk semua handler)
+        // JANGAN lock dokumen yang sudah terkirim ke akutansi/pembayaran (untuk handler selain akutansi/pembayaran)
+        // TAPI untuk handler akutansi/pembayaran sendiri, dokumen dengan status sent_to_* HARUS lock jika belum ada deadline
         // Dokumen ini sudah pindah ke role lain, jadi tidak perlu lock di halaman perpajakan
         if (in_array($dokumen->status, ['sent_to_akutansi', 'sent_to_pembayaran'])) {
-            return false; // Dokumen sudah terkirim, tidak terkunci
+            // Jika current_handler adalah akutansi/pembayaran, biarkan logika di switch case yang menangani
+            // Jika current_handler bukan akutansi/pembayaran, berarti dokumen sudah pindah ke role lain, tidak lock
+            if (!in_array($dokumen->current_handler, ['akutansi', 'pembayaran'])) {
+                return false; // Dokumen sudah terkirim ke role lain, tidak terkunci
+            }
+            // Jika current_handler adalah akutansi/pembayaran, lanjutkan ke logika di bawah (switch case)
         }
 
         // Base condition: must be sent to department without deadline
