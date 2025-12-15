@@ -129,6 +129,7 @@ class DashboardController extends Controller
             // Cari dokumen yang di-reject dari inbox dalam 24 jam terakhir
             // FIX: Gunakan AND condition yang ketat untuk mencegah cross-interference
             // Hanya dokumen yang BENAR-BENAR dibuat oleh IbuA yang akan ditampilkan
+            // FIX: inbox_approval_responded_at sudah dihapus, gunakan status_changed_at dari dokumen_statuses
             $rejectedDocuments = Dokumen::where(function ($query) {
                 // Hanya dokumen yang dibuat oleh IbuA
                 $query->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
@@ -138,24 +139,43 @@ class DashboardController extends Controller
                 ->where(function ($query) {
                     // DAN status returned ke IbuA
                     $query->where('status', 'returned_to_ibua')
-                        ->whereHas('roleStatuses', function ($q) {
-                        $q->where('status', 'rejected');
-                    });
+                        ->whereHas('roleStatuses', function ($q) use ($checkFrom) {
+                            // Filter by rejected status and check time from status_changed_at
+                            $q->where('status', 'rejected')
+                                ->where('status_changed_at', '>=', $checkFrom);
+                        });
                 })
-                ->where('inbox_approval_responded_at', '>=', $checkFrom)
-                ->whereNotNull('inbox_approval_responded_at')
-                ->with('activityLogs')
-                ->orderBy('inbox_approval_responded_at', 'desc')
-                ->select(['id', 'nomor_agenda', 'nomor_spp', 'uraian_spp', 'nilai_rupiah', 'inbox_approval_responded_at']) // Removed deleted columns
+                ->with(['activityLogs', 'roleStatuses' => function ($q) {
+                    $q->where('status', 'rejected');
+                }])
                 ->get()
+                ->filter(function ($doc) use ($checkFrom) {
+                    // Filter by the most recent rejection status change time
+                    $rejectedStatus = $doc->roleStatuses->first();
+                    return $rejectedStatus && $rejectedStatus->status_changed_at >= $checkFrom;
+                })
+                ->sortByDesc(function ($doc) {
+                    $rejectedStatus = $doc->roleStatuses->first();
+                    return $rejectedStatus ? $rejectedStatus->status_changed_at : null;
+                })
+                ->values()
                 ->map(function ($doc) {
                     // Populate reason from log if needed, or other source
-                    // For now, let's try to get reason from last rejection log
+                    // Get reason from status notes or activity log details
                     $rejectLog = $doc->activityLogs()
-                        ->where('action', 'inbox_rejected')
+                        ->where('action', 'rejected')
                         ->latest('action_at')
                         ->first();
-                    $doc->inbox_approval_reason = $rejectLog->details['reason'] ?? $doc->inbox_approval_reason ?? '';
+                    
+                    $rejectedStatus = $doc->roleStatuses->first();
+                    $doc->inbox_approval_reason = $rejectedStatus->notes 
+                        ?? ($rejectLog && isset($rejectLog->details['rejection_reason']) ? $rejectLog->details['rejection_reason'] : null)
+                        ?? ($rejectLog && isset($rejectLog->details['reason']) ? $rejectLog->details['reason'] : null)
+                        ?? '';
+                    
+                    // Add status_changed_at for compatibility
+                    $doc->inbox_approval_responded_at = $rejectedStatus->status_changed_at ?? null;
+                    
                     return $doc;
                 });
 
@@ -165,6 +185,7 @@ class DashboardController extends Controller
             ]);
 
             // Hitung total rejected (case-insensitive)
+            // FIX: inbox_approval_status sudah dihapus, gunakan dokumen_statuses
             $totalRejected = Dokumen::where(function ($query) {
                 $query->whereRaw('LOWER(created_by) = ?', ['ibua'])
                     ->orWhere('created_by', 'ibuA')
@@ -176,7 +197,9 @@ class DashboardController extends Controller
                         ->orWhere('current_handler', 'IbuA');
                 })
                 ->where('status', 'returned_to_ibua')
-                ->where('inbox_approval_status', 'rejected')
+                ->whereHas('roleStatuses', function ($q) {
+                    $q->where('status', 'rejected');
+                })
                 ->count();
 
             return response()->json([
@@ -184,29 +207,30 @@ class DashboardController extends Controller
                 'rejected_documents_count' => $rejectedDocuments->count(),
                 'total_rejected' => $totalRejected,
                 'rejected_documents' => $rejectedDocuments->map(function ($doc) {
-                    // Get rejected by name from activity log
+                    // Get rejected by name from status or activity log
+                    $rejectedStatus = $doc->roleStatuses->first();
                     $rejectLog = $doc->activityLogs()
-                        ->where('action', 'inbox_rejected')
+                        ->where('action', 'rejected')
                         ->latest('action_at')
                         ->first();
 
                     $rejectedBy = 'Unknown';
-                    if ($rejectLog) {
-                        $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
-                        // Map role to display name
-                        $nameMap = [
-                            'IbuB' => 'Ibu Yuni',
-                            'ibuB' => 'Ibu Yuni',
-                            'Perpajakan' => 'Team Perpajakan',
-                            'perpajakan' => 'Team Perpajakan',
-                            'Akutansi' => 'Team Akutansi',
-                            'akutansi' => 'Team Akutansi',
-                        ];
-                        $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-                    } else {
-                        // Fallback logic removed as inbox_approval_for is deleted
-                        $rejectedBy = 'Unknown';
+                    if ($rejectedStatus && $rejectedStatus->changed_by) {
+                        $rejectedBy = $rejectedStatus->changed_by;
+                    } elseif ($rejectLog) {
+                        $rejectedBy = $rejectLog->performed_by ?? ($rejectLog->details['rejected_by'] ?? 'Unknown');
                     }
+                    
+                    // Map role to display name
+                    $nameMap = [
+                        'IbuB' => 'Ibu Yuni',
+                        'ibuB' => 'Ibu Yuni',
+                        'Perpajakan' => 'Team Perpajakan',
+                        'perpajakan' => 'Team Perpajakan',
+                        'Akutansi' => 'Team Akutansi',
+                        'akutansi' => 'Team Akutansi',
+                    ];
+                    $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
 
                     return [
                         'id' => $doc->id,
@@ -214,7 +238,7 @@ class DashboardController extends Controller
                         'nomor_spp' => $doc->nomor_spp,
                         'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 50),
                         'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
-                        'rejected_at' => $doc->inbox_approval_responded_at->format('d/m/Y H:i'),
+                        'rejected_at' => $doc->inbox_approval_responded_at ? $doc->inbox_approval_responded_at->format('d/m/Y H:i') : '-',
                         'rejected_by' => $rejectedBy,
                         'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
                         'url' => route('ibua.rejected.show', $doc->id),
@@ -224,10 +248,14 @@ class DashboardController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error checking rejected documents: ' . $e->getMessage());
+            \Log::error('Error checking rejected documents: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'user_role' => auth()->user()?->role ?? 'unknown',
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memeriksa dokumen yang ditolak'
+                'message' => 'Gagal memeriksa dokumen yang ditolak: ' . $e->getMessage()
             ], 500);
         }
     }
