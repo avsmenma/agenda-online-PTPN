@@ -133,48 +133,48 @@ class DashboardBController extends Controller
             $join->on('dokumens.id', '=', 'ibub_data.dokumen_id')
                 ->where('ibub_data.role_code', '=', 'ibub');
         })
-            ->select('dokumens.*')
+            ->select([
+                'dokumens.id',
+                'dokumens.nomor_agenda',
+                'dokumens.nomor_spp',
+                'dokumens.uraian_spp',
+                'dokumens.nilai_rupiah',
+                'dokumens.status',
+                'dokumens.created_at',
+                'dokumens.tanggal_masuk',
+                'dokumens.tanggal_spp',
+                'dokumens.keterangan',
+                'dokumens.alasan_pengembalian',
+                // Deadline fields are now in dokumen_role_data table - use aliases for easier access
+                'ibub_data.deadline_at as deadline_at',
+                'ibub_data.deadline_days as deadline_days',
+                'ibub_data.deadline_note as deadline_note',
+                'dokumens.current_handler',
+                'dokumens.bulan',
+                'dokumens.tahun',
+                'dokumens.kategori',
+                'dokumens.kebun',
+                'dokumens.jenis_dokumen',
+                'dokumens.updated_at',
+                'dokumens.tanggal_spk',
+                'dokumens.tanggal_berakhir_spk',
+                'dokumens.no_spk',
+                'dokumens.nomor_mirror',
+                'dokumens.nama_pengirim',
+                'dokumens.jenis_pembayaran',
+                'dokumens.dibayar_kepada',
+                'dokumens.no_berita_acara',
+                'dokumens.tanggal_berita_acara',
+                // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
+                // 'dokumens.inbox_approval_reason', // REMOVED
+                // 'dokumens.inbox_approval_for', // REMOVED
+                // 'dokumens.inbox_approval_status', // REMOVED
+                'dokumens.created_by'
+            ])
             ->orderByRaw("
                 COALESCE(ibub_data.received_at, dokumens.created_at) DESC,
                 dokumens.id DESC
-            ")
-            ->select([
-                'id',
-                'nomor_agenda',
-                'nomor_spp',
-                'uraian_spp',
-                'nilai_rupiah',
-                'status',
-                'created_at',
-                'tanggal_masuk',
-                'tanggal_spp',
-                'keterangan',
-                'alasan_pengembalian',
-                'deadline_at',
-                'deadline_days',
-                'deadline_note',
-                'current_handler',
-                'bulan',
-                'tahun',
-                'kategori',
-                'kebun',
-                'jenis_dokumen',
-                'updated_at',
-                'tanggal_spk',
-                'tanggal_berakhir_spk',
-                'no_spk',
-                'nomor_mirror',
-                'nama_pengirim',
-                'jenis_pembayaran',
-                'dibayar_kepada',
-                'no_berita_acara',
-                'tanggal_berita_acara',
-                'inbox_approval_responded_at',
-                // 'inbox_approval_reason', // REMOVED
-                // 'inbox_approval_for', // REMOVED
-                // 'inbox_approval_status', // REMOVED
-                'created_by'
-            ]);
+            ");
 
         // Enhanced search functionality - search across all relevant fields
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
@@ -217,8 +217,8 @@ class DashboardBController extends Controller
             switch ($statusFilter) {
                 case 'deadline':
                     // Dokumen yang memiliki deadline (deadline_at tidak null) dan masih dalam scope Ibu Yuni
-                    $query->whereNotNull('deadline_at')
-                        ->where('current_handler', 'ibuB')
+                    $query->whereNotNull('ibub_data.deadline_at')
+                        ->where('dokumens.current_handler', 'ibuB')
                         // Pastikan bukan status terkirim atau selesai
                         ->whereNotIn('status', [
                             'sent_to_perpajakan',
