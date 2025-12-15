@@ -596,13 +596,35 @@
               <td>
                 <div class="action-buttons">
                   @php
+                    // Check if document has been sent to IbuB
+                    $isSentToIbuB = ($dokumen->status ?? '') == 'sent_to_ibub'
+                             || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua');
+                    
+                    // Check if document has been approved by Ibu Yuni and sent to other roles
+                    $ibuBStatus = $dokumen->getStatusForRole('ibub');
+                    $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
+                    
+                    // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
+                    $isSentToOtherRoles = in_array($dokumen->status ?? '', [
+                      'sent_to_perpajakan',
+                      'sent_to_akutansi',
+                      'sent_to_pembayaran',
+                      'pending_approval_perpajakan',
+                      'pending_approval_akutansi',
+                      'pending_approval_pembayaran'
+                    ]);
+                    
+                    // Document is considered "sent" if sent to IbuB OR approved by IbuB and sent to other roles
+                    $isSent = $isSentToIbuB || ($isApprovedByIbuB && $isSentToOtherRoles);
+                    
+                    // Can send only if document is draft/returned and still with IbuA
                     $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua', 'sedang diproses'])
                               && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
-                              && ($dokumen->created_by ?? 'ibuA') == 'ibuA';
-                    $isSent = ($dokumen->status ?? '') == 'sent_to_ibub'
-                             || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua')
-                             || !empty($dokumen->sent_to_ibub_at);
-                    $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua', 'sedang diproses'])
+                              && ($dokumen->created_by ?? 'ibuA') == 'ibuA'
+                              && !$isSent;
+                    
+                    // Can edit only if document is not sent and can be edited
+                    $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua'])
                               && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
                   @endphp
                   @if($canEdit)

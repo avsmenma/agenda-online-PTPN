@@ -3068,6 +3068,13 @@
                   if ($isReturnedStatus || $isRejected) {
                     $isLocked = false;
                   }
+                  
+                  // Check if document has been approved by Perpajakan or Akutansi
+                  $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
+                  $akutansiStatus = $dokumen->getStatusForRole('akutansi');
+                  $isApprovedByPerpajakan = $perpajakanStatus && $perpajakanStatus->status === 'approved';
+                  $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
+                  $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
                 @endphp
                 <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
                   onclick="handleRowClick(event, {{ $dokumen->id }})"
@@ -3265,11 +3272,21 @@
                         </button>
                       @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub']) || $isPending)
                         <!-- Document already sent or waiting approval - show status -->
-                        <button class="btn-action btn-edit locked btn-full-width" disabled
-                          title="Dokumen sedang menunggu approval, tidak dapat diedit">
-                          <i class="fa-solid fa-clock"></i>
-                          <span>Menunggu Approval</span>
-                        </button>
+                        @if($isApprovedByOtherRole)
+                          <!-- Document has been approved by Perpajakan/Akutansi - show approved status -->
+                          <button class="btn-action btn-edit locked btn-full-width" disabled
+                            title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span>Sudah Di-approve {{ $isApprovedByPerpajakan ? 'Perpajakan' : 'Akutansi' }}</span>
+                          </button>
+                        @else
+                          <!-- Document waiting approval - show waiting status -->
+                          <button class="btn-action btn-edit locked btn-full-width" disabled
+                            title="Dokumen sedang menunggu approval, tidak dapat diedit">
+                            <i class="fa-solid fa-clock"></i>
+                            <span>Menunggu Approval</span>
+                          </button>
+                        @endif
                       @elseif($isRejected)
                         <!-- Dokumen ditolak dari inbox - tampilkan Kirim (full width), Edit dan Kembalikan di bawah -->
                         <button type="button" class="btn-action btn-kirim btn-full-width"
@@ -3293,11 +3310,19 @@
                         </div>
                       @else
                         <!-- Unlocked state - buttons enabled -->
-                        @if(in_array($dokumen->status, ['sent_to_ibub', 'approved_ibub', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']))
+                        @if(in_array($dokumen->status, ['sent_to_ibub', 'approved_ibub', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
+                          <!-- Only show "Kirim Data" button if document hasn't been approved by other roles yet -->
                           <button type="button" class="btn-action btn-kirim btn-full-width"
                             onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
                             <i class="fa-solid fa-paper-plane"></i>
                             <span>Kirim Data</span>
+                          </button>
+                        @elseif($isApprovedByOtherRole)
+                          <!-- Document has been approved by Perpajakan/Akutansi - show approved status -->
+                          <button class="btn-action btn-edit locked btn-full-width" disabled
+                            title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span>Sudah Di-approve {{ $isApprovedByPerpajakan ? 'Perpajakan' : 'Akutansi' }}</span>
                           </button>
                         @endif
                         <div class="action-row">

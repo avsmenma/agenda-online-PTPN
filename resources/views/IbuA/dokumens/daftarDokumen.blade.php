@@ -2021,25 +2021,50 @@
         <td class="col-action sticky-column" onclick="event.stopPropagation()">
           <div class="action-buttons">
             @php
-              $isSent = ($dokumen->status ?? '') == 'sent_to_ibub'
+              // Check if document has been sent to IbuB
+              $isSentToIbuB = ($dokumen->status ?? '') == 'sent_to_ibub'
                        || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua');
+              
+              // Check if document has been approved by Ibu Yuni and sent to other roles
+              $ibuBStatus = $dokumen->getStatusForRole('ibub');
+              $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
+              
+              // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
+              $isSentToOtherRoles = in_array($dokumen->status ?? '', [
+                'sent_to_perpajakan',
+                'sent_to_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_perpajakan',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran'
+              ]);
+              
+              // Document is considered "sent" if sent to IbuB OR approved by IbuB and sent to other roles
+              $isSent = $isSentToIbuB || ($isApprovedByIbuB && $isSentToOtherRoles);
+              
+              // Can send only if document is draft/returned and still with IbuA
               $canSend = in_array($dokumen->status, ['draft', 'returned_to_ibua', 'sedang diproses'])
                         && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
-                        && ($dokumen->created_by ?? 'ibuA') == 'ibuA';
+                        && ($dokumen->created_by ?? 'ibuA') == 'ibuA'
+                        && !$isSent;
+              
+              // Can edit only if document is not sent and can be edited
+              $canEdit = !$isSent && in_array($dokumen->status, ['draft', 'returned_to_ibua'])
+                        && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
             @endphp
-            @unless($isSent)
+            @if($canEdit)
               <a href="{{ route('dokumens.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
                 <i class="fa-solid fa-edit"></i>
                 <span>Edit</span>
               </a>
-            @endunless
+            @endif
             @if($canSend)
             <button class="btn-action btn-send" onclick="sendToIbuB({{ $dokumen->id }})" title="Kirim ke Ibu Yuni">
               <i class="fa-solid fa-paper-plane"></i>
               <span>Kirim</span>
             </button>
             @elseif($isSent)
-            <button class="btn-action btn-send" disabled title="Dokumen sudah dikirim ke Ibu Yuni">
+            <button class="btn-action btn-send" disabled title="Dokumen sudah dikirim">
               <i class="fa-solid fa-paper-plane"></i>
               <span>Kirim</span>
             </button>
