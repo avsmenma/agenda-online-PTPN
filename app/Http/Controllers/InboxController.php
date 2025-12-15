@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
+use App\Models\DokumenStatus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -100,21 +101,34 @@ class InboxController extends Controller
         try {
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
+            $roleCode = strtolower($userRole);
+
+            // Refresh dokumen untuk memastikan data terbaru
+            $dokumen->refresh();
+            $dokumen->load('roleStatuses');
 
             // Validate user has access to this inbox
             // Note: This check logic is a bit complex due to unified model methods
             // We check if there is a pending status for this role
-            if (!$dokumen->isPendingForRole(strtolower($userRole))) {
+            if (!$dokumen->isPendingForRole($roleCode)) {
                 // Double check: maybe it WAS pending for this user but handled?
-                // If so, redirect to index with message
-                $status = $dokumen->getStatusForRole(strtolower($userRole));
-                if ($status && $status->status !== 'pending') {
-                    return redirect()->route('inbox.index')
-                        ->with('error', 'Dokumen ini sudah diproses');
+                // If so, redirect to index with appropriate message
+                $status = $dokumen->getStatusForRole($roleCode);
+                if ($status) {
+                    if ($status->status === DokumenStatus::STATUS_APPROVED) {
+                        // Dokumen sudah di-approve - redirect dengan info message
+                        return redirect()->route('inbox.index')
+                            ->with('info', 'Dokumen ini sudah disetujui dan telah masuk ke daftar dokumen resmi.');
+                    } elseif ($status->status === DokumenStatus::STATUS_REJECTED) {
+                        // Dokumen sudah di-reject
+                        return redirect()->route('inbox.index')
+                            ->with('info', 'Dokumen ini sudah ditolak sebelumnya.');
+                    }
                 }
 
                 // If not pending and not handled by this user ever (or cleared), then unauthorized
-                abort(403, 'Unauthorized access');
+                return redirect()->route('inbox.index')
+                    ->with('error', 'Dokumen ini tidak tersedia untuk approval atau sudah diproses.');
             }
 
             // Normalize module untuk layout (harus lowercase untuk match statement)
@@ -158,12 +172,25 @@ class InboxController extends Controller
             $userRole = $this->getUserRole($user);
             $roleCode = strtolower($userRole);
 
+            // Refresh dokumen untuk memastikan data terbaru (mencegah race condition)
+            $dokumen->refresh();
+            
+            // Reload relationship untuk mendapatkan status terbaru
+            $dokumen->load('roleStatuses');
+
             // Validate user has access using new status table
             if (!$dokumen->isPendingForRole($roleCode)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access atau dokumen sudah diproses'
-                ], 403);
+                // Cek apakah dokumen sudah di-approve oleh user ini
+                $status = $dokumen->getStatusForRole($roleCode);
+                if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
+                    // Dokumen sudah di-approve, redirect dengan success message
+                    return redirect()->route('inbox.index')
+                        ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan telah masuk ke daftar dokumen resmi.');
+                }
+                
+                // Dokumen tidak pending dan tidak approved - mungkin sudah di-reject atau tidak ada akses
+                return redirect()->route('inbox.index')
+                    ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk approval.');
             }
 
             // Use new approval method
@@ -173,8 +200,13 @@ class InboxController extends Controller
                 ->with('success', 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.');
 
         } catch (\Exception $e) {
-            Log::error('Error approving document from inbox: ' . $e->getMessage());
-            return back()->with('error', 'Gagal menyetujui dokumen: ' . $e->getMessage());
+            Log::error('Error approving document from inbox: ' . $e->getMessage(), [
+                'dokumen_id' => $dokumen->id,
+                'user_role' => $userRole ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('inbox.index')
+                ->with('error', 'Gagal menyetujui dokumen: ' . $e->getMessage());
         }
     }
 
@@ -196,12 +228,24 @@ class InboxController extends Controller
             $userRole = $this->getUserRole($user);
             $roleCode = strtolower($userRole);
 
+            // Refresh dokumen untuk memastikan data terbaru (mencegah race condition)
+            $dokumen->refresh();
+            $dokumen->load('roleStatuses');
+
             // Validate user has access using new status table
             if (!$dokumen->isPendingForRole($roleCode)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access atau dokumen sudah diproses'
-                ], 403);
+                // Cek apakah dokumen sudah di-process
+                $status = $dokumen->getStatusForRole($roleCode);
+                if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
+                    return redirect()->route('inbox.index')
+                        ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan tidak dapat ditolak.');
+                } elseif ($status && $status->status === DokumenStatus::STATUS_REJECTED) {
+                    return redirect()->route('inbox.index')
+                        ->with('info', 'Dokumen ini sudah ditolak sebelumnya.');
+                }
+                
+                return redirect()->route('inbox.index')
+                    ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk penolakan.');
             }
 
             // Use new rejection method
@@ -211,8 +255,13 @@ class InboxController extends Controller
                 ->with('success', 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason);
 
         } catch (\Exception $e) {
-            Log::error('Error rejecting document from inbox: ' . $e->getMessage());
-            return back()->with('error', 'Gagal menolak dokumen: ' . $e->getMessage());
+            Log::error('Error rejecting document from inbox: ' . $e->getMessage(), [
+                'dokumen_id' => $dokumen->id,
+                'user_role' => $userRole ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('inbox.index')
+                ->with('error', 'Gagal menolak dokumen: ' . $e->getMessage());
         }
     }
 

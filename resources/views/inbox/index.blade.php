@@ -1044,6 +1044,10 @@ document.addEventListener('DOMContentLoaded', function() {
         showNotification('error', 'Error!', '{{ session('error') }}');
     @endif
 
+    @if(session('info'))
+        showNotification('info', 'Informasi', '{{ session('info') }}');
+    @endif
+
     // Initialize notification polling
     initNotificationPolling();
 
