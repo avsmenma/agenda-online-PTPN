@@ -439,7 +439,18 @@ class OwnerDashboardController extends Controller
                 ->count(),
             'overdue_documents' => Dokumen::whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
-                ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap'])
+                ->whereNotIn('status', [
+                    'approved_data_sudah_terkirim', 
+                    'rejected_data_tidak_lengkap',
+                    'selesai',
+                    'completed',
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                ])
                 ->count(),
             'avg_processing_time' => $this->calculateAverageProcessingTime(),
             'fastest_department' => $this->getFastestDepartment(),
@@ -560,8 +571,23 @@ class OwnerDashboardController extends Controller
         if (!$dokumen->deadline_at)
             return false;
 
+        // Dokumen yang sudah terkirim ke perpajakan/akutansi/pembayaran tidak dianggap terlambat
+        // karena deadline Ibu Yuni sudah tidak berlaku lagi setelah dokumen terkirim
+        $excludedStatuses = [
+            'approved_data_sudah_terkirim',
+            'rejected_data_tidak_lengkap',
+            'selesai',
+            'completed',
+            'sent_to_perpajakan',
+            'sent_to_akutansi',
+            'sent_to_pembayaran',
+            'pending_approval_perpajakan',
+            'pending_approval_akutansi',
+            'pending_approval_pembayaran',
+        ];
+
         return Carbon::now()->greaterThan($dokumen->deadline_at) &&
-            !in_array($dokumen->status, ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap']);
+            !in_array($dokumen->status, $excludedStatuses);
     }
 
     /**
@@ -1739,9 +1765,20 @@ class OwnerDashboardController extends Controller
                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
                 });
         } elseif ($statFilter === 'terlambat') {
+            // Dokumen terlambat: memiliki deadline yang sudah lewat, belum selesai, dan belum terkirim ke perpajakan/akutansi
             $documentsQuery->whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
-                ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->whereNotIn('status', [
+                    'selesai', 
+                    'approved_data_sudah_terkirim', 
+                    'completed',
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                ])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
@@ -1819,9 +1856,21 @@ class OwnerDashboardController extends Controller
         $dokumens = $query->orderBy('deadline_at', 'asc')->paginate(20)->appends($request->query());
 
         // Calculate keterlambatan statistics
+        // Dokumen terlambat: memiliki deadline yang sudah lewat, belum selesai, dan belum terkirim ke perpajakan/akutansi
         $totalTerlambat = Dokumen::whereNotNull('deadline_at')
             ->where('deadline_at', '<', $now)
-            ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap', 'selesai'])
+            ->whereNotIn('status', [
+                'approved_data_sudah_terkirim', 
+                'rejected_data_tidak_lengkap', 
+                'selesai',
+                'completed',
+                'sent_to_perpajakan',
+                'sent_to_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_perpajakan',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran',
+            ])
             ->count();
 
         $terlambatByHandler = [];
@@ -1830,7 +1879,18 @@ class OwnerDashboardController extends Controller
             $terlambatByHandler[$handlerCode] = Dokumen::whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
                 ->where('current_handler', $handlerCode)
-                ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap', 'selesai'])
+                ->whereNotIn('status', [
+                    'approved_data_sudah_terkirim', 
+                    'rejected_data_tidak_lengkap', 
+                    'selesai',
+                    'completed',
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                ])
                 ->count();
         }
 

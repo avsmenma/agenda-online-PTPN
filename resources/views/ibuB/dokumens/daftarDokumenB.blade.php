@@ -722,6 +722,64 @@
         animation: overdue-alert 3s infinite;
       }
 
+      /* Sent State - Gray Theme (for documents sent to other roles) */
+      .deadline-card.deadline-sent {
+        --deadline-color: #6b7280;
+        --deadline-color-light: #9ca3af;
+        --deadline-bg: #f9fafb;
+        --deadline-text: #4b5563;
+      }
+
+      .deadline-card.deadline-sent {
+        background: var(--deadline-bg) !important;
+        border-color: rgba(107, 114, 128, 0.2) !important;
+        opacity: 0.8;
+      }
+
+      .deadline-card.deadline-sent .deadline-time {
+        color: var(--deadline-text) !important;
+      }
+
+      .deadline-indicator.deadline-sent {
+        background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+        color: white;
+        box-shadow: 0 2px 6px rgba(107, 114, 128, 0.3);
+      }
+
+      .deadline-indicator.deadline-sent i::before {
+        content: "\f1d8";
+        /* paper-plane */
+      }
+
+      /* Completed State - Green Theme (for completed documents) */
+      .deadline-card.deadline-completed {
+        --deadline-color: #10b981;
+        --deadline-color-light: #34d399;
+        --deadline-bg: #ecfdf5;
+        --deadline-text: #065f46;
+      }
+
+      .deadline-card.deadline-completed {
+        background: var(--deadline-bg) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+        opacity: 0.9;
+      }
+
+      .deadline-card.deadline-completed .deadline-time {
+        color: var(--deadline-text) !important;
+      }
+
+      .deadline-indicator.deadline-completed {
+        background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+        color: white;
+        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+      }
+
+      .deadline-indicator.deadline-completed i::before {
+        content: "\f058";
+        /* check-circle */
+      }
+
       .deadline-card.deadline-overdue .deadline-time {
         color: var(--deadline-text) !important;
         font-weight: 800;
@@ -3151,9 +3209,42 @@
                           : $dokumen->deadline_at;
                         $deadlineNote = $dokumen->deadline_note;
                       }
+                      
+                      // Check if document is already sent to other roles (perpajakan/akutansi/pembayaran)
+                      $isSent = in_array($dokumen->status, [
+                        'sent_to_perpajakan',
+                        'sent_to_akutansi',
+                        'sent_to_pembayaran',
+                        'pending_approval_perpajakan',
+                        'pending_approval_akutansi',
+                        'pending_approval_pembayaran',
+                      ]);
+                      
+                      // Check if document is completed
+                      $isCompleted = in_array($dokumen->status, [
+                        'selesai',
+                        'completed',
+                        'approved_data_sudah_terkirim',
+                      ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
+                      
+                      // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
+                      $deadlineType = 'active';
+                      if ($isCompleted) {
+                        $deadlineType = 'completed';
+                      } elseif ($isSent) {
+                        $deadlineType = 'sent';
+                      }
                     @endphp
                     @if($deadlineAt)
-                      <div class="deadline-card" data-deadline="{{ $deadlineAt->format('Y-m-d H:i:s') }}">
+                      @php
+                        // Get deadline_days from roleData to determine original deadline period
+                        $deadlineDays = $roleData?->deadline_days ?? null;
+                      @endphp
+                      <div class="deadline-card deadline-{{ $deadlineType }}" 
+                           data-deadline="{{ $deadlineAt->format('Y-m-d H:i:s') }}"
+                           data-deadline-days="{{ $deadlineDays ?? '' }}"
+                           data-sent="{{ $isSent ? 'true' : 'false' }}"
+                           data-completed="{{ $isCompleted ? 'true' : 'false' }}">
                         <div class="deadline-time">
                           <i class="fa-solid fa-clock"></i>
                           <span>{{ $deadlineAt->format('d M Y, H:i') }}</span>
@@ -3164,6 +3255,15 @@
                         </div>
                         @if($deadlineNote)
                           <div class="deadline-note">{{ Str::limit($deadlineNote, 50) }}</div>
+                        @endif
+                        @if($isSent)
+                          <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                            <i class="fa-solid fa-paper-plane"></i> Terkirim
+                          </div>
+                        @elseif($isCompleted)
+                          <div class="deadline-label" style="font-size: 8px; color: #10b981; margin-top: 4px; font-weight: 600;">
+                            <i class="fa-solid fa-check-circle"></i> Selesai
+                          </div>
                         @endif
                       </div>
                     @else
@@ -3600,15 +3700,16 @@
         return;
       }
 
-      // Check if document is already sent
+      // Check if document is already sent or completed
       const isSent = card.dataset.sent === 'true';
+      const isCompleted = card.dataset.completed === 'true';
 
       const deadline = new Date(deadlineStr);
       const now = new Date();
       const diffMs = deadline - now;
 
       // Remove existing status classes
-      card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue');
+      card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue', 'deadline-sent', 'deadline-completed');
 
       // Find status indicator
       const statusIndicator = card.querySelector('.deadline-indicator');
@@ -3636,8 +3737,27 @@
       if (existingTimeHint) existingTimeHint.remove();
       if (existingProgress) existingProgress.remove();
 
+      // Handle completed documents - show as completed (green, no countdown)
+      if (isCompleted) {
+        card.classList.add('deadline-completed');
+        statusText.textContent = 'SELESAI';
+        statusIcon.className = 'fa-solid fa-check-circle';
+        statusIndicator.className = 'deadline-indicator deadline-completed';
+        return; // Don't show countdown for completed documents
+      }
+
+      // Handle sent documents - show as sent (gray, no countdown, no overdue)
+      if (isSent) {
+        card.classList.add('deadline-sent');
+        statusText.textContent = 'TERKIRIM';
+        statusIcon.className = 'fa-solid fa-paper-plane';
+        statusIndicator.className = 'deadline-indicator deadline-sent';
+        return; // Don't show countdown or overdue for sent documents
+      }
+
+      // Handle active documents (still being processed) - show countdown
       if (diffMs < 0) {
-        // Overdue state
+        // Overdue state - only for active documents
         card.classList.add('deadline-overdue');
 
         // Calculate how late
@@ -3649,26 +3769,24 @@
         statusIcon.className = 'fa-solid fa-exclamation-triangle';
         statusIndicator.className = 'deadline-indicator deadline-overdue';
 
-        // Create late info with enhanced styling only if document is not sent
-        if (!isSent) {
-          let lateText;
-          if (diffDays >= 1) {
-            lateText = `${diffDays} HARI TELAT`;
-          } else if (diffHours >= 1) {
-            lateText = `${diffHours} JAM TELAT`;
-          } else {
-            lateText = 'BARU SAJA TELAT';
-          }
-
-          const lateInfo = document.createElement('div');
-          lateInfo.className = 'late-info';
-          lateInfo.innerHTML = `
-            <i class="fa-solid fa-exclamation-triangle"></i>
-            <span class="late-text">${lateText}</span>
-          `;
-
-          card.appendChild(lateInfo);
+        // Show late info for active documents
+        let lateText;
+        if (diffDays >= 1) {
+          lateText = `${diffDays} HARI TELAT`;
+        } else if (diffHours >= 1) {
+          lateText = `${diffHours} JAM TELAT`;
+        } else {
+          lateText = 'BARU SAJA TELAT';
         }
+
+        const lateInfo = document.createElement('div');
+        lateInfo.className = 'late-info';
+        lateInfo.innerHTML = `
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <span class="late-text">${lateText}</span>
+        `;
+
+        card.appendChild(lateInfo);
 
         // Add progress bar at bottom
         const progressBar = document.createElement('div');
@@ -3676,47 +3794,90 @@
         card.appendChild(progressBar);
 
       } else {
-        // Time remaining
+        // Time remaining - only for active documents
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMinutes = Math.floor(diffMs / (1000 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        // Get original deadline_days from data attribute
+        const deadlineDays = parseInt(card.dataset.deadlineDays) || null;
+        
+        // Calculate remaining hours for more accurate display
+        const totalHoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
+        
+        // Determine display text based on deadline_days and remaining time
+        let displayText = '';
+        let shouldShowDays = false;
+        
+        if (deadlineDays && deadlineDays > 0) {
+          // If original deadline was set for X days, show "X hari lagi" 
+          // as long as we're still within that period
+          // Logic: Show days if remaining hours >= 12 hours OR if we're still in the first day
+          if (totalHoursRemaining >= 12) {
+            // Calculate how many full days remaining
+            const fullDaysRemaining = Math.floor(totalHoursRemaining / 24);
+            // If we have at least 12 hours, show at least "1 hari lagi" for deadline 1 hari
+            // For deadline 2+ hari, show actual days remaining (capped at deadline_days)
+            if (deadlineDays === 1) {
+              // For 1 day deadline, show "1 hari lagi" if >= 12 hours remaining
+              displayText = '1 hari lagi';
+              shouldShowDays = true;
+            } else {
+              // For 2+ days deadline, show actual days remaining
+              const daysToShow = Math.min(Math.max(1, fullDaysRemaining + (totalHoursRemaining % 24 >= 12 ? 1 : 0)), deadlineDays);
+              displayText = `${daysToShow} ${daysToShow === 1 ? 'hari' : 'hari'} lagi`;
+              shouldShowDays = daysToShow >= 1;
+            }
+          } else {
+            // Less than 12 hours remaining, show hours
+            displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+            shouldShowDays = false;
+          }
+        } else {
+          // No deadline_days info, use standard calculation
+          if (diffDays >= 1) {
+            displayText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
+            shouldShowDays = true;
+          } else if (diffHours >= 1) {
+            displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+            shouldShowDays = false;
+          } else {
+            displayText = `${diffMinutes} menit lagi`;
+            shouldShowDays = false;
+          }
+        }
 
-        // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning, terlambat = merah
-        if (diffDays >= 1) {
-          // Safe (>= 1 day) - Green
+        // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning
+        if (shouldShowDays || diffDays >= 1) {
+          // Safe (>= 1 day or still within original deadline period) - Green
           card.classList.add('deadline-safe');
           statusText.textContent = 'AMAN';
           statusIcon.className = 'fa-solid fa-check-circle';
           statusIndicator.className = 'deadline-indicator deadline-safe';
 
-          // Add time remaining hint only if document is not sent
-          if (!isSent) {
-            const timeHint = document.createElement('div');
-            timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
-            timeHint.textContent = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
-            card.appendChild(timeHint);
-          }
+          // Add time remaining hint
+          const timeHint = document.createElement('div');
+          timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
+          timeHint.textContent = displayText;
+          card.appendChild(timeHint);
 
         } else if (diffHours >= 1 || diffMinutes >= 1) {
-          // Warning (< 1 day) - Yellow
+          // Warning (< 1 day or less than 12 hours remaining) - Yellow
           card.classList.add('deadline-warning');
           statusText.textContent = 'DEKAT';
           statusIcon.className = 'fa-solid fa-exclamation-triangle';
           statusIndicator.className = 'deadline-indicator deadline-warning';
 
-          // Add time remaining hint only if document is not sent
-          if (!isSent) {
-            const timeHint = document.createElement('div');
-            timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
-            if (diffHours >= 1) {
-              timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-            } else {
-              timeHint.textContent = `${diffMinutes} menit lagi`;
-              timeHint.style.animation = 'warning-shake 1s infinite';
-            }
-            card.appendChild(timeHint);
+          // Add time remaining hint
+          const timeHint = document.createElement('div');
+          timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
+          if (diffHours >= 1) {
+            timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+          } else {
+            timeHint.textContent = `${diffMinutes} menit lagi`;
+            timeHint.style.animation = 'warning-shake 1s infinite';
           }
-
+          card.appendChild(timeHint);
         }
 
         // Add progress bar
