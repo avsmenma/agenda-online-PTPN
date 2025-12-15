@@ -1874,7 +1874,9 @@
           // Use is_locked from controller (based on DokumenHelper logic)
           $isLocked = $dokumen->is_locked ?? false;
           $isSentToAkutansi = $dokumen->status == 'sent_to_akutansi';
-          $canSendToAkutansi = $dokumen->status != 'sent_to_akutansi'
+          $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
+          $canSend = $dokumen->status != 'sent_to_akutansi'
+            && $dokumen->status != 'sent_to_pembayaran'
             && $dokumen->current_handler == 'perpajakan';
           $perpajakanRequiredFields = [
             'npwp' => 'NPWP',
@@ -1894,10 +1896,12 @@
           }
           
           // Determine send button tooltip message
-          $sendButtonTooltip = 'Kirim ke Team Akutansi';
+          $sendButtonTooltip = 'Kirim ke Team Akutansi atau Pembayaran';
           if ($isSentToAkutansi) {
             $sendButtonTooltip = 'Dokumen sudah dikirim ke Team Akutansi';
-          } elseif (!$canSendToAkutansi) {
+          } elseif ($isSentToPembayaran) {
+            $sendButtonTooltip = 'Dokumen sudah dikirim ke Team Pembayaran';
+          } elseif (!$canSend) {
             if ($dokumen->current_handler != 'perpajakan') {
               $sendButtonTooltip = 'Dokumen tidak sedang ditangani oleh perpajakan';
             } else {
@@ -2065,6 +2069,8 @@
               <span class="badge-status badge-locked">🔒 Terkunci</span>
             @elseif($dokumen->status == 'sent_to_akutansi')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
+            @elseif($dokumen->status == 'sent_to_pembayaran')
+              <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
             @else
               <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @endif
@@ -2073,13 +2079,13 @@
             <div class="action-buttons-hybrid">
               @if($isLocked)
                 <!-- Locked state - tampilkan button Set Deadline -->
-                @unless($isSentToAkutansi)
+                @unless($isSentToAkutansi || $isSentToPembayaran)
                   <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
                     <i class="fa-solid fa-clock"></i>
                     <span>Set Deadline</span>
                   </button>
                 @endunless
-              @elseif($isSentToAkutansi)
+              @elseif($isSentToAkutansi || $isSentToPembayaran)
                 <!-- Document already sent - show sent status -->
                 <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim, tidak dapat diedit">
                   <i class="fa-solid fa-check-circle"></i>
@@ -2090,11 +2096,11 @@
                 <button
                   type="button"
                   class="btn-action btn-send btn-full-width"
-                  onclick="handleSendToAkutansi({{ $dokumen->id }})"
+                  onclick="handleSendToNext({{ $dokumen->id }})"
                   data-doc-id="{{ $dokumen->id }}"
                   data-missing-fields="{{ e(implode('||', $missingPerpajakanFields)) }}"
                   title="{{ $sendButtonTooltip }}"
-                  @if(!$canSendToAkutansi) disabled @endif
+                  @if(!$canSend) disabled @endif
                 >
                   <i class="fa-solid fa-paper-plane"></i>
                   <span>Kirim Data</span>
@@ -2342,15 +2348,26 @@
     <div class="modal-content">
       <div class="modal-header" style="background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%); color: white;">
         <h5 class="modal-title" id="sendConfirmationModalLabel">
-          <i class="fa-solid fa-paper-plane me-2"></i>Konfirmasi Pengiriman ke Team Akutansi
+          <i class="fa-solid fa-paper-plane me-2"></i>Konfirmasi Pengiriman Dokumen
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="sendConfirmationDocId">
+        <div class="mb-3">
+          <label for="nextHandlerSelect" class="form-label fw-bold">
+            <i class="fa-solid fa-route me-2"></i>Pilih Tujuan Pengiriman*
+          </label>
+          <select class="form-select" id="nextHandlerSelect" required>
+            <option value="">Pilih tujuan pengiriman</option>
+            <option value="akutansi">Team Akutansi</option>
+            <option value="pembayaran">Team Pembayaran</option>
+          </select>
+          <div class="form-text">Pilih ke mana dokumen akan dikirim</div>
+        </div>
         <div class="alert alert-info border-0" id="sendConfirmationInfo">
           <i class="fa-solid fa-circle-info me-2"></i>
-          Pastikan seluruh data Team Perpajakan sudah lengkap sebelum mengirim dokumen ke Team Akutansi.
+          Pastikan seluruh data Team Perpajakan sudah lengkap sebelum mengirim dokumen.
         </div>
         <div class="alert alert-warning border-0 d-none" id="missingFieldsWrapper">
           <div class="d-flex align-items-start">
@@ -2366,7 +2383,7 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           <i class="fa-solid fa-times me-2"></i>Batal
         </button>
-        <button type="button" class="btn btn-success" id="confirmSendBtn" onclick="confirmSendToAkutansi()">
+        <button type="button" class="btn btn-success" id="confirmSendBtn" onclick="confirmSendToNext()">
           <i class="fa-solid fa-paper-plane me-2"></i>Kirim Sekarang
         </button>
       </div>
@@ -2388,9 +2405,9 @@
         <div class="mb-3">
           <i class="fa-solid fa-check-circle" style="font-size: 48px; color: #16a085;"></i>
         </div>
-        <h5 class="fw-bold mb-3">Dokumen berhasil dikirim ke Team Akutansi!</h5>
-        <p class="text-muted mb-0">
-          Data Team Perpajakan telah disertakan dan dokumen sekarang akan muncul di halaman Team Akutansi.
+        <h5 class="fw-bold mb-3" id="sendSuccessTitle">Dokumen berhasil dikirim!</h5>
+        <p class="text-muted mb-0" id="sendSuccessMessage">
+          Data Team Perpajakan telah disertakan dan dokumen sekarang akan muncul di halaman tujuan.
         </p>
       </div>
       <div class="modal-footer border-0 justify-content-center">
@@ -2897,7 +2914,7 @@ let currentSendButton = null;
 let currentSendButtonOriginalHTML = '';
 let shouldReloadAfterSuccess = false;
 
-function handleSendToAkutansi(docId) {
+function handleSendToNext(docId) {
   const sendBtn = document.querySelector(`button[data-doc-id="${docId}"]`);
   if (!sendBtn) {
     console.warn('Send button not found for document ID:', docId);
@@ -2917,7 +2934,11 @@ function handleSendToAkutansi(docId) {
   const missingList = document.getElementById('missingFieldsList');
   const infoAlert = document.getElementById('sendConfirmationInfo');
   const confirmBtn = document.getElementById('confirmSendBtn');
+  const nextHandlerSelect = document.getElementById('nextHandlerSelect');
 
+  // Reset form
+  nextHandlerSelect.value = '';
+  
   if (missingFields.length > 0) {
     missingWrapper.classList.remove('d-none');
     missingList.innerHTML = missingFields.map(field => `<li>${field}</li>`).join('');
@@ -2936,16 +2957,24 @@ function handleSendToAkutansi(docId) {
   modal.show();
 }
 
-function confirmSendToAkutansi() {
+function confirmSendToNext() {
   const docId = document.getElementById('sendConfirmationDocId').value;
+  const nextHandler = document.getElementById('nextHandlerSelect').value;
+  
   if (!docId) {
     alert('Dokumen tidak ditemukan. Silakan muat ulang halaman.');
     return;
   }
-  performSendToAkutansi(docId);
+  
+  if (!nextHandler) {
+    alert('Silakan pilih tujuan pengiriman terlebih dahulu.');
+    return;
+  }
+  
+  performSendToNext(docId, nextHandler);
 }
 
-function performSendToAkutansi(docId) {
+function performSendToNext(docId, nextHandler) {
   const confirmBtn = document.getElementById('confirmSendBtn');
   confirmBtn.disabled = true;
   confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
@@ -2955,12 +2984,15 @@ function performSendToAkutansi(docId) {
     currentSendButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
   }
 
-  fetch(`/dokumensPerpajakan/${docId}/send-to-akutansi`, {
+  fetch(`/dokumensPerpajakan/${docId}/send-to-next`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    }
+    },
+    body: JSON.stringify({
+      next_handler: nextHandler
+    })
   })
   .then(response => response.json())
   .then(data => {
@@ -2968,6 +3000,12 @@ function performSendToAkutansi(docId) {
       const modalElement = document.getElementById('sendConfirmationModal');
       const modalInstance = bootstrap.Modal.getInstance(modalElement);
       modalInstance.hide();
+      
+      // Update success message based on handler
+      const handlerName = nextHandler === 'akutansi' ? 'Team Akutansi' : 'Team Pembayaran';
+      document.getElementById('sendSuccessTitle').textContent = `Dokumen berhasil dikirim ke ${handlerName}!`;
+      document.getElementById('sendSuccessMessage').textContent = `Data Team Perpajakan telah disertakan dan dokumen sekarang akan muncul di halaman ${handlerName}.`;
+      
       showSendSuccessModal();
     } else {
       alert('❌ Gagal mengirim dokumen: ' + data.message);
@@ -2975,7 +3013,7 @@ function performSendToAkutansi(docId) {
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('❌ Terjadi kesalahan saat mengirim dokumen ke Team Akutansi. Silakan coba lagi.');
+    alert('❌ Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
   })
   .finally(() => {
     confirmBtn.disabled = false;

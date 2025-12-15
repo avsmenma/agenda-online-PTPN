@@ -21,7 +21,8 @@ class DashboardPerpajakanController extends Controller
         $perpajakanDocs = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'sent_to_pembayaran');
             })
             ->get();
 
@@ -59,7 +60,8 @@ class DashboardPerpajakanController extends Controller
         $dokumenTerbaru = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'sent_to_pembayaran');
             })
             ->with(['dokumenPos', 'dokumenPrs'])
             ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
@@ -68,9 +70,10 @@ class DashboardPerpajakanController extends Controller
             })
             ->select('dokumens.*')
             ->orderByRaw("CASE
-                WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
+                WHEN current_handler = 'perpajakan' AND status NOT IN ('sent_to_akutansi', 'sent_to_pembayaran') THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
-                ELSE 3
+                WHEN status = 'sent_to_pembayaran' THEN 3
+                ELSE 4
             END")
             ->orderByDesc('perpajakan_data.received_at')
             ->orderByDesc('dokumens.updated_at')
@@ -97,11 +100,12 @@ class DashboardPerpajakanController extends Controller
     {
         // Perpajakan sees:
         // 1. Documents with current_handler = perpajakan (active documents)
-        // 2. Documents that were sent to akutansi (for tracking like dokumensB)
+        // 2. Documents that were sent to akutansi or pembayaran (for tracking like dokumensB)
         $query = Dokumen::query()
             ->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere('status', 'sent_to_pembayaran');
             })
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
@@ -164,6 +168,10 @@ class DashboardPerpajakanController extends Controller
                     // Dokumen yang sudah terkirim ke akutansi
                     $query->where('status', 'sent_to_akutansi');
                     break;
+                case 'terkirim_pembayaran':
+                    // Dokumen yang sudah terkirim ke pembayaran
+                    $query->where('status', 'sent_to_pembayaran');
+                    break;
                 case 'belum_diproses':
                     // Dokumen yang belum diproses (status_perpajakan null atau empty)
                     $query->where(function ($q) {
@@ -185,9 +193,10 @@ class DashboardPerpajakanController extends Controller
             })
             ->select('dokumens.*')
             ->orderByRaw("CASE
-                WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
+                WHEN current_handler = 'perpajakan' AND status NOT IN ('sent_to_akutansi', 'sent_to_pembayaran') THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
-                ELSE 3
+                WHEN status = 'sent_to_pembayaran' THEN 3
+                ELSE 4
             END")
             ->orderByDesc('perpajakan_data.received_at')
             ->orderByDesc('updated_at')
@@ -1084,8 +1093,17 @@ class DashboardPerpajakanController extends Controller
 
     /**
      * Send document to akutansi via inbox system
+     * @deprecated Use sendToNext instead
      */
     public function sendToAkutansi(Request $request, Dokumen $dokumen)
+    {
+        return $this->sendToNext($request, $dokumen);
+    }
+
+    /**
+     * Send document to next handler (Akutansi or Pembayaran) via inbox
+     */
+    public function sendToNext(Request $request, Dokumen $dokumen)
     {
         // Only allow if current_handler is perpajakan
         if ($dokumen->current_handler !== 'perpajakan') {
@@ -1095,35 +1113,53 @@ class DashboardPerpajakanController extends Controller
             ], 403);
         }
 
+        // Validate next handler
+        $request->validate([
+            'next_handler' => 'required|in:akutansi,pembayaran'
+        ]);
+
         try {
             \DB::beginTransaction();
+
+            // Map handler to inbox role format
+            $inboxRoleMap = [
+                'akutansi' => 'Akutansi',
+                'pembayaran' => 'Pembayaran',
+            ];
+
+            $inboxRole = $inboxRoleMap[$request->next_handler] ?? $request->next_handler;
 
             // Simpan status original sebelum dikirim ke inbox
             $originalStatus = $dokumen->status;
 
-            // Kirim ke inbox Akutansi menggunakan sistem inbox yang sudah ada
-            $dokumen->sendToInbox('Akutansi');
+            // Kirim ke inbox menggunakan sistem inbox yang sudah ada
+            $dokumen->sendToInbox($inboxRole);
 
-            // Set tanggal selesai verifikasi pajak
-            $dokumen->tanggal_selesai_verifikasi_pajak = now();
-            $dokumen->save();
+            // Set tanggal selesai verifikasi pajak (only for akutansi)
+            if ($request->next_handler === 'akutansi') {
+                $dokumen->tanggal_selesai_verifikasi_pajak = now();
+                $dokumen->save();
+            }
 
             \DB::commit();
 
-            \Log::info("Document #{$dokumen->id} sent to inbox Akutansi by Perpajakan");
+            $handlerName = $request->next_handler === 'akutansi' ? 'Akutansi' : 'Pembayaran';
+            \Log::info("Document #{$dokumen->id} sent to inbox {$handlerName} by Perpajakan");
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikirim ke inbox Team Akutansi dan menunggu persetujuan.'
+                'message' => "Dokumen berhasil dikirim ke inbox Team {$handlerName} dan menunggu persetujuan.",
+                'next_handler' => $handlerName
             ]);
 
         } catch (\Exception $e) {
             \DB::rollBack();
-            \Log::error('Error sending document to akutansi: ' . $e->getMessage());
+            \Log::error('Error sending document from perpajakan: ' . $e->getMessage());
 
+            $handlerName = $request->next_handler === 'akutansi' ? 'Akutansi' : 'Pembayaran';
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat mengirim dokumen ke Team Akutansi.'
+                'message' => "Terjadi kesalahan saat mengirim dokumen ke Team {$handlerName}."
             ], 500);
         }
     }

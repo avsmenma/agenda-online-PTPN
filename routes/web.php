@@ -397,6 +397,7 @@ Route::post('/dokumensPerpajakan/{dokumen}/set-deadline', [DashboardPerpajakanCo
 Route::get('/dokumensPerpajakan/{dokumen}/edit', [DashboardPerpajakanController::class, 'editDokumen'])->name('dokumensPerpajakan.edit');
 Route::put('/dokumensPerpajakan/{dokumen}', [DashboardPerpajakanController::class, 'updateDokumen'])->name('dokumensPerpajakan.update');
 Route::post('/dokumensPerpajakan/{dokumen}/send-to-akutansi', [DashboardPerpajakanController::class, 'sendToAkutansi'])->name('dokumensPerpajakan.sendToAkutansi');
+Route::post('/dokumensPerpajakan/{dokumen}/send-to-next', [DashboardPerpajakanController::class, 'sendToNext'])->name('dokumensPerpajakan.sendToNext');
 Route::post('/dokumensPerpajakan/{dokumen}/return', [DashboardPerpajakanController::class, 'returnDocument'])->name('dokumensPerpajakan.return');
 Route::post('/dokumensAkutansi/{dokumen}/return', [DashboardAkutansiController::class, 'returnDocument'])->name('dokumensAkutansi.return');
 Route::get('/pengembalian-dokumensPerpajakan', [DashboardPerpajakanController::class, 'pengembalian'])->name('pengembalianPerpajakan.index');
