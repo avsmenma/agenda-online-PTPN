@@ -278,11 +278,18 @@ class Dokumen extends Model
 
         // === SYNC LEGACY COLUMNS ===
         // Update legacy columns for backward compatibility with existing dashboards
-        $this->current_handler = $roleCode;
+        // Map role code to proper handler format (capital B for ibuB to match query expectations)
+        $handlerMap = [
+            'ibub' => 'ibuB',
+            'perpajakan' => 'perpajakan',
+            'akutansi' => 'akutansi',
+            'pembayaran' => 'pembayaran',
+        ];
+        $this->current_handler = $handlerMap[$roleCode] ?? $roleCode;
 
         switch ($roleCode) {
             case 'ibub':
-                $this->status = 'sedang_diproses'; // Status expected by DashboardB
+                $this->status = 'sedang diproses'; // Status expected by DashboardB (with space, not underscore)
                 $this->processed_at = now(); // Legacy timestamp for IbuB
                 break;
 

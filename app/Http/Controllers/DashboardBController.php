@@ -112,7 +112,11 @@ class DashboardBController extends Controller
             $query->where(function ($q) {
                 $q->where('current_handler', 'ibuB')
                     ->orWhere(function ($subQ) {
-                        $subQ->where('status', 'sedang_diproses')
+                        // Handle both status formats (with space and underscore) for backward compatibility
+                        $subQ->where(function ($statusQ) {
+                            $statusQ->where('status', 'sedang diproses')
+                                ->orWhere('status', 'sedang_diproses');
+                        })
                             ->where('current_handler', 'ibuB');
                     })
                     ->orWhereIn('status', ['sent_to_perpajakan']) // FIX: Hanya status yang valid
