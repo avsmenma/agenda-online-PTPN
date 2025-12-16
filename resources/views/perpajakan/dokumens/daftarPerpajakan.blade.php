@@ -959,13 +959,13 @@
 
   /* Enhanced Badge Styles matching dokumensB */
   .badge-status {
-    padding: 8px 20px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 25px;
     font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: none;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    border: 2px solid transparent;
     text-align: center;
     min-width: 100px;
     display: inline-flex;
@@ -973,30 +973,59 @@
     justify-content: center;
     gap: 6px;
     transition: all 0.3s ease;
-    white-space: nowrap;
   }
 
+  /* State 1: 🔒 Terkunci (Locked - Waiting for Deadline) */
   .badge-status.badge-locked {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+    border-color: #495057;
+    position: relative;
   }
 
+  /* State 2: ⏳ Diproses (In Progress) */
   .badge-status.badge-proses {
-    background: linear-gradient(135deg, #2d6a4f 0%, #1b5e3f 100%);
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(45, 106, 79, 0.3);
+    border-color: #083E40;
   }
 
+  .badge-status.badge-proses::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    margin-left: 6px;
+    animation: pulse 1.5s infinite;
+  }
+
+  /* State 3: ✅ Selesai (Completed) */
   .badge-status.badge-selesai {
-    background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%);
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(64, 145, 108, 0.3);
+    border-color: #083E40;
+  }
+
+  /* Special state for sent documents */
+  .badge-status.badge-sent {
+    background: #083E40;
+    color: white;
+    border-color: #083E40;
+    position: relative;
+  }
+
+  /* Special state for warning/pending approval */
+  .badge-status.badge-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: white;
+    border-color: #ffc107;
   }
 
   .badge-status:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   }
 
   /* Enhanced Action Buttons matching dokumensB */
@@ -1077,13 +1106,22 @@
   }
 
   .btn-edit {
-    background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
     color: white;
   }
 
   .btn-edit:hover {
-    background: linear-gradient(135deg, #0f3d2e 0%, #0a2e1f 100%);
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
     color: white;
+  }
+
+  .btn-kirim {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
+    color: white;
+  }
+
+  .btn-kirim:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
   }
 
   .btn-action.locked {
@@ -1093,6 +1131,17 @@
   }
 
   .btn-action.locked:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-terkirim {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    color: white;
+    cursor: default;
+  }
+
+  .btn-terkirim:hover {
     transform: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
