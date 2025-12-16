@@ -326,14 +326,217 @@
       <strong>Informasi:</strong> Tanggal masuk akan diisi otomatis saat dokumen disimpan. Bulan dan tahun diambil dari tanggal SPP.
     </div>
 
+    <!-- 1. Nomor Agenda -->
+    <div class="form-group">
+      <label>Nomor Agenda</label>
+      <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" required value="{{ old('nomor_agenda') }}">
+      @error('nomor_agenda')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <!-- 2. Nomor SPP -->
+    <div class="form-group">
+      <label>Nomor SPP</label>
+      <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" required value="{{ old('nomor_spp') }}">
+      @error('nomor_spp')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <!-- 3. Tanggal SPP -->
+    <div class="form-group">
+      <label>Tanggal SPP</label>
+      <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp') }}">
+      @error('tanggal_spp')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <!-- 4. Uraian SPP -->
+    <div class="form-group">
+      <label>Uraian SPP</label>
+      <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024" required data-autocomplete="document-descriptions">{{ old('uraian_spp') }}</textarea>
+      @error('uraian_spp')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <!-- 5. Vendor/Dibayar Kepada -->
+    <div class="section-title">Vendor/Dibayar Kepada</div>
+    <div class="form-group dynamic-field" data-field-type="dibayar_kepada">
+      <label>Vendor/Dibayar Kepada <span class="optional-label">(Bisa lebih dari 1)</span></label>
+      <input type="text" placeholder="Masukkan nama vendor/penerima" name="dibayar_kepada[]" data-autocomplete="payment-recipients" value="{{ old('dibayar_kepada.0') }}">
+      <button type="button" class="add-field-btn">+</button>
+      <button type="button" class="remove-field-btn" style="display: none;">−</button>
+    </div>
+
+    <!-- 6. Nilai Rupiah -->
+    <div class="form-group">
+      <label>Nilai Rupiah</label>
+      <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah') }}">
+      @error('nilai_rupiah')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <!-- 7. Ejaan Nilai Rupiah (Otomatis) -->
+    <div class="form-group">
+      <label>Ejaan Nilai Rupiah</label>
+      <input type="text" name="ejaan_nilai_rupiah" id="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+    </div>
+
+    <!-- Kategori & Jenis Dokumen -->
     <div class="form-row">
       <div class="form-group">
-        <label>Nomor Agenda</label>
-        <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" required value="{{ old('nomor_agenda') }}">
-        @error('nomor_agenda')
+        <label>Kategori</label>
+        <select id="kategori" name="kategori" required>
+          <option value="">Pilih Kategori</option>
+          <option value="Investasi on farm" {{ old('kategori') == 'Investasi on farm' ? 'selected' : '' }}>Investasi on farm</option>
+          <option value="Investasi off farm" {{ old('kategori') == 'Investasi off farm' ? 'selected' : '' }}>Investasi off farm</option>
+          <option value="Exploitasi" {{ old('kategori') == 'Exploitasi' ? 'selected' : '' }}>Exploitasi</option>
+        </select>
+        @error('kategori')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
+      <div class="form-group">
+        <label>Jenis Dokumen</label>
+        <select id="jenis_dokumen" name="jenis_dokumen" required>
+          <option value="">Pilih Kategori terlebih dahulu</option>
+        </select>
+        @error('jenis_dokumen')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+
+    <!-- Jenis SubPekerjaan & Jenis Pembayaran -->
+    <div class="form-row">
+      <div class="form-group">
+        <label>Jenis SubPekerjaan</label>
+        <select name="jenis_sub_pekerjaan">
+          <option value="">Pilih Opsi</option>
+          <option value="Surat Masuk/Keluar Reguler" {{ old('jenis_sub_pekerjaan') == 'Surat Masuk/Keluar Reguler' ? 'selected' : '' }}>Surat Masuk/Keluar Reguler</option>
+          <option value="Surat Undangan" {{ old('jenis_sub_pekerjaan') == 'Surat Undangan' ? 'selected' : '' }}>Surat Undangan</option>
+          <option value="Memo Internal" {{ old('jenis_sub_pekerjaan') == 'Memo Internal' ? 'selected' : '' }}>Memo Internal</option>
+        </select>
+        @error('jenis_sub_pekerjaan')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Jenis Pembayaran</label>
+        <select name="jenis_pembayaran">
+          <option value="">Pilih Opsi</option>
+          <option value="Karyawan" {{ old('jenis_pembayaran') == 'Karyawan' ? 'selected' : '' }}>Karyawan</option>
+          <option value="Mitra" {{ old('jenis_pembayaran') == 'Mitra' ? 'selected' : '' }}>Mitra</option>
+          <option value="MPN" {{ old('jenis_pembayaran') == 'MPN' ? 'selected' : '' }}>MPN</option>
+          <option value="TBS" {{ old('jenis_pembayaran') == 'TBS' ? 'selected' : '' }}>TBS</option>
+          <option value="Dropping" {{ old('jenis_pembayaran') == 'Dropping' ? 'selected' : '' }}>Dropping</option>
+          <option value="Lainnya" {{ old('jenis_pembayaran') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+        </select>
+        @error('jenis_pembayaran')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+
+    <!-- Kebun -->
+    <div class="form-row">
+      <div class="form-group">
+        <label>Kebun</label>
+        <select name="kebun">
+          <option value="">Pilih Kebun</option>
+          @php
+            $kebunOptions = [
+              'KEBUN-UNIT', 'REGION OFFICE', 'UNIT GRUP KALBAR', 'GUNUNG MELIAU',
+              'PKS GUNME', 'SUNGAI DEKAN', 'RIMBA BELIAN', 'PKS RIMBA BELIA',
+              'GUNUNG MAS', 'SINTANG', 'NGABANG', 'PKS NGABANG',
+              'PARINDU', 'PKS PARINDU', 'KEMBAYAN', 'PKS KEMBAYAN',
+              'PPPBB', 'UNIT GRUP KALSEL/TENG', 'DANAU SALAK', 'TAMBARANGAN',
+              'BATULICIN', 'PELAIHARI', 'PKS PELAIHARI', 'KUMAI',
+              'PKS PAMUKAN', 'PAMUKAN', 'PRYBB', 'RAREN BATUAH',
+              'UNIT GRUP KALTIM', 'TABARA', 'TAJATI', 'PANDAWA',
+              'LONGKALI', 'PKS SAMUNTAI', 'PKS LONG PINANG', 'KP JAKARTA',
+              'KP BALIKPAPAN'
+            ];
+            $oldKebun = old('kebun');
+            $oldKebunClean = $oldKebun ? preg_replace('/^\d+\s+/', '', $oldKebun) : '';
+          @endphp
+          @foreach($kebunOptions as $kebun)
+            <option value="{{ $kebun }}" {{ ($oldKebun == $kebun || $oldKebunClean == $kebun) ? 'selected' : '' }}>{{ $kebun }}</option>
+          @endforeach
+        </select>
+        @error('kebun')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+
+    <!-- 8. ALL SPK -->
+    <div class="section-title">SPK (Surat Perintah Kerja)</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>No SPK <span class="optional-label">(Opsional)</span></label>
+        <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk') }}">
+        @error('no_spk')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Tanggal SPK <span class="optional-label">(Opsional)</span></label>
+        <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk') }}">
+        @error('tanggal_spk')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Tanggal Berakhir SPK <span class="optional-label">(Opsional)</span></label>
+      <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk') }}">
+      @error('tanggal_berakhir_spk')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+      @enderror
+    </div>
+
+    <!-- 9. ALL BA (Berita Acara) -->
+    <div class="section-title">BA (Berita Acara)</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>No Berita Acara</label>
+        <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024" value="{{ old('no_berita_acara') }}">
+        @error('no_berita_acara')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Tanggal Berita Acara</label>
+        <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara') }}">
+        @error('tanggal_berita_acara')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+
+    <!-- 10. ALL PO/PR -->
+    <div class="section-title">PO/PR (Purchase Order / Purchase Request)</div>
+    <div class="form-group dynamic-field" data-field-type="po">
+      <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+      <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" data-autocomplete="po-numbers" value="{{ old('nomor_po.0') }}">
+      <button type="button" class="add-field-btn">+</button>
+      <button type="button" class="remove-field-btn" style="display: none;">−</button>
+    </div>
+    <div class="form-group dynamic-field" data-field-type="pr">
+      <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+      <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" data-autocomplete="pr-numbers" value="{{ old('nomor_pr.0') }}">
+      <button type="button" class="add-field-btn">+</button>
+      <button type="button" class="remove-field-btn" style="display: none;">−</button>
+    </div>
+
+    <!-- Field tambahan yang diperlukan (hidden atau di bagian bawah) -->
+    <div class="section-title">Informasi Tambahan</div>
+    <div class="form-row">
       <div class="form-group">
         <label>Bagian</label>
         <select name="bagian" required>
@@ -351,48 +554,10 @@
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
-    </div>
-
-    <div class="form-row">
       <div class="form-group">
         <label>Nama Pengirim Dokumen</label>
         <input type="text" name="nama_pengirim" placeholder="Masukkan nama pengirim dokumen" value="{{ old('nama_pengirim') }}" data-autocomplete="document-senders">
         @error('nama_pengirim')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Nomor SPP</label>
-        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" required value="{{ old('nomor_spp') }}">
-        @error('nomor_spp')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Tanggal SPP</label>
-        <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp') }}">
-        @error('tanggal_spp')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Uraian SPP</label>
-        <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024" required data-autocomplete="document-descriptions">{{ old('uraian_spp') }}</textarea>
-        @error('uraian_spp')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <!-- Nilai Rupiah -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>Nilai Rupiah</label>
-        <input type="text" name="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah') }}">
-        @error('nilai_rupiah')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
@@ -486,79 +651,6 @@
       </div>
     </div>
 
-    <!-- Nomor PR dan PO (Dipindahkan keatas) -->
-    <div class="section-title">Nomor PR & PO</div>
-
-    <!-- Nomor PR (Opsional) -->
-    <div class="form-group dynamic-field" data-field-type="pr">
-      <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
-      <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" data-autocomplete="pr-numbers">
-      <button type="button" class="add-field-btn">+</button>
-      <button type="button" class="remove-field-btn" style="display: none;">−</button>
-    </div>
-
-    <!-- Nomor PO (Opsional) -->
-    <div class="form-group dynamic-field" data-field-type="po">
-      <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
-      <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" data-autocomplete="po-numbers">
-      <button type="button" class="add-field-btn">+</button>
-      <button type="button" class="remove-field-btn" style="display: none;">−</button>
-    </div>
-
-    <!-- Dibayar Kepada (Dynamic seperti PO) -->
-    <div class="section-title">Penerima Pembayaran</div>
-
-    <div class="form-group dynamic-field" data-field-type="dibayar_kepada">
-      <label>Dibayar Kepada <span class="optional-label">(Bisa lebih dari 1)</span></label>
-      <input type="text" placeholder="Masukkan nama penerima" name="dibayar_kepada[]" data-autocomplete="payment-recipients">
-      <button type="button" class="add-field-btn">+</button>
-      <button type="button" class="remove-field-btn" style="display: none;">−</button>
-    </div>
-
-    <!-- Berita Acara -->
-    <div class="section-title">Dokumen Pendukung</div>
-
-    <div class="form-row-3">
-      <div class="form-group">
-        <label>No Berita Acara</label>
-        <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024" value="{{ old('no_berita_acara') }}">
-        @error('no_berita_acara')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Tanggal Berita Acara</label>
-         <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara') }}">
-         @error('tanggal_berita_acara')
-             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-         @enderror
-      </div>
-      <div class="form-group">
-        <label>No SPK <span class="optional-label">(Opsional)</span></label>
-        <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk') }}">
-        @error('no_spk')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <div class="form-row-2">
-      <div class="form-group">
-        <label>Tanggal SPK <span class="optional-label">(Opsional)</span></label>
-        <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk') }}">
-        @error('tanggal_spk')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Tanggal Berakhir SPK <span class="optional-label">(Opsional)</span></label>
-        <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk') }}">
-        @error('tanggal_berakhir_spk')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
     <!-- Form Actions -->
     <div class="form-actions">
       <button type="button" class="btn-auto-fill" onclick="autoFillForm()">
@@ -575,8 +667,178 @@
 </div>
 
 <script>
+  // Remove format dots from nilai_rupiah before form submit
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const nilaiRupiahInput = document.getElementById('nilai_rupiah');
+    if (nilaiRupiahInput && nilaiRupiahInput.value) {
+      // Remove all dots before submitting
+      nilaiRupiahInput.value = nilaiRupiahInput.value.replace(/\./g, '');
+    }
+    
+    // Remove ejaan_nilai_rupiah from form submission (it's readonly/display only)
+    const ejaanInput = document.getElementById('ejaan_nilai_rupiah');
+    if (ejaanInput) {
+      ejaanInput.disabled = true; // Disable so it won't be submitted
+    }
+  });
+</script>
+
+<script>
+  // Function to convert number to Indonesian terbilang
+  function terbilangRupiah(number) {
+    number = parseFloat(number.toString().replace(/\./g, '')) || 0;
+    
+    if (number == 0) {
+      return 'nol rupiah';
+    }
+
+    const angka = [
+      '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+      'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+      'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+      'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+    ];
+
+    let hasil = '';
+
+    // Handle triliun
+    if (number >= 1000000000000) {
+      const triliun = Math.floor(number / 1000000000000);
+      hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+      number = number % 1000000000000;
+    }
+
+    // Handle milyar
+    if (number >= 1000000000) {
+      const milyar = Math.floor(number / 1000000000);
+      hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+      number = number % 1000000000;
+    }
+
+    // Handle juta
+    if (number >= 1000000) {
+      const juta = Math.floor(number / 1000000);
+      hasil += terbilangSatuan(juta, angka) + ' juta ';
+      number = number % 1000000;
+    }
+
+    // Handle ribu
+    if (number >= 1000) {
+      const ribu = Math.floor(number / 1000);
+      if (ribu == 1) {
+        hasil += 'seribu ';
+      } else {
+        hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+      }
+      number = number % 1000;
+    }
+
+    // Handle ratusan, puluhan, dan satuan
+    if (number > 0) {
+      hasil += terbilangSatuan(number, angka);
+    }
+
+    return hasil.trim() + ' rupiah';
+  }
+
+  function terbilangSatuan(number, angka) {
+    let hasil = '';
+    number = parseInt(number);
+
+    if (number == 0) {
+      return '';
+    }
+
+    // Handle ratusan
+    if (number >= 100) {
+      const ratus = Math.floor(number / 100);
+      if (ratus == 1) {
+        hasil += 'seratus ';
+      } else {
+        hasil += angka[ratus] + ' ratus ';
+      }
+      number = number % 100;
+    }
+
+    // Handle puluhan dan satuan (0-99)
+    if (number > 0) {
+      if (number < 20) {
+        hasil += angka[number] + ' ';
+      } else {
+        const puluhan = Math.floor(number / 10);
+        const satuan = number % 10;
+        
+        if (puluhan == 1) {
+          hasil += angka[10 + satuan] + ' ';
+        } else {
+          hasil += angka[puluhan] + ' puluh ';
+          if (satuan > 0) {
+            hasil += angka[satuan] + ' ';
+          }
+        }
+      }
+    }
+
+    return hasil.trim();
+  }
+
   // Wait for DOM to be ready
   document.addEventListener('DOMContentLoaded', function() {
+    // Format nilai rupiah input with dots
+    const nilaiRupiahInput = document.getElementById('nilai_rupiah');
+    const ejaanRupiahInput = document.getElementById('ejaan_nilai_rupiah');
+
+    if (nilaiRupiahInput) {
+      // Format on input
+      nilaiRupiahInput.addEventListener('input', function() {
+        // Format with dots
+        let value = this.value.replace(/[^\d]/g, '');
+        if (value) {
+          value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          this.value = value;
+        } else {
+          this.value = '';
+        }
+
+        // Update ejaan
+        if (ejaanRupiahInput) {
+          const numericValue = value.replace(/\./g, '');
+          if (numericValue && numericValue > 0) {
+            ejaanRupiahInput.value = terbilangRupiah(numericValue);
+          } else {
+            ejaanRupiahInput.value = '';
+          }
+        }
+      });
+
+      // Format on paste
+      nilaiRupiahInput.addEventListener('paste', function(e) {
+        setTimeout(() => {
+          let value = this.value.replace(/[^\d]/g, '');
+          if (value) {
+            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            this.value = value;
+          } else {
+            this.value = '';
+          }
+
+          // Update ejaan
+          if (ejaanRupiahInput) {
+            const numericValue = value.replace(/\./g, '');
+            if (numericValue && numericValue > 0) {
+              ejaanRupiahInput.value = terbilangRupiah(numericValue);
+            } else {
+              ejaanRupiahInput.value = '';
+            }
+          }
+        }, 10);
+      });
+
+      // Format initial value if exists
+      if (nilaiRupiahInput.value) {
+        nilaiRupiahInput.dispatchEvent(new Event('input'));
+      }
+    }
     // Data jenis dokumen berdasarkan kategori
     const jenisDokumenData = {
       'Exploitasi': [
