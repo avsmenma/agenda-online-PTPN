@@ -1015,6 +1015,17 @@
     box-shadow: none;
   }
 
+  /* Destination Card Hover Effect */
+  #destination-pembayaran:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2) !important;
+    border-color: #0a4f52 !important;
+  }
+
+  #destination-pembayaran input[type="radio"]:checked + label {
+    color: #083E40;
+  }
+
   .btn-action.locked {
     background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
     cursor: not-allowed;
@@ -2427,6 +2438,94 @@
   </div>
 </div>
 
+<!-- Modal for Send to Pembayaran -->
+<div class="modal fade" id="sendToPembayaranModal" tabindex="-1" aria-labelledby="sendToPembayaranModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
+        <h5 class="modal-title" id="sendToPembayaranModalLabel">
+          <i class="fa-solid fa-paper-plane me-2"></i>Kirim Dokumen ke Bidang Berikutnya
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sendToPembayaranDocId">
+        
+        <!-- Information Box -->
+        <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%); border-left: 4px solid #0d6efd;">
+          <div class="d-flex align-items-start">
+            <i class="fa-solid fa-circle-info me-2 mt-1" style="color: #0d6efd; font-size: 18px;"></i>
+            <div>
+              <strong>Catatan:</strong> Deadline akan ditetapkan oleh departemen tujuan (Team Pembayaran) setelah dokumen diterima.
+            </div>
+          </div>
+        </div>
+
+        <!-- Destination Selection -->
+        <div class="mb-4">
+          <label class="form-label fw-bold mb-3">
+            <i class="fa-solid fa-paper-plane me-2"></i>Pilih Tujuan Pengiriman:
+          </label>
+          
+          <!-- Team Pembayaran Option -->
+          <div class="card border-2 mb-3" style="border-color: #083E40 !important; cursor: pointer; transition: all 0.3s ease;" 
+               onclick="selectDestination('pembayaran')" id="destination-pembayaran">
+            <div class="card-body p-3">
+              <div class="form-check d-flex align-items-start">
+                <input class="form-check-input mt-2 me-3" type="radio" name="destination" id="radioPembayaran" value="pembayaran" checked>
+                <div class="flex-grow-1">
+                  <label class="form-check-label fw-bold" for="radioPembayaran" style="cursor: pointer;">
+                    <i class="fa-solid fa-credit-card me-2" style="color: #083E40;"></i>Team Pembayaran
+                  </label>
+                  <p class="text-muted mb-0 mt-2 small">
+                    Untuk dokumen yang siap untuk diproses pembayaran. Status akan berubah menjadi "Siap Bayar" di halaman pembayaran.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn btn-success" onclick="confirmSendToPembayaran()" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none;">
+          <i class="fa-solid fa-paper-plane me-2"></i>Kirim
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Send Success -->
+<div class="modal fade" id="sendToPembayaranSuccessModal" tabindex="-1" aria-labelledby="sendToPembayaranSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+        <h5 class="modal-title" id="sendToPembayaranSuccessModalLabel">
+          <i class="fa-solid fa-circle-check me-2"></i>Pengiriman Berhasil
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #28a745;"></i>
+        </div>
+        <h5 class="fw-bold mb-3">Dokumen berhasil dikirim ke Team Pembayaran!</h5>
+        <p class="text-muted mb-0">
+          Dokumen sekarang akan muncul di inbox Team Pembayaran dan menunggu persetujuan.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal" onclick="location.reload()">
+          <i class="fa-solid fa-check me-2"></i>Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // Wrapper function untuk handle row click dengan text selection check
 function handleRowClick(event, docId) {
@@ -2538,38 +2637,96 @@ function editDocument(id) {
 }
 
 function sendToPembayaran(id) {
-  if (confirm('Apakah Anda yakin ingin mengirim dokumen ini ke Pembayaran?')) {
-    const sendBtn = event.currentTarget;
-    const originalHTML = sendBtn.innerHTML;
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-    fetch(`/dokumensAkutansi/${id}/send-to-pembayaran`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert(data.message);
-        // Remove the row from table or refresh
-        location.reload();
-      } else {
-        alert(data.message || 'Gagal mengirim dokumen ke Pembayaran.');
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = originalHTML;
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
-      sendBtn.disabled = false;
-      sendBtn.innerHTML = originalHTML;
-    });
+  // Set document ID in modal
+  document.getElementById('sendToPembayaranDocId').value = id;
+  
+  // Reset radio button selection
+  document.getElementById('radioPembayaran').checked = true;
+  
+  // Reset and highlight pembayaran card
+  const pembayaranCard = document.getElementById('destination-pembayaran');
+  if (pembayaranCard) {
+    pembayaranCard.style.borderColor = '#083E40';
+    pembayaranCard.style.boxShadow = '0 2px 8px rgba(8, 62, 64, 0.2)';
+    pembayaranCard.style.backgroundColor = 'rgba(8, 62, 64, 0.05)';
   }
+  
+  // Open modal
+  const modal = new bootstrap.Modal(document.getElementById('sendToPembayaranModal'));
+  modal.show();
+  
+  // Reset card styling when modal is closed
+  const modalEl = document.getElementById('sendToPembayaranModal');
+  modalEl.addEventListener('hidden.bs.modal', function() {
+    if (pembayaranCard) {
+      pembayaranCard.style.backgroundColor = '';
+    }
+  }, { once: true });
+}
+
+function selectDestination(destination) {
+  // Update radio button
+  if (destination === 'pembayaran') {
+    document.getElementById('radioPembayaran').checked = true;
+    
+    // Update card styling to show selected state
+    const pembayaranCard = document.getElementById('destination-pembayaran');
+    pembayaranCard.style.borderColor = '#083E40';
+    pembayaranCard.style.boxShadow = '0 2px 8px rgba(8, 62, 64, 0.2)';
+    pembayaranCard.style.backgroundColor = 'rgba(8, 62, 64, 0.05)';
+  }
+}
+
+function confirmSendToPembayaran() {
+  const docId = document.getElementById('sendToPembayaranDocId').value;
+  const selectedDestination = document.querySelector('input[name="destination"]:checked');
+  
+  if (!selectedDestination) {
+    alert('Pilih tujuan pengiriman terlebih dahulu!');
+    return;
+  }
+  
+  if (selectedDestination.value !== 'pembayaran') {
+    alert('Hanya dapat mengirim ke Team Pembayaran dari halaman Akutansi.');
+    return;
+  }
+  
+  // Disable button and show loading
+  const confirmBtn = document.querySelector('[onclick="confirmSendToPembayaran()"]');
+  const originalHTML = confirmBtn.innerHTML;
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
+  
+  // Close modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('sendToPembayaranModal'));
+  modal.hide();
+  
+  // Send request
+  fetch(`/dokumensAkutansi/${docId}/send-to-pembayaran`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Show success modal
+      const successModal = new bootstrap.Modal(document.getElementById('sendToPembayaranSuccessModal'));
+      successModal.show();
+    } else {
+      alert(data.message || 'Gagal mengirim dokumen ke Pembayaran.');
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = originalHTML;
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = originalHTML;
+  });
 }
 
 // Search functionality
