@@ -291,7 +291,7 @@
     </div>
   @endif
 
-  <form action="{{ route('dokumensPerpajakan.update', $dokumen->id) }}" method="POST" class="form-container">
+  <form action="{{ route('documents.perpajakan.update', $dokumen->id) }}" method="POST" class="form-container">
     @csrf
     @method('PUT')
 
@@ -799,7 +799,7 @@
 
     <!-- Submit Buttons -->
     <div style="padding: 24px 0; display: flex; gap: 12px; justify-content: flex-end;">
-      <a href="{{ route('dokumensPerpajakan.index') }}" class="btn-cancel">
+      <a href="{{ route('documents.perpajakan.index') }}" class="btn-cancel">
         <i class="fa-solid fa-times"></i>
         Batal
       </a>

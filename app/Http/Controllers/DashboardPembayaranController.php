@@ -249,7 +249,7 @@ class DashboardPembayaranController extends Controller
 
     public function storeDokumen(Request $request){
         // Implementation for storing document
-        return redirect()->route('dokumensPembayaran.index')->with('success', 'Pembayaran berhasil ditambahkan');
+        return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil ditambahkan');
     }
 
     public function editDokumen($id){
@@ -265,7 +265,7 @@ class DashboardPembayaranController extends Controller
 
     public function updateDokumen(Request $request, $id){
         // Implementation for updating document
-        return redirect()->route('dokumensPembayaran.index')->with('success', 'Pembayaran berhasil diperbarui');
+        return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil diperbarui');
     }
 
     /**
@@ -552,12 +552,12 @@ class DashboardPembayaranController extends Controller
 
     public function destroyDokumen($id){
         // Implementation for deleting document
-        return redirect()->route('dokumensPembayaran.index')->with('success', 'Pembayaran berhasil dihapus');
+        return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil dihapus');
     }
 
     public function pengembalian(){
         // Redirect ke daftar pembayaran karena tidak ada view pengembalian khusus
-        return redirect()->route('dokumensPembayaran.index')->with('info', 'Halaman pengembalian diarahkan ke daftar pembayaran');
+        return redirect()->route('documents.pembayaran.index')->with('info', 'Halaman pengembalian diarahkan ke daftar pembayaran');
     }
 
     public function rekapanKeterlambatan(){

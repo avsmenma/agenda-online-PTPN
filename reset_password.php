@@ -22,3 +22,4 @@ if ($user) {
     echo "Silakan jalankan: php artisan db:seed --class=UserSeeder\n";
 }
 
+

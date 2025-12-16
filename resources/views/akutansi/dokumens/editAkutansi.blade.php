@@ -256,7 +256,7 @@
 
 <div class="form-container">
 
-  <form method="POST" action="{{ route('dokumensAkutansi.update', $dokumen->id) }}">
+  <form method="POST" action="{{ route('documents.akutansi.update', $dokumen->id) }}">
     @csrf
     @method('PUT')
     <!-- Input Dokumen Baru -->
@@ -585,7 +585,7 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <a href="{{ route('dokumensAkutansi.index') }}" class="btn-cancel">
+      <a href="{{ route('documents.akutansi.index') }}" class="btn-cancel">
         <i class="fa-solid fa-times"></i>
         Batal
       </a>

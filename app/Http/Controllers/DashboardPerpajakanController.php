@@ -349,7 +349,7 @@ class DashboardPerpajakanController extends Controller
 
         // Only allow if current_handler is perpajakan
         if ($dokumen->current_handler !== 'perpajakan') {
-            return redirect()->route('dokumensPerpajakan.index')
+            return redirect()->route('documents.perpajakan.index')
                 ->with('error', 'Dokumen ini tidak dapat diakses.');
         }
 
@@ -370,7 +370,7 @@ class DashboardPerpajakanController extends Controller
 
         // Only allow if current_handler is perpajakan
         if ($dokumen->current_handler !== 'perpajakan') {
-            return redirect()->route('dokumensPerpajakan.index')
+            return redirect()->route('documents.perpajakan.index')
                 ->with('error', 'Dokumen ini tidak dapat diakses.');
         }
 
@@ -638,7 +638,7 @@ class DashboardPerpajakanController extends Controller
 
             \DB::commit();
 
-            return redirect()->route('dokumensPerpajakan.index')
+            return redirect()->route('documents.perpajakan.index')
                 ->with('success', 'Dokumen berhasil diperbarui.');
 
         } catch (\Exception $e) {

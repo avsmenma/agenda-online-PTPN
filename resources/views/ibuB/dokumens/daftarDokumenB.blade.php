@@ -2962,7 +2962,7 @@
 
     <!-- Enhanced Search & Filter Box -->
     <div class="search-box">
-      <form action="{{ route('dokumensB.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
+      <form action="{{ route('documents.verifikasi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
         <div class="input-group" style="flex: 1; min-width: 300px;">
           <span class="input-group-text">
             <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -3394,7 +3394,7 @@
                           <span>Kirim Data</span>
                         </button>
                         <div class="action-row">
-                          <a href="{{ route('dokumensB.edit', $dokumen->id) }}" title="Edit Dokumen"
+                          <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
                             style="flex: 1; text-decoration: none;">
                             <button class="btn-action btn-edit" style="width: 100%;">
                               <i class="fa-solid fa-pen"></i>
@@ -3425,7 +3425,7 @@
                           </button>
                         @endif
                         <div class="action-row">
-                          <a href="{{ route('dokumensB.edit', $dokumen->id) }}" title="Edit Dokumen"
+                          <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
                             style="flex: 1; text-decoration: none;">
                             <button class="btn-action btn-edit" style="width: 100%;">
                               <i class="fa-solid fa-pen"></i>
@@ -3579,7 +3579,7 @@
       `;
 
       // Send AJAX request
-      fetch(`/dokumensB/${docId}/change-status`, {
+      fetch(`/documents/verifikasi/${docId}/change-status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4388,14 +4388,14 @@
       // Type casting untuk memastikan integer
       const deadlineDaysInt = parseInt(deadlineDays);
 
-      console.log('Sending request to: ', `/dokumensB/${docId}/set-deadline`);
+      console.log('Sending request to: ', `/documents/verifikasi/${docId}/set-deadline`);
       console.log('Request payload: ', {
         deadline_days: deadlineDaysInt,
         deadline_note: deadlineNote
       });
       console.log('Deadline days type: ' + typeof deadlineDaysInt + ' value: ' + deadlineDaysInt);
 
-      fetch(`/dokumensB/${docId}/set-deadline`, {
+      fetch(`/documents/verifikasi/${docId}/set-deadline`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4529,7 +4529,7 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
 
-      fetch(`/dokumensB/${docId}/send-to-next`, {
+      fetch(`/documents/verifikasi/${docId}/send-to-next`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4754,7 +4754,7 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
 
-      fetch(`/dokumensB/${docId}/return-to-bidang`, {
+      fetch(`/documents/verifikasi/${docId}/return-to-bidang`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -5358,10 +5358,10 @@
       document.getElementById('view-dokumen-id').value = docId;
 
       // Set edit button URL
-      document.getElementById('view-edit-btn').href = `/dokumensB/${docId}/edit`;
+      document.getElementById('view-edit-btn').href = `/documents/verifikasi/${docId}/edit`;
 
       // Load document data via AJAX
-      fetch(`/dokumensB/${docId}/detail`, {
+      fetch(`/documents/verifikasi/${docId}/detail`, {
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'

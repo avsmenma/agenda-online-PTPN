@@ -1442,7 +1442,7 @@
         @php
           // Determine route based on module
           $menuRoute = match($module) {
-            'pembayaran' => route('dokumensPembayaran.index'),
+            'pembayaran' => route('documents.pembayaran.index'),
             'akutansi' => url($dokumenUrl),
             'perpajakan' => url($dokumenUrl),
             'ibub' => url($dokumenUrl),
@@ -1569,9 +1569,9 @@
         @php
           // Determine active state for each submenu item (combine controller class + route detection)
           $isDaftarActive = ($menuDaftarDokumen ?? '') === 'Active' || 
-                           request()->routeIs('dokumensPembayaran.*') || 
-                           request()->routeIs('dokumensPembayaran.index') ||
-                           request()->is('*dokumensPembayaran*');
+                           request()->routeIs('documents.pembayaran.*') || 
+                           request()->routeIs('documents.pembayaran.index') ||
+                           request()->is('*documents/pembayaran*');
           $isRekapanActive = ($menuRekapanDokumen ?? '') === 'Active' ||
                              request()->routeIs('pembayaran.rekapan') ||
                              request()->is('*rekapan-pembayaran*');
@@ -1586,7 +1586,7 @@
            class="{{ $isDaftarActive ? 'active' : '' }}">
           <i class="fa-solid fa-list me-2"></i> Daftar Pembayaran
         </a>
-        <a href="{{ route('pembayaran.rekapan') }}" 
+        <a href="{{ route('reports.pembayaran.index') }}" 
            class="{{ $isRekapanActive ? 'active' : '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Dokumen
         </a>
@@ -1594,7 +1594,7 @@
            class="{{ $isKeterlambatanActive ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
-        <a href="{{ route('pembayaran.rekapanTuTk') }}" 
+        <a href="{{ route('reports.pembayaran.tu-tk') }}" 
            class="{{ $isTuTkActive ? 'active' : '' }}">
           <i class="fa-solid fa-file-invoice me-2"></i> Rekapan TU/TK
         </a>
@@ -1606,7 +1606,7 @@
         <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
           <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Akutansi
         </a>
-        <a href="{{ route('akutansi.rekapan') }}" class="{{ $menuRekapan ?? '' }}">
+        <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
         </a>
       @elseif($module === 'perpajakan')

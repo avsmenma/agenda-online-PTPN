@@ -550,7 +550,7 @@ class DokumenController extends Controller
                 \Log::error('Failed to log document creation: ' . $logException->getMessage());
             }
 
-            return redirect()->route('dokumens.index')
+            return redirect()->route('documents.index')
                 ->with('success', 'Dokumen berhasil ditambahkan dengan nomor agenda: ' . $dokumen->nomor_agenda);
 
         } catch (Exception $e) {
@@ -792,7 +792,7 @@ class DokumenController extends Controller
 
             DB::commit();
 
-            return redirect()->route('dokumens.index')
+            return redirect()->route('documents.index')
                 ->with('success', 'Dokumen berhasil diperbarui.');
 
         } catch (Exception $e) {
@@ -820,7 +820,7 @@ class DokumenController extends Controller
 
             DB::commit();
 
-            return redirect()->route('dokumens.index')
+            return redirect()->route('documents.index')
                 ->with('success', 'Dokumen berhasil dihapus.');
 
         } catch (Exception $e) {

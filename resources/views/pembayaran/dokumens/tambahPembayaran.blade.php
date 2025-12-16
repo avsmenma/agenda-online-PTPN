@@ -108,7 +108,7 @@
 <div class="form-container">
   <h2 class="form-title">{{ $title }}</h2>
 
-  <form action="{{ route('dokumensPembayaran.store') }}" method="POST">
+  <form action="{{ route('documents.pembayaran.store') }}" method="POST">
     @csrf
 
     <div class="form-row">
@@ -154,7 +154,7 @@
       <button type="submit" class="btn-primary">
         <i class="fas fa-save"></i> Simpan Pembayaran
       </button>
-      <a href="{{ route('dokumensPembayaran.index') }}" class="btn-secondary">
+      <a href="{{ route('documents.pembayaran.index') }}" class="btn-secondary">
         <i class="fas fa-times"></i> Batal
       </a>
     </div>

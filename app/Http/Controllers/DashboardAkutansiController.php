@@ -400,7 +400,7 @@ class DashboardAkutansiController extends Controller
     public function storeDokumen(Request $request)
     {
         // Implementation for storing document
-        return redirect()->route('dokumensAkutansi.index')->with('success', 'Akutansi berhasil ditambahkan');
+        return redirect()->route('documents.akutansi.index')->with('success', 'Akutansi berhasil ditambahkan');
     }
 
     public function editDokumen($id)
@@ -410,7 +410,7 @@ class DashboardAkutansiController extends Controller
 
         // Validate that user can edit this document
         if (!DokumenHelper::canEditDocument($dokumen, 'akutansi')) {
-            return redirect()->route('dokumensAkutansi.index')
+            return redirect()->route('documents.akutansi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
 
@@ -576,7 +576,7 @@ class DashboardAkutansiController extends Controller
                 'updated_by' => Auth::user()?->name
             ]);
 
-            return redirect()->route('dokumensAkutansi.index')
+            return redirect()->route('documents.akutansi.index')
                 ->with('success', 'Dokumen Akutansi berhasil diperbarui!' .
                     ($updateData['nomor_miro'] ? ' Nomor MIRO: ' . $updateData['nomor_miro'] : ''));
 
@@ -604,7 +604,7 @@ class DashboardAkutansiController extends Controller
     public function destroyDokumen($id)
     {
         // Implementation for deleting document
-        return redirect()->route('dokumensAkutansi.index')->with('success', 'Akutansi berhasil dihapus');
+        return redirect()->route('documents.akutansi.index')->with('success', 'Akutansi berhasil dihapus');
     }
 
     /**
@@ -1275,7 +1275,7 @@ class DashboardAkutansiController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Dokumen berhasil dikirim ke Pembayaran untuk diproses pembayaran.',
-                'redirect_url' => route('dokumensAkutansi.index')
+                'redirect_url' => route('documents.akutansi.index')
             ]);
 
         } catch (\Exception $e) {

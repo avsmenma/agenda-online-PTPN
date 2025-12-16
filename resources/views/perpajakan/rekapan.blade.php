@@ -401,7 +401,7 @@
 
 <!-- Filter Section (Dipindahkan ke posisi 3) -->
 <div class="filter-section">
-  <form method="GET" action="{{ route('perpajakan.rekapan') }}">
+  <form method="GET" action="{{ route('reports.perpajakan.index') }}">
     <div class="row g-3">
       <div class="col-md-4">
         <label for="bagian" class="form-label">Filter Bagian</label>
@@ -435,7 +435,7 @@
         <button type="submit" class="btn btn-primary">
           <i class="fa-solid fa-filter me-2"></i>Filter Data
         </button>
-        <a href="{{ route('perpajakan.rekapan') }}" class="btn btn-secondary ms-2">
+        <a href="{{ route('reports.perpajakan.index') }}" class="btn btn-secondary ms-2">
           <i class="fa-solid fa-refresh me-2"></i>Reset
         </a>
       </div>

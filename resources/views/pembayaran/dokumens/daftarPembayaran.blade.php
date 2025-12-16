@@ -502,19 +502,19 @@
           <i class="fa-solid fa-filter me-2"></i>Filter Status:
         </label>
         <div class="btn-group" role="group">
-          <a href="{{ route('dokumensPembayaran.index') }}" 
+          <a href="{{ route('documents.pembayaran.index') }}" 
              class="btn btn-filter {{ !$statusFilter ? 'active' : '' }}">
             <i class="fa-solid fa-list me-1"></i>Semua
           </a>
-          <a href="{{ route('dokumensPembayaran.index', ['status_filter' => 'belum_siap_dibayar']) }}" 
+          <a href="{{ route('documents.pembayaran.index', ['status_filter' => 'belum_siap_dibayar']) }}" 
              class="btn btn-filter {{ $statusFilter === 'belum_siap_dibayar' ? 'active' : '' }}">
             <i class="fa-solid fa-clock me-1"></i>Belum Siap
           </a>
-          <a href="{{ route('dokumensPembayaran.index', ['status_filter' => 'siap_dibayar']) }}" 
+          <a href="{{ route('documents.pembayaran.index', ['status_filter' => 'siap_dibayar']) }}" 
              class="btn btn-filter {{ $statusFilter === 'siap_dibayar' ? 'active' : '' }}">
             <i class="fa-solid fa-check-circle me-1"></i>Sudah Siap
           </a>
-          <a href="{{ route('dokumensPembayaran.index', ['status_filter' => 'sudah_dibayar']) }}" 
+          <a href="{{ route('documents.pembayaran.index', ['status_filter' => 'sudah_dibayar']) }}" 
              class="btn btn-filter {{ $statusFilter === 'sudah_dibayar' ? 'active' : '' }}">
             <i class="fa-solid fa-check-double me-1"></i>Sudah Dibayar
           </a>
@@ -817,7 +817,7 @@ function loadDocumentDetail(docId) {
     </div>
   `;
 
-  fetch(`/dokumensPembayaran/${docId}/detail`)
+  fetch(`/documents/pembayaran/${docId}/detail`)
     .then(response => response.text())
     .then(html => {
       detailContent.innerHTML = html;
@@ -861,7 +861,7 @@ function confirmUpdateStatus() {
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
 
-  fetch(`/dokumensPembayaran/${docId}/update-status`, {
+  fetch(`/documents/pembayaran/${docId}/update-status`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

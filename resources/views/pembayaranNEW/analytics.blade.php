@@ -464,7 +464,7 @@
       <tbody id="dokumenTableBody">
         @forelse($dokumens as $index => $dokumen)
           <tr class="clickable-row" 
-              onclick="handleItemClick(event, '{{ route('dokumensPembayaran.detail', $dokumen->id) }}')"
+              onclick="handleItemClick(event, '{{ route('documents.pembayaran.detail', $dokumen->id) }}')"
               title="Klik untuk melihat detail dokumen">
             <td style="text-align: center;">{{ $index + 1 }}</td>
             <td><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>

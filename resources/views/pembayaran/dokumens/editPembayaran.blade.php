@@ -504,7 +504,7 @@
         </div>
     </div>
 
-    <form action="{{ route('dokumensPembayaran.update', $dokumen->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('documents.pembayaran.update', $dokumen->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -561,7 +561,7 @@
         </div>
 
         <div class="form-actions">
-            <a href="{{ route('dokumensPembayaran.index') }}" class="btn-back">
+            <a href="{{ route('documents.pembayaran.index') }}" class="btn-back">
                 <i class="fa-solid fa-arrow-left"></i>
                 Kembali
             </a>

@@ -463,7 +463,7 @@
 <div class="table-container">
   <h6>
     <span>Dokumen Terbaru</span>
-    <a href="{{ route('dokumensAkutansi.index') }}">View All</a>
+    <a href="{{ route('documents.akutansi.index') }}">View All</a>
   </h6>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">

@@ -1700,7 +1700,7 @@ function saveColumnCustomization() {
     // Create a new form if not found
     const newForm = document.createElement('form');
     newForm.method = 'GET';
-    newForm.action = '{{ route("dokumensPembayaran.index") }}';
+    newForm.action = '{{ route("documents.pembayaran.index") }}';
     document.body.appendChild(newForm);
     
     selectedColumnsOrder.forEach(columnKey => {

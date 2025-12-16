@@ -617,7 +617,7 @@
 <!-- Filter Section -->
 <div class="filter-section">
   <h6 class="filter-title">Filter Dokumen</h6>
-  <form method="GET" action="{{ route('akutansi.rekapan') }}">
+  <form method="GET" action="{{ route('reports.akutansi.index') }}">
     <div class="filter-row">
       <div class="form-group">
         <label for="bagian">Filter Bagian</label>
@@ -658,7 +658,7 @@
 
   @if($selectedBagian)
     <div class="mb-3">
-      <a href="{{ route('akutansi.rekapan') }}" class="btn btn-sm btn-outline-secondary">
+      <a href="{{ route('reports.akutansi.index') }}" class="btn btn-sm btn-outline-secondary">
         <i class="fas fa-arrow-left"></i> Kembali ke semua bagian
       </a>
     </div>

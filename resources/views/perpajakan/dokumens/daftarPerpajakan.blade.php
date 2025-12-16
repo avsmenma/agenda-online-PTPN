@@ -1883,7 +1883,7 @@
 
 <!-- Enhanced Search & Filter Box -->
 <div class="search-box">
-  <form action="{{ route('dokumensPerpajakan.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3" id="filterForm">
+  <form action="{{ route('documents.perpajakan.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3" id="filterForm">
     <div class="input-group" style="flex: 1; min-width: 300px;">
       <span class="input-group-text">
         <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -2237,7 +2237,7 @@
                   <span>Kirim Data</span>
                 </button>
                 <div class="action-row">
-                  <a href="{{ route('dokumensPerpajakan.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
+                  <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
                     <button class="btn-action btn-edit" style="width: 100%;">
                       <i class="fa-solid fa-pen"></i>
                       <span>Edit</span>
@@ -2651,10 +2651,10 @@ function openViewDocumentModal(docId) {
   document.getElementById('view-dokumen-id').value = docId;
   
   // Set edit button URL
-  document.getElementById('view-edit-btn').href = `/dokumensPerpajakan/${docId}/edit`;
+  document.getElementById('view-edit-btn').href = `/documents/perpajakan/${docId}/edit`;
   
   // Load document data via AJAX
-  fetch(`/dokumensPerpajakan/${docId}/detail`, {
+  fetch(`/documents/perpajakan/${docId}/detail`, {
     headers: {
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest'
@@ -2927,7 +2927,7 @@ function confirmSetDeadline() {
     return;
   }
 
-  fetch(`/dokumensPerpajakan/${docId}/set-deadline`, {
+  fetch(`/documents/perpajakan/${docId}/set-deadline`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3247,7 +3247,7 @@ function performSendToNext(docId, nextHandler) {
     currentSendButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
   }
 
-  fetch(`/dokumensPerpajakan/${docId}/send-to-next`, {
+  fetch(`/documents/perpajakan/${docId}/send-to-next`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3383,7 +3383,7 @@ function confirmReturn() {
     confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
 
     // Send return request
-    fetch(`/dokumensPerpajakan/${docId}/return`, {
+    fetch(`/documents/perpajakan/${docId}/return`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -447,14 +447,14 @@ class DashboardBController extends Controller
     public function storeDokumen(Request $request)
     {
         // Implementation for storing document
-        return redirect()->route('dokumensB.index')->with('success', 'Dokumen berhasil ditambahkan');
+        return redirect()->route('documents.verifikasi.index')->with('success', 'Dokumen berhasil ditambahkan');
     }
 
     public function editDokumen(Dokumen $dokumen)
     {
         // Only allow editing if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
-            return redirect()->route('dokumensB.index')
+            return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
 
@@ -476,7 +476,7 @@ class DashboardBController extends Controller
     {
         // Only allow updating if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
-            return redirect()->route('dokumensB.index')
+            return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengupdate dokumen ini.');
         }
 
@@ -633,7 +633,7 @@ class DashboardBController extends Controller
                 return redirect()->route('pengembalianB.index');
             } else {
                 session()->flash('success', 'Dokumen berhasil diperbarui.');
-                return redirect()->route('dokumensB.index');
+                return redirect()->route('documents.verifikasi.index');
             }
 
         } catch (\Exception $e) {
@@ -930,7 +930,7 @@ class DashboardBController extends Controller
     public function destroyDokumen($id)
     {
         // Implementation for deleting document
-        return redirect()->route('dokumensB.index')->with('success', 'Dokumen berhasil dihapus');
+        return redirect()->route('documents.verifikasi.index')->with('success', 'Dokumen berhasil dihapus');
     }
 
     public function pengembalian(Request $request)

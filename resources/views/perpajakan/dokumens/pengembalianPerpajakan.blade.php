@@ -456,7 +456,7 @@
 
   <!-- Search Box -->
   <div class="search-box">
-    <form action="{{ route('pengembalianPerpajakan.index') }}" method="GET" class="d-flex align-items-center w-100">
+    <form action="{{ route('returns.perpajakan.index') }}" method="GET" class="d-flex align-items-center w-100">
       <div class="input-group me-3" style="max-width: 300px;">
         <span class="input-group-text">
           <i class="fa-solid fa-search"></i>
@@ -521,7 +521,7 @@
               </td>
               <td onclick="event.stopPropagation()">
                 <div class="action-buttons">
-                  <a href="{{ route('dokumensPerpajakan.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+                  <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
                     <i class="fa-solid fa-pen"></i>
                     <span>Edit</span>
                   </a>
@@ -557,7 +557,7 @@
           <i class="fa-solid fa-file-invoice-dollar"></i>
           <h5>Belum ada dokumen</h5>
           <p class="mt-2">Tidak ada dokumen yang dikembalikan ke team verifikasi saat ini.</p>
-          <a href="{{ route('dokumensPerpajakan.index') }}" class="btn btn-primary mt-3">
+          <a href="{{ route('documents.perpajakan.index') }}" class="btn btn-primary mt-3">
             <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Daftar Dokumen Team Perpajakan
           </a>
         </div>

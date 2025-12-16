@@ -2412,7 +2412,7 @@ function exportToPDF() {
     }
 
     // Open export route in new tab
-    const exportUrl = '{{ route("pembayaran.rekapan.export") }}?' + params.toString();
+    const exportUrl = '{{ route("reports.pembayaran.export") }}?' + params.toString();
     window.open(exportUrl, '_blank');
     
     // Reset button after a short delay

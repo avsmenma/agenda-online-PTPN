@@ -1530,7 +1530,7 @@ async function exportNormalTableToExcel() {
     params.append('mode', 'normal');
 
     // Redirect to export route
-    window.location.href = '{{ route("pembayaran.rekapan.export") }}?' + params.toString();
+    window.location.href = '{{ route("reports.pembayaran.export") }}?' + params.toString();
   } catch (error) {
     console.error('Export error:', error);
     alert('Terjadi kesalahan saat export: ' + error.message);
@@ -1559,7 +1559,7 @@ function exportNormalTableToPDF() {
     params.append('mode', 'normal');
 
     // Redirect to export route
-    window.location.href = '{{ route("pembayaran.rekapan.export") }}?' + params.toString();
+    window.location.href = '{{ route("reports.pembayaran.export") }}?' + params.toString();
   } catch (error) {
     console.error('Export error:', error);
     alert('Terjadi kesalahan saat export: ' + error.message);
@@ -1595,7 +1595,7 @@ async function exportRekapanTableToExcel() {
     @endif
 
     // Redirect to export route
-    window.location.href = '{{ route("pembayaran.rekapan.export") }}?' + params.toString();
+    window.location.href = '{{ route("reports.pembayaran.export") }}?' + params.toString();
   } catch (error) {
     console.error('Export error:', error);
     alert('Terjadi kesalahan saat export: ' + error.message);
@@ -1631,7 +1631,7 @@ function exportRekapanTableToPDF() {
     @endif
 
     // Redirect to export route
-    window.location.href = '{{ route("pembayaran.rekapan.export") }}?' + params.toString();
+    window.location.href = '{{ route("reports.pembayaran.export") }}?' + params.toString();
   } catch (error) {
     console.error('Export error:', error);
     alert('Terjadi kesalahan saat export: ' + error.message);

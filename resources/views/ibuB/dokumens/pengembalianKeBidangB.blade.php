@@ -484,7 +484,7 @@
         <i class="fa-solid fa-building"></i>
         <h5>Belum ada dokumen</h5>
         <p class="mt-2">Tidak ada dokumen yang dikembalikan ke bagian saat ini.</p>
-        <a href="{{ route('dokumensB.index') }}" class="btn btn-primary mt-3">
+        <a href="{{ route('documents.verifikasi.index') }}" class="btn btn-primary mt-3">
           <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Daftar Dokumen
         </a>
       </div>

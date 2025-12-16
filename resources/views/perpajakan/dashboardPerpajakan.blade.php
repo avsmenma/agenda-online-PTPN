@@ -523,7 +523,7 @@
 <div class="table-container">
   <h6>
     <span>Dokumen Terbaru</span>
-    <a href="{{ route('dokumensPerpajakan.index') }}">View All</a>
+    <a href="{{ route('documents.perpajakan.index') }}">View All</a>
   </h6>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
@@ -571,7 +571,7 @@
             @endif
           </td>
           <td>
-            <a href="{{ route('dokumensPerpajakan.index') }}" class="btn-action btn-view" title="Lihat Detail">
+            <a href="{{ route('documents.perpajakan.index') }}" class="btn-action btn-view" title="Lihat Detail">
               <i class="fa-solid fa-eye"></i>
               Lihat
             </a>

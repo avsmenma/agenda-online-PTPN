@@ -398,7 +398,7 @@
 </div>
 
 <div class="form-container">
-  <form action="{{ route('dokumensB.update', $dokumen->id) }}" method="POST" id="editForm">
+  <form action="{{ route('documents.verifikasi.update', $dokumen->id) }}" method="POST" id="editForm">
     @csrf
     @method('PUT')
 
@@ -723,7 +723,7 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <a href="{{ route('dokumensB.index') }}" class="btn-reset" style="text-decoration: none; display: inline-block;">Batal</a>
+      <a href="{{ route('documents.verifikasi.index') }}" class="btn-reset" style="text-decoration: none; display: inline-block;">Batal</a>
       <button type="submit" class="btn-submit">
         <i class="fa-solid fa-save me-2"></i>Update Dokumen
       </button>

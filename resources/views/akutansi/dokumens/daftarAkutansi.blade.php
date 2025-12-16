@@ -1881,7 +1881,7 @@
 
 <!-- Enhanced Search & Filter Box -->
 <div class="search-box">
-  <form action="{{ route('dokumensAkutansi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
+  <form action="{{ route('documents.akutansi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
     <div class="input-group" style="flex: 1; min-width: 300px;">
       <span class="input-group-text">
         <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -2192,7 +2192,7 @@
                     </button>
                     <div class="action-row">
                       @if($dokumen->can_edit)
-                      <a href="{{ route('dokumensAkutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
+                      <a href="{{ route('documents.akutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
                         <button class="btn-action btn-edit" style="width: 100%;">
                           <i class="fa-solid fa-pen"></i>
                           <span>Edit</span>
@@ -2766,7 +2766,7 @@ function loadDocumentDetail(docId) {
     </div>
   `;
 
-  fetch(`/dokumensAkutansi/${docId}/detail`)
+  fetch(`/documents/akutansi/${docId}/detail`)
     .then(response => response.text())
     .then(html => {
       detailContent.innerHTML = html;
@@ -2783,7 +2783,7 @@ function loadDocumentDetail(docId) {
 
 function editDocument(id) {
   // Implement edit functionality
-  window.location.href = `/dokumensAkutansi/${id}/edit`;
+  window.location.href = `/documents/akutansi/${id}/edit`;
 }
 
 function sendToPembayaran(id) {
@@ -2852,7 +2852,7 @@ function confirmSendToPembayaran() {
   modal.hide();
   
   // Send request
-  fetch(`/dokumensAkutansi/${docId}/send-to-pembayaran`, {
+  fetch(`/documents/akutansi/${docId}/send-to-pembayaran`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -2974,13 +2974,13 @@ function confirmSetDeadline() {
   // Type casting untuk memastikan integer
   const deadlineDaysInt = parseInt(deadlineDays, 10);
 
-  console.log('Sending request to: ', `/dokumensAkutansi/${docId}/set-deadline`);
+  console.log('Sending request to: ', `/documents/akutansi/${docId}/set-deadline`);
   console.log('Request payload: ', {
     deadline_days: deadlineDaysInt,
     deadline_note: deadlineNote
   });
 
-  fetch(`/dokumensAkutansi/${docId}/set-deadline`, {
+  fetch(`/documents/akutansi/${docId}/set-deadline`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3394,7 +3394,7 @@ function confirmReturn() {
     confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
 
     // Send return request
-    fetch(`/dokumensAkutansi/${docId}/return`, {
+    fetch(`/documents/akutansi/${docId}/return`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -3928,10 +3928,10 @@ function openViewDocumentModal(docId) {
   document.getElementById('view-dokumen-id').value = docId;
   
   // Set edit button URL
-  document.getElementById('view-edit-btn').href = `/dokumensAkutansi/${docId}/edit`;
+  document.getElementById('view-edit-btn').href = `/documents/akutansi/${docId}/edit`;
   
   // Load document data via AJAX
-  fetch(`/dokumensAkutansi/${docId}/detail`, {
+  fetch(`/documents/akutansi/${docId}/detail`, {
     headers: {
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest'

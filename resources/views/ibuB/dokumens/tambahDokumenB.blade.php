@@ -119,7 +119,7 @@
 <h2>{{ $title }}</h2>
 
 <div class="form-container">
-  <form action="{{ route('dokumensB.store') }}" method="POST" enctype="multipart/form-data">
+  <form action="{{ route('documents.verifikasi.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
     <!-- Section Informasi Umum -->
@@ -258,7 +258,7 @@
 
     <!-- Buttons -->
     <div class="d-flex justify-content-end gap-3">
-      <a href="{{ route('dokumensB.index') }}" class="btn btn-secondary">
+      <a href="{{ route('documents.verifikasi.index') }}" class="btn btn-secondary">
         <i class="fas fa-times me-2"></i>Batal
       </a>
       <button type="submit" class="btn btn-primary">

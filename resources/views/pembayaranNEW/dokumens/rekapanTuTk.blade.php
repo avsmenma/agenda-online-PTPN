@@ -1191,7 +1191,7 @@
 
   <!-- Filter Section -->
   <div class="filter-section">
-    <form method="GET" action="{{ route('pembayaran.rekapanTuTk') }}" id="filterForm">
+    <form method="GET" action="{{ route('reports.pembayaran.tu-tk') }}" id="filterForm">
       <!-- Data Source Selector -->
       <div class="filter-row" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #e9ecef;">
         <div class="filter-group" style="flex: 1; position: relative;">
@@ -1259,7 +1259,7 @@
           <!-- Primary Actions: Filter & Reset -->
           <div class="flex gap-2 flex-shrink-0">
             <button type="submit" class="btn-filter" style="white-space: nowrap;">Filter</button>
-            <a href="{{ route('pembayaran.rekapanTuTk') }}" class="btn-reset" style="white-space: nowrap;">Reset</a>
+            <a href="{{ route('reports.pembayaran.tu-tk') }}" class="btn-reset" style="white-space: nowrap;">Reset</a>
           </div>
           
           <!-- Divider (hidden on mobile) -->
