@@ -380,6 +380,62 @@
     animation: warning-shake 1s infinite;
   }
 
+  /* Completed State - Dark Green Theme */
+  .deadline-card.deadline-completed {
+    --deadline-color: #15803d;
+    --deadline-color-light: #16a34a;
+    --deadline-bg: #f0fdf4;
+    --deadline-text: #14532d;
+    opacity: 0.9;
+  }
+
+  .deadline-card.deadline-completed {
+    background: var(--deadline-bg) !important;
+    border-color: rgba(21, 128, 61, 0.2) !important;
+  }
+
+  .deadline-card.deadline-completed .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-completed {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(21, 128, 61, 0.4);
+  }
+
+  .deadline-indicator.deadline-completed i::before {
+    content: "\f058"; /* check-double */
+  }
+
+  /* Sent State - Grey Theme */
+  .deadline-card.deadline-sent {
+    --deadline-color: #6b7280;
+    --deadline-color-light: #9ca3af;
+    --deadline-bg: #f3f4f6;
+    --deadline-text: #374151;
+    opacity: 0.8;
+  }
+
+  .deadline-card.deadline-sent {
+    background: var(--deadline-bg) !important;
+    border-color: rgba(107, 114, 128, 0.2) !important;
+  }
+
+  .deadline-card.deadline-sent .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-sent {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(107, 114, 128, 0.4);
+  }
+
+  .deadline-indicator.deadline-sent i::before {
+    content: "\f1d8"; /* paper-plane */
+  }
+
   /* Enhanced late information */
   .late-info {
     display: inline-flex;
@@ -2939,20 +2995,29 @@ function updateDeadlineCard(card) {
   const deadlineStr = card.dataset.deadline;
   if (!deadlineStr) return;
 
-  // Check if document is already sent
+  // Get sent and completed status from data attributes
   const isSent = card.dataset.sent === 'true';
+  const isCompleted = card.dataset.completed === 'true';
 
   const deadline = new Date(deadlineStr);
   const now = new Date();
   const diffMs = deadline - now;
 
   // Remove existing status classes
-  card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue');
+  card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue', 'deadline-sent', 'deadline-completed');
 
   // Find status indicator
   const statusIndicator = card.querySelector('.deadline-indicator');
   const statusText = card.querySelector('.status-text');
+  if (!statusText) {
+    console.error('Status text not found in card:', card);
+    return;
+  }
   const statusIcon = statusIndicator.querySelector('i');
+  if (!statusIcon) {
+    console.error('Status icon not found in card:', card);
+    return;
+  }
 
   // Remove existing late info and time hints
   const existingLateInfo = card.querySelector('.late-info');
@@ -2963,6 +3028,25 @@ function updateDeadlineCard(card) {
   if (existingTimeHint) existingTimeHint.remove();
   if (existingProgress) existingProgress.remove();
 
+  // Handle completed documents - show as completed (green, no countdown)
+  if (isCompleted) {
+    card.classList.add('deadline-completed');
+    statusText.textContent = 'SELESAI';
+    statusIcon.className = 'fa-solid fa-check-circle';
+    statusIndicator.className = 'deadline-indicator deadline-completed';
+    return; // Don't show countdown for completed documents
+  }
+
+  // Handle sent documents - show as sent (gray, no countdown, no overdue)
+  if (isSent) {
+    card.classList.add('deadline-sent');
+    statusText.textContent = 'TERKIRIM';
+    statusIcon.className = 'fa-solid fa-paper-plane';
+    statusIndicator.className = 'deadline-indicator deadline-sent';
+    return; // Don't show countdown or overdue for sent documents
+  }
+
+  // Handle active documents (still being processed) - show countdown
   if (diffMs < 0) {
     // Overdue state
     card.classList.add('deadline-overdue');
