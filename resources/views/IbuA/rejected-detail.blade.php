@@ -263,7 +263,7 @@
             <div class="breadcrumb-custom">
                 <a href="{{ url('/dashboard') }}">Home</a>
                 <span class="separator">/</span>
-                <a href="{{ route('dokumens.index') }}">Daftar Dokumen</a>
+                <a href="{{ route('documents.index') }}">Daftar Dokumen</a>
                 <span class="separator">/</span>
                 <span>Detail Ditolak</span>
             </div>
@@ -316,11 +316,11 @@
 
                     <!-- Action Buttons -->
                     <div class="action-buttons">
-                        <a href="{{ route('dokumens.edit', $dokumen) }}" class="btn-edit">
+                        <a href="{{ route('documents.edit', $dokumen) }}" class="btn-edit">
                             <i class="fas fa-edit"></i>
                             Edit Dokumen
                         </a>
-                        <a href="{{ route('dokumens.index') }}" class="btn-back">
+                        <a href="{{ route('documents.index') }}" class="btn-back">
                             <i class="fas fa-arrow-left"></i>
                             Kembali ke Daftar
                         </a>

@@ -314,7 +314,7 @@
 </div>
 
 <div class="form-container">
-  <form action="{{ route('dokumens.store') }}" method="POST">
+  <form action="{{ route('documents.store') }}" method="POST">
     @csrf
 
     <!-- Input Dokumen Baru -->

@@ -1781,7 +1781,7 @@
 
 <!-- Enhanced Search & Filter Box -->
 <div class="search-box">
-  <form action="{{ route('dokumens.index') }}" method="GET" id="filterForm" class="search-filter-form">
+  <form action="{{ route('documents.index') }}" method="GET" id="filterForm" class="search-filter-form">
     <div class="input-group search-input-group">
       <span class="input-group-text">
         <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -2053,7 +2053,7 @@
                         && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
             @endphp
             @if($canEdit)
-              <a href="{{ route('dokumens.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+              <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
                 <i class="fa-solid fa-edit"></i>
                 <span>Edit</span>
               </a>
@@ -2097,7 +2097,7 @@
         <td colspan="{{ count($filteredColumns) + 2 }}" class="text-center py-4">
           <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
           <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
-          <a href="{{ route('dokumens.create') }}" class="btn btn-primary">
+          <a href="{{ route('documents.create') }}" class="btn btn-primary">
             <i class="fa-solid fa-plus me-2"></i>Tambah Dokumen
           </a>
         </td>
@@ -2444,7 +2444,7 @@ function confirmSendToIbuB() {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
 
-  fetch(`/dokumens/${docId}/send-to-ibub`, {
+  fetch(`/documents/${docId}/send-to-verifikasi`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -2560,7 +2560,7 @@ function loadDocumentDetail(documentId) {
     mainRow.classList.add('selected');
 
     // Fetch detail data
-    fetch(`/dokumens/${documentId}/detail-ibua`)
+    fetch(`/documents/${documentId}/detail-ibua`)
       .then(response => response.text())
       .then(html => {
         detailContent.innerHTML = html;
@@ -3400,10 +3400,10 @@ function openViewDocumentModal(docId) {
   document.getElementById('view-dokumen-id').value = docId;
   
   // Set edit button URL
-  document.getElementById('view-edit-btn').href = `/dokumens/${docId}/edit`;
+  document.getElementById('view-edit-btn').href = `/documents/${docId}/edit`;
   
   // Load document data via AJAX
-  fetch(`/dokumens/${docId}/detail`, {
+  fetch(`/documents/${docId}/detail`, {
     headers: {
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest'

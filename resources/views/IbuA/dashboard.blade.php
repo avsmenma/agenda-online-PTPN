@@ -529,7 +529,7 @@
     <div class="table-container">
       <h6>
         <span style="color: #1a4d3e; text-decoration: none; font-size: 24px;">Dokumen Terbaru</span>
-        <a href="{{ route('dokumens.index') }}" style="color: #1a4d3e; text-decoration: none; font-size: 14px;">View All</a>
+        <a href="{{ route('documents.index') }}" style="color: #1a4d3e; text-decoration: none; font-size: 14px;">View All</a>
       </h6>
       <div class="table-responsive">
         <div>
@@ -628,7 +628,7 @@
                               && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
                   @endphp
                   @if($canEdit)
-                  <a href="{{ route('dokumens.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+                  <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
                     <i class="fa-solid fa-edit"></i>
                     Edit
                   </a>
@@ -676,7 +676,7 @@ function sendToIbuB(dokumenId) {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-  fetch(`/dokumens/${dokumenId}/send-to-ibub`, {
+  fetch(`/documents/${dokumenId}/send-to-verifikasi`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

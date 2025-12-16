@@ -489,7 +489,7 @@
         </td>
         <td>
           <div class="action-buttons">
-            <a href="{{ route('dokumens.edit', $dokumen->id) }}" class="btn-action btn-view" title="Edit">
+            <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-view" title="Edit">
               <i class="fa-solid fa-edit"></i>
             </a>
             <button type="button" class="btn-action btn-chevron" onclick="toggleDetail({{ $dokumen->id }})" title="Lihat Detail">

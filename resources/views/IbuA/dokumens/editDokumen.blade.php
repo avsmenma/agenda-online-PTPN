@@ -290,7 +290,7 @@
 </div>
 
 <div class="form-container">
-  <form action="{{ route('dokumens.update', $dokumen->id) }}" method="POST">
+  <form action="{{ route('documents.update', $dokumen->id) }}" method="POST">
     @csrf
     @method('PUT')
 
@@ -584,7 +584,7 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <a href="{{ route('dokumens.index') }}" class="btn-back">
+      <a href="{{ route('documents.index') }}" class="btn-back">
         <i class="fa-solid fa-arrow-left"></i> Kembali
       </a>
       <button type="submit" class="btn-submit">
