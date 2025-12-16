@@ -554,10 +554,15 @@
 
           <div class="form-group">
             <label>Nilai Rupiah <span style="color: red;">*</span></label>
-            <input type="text" name="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah', number_format($dokumen->nilai_rupiah, 0, '', '')) }}">
+            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah', number_format($dokumen->nilai_rupiah, 0, '', '.')) }}">
             @error('nilai_rupiah')
               <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
             @enderror
+          </div>
+
+          <div class="form-group">
+            <label>Ejaan Nilai Rupiah</label>
+            <input type="text" name="ejaan_nilai_rupiah" id="edit-ejaan-nilai-rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
           </div>
         </div>
       </div>
@@ -711,29 +716,6 @@
               <button type="button" class="remove-field-btn" style="display: none;">−</button>
             </div>
             @endif
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 5: Keterangan -->
-    <div class="accordion-section">
-      <div class="accordion-header" onclick="toggleAccordion(this)">
-        <div class="accordion-title">
-          <i class="fa-solid fa-comment"></i>
-          <span>Keterangan</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Opsional</span>
-        </div>
-        <i class="fa-solid fa-chevron-down accordion-icon"></i>
-      </div>
-      <div class="accordion-content">
-        <div class="accordion-body">
-          <div class="form-group">
-            <label>Keterangan</label>
-            <textarea name="keterangan" placeholder="Masukkan keterangan (opsional)">{{ old('keterangan', $dokumen->keterangan) }}</textarea>
-            @error('keterangan')
-              <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-            @enderror
           </div>
         </div>
       </div>
@@ -914,6 +896,175 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       }
+    }
+  });
+
+  // Function to convert number to Indonesian terbilang
+  function terbilangRupiah(number) {
+    number = parseFloat(number.toString().replace(/\./g, '')) || 0;
+    
+    if (number == 0) {
+      return 'nol rupiah';
+    }
+
+    const angka = [
+      '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+      'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+      'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+      'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+    ];
+
+    let hasil = '';
+
+    // Handle triliun
+    if (number >= 1000000000000) {
+      const triliun = Math.floor(number / 1000000000000);
+      hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+      number = number % 1000000000000;
+    }
+
+    // Handle milyar
+    if (number >= 1000000000) {
+      const milyar = Math.floor(number / 1000000000);
+      hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+      number = number % 1000000000;
+    }
+
+    // Handle juta
+    if (number >= 1000000) {
+      const juta = Math.floor(number / 1000000);
+      hasil += terbilangSatuan(juta, angka) + ' juta ';
+      number = number % 1000000;
+    }
+
+    // Handle ribu
+    if (number >= 1000) {
+      const ribu = Math.floor(number / 1000);
+      if (ribu == 1) {
+        hasil += 'seribu ';
+      } else {
+        hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+      }
+      number = number % 1000;
+    }
+
+    // Handle ratusan, puluhan, dan satuan
+    if (number > 0) {
+      hasil += terbilangSatuan(number, angka);
+    }
+
+    return hasil.trim() + ' rupiah';
+  }
+
+  function terbilangSatuan(number, angka) {
+    let hasil = '';
+    number = parseInt(number);
+
+    if (number == 0) {
+      return '';
+    }
+
+    // Handle ratusan
+    if (number >= 100) {
+      const ratus = Math.floor(number / 100);
+      if (ratus == 1) {
+        hasil += 'seratus ';
+      } else {
+        hasil += angka[ratus] + ' ratus ';
+      }
+      number = number % 100;
+    }
+
+    // Handle puluhan dan satuan (0-99)
+    if (number > 0) {
+      if (number < 20) {
+        hasil += angka[number] + ' ';
+      } else {
+        const puluhan = Math.floor(number / 10);
+        const satuan = number % 10;
+        
+        if (puluhan == 1) {
+          hasil += angka[10 + satuan] + ' ';
+        } else {
+          hasil += angka[puluhan] + ' puluh ';
+          if (satuan > 0) {
+            hasil += angka[satuan] + ' ';
+          }
+        }
+      }
+    }
+
+    return hasil.trim();
+  }
+
+  // Format nilai rupiah input with dots and auto-generate ejaan
+  const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
+  const ejaanRupiahInput = document.getElementById('edit-ejaan-nilai-rupiah');
+
+  if (nilaiRupiahInput) {
+    // Format on input
+    nilaiRupiahInput.addEventListener('input', function() {
+      // Format with dots
+      let value = this.value.replace(/[^\d]/g, '');
+      if (value) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        this.value = value;
+      } else {
+        this.value = '';
+      }
+
+      // Update ejaan
+      if (ejaanRupiahInput) {
+        const numericValue = value.replace(/\./g, '');
+        if (numericValue && numericValue > 0) {
+          ejaanRupiahInput.value = terbilangRupiah(numericValue);
+        } else {
+          ejaanRupiahInput.value = '';
+        }
+      }
+    });
+
+    // Format on paste
+    nilaiRupiahInput.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        let value = this.value.replace(/[^\d]/g, '');
+        if (value) {
+          value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          this.value = value;
+        } else {
+          this.value = '';
+        }
+
+        // Update ejaan
+        if (ejaanRupiahInput) {
+          const numericValue = value.replace(/\./g, '');
+          if (numericValue && numericValue > 0) {
+            ejaanRupiahInput.value = terbilangRupiah(numericValue);
+          } else {
+            ejaanRupiahInput.value = '';
+          }
+        }
+      }, 10);
+    });
+
+    // Format initial value if exists
+    if (nilaiRupiahInput.value) {
+      nilaiRupiahInput.dispatchEvent(new Event('input'));
+    }
+  }
+
+  // Remove format dots from nilai_rupiah before form submit
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
+    if (nilaiRupiahInput && nilaiRupiahInput.value) {
+      // Remove all dots before submitting
+      nilaiRupiahInput.value = nilaiRupiahInput.value.replace(/\./g, '');
+    }
+    
+    // Remove ejaan_nilai_rupiah from form submission (it's readonly/display only)
+    const ejaanInput = document.getElementById('edit-ejaan-nilai-rupiah');
+    if (ejaanInput) {
+      ejaanInput.disabled = true; // Disable so it won't be submitted
     }
   });
 
