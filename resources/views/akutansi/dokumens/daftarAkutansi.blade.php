@@ -2066,6 +2066,7 @@
                 $isSent = in_array($dokumen->status, [
                   'sent_to_pembayaran',
                   'pending_approval_pembayaran',
+                  'menunggu_di_approve', // Status setelah dikirim ke pembayaran via sendToInbox
                 ]);
                 
                 // Check if document is completed
@@ -2122,7 +2123,9 @@
               @endif
             </td>
             <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-              @if($dokumen->is_locked)
+              @if(in_array($dokumen->status, ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve']))
+                <span class="badge-status badge-sent">📤 Terkirim ke Pembayaran</span>
+              @elseif($dokumen->is_locked)
                 <span class="badge-status badge-locked">🔒 Terkunci</span>
               @elseif($dokumen->status == 'selesai')
                 <span class="badge-status badge-selesai">✓ Selesai</span>
@@ -2139,7 +2142,11 @@
             <td class="col-action" onclick="event.stopPropagation()">
               <div class="action-buttons-hybrid">
                 @php
-                  $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
+                  $isSentToPembayaran = in_array($dokumen->status, [
+                    'sent_to_pembayaran',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve', // Status setelah dikirim ke pembayaran via sendToInbox
+                  ]);
                 @endphp
                 @if($dokumen->is_locked)
                   <!-- Locked state - hanya tampilkan Set Deadline -->

@@ -109,7 +109,16 @@ class DokumenHelper
                 // Lock dokumen dengan status 'sent_to_akutansi' TAPI hanya jika tidak punya deadline
                 // Setelah deadline di-set, status berubah menjadi 'sedang diproses', jadi tidak terkunci lagi
                 // TAPI jika status sudah 'sent_to_akutansi', berarti sudah approve, tidak lock (sudah di-handle di atas)
-                $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_akutansi';
+                // JANGAN lock dokumen yang sudah dikirim ke pembayaran (status menunggu_di_approve atau sent_to_pembayaran)
+                if (in_array($dokumen->status, [
+                    'menunggu_di_approve',
+                    'sent_to_pembayaran',
+                    'pending_approval_pembayaran'
+                ])) {
+                    $isLocked = false; // Dokumen sudah dikirim ke pembayaran, tidak terkunci
+                } else {
+                    $isLocked = !$hasDeadline && $dokumen->status === 'sent_to_akutansi';
+                }
                 break;
             case 'perpajakan':
                 // Lock dokumen dengan status 'sent_to_perpajakan' (baru di-approve dari inbox)

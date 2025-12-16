@@ -1186,17 +1186,16 @@ class DashboardAkutansiController extends Controller
             // Store previous status for tracking
             $previousStatus = $dokumen->status;
 
-            // Update document status and handler
-            $dokumen->update([
-                'status' => 'sent_to_pembayaran',
-                'current_handler' => 'pembayaran',
-                // Note: universal_approval_for and sent_to_pembayaran_at columns removed - now in dokumen_statuses and dokumen_role_data
-            ]);
+            // Send document to Pembayaran inbox (this will create pending status in dokumen_statuses)
+            // This method will:
+            // 1. Create pending status in dokumen_statuses for pembayaran
+            // 2. Set received_at in dokumen_role_data for pembayaran
+            // 3. Update status to 'menunggu_di_approve'
+            // 4. Update current_handler to 'pembayaran'
+            $dokumen->sendToInbox('Pembayaran');
             
-            // Set received_at in dokumen_role_data for pembayaran
-            $dokumen->setDataForRole('pembayaran', [
-                'received_at' => now(),
-            ]);
+            // Also explicitly call sendToRoleInbox to ensure status is created
+            $dokumen->sendToRoleInbox('pembayaran', 'akutansi');
             
             // Set processed_at in dokumen_role_data for akutansi
             $roleData = $dokumen->getDataForRole('akutansi');
