@@ -28,11 +28,11 @@ final class User extends Authenticatable
         'owner' => '/owner/dashboard',
         'Owner' => '/owner/dashboard',
         'IbuA' => '/dashboard',
-        'IbuB' => '/dashboardB',
-        'Pembayaran' => '/dashboardPembayaran',
-        'Akutansi' => '/dashboardAkutansi',
-        'Perpajakan' => '/dashboardPerpajakan',
-        'Verifikasi' => '/dashboardVerifikasi',
+        'IbuB' => '/dashboard/verifikasi',
+        'Pembayaran' => '/dashboard/pembayaran',
+        'Akutansi' => '/dashboard/akutansi',
+        'Perpajakan' => '/dashboard/perpajakan',
+        'Verifikasi' => '/dashboard/verifikasi-role',
     ];
 
     /**
