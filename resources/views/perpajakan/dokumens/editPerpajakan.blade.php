@@ -366,6 +366,11 @@
             <input type="text" id="nilai_rupiah" name="nilai_rupiah" value="{{ old('nilai_rupiah', number_format($dokumen->nilai_rupiah, 0, ',', '.')) }}" required>
             <small class="text-muted">Format: 1.000.000</small>
           </div>
+
+          <div class="form-group">
+            <label for="ejaan_nilai_rupiah">Ejaan Nilai Rupiah</label>
+            <input type="text" id="ejaan_nilai_rupiah" name="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+          </div>
         </div>
       </div>
     </div>
@@ -854,9 +859,107 @@ function removeField(button) {
   button.parentElement.remove();
 }
 
+// Function to convert number to Indonesian terbilang
+function terbilangRupiah(number) {
+  number = parseFloat(number.toString().replace(/\./g, '')) || 0;
+  
+  if (number == 0) {
+    return 'nol rupiah';
+  }
+
+  const angka = [
+    '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+    'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+    'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+    'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+  ];
+
+  let hasil = '';
+
+  // Handle triliun
+  if (number >= 1000000000000) {
+    const triliun = Math.floor(number / 1000000000000);
+    hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+    number = number % 1000000000000;
+  }
+
+  // Handle milyar
+  if (number >= 1000000000) {
+    const milyar = Math.floor(number / 1000000000);
+    hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+    number = number % 1000000000;
+  }
+
+  // Handle juta
+  if (number >= 1000000) {
+    const juta = Math.floor(number / 1000000);
+    hasil += terbilangSatuan(juta, angka) + ' juta ';
+    number = number % 1000000;
+  }
+
+  // Handle ribu
+  if (number >= 1000) {
+    const ribu = Math.floor(number / 1000);
+    if (ribu == 1) {
+      hasil += 'seribu ';
+    } else {
+      hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+    }
+    number = number % 1000;
+  }
+
+  // Handle ratusan, puluhan, dan satuan
+  if (number > 0) {
+    hasil += terbilangSatuan(number, angka);
+  }
+
+  return hasil.trim() + ' rupiah';
+}
+
+function terbilangSatuan(number, angka) {
+  let hasil = '';
+  number = parseInt(number);
+
+  if (number == 0) {
+    return '';
+  }
+
+  // Handle ratusan
+  if (number >= 100) {
+    const ratus = Math.floor(number / 100);
+    if (ratus == 1) {
+      hasil += 'seratus ';
+    } else {
+      hasil += angka[ratus] + ' ratus ';
+    }
+    number = number % 100;
+  }
+
+  // Handle puluhan dan satuan (0-99)
+  if (number > 0) {
+    if (number < 20) {
+      hasil += angka[number] + ' ';
+    } else {
+      const puluhan = Math.floor(number / 10);
+      const satuan = number % 10;
+      
+      if (puluhan == 1) {
+        hasil += angka[10 + satuan] + ' ';
+      } else {
+        hasil += angka[puluhan] + ' puluh ';
+        if (satuan > 0) {
+          hasil += angka[satuan] + ' ';
+        }
+      }
+    }
+  }
+
+  return hasil.trim();
+}
+
 // Format rupiah input - all currency fields
 const rupiahInputs = [
-  'nilai_rupiah', 'dpp_pph', 'ppn_terhutang',
+  'dpp_pph', 'ppn_terhutang',
   'dpp_invoice', 'ppn_invoice', 'dpp_ppn_invoice',
   'dpp_faktur', 'ppn_faktur', 'selisih_pajak',
   'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'
@@ -870,6 +973,75 @@ rupiahInputs.forEach(id => {
     });
   }
 });
+
+// Format nilai_rupiah input with dots and auto-generate ejaan
+const nilaiRupiahInput = document.getElementById('nilai_rupiah');
+const ejaanRupiahInput = document.getElementById('ejaan_nilai_rupiah');
+
+if (nilaiRupiahInput) {
+  // Format on input
+  nilaiRupiahInput.addEventListener('input', function() {
+    // Format with dots
+    let value = this.value.replace(/[^\d]/g, '');
+    if (value) {
+      value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      this.value = value;
+    } else {
+      this.value = '';
+    }
+
+    // Update ejaan
+    if (ejaanRupiahInput) {
+      const numericValue = value.replace(/\./g, '');
+      if (numericValue && numericValue > 0) {
+        ejaanRupiahInput.value = terbilangRupiah(numericValue);
+      } else {
+        ejaanRupiahInput.value = '';
+      }
+    }
+  });
+
+  // Format on paste
+  nilaiRupiahInput.addEventListener('paste', function(e) {
+    setTimeout(() => {
+      let value = this.value.replace(/[^\d]/g, '');
+      if (value) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        this.value = value;
+      } else {
+        this.value = '';
+      }
+
+      // Update ejaan
+      if (ejaanRupiahInput) {
+        const numericValue = value.replace(/\./g, '');
+        if (numericValue && numericValue > 0) {
+          ejaanRupiahInput.value = terbilangRupiah(numericValue);
+        } else {
+          ejaanRupiahInput.value = '';
+        }
+      }
+    }, 10);
+  });
+
+  // Format initial value if exists and generate ejaan
+  if (nilaiRupiahInput.value) {
+    // Ensure format is correct (with dots)
+    let value = nilaiRupiahInput.value.replace(/[^\d]/g, '');
+    if (value) {
+      value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      nilaiRupiahInput.value = value;
+    }
+    
+    // Generate ejaan for initial value
+    if (ejaanRupiahInput) {
+      const numericValue = value.replace(/\./g, '');
+      if (numericValue && numericValue > 0) {
+        ejaanRupiahInput.value = terbilangRupiah(numericValue);
+      }
+    }
+  }
+}
 
 // Auto-calculate DPP + PPN Invoice
 const dppInvoice = document.getElementById('dpp_invoice');
@@ -887,6 +1059,21 @@ function calculateDppPpnInvoice() {
 
 if (dppInvoice) dppInvoice.addEventListener('input', calculateDppPpnInvoice);
 if (ppnInvoice) ppnInvoice.addEventListener('input', calculateDppPpnInvoice);
+
+// Remove format dots from nilai_rupiah before form submit
+document.querySelector('form').addEventListener('submit', function(e) {
+  const nilaiRupiahInput = document.getElementById('nilai_rupiah');
+  if (nilaiRupiahInput && nilaiRupiahInput.value) {
+    // Remove all dots before submitting
+    nilaiRupiahInput.value = nilaiRupiahInput.value.replace(/\./g, '');
+  }
+  
+  // Remove ejaan_nilai_rupiah from form submission (it's readonly/display only)
+  const ejaanInput = document.getElementById('ejaan_nilai_rupiah');
+  if (ejaanInput) {
+    ejaanInput.disabled = true; // Disable so it won't be submitted
+  }
+});
 </script>
 
 @endsection
