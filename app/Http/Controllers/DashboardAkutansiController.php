@@ -172,7 +172,9 @@ class DashboardAkutansiController extends Controller
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
+                ->orWhere('status', 'sent_to_pembayaran')
+                ->orWhere('status', 'menunggu_di_approve') // Status setelah dikirim ke pembayaran
+                ->orWhere('status', 'pending_approval_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
         })
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
@@ -223,6 +225,7 @@ class DashboardAkutansiController extends Controller
 
         // Order by deadline status first (locked documents first), then by received_at (when document was received by akutansi)
         // This ensures documents maintain their position after deadline is set
+        // Dokumen yang sudah terkirim ke pembayaran tetap mempertahankan posisinya berdasarkan received_at
         $dokumens = $query->orderByRaw("CASE
                 WHEN dokumens.current_handler = 'akutansi' AND dokumens.status = 'sent_to_akutansi' AND (
                     SELECT deadline_at FROM dokumen_role_data 
@@ -234,6 +237,7 @@ class DashboardAkutansiController extends Controller
                     WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
                     LIMIT 1
                 ) IS NOT NULL THEN 2
+                WHEN dokumens.current_handler = 'akutansi' AND dokumens.status IN ('menunggu_di_approve', 'pending_approval_pembayaran', 'sent_to_pembayaran') THEN 2
                 ELSE 3
             END")
             ->orderByRaw("COALESCE(
@@ -242,6 +246,7 @@ class DashboardAkutansiController extends Controller
                  LIMIT 1),
                 dokumens.created_at
             ) DESC")
+            ->orderBy('dokumens.id', 'DESC') // Secondary sort by ID untuk konsistensi
             ->paginate(10);
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator

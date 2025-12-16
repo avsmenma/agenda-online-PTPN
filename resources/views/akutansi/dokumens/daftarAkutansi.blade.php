@@ -1972,7 +1972,16 @@
       @forelse($dokumens as $index => $dokumen)
         <tr class="main-row clickable-row {{ $dokumen->lock_status_class }}" onclick="handleRowClick(event, {{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
             <td class="col-number">
-              @if($dokumen->is_locked)
+              @php
+                // Jangan tampilkan icon kunci untuk dokumen yang sudah dikirim ke pembayaran
+                $isSentToPembayaran = in_array($dokumen->status, [
+                  'sent_to_pembayaran',
+                  'pending_approval_pembayaran',
+                  'menunggu_di_approve',
+                ]);
+                $shouldShowLock = $dokumen->is_locked && !$isSentToPembayaran;
+              @endphp
+              @if($shouldShowLock)
                 <i class="fa-solid fa-lock text-warning me-1" style="font-size: 0.8em;" title="Terkunci: {{ $dokumen->lock_status_message }}"></i>
               @endif
               {{ $dokumens->firstItem() + $index }}
