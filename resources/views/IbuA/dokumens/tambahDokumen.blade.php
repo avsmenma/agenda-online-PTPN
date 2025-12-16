@@ -326,6 +326,34 @@
       <strong>Informasi:</strong> Tanggal masuk akan diisi otomatis saat dokumen disimpan. Bulan dan tahun diambil dari tanggal SPP.
     </div>
 
+    <!-- Bagian dan Nama Pengirim Dokumen -->
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bagian</label>
+        <select name="bagian" required>
+          <option value="">Pilih Bagian</option>
+          <option value="DPM" {{ old('bagian') == 'DPM' ? 'selected' : '' }}>DPM</option>
+          <option value="SKH" {{ old('bagian') == 'SKH' ? 'selected' : '' }}>SKH</option>
+          <option value="SDM" {{ old('bagian') == 'SDM' ? 'selected' : '' }}>SDM</option>
+          <option value="TEP" {{ old('bagian') == 'TEP' ? 'selected' : '' }}>TEP</option>
+          <option value="KPL" {{ old('bagian') == 'KPL' ? 'selected' : '' }}>KPL</option>
+          <option value="AKN" {{ old('bagian') == 'AKN' ? 'selected' : '' }}>AKN</option>
+          <option value="TAN" {{ old('bagian') == 'TAN' ? 'selected' : '' }}>TAN</option>
+          <option value="PMO" {{ old('bagian') == 'PMO' ? 'selected' : '' }}>PMO</option>
+        </select>
+        @error('bagian')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Nama Pengirim Dokumen</label>
+        <input type="text" name="nama_pengirim" placeholder="Masukkan nama pengirim dokumen" value="{{ old('nama_pengirim') }}" data-autocomplete="document-senders">
+        @error('nama_pengirim')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+
     <!-- 1. Nomor Agenda -->
     <div class="form-group">
       <label>Nomor Agenda</label>
@@ -534,122 +562,6 @@
       <button type="button" class="remove-field-btn" style="display: none;">−</button>
     </div>
 
-    <!-- Field tambahan yang diperlukan (hidden atau di bagian bawah) -->
-    <div class="section-title">Informasi Tambahan</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Bagian</label>
-        <select name="bagian" required>
-          <option value="">Pilih Bagian</option>
-          <option value="DPM" {{ old('bagian') == 'DPM' ? 'selected' : '' }}>DPM</option>
-          <option value="SKH" {{ old('bagian') == 'SKH' ? 'selected' : '' }}>SKH</option>
-          <option value="SDM" {{ old('bagian') == 'SDM' ? 'selected' : '' }}>SDM</option>
-          <option value="TEP" {{ old('bagian') == 'TEP' ? 'selected' : '' }}>TEP</option>
-          <option value="KPL" {{ old('bagian') == 'KPL' ? 'selected' : '' }}>KPL</option>
-          <option value="AKN" {{ old('bagian') == 'AKN' ? 'selected' : '' }}>AKN</option>
-          <option value="TAN" {{ old('bagian') == 'TAN' ? 'selected' : '' }}>TAN</option>
-          <option value="PMO" {{ old('bagian') == 'PMO' ? 'selected' : '' }}>PMO</option>
-        </select>
-        @error('bagian')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Nama Pengirim Dokumen</label>
-        <input type="text" name="nama_pengirim" placeholder="Masukkan nama pengirim dokumen" value="{{ old('nama_pengirim') }}" data-autocomplete="document-senders">
-        @error('nama_pengirim')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <!-- Kategori & Jenis Dokumen -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>Kategori</label>
-        <select id="kategori" name="kategori" required>
-          <option value="">Pilih Kategori</option>
-          <option value="Investasi on farm" {{ old('kategori') == 'Investasi on farm' ? 'selected' : '' }}>Investasi on farm</option>
-          <option value="Investasi off farm" {{ old('kategori') == 'Investasi off farm' ? 'selected' : '' }}>Investasi off farm</option>
-          <option value="Exploitasi" {{ old('kategori') == 'Exploitasi' ? 'selected' : '' }}>Exploitasi</option>
-        </select>
-        @error('kategori')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Jenis Dokumen</label>
-        <select id="jenis_dokumen" name="jenis_dokumen" required>
-          <option value="">Pilih Kategori terlebih dahulu</option>
-        </select>
-        @error('jenis_dokumen')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <!-- Jenis SubPekerjaan & Jenis Pembayaran -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>Jenis SubPekerjaan</label>
-        <select name="jenis_sub_pekerjaan">
-          <option value="">Pilih Opsi</option>
-          <option value="Surat Masuk/Keluar Reguler" {{ old('jenis_sub_pekerjaan') == 'Surat Masuk/Keluar Reguler' ? 'selected' : '' }}>Surat Masuk/Keluar Reguler</option>
-          <option value="Surat Undangan" {{ old('jenis_sub_pekerjaan') == 'Surat Undangan' ? 'selected' : '' }}>Surat Undangan</option>
-          <option value="Memo Internal" {{ old('jenis_sub_pekerjaan') == 'Memo Internal' ? 'selected' : '' }}>Memo Internal</option>
-        </select>
-        @error('jenis_sub_pekerjaan')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Jenis Pembayaran</label>
-        <select name="jenis_pembayaran">
-          <option value="">Pilih Opsi</option>
-          <option value="Karyawan" {{ old('jenis_pembayaran') == 'Karyawan' ? 'selected' : '' }}>Karyawan</option>
-          <option value="Mitra" {{ old('jenis_pembayaran') == 'Mitra' ? 'selected' : '' }}>Mitra</option>
-          <option value="MPN" {{ old('jenis_pembayaran') == 'MPN' ? 'selected' : '' }}>MPN</option>
-          <option value="TBS" {{ old('jenis_pembayaran') == 'TBS' ? 'selected' : '' }}>TBS</option>
-          <option value="Dropping" {{ old('jenis_pembayaran') == 'Dropping' ? 'selected' : '' }}>Dropping</option>
-          <option value="Lainnya" {{ old('jenis_pembayaran') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-        </select>
-        @error('jenis_pembayaran')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <!-- Kebun -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>Kebun</label>
-        <select name="kebun">
-          <option value="">Pilih Kebun</option>
-          @php
-            $kebunOptions = [
-              'KEBUN-UNIT', 'REGION OFFICE', 'UNIT GRUP KALBAR', 'GUNUNG MELIAU',
-              'PKS GUNME', 'SUNGAI DEKAN', 'RIMBA BELIAN', 'PKS RIMBA BELIA',
-              'GUNUNG MAS', 'SINTANG', 'NGABANG', 'PKS NGABANG',
-              'PARINDU', 'PKS PARINDU', 'KEMBAYAN', 'PKS KEMBAYAN',
-              'PPPBB', 'UNIT GRUP KALSEL/TENG', 'DANAU SALAK', 'TAMBARANGAN',
-              'BATULICIN', 'PELAIHARI', 'PKS PELAIHARI', 'KUMAI',
-              'PKS PAMUKAN', 'PAMUKAN', 'PRYBB', 'RAREN BATUAH',
-              'UNIT GRUP KALTIM', 'TABARA', 'TAJATI', 'PANDAWA',
-              'LONGKALI', 'PKS SAMUNTAI', 'PKS LONG PINANG', 'KP JAKARTA',
-              'KP BALIKPAPAN'
-            ];
-            $oldKebun = old('kebun');
-            $oldKebunClean = $oldKebun ? preg_replace('/^\d+\s+/', '', $oldKebun) : '';
-          @endphp
-          @foreach($kebunOptions as $kebun)
-            <option value="{{ $kebun }}" {{ ($oldKebun == $kebun || $oldKebunClean == $kebun) ? 'selected' : '' }}>{{ $kebun }}</option>
-          @endforeach
-        </select>
-        @error('kebun')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
 
     <!-- Form Actions -->
     <div class="form-actions">

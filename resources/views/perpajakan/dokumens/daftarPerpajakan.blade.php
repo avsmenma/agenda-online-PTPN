@@ -2561,6 +2561,12 @@ function openViewDocumentModal(docId) {
         // Detail Keuangan & Vendor
         document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
         document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+        // Ejaan nilai rupiah
+        if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
+          document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
+        } else {
+          document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+        }
         document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
         document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
         document.getElementById('view-kebun').textContent = dok.kebun || '-';
@@ -2648,6 +2654,104 @@ function formatDateTime(dateStr) {
 function formatNumber(num) {
   if (!num) return '-';
   return new Intl.NumberFormat('id-ID').format(num);
+}
+
+// Function to convert number to Indonesian terbilang
+function terbilangRupiah(number) {
+  number = parseFloat(number) || 0;
+  
+  if (number == 0) {
+    return 'nol rupiah';
+  }
+
+  const angka = [
+    '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+    'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+    'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+    'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+  ];
+
+  let hasil = '';
+
+  // Handle triliun
+  if (number >= 1000000000000) {
+    const triliun = Math.floor(number / 1000000000000);
+    hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+    number = number % 1000000000000;
+  }
+
+  // Handle milyar
+  if (number >= 1000000000) {
+    const milyar = Math.floor(number / 1000000000);
+    hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+    number = number % 1000000000;
+  }
+
+  // Handle juta
+  if (number >= 1000000) {
+    const juta = Math.floor(number / 1000000);
+    hasil += terbilangSatuan(juta, angka) + ' juta ';
+    number = number % 1000000;
+  }
+
+  // Handle ribu
+  if (number >= 1000) {
+    const ribu = Math.floor(number / 1000);
+    if (ribu == 1) {
+      hasil += 'seribu ';
+    } else {
+      hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+    }
+    number = number % 1000;
+  }
+
+  // Handle ratusan, puluhan, dan satuan
+  if (number > 0) {
+    hasil += terbilangSatuan(number, angka);
+  }
+
+  return hasil.trim() + ' rupiah';
+}
+
+function terbilangSatuan(number, angka) {
+  let hasil = '';
+  number = parseInt(number);
+
+  if (number == 0) {
+    return '';
+  }
+
+  // Handle ratusan
+  if (number >= 100) {
+    const ratus = Math.floor(number / 100);
+    if (ratus == 1) {
+      hasil += 'seratus ';
+    } else {
+      hasil += angka[ratus] + ' ratus ';
+    }
+    number = number % 100;
+  }
+
+  // Handle puluhan dan satuan (0-99)
+  if (number > 0) {
+    if (number < 20) {
+      hasil += angka[number] + ' ';
+    } else {
+      const puluhan = Math.floor(number / 10);
+      const satuan = number % 10;
+      
+      if (puluhan == 1) {
+        hasil += angka[10 + satuan] + ' ';
+      } else {
+        hasil += angka[puluhan] + ' puluh ';
+        if (satuan > 0) {
+          hasil += angka[satuan] + ' ';
+        }
+      }
+    }
+  }
+
+  return hasil.trim();
 }
 
 function formatStatusPerpajakan(status) {
@@ -3768,6 +3872,12 @@ document.addEventListener('click', function(e) {
               <div class="detail-item">
                 <label class="detail-label">Nilai Rupiah</label>
                 <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Ejaan Nilai Rupiah</label>
+                <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
               </div>
             </div>
             <div class="col-md-6">
