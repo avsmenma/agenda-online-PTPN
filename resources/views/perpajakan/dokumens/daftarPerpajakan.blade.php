@@ -1023,6 +1023,19 @@
     border-color: #ffc107;
   }
 
+  /* Special state for returned/rejected documents */
+  .badge-status.badge-dikembalikan {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-color: #dc3545;
+    position: relative;
+  }
+
+  .badge-status.badge-dikembalikan::before {
+    content: '⚠️';
+    margin-right: 4px;
+  }
+
   .badge-status:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
@@ -1182,7 +1195,7 @@
   }
 
   .btn-send {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
     color: white;
     position: relative;
     overflow: hidden;
@@ -1204,9 +1217,9 @@
   }
 
   .btn-send:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.4);
-    border-color: rgba(136, 151, 23, 0.6);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.4);
   }
 
   .btn-send i {
