@@ -1629,10 +1629,10 @@
         <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
           <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Perpajakan
         </a>
-        <a href="{{ url('/rekapan-perpajakan') }}" class="{{ $menuRekapan ?? '' }}">
+        <a href="{{ route('reports.perpajakan.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
-        <a href="{{ route('perpajakan.export') }}" class="{{ request()->routeIs('perpajakan.export') ? 'active' : '' }}">
+        <a href="{{ route('reports.perpajakan.export') }}" class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-export me-2"></i> Export Data
         </a>
       @elseif($module === 'ibub')
@@ -1640,15 +1640,15 @@
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
           <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ url('/pengembalian-dokumens-ke-bidang') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
+        <a href="{{ route('returns.verifikasi.bidang') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
           <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian ke Bidang
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge" style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ url('/pengembalian-dokumensB') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+        <a href="{{ route('returns.verifikasi.index') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
           <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian dari Bagian
           <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge" style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ url('/rekapan-ibuB') }}" class="{{ $menuRekapan ?? '' }}">
+        <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
       @else

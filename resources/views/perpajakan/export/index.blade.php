@@ -758,7 +758,7 @@
 
         <!-- Filter & Export Section -->
         <div class="filter-section">
-            <form action="{{ route('perpajakan.export') }}" method="GET" id="filterForm">
+            <form action="{{ route('reports.perpajakan.export') }}" method="GET" id="filterForm">
                 <input type="hidden" name="mode" value="{{ $mode }}">
                 <input type="hidden" name="columns" id="hiddenColumns" value="">
                 <div class="main-filter-row">
@@ -795,7 +795,7 @@
                         <button type="submit" class="btn-filter-primary">
                             <i class="fa-solid fa-filter me-2"></i>Filter
                         </button>
-                        <a href="{{ route('perpajakan.export') }}" class="btn-filter-reset" title="Reset Filter">
+                        <a href="{{ route('reports.perpajakan.export') }}" class="btn-filter-reset" title="Reset Filter">
                             <i class="fa-solid fa-arrows-rotate"></i>
                         </a>
                     </div>
@@ -808,7 +808,7 @@
                                 id="selectedColumnsDisplay">Semua</strong></span>
                     </div>
                     <div class="export-buttons">
-                        <button type="submit" formaction="{{ route('perpajakan.export.download') }}" name="export"
+                        <button type="submit" formaction="{{ route('reports.perpajakan.export.download') }}" name="export"
                             value="excel" class="btn-export btn-export-excel">
                             <i class="fa-solid fa-file-excel"></i>
                             <span>Export Excel</span>
@@ -1334,7 +1334,7 @@
             }
             
             // Open in new window
-            const url = '{{ route("perpajakan.export.download") }}?' + params.toString();
+            const url = '{{ route("reports.perpajakan.export.download") }}?' + params.toString();
             window.open(url, '_blank');
         }
     </script>

@@ -3280,7 +3280,7 @@
                       <span class="badge-status badge-dikembalikan" style="position: relative;">
                         <i class="fa-solid fa-times-circle me-1"></i>
                         <span>Dokumen Ditolak,
-                          <a href="{{ route('ibub.rejected.show', $dokumen) }}"
+                          <a href="{{ route('api.documents.verifikasi.rejected.show', $dokumen) }}"
                             class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
                             style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
                             Alasan

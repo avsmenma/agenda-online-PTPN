@@ -584,7 +584,7 @@
 
 <!-- Filter Section -->
 <div class="filter-section">
-  <form method="GET" action="{{ route('pembayaran.rekapan') }}" id="filterForm">
+  <form method="GET" action="{{ route('reports.pembayaran.index') }}" id="filterForm">
     <div class="row g-3 align-items-end">
       <div class="col-md-2">
         <label for="status_pembayaran" class="form-label">Status Pembayaran</label>
@@ -626,7 +626,7 @@
         <button type="submit" class="btn btn-filter me-2">
           <i class="fa-solid fa-filter me-1"></i> Filter
         </button>
-        <a href="{{ route('pembayaran.rekapan') }}" class="btn btn-reset">
+        <a href="{{ route('reports.pembayaran.index') }}" class="btn btn-reset">
           <i class="fa-solid fa-refresh me-1"></i> Reset
         </a>
       </div>

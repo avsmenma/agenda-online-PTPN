@@ -1063,7 +1063,7 @@
   </div>
   
   <!-- Card 2: Belum Siap Bayar -->
-  <a href="{{ route('pembayaran.analytics', ['status' => 'belum_siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+  <a href="{{ route('reports.pembayaran.analytics', ['status' => 'belum_siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
     <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
         <div class="stat-content" style="flex: 1; min-width: 0;">
@@ -1082,7 +1082,7 @@
   </a>
   
   <!-- Card 3: Siap Dibayar -->
-  <a href="{{ route('pembayaran.analytics', ['status' => 'siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+  <a href="{{ route('reports.pembayaran.analytics', ['status' => 'siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
     <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
         <div class="stat-content" style="flex: 1; min-width: 0;">
@@ -1101,7 +1101,7 @@
   </a>
   
   <!-- Card 4: Sudah Dibayar -->
-  <a href="{{ route('pembayaran.analytics', ['status' => 'sudah_dibayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+  <a href="{{ route('reports.pembayaran.analytics', ['status' => 'sudah_dibayar']) }}" style="text-decoration: none; color: inherit; display: block;">
     <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
         <div class="stat-content" style="flex: 1; min-width: 0;">
@@ -1122,7 +1122,7 @@
 
 <!-- Filter Section -->
 <div class="filter-section">
-  <form method="GET" action="{{ route('pembayaran.rekapan') }}" id="filterForm">
+  <form method="GET" action="{{ route('reports.pembayaran.index') }}" id="filterForm">
     <!-- Main Filter Row -->
     <div class="main-filter-row">
       <div class="filter-inputs">
@@ -1169,7 +1169,7 @@
         <button type="submit" class="btn-filter-primary">
           <i class="fa-solid fa-filter me-2"></i>Filter
         </button>
-        <a href="{{ route('pembayaran.rekapan') }}" class="btn-filter-reset">
+        <a href="{{ route('reports.pembayaran.index') }}" class="btn-filter-reset">
           <i class="fa-solid fa-rotate-left me-2"></i>Reset
         </a>
       </div>

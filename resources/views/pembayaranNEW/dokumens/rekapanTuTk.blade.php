@@ -1267,10 +1267,10 @@
           
           <!-- Export Actions: Excel & PDF -->
           <div class="flex gap-2 flex-shrink-0">
-            <a href="{{ route('pembayaran.exportRekapanTuTk', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn-export" style="padding: 10px 16px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; box-sizing: border-box;">
+            <a href="{{ route('reports.pembayaran.tu-tk.export', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn-export" style="padding: 10px 16px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; box-sizing: border-box;">
               <i class="fa-solid fa-file-excel"></i> Excel
             </a>
-            <a href="{{ route('pembayaran.exportRekapanTuTk', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn-export" style="padding: 10px 16px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; box-sizing: border-box;">
+            <a href="{{ route('reports.pembayaran.tu-tk.export', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn-export" style="padding: 10px 16px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 42px; box-sizing: border-box;">
               <i class="fa-solid fa-file-pdf"></i> PDF
             </a>
           </div>
