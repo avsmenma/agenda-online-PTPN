@@ -134,25 +134,26 @@
     margin-top: 40px;
   }
 
-  .btn-reset {
-    padding: 12px 32px;
-    border: 2px solid rgba(8, 62, 64, 0.2);
-    background-color: white;
-    color: #083E40;
+  .btn-cancel {
+    padding: 14px 32px;
+    background: #6c757d;
+    color: white;
+    border: none;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     transition: all 0.3s ease;
-    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .btn-reset:hover {
-    background-color: #083E40;
-    color: white;
-    border-color: #083E40;
+  .btn-cancel:hover {
+    background: #5a6268;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+    color: white;
   }
 
   .btn-submit {
@@ -584,7 +585,10 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <button type="reset" class="btn-reset">Reset</button>
+      <a href="{{ route('dokumensAkutansi.index') }}" class="btn-cancel">
+        <i class="fa-solid fa-times"></i>
+        Batal
+      </a>
       <button type="submit" class="btn-submit">Update Dokumen</button>
     </div>
   </form>
