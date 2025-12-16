@@ -962,27 +962,34 @@ class DashboardPerpajakanController extends Controller
     public function pengembalian(Request $request)
     {
         // Get all documents that have been returned by perpajakan
-        $query = Dokumen::whereNotNull('returned_from_perpajakan_at')
-            ->where('status', 'returned_to_department')
+        $query = Dokumen::where('status', 'returned_to_department')
+            ->where('target_department', 'perpajakan')
             ->with(['dokumenPos', 'dokumenPrs'])
-            ->orderBy('returned_from_perpajakan_at', 'desc');
+            ->orderByDesc('department_returned_at');
 
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics
-        $totalReturned = Dokumen::whereNotNull('returned_from_perpajakan_at')
-            ->where('status', 'returned_to_department')
+        $totalReturned = Dokumen::where('status', 'returned_to_department')
+            ->where('target_department', 'perpajakan')
             ->count();
 
         $totalPending = Dokumen::where('current_handler', 'ibuB')
             ->where('status', 'returned_to_department')
-            ->whereNull('processed_perpajakan_at')
+            ->where('target_department', 'perpajakan')
+            ->whereDoesntHave('roleData', function ($roleQ) {
+                $roleQ->where('role_code', 'perpajakan')
+                    ->whereNotNull('processed_at');
+            })
             ->count();
 
-        $totalCompleted = Dokumen::whereNotNull('returned_from_perpajakan_at')
-            ->where('status', 'returned_to_department')
-            ->whereNotNull('processed_perpajakan_at')
+        $totalCompleted = Dokumen::where('status', 'returned_to_department')
+            ->where('target_department', 'perpajakan')
+            ->whereHas('roleData', function ($roleQ) {
+                $roleQ->where('role_code', 'perpajakan')
+                    ->whereNotNull('processed_at');
+            })
             ->count();
 
         $data = array(
@@ -1044,15 +1051,13 @@ class DashboardPerpajakanController extends Controller
             $updateData = [
                 'status' => 'returned_to_department',
                 'current_handler' => 'ibuB',
-                'returned_from_perpajakan_at' => now(),
+                'target_department' => 'perpajakan',
+                'department_returned_at' => now(),
+                'department_return_reason' => $request->return_reason,
                 'alasan_pengembalian' => $request->return_reason,
                 // Reset tax status since document is being returned
                 'status_perpajakan' => null,
                 'tanggal_selesai_verifikasi_pajak' => null,
-                'deadline_perpajakan_at' => null,
-                'deadline_perpajakan_note' => null,
-                // Clear sent timestamps
-                'sent_to_perpajakan_at' => null,
             ];
 
             // Only set sent_to_ibub_at if it's null (first time entering IbuB)
@@ -1390,10 +1395,13 @@ class DashboardPerpajakanController extends Controller
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB)
+                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
                         ->where('current_handler', '!=', 'ibuB')
-                        ->whereNotNull('sent_to_perpajakan_at');
+                        ->whereHas('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('received_at');
+                        });
                 })
                 ->orWhere(function ($subQ) {
                     // Documents being processed by perpajakan
@@ -1401,14 +1409,17 @@ class DashboardPerpajakanController extends Controller
                         ->where('current_handler', 'perpajakan');
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents that have been processed by perpajakan and moved forward
+                    // Documents that have been processed by perpajakan and moved forward - check dokumen_role_data
                     $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
-                        ->whereNotNull('processed_perpajakan_at');
+                        ->whereHas('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('processed_at');
+                        });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking)
+                    // Documents returned from perpajakan (for tracking) - check status and target_department
                     $subQ->where('status', 'returned_to_department')
-                        ->whereNotNull('returned_from_perpajakan_at');
+                        ->where('target_department', 'perpajakan');
                 });
         });
 
@@ -1541,10 +1552,13 @@ class DashboardPerpajakanController extends Controller
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB)
+                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
                         ->where('current_handler', '!=', 'ibuB')
-                        ->whereNotNull('sent_to_perpajakan_at');
+                        ->whereHas('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('received_at');
+                        });
                 })
                 ->orWhere(function ($subQ) {
                     // Documents being processed by perpajakan
@@ -1552,14 +1566,17 @@ class DashboardPerpajakanController extends Controller
                         ->where('current_handler', 'perpajakan');
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents that have been processed by perpajakan and moved forward
+                    // Documents that have been processed by perpajakan and moved forward - check dokumen_role_data
                     $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
-                        ->whereNotNull('processed_perpajakan_at');
+                        ->whereHas('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('processed_at');
+                        });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking)
+                    // Documents returned from perpajakan (for tracking) - check status and target_department
                     $subQ->where('status', 'returned_to_department')
-                        ->whereNotNull('returned_from_perpajakan_at');
+                        ->where('target_department', 'perpajakan');
                 });
         });
 
@@ -1595,7 +1612,9 @@ class DashboardPerpajakanController extends Controller
         $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10; // Validate per_page value
         session(['perpajakan_export_per_page' => $perPage]); // Save to session
 
-        $dokumens = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $dokumens = $query->with(['dokumenPos', 'dokumenPrs', 'roleData' => function($q) {
+            $q->where('role_code', 'perpajakan');
+        }])->orderBy('created_at', 'desc')->paginate($perPage);
         $dokumens->appends($request->all());
 
         // Helper for stats
@@ -1605,10 +1624,13 @@ class DashboardPerpajakanController extends Controller
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB)
+                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
                         ->where('current_handler', '!=', 'ibuB')
-                        ->whereNotNull('sent_to_perpajakan_at');
+                        ->whereHas('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('received_at');
+                        });
                 })
                 ->orWhere(function ($subQ) {
                     // Documents being processed by perpajakan
@@ -1616,14 +1638,17 @@ class DashboardPerpajakanController extends Controller
                         ->where('current_handler', 'perpajakan');
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents that have been processed by perpajakan and moved forward
+                    // Documents that have been processed by perpajakan and moved forward - check dokumen_role_data
                     $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
-                        ->whereNotNull('processed_perpajakan_at');
+                        ->whereHas('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('processed_at');
+                        });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking)
+                    // Documents returned from perpajakan (for tracking) - check status and target_department
                     $subQ->where('status', 'returned_to_department')
-                        ->whereNotNull('returned_from_perpajakan_at');
+                        ->where('target_department', 'perpajakan');
                 });
         });
         if ($year) {
@@ -1767,8 +1792,8 @@ class DashboardPerpajakanController extends Controller
             'selisih_ppn' => 'Selisih PPN',
             // Timestamps
             'created_at' => 'Tanggal Masuk',
-            'sent_to_perpajakan_at' => 'Tgl Masuk Perpajakan',
-            'processed_perpajakan_at' => 'Tgl Diproses Perpajakan',
+            // Note: sent_to_perpajakan_at and processed_perpajakan_at are now in dokumen_role_data
+            // They can be accessed via $dokumen->getDataForRole('perpajakan')->received_at and processed_at
         ];
     }
 
@@ -1855,7 +1880,9 @@ class DashboardPerpajakanController extends Controller
         }
 
         // Load necessary relationships for export
-        $docs = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+        $docs = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs', 'roleData' => function($q) {
+            $q->where('role_code', 'perpajakan');
+        }])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -1866,7 +1893,8 @@ class DashboardPerpajakanController extends Controller
         $filename = 'export-perpajakan-' . date('Y-m-d-H-i-s') . '.xls';
 
         // Date, Currency, Text field definitions
-        $dateFields = ['tanggal_spp', 'tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_selesai_verifikasi_pajak', 'tanggal_invoice', 'tanggal_pengajuan_pajak', 'created_at', 'sent_to_perpajakan_at', 'processed_perpajakan_at', 'deadline_at', 'deadline_perpajakan_at'];
+        // Note: sent_to_perpajakan_at and processed_perpajakan_at are now in dokumen_role_data
+        $dateFields = ['tanggal_spp', 'tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_selesai_verifikasi_pajak', 'tanggal_invoice', 'tanggal_pengajuan_pajak', 'created_at', 'deadline_at', 'deadline_perpajakan_at'];
         $currencyFields = ['nilai_rupiah', 'dpp_pph', 'ppn_terhutang', 'dpp_invoice', 'ppn_invoice', 'dpp_ppn_invoice', 'dpp_faktur', 'ppn_faktur', 'selisih_pajak', 'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'];
         $textFields = ['npwp', 'no_faktur', 'no_invoice', 'no_kontrak', 'nomor_agenda', 'nomor_spp', 'no_berita_acara', 'no_spk'];
 
@@ -1911,6 +1939,14 @@ class DashboardPerpajakanController extends Controller
                         } else {
                             $value = null;
                         }
+                    } elseif ($col === 'sent_to_perpajakan_at') {
+                        // Get from dokumen_role_data
+                        $roleData = $doc->getDataForRole('perpajakan');
+                        $value = $roleData?->received_at;
+                    } elseif ($col === 'processed_perpajakan_at') {
+                        // Get from dokumen_role_data
+                        $roleData = $doc->getDataForRole('perpajakan');
+                        $value = $roleData?->processed_at;
                     } else {
                         // Regular column access - use getAttribute for safe access
                         try {
