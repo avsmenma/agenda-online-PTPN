@@ -560,16 +560,16 @@
                 <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
               </td>
               <td>
-                @if(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
-                  <span class="badge badge-pending">
-                    <i class="fas fa-clock"></i>
-                    Belum Dikirim
-                  </span>
                 @php
                   $ibuBStatus = $dokumen->getStatusForRole('ibub');
                   $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
                   $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
                 @endphp
+                @if(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+                  <span class="badge badge-pending">
+                    <i class="fas fa-clock"></i>
+                    Belum Dikirim
+                  </span>
                 @elseif($isApproved)
                   {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
                   <span class="badge badge-sent">
