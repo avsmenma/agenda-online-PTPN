@@ -2526,6 +2526,121 @@
   </div>
 </div>
 
+<!-- Modal for Error -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+        <h5 class="modal-title" id="errorModalLabel">
+          <i class="fa-solid fa-exclamation-circle me-2"></i>Terjadi Kesalahan
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 52px; color: #dc3545;"></i>
+        </div>
+        <h5 class="fw-bold mb-3 text-center" id="errorModalTitle">Error</h5>
+        <p class="text-muted mb-0 text-center" id="errorModalMessage">
+          Terjadi kesalahan yang tidak diketahui.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Warning -->
+<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+        <h5 class="modal-title" id="warningModalLabel">
+          <i class="fa-solid fa-exclamation-triangle me-2"></i>Peringatan
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 52px; color: #ffc107;"></i>
+        </div>
+        <h5 class="fw-bold mb-3 text-center" id="warningModalTitle">Peringatan</h5>
+        <p class="text-muted mb-0 text-center" id="warningModalMessage">
+          Peringatan.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-check me-2"></i>Mengerti
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Info -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: white;">
+        <h5 class="modal-title" id="infoModalLabel">
+          <i class="fa-solid fa-circle-info me-2"></i>Informasi
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-circle-info" style="font-size: 52px; color: #0d6efd;"></i>
+        </div>
+        <h5 class="fw-bold mb-3 text-center" id="infoModalTitle">Informasi</h5>
+        <p class="text-muted mb-0 text-center" id="infoModalMessage">
+          Informasi.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-check me-2"></i>Mengerti
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Confirmation -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
+        <h5 class="modal-title" id="confirmationModalLabel">
+          <i class="fa-solid fa-question-circle me-2"></i>Konfirmasi
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-question-circle" style="font-size: 52px; color: #083E40;"></i>
+        </div>
+        <h5 class="fw-bold mb-3 text-center" id="confirmationModalTitle">Konfirmasi</h5>
+        <p class="text-muted mb-0 text-center" id="confirmationModalMessage">
+          Apakah Anda yakin?
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" id="confirmationModalCancel">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn btn-success px-4" id="confirmationModalConfirm" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none;">
+          <i class="fa-solid fa-check me-2"></i>Ya
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // Wrapper function untuk handle row click dengan text selection check
 function handleRowClick(event, docId) {
@@ -2682,12 +2797,12 @@ function confirmSendToPembayaran() {
   const selectedDestination = document.querySelector('input[name="destination"]:checked');
   
   if (!selectedDestination) {
-    alert('Pilih tujuan pengiriman terlebih dahulu!');
+    showWarningModal('Peringatan', 'Pilih tujuan pengiriman terlebih dahulu!');
     return;
   }
   
   if (selectedDestination.value !== 'pembayaran') {
-    alert('Hanya dapat mengirim ke Team Pembayaran dari halaman Akutansi.');
+    showWarningModal('Peringatan', 'Hanya dapat mengirim ke Team Pembayaran dari halaman Akutansi.');
     return;
   }
   
@@ -2709,21 +2824,29 @@ function confirmSendToPembayaran() {
       'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     }
   })
-  .then(response => response.json())
+  .then(response => {
+    // Check if response is ok
+    if (!response.ok) {
+      return response.json().then(data => {
+        throw new Error(data.message || 'Terjadi kesalahan saat mengirim dokumen.');
+      });
+    }
+    return response.json();
+  })
   .then(data => {
     if (data.success) {
       // Show success modal
       const successModal = new bootstrap.Modal(document.getElementById('sendToPembayaranSuccessModal'));
       successModal.show();
     } else {
-      alert(data.message || 'Gagal mengirim dokumen ke Pembayaran.');
+      showErrorModal('Gagal Mengirim Dokumen', data.message || 'Gagal mengirim dokumen ke Pembayaran.');
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = originalHTML;
     }
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
+    showErrorModal('Terjadi Kesalahan', error.message || 'Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
     confirmBtn.disabled = false;
     confirmBtn.innerHTML = originalHTML;
   });
@@ -2775,10 +2898,14 @@ function openSetDeadlineModal(docId) {
 }
 
 function openReturnToPerpajakanModal(docId) {
-  if (confirm('Apakah Anda yakin ingin mengembalikan dokumen ini ke Team Perpajakan?')) {
-    // TODO: Implement return to perpajakan functionality
-    alert('Fungsi return ke Perpajakan akan segera diimplementasikan.');
-  }
+  showConfirmationModal(
+    'Konfirmasi Pengembalian',
+    'Apakah Anda yakin ingin mengembalikan dokumen ini ke Team Perpajakan?',
+    function() {
+      // TODO: Implement return to perpajakan functionality
+      showInfoModal('Informasi', 'Fungsi return ke Perpajakan akan segera diimplementasikan.');
+    }
+  );
 }
 
 function confirmSetDeadline() {
@@ -2884,7 +3011,7 @@ function confirmSetDeadline() {
       
       successModal.show();
     } else {
-      alert('Gagal menetapkan deadline: ' + (data.message || 'Terjadi kesalahan yang tidak diketahui'));
+      showErrorModal('Gagal Menetapkan Deadline', data.message || 'Terjadi kesalahan yang tidak diketahui');
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalHTML;
     }
@@ -2892,22 +3019,82 @@ function confirmSetDeadline() {
   .catch(error => {
     console.error('Error:', error);
     console.error('Error details:', error.message);
-    alert('Terjadi kesalahan saat menetapkan deadline: ' + error.message);
+    showErrorModal('Terjadi Kesalahan', 'Terjadi kesalahan saat menetapkan deadline: ' + error.message);
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalHTML;
   });
 }
 // Helper Functions for Modal Alerts
-function showWarningModal(message) {
-  alert(message); // Simple fallback - could be enhanced with proper modal
+function showErrorModal(title, message) {
+  const modal = document.getElementById('errorModal');
+  const titleEl = document.getElementById('errorModalTitle');
+  const messageEl = document.getElementById('errorModalMessage');
+  
+  titleEl.textContent = title || 'Terjadi Kesalahan';
+  messageEl.textContent = message || 'Terjadi kesalahan yang tidak diketahui.';
+  
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
 }
 
-function showErrorModal(message) {
-  alert(message); // Simple fallback - could be enhanced with proper modal
+function showWarningModal(title, message) {
+  const modal = document.getElementById('warningModal');
+  const titleEl = document.getElementById('warningModalTitle');
+  const messageEl = document.getElementById('warningModalMessage');
+  
+  titleEl.textContent = title || 'Peringatan';
+  messageEl.textContent = message || 'Peringatan.';
+  
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
 }
 
-function showSuccessModal(message) {
-  alert(message); // Simple fallback - could be enhanced with proper modal
+function showInfoModal(title, message) {
+  const modal = document.getElementById('infoModal');
+  const titleEl = document.getElementById('infoModalTitle');
+  const messageEl = document.getElementById('infoModalMessage');
+  
+  titleEl.textContent = title || 'Informasi';
+  messageEl.textContent = message || 'Informasi.';
+  
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
+}
+
+function showConfirmationModal(title, message, onConfirm, onCancel) {
+  const modal = document.getElementById('confirmationModal');
+  const titleEl = document.getElementById('confirmationModalTitle');
+  const messageEl = document.getElementById('confirmationModalMessage');
+  const confirmBtn = document.getElementById('confirmationModalConfirm');
+  const cancelBtn = document.getElementById('confirmationModalCancel');
+  
+  titleEl.textContent = title || 'Konfirmasi';
+  messageEl.textContent = message || 'Apakah Anda yakin?';
+  
+  // Remove existing event listeners by cloning
+  const newConfirmBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+  
+  const newCancelBtn = cancelBtn.cloneNode(true);
+  cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+  
+  // Add new event listeners
+  newConfirmBtn.addEventListener('click', function() {
+    const bootstrapModal = bootstrap.Modal.getInstance(modal);
+    bootstrapModal.hide();
+    if (onConfirm && typeof onConfirm === 'function') {
+      onConfirm();
+    }
+  });
+  
+  newCancelBtn.addEventListener('click', function() {
+    if (onCancel && typeof onCancel === 'function') {
+      onCancel();
+    }
+  });
+  
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
 }
 
 // Enhanced deadline system with color coding and late information for akutansi
@@ -3544,13 +3731,13 @@ function updateSelectedCount() {
 
 function saveColumnCustomization() {
   if (selectedColumnsOrder.length === 0) {
-    alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
+    showWarningModal('Peringatan', 'Silakan pilih minimal satu kolom untuk ditampilkan.');
     return;
   }
 
   const filterForm = document.querySelector('form[action*="dokumensAkutansi"]');
   if (!filterForm) {
-    alert('Form tidak ditemukan.');
+    showErrorModal('Error', 'Form tidak ditemukan.');
     return;
   }
 
