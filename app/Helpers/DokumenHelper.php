@@ -29,27 +29,35 @@ class DokumenHelper
         }
         
         // Untuk 'menunggu_di_approve' (status untuk pembayaran),
-        // hanya lock jika current_handler bukan perpajakan (artinya dokumen sudah pindah ke pembayaran)
-        // Jika current_handler adalah perpajakan, berarti dokumen sudah dikirim dari perpajakan, jadi tidak lock
+        // JANGAN lock dokumen yang sudah dikirim ke pembayaran dari role manapun
+        // Dokumen dengan status ini berarti sedang menunggu approval di inbox pembayaran
+        // Logika locking akan di-handle di switch case berdasarkan current_handler
+        // Untuk role pengirim (akutansi, perpajakan), dokumen tidak terkunci di halaman mereka
         if ($dokumen->status === 'menunggu_di_approve') {
-            // Jika current_handler bukan perpajakan, berarti dokumen sudah pindah ke role lain, lock
-            if ($dokumen->current_handler !== 'perpajakan') {
-                return true;
+            // Jika current_handler adalah pembayaran, berarti dokumen sudah di inbox pembayaran, tidak lock
+            if ($dokumen->current_handler === 'pembayaran') {
+                return false;
             }
-            // Jika current_handler masih perpajakan, berarti dokumen sudah dikirim, tidak lock
-            // (akan di-handle di switch case nanti)
+            // Jika current_handler adalah akutansi atau perpajakan, berarti dokumen sudah dikirim dari role tersebut
+            // Tidak lock di halaman role pengirim - lanjutkan ke switch case untuk pengecekan lebih detail
+            // Switch case untuk 'akutansi' dan 'perpajakan' akan return false untuk dokumen dengan status ini
+            // Tidak perlu return true di sini, biarkan switch case yang menangani
         }
         
         // Untuk pending_approval_akutansi dan pending_approval_pembayaran,
-        // hanya lock jika current_handler bukan perpajakan (artinya dokumen sudah pindah ke role lain)
-        // Jika current_handler adalah perpajakan, berarti dokumen sudah dikirim dari perpajakan, jadi tidak lock
+        // JANGAN lock dokumen yang sudah dikirim dari role pengirim
+        // Logika locking akan di-handle di switch case berdasarkan current_handler
         if (in_array($dokumen->status, ['pending_approval_akutansi', 'pending_approval_pembayaran'])) {
-            // Jika current_handler bukan perpajakan, berarti dokumen sudah pindah ke role lain, lock
-            if ($dokumen->current_handler !== 'perpajakan') {
-                return true;
+            // Jika current_handler adalah role tujuan, berarti dokumen sudah di inbox, tidak lock
+            if ($dokumen->status === 'pending_approval_akutansi' && $dokumen->current_handler === 'akutansi') {
+                return false;
             }
-            // Jika current_handler masih perpajakan, berarti dokumen sudah dikirim, tidak lock
-            // (akan di-handle di switch case nanti)
+            if ($dokumen->status === 'pending_approval_pembayaran' && $dokumen->current_handler === 'pembayaran') {
+                return false;
+            }
+            // Jika current_handler adalah perpajakan, berarti dokumen sudah dikirim dari perpajakan
+            // Tidak lock di halaman perpajakan (akan di-handle di switch case)
+            // Hanya lanjutkan ke switch case untuk pengecekan lebih detail
         }
 
         // Check if document has pending status in dokumen_statuses

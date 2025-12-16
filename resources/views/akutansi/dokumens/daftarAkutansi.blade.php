@@ -825,6 +825,13 @@
     position: relative;
   }
 
+  .badge-status.badge-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+    color: white;
+    border-color: #ffc107;
+    position: relative;
+  }
+
   .badge-status:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
@@ -2123,7 +2130,12 @@
               @endif
             </td>
             <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-              @if(in_array($dokumen->status, ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve']))
+              @if(in_array($dokumen->status, ['menunggu_di_approve', 'pending_approval_pembayaran']))
+                <span class="badge-status badge-warning">
+                  <i class="fa-solid fa-clock me-1"></i>
+                  Menunggu Approve
+                </span>
+              @elseif($dokumen->status == 'sent_to_pembayaran')
                 <span class="badge-status badge-sent">📤 Terkirim ke Pembayaran</span>
               @elseif($dokumen->is_locked)
                 <span class="badge-status badge-locked">🔒 Terkunci</span>
@@ -2186,11 +2198,18 @@
                       @endif
                     </div>
                   @else
-                    <!-- Dokumen sudah terkirim - tampilkan status terkirim -->
-                    <button type="button" class="btn-action btn-sent btn-full-width" disabled>
-                      <i class="fa-solid fa-check-circle"></i>
-                      <span>Terkirim ke Pembayaran</span>
-                    </button>
+                    <!-- Dokumen sudah terkirim - tampilkan status sesuai kondisi -->
+                    @if(in_array($dokumen->status, ['menunggu_di_approve', 'pending_approval_pembayaran']))
+                      <button type="button" class="btn-action btn-warning btn-full-width" disabled style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Menunggu Approve</span>
+                      </button>
+                    @elseif($dokumen->status == 'sent_to_pembayaran')
+                      <button type="button" class="btn-action btn-sent btn-full-width" disabled>
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Terkirim ke Pembayaran</span>
+                      </button>
+                    @endif
                   @endunless
                 @endif
               </div>

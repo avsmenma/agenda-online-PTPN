@@ -1191,11 +1191,18 @@ class DashboardAkutansiController extends Controller
             // 1. Create pending status in dokumen_statuses for pembayaran
             // 2. Set received_at in dokumen_role_data for pembayaran
             // 3. Update status to 'menunggu_di_approve'
-            // 4. Update current_handler to 'pembayaran'
+            // Note: current_handler tetap 'akutansi' agar dokumen tetap muncul di halaman Akutansi
             $dokumen->sendToInbox('Pembayaran');
             
             // Also explicitly call sendToRoleInbox to ensure status is created
             $dokumen->sendToRoleInbox('pembayaran', 'akutansi');
+            
+            // Pastikan current_handler tetap 'akutansi' agar dokumen tetap muncul di halaman Akutansi
+            // current_handler akan berubah menjadi 'pembayaran' setelah dokumen di-approve di inbox pembayaran
+            if ($dokumen->current_handler !== 'akutansi') {
+                $dokumen->current_handler = 'akutansi';
+                $dokumen->save();
+            }
             
             // Set processed_at in dokumen_role_data for akutansi
             $roleData = $dokumen->getDataForRole('akutansi');
