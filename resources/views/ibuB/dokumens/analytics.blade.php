@@ -592,7 +592,7 @@
       </thead>
       <tbody id="dokumenTableBody">
         @forelse($dokumens as $index => $dokumen)
-          <tr onclick="handleItemClick(event, '{{ route('dokumens.detail', $dokumen->id) }}')">
+          <tr onclick="handleItemClick(event, '{{ route('documents.verifikasi.detail', $dokumen->id) }}')">
             <td style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
             <td class="select-text"><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
             <td>
