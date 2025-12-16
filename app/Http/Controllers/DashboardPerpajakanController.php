@@ -148,10 +148,13 @@ class DashboardPerpajakanController extends Controller
         if ($request->has('status') && $request->status) {
             switch ($request->status) {
                 case 'terkunci':
-                    // Dokumen yang terkunci (belum set deadline)
-                    $query->whereNull('deadline_at')
-                        ->where('current_handler', 'perpajakan')
-                        ->where('status', 'sent_to_perpajakan');
+                    // Dokumen yang terkunci (belum set deadline) - check dokumen_role_data
+                    $query->where('current_handler', 'perpajakan')
+                        ->where('status', 'sent_to_perpajakan')
+                        ->whereDoesntHave('roleData', function ($roleQ) {
+                            $roleQ->where('role_code', 'perpajakan')
+                                ->whereNotNull('deadline_at');
+                        });
                     break;
                 case 'sedang_diproses':
                     // Dokumen yang sedang diproses oleh perpajakan
@@ -1423,9 +1426,28 @@ class DashboardPerpajakanController extends Controller
                 });
         });
 
+        // Ensure roleData relationship is loaded for whereHas/whereDoesntHave
+        $statsQuery->with(['roleData' => function($q) {
+            $q->where('role_code', 'perpajakan');
+        }]);
+
         $countTotal = (clone $statsQuery)->count();
-        $countTerkunci = (clone $statsQuery)->whereNull('deadline_at')->where('current_handler', 'perpajakan')->where('status', 'sent_to_perpajakan')->count();
-        $countProses = (clone $statsQuery)->whereNotNull('deadline_at')->where('current_handler', 'perpajakan')->whereNotIn('status', ['selesai', 'sent_to_akutansi'])->count();
+        $countTerkunci = (clone $statsQuery)
+            ->where('current_handler', 'perpajakan')
+            ->where('status', 'sent_to_perpajakan')
+            ->whereDoesntHave('roleData', function ($roleQ) {
+                $roleQ->where('role_code', 'perpajakan')
+                    ->whereNotNull('deadline_at');
+            })
+            ->count();
+        $countProses = (clone $statsQuery)
+            ->where('current_handler', 'perpajakan')
+            ->whereNotIn('status', ['selesai', 'sent_to_akutansi'])
+            ->whereHas('roleData', function ($roleQ) {
+                $roleQ->where('role_code', 'perpajakan')
+                    ->whereNotNull('deadline_at');
+            })
+            ->count();
         $countSelesai = (clone $statsQuery)->where(function ($q) {
             $q->where('status', 'selesai')
                 ->orWhere('status', 'sent_to_akutansi')
@@ -1668,9 +1690,28 @@ class DashboardPerpajakanController extends Controller
                 ->whereMonth('tanggal_invoice', $month);
         }
 
+        // Ensure roleData relationship is loaded for whereHas/whereDoesntHave
+        $statsQuery->with(['roleData' => function($q) {
+            $q->where('role_code', 'perpajakan');
+        }]);
+
         $countTotal = (clone $statsQuery)->count();
-        $countTerkunci = (clone $statsQuery)->whereNull('deadline_at')->where('current_handler', 'perpajakan')->where('status', 'sent_to_perpajakan')->count();
-        $countProses = (clone $statsQuery)->whereNotNull('deadline_at')->where('current_handler', 'perpajakan')->whereNotIn('status', ['selesai', 'sent_to_akutansi'])->count();
+        $countTerkunci = (clone $statsQuery)
+            ->where('current_handler', 'perpajakan')
+            ->where('status', 'sent_to_perpajakan')
+            ->whereDoesntHave('roleData', function ($roleQ) {
+                $roleQ->where('role_code', 'perpajakan')
+                    ->whereNotNull('deadline_at');
+            })
+            ->count();
+        $countProses = (clone $statsQuery)
+            ->where('current_handler', 'perpajakan')
+            ->whereNotIn('status', ['selesai', 'sent_to_akutansi'])
+            ->whereHas('roleData', function ($roleQ) {
+                $roleQ->where('role_code', 'perpajakan')
+                    ->whereNotNull('deadline_at');
+            })
+            ->count();
         $countSelesai = (clone $statsQuery)->where(function ($q) {
             $q->where('status', 'selesai')
                 ->orWhere('status', 'sent_to_akutansi')
@@ -1947,6 +1988,10 @@ class DashboardPerpajakanController extends Controller
                         // Get from dokumen_role_data
                         $roleData = $doc->getDataForRole('perpajakan');
                         $value = $roleData?->processed_at;
+                    } elseif ($col === 'deadline_at' || $col === 'deadline_perpajakan_at') {
+                        // Get from dokumen_role_data
+                        $roleData = $doc->getDataForRole('perpajakan');
+                        $value = $roleData?->deadline_at;
                     } else {
                         // Regular column access - use getAttribute for safe access
                         try {
