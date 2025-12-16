@@ -226,18 +226,24 @@ class DashboardAkutansiController extends Controller
         // Order by deadline status first (locked documents first), then by received_at (when document was received by akutansi)
         // This ensures documents maintain their position after deadline is set
         // Dokumen yang sudah terkirim ke pembayaran tetap mempertahankan posisinya berdasarkan received_at
+        // Tidak peduli current_handler-nya, karena setelah approve di pembayaran, current_handler berubah menjadi 'pembayaran'
+        // Priority: 1 = locked (no deadline), 2 = has deadline or sent to pembayaran, 3 = others
         $dokumens = $query->orderByRaw("CASE
-                WHEN dokumens.current_handler = 'akutansi' AND dokumens.status = 'sent_to_akutansi' AND (
+                -- Kategori 1: Dokumen yang locked (belum set deadline)
+                WHEN dokumens.status = 'sent_to_akutansi' 
+                AND (
                     SELECT deadline_at FROM dokumen_role_data 
                     WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
                     LIMIT 1
                 ) IS NULL THEN 1
-                WHEN dokumens.current_handler = 'akutansi' AND (
+                -- Kategori 2: Dokumen yang sudah punya deadline atau sudah terkirim ke pembayaran
+                WHEN (
                     SELECT deadline_at FROM dokumen_role_data 
                     WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
                     LIMIT 1
-                ) IS NOT NULL THEN 2
-                WHEN dokumens.current_handler = 'akutansi' AND dokumens.status IN ('menunggu_di_approve', 'pending_approval_pembayaran', 'sent_to_pembayaran') THEN 2
+                ) IS NOT NULL 
+                OR dokumens.status IN ('menunggu_di_approve', 'pending_approval_pembayaran', 'sent_to_pembayaran') THEN 2
+                -- Kategori 3: Lainnya
                 ELSE 3
             END")
             ->orderByRaw("COALESCE(
