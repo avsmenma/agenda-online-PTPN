@@ -1039,6 +1039,20 @@
       background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
     }
 
+    /* Notification styles for approved documents */
+    .notification-approved {
+      border-left: 4px solid #ffc107 !important;
+      background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+    }
+
+    .notification-approved .notification-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .notification-header-approved {
+      background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+    }
+
     @keyframes slideInRight {
       from {
         transform: translateX(100%);
@@ -2038,7 +2052,12 @@
     } else if (type === 'pembayaran') {
       notificationClass = 'notification-pembayaran';
     } else {
-      notificationClass = 'notification-new';
+      // Check if document is approved
+      if (doc.approved_by) {
+        notificationClass = 'notification-approved';
+      } else {
+        notificationClass = 'notification-new';
+      }
     }
     notification.className = `notification-toast ${notificationClass}`;
 
@@ -2131,6 +2150,37 @@
                   </button>
                 </div>
               `;
+            } else if (type === 'approved' || doc.approved_by) {
+              // Dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
+              const approvedRoleName = doc.approved_by === 'Perpajakan' ? 'Team Perpajakan' : 
+                                       doc.approved_by === 'Akutansi' ? 'Team Akutansi' : 
+                                       doc.approved_by === 'Pembayaran' ? 'Team Pembayaran' : doc.approved_by;
+              
+              notification.innerHTML = `
+                <div class="notification-header notification-header-approved">
+                  <div class="notification-title">
+                    <i class="fa-solid fa-check-circle"></i>
+                    Dokumen Sudah Di-approve
+                  </div>
+                  <button class="notification-close" onclick="removeNotification('${notificationId}')">
+                    <i class="fa-solid fa-times"></i>
+                  </button>
+                </div>
+                <div class="notification-body">
+                  <strong>No. Agenda:</strong> ${doc.nomor_agenda || '-'}<br>
+                  <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
+                  <strong>Nilai:</strong> ${formattedRupiah}<br>
+                  <small style="opacity: 0.8;">Disetujui oleh ${approvedRoleName} - ${doc.approved_at || doc.sent_at}</small>
+                </div>
+                <div class="notification-footer">
+                  <button class="btn-refresh" onclick="refreshPage()">
+                    <i class="fa-solid fa-refresh"></i> Refresh Halaman
+                  </button>
+                  <button class="btn-refresh" onclick="viewDocument(${doc.id})">
+                    <i class="fa-solid fa-eye"></i> Lihat Detail
+                  </button>
+                </div>
+              `;
             } else {
               // Original new document notification
               notification.innerHTML = `
@@ -2165,11 +2215,17 @@
             // Notifikasi permanen - hanya hilang ketika user klik tombol X
             // Auto-remove dihapus agar notifikasi tetap muncul sampai user menutupnya
 
-            notificationCount++;
+            // Only increment counter for new documents, not for approved documents
+            if (type !== 'approved' && !doc.approved_by) {
+              notificationCount++;
+            }
           }, index * 500); // Stagger notifications
         });
 
-        updateNotificationBadge(notificationCount);
+        // Only update badge for new documents, not for approved documents
+        if (type !== 'approved') {
+          updateNotificationBadge(notificationCount);
+        }
       }
 
       // Remove notification
@@ -2181,6 +2237,7 @@
           const isPerpajakanNotification = notification.classList.contains('notification-perpajakan');
           const isAkutansiNotification = notification.classList.contains('notification-akutansi');
           const isPembayaranNotification = notification.classList.contains('notification-pembayaran');
+          const isApprovedNotification = notification.classList.contains('notification-approved');
 
           notification.classList.add('hiding');
           setTimeout(() => {
@@ -2198,6 +2255,9 @@
             } else if (isPembayaranNotification) {
               pembayaranNotificationCount = Math.max(0, pembayaranNotificationCount - 1);
               updateNotificationBadge(pembayaranNotificationCount, 'pembayaran');
+            } else if (isApprovedNotification) {
+              // Approved notifications don't affect badge counter
+              // Do nothing
             } else {
               notificationCount = Math.max(0, notificationCount - 1);
               updateNotificationBadge(notificationCount, 'new');
@@ -2302,34 +2362,57 @@
               console.log('New documents found:', newDocuments);
               console.log('🚨 NOTIFICATION TRIGGERED - Type will be:', isAkutansi ? 'akutansi' : (isPerpajakan ? 'perpajakan' : 'other'));
 
+              // Separate new documents from approved documents for IbuB
+              let documentsToNotify = newDocuments;
+              let approvedDocuments = [];
+              let newDocumentsOnly = [];
+              
+              if (isIbuB) {
+                newDocumentsOnly = newDocuments.filter(doc => doc.is_new_from_ibua === true);
+                approvedDocuments = newDocuments.filter(doc => doc.approved_by);
+                
+                // Only show notification for approved documents (not as "new document")
+                if (approvedDocuments.length > 0) {
+                  showNotification(approvedDocuments, 'approved');
+                }
+                
+                // Show notification for new documents from IbuA
+                if (newDocumentsOnly.length > 0) {
+                  showNotification(newDocumentsOnly, 'new');
+                }
+                
+                documentsToNotify = []; // Don't show default notification
+              }
+
               // Add to known documents
               newDocuments.forEach(doc => knownDocumentIds.add(doc.id));
 
-              // Show notifications
-              let notificationType;
-              if (isIbuB) {
-                notificationType = 'new';
-              } else if (isPerpajakan) {
-                notificationType = 'perpajakan';
-              } else if (isAkutansi) {
-                notificationType = 'akutansi';
-                console.log('🟢 AKUTANSI NOTIFICATION TYPE SET');
-              } else if (isPembayaran) {
-                notificationType = 'pembayaran';
-              } else {
-                notificationType = 'returned';
+              // Show notifications for other roles
+              if (!isIbuB && documentsToNotify.length > 0) {
+                let notificationType;
+                if (isPerpajakan) {
+                  notificationType = 'perpajakan';
+                } else if (isAkutansi) {
+                  notificationType = 'akutansi';
+                  console.log('🟢 AKUTANSI NOTIFICATION TYPE SET');
+                } else if (isPembayaran) {
+                  notificationType = 'pembayaran';
+                } else {
+                  notificationType = 'returned';
+                }
+                showNotification(documentsToNotify, notificationType);
               }
-              showNotification(newDocuments, notificationType);
 
-              // Update badge counter based on type
+              // Update badge counter based on type (only for new documents, not approved)
               if (isIbuB) {
-                notificationCount += newDocuments.length;
+                // Only count new documents from IbuA, not approved documents
+                notificationCount += newDocumentsOnly.length;
                 updateNotificationBadge(notificationCount, 'new');
               } else if (isPerpajakan) {
-                perpajakanNotificationCount += newDocuments.length;
+                perpajakanNotificationCount += documentsToNotify.length;
                 updateNotificationBadge(perpajakanNotificationCount, 'perpajakan');
               } else if (isAkutansi) {
-                akutansiNotificationCount += newDocuments.length;
+                akutansiNotificationCount += documentsToNotify.length;
                 console.log('🔔 UPDATING AKUTANSI BADGE with count:', akutansiNotificationCount);
                 updateNotificationBadge(akutansiNotificationCount, 'akutansi');
               } else if (isPembayaran) {

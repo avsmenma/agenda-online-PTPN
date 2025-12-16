@@ -105,14 +105,15 @@ Route::get('/dokumensB/check-updates', function () {
             : \Carbon\Carbon::now()->subDays(1);
 
         // Cek dokumen yang berubah status setelah lastChecked
-        // Termasuk dokumen yang dikirim ke perpajakan/akutansi/pembayaran
+        // Beda antara dokumen baru dari IbuA vs dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
         $newDocuments = \App\Models\Dokumen::where(function($query) use ($lastCheckedDate) {
-                // Dokumen yang masih di ibuB dan updated setelah lastChecked
+                // Dokumen yang masih di ibuB dan updated setelah lastChecked (dokumen baru dari IbuA)
                 $query->where(function($q) use ($lastCheckedDate) {
                     $q->where('current_handler', 'ibuB')
-                      ->where('updated_at', '>', $lastCheckedDate);
+                      ->where('updated_at', '>', $lastCheckedDate)
+                      ->whereIn('status', ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
                 })
-                // Atau dokumen yang baru dikirim ke perpajakan/akutansi/pembayaran setelah lastChecked
+                // Atau dokumen yang baru di-approve oleh perpajakan/akutansi/pembayaran setelah lastChecked
                 ->orWhere(function($q) use ($lastCheckedDate) {
                     $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
                       ->where('updated_at', '>', $lastCheckedDate);
@@ -120,6 +121,9 @@ Route::get('/dokumensB/check-updates', function () {
             })
             ->with(['roleData' => function($query) {
                 $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
+            }])
+            ->with(['roleStatuses' => function($query) {
+                $query->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
             }])
             ->latest('updated_at')
             ->take(10)
@@ -136,6 +140,37 @@ Route::get('/dokumensB/check-updates', function () {
             'total_documents' => $totalDocuments,
             'new_documents' => $newDocuments->map(function ($doc) {
                 $roleData = $doc->roleData->firstWhere('role_code', 'ibub');
+                
+                // Tentukan apakah ini dokumen baru dari IbuA atau dokumen yang sudah di-approve
+                $isNewFromIbuA = $doc->current_handler === 'ibuB' && 
+                                 in_array($doc->status, ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
+                
+                // Cek apakah dokumen sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
+                $approvedBy = null;
+                $approvedAt = null;
+                if (!$isNewFromIbuA && in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])) {
+                    // Cek status dari role yang approve
+                    if ($doc->status === 'sent_to_perpajakan') {
+                        $perpajakanStatus = $doc->roleStatuses->firstWhere('role_code', 'perpajakan');
+                        if ($perpajakanStatus && $perpajakanStatus->status === 'approved') {
+                            $approvedBy = 'Perpajakan';
+                            $approvedAt = $perpajakanStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
+                        }
+                    } elseif ($doc->status === 'sent_to_akutansi') {
+                        $akutansiStatus = $doc->roleStatuses->firstWhere('role_code', 'akutansi');
+                        if ($akutansiStatus && $akutansiStatus->status === 'approved') {
+                            $approvedBy = 'Akutansi';
+                            $approvedAt = $akutansiStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
+                        }
+                    } elseif ($doc->status === 'sent_to_pembayaran') {
+                        $pembayaranStatus = $doc->roleStatuses->firstWhere('role_code', 'pembayaran');
+                        if ($pembayaranStatus && $pembayaranStatus->status === 'approved') {
+                            $approvedBy = 'Pembayaran';
+                            $approvedAt = $pembayaranStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
+                        }
+                    }
+                }
+                
                 return [
                     'id' => $doc->id,
                     'nomor_agenda' => $doc->nomor_agenda,
@@ -144,6 +179,9 @@ Route::get('/dokumensB/check-updates', function () {
                     'nilai_rupiah' => $doc->nilai_rupiah,
                     'status' => $doc->status,
                     'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i'),
+                    'is_new_from_ibua' => $isNewFromIbuA,
+                    'approved_by' => $approvedBy,
+                    'approved_at' => $approvedAt,
                 ];
             }),
             'last_checked' => time()
