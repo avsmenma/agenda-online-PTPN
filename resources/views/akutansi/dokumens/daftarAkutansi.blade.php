@@ -957,7 +957,7 @@
   }
 
   .btn-send {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%); /* Dark teal gradient */
     color: white;
     position: relative;
     overflow: hidden;
@@ -979,9 +979,10 @@
   }
 
   .btn-send:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%); /* Darker teal on hover */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.4);
-    border-color: rgba(136, 151, 23, 0.6);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.4); /* Dark teal shadow */
+    border-color: rgba(8, 62, 64, 0.6);
   }
 
   .btn-send i {
@@ -999,6 +1000,17 @@
   }
 
   .btn-send:disabled:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-sent {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+    cursor: default;
+  }
+
+  .btn-sent:hover {
     transform: none;
     box-shadow: none;
   }
@@ -2129,14 +2141,7 @@
                 @else
                   <!-- Unlocked state - buttons enabled -->
                   @unless($isSentToPembayaran)
-                    @php
-                      $hasNomorMiro = !empty($dokumen->nomor_miro);
-                      $canSend = !$isSentToPembayaran && 
-                                 $dokumen->status == 'sedang diproses' && 
-                                 $dokumen->current_handler == 'akutansi' &&
-                                 $hasNomorMiro;
-                    @endphp
-                    @if($canSend)
+                    <!-- Tombol Kirim Data - selalu muncul untuk dokumen yang tidak terkunci dan belum terkirim -->
                     <button
                       type="button"
                       class="btn-action btn-send btn-full-width"
@@ -2146,7 +2151,6 @@
                       <i class="fa-solid fa-paper-plane"></i>
                       <span>Kirim Data</span>
                     </button>
-                    @endif
                     <div class="action-row">
                       @if($dokumen->can_edit)
                       <a href="{{ route('dokumensAkutansi.edit', $dokumen->id) }}" title="Edit Dokumen" style="flex: 1; text-decoration: none;">
@@ -2163,6 +2167,12 @@
                       </button>
                       @endif
                     </div>
+                  @else
+                    <!-- Dokumen sudah terkirim - tampilkan status terkirim -->
+                    <button type="button" class="btn-action btn-sent btn-full-width" disabled>
+                      <i class="fa-solid fa-check-circle"></i>
+                      <span>Terkirim ke Pembayaran</span>
+                    </button>
                   @endunless
                 @endif
               </div>
