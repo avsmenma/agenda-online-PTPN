@@ -620,7 +620,7 @@
     </div>
   </div>
   <div class="col-xl-4 col-lg-6 mb-4">
-    <a href="{{ route('rekapan.analytics') }}" style="text-decoration: none; color: inherit;">
+    <a href="{{ route('reports.analytics') }}" style="text-decoration: none; color: inherit;">
       <div class="stat-card" style="cursor: pointer;">
         <div class="stat-card-body">
           <div class="stat-icon bagian">
@@ -655,7 +655,7 @@
 <!-- Filter Section -->
 <div class="filter-section">
   <h6 class="filter-title">Filter Dokumen</h6>
-  <form method="GET" action="{{ route('rekapan.index') }}">
+  <form method="GET" action="{{ route('reports.index') }}">
     <div class="filter-row">
       <div class="form-group">
         <label for="bagian">Filter Bagian</label>
@@ -696,7 +696,7 @@
 
   @if($selectedBagian)
     <div class="mb-3">
-      <a href="{{ route('rekapan.index') }}" class="btn btn-sm btn-outline-secondary">
+      <a href="{{ route('reports.index') }}" class="btn btn-sm btn-outline-secondary">
         <i class="fas fa-arrow-left"></i> Kembali ke semua bagian
       </a>
     </div>

@@ -508,7 +508,7 @@
 
 
 <!-- Search & Filter Box -->
-<form method="GET" action="{{ route('rekapanKeterlambatan.index') }}" id="filterForm">
+<form method="GET" action="{{ route('reports.pembayaran.delays') }}" id="filterForm">
   <div class="search-box">
     <div class="input-group">
       <span class="input-group-text">
