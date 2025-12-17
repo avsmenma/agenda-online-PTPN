@@ -1935,9 +1935,9 @@
                 <span class="badge-status badge-dikembalikan" style="position: relative;">
                   <i class="fa-solid fa-times-circle me-1"></i>
                   <span>Dokumen Ditolak, 
-                    <a href="#" 
+                    <a href="javascript:void(0);" 
                        class="text-white text-decoration-underline fw-bold" 
-                       onclick="event.stopPropagation(); showRejectionModal({{ $dokumen->id }}); return false;">
+                       onclick="event.preventDefault(); event.stopPropagation(); if(typeof showRejectionModal === 'function') { showRejectionModal({{ $dokumen->id }}); } else { console.error('showRejectionModal function not found'); alert('Fungsi tidak tersedia. Silakan refresh halaman.'); }">
                       Alasan
                     </a>
                   </span>
@@ -2029,6 +2029,9 @@
               $ibuBStatus = $dokumen->getStatusForRole('ibub');
               $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
               
+              // Check if document is rejected (from status check above)
+              $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
+              
               // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
               $isSentToOtherRoles = in_array($dokumen->status ?? '', [
                 'sent_to_perpajakan',
@@ -2040,9 +2043,11 @@
               ]);
               
               // Document is considered "sent" if sent to IbuB OR approved by IbuB and sent to other roles
-              $isSent = $isSentToIbuB || ($isApprovedByIbuB && $isSentToOtherRoles);
+              // BUT: rejected documents are NOT considered "sent" - they can be sent again
+              $isSent = ($isSentToIbuB || ($isApprovedByIbuB && $isSentToOtherRoles)) && !$isRejected;
               
               // Can send only if document is draft/returned and still with IbuA
+              // Include rejected documents (returned_to_ibua) so they can be sent again
               $canSend = in_array($dokumen->status, ['draft', 'returned_to_ibua', 'sedang diproses'])
                         && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
                         && ($dokumen->created_by ?? 'ibuA') == 'ibuA'
@@ -2814,10 +2819,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to show rejection modal (outside DOMContentLoaded so it's globally accessible)
 function showRejectionModal(dokumenId) {
-  const modal = new bootstrap.Modal(document.getElementById('rejectionDetailModal'));
+  console.log('showRejectionModal called with dokumenId:', dokumenId);
+  
+  const modalEl = document.getElementById('rejectionDetailModal');
+  if (!modalEl) {
+    console.error('Modal element not found');
+    alert('Modal tidak ditemukan. Silakan refresh halaman.');
+    return;
+  }
+  
+  const modal = new bootstrap.Modal(modalEl);
   const loadingEl = document.getElementById('rejectionModalLoading');
   const contentEl = document.getElementById('rejectionModalContent');
   const errorEl = document.getElementById('rejectionModalError');
+  
+  if (!loadingEl || !contentEl || !errorEl) {
+    console.error('Modal elements not found');
+    alert('Elemen modal tidak ditemukan. Silakan refresh halaman.');
+    return;
+  }
   
   // Reset modal state
   loadingEl.style.display = 'block';
