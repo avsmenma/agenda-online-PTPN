@@ -1029,10 +1029,6 @@ body {
                 <div class="document-info-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</div>
               </div>
               <div class="document-info-item">
-                <div class="document-info-label">Jenis Pembayaran</div>
-                <div class="document-info-value">{{ $dokumen->jenis_pembayaran ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
                 <div class="document-info-label">Kebun</div>
                 <div class="document-info-value">{{ $dokumen->kebun ?? '-' }}</div>
               </div>

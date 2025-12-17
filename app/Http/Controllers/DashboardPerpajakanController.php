@@ -868,7 +868,6 @@ class DashboardPerpajakanController extends Controller
             'Kriteria CF' => $dokumen->kategori ?? '-',
             'Sub Kriteria' => $dokumen->jenis_dokumen ?? '-',
             'Item Sub Kriteria' => $dokumen->jenis_sub_pekerjaan ?? '-',
-            'Jenis Pembayaran' => $dokumen->jenis_pembayaran ?? '-',
             'Kebun' => $dokumen->kebun ?? '-',
             'Dibayar Kepada' => $dokumen->dibayarKepadas->count() > 0
                 ? htmlspecialchars($dokumen->dibayarKepadas->pluck('nama_penerima')->join(', '))

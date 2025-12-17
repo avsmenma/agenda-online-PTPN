@@ -3708,12 +3708,6 @@ function terbilangSatuan(number, angka) {
             </div>
             <div class="col-md-6">
               <div class="detail-item">
-                <label class="detail-label">Jenis Pembayaran</label>
-                <div class="detail-value" id="view-jenis-pembayaran">-</div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="detail-item">
                 <label class="detail-label">Dibayar Kepada (Vendor)</label>
                 <div class="detail-value" id="view-dibayar-kepada">-</div>
               </div>

@@ -427,10 +427,6 @@
             <div class="info-label">Jenis Dokumen</div>
             <div class="info-value">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
         </div>
-        <div class="info-item">
-            <div class="info-label">Jenis Pembayaran</div>
-            <div class="info-value">{{ $dokumen->jenis_pembayaran ?? '-' }}</div>
-        </div>
     </div>
 
     <div style="margin-top: 15px;">

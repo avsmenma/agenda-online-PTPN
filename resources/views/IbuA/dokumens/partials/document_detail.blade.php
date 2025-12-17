@@ -40,10 +40,6 @@
     <span class="detail-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</span>
   </div>
   <div class="detail-item">
-    <span class="detail-label">Jenis Pembayaran</span>
-    <span class="detail-value">{{ $dokumen->jenis_pembayaran ?? '-' }}</span>
-  </div>
-  <div class="detail-item">
     <span class="detail-label">Kebun</span>
     <span class="detail-value">{{ $dokumen->kebun ?? '-' }}</span>
   </div>
