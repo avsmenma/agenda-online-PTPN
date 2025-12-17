@@ -493,6 +493,23 @@ class DokumenController extends Controller
                 12 => 'Desember'
             ];
 
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+            
+            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+            }
+            
+            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                $subKriteria = SubKriteria::find($request->sub_kriteria);
+            }
+            
+            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+            }
+
             // Create dokumen
             $dokumen = Dokumen::create([
                 'nomor_agenda' => $request->nomor_agenda,
@@ -503,9 +520,10 @@ class DokumenController extends Controller
                 'tanggal_spp' => $request->tanggal_spp,
                 'uraian_spp' => $request->uraian_spp,
                 'nilai_rupiah' => $nilaiRupiah,
-                'kategori' => $request->kategori,
-                'jenis_dokumen' => $request->jenis_dokumen,
-                'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? null),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? null),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? null),
                 'jenis_pembayaran' => $request->jenis_pembayaran,
                 'kebun' => $request->kebun,
                 'bagian' => $request->bagian,

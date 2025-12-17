@@ -31,8 +31,24 @@ class StoreDokumenRequest extends FormRequest
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
             'nilai_rupiah' => 'required|string',
-            'kategori' => 'required|string|in:Investasi on farm,Investasi off farm,Exploitasi',
-            'jenis_dokumen' => 'required|string',
+            'kriteria_cf' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!\App\Models\KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
+                    $fail('Kriteria CF yang dipilih tidak valid.');
+                }
+            }],
+            'sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!\App\Models\SubKriteria::where('id_sub_kriteria', $value)->exists()) {
+                    $fail('Sub Kriteria yang dipilih tidak valid.');
+                }
+            }],
+            'item_sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!\App\Models\ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
+                    $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                }
+            }],
+            // Keep old fields as nullable for backward compatibility
+            'kategori' => 'nullable|string',
+            'jenis_dokumen' => 'nullable|string',
             'jenis_sub_pekerjaan' => 'nullable|string',
             'jenis_pembayaran' => 'nullable|string',
             'dibayar_kepada' => 'array',
@@ -61,6 +77,9 @@ class StoreDokumenRequest extends FormRequest
             'bagian.required' => 'Bagian harus dipilih.',
             'bagian.in' => 'Bagian tidak valid. Pilih salah satu dari opsi yang tersedia.',
             'nama_pengirim.max' => 'Nama pengirim maksimal 255 karakter.',
+            'kriteria_cf.required' => 'Kriteria CF wajib dipilih.',
+            'sub_kriteria.required' => 'Sub Kriteria wajib dipilih.',
+            'item_sub_kriteria.required' => 'Item Sub Kriteria wajib dipilih.',
             'kategori.in' => 'Kategori tidak valid. Pilih salah satu dari opsi yang tersedia.',
             'tanggal_berakhir_spk.after_or_equal' => 'Tanggal berakhir SPK harus sama atau setelah tanggal SPK.',
             'dibayar_kepada.*.max' => 'Nama penerima maksimal 255 karakter.',
