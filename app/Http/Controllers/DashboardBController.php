@@ -470,34 +470,48 @@ class DashboardBController extends Controller
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Ambil data dari database cash_bank_new untuk dropdown baru
-        $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
-        $subKriteria = SubKriteria::all();
-        $itemSubKriteria = ItemSubKriteria::all();
+        // Tambahkan try-catch untuk menangani error koneksi database
+        try {
+            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = SubKriteria::all();
+            $itemSubKriteria = ItemSubKriteria::all();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+        }
 
         // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
         $selectedKriteriaCfId = null;
         $selectedSubKriteriaId = null;
         $selectedItemSubKriteriaId = null;
 
-        if ($dokumen->kategori) {
-            $foundKategori = KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
-            if ($foundKategori) {
-                $selectedKriteriaCfId = $foundKategori->id_kategori_kriteria;
+        try {
+            if ($dokumen->kategori) {
+                $foundKategori = KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+                if ($foundKategori) {
+                    $selectedKriteriaCfId = $foundKategori->id_kategori_kriteria;
+                }
             }
-        }
 
-        if ($dokumen->jenis_dokumen) {
-            $foundSub = SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
-            if ($foundSub) {
-                $selectedSubKriteriaId = $foundSub->id_sub_kriteria;
+            if ($dokumen->jenis_dokumen) {
+                $foundSub = SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+                if ($foundSub) {
+                    $selectedSubKriteriaId = $foundSub->id_sub_kriteria;
+                }
             }
-        }
 
-        if ($dokumen->jenis_sub_pekerjaan) {
-            $foundItem = ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
-            if ($foundItem) {
-                $selectedItemSubKriteriaId = $foundItem->id_item_sub_kriteria;
+            if ($dokumen->jenis_sub_pekerjaan) {
+                $foundItem = ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+                if ($foundItem) {
+                    $selectedItemSubKriteriaId = $foundItem->id_item_sub_kriteria;
+                }
             }
+        } catch (\Exception $e) {
+            \Log::error('Error finding IDs from names: ' . $e->getMessage());
+            // Continue dengan null values jika error
         }
 
         $data = array(
@@ -507,12 +521,12 @@ class DashboardBController extends Controller
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
             'dokumen' => $dokumen,
-            'kategoriKriteria' => $kategoriKriteria,
-            'subKriteria' => $subKriteria,
-            'itemSubKriteria' => $itemSubKriteria,
-            'selectedKriteriaCfId' => $selectedKriteriaCfId,
-            'selectedSubKriteriaId' => $selectedSubKriteriaId,
-            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId,
+            'kategoriKriteria' => $kategoriKriteria ?? collect([]),
+            'subKriteria' => $subKriteria ?? collect([]),
+            'itemSubKriteria' => $itemSubKriteria ?? collect([]),
+            'selectedKriteriaCfId' => $selectedKriteriaCfId ?? null,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
         );
         return view('ibuB.dokumens.editDokumenB', $data);
     }

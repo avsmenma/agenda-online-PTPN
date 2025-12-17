@@ -585,11 +585,13 @@
               <label>Kriteria CF <span style="color: red;">*</span></label>
               <select id="kriteria_cf" name="kriteria_cf" required>
                 <option value="">Pilih Kriteria CF</option>
-                @foreach($kategoriKriteria as $kategori)
-                  <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
-                    {{ $kategori->nama_kriteria }}
-                  </option>
-                @endforeach
+                @if(isset($kategoriKriteria) && $kategoriKriteria->count() > 0)
+                  @foreach($kategoriKriteria as $kategori)
+                    <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+                      {{ $kategori->nama_kriteria }}
+                    </option>
+                  @endforeach
+                @endif
               </select>
               @error('kriteria_cf')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
@@ -728,8 +730,8 @@ function toggleAccordion(header) {
 // Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', function() {
   // Data untuk cascading dropdown dari cash_bank database
-  const subKriteriaData = @json($subKriteria);
-  const itemSubKriteriaData = @json($itemSubKriteria);
+  const subKriteriaData = @json($subKriteria ?? []);
+  const itemSubKriteriaData = @json($itemSubKriteria ?? []);
 
   // Function to update sub kriteria dropdown
   function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
