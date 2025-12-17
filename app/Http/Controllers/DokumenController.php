@@ -670,6 +670,53 @@ class DokumenController extends Controller
 
     public function update(UpdateDokumenRequest $request, Dokumen $dokumen)
     {
+        // Validate that user can edit this document
+        // Allow editing if:
+        // 1. Document is created by IbuA and currently with IbuA
+        // 2. Document is rejected (can be edited to fix issues)
+        // 3. Document is in draft or returned status
+        
+        $currentHandler = strtolower($dokumen->current_handler ?? '');
+        $createdBy = strtolower($dokumen->created_by ?? '');
+        $status = strtolower($dokumen->status ?? '');
+        
+        // Check if document is created by IbuA (case-insensitive)
+        $createdByIbuA = in_array($createdBy, ['ibua', 'ibu a']);
+        
+        // Check if document is currently with IbuA (case-insensitive)
+        $currentHandlerIbuA = in_array($currentHandler, ['ibua', 'ibu a']);
+        
+        // Check if document is rejected
+        $isRejected = false;
+        $ibuBStatus = $dokumen->getStatusForRole('ibub');
+        if ($ibuBStatus && strtolower($ibuBStatus->status ?? '') === 'rejected') {
+            $isRejected = true;
+        } else {
+            $rejectedStatus = $dokumen->roleStatuses()
+                ->where('status', 'rejected')
+                ->whereIn('role_code', ['ibub', 'ibuB'])
+                ->first();
+            $isRejected = $rejectedStatus !== null;
+        }
+        
+        // Check if status allows editing
+        $allowedStatuses = ['draft', 'returned_to_ibua'];
+        $isAllowedStatus = in_array($status, $allowedStatuses);
+        
+        // Allow editing if:
+        // 1. Document is rejected AND with IbuA (can always be edited)
+        // 2. OR document has allowed status AND with IbuA
+        if (!$createdByIbuA || !$currentHandlerIbuA) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
+        }
+        
+        if (!$isRejected && !$isAllowedStatus) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Dokumen tidak dapat diedit. Status dokumen harus draft, returned, atau ditolak.');
+        }
 
         try {
             DB::beginTransaction();
@@ -745,7 +792,8 @@ class DokumenController extends Controller
 
             // Update dokumen
             // IMPORTANT: Status is NOT updated here - it only changes via workflow (send, return, etc)
-            $dokumen->update([
+            // BUT: For rejected documents, we need to ensure status remains 'returned_to_ibua' so they can be resent
+            $updateData = [
                 'nomor_agenda' => $request->nomor_agenda,
                 'bulan' => $newBulan,
                 'tahun' => $newTahun,
@@ -770,8 +818,16 @@ class DokumenController extends Controller
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
                 // 'status' => REMOVED - status should only change through workflow, not manual edit
                 // 'keterangan' => REMOVED - not used anymore
-            ]);
-
+            ];
+            
+            // For rejected documents, ensure status remains 'returned_to_ibua' so they can be resent
+            // Don't change status if it's already 'returned_to_ibua' (for rejected documents)
+            if ($isRejected && $dokumen->status !== 'returned_to_ibua') {
+                // Keep current status, don't change it
+                // Status will remain as is, but document can still be edited
+            }
+            
+            $dokumen->update($updateData);
             $dokumen->refresh();
 
             // Log changes for all edited fields
@@ -901,11 +957,25 @@ class DokumenController extends Controller
         } catch (Exception $e) {
             DB::rollback();
 
-            \Log::error('Error updating dokumen: ' . $e->getMessage());
+            \Log::error('Error updating dokumen: ' . $e->getMessage(), [
+                'dokumen_id' => $dokumen->id ?? 'unknown',
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'request_data' => $request->except(['_token', '_method', 'password']),
+            ]);
+
+            // Provide more informative error message
+            $errorMessage = 'Terjadi kesalahan saat memperbarui dokumen.';
+            if (config('app.debug')) {
+                $errorMessage .= ' Error: ' . $e->getMessage();
+            } else {
+                $errorMessage .= ' Silakan coba lagi atau hubungi administrator jika masalah berlanjut.';
+            }
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui dokumen. Silakan coba lagi.');
+                ->with('error', $errorMessage);
         }
     }
 
