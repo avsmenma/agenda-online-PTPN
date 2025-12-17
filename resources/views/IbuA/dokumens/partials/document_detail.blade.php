@@ -28,15 +28,15 @@
     <span class="detail-value">{{ $dokumen->formatted_nilai_rupiah }}</span>
   </div>
   <div class="detail-item">
-    <span class="detail-label">Kategori</span>
-    <span class="detail-value">{{ $dokumen->kategori }}</span>
+    <span class="detail-label">Kriteria CF</span>
+    <span class="detail-value">{{ $dokumen->kategori ?? '-' }}</span>
   </div>
   <div class="detail-item">
-    <span class="detail-label">Jenis Dokumen</span>
-    <span class="detail-value">{{ $dokumen->jenis_dokumen }}</span>
+    <span class="detail-label">Sub Kriteria</span>
+    <span class="detail-value">{{ $dokumen->jenis_dokumen ?? '-' }}</span>
   </div>
   <div class="detail-item">
-    <span class="detail-label">SubBagian Pekerjaan</span>
+    <span class="detail-label">Item Sub Kriteria</span>
     <span class="detail-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</span>
   </div>
   <div class="detail-item">

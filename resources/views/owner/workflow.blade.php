@@ -1017,15 +1017,15 @@ body {
                 <div class="document-info-value">Rp. {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</div>
               </div>
               <div class="document-info-item">
-                <div class="document-info-label">Kategori</div>
+                <div class="document-info-label">Kriteria CF</div>
                 <div class="document-info-value">{{ $dokumen->kategori ?? '-' }}</div>
               </div>
               <div class="document-info-item">
-                <div class="document-info-label">Jenis Dokumen</div>
+                <div class="document-info-label">Sub Kriteria</div>
                 <div class="document-info-value">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
               </div>
               <div class="document-info-item">
-                <div class="document-info-label">Sub Bagian Pekerjaan</div>
+                <div class="document-info-label">Item Sub Kriteria</div>
                 <div class="document-info-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</div>
               </div>
               <div class="document-info-item">

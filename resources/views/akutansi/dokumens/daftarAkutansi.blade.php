@@ -4234,20 +4234,20 @@ function formatStatusPerpajakan(status) {
             </div>
             <div class="col-md-4">
               <div class="detail-item">
-                <label class="detail-label">Jenis Dokumen</label>
+                <label class="detail-label">Kriteria CF</label>
+                <div class="detail-value" id="view-kategori">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Sub Kriteria</label>
                 <div class="detail-value" id="view-jenis-dokumen">-</div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="detail-item">
-                <label class="detail-label">Sub-Bagian Pekerjaan</label>
+                <label class="detail-label">Item Sub Kriteria</label>
                 <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="detail-item">
-                <label class="detail-label">Kategori Investasi</label>
-                <div class="detail-value" id="view-kategori">-</div>
               </div>
             </div>
           </div>

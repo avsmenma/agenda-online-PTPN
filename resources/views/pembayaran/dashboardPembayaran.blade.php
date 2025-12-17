@@ -575,11 +575,15 @@
                         <span class="detail-value">Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</span>
                       </div>
                       <div class="detail-item">
-                        <span class="detail-label">Kategori</span>
+                        <span class="detail-label">Kriteria CF</span>
                         <span class="detail-value">{{ $dokumen->kategori ?? '-' }}</span>
                       </div>
                       <div class="detail-item">
-                        <span class="detail-label">SubBagian Pekerjaan</span>
+                        <span class="detail-label">Sub Kriteria</span>
+                        <span class="detail-value">{{ $dokumen->jenis_dokumen ?? '-' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Item Sub Kriteria</span>
                         <span class="detail-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</span>
                       </div>
                       <div class="detail-item">

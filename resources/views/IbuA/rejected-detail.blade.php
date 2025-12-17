@@ -301,12 +301,16 @@
                             <td class="text-right"><strong>Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</strong></td>
                         </tr>
                         <tr>
-                            <th>Kategori</th>
+                            <th>Kriteria CF</th>
                             <td>{{ $dokumen->kategori ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <th>Jenis Dokumen</th>
+                            <th>Sub Kriteria</th>
                             <td>{{ $dokumen->jenis_dokumen ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Item Sub Kriteria</th>
+                            <td>{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</td>
                         </tr>
                         <tr>
                             <th>Tanggal Masuk</th>

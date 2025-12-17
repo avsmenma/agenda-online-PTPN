@@ -3031,9 +3031,9 @@ class DashboardPembayaranController extends Controller
             'Tanggal SPP' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-',
             'Uraian SPP' => $dokumen->uraian_spp ?? '-',
             'Nilai Rp' => $dokumen->formatted_nilai_rupiah ?? 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.'),
-            'Kategori' => $dokumen->kategori ?? '-',
-            'Jenis Dokumen' => $dokumen->jenis_dokumen ?? '-',
-            'SubBagian Pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? '-',
+            'Kriteria CF' => $dokumen->kategori ?? '-',
+            'Sub Kriteria' => $dokumen->jenis_dokumen ?? '-',
+            'Item Sub Kriteria' => $dokumen->jenis_sub_pekerjaan ?? '-',
             'Jenis Pembayaran' => $dokumen->jenis_pembayaran ?? '-',
             'Kebun' => $dokumen->kebun ?? '-',
             'Dibayar Kepada' => $dokumen->dibayarKepadas->count() > 0
