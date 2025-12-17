@@ -1935,7 +1935,7 @@
                 <span class="badge-status badge-dikembalikan" style="position: relative;">
                   <i class="fa-solid fa-times-circle me-1"></i>
                   <span>Dokumen Ditolak, 
-                    <a href="{{ route('ibua.rejected.show', $dokumen->id) }}" 
+                    <a href="{{ route('api.documents.rejected.show', $dokumen->id) }}" 
                        class="text-white text-decoration-underline fw-bold" 
                        onclick="event.stopPropagation();">
                       Alasan
