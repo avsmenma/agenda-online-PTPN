@@ -3534,15 +3534,15 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Check if user is on a submenu page (any page that should show secondary sidebar)
-  const currentPath = window.location.pathname;
-  const isSubmenuPage = currentPath.includes('/dokumens') || 
-                        currentPath.includes('/rekapan') || 
-                        currentPath.includes('/pengembalian') ||
-                        currentPath.includes('/rekapan-tu-tk');
+  const currentPathCheck = window.location.pathname;
+  const isSubmenuPage = currentPathCheck.includes('/dokumens') || 
+                        currentPathCheck.includes('/rekapan') || 
+                        currentPathCheck.includes('/pengembalian') ||
+                        currentPathCheck.includes('/rekapan-tu-tk');
   
   console.log('State check:', {
     isSubmenuPage,
-    currentPath
+    currentPath: currentPathCheck
   });
   
   // Show secondary sidebar if user is on submenu page
@@ -3575,8 +3575,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // No need for click handler since menu is now a direct link
   
   // Check if we're on a submenu page and auto-open sidebar
-  const currentPath = window.location.pathname;
-  const isSubmenuPage = currentPath.includes('/dokumensPembayaran') || 
+  const currentPathPembayaran = window.location.pathname;
+  const isSubmenuPage = currentPathPembayaran.includes('/dokumensPembayaran') || 
                         currentPath.includes('/rekapan-pembayaran') || 
                         currentPath.includes('/rekapan-keterlambatan') ||
                         currentPath.includes('/rekapan-tu-tk') ||

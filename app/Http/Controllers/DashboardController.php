@@ -293,10 +293,13 @@ class DashboardController extends Controller
                         
                         // Map role to display name
                         $nameMap = [
-                            'IbuB' => 'Ibu Yuni',
-                            'ibuB' => 'Ibu Yuni',
+                            'IbuB' => 'Team Verifikasi',
+                            'ibuB' => 'Team Verifikasi',
+                            'ibub' => 'Team Verifikasi',
                             'Perpajakan' => 'Team Perpajakan',
                             'perpajakan' => 'Team Perpajakan',
+                            'Akutansi' => 'Team Akutansi',
+                            'akutansi' => 'Team Akutansi',
                         ];
                         $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
 
@@ -310,20 +313,30 @@ class DashboardController extends Controller
                             \Log::warning('Error formatting nilai rupiah', ['doc_id' => $doc->id ?? 'unknown']);
                         }
 
-                        // Format rejected_at safely
+                        // Format rejected_at safely - get from dokumen_statuses
                         $rejectedAt = '-';
+                        $rejectionReason = 'Tidak ada alasan yang diberikan';
                         try {
-                            if ($doc->inbox_approval_responded_at) {
-                                if ($doc->inbox_approval_responded_at instanceof \Carbon\Carbon) {
-                                    $rejectedAt = $doc->inbox_approval_responded_at->format('d/m/Y H:i');
-                                } else {
-                                    $rejectedAt = \Carbon\Carbon::parse($doc->inbox_approval_responded_at)->format('d/m/Y H:i');
+                            // Get from rejectedStatus (already loaded)
+                            if ($rejectedStatus && $rejectedStatus->status_changed_at) {
+                                $rejectedAt = $rejectedStatus->status_changed_at->format('d/m/Y H:i');
+                            }
+                            
+                            // Get rejection reason from status notes or activity log
+                            if ($rejectedStatus && $rejectedStatus->notes) {
+                                $rejectionReason = $rejectedStatus->notes;
+                            } elseif ($rejectLog) {
+                                $details = $rejectLog->details ?? [];
+                                if (isset($details['rejection_reason'])) {
+                                    $rejectionReason = $details['rejection_reason'];
+                                } elseif (isset($details['reason'])) {
+                                    $rejectionReason = $details['reason'];
                                 }
                             }
                         } catch (\Exception $e) {
                             \Log::warning('Error formatting rejected_at', [
                                 'doc_id' => $doc->id ?? 'unknown',
-                                'rejected_at' => $doc->inbox_approval_responded_at ?? null
+                                'error' => $e->getMessage()
                             ]);
                         }
 
@@ -335,8 +348,8 @@ class DashboardController extends Controller
                             'nilai_rupiah' => $nilaiRupiah,
                             'rejected_at' => $rejectedAt,
                             'rejected_by' => $rejectedBy,
-                            'rejection_reason' => \Illuminate\Support\Str::limit($doc->inbox_approval_reason ?? '-', 100),
-                            'url' => route('ibua.rejected.show', $doc->id ?? 0),
+                            'rejection_reason' => \Illuminate\Support\Str::limit($rejectionReason, 100),
+                            'url' => route('api.documents.rejected.show', $doc->id ?? 0),
                         ];
                     } catch (\Exception $e) {
                         \Log::error('Error formatting rejected document response', [
@@ -401,44 +414,60 @@ class DashboardController extends Controller
                 abort(404, 'Dokumen tidak ditemukan atau tidak valid');
             }
 
-            // Get rejected by name from activity log
+            // Get rejected status from dokumen_statuses
+            $rejectedStatus = $dokumen->roleStatuses()
+                ->where('status', 'rejected')
+                ->latest('status_changed_at')
+                ->first();
+
+            // Get rejected by name from status or activity log
             $rejectLog = $dokumen->activityLogs()
-                ->where('action', 'inbox_rejected')
+                ->whereIn('action', ['rejected', 'inbox_rejected'])
                 ->latest('action_at')
                 ->first();
 
             $rejectedBy = 'Unknown';
-            if ($rejectLog) {
-                $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
-                // Map role to display name
-                $nameMap = [
-                    'IbuB' => 'Ibu Yuni',
-                    'ibuB' => 'Ibu Yuni',
-                    'Perpajakan' => 'Team Perpajakan',
-                    'perpajakan' => 'Team Perpajakan',
-                    'Akutansi' => 'Team Akutansi',
-                    'akutansi' => 'Team Akutansi',
-                ];
-                $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
-            } else {
-                // Fallback with activity log query if direct property is not available
-                // We rely on log or current state
-                $rejectedBy = 'Unknown';
+            $rejectionReason = 'Tidak ada alasan yang diberikan';
+            $rejectedAt = null;
+
+            if ($rejectedStatus) {
+                $rejectedBy = $rejectedStatus->changed_by ?? 'Unknown';
+                $rejectionReason = $rejectedStatus->notes ?? 'Tidak ada alasan yang diberikan';
+                $rejectedAt = $rejectedStatus->status_changed_at;
+            } elseif ($rejectLog) {
+                $rejectedBy = $rejectLog->performed_by ?? 'Unknown';
+                if (isset($rejectLog->details['rejection_reason'])) {
+                    $rejectionReason = $rejectLog->details['rejection_reason'];
+                }
+                $rejectedAt = $rejectLog->action_at;
             }
 
-            $data = [
-                "title" => "Detail Dokumen Ditolak",
-                "module" => "IbuA",
-                "menuDokumen" => "",
-                "menuDaftarDokumen" => "",
-                "menuDashboard" => "",
-                "dokumen" => $dokumen,
-                "rejectedBy" => $rejectedBy,
-                "rejectionReason" => $dokumen->inbox_approval_reason,
-                "rejectedAt" => $dokumen->inbox_approval_responded_at,
+            // Map role to display name
+            $nameMap = [
+                'IbuB' => 'Team Verifikasi',
+                'ibuB' => 'Team Verifikasi',
+                'ibub' => 'Team Verifikasi',
+                'Perpajakan' => 'Team Perpajakan',
+                'perpajakan' => 'Team Perpajakan',
+                'Akutansi' => 'Team Akutansi',
+                'akutansi' => 'Team Akutansi',
             ];
+            $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
 
-            return view('IbuA.rejected-detail', $data);
+            // Return JSON response for AJAX modal
+            return response()->json([
+                'success' => true,
+                'dokumen' => [
+                    'id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'nomor_spp' => $dokumen->nomor_spp,
+                    'uraian_spp' => $dokumen->uraian_spp,
+                    'nilai_rupiah' => 'Rp ' . number_format((float)$dokumen->nilai_rupiah, 0, ',', '.'),
+                ],
+                'rejected_by' => $rejectedBy,
+                'rejection_reason' => $rejectionReason,
+                'rejected_at' => $rejectedAt ? $rejectedAt->format('d/m/Y H:i') : '-',
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Error showing rejected document: ' . $e->getMessage());
