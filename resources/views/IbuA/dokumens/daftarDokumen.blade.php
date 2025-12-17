@@ -2030,16 +2030,33 @@
               $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
               
               // Check if document is rejected - check from roleStatuses
+              // More comprehensive check to ensure we catch all rejected documents
               $isRejected = false;
-              if ($ibuBStatus) {
-                $isRejected = $ibuBStatus->status === 'rejected';
-              } else {
-                // Fallback: check from dokumen_statuses directly
+              
+              // Method 1: Check from getStatusForRole
+              if ($ibuBStatus && strtolower($ibuBStatus->status ?? '') === 'rejected') {
+                $isRejected = true;
+              }
+              
+              // Method 2: Fallback - check from dokumen_statuses directly (case-insensitive)
+              if (!$isRejected) {
                 $rejectedStatus = $dokumen->roleStatuses()
                   ->where('status', 'rejected')
-                  ->whereIn('role_code', ['ibub', 'ibuB'])
+                  ->whereIn('role_code', ['ibub', 'ibuB', 'ibub', 'IbuB'])
                   ->first();
                 $isRejected = $rejectedStatus !== null;
+              }
+              
+              // Method 3: Check if status is returned_to_ibua AND has rejection in roleStatuses
+              // This catches documents that were rejected but status might not be set correctly
+              if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_ibua') {
+                // Check if there's any rejection status in roleStatuses relationship
+                $hasAnyRejection = $dokumen->roleStatuses()
+                  ->where('status', 'rejected')
+                  ->exists();
+                if ($hasAnyRejection) {
+                  $isRejected = true;
+                }
               }
               
               // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
@@ -2058,18 +2075,51 @@
               
               // Can send only if document is draft/returned and still with IbuA
               // Include rejected documents (returned_to_ibua) so they can be sent again
-              // IMPORTANT: Rejected documents (status returned_to_ibua) should always be able to be sent again
+              // IMPORTANT: Rejected documents should always be able to be sent again
+              
+              // Check if document is created by IbuA (case-insensitive)
+              $createdByIbuA = in_array(strtolower($dokumen->created_by ?? ''), ['ibua', 'ibu a']);
+              
+              // Check if document is currently with IbuA (case-insensitive)
+              $currentHandlerIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a']);
+              
+              // Check if document is returned (case-insensitive)
+              $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_ibua';
+              
+              // Initialize canSend
               $canSend = false;
-              if ($isRejected && $dokumen->status == 'returned_to_ibua' && ($dokumen->current_handler ?? 'ibuA') == 'ibuA') {
-                // Rejected documents can always be sent again
-                $canSend = true;
-              } elseif (in_array($dokumen->status, ['draft', 'returned_to_ibua', 'sedang diproses'])
-                        && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
-                        && ($dokumen->created_by ?? 'ibuA') == 'ibuA'
-                        && !$isSent) {
-                // Normal documents
+              
+              // PRIORITY 1: Rejected documents can ALWAYS be sent again if they're with IbuA
+              // This is the most important case - rejected documents must be able to be resent
+              if ($isRejected && $currentHandlerIbuA && $createdByIbuA) {
                 $canSend = true;
               }
+              // PRIORITY 2: Returned documents (returned_to_ibua) can be sent
+              // This includes rejected documents that have status returned_to_ibua
+              elseif ($isReturned && $currentHandlerIbuA && $createdByIbuA && !$isSent) {
+                $canSend = true;
+              }
+              // PRIORITY 3: Normal documents (draft, sedang diproses)
+              elseif (in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses'])
+                        && $currentHandlerIbuA
+                        && $createdByIbuA
+                        && !$isSent) {
+                $canSend = true;
+              }
+              
+              // DEBUG: Log untuk membantu troubleshooting (hapus setelah fix)
+              // \Log::info('Document send permission check', [
+              //   'doc_id' => $dokumen->id,
+              //   'isRejected' => $isRejected,
+              //   'isReturned' => $isReturned,
+              //   'current_handler' => $dokumen->current_handler,
+              //   'created_by' => $dokumen->created_by,
+              //   'status' => $dokumen->status,
+              //   'currentHandlerIbuA' => $currentHandlerIbuA,
+              //   'createdByIbuA' => $createdByIbuA,
+              //   'isSent' => $isSent,
+              //   'canSend' => $canSend,
+              // ]);
               
               // Can edit only if document is not sent and can be edited
               $canEdit = !$isSent && in_array($dokumen->status, ['draft', 'returned_to_ibua'])
