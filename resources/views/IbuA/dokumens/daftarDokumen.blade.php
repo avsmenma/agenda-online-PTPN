@@ -3440,7 +3440,6 @@ function openViewDocumentModal(docId) {
         } else {
           document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
         }
-        document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
         document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
         document.getElementById('view-kebun').textContent = dok.kebun || '-';
         document.getElementById('view-bagian').textContent = dok.bagian || '-';
