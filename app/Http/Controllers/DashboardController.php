@@ -402,9 +402,12 @@ class DashboardController extends Controller
         try {
             $user = auth()->user();
 
-            // Hanya allow IbuA
+            // Hanya allow IbuA - return JSON instead of abort
             if (!$user || strtolower($user->role) !== 'ibua') {
-                abort(403, 'Unauthorized access');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
             }
 
             // Validasi: dokumen harus di-reject dan dikembalikan ke IbuA
@@ -413,13 +416,48 @@ class DashboardController extends Controller
                 ->where('status', 'rejected')
                 ->exists();
 
-            if (
-                $dokumen->status !== 'returned_to_ibua' ||
-                !$hasRejection ||
-                strtolower($dokumen->created_by) !== 'ibua' ||
-                strtolower($dokumen->current_handler) !== 'ibua'
-            ) {
-                abort(404, 'Dokumen tidak ditemukan atau tidak valid');
+            // More flexible validation - allow if document is rejected OR returned to IbuA
+            $isValid = false;
+            $validationErrors = [];
+            
+            // Check if document is created by IbuA (case-insensitive)
+            $createdByIbuA = in_array(strtolower($dokumen->created_by ?? ''), ['ibua', 'ibu a']);
+            
+            // Check if document is currently with IbuA (case-insensitive)
+            $currentHandlerIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a']);
+            
+            // Check if document is returned or has rejection status
+            $isReturned = $dokumen->status === 'returned_to_ibua';
+            
+            if (!$createdByIbuA) {
+                $validationErrors[] = 'Dokumen tidak dibuat oleh IbuA';
+            }
+            if (!$currentHandlerIbuA) {
+                $validationErrors[] = 'Dokumen tidak sedang ditangani oleh IbuA';
+            }
+            if (!$isReturned && !$hasRejection) {
+                $validationErrors[] = 'Dokumen tidak dalam status ditolak atau dikembalikan';
+            }
+            
+            // Allow if document is created by IbuA and has rejection status
+            if ($createdByIbuA && ($hasRejection || $isReturned)) {
+                $isValid = true;
+            }
+            
+            if (!$isValid) {
+                \Log::warning('Invalid rejected document access attempt', [
+                    'dokumen_id' => $dokumen->id,
+                    'created_by' => $dokumen->created_by,
+                    'current_handler' => $dokumen->current_handler,
+                    'status' => $dokumen->status,
+                    'has_rejection' => $hasRejection,
+                    'errors' => $validationErrors,
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak ditemukan atau tidak valid: ' . implode(', ', $validationErrors)
+                ], 404);
             }
 
             // Get rejected status from dokumen_statuses
@@ -466,11 +504,11 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => true,
                 'dokumen' => [
-                    'id' => $dokumen->id,
-                    'nomor_agenda' => $dokumen->nomor_agenda,
-                    'nomor_spp' => $dokumen->nomor_spp,
-                    'uraian_spp' => $dokumen->uraian_spp,
-                    'nilai_rupiah' => 'Rp ' . number_format((float)$dokumen->nilai_rupiah, 0, ',', '.'),
+                    'id' => $dokumen->id ?? 0,
+                    'nomor_agenda' => $dokumen->nomor_agenda ?? '-',
+                    'nomor_spp' => $dokumen->nomor_spp ?? '-',
+                    'uraian_spp' => $dokumen->uraian_spp ?? '-',
+                    'nilai_rupiah' => 'Rp ' . number_format((float)($dokumen->nilai_rupiah ?? 0), 0, ',', '.'),
                 ],
                 'rejected_by' => $rejectedBy,
                 'rejection_reason' => $rejectionReason,
@@ -478,8 +516,18 @@ class DashboardController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error showing rejected document: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memuat detail dokumen yang ditolak');
+            \Log::error('Error showing rejected document: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'dokumen_id' => isset($dokumen) ? $dokumen->id : 'unknown',
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
+            // Return JSON instead of redirect to prevent HTML response
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail dokumen yang ditolak: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
