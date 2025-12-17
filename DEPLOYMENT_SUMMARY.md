@@ -85,7 +85,11 @@ git pull origin main
 
 # 5. Install/Update dependencies
 composer install --no-dev --optimize-autoloader
+
+# Install Node.js dependencies (PENTING: Harus dijalankan sebelum npm run build)
 npm install
+
+# Build assets untuk production
 npm run build
 
 # 6. Run migrations (PENTING: Pastikan backup database dulu!)
@@ -167,6 +171,64 @@ php artisan db:backup  # Jika ada package backup
    php artisan view:clear
    ```
 
+### Jika Error "vite: not found" ⚠️
+
+**Error ini terjadi karena `node_modules` belum terinstall atau Vite tidak tersedia.**
+
+**Solusi:**
+
+```bash
+# 1. Pastikan berada di direktori project
+cd /var/www/agendareg5.online
+
+# 2. Install semua dependencies (termasuk vite)
+# PENTING: Harus dijalankan sebelum npm run build!
+npm install
+
+# 3. Verifikasi vite terinstall
+ls node_modules/.bin/vite
+
+# 4. Setelah itu baru jalankan build
+npm run build
+```
+
+**Jika masih error, coba install ulang dengan clean:**
+
+```bash
+# Hapus node_modules dan package-lock.json
+rm -rf node_modules package-lock.json
+
+# Install ulang
+npm install
+
+# Build assets
+npm run build
+```
+
+**Pastikan Node.js dan npm sudah terinstall:**
+
+```bash
+# Cek versi Node.js dan npm
+node --version
+npm --version
+
+# Jika belum terinstall, install Node.js (contoh untuk Ubuntu/Debian)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Atau untuk versi LTS
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+**Urutan yang benar saat deployment:**
+
+1. ✅ `composer install --no-dev --optimize-autoloader`
+2. ✅ `npm install` ← **PENTING: Jangan skip ini!**
+3. ✅ `npm run build`
+4. ✅ `php artisan migrate --force`
+5. ✅ Clear cache dan optimize
+
 ---
 
 ## 📝 Checklist Deployment
@@ -179,7 +241,8 @@ php artisan db:backup  # Jika ada package backup
 
 ### Saat Deployment
 - [ ] Pull perubahan dari GitHub
-- [ ] Install/update dependencies (composer, npm)
+- [ ] Install/update dependencies (composer install)
+- [ ] **Install Node.js dependencies (npm install)** ⚠️ PENTING - Jangan skip!
 - [ ] Build assets (npm run build)
 - [ ] Run migrations
 - [ ] Clear dan optimize cache

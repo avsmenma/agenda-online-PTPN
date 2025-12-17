@@ -20,9 +20,15 @@ class DokumenController extends Controller
     public function index(Request $request)
     {
         // IbuA only sees documents created by ibuA
+        // Order by nomor_agenda descending (numerically) - so new documents with lower numbers appear in correct position
+        // Example: 2010, 2009, 2006 (new), 2005, 2004, 2003
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
             ->where('created_by', 'ibuA')
-            ->latest('tanggal_masuk');
+            ->orderByRaw('CASE 
+                WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC')
+            ->orderBy('nomor_agenda', 'DESC'); // Secondary sort for non-numeric or same numeric values
 
         // Enhanced search functionality - search across all relevant fields
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
