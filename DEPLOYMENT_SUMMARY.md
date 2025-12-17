@@ -231,6 +231,82 @@ sudo apt-get install -y nodejs
 
 ---
 
+## Troubleshooting
+
+### Error: Permission denied pada `storage/framework/views/`
+
+Jika muncul error seperti:
+```
+file_put_contents(/var/www/agenda_online_ptpn/storage/framework/views/...): Failed to open stream: Permission denied
+```
+
+Ini adalah masalah permission. Laravel tidak bisa menulis file compiled view.
+
+**Solusi:**
+
+1. **Masuk ke server via SSH** dan navigasi ke direktori project:
+   ```bash
+   cd /var/www/agenda_online_ptpn
+   ```
+
+2. **Cek user web server yang sedang berjalan:**
+   ```bash
+   # Untuk Apache
+   ps aux | grep apache | head -1
+   
+   # Untuk Nginx
+   ps aux | grep nginx | head -1
+   ```
+
+3. **Set ownership ke web server user:**
+   ```bash
+   # Untuk Apache (biasanya www-data)
+   sudo chown -R www-data:www-data storage bootstrap/cache
+   
+   # Untuk Nginx (biasanya nginx)
+   sudo chown -R nginx:nginx storage bootstrap/cache
+   ```
+
+4. **Set permission yang benar:**
+   ```bash
+   sudo chmod -R 775 storage bootstrap/cache
+   ```
+
+5. **Jika masih error, coba set permission lebih luas (sementara untuk testing):**
+   ```bash
+   sudo chmod -R 777 storage bootstrap/cache
+   ```
+
+6. **Clear cache Laravel:**
+   ```bash
+   php artisan cache:clear
+   php artisan config:clear
+   php artisan view:clear
+   php artisan route:clear
+   ```
+
+7. **Verifikasi permission:**
+   ```bash
+   ls -la storage/framework/views/
+   ls -la bootstrap/cache/
+   ```
+   
+   Pastikan direktori tersebut memiliki permission `drwxrwxr-x` atau `drwxrwxrwx` dan ownership sesuai dengan web server user.
+
+8. **Jika menggunakan SELinux (CentOS/RHEL), tambahkan context:**
+   ```bash
+   sudo chcon -R -t httpd_sys_rw_content_t storage
+   sudo chcon -R -t httpd_sys_rw_content_t bootstrap/cache
+   ```
+
+**Catatan:**
+- Ganti `www-data` atau `nginx` dengan user web server yang sesuai dengan server Anda
+- Setelah permission diperbaiki, refresh halaman browser
+- Jika masih error, pastikan SELinux tidak memblokir (jika menggunakan CentOS/RHEL)
+- Untuk production, gunakan permission `775` (lebih aman dari `777`)
+
+---
+
 ## 📝 Checklist Deployment
 
 ### Sebelum Deployment

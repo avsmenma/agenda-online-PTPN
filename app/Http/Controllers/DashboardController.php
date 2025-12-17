@@ -378,11 +378,19 @@ class DashboardController extends Controller
                 'trace' => $e->getTraceAsString(),
                 'user_id' => auth()->id(),
                 'user_role' => auth()->user()?->role ?? 'unknown',
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
+            
+            // Return empty result instead of 500 to prevent console errors
             return response()->json([
                 'success' => false,
+                'rejected_documents_count' => 0,
+                'total_rejected' => 0,
+                'rejected_documents' => [],
+                'current_time' => now()->toIso8601String(),
                 'message' => 'Gagal memeriksa dokumen yang ditolak: ' . $e->getMessage()
-            ], 500);
+            ], 200); // Return 200 instead of 500 to prevent console spam
         }
     }
 

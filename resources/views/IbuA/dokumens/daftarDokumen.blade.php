@@ -1937,7 +1937,7 @@
                   <span>Dokumen Ditolak, 
                     <a href="javascript:void(0);" 
                        class="text-white text-decoration-underline fw-bold" 
-                       onclick="event.preventDefault(); event.stopPropagation(); if(typeof showRejectionModal === 'function') { showRejectionModal({{ $dokumen->id }}); } else { console.error('showRejectionModal function not found'); alert('Fungsi tidak tersedia. Silakan refresh halaman.'); }">
+                       onclick="event.preventDefault(); event.stopPropagation(); if(typeof window.showRejectionModal === 'function') { window.showRejectionModal({{ $dokumen->id }}); } else { console.error('showRejectionModal function not found'); alert('Fungsi tidak tersedia. Silakan refresh halaman.'); }">
                       Alasan
                     </a>
                   </span>
@@ -2029,8 +2029,18 @@
               $ibuBStatus = $dokumen->getStatusForRole('ibub');
               $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
               
-              // Check if document is rejected (from status check above)
-              $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
+              // Check if document is rejected - check from roleStatuses
+              $isRejected = false;
+              if ($ibuBStatus) {
+                $isRejected = $ibuBStatus->status === 'rejected';
+              } else {
+                // Fallback: check from dokumen_statuses directly
+                $rejectedStatus = $dokumen->roleStatuses()
+                  ->where('status', 'rejected')
+                  ->whereIn('role_code', ['ibub', 'ibuB'])
+                  ->first();
+                $isRejected = $rejectedStatus !== null;
+              }
               
               // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
               $isSentToOtherRoles = in_array($dokumen->status ?? '', [
@@ -2048,10 +2058,18 @@
               
               // Can send only if document is draft/returned and still with IbuA
               // Include rejected documents (returned_to_ibua) so they can be sent again
-              $canSend = in_array($dokumen->status, ['draft', 'returned_to_ibua', 'sedang diproses'])
+              // IMPORTANT: Rejected documents (status returned_to_ibua) should always be able to be sent again
+              $canSend = false;
+              if ($isRejected && $dokumen->status == 'returned_to_ibua' && ($dokumen->current_handler ?? 'ibuA') == 'ibuA') {
+                // Rejected documents can always be sent again
+                $canSend = true;
+              } elseif (in_array($dokumen->status, ['draft', 'returned_to_ibua', 'sedang diproses'])
                         && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
                         && ($dokumen->created_by ?? 'ibuA') == 'ibuA'
-                        && !$isSent;
+                        && !$isSent) {
+                // Normal documents
+                $canSend = true;
+              }
               
               // Can edit only if document is not sent and can be edited
               $canEdit = !$isSent && in_array($dokumen->status, ['draft', 'returned_to_ibua'])
@@ -2797,28 +2815,8 @@ notificationStyles.textContent = `
 `;
 document.head.appendChild(notificationStyles);
 
-
-// Enhanced page initialization
-document.addEventListener('DOMContentLoaded', function() {
-  const successModalEl = document.getElementById('sendSuccessModal');
-  if (successModalEl) {
-    successModalEl.addEventListener('hidden.bs.modal', function() {
-      if (shouldReloadAfterSendSuccess) {
-        shouldReloadAfterSendSuccess = false;
-        location.reload();
-      }
-    });
-  }
-
-  // Initialize confirmation button click handler
-  const confirmBtn = document.getElementById('confirmSendToIbuBBtn');
-  if (confirmBtn) {
-    confirmBtn.addEventListener('click', confirmSendToIbuB);
-  }
-});
-
-// Function to show rejection modal (outside DOMContentLoaded so it's globally accessible)
-function showRejectionModal(dokumenId) {
+// Function to show rejection modal (MUST be defined before DOMContentLoaded to be globally accessible)
+window.showRejectionModal = function(dokumenId) {
   console.log('showRejectionModal called with dokumenId:', dokumenId);
   
   const modalEl = document.getElementById('rejectionDetailModal');
@@ -2887,6 +2885,25 @@ function showRejectionModal(dokumenId) {
     document.getElementById('rejectionErrorMessage').textContent = 
       'Gagal memuat detail penolakan: ' + (error.message || 'Terjadi kesalahan');
   });
+};
+
+// Enhanced page initialization
+document.addEventListener('DOMContentLoaded', function() {
+  const successModalEl = document.getElementById('sendSuccessModal');
+  if (successModalEl) {
+    successModalEl.addEventListener('hidden.bs.modal', function() {
+      if (shouldReloadAfterSendSuccess) {
+        shouldReloadAfterSendSuccess = false;
+        location.reload();
+      }
+    });
+  }
+
+  // Initialize confirmation button click handler
+  const confirmBtn = document.getElementById('confirmSendToIbuBBtn');
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', confirmSendToIbuB);
+  }
 
   // Add smooth scroll behavior
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
