@@ -2377,9 +2377,9 @@
         <div class="mb-3">
           <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #0f8357;"></i>
         </div>
-        <h5 class="fw-bold mb-2">Dokumen telah dikirim ke Ibu Yuni!</h5>
+        <h5 class="fw-bold mb-2">Dokumen telah dikirim ke Team Verifikasi!</h5>
         <p class="text-muted mb-0" id="sendSuccessMessage">
-          Dokumen berhasil dikirim dan langsung muncul di daftar dokumen Ibu Yuni.
+          Dokumen berhasil dikirim dan langsung muncul di daftar dokumen Team Verifikasi.
         </p>
       </div>
       <div class="modal-footer border-0 justify-content-center">
@@ -2493,7 +2493,7 @@ function showSendSuccessModal(message) {
 
   const textEl = document.getElementById('sendSuccessMessage');
   if (textEl) {
-    textEl.textContent = message || 'Dokumen berhasil dikirim dan akan diproses oleh Ibu Yuni.';
+    textEl.textContent = message || 'Dokumen berhasil dikirim dan akan diproses oleh Team Verifikasi.';
   }
 
   shouldReloadAfterSendSuccess = true;
