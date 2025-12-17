@@ -13,6 +13,9 @@ use App\Models\DokumenPO;
 use App\Models\DokumenPR;
 use App\Models\Bidang;
 use App\Models\DibayarKepada;
+use App\Models\KategoriKriteria;
+use App\Models\SubKriteria;
+use App\Models\ItemSubKriteria;
 use App\Events\DocumentReturned;
 use App\Helpers\SearchHelper;
 use App\Helpers\ActivityLogHelper;
@@ -466,6 +469,37 @@ class DashboardBController extends Controller
         // Load relationships including dibayarKepadas
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
+        // Ambil data dari database cash_bank_new untuk dropdown baru
+        $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+        $subKriteria = SubKriteria::all();
+        $itemSubKriteria = ItemSubKriteria::all();
+
+        // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
+        if ($dokumen->kategori) {
+            $foundKategori = KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+            if ($foundKategori) {
+                $selectedKriteriaCfId = $foundKategori->id_kategori_kriteria;
+            }
+        }
+
+        if ($dokumen->jenis_dokumen) {
+            $foundSub = SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+            if ($foundSub) {
+                $selectedSubKriteriaId = $foundSub->id_sub_kriteria;
+            }
+        }
+
+        if ($dokumen->jenis_sub_pekerjaan) {
+            $foundItem = ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+            if ($foundItem) {
+                $selectedItemSubKriteriaId = $foundItem->id_item_sub_kriteria;
+            }
+        }
+
         $data = array(
             "title" => "Edit Dokumen",
             "module" => "ibuB",
@@ -473,6 +507,12 @@ class DashboardBController extends Controller
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
             'dokumen' => $dokumen,
+            'kategoriKriteria' => $kategoriKriteria,
+            'subKriteria' => $subKriteria,
+            'itemSubKriteria' => $itemSubKriteria,
+            'selectedKriteriaCfId' => $selectedKriteriaCfId,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId,
         );
         return view('ibuB.dokumens.editDokumenB', $data);
     }
@@ -494,8 +534,24 @@ class DashboardBController extends Controller
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
             'nilai_rupiah' => 'required|string',
-            'kategori' => 'required|string|in:Investasi on farm,Investasi off farm,Exploitasi',
-            'jenis_dokumen' => 'required|string',
+            'kriteria_cf' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
+                    $fail('Kriteria CF yang dipilih tidak valid.');
+                }
+            }],
+            'sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!SubKriteria::where('id_sub_kriteria', $value)->exists()) {
+                    $fail('Sub Kriteria yang dipilih tidak valid.');
+                }
+            }],
+            'item_sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
+                    $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                }
+            }],
+            // Keep old fields as nullable for backward compatibility
+            'kategori' => 'nullable|string',
+            'jenis_dokumen' => 'nullable|string',
             'jenis_sub_pekerjaan' => 'nullable|string',
             'jenis_pembayaran' => 'nullable|string',
             'dibayar_kepada' => 'nullable|string',
@@ -514,7 +570,9 @@ class DashboardBController extends Controller
             'tahun.integer' => 'Tahun harus berupa angka.',
             'tahun.min' => 'Tahun minimal 2020.',
             'tahun.max' => 'Tahun maksimal 2030.',
-            'kategori.in' => 'Kategori tidak valid. Pilih salah satu dari opsi yang tersedia.',
+            'kriteria_cf.required' => 'Kriteria CF wajib dipilih.',
+            'sub_kriteria.required' => 'Sub Kriteria wajib dipilih.',
+            'item_sub_kriteria.required' => 'Item Sub Kriteria wajib dipilih.',
         ]);
 
         if ($validator->fails()) {
@@ -552,6 +610,23 @@ class DashboardBController extends Controller
                 $resetInboxRejection = true;
             }
 
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+            
+            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+            }
+            
+            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                $subKriteria = SubKriteria::find($request->sub_kriteria);
+            }
+            
+            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+            }
+
             // Update dokumen
             $updateData = [
                 'nomor_agenda' => $request->nomor_agenda,
@@ -562,9 +637,10 @@ class DashboardBController extends Controller
                 'tanggal_spp' => $request->tanggal_spp,
                 'uraian_spp' => $request->uraian_spp,
                 'nilai_rupiah' => $nilaiRupiah,
-                'kategori' => $request->kategori,
-                'jenis_dokumen' => $request->jenis_dokumen,
-                'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan),
                 'jenis_pembayaran' => $request->jenis_pembayaran,
                 'kebun' => $request->kebun,
                 'bagian' => $request->bagian,

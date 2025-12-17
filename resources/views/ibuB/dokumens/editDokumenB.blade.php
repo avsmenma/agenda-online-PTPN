@@ -568,12 +568,12 @@
       </div>
     </div>
 
-    <!-- Section 3: Kategori & Jenis Dokumen -->
+    <!-- Section 3: Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
     <div class="accordion-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
           <i class="fa-solid fa-tags"></i>
-          <span>Kategori & Jenis Dokumen</span>
+          <span>Kriteria CF, Sub Kriteria, Item Sub Kriteria</span>
           <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
@@ -582,50 +582,34 @@
         <div class="accordion-body">
           <div class="form-row">
             <div class="form-group">
-              <label>Kategori <span style="color: red;">*</span></label>
-              <select id="kategori" name="kategori" required>
-                <option value="">Pilih Kategori</option>
-                <option value="Investasi on farm" {{ old('kategori', $dokumen->kategori) == 'Investasi on farm' ? 'selected' : '' }}>Investasi on farm</option>
-                <option value="Investasi off farm" {{ old('kategori', $dokumen->kategori) == 'Investasi off farm' ? 'selected' : '' }}>Investasi off farm</option>
-                <option value="Exploitasi" {{ old('kategori', $dokumen->kategori) == 'Exploitasi' ? 'selected' : '' }}>Exploitasi</option>
-              </select>
-              @error('kategori')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>Jenis Dokumen <span style="color: red;">*</span></label>
-              <select id="jenis_dokumen" name="jenis_dokumen" required>
-                <option value="">Pilih Kategori terlebih dahulu</option>
-              </select>
-              @error('jenis_dokumen')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Jenis SubPekerjaan <span class="optional-label">(Opsional)</span></label>
-              <select name="jenis_sub_pekerjaan">
-                <option value="">Pilih Opsi</option>
-                <option value="Surat Masuk/Keluar Reguler" {{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) == 'Surat Masuk/Keluar Reguler' ? 'selected' : '' }}>Surat Masuk/Keluar Reguler</option>
-                <option value="Surat Undangan" {{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) == 'Surat Undangan' ? 'selected' : '' }}>Surat Undangan</option>
-                <option value="Memo Internal" {{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) == 'Memo Internal' ? 'selected' : '' }}>Memo Internal</option>
-              </select>
-              @error('jenis_sub_pekerjaan')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>Jenis Pembayaran <span class="optional-label">(Opsional)</span></label>
-              <select name="jenis_pembayaran">
-                <option value="">Pilih Opsi</option>
-                @foreach(['Karyawan', 'Mitra', 'MPN', 'TBS', 'Dropping', 'Lainnya'] as $jenis)
-                  <option value="{{ $jenis }}" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == $jenis ? 'selected' : '' }}>{{ $jenis }}</option>
+              <label>Kriteria CF <span style="color: red;">*</span></label>
+              <select id="kriteria_cf" name="kriteria_cf" required>
+                <option value="">Pilih Kriteria CF</option>
+                @foreach($kategoriKriteria as $kategori)
+                  <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+                    {{ $kategori->nama_kriteria }}
+                  </option>
                 @endforeach
               </select>
-              @error('jenis_pembayaran')
+              @error('kriteria_cf')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Sub Kriteria <span style="color: red;">*</span></label>
+              <select id="sub_kriteria" name="sub_kriteria" required>
+                <option value="">Pilih Kriteria CF terlebih dahulu</option>
+              </select>
+              @error('sub_kriteria')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Item Sub Kriteria <span style="color: red;">*</span></label>
+              <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+                <option value="">Pilih Sub Kriteria terlebih dahulu</option>
+              </select>
+              @error('item_sub_kriteria')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
             </div>
@@ -743,105 +727,94 @@ function toggleAccordion(header) {
 
 // Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', function() {
-  // Data jenis dokumen berdasarkan kategori
-  const jenisDokumenData = {
-    'Exploitasi': [
-      'Pemeliharaan Tanaman Menghasilkan',
-      'Pemupukan',
-      'Aplikasi Pemupukan',
-      'Panen & Pengumpulan',
-      'Pengangkutan',
-      'Pengolahan',
-      'Pembelian Bahan Bakar Minyak (BBM)',
-      'Biaya Pengiriman ke Pelabuhan',
-      'Biaya Sewa Gudang',
-      'Biaya Instalasi Pemompaan',
-      'Biaya Pelabuhan',
-      'Biaya Jasa KPBN',
-      'Biaya Pemasaran Lainnya',
-      'Biaya Pengangkutan, Perjalan & Penginapan',
-      'Biaya Pemeliharaan Bangunan, Mesin, Jalan dan Instalasi',
-      'Biaya Pemeliharaan Perlengkapan Kantor',
-      'Biaya Pajak dan Retribusi',
-      'Biaya Premi Asuransi',
-      'Biaya Keamanan',
-      'Biaya Mutu (ISO 9000)',
-      'Biaya Pengendalian Lingkungan (ISO 14000)',
-      'Biaya Sistem Manajemen Kesehatan & Keselamatan Kerja',
-      'Biaya Penelitian dan Percobaan',
-      'Biaya Sumbangan dan Iuran',
-      'Biaya CSR',
-      'Biaya Pendidikan dan Pengembangan SDM',
-      'Biaya Konsultan',
-      'Biaya Audit',
-      'Utilities (Air, Listrik, ATK, Brg Umum, Sewa Kantor)',
-      'Biaya Distrik',
-      'Biaya Institusi Terkait',
-      'Biaya Kantor Perwakilan',
-      'Biaya Komisaris',
-      'Biaya Media',
-      'Biaya Rapat',
-      'Biaya Telekomunikasi dan Ekspedisi',
-      'Lainnya',
-      'PPh Badan',
-      'PBB',
-      'PPH Masa',
-      'PPN',
-      'BPHTB',
-      'PPh Pasal 22, Pasal 23, Pasal 4 ayat (2) & PPh Pasal 15'
-    ],
-    'Investasi on farm': [
-      'Pekerjaan TU,TK,TB.',
-      'Pemel TBM Pupuk',
-      'Pemel TBM diluar Pupuk',
-      'Pembangunan bibitan'
-    ],
-    'Investasi off farm': [
-      'Pekerjaan Pembangunan Rumah',
-      'Pekerjaan Pembangunan Perusahaan',
-      'Pekerjaan Pembangunan Mesin dan Instalasi',
-      'Pekerjaan Pembangunan Jalan,jembatan dan Saluran Air',
-      'Pekerjaan Alat Angkutan',
-      'Pekerjaan Inventaris kecil',
-      'Pekerjaan Investasi Off Farm Lainnya'
-    ]
-  };
+  // Data untuk cascading dropdown dari cash_bank database
+  const subKriteriaData = @json($subKriteria);
+  const itemSubKriteriaData = @json($itemSubKriteria);
 
-  // Function to update jenis dokumen dropdown
-  function updateJenisDokumen(kategori, selectedValue = null) {
-    const jenisDokumenSelect = document.getElementById('jenis_dokumen');
+  // Function to update sub kriteria dropdown
+  function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
+    const subKriteriaSelect = document.getElementById('sub_kriteria');
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
 
     // Clear existing options
-    jenisDokumenSelect.innerHTML = '<option value="">Pilih Jenis Dokumen</option>';
+    subKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria</option>';
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
 
-    // Populate options based on selected kategori
-    if (kategori && jenisDokumenData[kategori]) {
-      jenisDokumenData[kategori].forEach(function(jenis) {
-        const option = document.createElement('option');
-        option.value = jenis;
-        option.textContent = jenis;
-        if (selectedValue && jenis === selectedValue) {
-          option.selected = true;
-        }
-        jenisDokumenSelect.appendChild(option);
-      });
-    } else {
-      jenisDokumenSelect.innerHTML = '<option value="">Pilih Kategori terlebih dahulu</option>';
+    if (!kategoriKriteriaId) {
+      return;
+    }
+
+    // Filter sub kriteria berdasarkan id_kategori_kriteria
+    const filteredSubKriteria = subKriteriaData.filter(sub => 
+      sub.id_kategori_kriteria == kategoriKriteriaId
+    );
+
+    // Populate sub kriteria options
+    filteredSubKriteria.forEach(sub => {
+      const option = document.createElement('option');
+      option.value = sub.id_sub_kriteria;
+      option.textContent = sub.nama_sub_kriteria;
+      if (selectedValue && selectedValue == sub.id_sub_kriteria) {
+        option.selected = true;
+      }
+      subKriteriaSelect.appendChild(option);
+    });
+  }
+
+  // Function to update item sub kriteria dropdown
+  function updateItemSubKriteria(subKriteriaId, selectedValue = null) {
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+    // Clear existing options
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Item Sub Kriteria</option>';
+
+    if (!subKriteriaId) {
+      return;
+    }
+
+    // Filter item sub kriteria berdasarkan id_sub_kriteria
+    const filteredItemSubKriteria = itemSubKriteriaData.filter(item => 
+      item.id_sub_kriteria == subKriteriaId
+    );
+
+    // Populate item sub kriteria options
+    filteredItemSubKriteria.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id_item_sub_kriteria;
+      option.textContent = item.nama_item_sub_kriteria;
+      if (selectedValue && selectedValue == item.id_item_sub_kriteria) {
+        option.selected = true;
+      }
+      itemSubKriteriaSelect.appendChild(option);
+    });
+  }
+
+  // Initialize dropdowns if values already selected
+  const kriteriaCfSelect = document.getElementById('kriteria_cf');
+  const subKriteriaSelect = document.getElementById('sub_kriteria');
+  const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+  
+  const oldKriteriaCf = '{{ old("kriteria_cf", $selectedKriteriaCfId ?? "") }}';
+  const oldSubKriteria = '{{ old("sub_kriteria", $selectedSubKriteriaId ?? "") }}';
+  const oldItemSubKriteria = '{{ old("item_sub_kriteria", $selectedItemSubKriteriaId ?? "") }}';
+
+  if (oldKriteriaCf && oldKriteriaCf !== '') {
+    updateSubKriteria(oldKriteriaCf, oldSubKriteria);
+    if (oldSubKriteria && oldSubKriteria !== '') {
+      updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
     }
   }
 
-  // Initialize jenis dokumen if kategori already selected
-  const kategoriSelect = document.getElementById('kategori');
-  const currentKategori = '{{ old("kategori", $dokumen->kategori) }}';
-  const currentJenisDokumen = '{{ old("jenis_dokumen", $dokumen->jenis_dokumen) }}';
+  // Event listener untuk dropdown kriteria CF
+  kriteriaCfSelect.addEventListener('change', function() {
+    updateSubKriteria(this.value);
+    // Reset item sub kriteria
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+  });
 
-  if (currentKategori && currentKategori !== '') {
-    updateJenisDokumen(currentKategori, currentJenisDokumen);
-  }
-
-  // Event listener untuk dropdown kategori
-  kategoriSelect.addEventListener('change', function() {
-    updateJenisDokumen(this.value);
+  // Event listener untuk dropdown sub kriteria
+  subKriteriaSelect.addEventListener('change', function() {
+    updateItemSubKriteria(this.value);
   });
 
   // Event delegation untuk tombol tambah dan kurang
