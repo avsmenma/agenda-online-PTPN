@@ -604,6 +604,50 @@ class DokumenController extends Controller
         // Load relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
+        // Ambil data dari database cash_bank_new untuk dropdown baru
+        try {
+            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = SubKriteria::all();
+            $itemSubKriteria = ItemSubKriteria::all();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+        }
+
+        // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
+        try {
+            if ($dokumen->kategori) {
+                $foundKategori = KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+                if ($foundKategori) {
+                    $selectedKriteriaCfId = $foundKategori->id_kategori_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_dokumen) {
+                $foundSub = SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+                if ($foundSub) {
+                    $selectedSubKriteriaId = $foundSub->id_sub_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_sub_pekerjaan) {
+                $foundItem = ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+                if ($foundItem) {
+                    $selectedItemSubKriteriaId = $foundItem->id_item_sub_kriteria;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error finding IDs from names: ' . $e->getMessage());
+            // Continue dengan null values jika error
+        }
+
         $data = array(
             "title" => "Edit Dokumen",
             "module" => "IbuA",
@@ -613,6 +657,12 @@ class DokumenController extends Controller
             "menuDaftarDokumenDikembalikan" => "",
             "menuDashboard" => "",
             "dokumen" => $dokumen,
+            'kategoriKriteria' => $kategoriKriteria ?? collect([]),
+            'subKriteria' => $subKriteria ?? collect([]),
+            'itemSubKriteria' => $itemSubKriteria ?? collect([]),
+            'selectedKriteriaCfId' => $selectedKriteriaCfId ?? null,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
         );
 
         return view('IbuA.dokumens.editDokumen', $data);
@@ -676,6 +726,23 @@ class DokumenController extends Controller
             $newBulan = $bulanIndonesia[$tanggalSpp->month];
             $newTahun = $tanggalSpp->year;
 
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+            
+            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+            }
+            
+            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                $subKriteria = SubKriteria::find($request->sub_kriteria);
+            }
+            
+            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+            }
+
             // Update dokumen
             // IMPORTANT: Status is NOT updated here - it only changes via workflow (send, return, etc)
             $dokumen->update([
@@ -687,9 +754,10 @@ class DokumenController extends Controller
                 'tanggal_spp' => $request->tanggal_spp,
                 'uraian_spp' => $request->uraian_spp,
                 'nilai_rupiah' => $nilaiRupiah,
-                'kategori' => $request->kategori,
-                'jenis_dokumen' => $request->jenis_dokumen,
-                'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan),
                 'jenis_pembayaran' => $request->jenis_pembayaran,
                 'kebun' => $request->kebun,
                 'bagian' => $request->bagian,

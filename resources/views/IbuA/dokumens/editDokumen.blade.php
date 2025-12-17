@@ -368,64 +368,52 @@
     <div class="form-row">
       <div class="form-group">
         <label>Nilai Rupiah</label>
-        <input type="text" name="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah) }}">
+        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah) }}">
         @error('nilai_rupiah')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
     </div>
 
-    <!-- Kategori & Jenis Dokumen -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>Kategori</label>
-        <select id="kategori" name="kategori" required>
-          <option value="">Pilih Kategori</option>
-          <option value="Investasi on farm" {{ old('kategori', $dokumen->kategori) == 'Investasi on farm' ? 'selected' : '' }}>Investasi on farm</option>
-          <option value="Investasi off farm" {{ old('kategori', $dokumen->kategori) == 'Investisi off farm' ? 'selected' : '' }}>Investasi off farm</option>
-          <option value="Exploitasi" {{ old('kategori', $dokumen->kategori) == 'Exploitasi' ? 'selected' : '' }}>Exploitasi</option>
-        </select>
-        @error('kategori')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-      <div class="form-group">
-        <label>Jenis Dokumen</label>
-        <select id="jenis_dokumen" name="jenis_dokumen" required>
-          <option value="">Pilih Kategori terlebih dahulu</option>
-        </select>
-        @error('jenis_dokumen')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
+    <!-- Ejaan Nilai Rupiah (Otomatis) -->
+    <div class="form-group">
+      <label>Ejaan Nilai Rupiah</label>
+      <input type="text" name="ejaan_nilai_rupiah" id="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
     </div>
 
-    <!-- Jenis SubPekerjaan & Jenis Pembayaran -->
-    <div class="form-row">
+    <!-- Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
+    <div class="form-row-3">
       <div class="form-group">
-        <label>Jenis SubPekerjaan</label>
-        <select name="jenis_sub_pekerjaan">
-          <option value="">Pilih Opsi</option>
-          <option value="Surat Masuk/Keluar Reguler" {{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) == 'Surat Masuk/Keluar Reguler' ? 'selected' : '' }}>Surat Masuk/Keluar Reguler</option>
-          <option value="Surat Undangan" {{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) == 'Surat Undangan' ? 'selected' : '' }}>Surat Undangan</option>
-          <option value="Memo Internal" {{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) == 'Memo Internal' ? 'selected' : '' }}>Memo Internal</option>
+        <label>Kriteria CF <span style="color: red;">*</span></label>
+        <select id="kriteria_cf" name="kriteria_cf" required>
+          <option value="">Pilih Kriteria CF</option>
+          @if(isset($kategoriKriteria) && $kategoriKriteria->count() > 0)
+            @foreach($kategoriKriteria as $kategori)
+              <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+                {{ $kategori->nama_kriteria }}
+              </option>
+            @endforeach
+          @endif
         </select>
-        @error('jenis_sub_pekerjaan')
+        @error('kriteria_cf')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Pembayaran</label>
-        <select name="jenis_pembayaran">
-          <option value="">Pilih Opsi</option>
-          <option value="Karyawan" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Karyawan' ? 'selected' : '' }}>Karyawan</option>
-          <option value="Mitra" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Mitra' ? 'selected' : '' }}>Mitra</option>
-          <option value="MPN" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'MPN' ? 'selected' : '' }}>MPN</option>
-          <option value="TBS" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'TBS' ? 'selected' : '' }}>TBS</option>
-          <option value="Dropping" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Dropping' ? 'selected' : '' }}>Dropping</option>
-          <option value="Lainnya" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+        <label>Sub Kriteria <span style="color: red;">*</span></label>
+        <select id="sub_kriteria" name="sub_kriteria" required>
+          <option value="">Pilih Kriteria CF terlebih dahulu</option>
         </select>
-        @error('jenis_pembayaran')
+        @error('sub_kriteria')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Item Sub Kriteria <span style="color: red;">*</span></label>
+        <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+          <option value="">Pilih Sub Kriteria terlebih dahulu</option>
+        </select>
+        @error('item_sub_kriteria')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
@@ -597,105 +585,213 @@
 <script>
   // Wait for DOM to be ready
   document.addEventListener('DOMContentLoaded', function() {
-    // Data jenis dokumen berdasarkan kategori
-    const jenisDokumenData = {
-      'Exploitasi': [
-        'Pemeliharaan Tanaman Menghasilkan',
-        'Pemupukan',
-        'Aplikasi Pemupukan',
-        'Panen & Pengumpulan',
-        'Pengangkutan',
-        'Pengolahan',
-        'Pembelian Bahan Bakar Minyak (BBM)',
-        'Biaya Pengiriman ke Pelabuhan',
-        'Biaya Sewa Gudang',
-        'Biaya Instalasi Pemompaan',
-        'Biaya Pelabuhan',
-        'Biaya Jasa KPBN',
-        'Biaya Pemasaran Lainnya',
-        'Biaya Pengangkutan, Perjalan & Penginapan',
-        'Biaya Pemeliharaan Bangunan, Mesin, Jalan dan Instalasi',
-        'Biaya Pemeliharaan Perlengkapan Kantor',
-        'Biaya Pajak dan Retribusi',
-        'Biaya Premi Asuransi',
-        'Biaya Keamanan',
-        'Biaya Mutu (ISO 9000)',
-        'Biaya Pengendalian Lingkungan (ISO 14000)',
-        'Biaya Sistem Manajemen Kesehatan & Keselamatan Kerja',
-        'Biaya Penelitian dan Percobaan',
-        'Biaya Sumbangan dan Iuran',
-        'Biaya CSR',
-        'Biaya Pendidikan dan Pengembangan SDM',
-        'Biaya Konsultan',
-        'Biaya Audit',
-        'Utilities (Air, Listrik, ATK, Brg Umum, Sewa Kantor)',
-        'Biaya Distrik',
-        'Biaya Institusi Terkait',
-        'Biaya Kantor Perwakilan',
-        'Biaya Komisaris',
-        'Biaya Media',
-        'Biaya Rapat',
-        'Biaya Telekomunikasi dan Ekspedisi',
-        'Lainnya',
-        'PPh Badan',
-        'PBB',
-        'PPH Masa',
-        'PPN',
-        'BPHTB',
-        'PPh Pasal 22, Pasal 23, Pasal 4 ayat (2) & PPh Pasal 15'
-      ],
-      'Investasi on farm': [
-        'Pekerjaan TU,TK,TB.',
-        'Pemel TBM Pupuk',
-        'Pemel TBM diluar Pupuk',
-        'Pembangunan bibitan'
-      ],
-      'Investasi off farm': [
-        'Pekerjaan Pembangunan Rumah',
-        'Pekerjaan Pembangunan Perusahaan',
-        'Pekerjaan Pembangunan Mesin dan Instalasi',
-        'Pekerjaan Pembangunan Jalan,jembatan dan Saluran Air',
-        'Pekerjaan Alat Angkutan',
-        'Pekerjaan Inventaris kecil',
-        'Pekerjaan Investasi Off Farm Lainnya'
-      ]
-    };
+    // Function to convert number to Indonesian terbilang
+    function terbilangRupiah(number) {
+      number = parseFloat(number.toString().replace(/\./g, '')) || 0;
+      
+      if (number == 0) {
+        return 'nol rupiah';
+      }
+      
+      const satuan = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
+      const belasan = ['sepuluh', 'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas', 'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'];
+      
+      function terbilangSatuan(n) {
+        if (n < 10) return satuan[n];
+        if (n < 20) return belasan[n - 10];
+        if (n < 100) {
+          const puluhan = Math.floor(n / 10);
+          const sisa = n % 10;
+          if (puluhan === 1) return belasan[sisa];
+          return satuan[puluhan] + ' puluh' + (sisa > 0 ? ' ' + satuan[sisa] : '');
+        }
+        if (n < 1000) {
+          const ratusan = Math.floor(n / 100);
+          const sisa = n % 100;
+          if (ratusan === 1) return 'seratus' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+          return satuan[ratusan] + ' ratus' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+        }
+        if (n < 1000000) {
+          const ribuan = Math.floor(n / 1000);
+          const sisa = n % 1000;
+          if (ribuan === 1) return 'seribu' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+          return terbilangSatuan(ribuan) + ' ribu' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+        }
+        if (n < 1000000000) {
+          const jutaan = Math.floor(n / 1000000);
+          const sisa = n % 1000000;
+          return terbilangSatuan(jutaan) + ' juta' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+        }
+        if (n < 1000000000000) {
+          const milyaran = Math.floor(n / 1000000000);
+          const sisa = n % 1000000000;
+          return terbilangSatuan(milyaran) + ' milyar' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+        }
+        return 'jumlah terlalu besar';
+      }
+      
+      return terbilangSatuan(Math.floor(number)) + ' rupiah';
+    }
 
-    // Function to update jenis dokumen dropdown
-    function updateJenisDokumen(kategori, selectedValue = null) {
-      const jenisDokumenSelect = document.getElementById('jenis_dokumen');
+    // Format nilai rupiah input with dots and update ejaan
+    const nilaiRupiahInput = document.getElementById('nilai_rupiah');
+    const ejaanRupiahInput = document.getElementById('ejaan_nilai_rupiah');
 
-      // Clear existing options
-      jenisDokumenSelect.innerHTML = '<option value="">Pilih Jenis Dokumen</option>';
+    if (nilaiRupiahInput) {
+      // Format on input
+      nilaiRupiahInput.addEventListener('input', function() {
+        // Format with dots
+        let value = this.value.replace(/[^\d]/g, '');
+        if (value) {
+          value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          this.value = value;
+        } else {
+          this.value = '';
+        }
 
-      // Populate options based on selected kategori
-      if (kategori && jenisDokumenData[kategori]) {
-        jenisDokumenData[kategori].forEach(function(jenis) {
-          const option = document.createElement('option');
-          option.value = jenis;
-          option.textContent = jenis;
-          if (selectedValue && jenis === selectedValue) {
-            option.selected = true;
+        // Update ejaan
+        if (ejaanRupiahInput) {
+          const numericValue = value.replace(/\./g, '');
+          if (numericValue && numericValue > 0) {
+            ejaanRupiahInput.value = terbilangRupiah(numericValue);
+          } else {
+            ejaanRupiahInput.value = '';
           }
-          jenisDokumenSelect.appendChild(option);
-        });
-      } else {
-        jenisDokumenSelect.innerHTML = '<option value="">Pilih Kategori terlebih dahulu</option>';
+        }
+      });
+
+      // Format on paste
+      nilaiRupiahInput.addEventListener('paste', function(e) {
+        setTimeout(() => {
+          let value = this.value.replace(/[^\d]/g, '');
+          if (value) {
+            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            this.value = value;
+          } else {
+            this.value = '';
+          }
+
+          // Update ejaan
+          if (ejaanRupiahInput) {
+            const numericValue = value.replace(/\./g, '');
+            if (numericValue && numericValue > 0) {
+              ejaanRupiahInput.value = terbilangRupiah(numericValue);
+            } else {
+              ejaanRupiahInput.value = '';
+            }
+          }
+        }, 10);
+      });
+
+      // Format initial value if exists
+      if (nilaiRupiahInput.value) {
+        nilaiRupiahInput.dispatchEvent(new Event('input'));
       }
     }
 
-    // Initialize jenis dokumen with existing data
-    const kategoriSelect = document.getElementById('kategori');
-    const currentKategori = kategoriSelect.value;
-    const currentJenisDokumen = '{{ $dokumen->jenis_dokumen }}';
+    // Data untuk cascading dropdown dari cash_bank database
+    const subKriteriaData = @json($subKriteria ?? []);
+    const itemSubKriteriaData = @json($itemSubKriteria ?? []);
 
-    if (currentKategori) {
-      updateJenisDokumen(currentKategori, currentJenisDokumen);
+    // Function to update sub kriteria dropdown
+    function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
+      const subKriteriaSelect = document.getElementById('sub_kriteria');
+      const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+      // Clear existing options
+      subKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria</option>';
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+
+      if (!kategoriKriteriaId) {
+        return;
+      }
+
+      // Filter sub kriteria berdasarkan id_kategori_kriteria
+      const filteredSubKriteria = subKriteriaData.filter(sub => 
+        sub.id_kategori_kriteria == kategoriKriteriaId
+      );
+
+      // Populate sub kriteria options
+      filteredSubKriteria.forEach(sub => {
+        const option = document.createElement('option');
+        option.value = sub.id_sub_kriteria;
+        option.textContent = sub.nama_sub_kriteria;
+        if (selectedValue && selectedValue == sub.id_sub_kriteria) {
+          option.selected = true;
+        }
+        subKriteriaSelect.appendChild(option);
+      });
     }
 
-    // Event listener untuk dropdown kategori
-    kategoriSelect.addEventListener('change', function() {
-      updateJenisDokumen(this.value);
+    // Function to update item sub kriteria dropdown
+    function updateItemSubKriteria(subKriteriaId, selectedValue = null) {
+      const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+      // Clear existing options
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Item Sub Kriteria</option>';
+
+      if (!subKriteriaId) {
+        return;
+      }
+
+      // Filter item sub kriteria berdasarkan id_sub_kriteria
+      const filteredItemSubKriteria = itemSubKriteriaData.filter(item => 
+        item.id_sub_kriteria == subKriteriaId
+      );
+
+      // Populate item sub kriteria options
+      filteredItemSubKriteria.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id_item_sub_kriteria;
+        option.textContent = item.nama_item_sub_kriteria;
+        if (selectedValue && selectedValue == item.id_item_sub_kriteria) {
+          option.selected = true;
+        }
+        itemSubKriteriaSelect.appendChild(option);
+      });
+    }
+
+    // Initialize dropdowns if values already selected (from old input)
+    const kriteriaCfSelect = document.getElementById('kriteria_cf');
+    const subKriteriaSelect = document.getElementById('sub_kriteria');
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+    
+    const oldKriteriaCf = '{{ old("kriteria_cf", $selectedKriteriaCfId ?? "") }}';
+    const oldSubKriteria = '{{ old("sub_kriteria", $selectedSubKriteriaId ?? "") }}';
+    const oldItemSubKriteria = '{{ old("item_sub_kriteria", $selectedItemSubKriteriaId ?? "") }}';
+
+    if (oldKriteriaCf && oldKriteriaCf !== '') {
+      updateSubKriteria(oldKriteriaCf, oldSubKriteria);
+      if (oldSubKriteria && oldSubKriteria !== '') {
+        updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
+      }
+    }
+
+    // Event listener untuk dropdown kriteria CF
+    kriteriaCfSelect.addEventListener('change', function() {
+      updateSubKriteria(this.value);
+      // Reset item sub kriteria
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+    });
+
+    // Event listener untuk dropdown sub kriteria
+    subKriteriaSelect.addEventListener('change', function() {
+      updateItemSubKriteria(this.value);
+    });
+
+    // Handle form submission - remove dots from nilai_rupiah and disable ejaan_nilai_rupiah
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const nilaiRupiahInput = document.getElementById('nilai_rupiah');
+      if (nilaiRupiahInput && nilaiRupiahInput.value) {
+        // Remove all dots before submitting
+        nilaiRupiahInput.value = nilaiRupiahInput.value.replace(/\./g, '');
+      }
+      
+      // Remove ejaan_nilai_rupiah from form submission (it's readonly/display only)
+      const ejaanInput = document.getElementById('ejaan_nilai_rupiah');
+      if (ejaanInput) {
+        ejaanInput.disabled = true; // Disable so it won't be submitted
+      }
     });
 
     // Event delegation untuk tombol tambah dan kurang

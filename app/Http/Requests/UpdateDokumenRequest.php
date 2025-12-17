@@ -33,9 +33,30 @@ class UpdateDokumenRequest extends FormRequest
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
             'nilai_rupiah' => 'required|string',
-            'kategori' => 'required|string|in:Investasi on farm,Investasi off farm,Exploitasi',
-            'jenis_dokumen' => 'required|string',
-            'jenis_sub_pekerjaan' => 'nullable|string',
+            'kriteria_cf' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (!\App\Models\KategoriKriteria::on('cash_bank')->where('id_kategori_kriteria', $value)->exists()) {
+                        $fail('Kriteria CF yang dipilih tidak valid.');
+                    }
+                },
+            ],
+            'sub_kriteria' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (!\App\Models\SubKriteria::on('cash_bank')->where('id_sub_kriteria', $value)->exists()) {
+                        $fail('Sub Kriteria yang dipilih tidak valid.');
+                    }
+                },
+            ],
+            'item_sub_kriteria' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (!\App\Models\ItemSubKriteria::on('cash_bank')->where('id_item_sub_kriteria', $value)->exists()) {
+                        $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                    }
+                },
+            ],
             'jenis_pembayaran' => 'nullable|string',
             'dibayar_kepada' => 'array',
             'dibayar_kepada.*' => 'nullable|distinct|string|max:255',
