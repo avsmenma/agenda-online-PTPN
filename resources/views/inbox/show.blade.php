@@ -597,7 +597,13 @@
                             <div class="summary-content">
                                 <div class="summary-label">Dikirim ke Inbox</div>
                                 <div class="summary-value">
-                                    {{ $dokumen->inbox_approval_sent_at ? $dokumen->inbox_approval_sent_at->format('d/m/Y H:i') : '-' }}
+                                    @php
+                                        $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                        $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                        $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                        $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                    @endphp
+                                    {{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}
                                 </div>
                             </div>
                         </div>
@@ -661,7 +667,13 @@
                         </tr>
                         <tr>
                             <th>Dikirim ke Inbox</th>
-                            <td>{{ $dokumen->inbox_approval_sent_at ? $dokumen->inbox_approval_sent_at->format('d/m/Y H:i') : '-' }}</td>
+                            @php
+                                $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                            @endphp
+                            <td>{{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}</td>
                         </tr>
                         <tr>
                             <th>Bulan</th>
@@ -703,7 +715,13 @@
                     <div class="timeline-content">
                         <div class="timeline-title">Ibu Tarapul</div>
                         <div class="timeline-time">
-                            Dikirim {{ $dokumen->inbox_approval_sent_at ? $dokumen->inbox_approval_sent_at->diffForHumans() : '-' }}
+                            @php
+                                $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                            @endphp
+                            Dikirim {{ $sentAt ? $sentAt->diffForHumans() : '-' }}
                         </div>
                     </div>
                 </div>

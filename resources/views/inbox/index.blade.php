@@ -939,7 +939,12 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 @php
-                                    $isNew = $dokumen->inbox_approval_sent_at && $dokumen->inbox_approval_sent_at->gte(now()->subHours(24));
+                                    // Get sent_at from dokumen_statuses or dokumen_role_data
+                                    $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                    $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                    $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                    $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                    $isNew = $sentAt && $sentAt->gte(now()->subHours(24));
                                 @endphp
                                 @if($isNew)
                                 <span class="new-badge">
@@ -974,7 +979,13 @@
                                 <div class="document-info-label">Tanggal Kirim</div>
                                 <div class="document-info-value">
                                     <i class="fas fa-calendar-alt"></i>
-                                    <span>{{ $dokumen->inbox_approval_sent_at ? $dokumen->inbox_approval_sent_at->format('d/m/Y H:i') : '-' }}</span>
+                                    @php
+                                        $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                        $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                        $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                        $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                    @endphp
+                                    <span>{{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}</span>
                                 </div>
                             </div>
 
@@ -990,7 +1001,13 @@
                         <div class="document-footer">
                             <div class="document-time">
                                 <i class="far fa-clock"></i>
-                                <span>Diterima {{ $dokumen->inbox_approval_sent_at ? $dokumen->inbox_approval_sent_at->diffForHumans() : '-' }}</span>
+                                @php
+                                    $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                    $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                    $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                    $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                @endphp
+                                <span>Diterima {{ $sentAt ? $sentAt->diffForHumans() : '-' }}</span>
                             </div>
                             <a href="{{ route('inbox.show', $dokumen) }}" 
                                class="btn-view-detail"
