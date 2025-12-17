@@ -414,57 +414,37 @@
       <input type="text" name="ejaan_nilai_rupiah" id="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
     </div>
 
-    <!-- Kategori & Jenis Dokumen -->
+    <!-- Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
     <div class="form-row">
       <div class="form-group">
-        <label>Kategori</label>
-        <select id="kategori" name="kategori" required>
-          <option value="">Pilih Kategori</option>
-          <option value="Investasi on farm" {{ old('kategori') == 'Investasi on farm' ? 'selected' : '' }}>Investasi on farm</option>
-          <option value="Investasi off farm" {{ old('kategori') == 'Investasi off farm' ? 'selected' : '' }}>Investasi off farm</option>
-          <option value="Exploitasi" {{ old('kategori') == 'Exploitasi' ? 'selected' : '' }}>Exploitasi</option>
+        <label>Kriteria CF</label>
+        <select id="kriteria_cf" name="kriteria_cf" required>
+          <option value="">Pilih Kriteria CF</option>
+          @foreach($kategoriKriteria as $kategori)
+            <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+              {{ $kategori->nama_kriteria }}
+            </option>
+          @endforeach
         </select>
-        @error('kategori')
+        @error('kriteria_cf')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Dokumen</label>
-        <select id="jenis_dokumen" name="jenis_dokumen" required>
-          <option value="">Pilih Kategori terlebih dahulu</option>
+        <label>Sub Kriteria</label>
+        <select id="sub_kriteria" name="sub_kriteria" required>
+          <option value="">Pilih Kriteria CF terlebih dahulu</option>
         </select>
-        @error('jenis_dokumen')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-    </div>
-
-    <!-- Jenis SubPekerjaan & Jenis Pembayaran -->
-    <div class="form-row">
-      <div class="form-group">
-        <label>Jenis SubPekerjaan</label>
-        <select name="jenis_sub_pekerjaan">
-          <option value="">Pilih Opsi</option>
-          <option value="Surat Masuk/Keluar Reguler" {{ old('jenis_sub_pekerjaan') == 'Surat Masuk/Keluar Reguler' ? 'selected' : '' }}>Surat Masuk/Keluar Reguler</option>
-          <option value="Surat Undangan" {{ old('jenis_sub_pekerjaan') == 'Surat Undangan' ? 'selected' : '' }}>Surat Undangan</option>
-          <option value="Memo Internal" {{ old('jenis_sub_pekerjaan') == 'Memo Internal' ? 'selected' : '' }}>Memo Internal</option>
-        </select>
-        @error('jenis_sub_pekerjaan')
+        @error('sub_kriteria')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Pembayaran</label>
-        <select name="jenis_pembayaran">
-          <option value="">Pilih Opsi</option>
-          <option value="Karyawan" {{ old('jenis_pembayaran') == 'Karyawan' ? 'selected' : '' }}>Karyawan</option>
-          <option value="Mitra" {{ old('jenis_pembayaran') == 'Mitra' ? 'selected' : '' }}>Mitra</option>
-          <option value="MPN" {{ old('jenis_pembayaran') == 'MPN' ? 'selected' : '' }}>MPN</option>
-          <option value="TBS" {{ old('jenis_pembayaran') == 'TBS' ? 'selected' : '' }}>TBS</option>
-          <option value="Dropping" {{ old('jenis_pembayaran') == 'Dropping' ? 'selected' : '' }}>Dropping</option>
-          <option value="Lainnya" {{ old('jenis_pembayaran') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+        <label>Item Sub Kriteria</label>
+        <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+          <option value="">Pilih Sub Kriteria terlebih dahulu</option>
         </select>
-        @error('jenis_pembayaran')
+        @error('item_sub_kriteria')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
@@ -815,47 +795,101 @@
       ]
     };
 
-    // Function to update jenis dokumen dropdown
-    function updateJenisDokumen(kategori, selectedValue = null) {
-      const jenisDokumenSelect = document.getElementById('jenis_dokumen');
+    // Data untuk cascading dropdown
+    const subKriteriaData = @json($subKriteria);
+    const itemSubKriteriaData = @json($itemSubKriteria);
+
+    // Function to update sub kriteria dropdown
+    function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
+      const subKriteriaSelect = document.getElementById('sub_kriteria');
+      const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
 
       // Clear existing options
-      jenisDokumenSelect.innerHTML = '<option value="">Pilih Jenis Dokumen</option>';
+      subKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria</option>';
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
 
-      // Populate options based on selected kategori
-      if (kategori && jenisDokumenData[kategori]) {
-        jenisDokumenData[kategori].forEach(function(jenis) {
-          const option = document.createElement('option');
-          option.value = jenis;
-          option.textContent = jenis;
-          if (selectedValue && jenis === selectedValue) {
-            option.selected = true;
-          }
-          jenisDokumenSelect.appendChild(option);
-        });
-      } else {
-        jenisDokumenSelect.innerHTML = '<option value="">Pilih Kategori terlebih dahulu</option>';
+      if (!kategoriKriteriaId) {
+        return;
+      }
+
+      // Filter sub kriteria berdasarkan id_kategori_kriteria
+      const filteredSubKriteria = subKriteriaData.filter(sub => 
+        sub.id_kategori_kriteria == kategoriKriteriaId
+      );
+
+      // Populate sub kriteria options
+      filteredSubKriteria.forEach(sub => {
+        const option = document.createElement('option');
+        option.value = sub.id_sub_kriteria;
+        option.textContent = sub.nama_sub_kriteria;
+        if (selectedValue && selectedValue == sub.id_sub_kriteria) {
+          option.selected = true;
+        }
+        subKriteriaSelect.appendChild(option);
+      });
+    }
+
+    // Function to update item sub kriteria dropdown
+    function updateItemSubKriteria(subKriteriaId, selectedValue = null) {
+      const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+      // Clear existing options
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Item Sub Kriteria</option>';
+
+      if (!subKriteriaId) {
+        return;
+      }
+
+      // Filter item sub kriteria berdasarkan id_sub_kriteria
+      const filteredItemSubKriteria = itemSubKriteriaData.filter(item => 
+        item.id_sub_kriteria == subKriteriaId
+      );
+
+      // Populate item sub kriteria options
+      filteredItemSubKriteria.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id_item_sub_kriteria;
+        option.textContent = item.nama_item_sub_kriteria;
+        if (selectedValue && selectedValue == item.id_item_sub_kriteria) {
+          option.selected = true;
+        }
+        itemSubKriteriaSelect.appendChild(option);
+      });
+    }
+
+    // Initialize dropdowns if values already selected (from old input)
+    const kriteriaCfSelect = document.getElementById('kriteria_cf');
+    const subKriteriaSelect = document.getElementById('sub_kriteria');
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+    
+    const oldKriteriaCf = '{{ old("kriteria_cf") }}';
+    const oldSubKriteria = '{{ old("sub_kriteria") }}';
+    const oldItemSubKriteria = '{{ old("item_sub_kriteria") }}';
+
+    if (oldKriteriaCf && oldKriteriaCf !== '') {
+      updateSubKriteria(oldKriteriaCf, oldSubKriteria);
+      if (oldSubKriteria && oldSubKriteria !== '') {
+        updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
       }
     }
 
-    // Initialize jenis dokumen if kategori already selected (from old input)
-    const kategoriSelect = document.getElementById('kategori');
-    const oldKategori = '{{ old("kategori") }}';
-    const oldJenisDokumen = '{{ old("jenis_dokumen") }}';
-
-    if (oldKategori && oldKategori !== '') {
-      updateJenisDokumen(oldKategori, oldJenisDokumen);
-    }
-
-    // Event listener untuk dropdown kategori
-    kategoriSelect.addEventListener('change', function() {
-      updateJenisDokumen(this.value);
+    // Event listener untuk dropdown kriteria CF
+    kriteriaCfSelect.addEventListener('change', function() {
+      updateSubKriteria(this.value);
+      // Reset item sub kriteria
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
     });
 
-    // Handle form reset
+    // Event listener untuk dropdown sub kriteria
+    subKriteriaSelect.addEventListener('change', function() {
+      updateItemSubKriteria(this.value);
+    });
+
+    // Handle form reset untuk dropdown baru
     document.querySelector('form').addEventListener('reset', function() {
       setTimeout(function() {
-        updateJenisDokumen('');
+        updateSubKriteria('');
+        updateItemSubKriteria('');
       }, 0);
     });
 
@@ -1256,10 +1290,27 @@
     fillFormField('tanggal_spp', randomData.tanggal_spp, 'datetime-local');
     fillFormField('uraian_spp', randomData.uraian_spp, 'textarea');
     fillFormField('nilai_rupiah', randomData.nilai_rupiah);
-    fillFormField('kategori', randomData.kategori, 'select');
-    fillFormField('jenis_dokumen', randomData.jenis_dokumen, 'select');
-    fillFormField('jenis_sub_pekerjaan', randomData.jenis_sub_pekerjaan, 'select');
-    fillFormField('jenis_pembayaran', randomData.jenis_pembayaran, 'select');
+    // OLD: Removed kategori, jenis_dokumen, jenis_sub_pekerjaan, jenis_pembayaran
+    // NEW: Fill cascading dropdown for kriteria CF, sub kriteria, item sub kriteria
+    const kategoriKriteriaArray = @json($kategoriKriteria ?? []);
+    if (subKriteriaData && subKriteriaData.length > 0 && itemSubKriteriaData && itemSubKriteriaData.length > 0 && kategoriKriteriaArray && kategoriKriteriaArray.length > 0) {
+      const randomKategori = kategoriKriteriaArray[Math.floor(Math.random() * kategoriKriteriaArray.length)];
+      if (randomKategori) {
+        fillFormField('kriteria_cf', randomKategori.id_kategori_kriteria, 'select');
+        updateSubKriteria(randomKategori.id_kategori_kriteria);
+        const filteredSub = subKriteriaData.filter(s => s.id_kategori_kriteria == randomKategori.id_kategori_kriteria);
+        if (filteredSub.length > 0) {
+          const randomSub = filteredSub[Math.floor(Math.random() * filteredSub.length)];
+          fillFormField('sub_kriteria', randomSub.id_sub_kriteria, 'select');
+          updateItemSubKriteria(randomSub.id_sub_kriteria);
+          const filteredItem = itemSubKriteriaData.filter(i => i.id_sub_kriteria == randomSub.id_sub_kriteria);
+          if (filteredItem.length > 0) {
+            const randomItem = filteredItem[Math.floor(Math.random() * filteredItem.length)];
+            fillFormField('item_sub_kriteria', randomItem.id_item_sub_kriteria, 'select');
+          }
+        }
+      }
+    }
     fillFormField('kebun', randomData.kebun, 'select');
     fillFormField('no_berita_acara', randomData.no_berita_acara);
     fillFormField('tanggal_berita_acara', randomData.tanggal_berita_acara, 'date');
@@ -1306,10 +1357,8 @@
       tanggal_spp: formatDateTime(randomDate),
       uraian_spp: generateRandomUraian(),
       nilai_rupiah: Math.floor(Math.random() * 900000000) + 100000000, // 100M - 1B
-      kategori: categories[Math.floor(Math.random() * categories.length)],
-      jenis_dokumen: kategoris[Math.floor(Math.random() * kategoris.length)],
-      jenis_sub_pekerjaan: 'Pembayaran Tagihan',
-      jenis_pembayaran: jenisPembayaran[Math.floor(Math.random() * jenisPembayaran.length)],
+      // OLD: kategori, jenis_dokumen, jenis_sub_pekerjaan, jenis_pembayaran removed
+      // NEW: Will be filled by cascading dropdown logic above
       kebun: kebunOptions[Math.floor(Math.random() * kebunOptions.length)],
       no_berita_acara: `BAST/${Math.floor(Math.random() * 100)}/${Math.floor(Math.random() * 31)}/XI/2024`,
       tanggal_berita_acara: formatDate(randomDate),

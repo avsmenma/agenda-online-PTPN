@@ -9,6 +9,9 @@ use App\Models\Dokumen;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
 use App\Models\DibayarKepada;
+use App\Models\KategoriKriteria;
+use App\Models\SubKriteria;
+use App\Models\ItemSubKriteria;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Carbon\Carbon;
@@ -192,6 +195,11 @@ class DokumenController extends Controller
 
     public function create()
     {
+        // Ambil data dari database cash_bank_new
+        $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+        $subKriteria = SubKriteria::all();
+        $itemSubKriteria = ItemSubKriteria::all();
+        
         $data = array(
             "title" => "Tambah Dokumen",
             "module" => "IbuA",
@@ -200,6 +208,9 @@ class DokumenController extends Controller
             "menuTambahDokumen" => "active",
             "menuDaftarDokumenDikembalikan" => "",
             "menuDashboard" => "",
+            "kategoriKriteria" => $kategoriKriteria,
+            "subKriteria" => $subKriteria,
+            "itemSubKriteria" => $itemSubKriteria,
         );
         return view('IbuA.dokumens.tambahDokumen', $data);
     }

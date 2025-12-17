@@ -223,12 +223,15 @@ class DashboardAkutansiController extends Controller
             }
         ]);
 
-        // Order by deadline status first (locked documents first), then by received_at (when document was received by akutansi)
-        // This ensures documents maintain their position after deadline is set
-        // Dokumen yang sudah terkirim ke pembayaran tetap mempertahankan posisinya berdasarkan received_at
-        // Tidak peduli current_handler-nya, karena setelah approve di pembayaran, current_handler berubah menjadi 'pembayaran'
+        // Order by nomor_agenda descending (numerically) first, then by deadline status, then by received_at
+        // This ensures documents are sorted by nomor_agenda (2010, 2009, 2006, 2005, etc.)
         // Priority: 1 = locked (no deadline), 2 = has deadline or sent to pembayaran, 3 = others
-        $dokumens = $query->orderByRaw("CASE
+        $dokumens = $query->orderByRaw("CASE 
+                WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC")
+            ->orderBy('dokumens.nomor_agenda', 'DESC') // Secondary sort for non-numeric or same numeric values
+            ->orderByRaw("CASE
                 -- Kategori 1: Dokumen yang locked (belum set deadline)
                 WHEN dokumens.status = 'sent_to_akutansi' 
                 AND (

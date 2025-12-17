@@ -121,7 +121,13 @@ class DashboardPembayaranController extends Controller
         };
 
         // Get all documents with ordering and eager load relationships (before pagination)
+        // Order by nomor_agenda descending (numerically) first, then by status priority
         $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+            ->orderByRaw("CASE 
+                WHEN nomor_agenda REGEXP '^[0-9]+$' THEN CAST(nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC")
+            ->orderBy('nomor_agenda', 'DESC') // Secondary sort for non-numeric or same numeric values
             ->orderByRaw("CASE
                 WHEN status IN ('processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran') OR current_handler = 'pembayaran' THEN 1
                 WHEN status IN ('sent_to_akutansi', 'processed_by_perpajakan', 'sent_to_perpajakan') THEN 2
