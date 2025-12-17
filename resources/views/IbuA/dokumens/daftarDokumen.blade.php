@@ -2122,8 +2122,24 @@
               // ]);
               
               // Can edit only if document is not sent and can be edited
-              $canEdit = !$isSent && in_array($dokumen->status, ['draft', 'returned_to_ibua'])
-                        && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
+              // IMPORTANT: Rejected documents should always be able to be edited
+              $canEdit = false;
+              
+              // PRIORITY 1: Rejected documents can ALWAYS be edited if they're with IbuA
+              if ($isRejected && $currentHandlerIbuA && $createdByIbuA) {
+                $canEdit = true;
+              }
+              // PRIORITY 2: Returned documents (returned_to_ibua) can be edited
+              elseif ($isReturned && $currentHandlerIbuA && $createdByIbuA && !$isSent) {
+                $canEdit = true;
+              }
+              // PRIORITY 3: Draft documents can be edited
+              elseif (strtolower($dokumen->status ?? '') === 'draft'
+                        && $currentHandlerIbuA
+                        && $createdByIbuA
+                        && !$isSent) {
+                $canEdit = true;
+              }
             @endphp
             @if($canEdit)
               <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
