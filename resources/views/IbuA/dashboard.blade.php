@@ -664,7 +664,7 @@
 
 <script>
 function sendToIbuB(dokumenId) {
-  if (!confirm('Apakah Anda yakin ingin mengirim dokumen ini ke Ibu Yuni?')) {
+  if (!confirm('Apakah Anda yakin ingin mengirim dokumen ini ke Team Verifikasi?')) {
     return;
   }
 

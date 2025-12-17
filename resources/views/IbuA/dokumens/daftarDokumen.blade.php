@@ -2346,9 +2346,9 @@
         <div class="mb-3">
           <i class="fa-solid fa-question-circle" style="font-size: 52px; color: #0f8357;"></i>
         </div>
-        <h5 class="fw-bold mb-3">Apakah Anda yakin ingin mengirim dokumen ini ke Ibu Yuni?</h5>
+        <h5 class="fw-bold mb-3">Apakah Anda yakin ingin mengirim dokumen ini ke Team Verifikasi?</h5>
         <p class="text-muted mb-0">
-          Dokumen akan langsung dikirim ke Ibu Yuni dan muncul di daftar dokumen Ibu Yuni untuk diproses.
+          Dokumen akan langsung dikirim ke Team Verifikasi dan muncul di daftar dokumen Team Verifikasi untuk diproses.
         </p>
       </div>
       <div class="modal-footer border-0 justify-content-center gap-2">
