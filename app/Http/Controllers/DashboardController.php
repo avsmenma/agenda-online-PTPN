@@ -112,19 +112,21 @@ class DashboardController extends Controller
             // Ini memastikan bahwa dokumen yang di-reject dalam 24 jam terakhir selalu ditampilkan
             $checkFrom24Hours = now()->subHours(24);
             
+            // Initialize $checkFrom dengan default value
+            $checkFrom = $checkFrom24Hours;
+            
             try {
-                $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
+                if ($lastCheckTime) {
+                    $parsedTime = \Carbon\Carbon::parse($lastCheckTime);
+                    // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
+                    $checkFrom = $parsedTime->gt($checkFrom24Hours) ? $checkFrom24Hours : $parsedTime;
+                }
             } catch (\Exception $e) {
                 \Log::warning('Invalid last_check_time format, using 24 hours ago', [
                     'last_check_time' => $lastCheckTime,
                     'error' => $e->getMessage()
                 ]);
-                $checkFrom = $checkFrom24Hours;
-            }
-
-            // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
-            if ($checkFrom->gt($checkFrom24Hours)) {
-                $checkFrom = $checkFrom24Hours;
+                // $checkFrom already set to $checkFrom24Hours as default
             }
 
             \Log::info('IbuA checkRejectedDocuments called', [

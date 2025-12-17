@@ -88,8 +88,18 @@ class InboxController extends Controller
             return view('inbox.index', $data);
 
         } catch (\Exception $e) {
-            Log::error('Error loading inbox index: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memuat daftar dokumen inbox');
+            Log::error('Error loading inbox index: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Show detailed error in development, generic message in production
+            $errorMessage = config('app.debug') 
+                ? 'Gagal memuat daftar dokumen inbox: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')'
+                : 'Gagal memuat daftar dokumen inbox. Silakan cek log untuk detail.';
+            
+            return back()->with('error', $errorMessage);
         }
     }
 
@@ -156,8 +166,18 @@ class InboxController extends Controller
             return view('inbox.show', $data);
 
         } catch (\Exception $e) {
-            Log::error('Error loading inbox show: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memuat detail dokumen');
+            Log::error('Error loading inbox show: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Show detailed error in development, generic message in production
+            $errorMessage = config('app.debug') 
+                ? 'Gagal memuat detail dokumen: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')'
+                : 'Gagal memuat detail dokumen. Silakan cek log untuk detail.';
+            
+            return back()->with('error', $errorMessage);
         }
     }
 
@@ -258,10 +278,18 @@ class InboxController extends Controller
             Log::error('Error rejecting document from inbox: ' . $e->getMessage(), [
                 'dokumen_id' => $dokumen->id,
                 'user_role' => $userRole ?? 'unknown',
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
+            // Show detailed error in development, generic message in production
+            $errorMessage = config('app.debug') 
+                ? 'Gagal menolak dokumen: ' . $e->getMessage() . ' (File: ' . basename($e->getFile()) . ', Line: ' . $e->getLine() . ')'
+                : 'Gagal menolak dokumen. Silakan cek log untuk detail.';
+            
             return redirect()->route('inbox.index')
-                ->with('error', 'Gagal menolak dokumen: ' . $e->getMessage());
+                ->with('error', $errorMessage);
         }
     }
 
