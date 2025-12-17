@@ -947,17 +947,43 @@ class DokumenController extends Controller
             $currentHandler = $dokumen->current_handler ?? 'ibuA';
             $createdBy = $dokumen->created_by ?? 'ibuA';
 
-            // Only allow sending if document is in draft, returned, or sedang diproses status
-            // and current_handler is ibuA
-            if (!in_array($dokumen->status, ['draft', 'returned_to_ibua', 'sedang diproses'])) {
+            // Check if document is created by IbuA (case-insensitive)
+            $createdByIbuA = in_array(strtolower($createdBy), ['ibua', 'ibu a']);
+            
+            // Check if document is currently with IbuA (case-insensitive)
+            $currentHandlerIbuA = in_array(strtolower($currentHandler), ['ibua', 'ibu a']);
+            
+            // Check if document is rejected (can be sent again)
+            $isRejected = false;
+            $ibuBStatus = $dokumen->getStatusForRole('ibub');
+            if ($ibuBStatus && strtolower($ibuBStatus->status ?? '') === 'rejected') {
+                $isRejected = true;
+            } else {
+                // Fallback: check from roleStatuses directly
+                $rejectedStatus = $dokumen->roleStatuses()
+                    ->where('status', 'rejected')
+                    ->whereIn('role_code', ['ibub', 'ibuB'])
+                    ->first();
+                $isRejected = $rejectedStatus !== null;
+            }
+            
+            // Check if document status is allowed (case-insensitive)
+            $statusLower = strtolower($dokumen->status ?? '');
+            $allowedStatuses = ['draft', 'returned_to_ibua', 'sedang diproses'];
+            $isAllowedStatus = in_array($statusLower, $allowedStatuses);
+            
+            // Allow sending if:
+            // 1. Document is rejected (can always be resent) AND with IbuA
+            // 2. OR document has allowed status AND with IbuA
+            if (!$isRejected && !$isAllowedStatus) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak dapat dikirim. Status dokumen harus draft, returned, atau sedang diproses.'
                 ], 400);
             }
 
-            // Only allow if created by ibuA and current_handler is ibuA
-            if ($createdBy !== 'ibuA' || $currentHandler !== 'ibuA') {
+            // Only allow if created by ibuA and current_handler is ibuA (case-insensitive)
+            if (!$createdByIbuA || !$currentHandlerIbuA) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
