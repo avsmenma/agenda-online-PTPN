@@ -352,6 +352,35 @@ Ini adalah masalah permission. Laravel tidak bisa menulis file compiled view.
 
 ---
 
+## 🔧 Troubleshooting
+
+### Error: Permission Denied pada Storage
+
+**Error:**
+```
+file_put_contents(.../storage/framework/views/...): Failed to open stream: Permission denied
+```
+
+**Solusi:**
+```bash
+cd /var/www/agenda_online_ptpn
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+**Quick Fix (One-Liner):**
+```bash
+cd /var/www/agenda_online_ptpn && sudo chown -R www-data:www-data storage bootstrap/cache && sudo chmod -R 775 storage bootstrap/cache && php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear
+```
+
+Lihat detail lengkap di `FIX_STORAGE_PERMISSION.md`
+
+---
+
 ## 📞 Support
 
 Jika ada masalah:

@@ -1865,6 +1865,163 @@ document.addEventListener('click', function(e) {
 
 <!-- JavaScript -->
 <script>
+// Define global functions FIRST before any DOMContentLoaded handlers
+// This ensures functions are available immediately when page loads
+window.openEditPembayaranModal = function(docId) {
+    console.log('openEditPembayaranModal called with docId:', docId);
+    
+    // Set dokumen ID in hidden field
+    const docIdField = document.getElementById('editPembayaranDocId');
+    const tanggalField = document.getElementById('tanggal_dibayar');
+    const linkField = document.getElementById('link_bukti_pembayaran');
+    const modalElement = document.getElementById('editPembayaranModal');
+    
+    if (!docIdField || !tanggalField || !linkField || !modalElement) {
+        console.error('Modal elements not found:', {
+            docIdField: !!docIdField,
+            tanggalField: !!tanggalField,
+            linkField: !!linkField,
+            modalElement: !!modalElement
+        });
+        alert('Terjadi kesalahan. Silakan muat ulang halaman.');
+        return;
+    }
+    
+    docIdField.value = docId;
+    
+    // Ambil data terbaru dari server untuk memastikan nilai tidak hilang
+    fetch(`/dokumensPembayaran/${docId}/get-payment-data`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Payment data received:', data);
+        if (data.success) {
+            tanggalField.value = data.tanggal_dibayar || '';
+            linkField.value = data.link_bukti_pembayaran || '';
+        }
+        
+        // Use getOrCreateInstance for better compatibility
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.show();
+            console.log('Modal opened successfully');
+        } else {
+            console.error('Bootstrap Modal not available');
+            // Fallback: show modal manually
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = 'editPembayaranModalBackdrop';
+            document.body.appendChild(backdrop);
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching payment data:', error);
+        // Jika error, tetap buka modal dengan nilai kosong
+        tanggalField.value = '';
+        linkField.value = '';
+        
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.show();
+        } else {
+            // Fallback: show modal manually
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = 'editPembayaranModalBackdrop';
+            document.body.appendChild(backdrop);
+        }
+    });
+};
+
+window.submitEditPembayaran = function() {
+    const docId = document.getElementById('editPembayaranDocId').value;
+    if (!docId) {
+        alert('Dokumen tidak ditemukan. Silakan muat ulang halaman.');
+        return;
+    }
+    
+    const form = document.getElementById('editPembayaranForm');
+    const formData = new FormData(form);
+    const submitBtn = document.querySelector('#editPembayaranModal .btn-primary');
+
+    const tanggalDibayar = formData.get('tanggal_dibayar');
+    const linkBukti = formData.get('link_bukti_pembayaran');
+
+    // Validasi: minimal salah satu harus diisi
+    if (!tanggalDibayar && !linkBukti) {
+        alert('Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.');
+        return;
+    }
+
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
+
+    // Kirim semua field yang ada di form (termasuk yang kosong, untuk mempertahankan nilai yang sudah ada)
+    const requestData = {};
+    // Selalu kirim tanggal_dibayar jika ada (termasuk string kosong, akan di-handle di backend)
+    if (tanggalDibayar) {
+        requestData.tanggal_dibayar = tanggalDibayar;
+    }
+    // Selalu kirim link_bukti_pembayaran jika ada (termasuk string kosong, akan di-handle di backend)
+    if (linkBukti) {
+        requestData.link_bukti_pembayaran = linkBukti;
+    }
+
+    fetch(`/dokumensPembayaran/${docId}/update-pembayaran`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const modalElement = document.getElementById('editPembayaranModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            if (data.is_complete) {
+                alert('Data pembayaran berhasil disimpan! Kedua field sudah lengkap, dokumen selesai.');
+            } else {
+                alert('Data pembayaran berhasil disimpan! Status otomatis berubah menjadi "Sudah Dibayar".');
+            }
+            location.reload();
+        } else {
+            alert(data.message || 'Gagal menyimpan data pembayaran.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan data pembayaran.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+    });
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const dropdownToggle = document.getElementById('statusFilterDropdown');
     const dropdownMenu = document.getElementById('statusFilterMenu');
@@ -2075,162 +2232,8 @@ function changePerPage(perPage) {
     window.location.href = url.toString();
 }
 
-// Make function globally accessible
-window.openEditPembayaranModal = function(docId) {
-    console.log('openEditPembayaranModal called with docId:', docId);
-    
-    // Set dokumen ID in hidden field
-    const docIdField = document.getElementById('editPembayaranDocId');
-    const tanggalField = document.getElementById('tanggal_dibayar');
-    const linkField = document.getElementById('link_bukti_pembayaran');
-    const modalElement = document.getElementById('editPembayaranModal');
-    
-    if (!docIdField || !tanggalField || !linkField || !modalElement) {
-        console.error('Modal elements not found:', {
-            docIdField: !!docIdField,
-            tanggalField: !!tanggalField,
-            linkField: !!linkField,
-            modalElement: !!modalElement
-        });
-        alert('Terjadi kesalahan. Silakan muat ulang halaman.');
-        return;
-    }
-    
-    docIdField.value = docId;
-    
-    // Ambil data terbaru dari server untuk memastikan nilai tidak hilang
-    fetch(`/dokumensPembayaran/${docId}/get-payment-data`, {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Payment data received:', data);
-        if (data.success) {
-            tanggalField.value = data.tanggal_dibayar || '';
-            linkField.value = data.link_bukti_pembayaran || '';
-        }
-        
-        // Use getOrCreateInstance for better compatibility
-        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-            modal.show();
-            console.log('Modal opened successfully');
-        } else {
-            console.error('Bootstrap Modal not available');
-            // Fallback: show modal manually
-            modalElement.style.display = 'block';
-            modalElement.classList.add('show');
-            document.body.classList.add('modal-open');
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'editPembayaranModalBackdrop';
-            document.body.appendChild(backdrop);
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching payment data:', error);
-        // Jika error, tetap buka modal dengan nilai kosong
-        tanggalField.value = '';
-        linkField.value = '';
-        
-        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-            modal.show();
-        } else {
-            // Fallback: show modal manually
-            modalElement.style.display = 'block';
-            modalElement.classList.add('show');
-            document.body.classList.add('modal-open');
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'editPembayaranModalBackdrop';
-            document.body.appendChild(backdrop);
-        }
-    });
-};
-
-// Make function globally accessible
-window.submitEditPembayaran = function() {
-    const docId = document.getElementById('editPembayaranDocId').value;
-    if (!docId) {
-        alert('Dokumen tidak ditemukan. Silakan muat ulang halaman.');
-        return;
-    }
-    
-    const form = document.getElementById('editPembayaranForm');
-    const formData = new FormData(form);
-    const submitBtn = document.querySelector('#editPembayaranModal .btn-primary');
-
-    const tanggalDibayar = formData.get('tanggal_dibayar');
-    const linkBukti = formData.get('link_bukti_pembayaran');
-
-    // Validasi: minimal salah satu harus diisi
-    if (!tanggalDibayar && !linkBukti) {
-        alert('Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.');
-        return;
-    }
-
-    const originalHTML = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
-
-    // Kirim semua field yang ada di form (termasuk yang kosong, untuk mempertahankan nilai yang sudah ada)
-    const requestData = {};
-    // Selalu kirim tanggal_dibayar jika ada (termasuk string kosong, akan di-handle di backend)
-    if (tanggalDibayar) {
-        requestData.tanggal_dibayar = tanggalDibayar;
-    }
-    // Selalu kirim link_bukti_pembayaran jika ada (termasuk string kosong, akan di-handle di backend)
-    if (linkBukti) {
-        requestData.link_bukti_pembayaran = linkBukti;
-    }
-
-    fetch(`/dokumensPembayaran/${docId}/update-pembayaran`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const modalElement = document.getElementById('editPembayaranModal');
-            if (modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    modal.hide();
-                }
-            }
-            if (data.is_complete) {
-                alert('Data pembayaran berhasil disimpan! Kedua field sudah lengkap, dokumen selesai.');
-            } else {
-                alert('Data pembayaran berhasil disimpan! Status otomatis berubah menjadi "Sudah Dibayar".');
-            }
-            location.reload();
-        } else {
-            alert(data.message || 'Gagal menyimpan data pembayaran.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHTML;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat menyimpan data pembayaran.');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHTML;
-    });
-};
+// Note: openEditPembayaranModal and submitEditPembayaran are already defined at the top of this script
+// They are defined before DOMContentLoaded to ensure they're available immediately
 
 // Ensure workflow tracking links work correctly
 document.addEventListener('DOMContentLoaded', function() {

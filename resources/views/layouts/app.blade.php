@@ -3536,10 +3536,25 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Check if user is on a submenu page (any page that should show secondary sidebar)
   const currentPathCheck = window.location.pathname;
-  const isSubmenuPage = currentPathCheck.includes('/dokumens') || 
-                        currentPathCheck.includes('/rekapan') || 
-                        currentPathCheck.includes('/pengembalian') ||
-                        currentPathCheck.includes('/rekapan-tu-tk');
+  const currentPath = window.location.pathname; // Alias for compatibility
+  let isSubmenuPage = currentPathCheck.includes('/dokumens') || 
+                      currentPathCheck.includes('/rekapan') || 
+                      currentPathCheck.includes('/pengembalian') ||
+                      currentPathCheck.includes('/rekapan-tu-tk') ||
+                      currentPathCheck.includes('/dokumensPembayaran') || 
+                      currentPathCheck.includes('/rekapan-pembayaran') || 
+                      currentPathCheck.includes('/rekapan-keterlambatan') ||
+                      currentPathCheck.includes('/pengembalian-dokumensPembayaran') ||
+                      currentPathCheck.includes('/dokumensAkutansi') ||
+                      currentPathCheck.includes('/rekapan-akutansi') ||
+                      currentPathCheck.includes('/dokumensPerpajakan') ||
+                      currentPathCheck.includes('/rekapan-perpajakan') ||
+                      currentPathCheck.includes('/dokumensB') ||
+                      currentPathCheck.includes('/rekapan-ibuB') ||
+                      currentPathCheck.includes('/documents/pembayaran') ||
+                      currentPathCheck.includes('/documents/akutansi') ||
+                      currentPathCheck.includes('/documents/perpajakan') ||
+                      currentPathCheck.includes('/documents/verifikasi');
   
   console.log('State check:', {
     isSubmenuPage,
@@ -3574,20 +3589,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Auto-open secondary sidebar based on current route
   // No need for click handler since menu is now a direct link
-  
-  // Check if we're on a submenu page and auto-open sidebar
-  const currentPathPembayaran = window.location.pathname;
-  const isSubmenuPage = currentPathPembayaran.includes('/dokumensPembayaran') || 
-                        currentPath.includes('/rekapan-pembayaran') || 
-                        currentPath.includes('/rekapan-keterlambatan') ||
-                        currentPath.includes('/rekapan-tu-tk') ||
-                        currentPath.includes('/pengembalian-dokumensPembayaran') ||
-                        currentPath.includes('/dokumensAkutansi') ||
-                        currentPath.includes('/rekapan-akutansi') ||
-                        currentPath.includes('/dokumensPerpajakan') ||
-                        currentPath.includes('/rekapan-perpajakan') ||
-                        currentPath.includes('/dokumensB') ||
-                        currentPath.includes('/rekapan-ibuB');
   
   const topbar = document.querySelector('.topbar');
   
