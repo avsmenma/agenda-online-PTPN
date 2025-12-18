@@ -2995,7 +2995,6 @@
           <i class="fa-solid fa-table-columns me-2"></i>
           Kustomisasi Kolom Tabel
         </button>
-        <a href="#"><button type="button" class="btn-excel mr-2">Ekspor ke PDF</button></a>
 
         <!-- Preserve per_page and columns parameters -->
         @if(request('per_page'))
