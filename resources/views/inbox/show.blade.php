@@ -1119,10 +1119,37 @@ function showNotification(type, title, message) {
         editing: new Map()
     };
 
+    console.log('🎯 Activity Tracking: Initializing...', {
+        dokumenId,
+        currentUserId,
+        currentUserName
+    });
+
+    // Wait for Echo to be ready
+    function waitForEcho(callback, maxAttempts = 20) {
+        let attempts = 0;
+        const checkEcho = setInterval(() => {
+            attempts++;
+            if (window.Echo) {
+                clearInterval(checkEcho);
+                console.log('✅ Echo is ready, initializing activity tracking');
+                callback();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkEcho);
+                console.error('❌ Echo not available after', maxAttempts, 'attempts');
+                // Fallback: use polling only
+                initActivityTrackingPollingOnly();
+            }
+        }, 500);
+    }
+
     // Initialize activity tracking
     function initActivityTracking() {
+        console.log('🚀 Initializing activity tracking...');
+        
         if (!window.Echo) {
-            console.warn('Laravel Echo not available');
+            console.warn('⚠️ Laravel Echo not available, using polling only');
+            initActivityTrackingPollingOnly();
             return;
         }
 
@@ -1135,16 +1162,30 @@ function showNotification(type, title, message) {
         }, 30000);
 
         // Listen to real-time activity changes
-        echoChannel = window.Echo.channel(`document.${dokumenId}`);
-        
-        echoChannel.listen('.document.activity.changed', (data) => {
-            handleActivityChange(data);
-        });
+        try {
+            echoChannel = window.Echo.channel(`document.${dokumenId}`);
+            console.log('📡 Listening to channel: document.' + dokumenId);
+            
+            echoChannel.listen('.document.activity.changed', (data) => {
+                console.log('📨 Activity change received:', data);
+                handleActivityChange(data);
+            });
+
+            echoChannel.error((error) => {
+                console.error('❌ Echo channel error:', error);
+            });
+
+            echoChannel.subscribed(() => {
+                console.log('✅ Subscribed to channel: document.' + dokumenId);
+            });
+        } catch (error) {
+            console.error('❌ Error setting up Echo channel:', error);
+        }
 
         // Load initial activities
         loadActivities();
 
-        // Track activity every 5 seconds
+        // Track activity every 5 seconds (backup polling)
         activityInterval = setInterval(() => {
             loadActivities();
         }, 5000);
@@ -1178,20 +1219,49 @@ function showNotification(type, title, message) {
         });
     }
 
+    // Initialize with polling only (fallback)
+    function initActivityTrackingPollingOnly() {
+        console.log('🔄 Using polling-only mode for activity tracking');
+        trackActivity('viewing');
+        loadActivities();
+        heartbeatInterval = setInterval(() => {
+            trackActivity('viewing');
+        }, 30000);
+        activityInterval = setInterval(() => {
+            loadActivities();
+        }, 3000); // More frequent polling
+    }
+
     // Track activity
     function trackActivity(activityType) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
         fetch(`/api/documents/${dokumenId}/activity`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
                 activity_type: activityType
             })
-        }).catch(err => {
-            console.error('Error tracking activity:', err);
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Activity tracked:', activityType);
+            } else {
+                console.warn('⚠️ Activity tracking response:', data);
+            }
+        })
+        .catch(err => {
+            console.error('❌ Error tracking activity:', err);
         });
     }
 
@@ -1202,14 +1272,22 @@ function showNotification(type, title, message) {
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
+                console.log('📊 Activities loaded:', data.activities);
                 updateActivityDisplay(data.activities);
+            } else {
+                console.warn('⚠️ Activities response:', data);
             }
         })
         .catch(err => {
-            console.error('Error loading activities:', err);
+            console.error('❌ Error loading activities:', err);
         });
     }
 
@@ -1280,11 +1358,28 @@ function showNotification(type, title, message) {
         const editorsWarning = document.getElementById('editors-warning');
         const editorNameSpan = document.getElementById('editor-name');
 
-        // Show panel if there are any activities
-        if (activityUsers.viewing.size > 0 || activityUsers.editing.size > 0) {
+        if (!panel || !viewersList) {
+            console.error('❌ Activity panel elements not found');
+            return;
+        }
+
+        const totalViewers = activityUsers.viewing.size + 1; // +1 for current user
+        const totalEditors = activityUsers.editing.size;
+        
+        console.log('📊 Updating activity display:', {
+            viewers: totalViewers,
+            editors: totalEditors,
+            viewingMap: Array.from(activityUsers.viewing.entries()),
+            editingMap: Array.from(activityUsers.editing.entries())
+        });
+
+        // Show panel if there are other users OR if there are editors
+        if (activityUsers.viewing.size > 0 || totalEditors > 0) {
             panel.style.display = 'block';
+            console.log('✅ Showing activity panel');
         } else {
             panel.style.display = 'none';
+            console.log('ℹ️ Hiding activity panel (no other users)');
             return;
         }
 
@@ -1294,11 +1389,13 @@ function showNotification(type, title, message) {
         // Add current user first
         const currentUserItem = createActivityItem(currentUserName, 'Anda', true);
         viewersList.appendChild(currentUserItem);
+        console.log('➕ Added current user to viewers list');
 
         // Add other viewing users
         activityUsers.viewing.forEach((user, userId) => {
-            const item = createActivityItem(user.name, user.role, false);
+            const item = createActivityItem(user.name, user.role || null, false);
             viewersList.appendChild(item);
+            console.log('➕ Added viewer:', user.name);
         });
 
         // Update editors warning
@@ -1306,6 +1403,7 @@ function showNotification(type, title, message) {
             const firstEditor = Array.from(activityUsers.editing.values())[0];
             editorNameSpan.textContent = firstEditor.name;
             editorsWarning.style.display = 'block';
+            console.log('⚠️ Showing editor warning for:', firstEditor.name);
         } else {
             editorsWarning.style.display = 'none';
         }
@@ -1349,12 +1447,19 @@ function showNotification(type, title, message) {
         });
     }
 
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initActivityTracking);
-    } else {
-        initActivityTracking();
+    // Initialize when DOM is ready and Echo is available
+    function startActivityTracking() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                waitForEcho(initActivityTracking);
+            });
+        } else {
+            waitForEcho(initActivityTracking);
+        }
     }
+
+    // Start tracking
+    startActivityTracking();
 })();
 </script>
 

@@ -471,6 +471,7 @@ class InboxController extends Controller
         try {
             $user = auth()->user();
             if (!$user) {
+                Log::warning('Activity tracking: Unauthorized user');
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized'
@@ -478,6 +479,13 @@ class InboxController extends Controller
             }
 
             $activityType = $request->input('activity_type', DocumentActivity::TYPE_VIEWING);
+            
+            Log::info('Activity tracking request', [
+                'dokumen_id' => $dokumenId,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'activity_type' => $activityType
+            ]);
             
             // Validate activity type
             if (!in_array($activityType, [DocumentActivity::TYPE_VIEWING, DocumentActivity::TYPE_EDITING])) {
@@ -502,6 +510,12 @@ class InboxController extends Controller
                 ]
             );
 
+            Log::info('Activity saved', [
+                'activity_id' => $activity->id,
+                'dokumen_id' => $dokumenId,
+                'user_id' => $user->id
+            ]);
+
             // Broadcast activity change
             broadcast(new DocumentActivityChanged(
                 $dokumenId,
@@ -511,6 +525,11 @@ class InboxController extends Controller
                 $activityType,
                 now()->toIso8601String()
             ));
+
+            Log::info('Activity broadcasted', [
+                'dokumen_id' => $dokumenId,
+                'user_id' => $user->id
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -534,11 +553,24 @@ class InboxController extends Controller
     public function getActivities($dokumenId)
     {
         try {
+            Log::info('Getting activities', ['dokumen_id' => $dokumenId]);
+            
             $activities = DocumentActivity::with('user')
                 ->where('dokumen_id', $dokumenId)
                 ->active()
-                ->get()
-                ->groupBy('activity_type')
+                ->get();
+
+            Log::info('Activities found', [
+                'dokumen_id' => $dokumenId,
+                'count' => $activities->count(),
+                'activities' => $activities->map(fn($a) => [
+                    'user_id' => $a->user_id,
+                    'user_name' => $a->user->name ?? 'Unknown',
+                    'activity_type' => $a->activity_type
+                ])->toArray()
+            ]);
+
+            $grouped = $activities->groupBy('activity_type')
                 ->map(function ($group) {
                     return $group->map(function ($activity) {
                         return [
@@ -550,13 +582,21 @@ class InboxController extends Controller
                     })->values();
                 });
 
-            return response()->json([
+            $result = [
                 'success' => true,
                 'activities' => [
-                    'viewing' => $activities->get(DocumentActivity::TYPE_VIEWING, []),
-                    'editing' => $activities->get(DocumentActivity::TYPE_EDITING, []),
+                    'viewing' => $grouped->get(DocumentActivity::TYPE_VIEWING, []),
+                    'editing' => $grouped->get(DocumentActivity::TYPE_EDITING, []),
                 ]
+            ];
+
+            Log::info('Activities response', [
+                'dokumen_id' => $dokumenId,
+                'viewing_count' => count($result['activities']['viewing']),
+                'editing_count' => count($result['activities']['editing'])
             ]);
+
+            return response()->json($result);
 
         } catch (\Exception $e) {
             Log::error('Error getting activities: ' . $e->getMessage());
