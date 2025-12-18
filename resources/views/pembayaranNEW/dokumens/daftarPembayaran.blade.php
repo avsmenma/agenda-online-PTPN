@@ -2488,7 +2488,11 @@ window.loadDocumentDetail = function(dokumenId) {
             {{-- Modal Body --}}
             <div class="overflow-y-auto max-h-[calc(90vh-80px)] p-6" style="background: white;">
                 {{-- Loading State --}}
-                <div x-show="loading" x-cloak class="flex items-center justify-center py-20" style="min-height: 200px;">
+                <div x-show="loading" 
+                     x-cloak 
+                     class="flex items-center justify-center py-20" 
+                     style="min-height: 200px;"
+                     :style="loading ? 'display: flex !important;' : 'display: none !important;'">
                     <div class="text-center">
                         <i class="fas fa-spinner fa-spin text-4xl text-emerald-600 mb-4"></i>
                         <p class="text-gray-600">Memuat data dokumen...</p>
@@ -2496,7 +2500,10 @@ window.loadDocumentDetail = function(dokumenId) {
                 </div>
                 
                 {{-- Error State --}}
-                <div x-show="error && !loading" x-cloak class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div x-show="error && !loading" 
+                     x-cloak 
+                     class="bg-red-50 border border-red-200 rounded-lg p-4"
+                     :style="(error && !loading) ? 'display: block !important;' : 'display: none !important;'">
                     <div class="flex items-center gap-2 text-red-800">
                         <i class="fas fa-exclamation-circle"></i>
                         <span x-text="error"></span>
@@ -2504,7 +2511,10 @@ window.loadDocumentDetail = function(dokumenId) {
                 </div>
                 
                 {{-- Modern View --}}
-                <div x-show="!loading && !error && viewMode === 'modern' && data !== null && data !== undefined" x-cloak class="space-y-6">
+                <div x-show="!loading && !error && viewMode === 'modern' && data !== null && data !== undefined" 
+                     x-cloak 
+                     class="space-y-6"
+                     :style="(!loading && !error && viewMode === 'modern' && data !== null && data !== undefined) ? 'display: block !important;' : 'display: none !important;'">
                     {{-- Header Section: No SPP, Judul Pekerjaan, Nilai Rp --}}
                     <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-8 border-2 border-emerald-200 shadow-lg">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -2813,7 +2823,11 @@ window.loadDocumentDetail = function(dokumenId) {
                 </div>
                 
                 {{-- Excel View --}}
-                <div x-show="!loading && !error && viewMode === 'excel' && data !== null && data !== undefined" x-cloak class="overflow-x-auto" style="background: white;">
+                <div x-show="!loading && !error && viewMode === 'excel' && data !== null && data !== undefined" 
+                     x-cloak 
+                     class="overflow-x-auto" 
+                     style="background: white;"
+                     :style="(!loading && !error && viewMode === 'excel' && data !== null && data !== undefined) ? 'display: block !important;' : 'display: none !important;'">
                     <table class="w-full border-collapse border border-gray-400 text-sm font-mono">
                         <thead>
                             <tr class="bg-green-600">
@@ -3020,20 +3034,47 @@ function documentDetailModal() {
             .then(result => {
                 console.log('Document detail response:', result);
                 if (result.success && result.data) {
+                    // Set data and update loading state
                     this.data = result.data;
+                    this.loading = false;
+                    this.error = null;
                     console.log('Data loaded successfully:', this.data);
+                    console.log('Loading set to false, error set to null');
+                    
+                    // Force Alpine.js reactivity by accessing properties
+                    // This ensures x-show directives are re-evaluated
+                    const _data = this.data;
+                    const _loading = this.loading;
+                    const _error = this.error;
+                    
+                    // Use $nextTick if available to ensure DOM updates
+                    if (this.$nextTick) {
+                        this.$nextTick(() => {
+                            console.log('After $nextTick - State:', {
+                                loading: this.loading,
+                                error: this.error,
+                                hasData: !!this.data,
+                                viewMode: this.viewMode
+                            });
+                        });
+                    }
                 } else {
                     throw new Error(result.message || 'Data tidak ditemukan');
                 }
             })
             .catch(error => {
                 console.error('Error loading document detail:', error);
-                this.error = error.message || 'Terjadi kesalahan saat memuat data dokumen';
-                this.data = null; // Ensure data is null on error
-            })
-            .finally(() => {
-                this.loading = false;
-                console.log('Loading finished. Data:', this.data, 'Error:', this.error);
+                if (typeof Alpine !== 'undefined' && Alpine.nextTick) {
+                    Alpine.nextTick(() => {
+                        this.error = error.message || 'Terjadi kesalahan saat memuat data dokumen';
+                        this.data = null;
+                        this.loading = false;
+                    });
+                } else {
+                    this.error = error.message || 'Terjadi kesalahan saat memuat data dokumen';
+                    this.data = null;
+                    this.loading = false;
+                }
             });
         },
         
