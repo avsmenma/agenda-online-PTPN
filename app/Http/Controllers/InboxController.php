@@ -517,19 +517,30 @@ class InboxController extends Controller
             ]);
 
             // Broadcast activity change
-            broadcast(new DocumentActivityChanged(
-                $dokumenId,
-                $user->id,
-                $user->name,
-                $user->role,
-                $activityType,
-                now()->toIso8601String()
-            ));
+            try {
+                broadcast(new DocumentActivityChanged(
+                    $dokumenId,
+                    $user->id,
+                    $user->name,
+                    $user->role ?? null,
+                    $activityType,
+                    now()->toIso8601String()
+                ))->toOthers();
+                
+                Log::info('Activity broadcasted successfully', [
+                    'dokumen_id' => $dokumenId,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'activity_type' => $activityType
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to broadcast activity (non-critical)', [
+                    'error' => $e->getMessage(),
+                    'dokumen_id' => $dokumenId,
+                    'user_id' => $user->id
+                ]);
+            }
 
-            Log::info('Activity broadcasted', [
-                'dokumen_id' => $dokumenId,
-                'user_id' => $user->id
-            ]);
 
             return response()->json([
                 'success' => true,
@@ -553,20 +564,46 @@ class InboxController extends Controller
     public function getActivities($dokumenId)
     {
         try {
-            Log::info('Getting activities', ['dokumen_id' => $dokumenId]);
+            $currentUserId = auth()->id();
+            Log::info('Getting activities', [
+                'dokumen_id' => $dokumenId,
+                'current_user_id' => $currentUserId
+            ]);
             
+            // Get all activities (not just active) to see what's in database
+            $allActivities = DocumentActivity::with('user')
+                ->where('dokumen_id', $dokumenId)
+                ->get();
+            
+            Log::info('All activities in database', [
+                'dokumen_id' => $dokumenId,
+                'total_count' => $allActivities->count(),
+                'all_activities' => $allActivities->map(fn($a) => [
+                    'id' => $a->id,
+                    'user_id' => $a->user_id,
+                    'user_name' => $a->user->name ?? 'Unknown',
+                    'activity_type' => $a->activity_type,
+                    'last_activity_at' => $a->last_activity_at->toIso8601String(),
+                    'is_active' => $a->last_activity_at->gte(now()->subMinutes(5))
+                ])->toArray()
+            ]);
+            
+            // Get only active activities
             $activities = DocumentActivity::with('user')
                 ->where('dokumen_id', $dokumenId)
                 ->active()
                 ->get();
 
-            Log::info('Activities found', [
+            Log::info('Active activities found', [
                 'dokumen_id' => $dokumenId,
-                'count' => $activities->count(),
+                'active_count' => $activities->count(),
+                'current_user_id' => $currentUserId,
                 'activities' => $activities->map(fn($a) => [
                     'user_id' => $a->user_id,
                     'user_name' => $a->user->name ?? 'Unknown',
-                    'activity_type' => $a->activity_type
+                    'user_role' => $a->user->role ?? null,
+                    'activity_type' => $a->activity_type,
+                    'last_activity_at' => $a->last_activity_at->toIso8601String()
                 ])->toArray()
             ]);
 

@@ -38,11 +38,11 @@ class DocumentActivity extends Model
     }
 
     /**
-     * Scope to get active activities (within last 2 minutes).
+     * Scope to get active activities (within last 5 minutes).
      */
     public function scopeActive($query)
     {
-        return $query->where('last_activity_at', '>=', now()->subMinutes(2));
+        return $query->where('last_activity_at', '>=', now()->subMinutes(5));
     }
 
     /**

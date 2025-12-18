@@ -1234,6 +1234,12 @@ function showNotification(type, title, message) {
 
     // Track activity
     function trackActivity(activityType) {
+        console.log('📤 Sending activity tracking request:', {
+            dokumen_id: dokumenId,
+            user_id: currentUserId,
+            activity_type: activityType
+        });
+        
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         
         fetch(`/api/documents/${dokumenId}/activity`, {
@@ -1248,16 +1254,23 @@ function showNotification(type, title, message) {
             })
         })
         .then(response => {
+            console.log('📥 Activity tracking response status:', response.status);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return response.text().then(text => {
+                    console.error('❌ Activity tracking failed:', text);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
             }
             return response.json();
         })
         .then(data => {
             if (data.success) {
-                console.log('✅ Activity tracked:', activityType);
+                console.log('✅ Activity tracked successfully:', {
+                    activity_type: activityType,
+                    response: data
+                });
             } else {
-                console.warn('⚠️ Activity tracking response:', data);
+                console.warn('⚠️ Activity tracking response (not success):', data);
             }
         })
         .catch(err => {
@@ -1267,23 +1280,34 @@ function showNotification(type, title, message) {
 
     // Load current activities
     function loadActivities() {
+        console.log('📥 Loading activities for dokumen:', dokumenId);
+        
         fetch(`/api/documents/${dokumenId}/activities`, {
             headers: {
                 'Accept': 'application/json'
             }
         })
         .then(response => {
+            console.log('📥 Activities response status:', response.status);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return response.text().then(text => {
+                    console.error('❌ Failed to load activities:', text);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
             }
             return response.json();
         })
         .then(data => {
             if (data.success) {
-                console.log('📊 Activities loaded:', data.activities);
+                console.log('📊 Activities loaded successfully:', {
+                    viewing_count: data.activities.viewing?.length || 0,
+                    editing_count: data.activities.editing?.length || 0,
+                    viewing: data.activities.viewing,
+                    editing: data.activities.editing
+                });
                 updateActivityDisplay(data.activities);
             } else {
-                console.warn('⚠️ Activities response:', data);
+                console.warn('⚠️ Activities response (not success):', data);
             }
         })
         .catch(err => {

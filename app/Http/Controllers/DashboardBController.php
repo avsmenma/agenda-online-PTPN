@@ -122,7 +122,7 @@ class DashboardBController extends Controller
                         })
                             ->where('current_handler', 'ibuB');
                     })
-                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi/pembayaran
                     ->orWhere(function ($rejectQ) {
                         // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
                         $rejectQ->where('status', 'returned_to_department')
@@ -270,6 +270,10 @@ class DashboardBController extends Controller
                 case 'terkirim_akutansi':
                     // Dokumen yang terkirim ke akutansi - hanya status ini saja
                     $query->where('status', 'sent_to_akutansi');
+                    break;
+                case 'terkirim_pembayaran':
+                    // Dokumen yang terkirim ke pembayaran - hanya status ini saja
+                    $query->where('status', 'sent_to_pembayaran');
                     break;
                 case 'ditolak':
                     // Dokumen yang ditolak - hanya status ditolak saja
