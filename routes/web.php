@@ -460,6 +460,16 @@ Route::get('/ibub/pending-approval', function () {
     return redirect()->route('documents.verifikasi.pending-approval', [], 301);
 })->name('ibub.pending.approval.old');
 
+// Document Activity Tracking Routes
+Route::middleware(['autologin', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
+    Route::post('/{dokumen}/activity', [\App\Http\Controllers\InboxController::class, 'trackActivity'])
+        ->name('activity.track');
+    Route::get('/{dokumen}/activities', [\App\Http\Controllers\InboxController::class, 'getActivities'])
+        ->name('activity.get');
+    Route::post('/{dokumen}/activity/stop', [\App\Http\Controllers\InboxController::class, 'stopActivity'])
+        ->name('activity.stop');
+});
+
 // Universal Approval Routes - Untuk semua user kecuali IbuA - dengan autologin
 Route::middleware(['autologin'])->group(function () {
     Route::post('/universal-approval/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])

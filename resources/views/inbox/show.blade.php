@@ -221,6 +221,106 @@
     color: #64748b;
 }
 
+/* Activity Panel */
+.activity-panel {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.15);
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    margin-bottom: 24px;
+}
+
+.activity-panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #083E40;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.activity-list {
+    margin-bottom: 16px;
+}
+
+.activity-section {
+    margin-bottom: 16px;
+}
+
+.activity-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.activity-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 3px solid #10b981;
+}
+
+.activity-item.self {
+    background: #ecfdf5;
+    border-left-color: #083E40;
+}
+
+.activity-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    flex: 1;
+}
+
+.activity-item-role {
+    font-size: 11px;
+    color: #64748b;
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.activity-item-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.activity-warning {
+    padding: 12px 16px;
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    color: #92400e;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+}
+
 /* Action Panel */
 .action-panel {
     background: white;
@@ -730,6 +830,30 @@
                 </div>
             </div>
 
+            <!-- Activity Indicators Panel -->
+            <div class="activity-panel" id="activity-panel" style="display: none;">
+                <h5 class="activity-panel-title">
+                    <i class="fas fa-users me-2"></i>
+                    Aktivitas Dokumen
+                </h5>
+                
+                <div id="viewers-list" class="activity-list">
+                    <div class="activity-section">
+                        <div class="activity-label">
+                            <i class="fas fa-eye me-2"></i>Sedang melihat:
+                        </div>
+                        <div id="viewers-items" class="activity-items">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editors-warning" class="activity-warning" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="editor-name"></span> sedang mengedit dokumen ini
+                </div>
+            </div>
+
             <!-- Action Panel -->
             <div class="action-panel">
                 <h5 class="action-panel-title">
@@ -979,4 +1103,259 @@ function showNotification(type, title, message) {
     }
 }
 </script>
+<!-- Document Activity Tracking Script -->
+<script>
+(function() {
+    'use strict';
+    
+    const dokumenId = {{ $dokumen->id }};
+    const currentUserId = {{ auth()->id() }};
+    const currentUserName = '{{ auth()->user()->name }}';
+    let activityInterval = null;
+    let heartbeatInterval = null;
+    let echoChannel = null;
+    const activityUsers = {
+        viewing: new Map(),
+        editing: new Map()
+    };
+
+    // Initialize activity tracking
+    function initActivityTracking() {
+        if (!window.Echo) {
+            console.warn('Laravel Echo not available');
+            return;
+        }
+
+        // Track initial viewing activity
+        trackActivity('viewing');
+
+        // Set up heartbeat (send activity every 30 seconds)
+        heartbeatInterval = setInterval(() => {
+            trackActivity('viewing');
+        }, 30000);
+
+        // Listen to real-time activity changes
+        echoChannel = window.Echo.channel(`document.${dokumenId}`);
+        
+        echoChannel.listen('.document.activity.changed', (data) => {
+            handleActivityChange(data);
+        });
+
+        // Load initial activities
+        loadActivities();
+
+        // Track activity every 5 seconds
+        activityInterval = setInterval(() => {
+            loadActivities();
+        }, 5000);
+
+        // Track editing when user focuses on edit fields
+        const editFields = document.querySelectorAll('input, textarea, select');
+        editFields.forEach(field => {
+            field.addEventListener('focus', () => {
+                trackActivity('editing');
+            });
+            field.addEventListener('blur', () => {
+                // After 10 seconds of no editing, switch back to viewing
+                setTimeout(() => {
+                    trackActivity('viewing');
+                }, 10000);
+            });
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopActivity();
+        });
+
+        // Clean up on visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopActivity();
+            } else {
+                trackActivity('viewing');
+            }
+        });
+    }
+
+    // Track activity
+    function trackActivity(activityType) {
+        fetch(`/api/documents/${dokumenId}/activity`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                activity_type: activityType
+            })
+        }).catch(err => {
+            console.error('Error tracking activity:', err);
+        });
+    }
+
+    // Load current activities
+    function loadActivities() {
+        fetch(`/api/documents/${dokumenId}/activities`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateActivityDisplay(data.activities);
+            }
+        })
+        .catch(err => {
+            console.error('Error loading activities:', err);
+        });
+    }
+
+    // Handle real-time activity change
+    function handleActivityChange(data) {
+        const { user_id, user_name, activity_type } = data;
+
+        // Ignore own activities (we update via loadActivities)
+        if (user_id === currentUserId) {
+            return;
+        }
+
+        if (activity_type === 'left') {
+            // Remove user from all activities
+            activityUsers.viewing.delete(user_id);
+            activityUsers.editing.delete(user_id);
+        } else if (activity_type === 'viewing') {
+            activityUsers.viewing.set(user_id, {
+                name: user_name,
+                timestamp: data.timestamp
+            });
+            activityUsers.editing.delete(user_id);
+        } else if (activity_type === 'editing') {
+            activityUsers.editing.set(user_id, {
+                name: user_name,
+                timestamp: data.timestamp
+            });
+        }
+
+        updateActivityDisplayFromMap();
+    }
+
+    // Update activity display from API data
+    function updateActivityDisplay(activities) {
+        // Clear existing
+        activityUsers.viewing.clear();
+        activityUsers.editing.clear();
+
+        // Add viewing users
+        activities.viewing?.forEach(user => {
+            if (user.user_id !== currentUserId) {
+                activityUsers.viewing.set(user.user_id, {
+                    name: user.user_name,
+                    role: user.user_role,
+                    timestamp: user.last_activity_at
+                });
+            }
+        });
+
+        // Add editing users
+        activities.editing?.forEach(user => {
+            if (user.user_id !== currentUserId) {
+                activityUsers.editing.set(user.user_id, {
+                    name: user.user_name,
+                    role: user.user_role,
+                    timestamp: user.last_activity_at
+                });
+            }
+        });
+
+        updateActivityDisplayFromMap();
+    }
+
+    // Update UI from activity map
+    function updateActivityDisplayFromMap() {
+        const panel = document.getElementById('activity-panel');
+        const viewersList = document.getElementById('viewers-items');
+        const editorsWarning = document.getElementById('editors-warning');
+        const editorNameSpan = document.getElementById('editor-name');
+
+        // Show panel if there are any activities
+        if (activityUsers.viewing.size > 0 || activityUsers.editing.size > 0) {
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+            return;
+        }
+
+        // Update viewers list
+        viewersList.innerHTML = '';
+        
+        // Add current user first
+        const currentUserItem = createActivityItem(currentUserName, 'Anda', true);
+        viewersList.appendChild(currentUserItem);
+
+        // Add other viewing users
+        activityUsers.viewing.forEach((user, userId) => {
+            const item = createActivityItem(user.name, user.role, false);
+            viewersList.appendChild(item);
+        });
+
+        // Update editors warning
+        if (activityUsers.editing.size > 0) {
+            const firstEditor = Array.from(activityUsers.editing.values())[0];
+            editorNameSpan.textContent = firstEditor.name;
+            editorsWarning.style.display = 'block';
+        } else {
+            editorsWarning.style.display = 'none';
+        }
+    }
+
+    // Create activity item element
+    function createActivityItem(name, role, isSelf) {
+        const item = document.createElement('div');
+        item.className = `activity-item ${isSelf ? 'self' : ''}`;
+        
+        item.innerHTML = `
+            <div class="activity-item-status"></div>
+            <div class="activity-item-name">${name}</div>
+            ${role ? `<div class="activity-item-role">${role}</div>` : ''}
+        `;
+        
+        return item;
+    }
+
+    // Stop activity tracking
+    function stopActivity() {
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+        }
+        if (activityInterval) {
+            clearInterval(activityInterval);
+        }
+        if (echoChannel) {
+            window.Echo.leave(`document.${dokumenId}`);
+        }
+        
+        fetch(`/api/documents/${dokumenId}/activity/stop`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            }
+        }).catch(err => {
+            console.error('Error stopping activity:', err);
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initActivityTracking);
+    } else {
+        initActivityTracking();
+    }
+})();
+</script>
+
 @endsection

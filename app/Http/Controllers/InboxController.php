@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
 use App\Models\DokumenStatus;
+use App\Models\DocumentActivity;
+use App\Events\DocumentActivityChanged;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -458,6 +460,144 @@ class InboxController extends Controller
                 'success' => false,
                 'message' => 'Gagal memeriksa dokumen baru'
             ], 500);
+        }
+    }
+
+    /**
+     * Track user activity on a document (viewing/editing)
+     */
+    public function trackActivity(Request $request, $dokumenId)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            $activityType = $request->input('activity_type', DocumentActivity::TYPE_VIEWING);
+            
+            // Validate activity type
+            if (!in_array($activityType, [DocumentActivity::TYPE_VIEWING, DocumentActivity::TYPE_EDITING])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid activity type'
+                ], 400);
+            }
+
+            // Check if document exists
+            $dokumen = Dokumen::findOrFail($dokumenId);
+
+            // Update or create activity record
+            $activity = DocumentActivity::updateOrCreate(
+                [
+                    'dokumen_id' => $dokumenId,
+                    'user_id' => $user->id,
+                    'activity_type' => $activityType,
+                ],
+                [
+                    'last_activity_at' => now(),
+                ]
+            );
+
+            // Broadcast activity change
+            broadcast(new DocumentActivityChanged(
+                $dokumenId,
+                $user->id,
+                $user->name,
+                $user->role,
+                $activityType,
+                now()->toIso8601String()
+            ));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Activity tracked successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error tracking activity: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melacak aktivitas'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get current activities for a document
+     */
+    public function getActivities($dokumenId)
+    {
+        try {
+            $activities = DocumentActivity::with('user')
+                ->where('dokumen_id', $dokumenId)
+                ->active()
+                ->get()
+                ->groupBy('activity_type')
+                ->map(function ($group) {
+                    return $group->map(function ($activity) {
+                        return [
+                            'user_id' => $activity->user_id,
+                            'user_name' => $activity->user->name ?? 'Unknown',
+                            'user_role' => $activity->user->role ?? null,
+                            'last_activity_at' => $activity->last_activity_at->toIso8601String(),
+                        ];
+                    })->values();
+                });
+
+            return response()->json([
+                'success' => true,
+                'activities' => [
+                    'viewing' => $activities->get(DocumentActivity::TYPE_VIEWING, []),
+                    'editing' => $activities->get(DocumentActivity::TYPE_EDITING, []),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting activities: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil aktivitas'
+            ], 500);
+        }
+    }
+
+    /**
+     * Stop tracking activity (when user leaves page)
+     */
+    public function stopActivity(Request $request, $dokumenId)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['success' => false], 401);
+            }
+
+            // Delete activity records for this user and document
+            DocumentActivity::where('dokumen_id', $dokumenId)
+                ->where('user_id', $user->id)
+                ->delete();
+
+            // Broadcast that user left
+            broadcast(new DocumentActivityChanged(
+                $dokumenId,
+                $user->id,
+                $user->name,
+                $user->role,
+                'left',
+                now()->toIso8601String()
+            ));
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            Log::error('Error stopping activity: ' . $e->getMessage());
+            return response()->json(['success' => false], 500);
         }
     }
 }
