@@ -2267,7 +2267,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Global function to open document detail modal
-function openDocumentDetailModal(dokumenId, event) {
+window.openDocumentDetailModal = function(dokumenId, event) {
     // Prevent default navigation
     if (event) {
         event.preventDefault();
@@ -2276,10 +2276,48 @@ function openDocumentDetailModal(dokumenId, event) {
     
     console.log('openDocumentDetailModal called with dokumenId:', dokumenId);
     
+    const modalElement = document.getElementById('documentDetailModal');
+    if (!modalElement) {
+        console.error('Modal element not found');
+        alert('Modal tidak ditemukan. Silakan refresh halaman.');
+        return false;
+    }
+    
+    // Show modal immediately (before Alpine.js processes)
+    modalElement.style.display = 'block';
+    modalElement.style.position = 'fixed';
+    modalElement.style.top = '0';
+    modalElement.style.left = '0';
+    modalElement.style.right = '0';
+    modalElement.style.bottom = '0';
+    modalElement.style.zIndex = '99999';
+    modalElement.style.width = '100vw';
+    modalElement.style.height = '100vh';
+    modalElement.style.visibility = 'visible';
+    modalElement.style.opacity = '1';
+    
+    // Remove x-cloak to ensure visibility
+    modalElement.removeAttribute('x-cloak');
+    modalElement.classList.remove('x-cloak');
+    
+    // Ensure modal content is visible immediately
+    const modalContainer = modalElement.querySelector('.relative.flex');
+    const modalContent = modalElement.querySelector('.bg-white');
+    if (modalContainer) {
+        modalContainer.style.display = 'flex';
+        modalContainer.style.visibility = 'visible';
+        modalContainer.style.opacity = '1';
+    }
+    if (modalContent) {
+        modalContent.style.display = 'block';
+        modalContent.style.visibility = 'visible';
+        modalContent.style.opacity = '1';
+        modalContent.style.background = 'white';
+    }
+    
     // Wait for Alpine.js to be ready
     if (typeof Alpine !== 'undefined') {
         // Use custom event - Alpine will handle it via @open-document-modal.window
-        // Wait a bit to ensure Alpine is fully initialized
         setTimeout(() => {
             console.log('Dispatching open-document-modal event for dokumenId:', dokumenId);
             window.dispatchEvent(new CustomEvent('open-document-modal', { 
@@ -2291,17 +2329,14 @@ function openDocumentDetailModal(dokumenId, event) {
     } else {
         // Fallback: Direct modal manipulation if Alpine.js not loaded
         console.warn('Alpine.js not loaded, using fallback');
-        const modalElement = document.getElementById('documentDetailModal');
-        if (modalElement) {
-            modalElement.style.display = 'block';
-            // Load data directly
+        if (typeof loadDocumentDetail === 'function') {
             loadDocumentDetail(dokumenId);
         }
     }
     
     // Prevent any navigation
     return false;
-}
+};
 
 // Fallback function to load document detail (if Alpine.js not available)
 function loadDocumentDetail(dokumenId) {
@@ -2346,7 +2381,7 @@ function loadDocumentDetail(dokumenId) {
      @open-document-modal.window="openModal($event.detail.dokumenId)"
      @keydown.escape.window="if (typeof closeModal === 'function') { closeModal(); }"
      class="document-modal-overlay"
-     style="display: none;"
+     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; width: 100vw; height: 100vh;"
      x-transition:enter="ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -2355,12 +2390,12 @@ function loadDocumentDetail(dokumenId) {
      x-transition:leave-end="opacity-0">
     
     {{-- Backdrop --}}
-    <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity backdrop-blur-sm" @click="closeModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9998; pointer-events: auto;"></div>
+    <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity backdrop-blur-sm" @click="closeModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99998; pointer-events: auto; width: 100vw; height: 100vh;"></div>
     
     {{-- Modal Container --}}
-    <div class="relative flex min-h-full items-center justify-center p-4" style="position: relative; z-index: 9999; pointer-events: none;">
+    <div class="relative flex min-h-full items-center justify-center p-4" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; pointer-events: none; width: 100vw; height: 100vh; display: flex !important; visibility: visible !important;">
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden transform transition-all"
-             style="pointer-events: auto;"
+             style="pointer-events: auto; background: white !important; display: block !important; visibility: visible !important; opacity: 1 !important;"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
              x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
