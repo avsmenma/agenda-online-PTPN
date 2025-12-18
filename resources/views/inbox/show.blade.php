@@ -519,7 +519,7 @@
                         @click="activeTab = 'summary'"
                     >
                         <i class="fas fa-chart-line me-2"></i>
-                        Ringkasan Eksekutif
+                        Ringkasan Dokumen
                     </button>
                     <button 
                         class="tab-button"
@@ -539,45 +539,9 @@
                     </button>
                 </div>
 
-                <!-- Tab Content: Ringkasan Eksekutif -->
+                <!-- Tab Content: Ringkasan Dokumen -->
                 <div x-show="activeTab === 'summary'" x-transition>
                     <div class="exec-summary-grid">
-                        <div class="summary-item">
-                            <div class="summary-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="summary-content">
-                                <div class="summary-label">Tanggal SPP</div>
-                                <div class="summary-value">
-                                    {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="summary-item">
-                            <div class="summary-icon">
-                                <i class="fas fa-tag"></i>
-                            </div>
-                            <div class="summary-content">
-                                <div class="summary-label">Kategori</div>
-                                <div class="summary-value">
-                                    {{ $dokumen->kategori ?? '-' }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="summary-item">
-                            <div class="summary-icon">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="summary-content">
-                                <div class="summary-label">Pengirim</div>
-                                <div class="summary-value">
-                                    {{ $dokumen->getSenderDisplayName() }}
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="summary-item">
                             <div class="summary-icon">
                                 <i class="fas fa-file-invoice"></i>
@@ -592,28 +556,44 @@
 
                         <div class="summary-item">
                             <div class="summary-icon">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-calendar-alt"></i>
                             </div>
                             <div class="summary-content">
-                                <div class="summary-label">Dikirim ke Inbox</div>
+                                <div class="summary-label">Tanggal SPP</div>
                                 <div class="summary-value">
-                                    @php
-                                        $currentRoleCode = strtolower($userRole ?? 'ibub');
-                                        $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
-                                        $roleData = $dokumen->getDataForRole($currentRoleCode);
-                                        $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
-                                    @endphp
-                                    {{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}
+                                    {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Uraian SPP -->
-                    <div class="mt-4 p-4" style="background: #f8fafc; border-radius: 12px; border-left: 4px solid #083E40;">
-                        <div class="summary-label mb-2">Uraian SPP</div>
-                        <div class="summary-value" style="font-size: 14px; font-weight: 500; line-height: 1.6;">
-                            {{ $dokumen->uraian_spp ?? '-' }}
+                        <div class="summary-item">
+                            <div class="summary-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">Nilai Rupiah</div>
+                                <div class="summary-value">
+                                    <strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="summary-item">
+                            <div class="summary-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">Dibayar Kepada (Vendor)</div>
+                                <div class="summary-value">
+                                    @if($dokumen->dibayarKepadas->count() > 0)
+                                        {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
+                                    @elseif($dokumen->dibayar_kepada)
+                                        {{ $dokumen->dibayar_kepada }}
+                                    @else
+                                        -
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
