@@ -596,6 +596,19 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Uraian SPP - Full Width -->
+                    <div class="summary-item" style="grid-column: 1 / -1; margin-top: 20px;">
+                        <div class="summary-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="summary-content" style="width: 100%;">
+                            <div class="summary-label">Uraian SPP</div>
+                            <div class="summary-value" style="font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;">
+                                {{ $dokumen->uraian_spp ?? '-' }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab Content: Data Lengkap -->
