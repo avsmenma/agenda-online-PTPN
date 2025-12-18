@@ -1370,16 +1370,19 @@ function showNotification(type, title, message) {
             viewers: totalViewers,
             editors: totalEditors,
             viewingMap: Array.from(activityUsers.viewing.entries()),
-            editingMap: Array.from(activityUsers.editing.entries())
+            editingMap: Array.from(activityUsers.editing.entries()),
+            currentUserId: currentUserId
         });
 
         // Show panel if there are other users OR if there are editors
         if (activityUsers.viewing.size > 0 || totalEditors > 0) {
             panel.style.display = 'block';
-            console.log('✅ Showing activity panel');
+            console.log('✅ Showing activity panel - Found other users');
         } else {
             panel.style.display = 'none';
-            console.log('ℹ️ Hiding activity panel (no other users)');
+            console.log('ℹ️ Hiding activity panel - No other users detected');
+            console.log('💡 TIP: Activity tracking requires 2 DIFFERENT users logged in with DIFFERENT credentials');
+            console.log('💡 Current user ID:', currentUserId);
             return;
         }
 
