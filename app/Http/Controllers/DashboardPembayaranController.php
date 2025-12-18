@@ -2928,14 +2928,41 @@ class DashboardPembayaranController extends Controller
 
             // Allow access if document is handled by pembayaran or sent to pembayaran
             $allowedHandlers = ['pembayaran', 'akutansi', 'perpajakan', 'ibuB', 'ibub'];
-            $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar'];
+            $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar', 'menunggu_di_approve', 'pending_approval_pembayaran'];
+            
+            // Check if document was sent to pembayaran role (using dokumen_role_data)
+            $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+            $isSentToPembayaran = $pembayaranRoleData && $pembayaranRoleData->received_at !== null;
+            
+            // Check if document status is for pembayaran approval
+            $pembayaranStatus = $dokumen->getStatusForRole('pembayaran');
+            $isPendingInPembayaran = $pembayaranStatus && in_array($pembayaranStatus->status, ['pending', 'approved', 'rejected']);
+            
+            // Allow access if:
+            // 1. Document handler is in allowed list, OR
+            // 2. Document status is in allowed list, OR
+            // 3. Document was sent to pembayaran (has role_data with received_at), OR
+            // 4. Document has pending status in pembayaran inbox
+            $hasAccess = in_array(strtolower($dokumen->current_handler ?? ''), array_map('strtolower', $allowedHandlers)) || 
+                        in_array($dokumen->status, $allowedStatuses) ||
+                        $isSentToPembayaran ||
+                        $isPendingInPembayaran;
 
-            if (!in_array(strtolower($dokumen->current_handler ?? ''), array_map('strtolower', $allowedHandlers)) && 
-                !in_array($dokumen->status, $allowedStatuses)) {
+            if (!$hasAccess) {
                 Log::warning('Access denied for document detail', [
                     'dokumen_id' => $dokumen->id,
                     'current_handler' => $dokumen->current_handler,
                     'status' => $dokumen->status,
+                    'isSentToPembayaran' => $isSentToPembayaran,
+                    'isPendingInPembayaran' => $isPendingInPembayaran,
+                    'pembayaranRoleData' => $pembayaranRoleData ? [
+                        'received_at' => $pembayaranRoleData->received_at,
+                        'role_code' => $pembayaranRoleData->role_code,
+                    ] : null,
+                    'pembayaranStatus' => $pembayaranStatus ? [
+                        'status' => $pembayaranStatus->status,
+                        'role_code' => $pembayaranStatus->role_code,
+                    ] : null,
                 ]);
                 
                 return response()->json([
@@ -2943,6 +2970,14 @@ class DashboardPembayaranController extends Controller
                     'message' => 'Access denied. Document handler: ' . ($dokumen->current_handler ?? 'null') . ', Status: ' . ($dokumen->status ?? 'null')
                 ], 403);
             }
+            
+            Log::info('Access granted for document detail', [
+                'dokumen_id' => $dokumen->id,
+                'current_handler' => $dokumen->current_handler,
+                'status' => $dokumen->status,
+                'isSentToPembayaran' => $isSentToPembayaran,
+                'isPendingInPembayaran' => $isPendingInPembayaran,
+            ]);
 
             // Load required relationships
             $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
