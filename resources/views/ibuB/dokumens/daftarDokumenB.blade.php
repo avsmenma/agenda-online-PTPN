@@ -3039,7 +3039,7 @@
       <div class="table-container-header">
         <h3 class="table-container-title">
           <i class="fa-solid fa-file-lines"></i>
-          Daftar Dokumen B
+          Daftar Dokumen Team Verifikasi
         </h3>
         <div class="table-container-stats">
           <div class="stat-item">

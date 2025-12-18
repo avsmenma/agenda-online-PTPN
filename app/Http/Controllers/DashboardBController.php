@@ -424,7 +424,7 @@ class DashboardBController extends Controller
         }
 
         $data = array(
-            "title" => "Daftar Dokumen B",
+            "title" => "Daftar Dokumen Team Verifikasi",
             "module" => "ibuB",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
@@ -443,7 +443,7 @@ class DashboardBController extends Controller
     public function createDokumen()
     {
         $data = array(
-            "title" => "Tambah Dokumen B",
+            "title" => "Tambah Dokumen Team Verifikasi",
             "module" => "ibuB",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
@@ -1143,7 +1143,7 @@ class DashboardBController extends Controller
     public function diagram()
     {
         $data = array(
-            "title" => "Diagram B",
+            "title" => "Diagram Team Verifikasi",
             "module" => "ibuB",
             "menuDashboard" => "",
             'menuDiagram' => 'Active',
