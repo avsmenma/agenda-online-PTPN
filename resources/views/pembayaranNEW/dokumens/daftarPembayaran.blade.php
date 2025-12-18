@@ -2339,38 +2339,90 @@ window.openDocumentDetailModal = function(dokumenId, event) {
 };
 
 // Fallback function to load document detail (if Alpine.js not available)
-function loadDocumentDetail(dokumenId) {
+window.loadDocumentDetail = function(dokumenId) {
     const modalElement = document.getElementById('documentDetailModal');
-    if (!modalElement) return;
+    if (!modalElement) {
+        console.error('Modal element not found in loadDocumentDetail');
+        return;
+    }
     
-    // Show loading
-    const loadingEl = modalElement.querySelector('.modal-loading');
-    const contentEl = modalElement.querySelector('.modal-content-area');
-    if (loadingEl) loadingEl.style.display = 'block';
-    if (contentEl) contentEl.style.display = 'none';
+    console.log('loadDocumentDetail called for dokumenId:', dokumenId);
+    
+    // Show loading state
+    const loadingEl = modalElement.querySelector('[x-show="loading"]');
+    const errorEl = modalElement.querySelector('[x-show="error && !loading"]');
+    const modernView = modalElement.querySelector('[x-show="!loading && !error && viewMode === \'modern\'"]');
+    const excelView = modalElement.querySelector('[x-show="!loading && !error && viewMode === \'excel\'"]');
+    
+    // Show loading, hide others
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+        loadingEl.removeAttribute('x-cloak');
+    }
+    if (errorEl) errorEl.style.display = 'none';
+    if (modernView) modernView.style.display = 'none';
+    if (excelView) excelView.style.display = 'none';
     
     fetch(`/dokumensPembayaran/${dokumenId}/detail`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
+            'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        }
+        },
+        credentials: 'same-origin'
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Fallback response status:', response.status);
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return response.text().then(text => {
+                console.error('Fallback response is not JSON. Content-Type:', contentType);
+                console.error('Response body:', text);
+                throw new Error('Server returned non-JSON response. Status: ' + response.status);
+            });
+        }
+        
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.message || 'Gagal memuat data dokumen. Status: ' + response.status);
+            });
+        }
+        
+        return response.json();
+    })
     .then(result => {
+        console.log('Fallback document detail response:', result);
         if (result.success && result.data) {
-            // Populate modal with data (simplified version)
-            console.log('Document data loaded:', result.data);
+            // Hide loading, show content
             if (loadingEl) loadingEl.style.display = 'none';
-            if (contentEl) contentEl.style.display = 'block';
+            if (modernView) {
+                modernView.style.display = 'block';
+                modernView.removeAttribute('x-cloak');
+            }
+            
+            // Try to update Alpine.js component if available
+            if (window.documentDetailModalInstance) {
+                window.documentDetailModalInstance.data = result.data;
+                window.documentDetailModalInstance.loading = false;
+                window.documentDetailModalInstance.error = null;
+            }
+        } else {
+            throw new Error(result.message || 'Data tidak ditemukan');
         }
     })
     .catch(error => {
         console.error('Error loading document:', error);
         if (loadingEl) loadingEl.style.display = 'none';
+        if (errorEl) {
+            errorEl.style.display = 'block';
+            errorEl.removeAttribute('x-cloak');
+            const errorText = errorEl.querySelector('span');
+            if (errorText) errorText.textContent = error.message || 'Terjadi kesalahan saat memuat data dokumen';
+        }
     });
-}
+};
 </script>
 
 {{-- Smart Dual-View Modal Component --}}
@@ -2937,14 +2989,32 @@ function documentDetailModal() {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                }
+                },
+                credentials: 'same-origin'
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Gagal memuat data dokumen');
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Response is not JSON. Content-Type:', contentType);
+                    return response.text().then(text => {
+                        console.error('Response body:', text);
+                        throw new Error('Server returned non-JSON response. Status: ' + response.status);
+                    });
                 }
+                
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Gagal memuat data dokumen. Status: ' + response.status);
+                    });
+                }
+                
                 return response.json();
             })
             .then(result => {

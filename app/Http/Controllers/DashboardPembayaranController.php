@@ -2914,28 +2914,73 @@ class DashboardPembayaranController extends Controller
 
     public function getDocumentDetail(Dokumen $dokumen)
     {
-        // Allow access if document is handled by pembayaran or sent to pembayaran
-        $allowedHandlers = ['pembayaran', 'akutansi', 'perpajakan', 'ibuB'];
-        $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar'];
+        try {
+            // Log request details for debugging
+            Log::info('getDocumentDetail called', [
+                'dokumen_id' => $dokumen->id,
+                'current_handler' => $dokumen->current_handler,
+                'status' => $dokumen->status,
+                'wantsJson' => request()->wantsJson(),
+                'ajax' => request()->ajax(),
+                'accept_header' => request()->header('Accept'),
+                'x_requested_with' => request()->header('X-Requested-With'),
+            ]);
 
-        if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
+            // Allow access if document is handled by pembayaran or sent to pembayaran
+            $allowedHandlers = ['pembayaran', 'akutansi', 'perpajakan', 'ibuB', 'ibub'];
+            $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar'];
+
+            if (!in_array(strtolower($dokumen->current_handler ?? ''), array_map('strtolower', $allowedHandlers)) && 
+                !in_array($dokumen->status, $allowedStatuses)) {
+                Log::warning('Access denied for document detail', [
+                    'dokumen_id' => $dokumen->id,
+                    'current_handler' => $dokumen->current_handler,
+                    'status' => $dokumen->status,
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied. Document handler: ' . ($dokumen->current_handler ?? 'null') . ', Status: ' . ($dokumen->status ?? 'null')
+                ], 403);
+            }
+
+            // Load required relationships
+            $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+            // Check if request wants JSON (for AJAX modal)
+            // Check multiple conditions to ensure JSON response for AJAX requests
+            $wantsJson = request()->wantsJson() || 
+                         request()->ajax() || 
+                         request()->expectsJson() ||
+                         (request()->header('Accept') && str_contains(request()->header('Accept'), 'application/json')) ||
+                         (request()->header('X-Requested-With') === 'XMLHttpRequest');
+            
+            Log::info('Request type check', [
+                'wantsJson' => $wantsJson,
+                'wantsJson_method' => request()->wantsJson(),
+                'ajax_method' => request()->ajax(),
+                'expectsJson_method' => request()->expectsJson(),
+            ]);
+            
+            if ($wantsJson) {
+                return $this->getDocumentDetailJson($dokumen);
+            }
+
+            // Return HTML partial for detail view (backward compatibility)
+            $html = $this->generateDocumentDetailHtml($dokumen);
+            return response($html);
+        } catch (\Exception $e) {
+            Log::error('Error in getDocumentDetail', [
+                'dokumen_id' => $dokumen->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Access denied'
-            ], 403);
+                'message' => 'Terjadi kesalahan saat memuat data dokumen: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Load required relationships
-        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
-
-        // Check if request wants JSON (for AJAX modal)
-        if (request()->wantsJson() || request()->ajax()) {
-            return $this->getDocumentDetailJson($dokumen);
-        }
-
-        // Return HTML partial for detail view (backward compatibility)
-        $html = $this->generateDocumentDetailHtml($dokumen);
-        return response($html);
     }
 
     /**
