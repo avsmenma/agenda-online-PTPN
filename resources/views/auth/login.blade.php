@@ -114,7 +114,8 @@
             position: relative;
         }
 
-        .input-group-custom i {
+        /* Base styling for left icons (user, lock) - exclude password toggle */
+        .input-group-custom > i:not(.password-toggle) {
             position: absolute;
             left: 15px;
             top: 50%;
@@ -125,11 +126,16 @@
             pointer-events: none; /* Prevent icon from blocking clicks */
         }
 
-        /* Specific styling for password field icon (lock) */
-        .input-group-custom .fa-lock {
-            left: 15px;
-            z-index: 10;
-            pointer-events: none; /* Prevent lock icon from blocking clicks */
+        /* Specific styling for password field lock icon - ensure it's on the left */
+        .password-lock-icon,
+        .password-field-wrapper .fa-lock {
+            position: absolute !important;
+            left: 15px !important;
+            right: auto !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 10 !important;
+            pointer-events: none !important; /* Prevent lock icon from blocking clicks */
         }
 
         .form-control {
@@ -143,9 +149,10 @@
             background: #ffffff;
         }
         
-        /* Ensure password field has proper right padding for eye icon */
+        /* Ensure password field has proper padding for both icons */
         #password {
-            padding-right: 45px !important;
+            padding-left: 45px !important; /* Space for lock icon on left */
+            padding-right: 50px !important; /* Extra space for eye icon on right */
         }
 
         .form-control::placeholder {
@@ -157,25 +164,30 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+        /* Eye icon for password toggle - must be on the right side */
+        .password-toggle,
+        .password-field-wrapper .password-toggle,
+        #togglePassword {
+            position: absolute !important;
+            right: 15px !important;
+            left: auto !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
             cursor: pointer;
             color: #999;
-            z-index: 30; /* Higher z-index than lock icon and input */
+            z-index: 30 !important; /* Higher z-index than lock icon and input */
             font-size: 16px;
             width: 24px;
             height: 24px;
-            display: flex;
+            display: flex !important;
             align-items: center;
             justify-content: center;
             transition: color 0.3s ease;
             background: transparent;
             border: none;
             padding: 0;
-            pointer-events: auto; /* Ensure eye icon is clickable */
+            pointer-events: auto !important; /* Ensure eye icon is clickable */
+            margin: 0;
         }
 
         .password-toggle:hover {
@@ -391,8 +403,8 @@
 
                     <div class="form-group">
                         <label class="form-label">Password</label>
-                        <div class="input-group-custom">
-                            <i class="fas fa-lock"></i>
+                        <div class="input-group-custom password-field-wrapper">
+                            <i class="fas fa-lock password-lock-icon"></i>
                             <input type="password"
                                    class="form-control"
                                    name="password"
