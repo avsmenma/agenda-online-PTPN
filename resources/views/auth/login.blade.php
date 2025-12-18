@@ -122,6 +122,14 @@
             color: #999;
             font-size: 16px;
             z-index: 10;
+            pointer-events: none; /* Prevent icon from blocking clicks */
+        }
+
+        /* Specific styling for password field icon (lock) */
+        .input-group-custom .fa-lock {
+            left: 15px;
+            z-index: 10;
+            pointer-events: none; /* Prevent lock icon from blocking clicks */
         }
 
         .form-control {
@@ -129,9 +137,15 @@
             border: 1px solid #d1d5db;
             border-radius: 8px;
             padding-left: 45px;
+            padding-right: 45px; /* Add right padding for eye icon */
             font-size: 14px;
             transition: all 0.3s ease;
             background: #ffffff;
+        }
+        
+        /* Ensure password field has proper right padding for eye icon */
+        #password {
+            padding-right: 45px !important;
         }
 
         .form-control::placeholder {
@@ -150,11 +164,26 @@
             transform: translateY(-50%);
             cursor: pointer;
             color: #999;
-            z-index: 10;
+            z-index: 30; /* Higher z-index than lock icon and input */
+            font-size: 16px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+            background: transparent;
+            border: none;
+            padding: 0;
+            pointer-events: auto; /* Ensure eye icon is clickable */
         }
 
         .password-toggle:hover {
             color: #3b82f6;
+        }
+
+        .password-toggle:active {
+            transform: translateY(-50%) scale(0.95);
         }
 
         .remember-forgot {
@@ -407,12 +436,16 @@
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
 
-        togglePassword.addEventListener('click', function() {
+        togglePassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
 
+            // Toggle between eye and eye-slash icons
             this.classList.toggle('fa-eye');
-            // this.classList.toggle('fa-eye-slash');
+            this.classList.toggle('fa-eye-slash');
         });
 
         // Form submission loading state
