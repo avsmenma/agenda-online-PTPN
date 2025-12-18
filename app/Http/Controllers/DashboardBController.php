@@ -81,7 +81,7 @@ class DashboardBController extends Controller
             ->get();
 
         $data = array(
-            "title" => "Dashboard B",
+            "title" => "Team Verifikasi",
             "module" => "ibuB",
             "menuDashboard" => "Active",
             'menuDokumen' => '',
@@ -973,7 +973,7 @@ class DashboardBController extends Controller
 
         // Dates
         $dates = [
-            'Tanggal Dikirim ke Ibu Yuni' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d-m-Y H:i') : null,
+            'Tanggal Dikirim ke Team Verifikasi' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d-m-Y H:i') : null,
             'Tanggal Diproses' => $dokumen->getDataForRole('ibub')?->processed_at ? $dokumen->getDataForRole('ibub')->processed_at->format('d-m-Y H:i') : null,
             'Tanggal Dikembalikan' => $dokumen->returned_to_ibua_at ? $dokumen->returned_to_ibua_at->format('d-m-Y H:i') : null,
         ];
@@ -2172,7 +2172,7 @@ class DashboardBController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil diterima dan masuk ke sistem Ibu Yuni.'
+                'message' => 'Dokumen berhasil diterima dan masuk ke sistem Team Verifikasi.'
             ]);
 
         } catch (Exception $e) {
@@ -2436,7 +2436,7 @@ class DashboardBController extends Controller
     }
 
     /**
-     * Display analytics page for Ibu Yuni (similar to Ibu Tarapul)
+     * Display analytics page for Team Verifikasi (similar to Ibu Tarapul)
      */
     public function rekapanAnalytics(Request $request): View
     {
@@ -2559,8 +2559,8 @@ class DashboardBController extends Controller
 
                 if ($rejectedBy) {
                     $nameMap = [
-                        'IbuB' => 'Ibu Yuni',
-                        'ibuB' => 'Ibu Yuni',
+                        'IbuB' => 'Team Verifikasi',
+                        'ibuB' => 'Team Verifikasi',
                         'Perpajakan' => 'Team Perpajakan',
                         'perpajakan' => 'Team Perpajakan',
                         'Akutansi' => 'Team Akutansi',

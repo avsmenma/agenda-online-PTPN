@@ -383,7 +383,7 @@
 </style>
 
 <div class="card mb-4 p-3" style="background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 16px; box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05); border: 1px solid rgba(8, 62, 64, 0.08);">
-    <h2 class="form-title">Edit <span>Dokumen - Ibu Yuni</span></h2>
+    <h2 class="form-title">Edit <span>Dokumen - Team Verifikasi</span></h2>
 </div>
 
 <!-- Info Alert -->
@@ -392,7 +392,7 @@
   <div class="info-alert-content">
     <div class="info-alert-title">Informasi Edit Dokumen</div>
     <p class="info-alert-text">
-      Sebagai Ibu Yuni, Anda dapat mengedit semua data dokumen. Perubahan yang Anda lakukan akan tersimpan dan dapat dilihat oleh semua pihak terkait.
+      Sebagai Team Verifikasi, Anda dapat mengedit semua data dokumen. Perubahan yang Anda lakukan akan tersimpan dan dapat dilihat oleh semua pihak terkait.
     </p>
   </div>
 </div>

@@ -23,8 +23,8 @@ final class WelcomeMessageSeeder extends Seeder
             ],
             [
                 'module' => 'ibuB',
-                'message' => 'Selamat datang, Ibu Yuni',
-                'type' => WelcomeMessage::TYPE_PERSONAL,
+                'message' => 'Selamat datang, Team Verifikasi',
+                'type' => WelcomeMessage::TYPE_TEAM,
                 'is_active' => true,
             ],
             [

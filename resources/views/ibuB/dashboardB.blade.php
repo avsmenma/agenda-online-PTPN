@@ -557,7 +557,7 @@
           <div class="stat-content">
             <div class="stat-title">Total Dokumen Approved</div>
             <div class="stat-value">{{ number_format($totalDokumenApproved ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Disetujui Ibu Yuni</div>
+            <div class="stat-description">Disetujui Team Verifikasi</div>
           </div>
         </div>
       </div>

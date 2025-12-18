@@ -2095,7 +2095,7 @@
                   <strong>No. Agenda:</strong> ${doc.nomor_agenda || '-'}<br>
                   <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
                   <strong>Alasan:</strong> <span class="alasan-text">${doc.alasan_pengembalian || 'Tidak ada alasan'}</span><br>
-                  <small style="opacity: 0.8;">Dikembalikan dari Ibu Yuni - ${doc.returned_at}</small>
+                  <small style="opacity: 0.8;">Dikembalikan dari Team Verifikasi - ${doc.returned_at}</small>
                 </div>
                 <div class="notification-footer">
                   <button class="btn-refresh" onclick="refreshPage()">
@@ -2123,7 +2123,7 @@
                   <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
                   <strong>Nilai:</strong> ${formattedRupiah}<br>
                   <strong>Status Perpajakan:</strong> ${doc.status_perpajakan || 'Belum diproses'}<br>
-                  <small style="opacity: 0.8;">Dokumen baru dari Ibu Yuni - ${doc.sent_at}</small>
+                  <small style="opacity: 0.8;">Dokumen baru dari Team Verifikasi - ${doc.sent_at}</small>
                 </div>
                 <div class="notification-footer">
                   <button class="btn-refresh" onclick="refreshPage()">
@@ -2727,7 +2727,7 @@
     });
 
     // Check if user is IbuB
-    const isIbuB = ['ibub', 'ibu b', 'ibu yuni'].includes(userRoleLower);
+    const isIbuB = ['ibub', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
 
     // Debug logging
     console.log('Notification System Init:', {
@@ -2773,6 +2773,7 @@
         'ibub': 'IbuB',
         'ibu b': 'IbuB',
         'ibu yuni': 'IbuB',
+        'team verifikasi': 'IbuB',
         'perpajakan': 'Perpajakan',
         'akutansi': 'Akutansi'
     };

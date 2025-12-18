@@ -63,7 +63,7 @@ final readonly class WelcomeMessageService
     {
         return match ($module) {
             'IbuA' => 'Selamat datang, Ibu Tarapul',
-            'ibuB' => 'Selamat datang, Ibu Yuni',
+            'ibuB' => 'Selamat datang, Team Verifikasi',
             'perpajakan' => 'Selamat datang, Team Perpajakan',
             'akutansi' => 'Selamat datang, Team Akutansi',
             'pembayaran' => '{greeting}, Team Pembayaran!',

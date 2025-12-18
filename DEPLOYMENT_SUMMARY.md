@@ -233,6 +233,25 @@ sudo apt-get install -y nodejs
 
 ## Troubleshooting
 
+### Error: Permission denied pada halaman Login
+
+Jika muncul error seperti:
+```
+file_put_contents(/var/www/agenda_online_ptpn/storage/framework/views/...): Failed to open stream: Permission denied
+```
+
+Saat mengakses halaman login, ini adalah masalah permission yang sama seperti di atas.
+
+**Solusi cepat:**
+```bash
+cd /var/www/agenda_online_ptpn
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+php artisan view:clear
+```
+
+Lihat file `FIX_LOGIN_PERMISSION.md` untuk panduan lengkap.
+
 ### Error: Permission denied pada `storage/framework/views/`
 
 Jika muncul error seperti:

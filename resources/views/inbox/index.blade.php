@@ -802,7 +802,7 @@
                                 @php
                                     $hour = date('H');
                                     $greeting = $hour < 12 ? 'Selamat Pagi' : ($hour < 15 ? 'Selamat Siang' : ($hour < 18 ? 'Selamat Sore' : 'Selamat Malam'));
-                                    $userName = $userRole === 'IbuB' ? 'Ibu Yuni' : ucfirst($userRole);
+                                    $userName = $userRole === 'IbuB' ? 'Team Verifikasi' : ucfirst($userRole);
                                 @endphp
                                 {{ $greeting }}
                             </div>
