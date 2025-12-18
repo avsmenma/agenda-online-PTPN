@@ -865,7 +865,7 @@
                   Selesai
                 </button>
               @else
-                  <button type="button" class="btn-action" onclick="event.stopPropagation(); openEditPembayaranModal({{ $dokumen->id }})">
+                  <button type="button" class="btn-action" onclick="event.stopPropagation(); event.preventDefault(); if(typeof window.openEditPembayaranModal === 'function') { window.openEditPembayaranModal({{ $dokumen->id }}); } else { console.error('openEditPembayaranModal function not found'); alert('Fungsi tidak tersedia. Silakan refresh halaman.'); }">
                   <i class="fa-solid fa-edit"></i>
                   Edit
                   </button>
@@ -2075,7 +2075,10 @@ function changePerPage(perPage) {
     window.location.href = url.toString();
 }
 
-function openEditPembayaranModal(docId) {
+// Make function globally accessible
+window.openEditPembayaranModal = function(docId) {
+    console.log('openEditPembayaranModal called with docId:', docId);
+    
     // Set dokumen ID in hidden field
     const docIdField = document.getElementById('editPembayaranDocId');
     const tanggalField = document.getElementById('tanggal_dibayar');
@@ -2083,7 +2086,12 @@ function openEditPembayaranModal(docId) {
     const modalElement = document.getElementById('editPembayaranModal');
     
     if (!docIdField || !tanggalField || !linkField || !modalElement) {
-        console.error('Modal elements not found');
+        console.error('Modal elements not found:', {
+            docIdField: !!docIdField,
+            tanggalField: !!tanggalField,
+            linkField: !!linkField,
+            modalElement: !!modalElement
+        });
         alert('Terjadi kesalahan. Silakan muat ulang halaman.');
         return;
     }
@@ -2094,32 +2102,64 @@ function openEditPembayaranModal(docId) {
     fetch(`/dokumensPembayaran/${docId}/get-payment-data`, {
         method: 'GET',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
             'Accept': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Payment data received:', data);
         if (data.success) {
             tanggalField.value = data.tanggal_dibayar || '';
             linkField.value = data.link_bukti_pembayaran || '';
         }
         
         // Use getOrCreateInstance for better compatibility
-        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-        modal.show();
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.show();
+            console.log('Modal opened successfully');
+        } else {
+            console.error('Bootstrap Modal not available');
+            // Fallback: show modal manually
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = 'editPembayaranModalBackdrop';
+            document.body.appendChild(backdrop);
+        }
     })
     .catch(error => {
         console.error('Error fetching payment data:', error);
         // Jika error, tetap buka modal dengan nilai kosong
         tanggalField.value = '';
         linkField.value = '';
-        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-        modal.show();
+        
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.show();
+        } else {
+            // Fallback: show modal manually
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = 'editPembayaranModalBackdrop';
+            document.body.appendChild(backdrop);
+        }
     });
-}
+};
 
-function submitEditPembayaran() {
+// Make function globally accessible
+window.submitEditPembayaran = function() {
     const docId = document.getElementById('editPembayaranDocId').value;
     if (!docId) {
         alert('Dokumen tidak ditemukan. Silakan muat ulang halaman.');
@@ -2190,7 +2230,7 @@ function submitEditPembayaran() {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalHTML;
     });
-}
+};
 
 // Ensure workflow tracking links work correctly
 document.addEventListener('DOMContentLoaded', function() {
