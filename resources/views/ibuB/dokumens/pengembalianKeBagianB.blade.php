@@ -1565,10 +1565,27 @@ function loadDocumentDetail(docId) {
     </div>
   `;
 
-  fetch(`/dokumens/${docId}/detail`)
-    .then(response => response.text())
-    .then(html => {
-      detailContent.innerHTML = html;
+  // Use the same endpoint as the document list page to ensure consistency
+  fetch(`/documents/verifikasi/${docId}/detail`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success && data.dokumen) {
+        // Generate HTML from JSON data (same format as document list page)
+        const html = generateDocumentDetailHtml(data.dokumen);
+        detailContent.innerHTML = html;
+      } else {
+        throw new Error('Invalid response format');
+      }
     })
     .catch(error => {
       console.error('Error:', error);
@@ -1578,6 +1595,80 @@ function loadDocumentDetail(docId) {
         </div>
       `;
     });
+}
+
+function generateDocumentDetailHtml(dokumen) {
+  let html = '<div class="detail-grid">';
+  
+  // Document Information Section - Same as document list page
+  const detailItems = {
+    'Tanggal Masuk': dokumen.tanggal_masuk ? formatDateTime(dokumen.tanggal_masuk) : '-',
+    'Bulan': dokumen.bulan || '-',
+    'Tahun': dokumen.tahun || '-',
+    'No SPP': dokumen.nomor_spp || '-',
+    'Tanggal SPP': dokumen.tanggal_spp ? formatDate(dokumen.tanggal_spp) : '-',
+    'Uraian SPP': dokumen.uraian_spp || '-',
+    'Nilai Rp': formatRupiah(dokumen.nilai_rupiah) || '-',
+    'Kriteria CF': dokumen.kategori || '-',
+    'Sub Kriteria': dokumen.jenis_dokumen || '-',
+    'Item Sub Kriteria': dokumen.jenis_sub_pekerjaan || '-',
+    'Jenis Pembayaran': dokumen.jenis_pembayaran || '-',
+    'Dibayar Kepada': dokumen.dibayar_kepada || '-',
+    'Kebun': dokumen.kebun || '-',
+    'No SPK': dokumen.no_spk || '-',
+    'Tanggal SPK': dokumen.tanggal_spk ? formatDate(dokumen.tanggal_spk) : '-',
+    'Tanggal Berakhir SPK': dokumen.tanggal_berakhir_spk ? formatDate(dokumen.tanggal_berakhir_spk) : '-',
+    'No Berita Acara': dokumen.no_berita_acara || '-',
+    'Tanggal Berita Acara': dokumen.tanggal_berita_acara ? formatDate(dokumen.tanggal_berita_acara) : '-',
+    'No Mirror': dokumen.nomor_mirror || '-',
+  };
+
+  // Add PO/PR numbers if available
+  if (dokumen.dokumen_pos && dokumen.dokumen_pos.length > 0) {
+    const poNumbers = dokumen.dokumen_pos.map(po => po.nomor_po).join(', ');
+    detailItems['No PO'] = poNumbers;
+  }
+
+  if (dokumen.dokumen_prs && dokumen.dokumen_prs.length > 0) {
+    const prNumbers = dokumen.dokumen_prs.map(pr => pr.nomor_pr).join(', ');
+    detailItems['No PR'] = prNumbers;
+  }
+
+  // Generate detail items HTML
+  for (const [label, value] of Object.entries(detailItems)) {
+    html += `
+      <div class="detail-item">
+        <span class="detail-label">${label}</span>
+        <span class="detail-value">${value}</span>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
+function formatRupiah(angka) {
+  if (!angka) return '-';
+  return 'Rp. ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 // Send document to next handler
