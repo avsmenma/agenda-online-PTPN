@@ -756,8 +756,8 @@ class DashboardBController extends Controller
                 'is_ajax' => request()->ajax(),
             ]);
 
-            $allowedHandlers = ['ibuB', 'perpajakan', 'akutansi', 'ibuA'];
-            $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'approved_ibub', 'returned_to_department', 'returned_to_bidang', 'returned_to_ibua'];
+            $allowedHandlers = ['ibuB', 'perpajakan', 'akutansi', 'ibuA', 'pembayaran'];
+            $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_ibub', 'returned_to_department', 'returned_to_bidang', 'returned_to_ibua'];
 
             // Allow if rejected by IbuB
             $isInboxRejected = false;
