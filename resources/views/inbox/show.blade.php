@@ -806,10 +806,16 @@
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="timeline-content">
-                        <div class="timeline-title">Ibu Tarapul</div>
-                        <div class="timeline-time">
+                        <div class="timeline-title">
                             @php
                                 $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                // Get sender name based on document status and current role
+                                $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
+                            @endphp
+                            {{ $senderName }}
+                        </div>
+                        <div class="timeline-time">
+                            @php
                                 $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
                                 $roleData = $dokumen->getDataForRole($currentRoleCode);
                                 $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;

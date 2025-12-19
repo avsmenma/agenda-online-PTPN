@@ -463,6 +463,75 @@ class Dokumen extends Model
     }
 
     /**
+     * Get sender display name for inbox history based on document status
+     * This determines who sent the document to the current inbox
+     */
+    public function getInboxSenderDisplayName(?string $currentRoleCode = null): string
+    {
+        $currentRoleCode = strtolower($currentRoleCode ?? '');
+        $status = strtolower($this->status ?? '');
+        
+        // Tentukan pengirim berdasarkan status dokumen dan role saat ini
+        // Urutan alur dokumen: IbuA -> IbuB (Verifikasi) -> Perpajakan -> Akutansi -> Pembayaran
+        
+        // Jika dokumen dikirim ke perpajakan, pengirimnya adalah team verifikasi (ibuB)
+        if ($status === 'sent_to_perpajakan' || $status === 'pending_approval_perpajakan') {
+            // Cek apakah ada status dari ibuB yang menunjukkan dokumen dikirim dari sana
+            $ibuBStatus = $this->getStatusForRole('ibub');
+            if ($ibuBStatus && in_array(strtolower($ibuBStatus->status ?? ''), ['approved', 'pending'])) {
+                return 'Team Verifikasi';
+            }
+            // Jika current_handler adalah perpajakan atau user melihat dari inbox perpajakan
+            if ($this->current_handler === 'perpajakan' || $currentRoleCode === 'perpajakan') {
+                return 'Team Verifikasi';
+            }
+        }
+        
+        // Jika dokumen dikirim ke akutansi, pengirimnya adalah team perpajakan
+        if ($status === 'sent_to_akutansi' || $status === 'pending_approval_akutansi') {
+            $perpajakanStatus = $this->getStatusForRole('perpajakan');
+            if ($perpajakanStatus && in_array(strtolower($perpajakanStatus->status ?? ''), ['approved', 'pending'])) {
+                return 'Team Perpajakan';
+            }
+            if ($this->current_handler === 'akutansi' || $currentRoleCode === 'akutansi') {
+                return 'Team Perpajakan';
+            }
+        }
+        
+        // Jika dokumen dikirim ke pembayaran, pengirimnya adalah team akutansi
+        if ($status === 'sent_to_pembayaran' || $status === 'pending_approval_pembayaran') {
+            $akutansiStatus = $this->getStatusForRole('akutansi');
+            if ($akutansiStatus && in_array(strtolower($akutansiStatus->status ?? ''), ['approved', 'pending'])) {
+                return 'Team Akutansi';
+            }
+            if ($this->current_handler === 'pembayaran' || $currentRoleCode === 'pembayaran') {
+                return 'Team Akutansi';
+            }
+        }
+        
+        // Jika dokumen dikirim ke ibuB, pengirimnya adalah Ibu Tarapul
+        if ($status === 'sent_to_ibub' || $status === 'pending_approval_ibub' || $status === 'menunggu_di_approve') {
+            return 'Ibu Tarapul';
+        }
+        
+        // Fallback: berdasarkan current_handler atau created_by
+        if ($this->current_handler === 'perpajakan' && $currentRoleCode === 'perpajakan') {
+            return 'Team Verifikasi';
+        }
+        
+        if ($this->current_handler === 'akutansi' && $currentRoleCode === 'akutansi') {
+            return 'Team Perpajakan';
+        }
+        
+        if ($this->current_handler === 'pembayaran' && $currentRoleCode === 'pembayaran') {
+            return 'Team Akutansi';
+        }
+        
+        // Final fallback: gunakan getSenderDisplayName() untuk creator
+        return $this->getSenderDisplayName();
+    }
+
+    /**
      * Inbox Approval System Methods
      */
 
