@@ -218,6 +218,11 @@
     box-shadow: 0 4px 12px rgba(8, 62, 64, 0.15);
   }
 
+  .table-dokumen tbody tr.main-row.selected {
+    background: linear-gradient(135deg, rgba(136, 151, 23, 0.12) 0%, rgba(8, 62, 64, 0.06) 100%);
+    border-left-color: #889717;
+  }
+
   .table-dokumen tbody td {
     padding: 16px;
     vertical-align: middle;
@@ -318,58 +323,6 @@
     color: #2c3e50;
   }
 
-  /* Action Buttons */
-  .action-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .btn-action {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-width: 100px;
-    min-height: 40px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .btn-edit {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-  }
-
-  .btn-edit:hover {
-    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.4);
-    color: white;
-  }
-
-  .btn-send {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-  }
-
-  .btn-send:hover {
-    background: linear-gradient(135deg, #20c997 0%, #1ea085 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    color: white;
-  }
 
   /* Badge Status */
   .badge-status {
@@ -405,13 +358,13 @@
 
   /* Detail Row */
   .detail-row {
-    display: none;
+    display: none !important;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-left: 4px solid #889717;
   }
 
   .detail-row.show {
-    display: table-row;
+    display: table-row !important;
     animation: slideDown 0.3s ease;
   }
 
@@ -548,16 +501,6 @@
       grid-template-columns: 1fr;
     }
 
-    .action-buttons {
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .btn-action {
-      width: 100%;
-      justify-content: center;
-    }
-
     .table-dokumen {
       border-radius: 12px;
     }
@@ -666,7 +609,7 @@
           </thead>
           <tbody>
             @foreach($dokumens as $index => $dokumen)
-            <tr class="main-row" onclick="toggleDetail({{ $dokumen->id }})">
+            <tr class="main-row" data-id="{{ $dokumen->id }}" onclick="event.stopPropagation(); toggleDetail({{ $dokumen->id }});">
               <td>{{ $dokumens->firstItem() + $index }}</td>
               <td class="nomor-column">
                 <strong>{{ $dokumen->nomor_agenda }}</strong>
@@ -707,9 +650,9 @@
                 </div>
               </td>
             </tr>
-            <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none;">
-              <td colspan="8">
-                <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
+            <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none !important;">
+              <td colspan="8" style="padding: 0;">
+                <div class="detail-content" id="detail-content-{{ $dokumen->id }}" style="padding: 24px;">
                   <div class="text-center p-4">
                     <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
                     <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
@@ -743,19 +686,88 @@
 </div>
 
 <script>
+// Prevent event bubbling issues and ensure proper event handling
+document.addEventListener('DOMContentLoaded', function() {
+  // Close all detail rows when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.table-dokumen tbody tr')) {
+      const openRows = document.querySelectorAll('.detail-row.show');
+      openRows.forEach(row => {
+        row.style.display = 'none';
+        row.classList.remove('show');
+        const docId = row.id.replace('detail-', '');
+        const mainRow = document.querySelector(`tr.main-row[data-id="${docId}"]`);
+        if (mainRow) {
+          mainRow.classList.remove('selected');
+        }
+      });
+    }
+  });
+
+  // Handle row clicks
+  const mainRows = document.querySelectorAll('.table-dokumen tbody tr.main-row');
+  mainRows.forEach(row => {
+    row.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      const docId = this.getAttribute('data-id');
+      if (docId) {
+        toggleDetail(parseInt(docId));
+      }
+    });
+  });
+});
+
 function toggleDetail(docId) {
   const detailRow = document.getElementById('detail-' + docId);
+  const mainRow = document.querySelector(`tr.main-row[data-id="${docId}"]`);
+
+  if (!detailRow) {
+    console.error('Detail row not found for document:', docId);
+    return;
+  }
+
+  // Close all other detail rows first
+  const allDetailRows = document.querySelectorAll('.detail-row.show');
+  allDetailRows.forEach(row => {
+    if (row.id !== 'detail-' + docId) {
+      row.style.display = 'none';
+      row.classList.remove('show');
+      const otherDocId = row.id.replace('detail-', '');
+      const otherMainRow = document.querySelector(`tr.main-row[data-id="${otherDocId}"]`);
+      if (otherMainRow) {
+        otherMainRow.classList.remove('selected');
+      }
+    }
+  });
 
   // Toggle visibility
-  if (detailRow.style.display === 'none' || detailRow.style.display === '') {
+  const isHidden = detailRow.style.display === 'none' || !detailRow.classList.contains('show');
+  
+  if (isHidden) {
+    // Show detail row
     detailRow.style.display = 'table-row';
     detailRow.classList.add('show');
+    
+    // Add selected class to main row
+    if (mainRow) {
+      mainRow.classList.add('selected');
+    }
+
+    // Scroll to detail row
+    detailRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     // Load detail content via AJAX
     loadDocumentDetail(docId);
   } else {
+    // Hide detail row
     detailRow.style.display = 'none';
     detailRow.classList.remove('show');
+    
+    // Remove selected class from main row
+    if (mainRow) {
+      mainRow.classList.remove('selected');
+    }
   }
 }
 
