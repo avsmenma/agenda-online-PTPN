@@ -1041,9 +1041,10 @@
 
   /* State 2: ⏳ Diproses (In Progress) */
   .badge-status.badge-proses {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    background: linear-gradient(135deg, #2E6F68 0%, #2A605A 100%);
     color: white;
-    border-color: #083E40;
+    border-color: #2A605A;
+    box-shadow: 0 3px 12px rgba(46, 111, 104, 0.25);
   }
 
   .badge-status.badge-proses::after {
@@ -1051,7 +1052,7 @@
     display: inline-block;
     width: 6px;
     height: 6px;
-    background: white;
+    background: #4CAF50;
     border-radius: 50%;
     margin-left: 6px;
     animation: pulse 1.5s infinite;
@@ -1059,17 +1060,19 @@
 
   /* State 3: ✅ Selesai (Completed) */
   .badge-status.badge-selesai {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    background: linear-gradient(135deg, #2E6F68 0%, #2A605A 100%);
     color: white;
-    border-color: #083E40;
+    border-color: #2A605A;
+    box-shadow: 0 3px 12px rgba(46, 111, 104, 0.25);
   }
 
   /* Special state for sent documents */
   .badge-status.badge-sent {
-    background: #083E40;
+    background: linear-gradient(135deg, #2E6F68 0%, #2A605A 100%);
     color: white;
-    border-color: #083E40;
+    border-color: #2A605A;
     position: relative;
+    box-shadow: 0 3px 12px rgba(46, 111, 104, 0.25);
   }
 
   /* Special state for warning/pending approval */
