@@ -9,48 +9,91 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin-bottom: 0;
   }
 
+  /* Statistics Cards - Modern Design with Left Border & Icon */
   .stats-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
     margin-bottom: 30px;
   }
 
   .stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    background: #ffffff;
     border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.08);
-    border: 1px solid rgba(8, 62, 64, 0.05);
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #083E40;
     transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 120px;
   }
 
   .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(8, 62, 64, 0.12);
+    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.15);
+    border-left-width: 5px;
+  }
+
+  .stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .stat-label {
     font-size: 13px;
-    color: #666;
-    font-weight: 500;
-    margin-bottom: 5px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #333;
+  .stat-label i {
+    font-size: 16px;
+    color: #083E40;
   }
 
+  .stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #083E40;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+  }
+
+  .stat-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    box-shadow: 0 2px 8px rgba(8, 62, 64, 0.2);
+  }
+
+  .stat-icon {
+    font-size: 28px;
+    color: white;
+  }
+
+  /* Search Box - Enhanced */
   .search-box {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 20px;
+    padding: 20px 24px;
     border-radius: 16px;
     margin-bottom: 24px;
     box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
@@ -63,6 +106,7 @@
     border-right: none;
     border-radius: 10px 0 0 10px;
     padding: 10px 14px;
+    color: #083E40;
   }
 
   .search-box .form-control {
@@ -80,6 +124,22 @@
     box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
   }
 
+  .search-box .btn-primary {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .search-box .btn-primary:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+  }
+
+  /* Table Styling - Green Theme */
   .table-dokumen {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
@@ -99,7 +159,6 @@
   .table-dokumen thead {
     background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
     color: white;
-    position: relative;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -112,7 +171,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(136, 151, 23, 0.3) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
   }
 
   .table-dokumen thead th {
@@ -122,63 +181,48 @@
     border: none;
     text-align: center;
     letter-spacing: 0.8px;
-    color: #000000;
+    color: white;
     text-transform: uppercase;
     white-space: nowrap;
     position: relative;
-    text-shadow: none;
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .table-dokumen thead th:last-child {
     border-right: none;
   }
 
-  /* Column width settings for better layout */
-  .table-dokumen thead th:nth-child(1) { width: 60px; min-width: 60px; } /* No */
-  .table-dokumen thead th:nth-child(2) { width: 150px; min-width: 150px; } /* Nomor Agenda */
-  .table-dokumen thead th:nth-child(3) { width: 180px; min-width: 180px; } /* Nomor SPP */
-  .table-dokumen thead th:nth-child(4) { width: 250px; min-width: 200px; } /* Uraian */
-  .table-dokumen thead th:nth-child(5) { width: 140px; min-width: 140px; } /* Nilai */
-  .table-dokumen thead th:nth-child(6) { width: 160px; min-width: 160px; } /* Status Perpajakan */
-  .table-dokumen thead th:nth-child(7) { width: 180px; min-width: 180px; } /* Tanggal Dikembalikan */
-  .table-dokumen thead th:nth-child(8) { width: 400px; min-width: 300px; } /* Alasan */
-  .table-dokumen thead th:nth-child(9) { width: 200px; min-width: 180px; } /* Aksi */
-
-  .table-dokumen thead th::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%);
-    border-radius: 1px;
-  }
-
-  .table-dokumen tbody tr {
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-    border-bottom: 1px solid rgba(136, 151, 23, 0.05);
-  }
+  /* Column width settings */
+  .table-dokumen thead th:nth-child(1) { width: 60px; min-width: 60px; }
+  .table-dokumen thead th:nth-child(2) { width: 150px; min-width: 150px; }
+  .table-dokumen thead th:nth-child(3) { width: 180px; min-width: 180px; }
+  .table-dokumen thead th:nth-child(4) { width: 250px; min-width: 200px; }
+  .table-dokumen thead th:nth-child(5) { width: 140px; min-width: 140px; }
+  .table-dokumen thead th:nth-child(6) { width: 160px; min-width: 160px; }
+  .table-dokumen thead th:nth-child(7) { width: 180px; min-width: 180px; }
+  .table-dokumen thead th:nth-child(8) { width: 400px; min-width: 300px; }
+  .table-dokumen thead th:nth-child(9) { width: 200px; min-width: 180px; }
 
   .table-dokumen tbody tr.main-row {
     cursor: pointer;
+    transition: all 0.3s ease;
+    border-left: 4px solid #083E40;
+    border-bottom: 1px solid rgba(8, 62, 64, 0.1);
+    background: #ffffff;
   }
 
-  .table-dokumen tbody tr:hover {
+  .table-dokumen tbody tr.main-row:hover {
     background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(8, 62, 64, 0.04) 100%);
-    border-left: 3px solid #889717;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.1);
+    border-left-color: #889717;
+    transform: translateX(2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.15);
   }
 
   .table-dokumen tbody td {
     padding: 16px;
     vertical-align: middle;
-    border-bottom: 1px solid rgba(136, 151, 23, 0.03);
-    border-right: 1px solid rgba(136, 151, 23, 0.05);
+    border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+    border-right: 1px solid rgba(8, 62, 64, 0.05);
     text-align: center;
     font-size: 13px;
     line-height: 1.5;
@@ -190,6 +234,7 @@
     border-right: none;
   }
 
+  /* Alasan Column - Bubble Chat Style */
   .alasan-column {
     max-width: 400px;
     min-width: 300px;
@@ -200,21 +245,51 @@
     line-height: 1.6;
     text-align: left !important;
     padding: 16px 20px !important;
-    display: block;
-    hyphens: auto;
-    font-size: 12px;
-    color: #555;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-radius: 8px;
-    border-left: 3px solid #889717;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 0;
+  }
+
+  .alasan-bubble {
+    background: linear-gradient(135deg, #f0f9f9 0%, #e0f2f2 100%);
+    color: #083E40;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border-left: 4px solid #083E40;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(8, 62, 64, 0.1);
+  }
+
+  .alasan-bubble::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 20px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #083E40;
+  }
+
+  .alasan-icon {
+    font-size: 18px;
+    color: #083E40;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .alasan-text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    word-break: break-word;
   }
 
   .nilai-column {
-    font-weight: 600;
-    color: #2c3e50;
+    font-weight: 700;
+    color: #083E40;
     font-size: 14px;
   }
 
@@ -243,40 +318,44 @@
     color: #2c3e50;
   }
 
+  /* Action Buttons */
   .action-buttons {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
   }
 
   .btn-action {
-    padding: 8px 12px;
+    padding: 10px 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    min-width: 44px;
-    min-height: 36px;
+    gap: 6px;
+    min-width: 100px;
+    min-height: 40px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .btn-edit {
     background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
     color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
   }
 
   .btn-edit:hover {
     background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.4);
     color: white;
   }
 
@@ -292,6 +371,39 @@
     color: white;
   }
 
+  /* Badge Status */
+  .badge-status {
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .badge-status:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .badge-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: 2px solid transparent;
+  }
+
+  .badge-returned {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: white;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  }
+
+  /* Detail Row */
   .detail-row {
     display: none;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
@@ -306,14 +418,16 @@
   @keyframes slideDown {
     from {
       opacity: 0;
+      transform: translateY(-10px);
     }
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
 
   .detail-content {
-    padding: 20px;
+    padding: 24px;
     border-top: 2px solid rgba(8, 62, 64, 0.1);
   }
 
@@ -355,33 +469,7 @@
     word-break: break-word;
   }
 
-  .badge-status {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .badge-returned {
-    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-  }
-
-  .chevron-icon {
-    transition: transform 0.3s ease;
-    color: #fff;
-  }
-
-  .chevron-icon.rotate {
-    transform: rotate(180deg);
-  }
-
+  /* Empty State */
   .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -389,11 +477,72 @@
   }
 
   .empty-state i {
-    font-size: 48px;
+    font-size: 64px;
     margin-bottom: 16px;
-    opacity: 0.5;
+    opacity: 0.3;
+    color: #083E40;
   }
 
+  .empty-state h5 {
+    color: #083E40;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    color: #6c757d;
+    margin-bottom: 20px;
+  }
+
+  .empty-state .btn-primary {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .empty-state .btn-primary:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 20px;
+  }
+
+  .pagination .page-link {
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    background-color: white;
+    color: #083E40;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .pagination .page-link:hover {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border-color: #083E40;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+  }
+
+  .pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border-color: #083E40;
+  }
+
+  /* Responsive */
   @media (max-width: 768px) {
     .stats-container {
       grid-template-columns: 1fr;
@@ -408,6 +557,10 @@
       width: 100%;
       justify-content: center;
     }
+
+    .table-dokumen {
+      border-radius: 12px;
+    }
   }
 
   @media (max-width: 480px) {
@@ -419,51 +572,75 @@
     .detail-item {
       padding: 8px;
     }
+
+    .stat-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .stat-icon-wrapper {
+      margin: 0 auto;
+    }
   }
 </style>
 
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="form-title">Daftar Pengembalian Dokumen Team Perpajakan ke team verifikasi</h2>
+    <h2 class="form-title">Daftar Pengembalian Dokumen Team Perpajakan ke Team Verifikasi</h2>
   </div>
 
   <!-- Statistics Cards -->
   <div class="stats-container">
     <div class="stat-card">
-      <div class="stat-label">
-        <i class="fa-solid fa-file-invoice-dollar"></i>
-        Total Dokumen Dikembalikan
+      <div class="stat-content">
+        <div class="stat-label">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          Total Dokumen Dikembalikan
+        </div>
+        <div class="stat-value">{{ $totalReturned ?? 0 }}</div>
       </div>
-      <div class="stat-value">{{ $totalReturned ?? 0 }}</div>
+      <div class="stat-icon-wrapper">
+        <i class="fa-solid fa-file-invoice-dollar stat-icon"></i>
+      </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">
-        <i class="fa-solid fa-clock"></i>
-        Menunggu Verifikasi
+      <div class="stat-content">
+        <div class="stat-label">
+          <i class="fa-solid fa-clock"></i>
+          Menunggu Verifikasi
+        </div>
+        <div class="stat-value">{{ $totalPending ?? 0 }}</div>
       </div>
-      <div class="stat-value">{{ $totalPending ?? 0 }}</div>
+      <div class="stat-icon-wrapper">
+        <i class="fa-solid fa-clock stat-icon"></i>
+      </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">
-        <i class="fa-solid fa-check-circle"></i>
-        Selesai Diverifikasi
+      <div class="stat-content">
+        <div class="stat-label">
+          <i class="fa-solid fa-check-circle"></i>
+          Selesai Diverifikasi
+        </div>
+        <div class="stat-value">{{ $totalCompleted ?? 0 }}</div>
       </div>
-      <div class="stat-value">{{ $totalCompleted ?? 0 }}</div>
+      <div class="stat-icon-wrapper">
+        <i class="fa-solid fa-check-circle stat-icon"></i>
+      </div>
     </div>
   </div>
 
   <!-- Search Box -->
   <div class="search-box">
-    <form action="{{ route('returns.perpajakan.index') }}" method="GET" class="d-flex align-items-center w-100">
-      <div class="input-group me-3" style="max-width: 300px;">
+    <form action="{{ route('returns.perpajakan.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
+      <div class="input-group" style="flex: 1; min-width: 300px;">
         <span class="input-group-text">
-          <i class="fa-solid fa-search"></i>
+          <i class="fa-solid fa-magnifying-glass"></i>
         </span>
         <input type="text" class="form-control" name="search" placeholder="Cari nomor agenda, nomor SPP, atau uraian..." value="{{ request('search') }}">
       </div>
-
       <button type="submit" class="btn btn-primary">
         <i class="fa-solid fa-filter me-2"></i>Filter
       </button>
@@ -477,7 +654,7 @@
         <table class="table">
           <thead>
             <tr>
-              <th style="width: 50px;">No</th>
+              <th>No</th>
               <th>Nomor Agenda</th>
               <th>Nomor SPP</th>
               <th>Uraian</th>
@@ -485,7 +662,7 @@
               <th>Status Dokumen</th>
               <th>Tanggal Dikembalikan</th>
               <th>Alasan</th>
-              <th style="width: 200px;">Aksi</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -493,9 +670,9 @@
             <tr class="main-row" onclick="toggleDetail({{ $dokumen->id }})">
               <td>{{ $dokumens->firstItem() + $index }}</td>
               <td class="nomor-column">
-                {{ $dokumen->nomor_agenda }}
+                <strong>{{ $dokumen->nomor_agenda }}</strong>
                 <br>
-                <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
+                <small class="text-muted" style="font-size: 11px;">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
               </td>
               <td class="nomor-column">{{ $dokumen->nomor_spp }}</td>
               <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>
@@ -517,7 +694,10 @@
                 <small>{{ $dokumen->returned_from_perpajakan_at ? $dokumen->returned_from_perpajakan_at->format('d/m/Y H:i') : '-' }}</small>
               </td>
               <td class="alasan-column">
-                {{ $dokumen->alasan_pengembalian ?? '-' }}
+                <div class="alasan-bubble">
+                  <i class="fa-solid fa-comment-dots alasan-icon"></i>
+                  <span class="alasan-text">{{ $dokumen->alasan_pengembalian ?? '-' }}</span>
+                </div>
               </td>
               <td onclick="event.stopPropagation()">
                 <div class="action-buttons">
@@ -536,7 +716,8 @@
               <td colspan="9">
                 <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                   <div class="text-center p-4">
-                    <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
+                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                    <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
                   </div>
                 </div>
               </td>
@@ -546,8 +727,8 @@
         </table>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-4">
-          <div class="text-muted">
+        <div class="d-flex justify-content-between align-items-center" style="padding: 20px;">
+          <div class="text-muted" style="font-size: 13px; color: #6c757d;">
             Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari total {{ $dokumens->total() }} dokumen
           </div>
           {{ $dokumens->links() }}
@@ -556,8 +737,8 @@
         <div class="empty-state">
           <i class="fa-solid fa-file-invoice-dollar"></i>
           <h5>Belum ada dokumen</h5>
-          <p class="mt-2">Tidak ada dokumen yang dikembalikan ke team verifikasi saat ini.</p>
-          <a href="{{ route('documents.perpajakan.index') }}" class="btn btn-primary mt-3">
+          <p>Tidak ada dokumen yang dikembalikan ke team verifikasi saat ini.</p>
+          <a href="{{ route('documents.perpajakan.index') }}" class="btn btn-primary">
             <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Daftar Dokumen Team Perpajakan
           </a>
         </div>
@@ -584,19 +765,34 @@ function toggleDetail(docId) {
 }
 
 function loadDocumentDetail(docId) {
-  fetch(`/dokumensPerpajakan/${docId}/detail`)
-    .then(response => response.text())
-    .then(html => {
+  fetch(`/documents/perpajakan/${docId}/detail`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
       const detailContent = document.getElementById(`detail-content-${docId}`);
-      if (detailContent) {
-        detailContent.innerHTML = html;
+      if (detailContent && data.success && data.html) {
+        detailContent.innerHTML = data.html;
+      } else if (detailContent && data.html) {
+        // Fallback: jika response langsung HTML
+        detailContent.innerHTML = data.html;
+      } else {
+        throw new Error('Invalid response format');
       }
     })
     .catch(error => {
       console.error('Error loading document detail:', error);
       const detailContent = document.getElementById(`detail-content-${docId}`);
       if (detailContent) {
-        detailContent.innerHTML = '<div class="text-center p-4 text-danger">Gagal memuat detail dokumen</div>';
+        detailContent.innerHTML = '<div class="text-center p-4 text-danger"><i class="fa-solid fa-exclamation-triangle me-2"></i>Gagal memuat detail dokumen</div>';
       }
     });
 }
@@ -604,12 +800,16 @@ function loadDocumentDetail(docId) {
 function sendBackToVerification(docId) {
   if (confirm("Apakah Anda yakin ingin mengirim dokumen ini kembali ke proses verifikasi?")) {
     // AJAX call to send back to verification
-    fetch(`/pengembalian-dokumensPerpajakan/${docId}/kirim-kembali`, {
+    fetch(`/documents/perpajakan/${docId}/send-to-next`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-      }
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        next_handler: 'ibuB'
+      })
     })
     .then(response => response.json())
     .then(data => {
