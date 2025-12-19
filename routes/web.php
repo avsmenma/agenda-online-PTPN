@@ -248,10 +248,13 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
 })->middleware('auth')->name('api.documents.verifikasi.check-updates');
 
 Route::get('/api/documents/perpajakan/check-updates', [DashboardPerpajakanController::class, 'checkUpdates'])
+    ->middleware('auth')
     ->name('api.documents.perpajakan.check-updates');
 Route::get('/api/documents/akutansi/check-updates', [DashboardAkutansiController::class, 'checkUpdates'])
+    ->middleware('auth')
     ->name('api.documents.akutansi.check-updates');
 Route::get('/api/documents/pembayaran/check-updates', [DashboardPembayaranController::class, 'checkUpdates'])
+    ->middleware('auth')
     ->name('api.documents.pembayaran.check-updates');
 
 // Backward compatibility for old check-updates routes
@@ -389,7 +392,7 @@ Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->name('admin.monitoring');
 
 // Professional Document Routes - IbuA (Owner)
-Route::prefix('documents')->name('documents.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibua,IbuA'])->prefix('documents')->name('documents.')->group(function () {
     Route::get('/', [DokumenController::class, 'index'])->name('index');
     Route::get('/create', [DokumenController::class, 'create'])->name('create');
     Route::post('/', [DokumenController::class, 'store'])->name('store');
@@ -398,16 +401,12 @@ Route::prefix('documents')->name('documents.')->group(function () {
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForIbuA'])->name('progress');
     Route::put('/{dokumen}', [DokumenController::class, 'update'])->name('update');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
-    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToIbuB'])
-        ->middleware(['autologin', 'role:ibuA,admin'])
-        ->name('send-to-verifikasi');
-    Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])
-        ->middleware(['autologin', 'role:ibuB,admin'])
-        ->name('approve');
+    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToIbuB'])->name('send-to-verifikasi');
+    Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
 });
 
 // Professional Reports Routes
-Route::prefix('reports')->name('reports.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibua,IbuA'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [DokumenRekapanController::class, 'index'])->name('index');
     Route::get('/analytics', [DokumenRekapanController::class, 'analytics'])->name('analytics');
 });
@@ -442,37 +441,35 @@ Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'ind
 Route::get('diagram', [diagramController::class, 'index']);
 
 // Professional Document Routes - Verifikasi (IbuB)
-Route::prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [DashboardBController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/edit', [DashboardBController::class, 'editDokumen'])->name('edit');
     Route::put('/{dokumen}', [DashboardBController::class, 'updateDokumen'])->name('update');
     Route::post('/{dokumen}/return-to-department', [DashboardBController::class, 'returnToDepartment'])->name('return-to-department');
     Route::post('/{dokumen}/send-to-next', [DashboardBController::class, 'sendToNextHandler'])->name('send-to-next');
-    Route::post('/{dokumen}/set-deadline', [DashboardBController::class, 'setDeadline'])
-        ->middleware(['autologin', 'role:ibub,admin'])
-        ->name('set-deadline');
+    Route::post('/{dokumen}/set-deadline', [DashboardBController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/return-to-owner', [DashboardBController::class, 'returnToIbuA'])->name('return-to-owner');
     Route::post('/{dokumen}/change-status', [DashboardBController::class, 'changeDocumentStatus'])->name('change-status');
 });
 
 // Professional Reports Routes - Verifikasi
-Route::prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
     Route::get('/', [DashboardBController::class, 'rekapan'])->name('index');
-    Route::get('/analytics', [DashboardBController::class, 'rekapanAnalytics'])
-        ->middleware(['autologin', 'role:ibuB,admin'])
-        ->name('analytics');
+    Route::get('/analytics', [DashboardBController::class, 'rekapanAnalytics'])->name('analytics');
 });
 
 // Professional Returns Routes - Verifikasi
-Route::prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
     Route::get('/', [DashboardBController::class, 'pengembalian'])->name('index');
     Route::get('/stats', [DashboardBController::class, 'getPengembalianKeBagianStats'])->name('stats');
     Route::get('/bidang', [DashboardBController::class, 'pengembalianKeBidang'])->name('bidang');
 });
 
 // Professional Diagram Routes - Verifikasi
-Route::get('/reports/verifikasi/diagram', [DashboardBController::class, 'diagram'])->name('reports.verifikasi.diagram');
+Route::get('/reports/verifikasi/diagram', [DashboardBController::class, 'diagram'])
+    ->middleware(['auth', 'role:admin,ibub,IbuB'])
+    ->name('reports.verifikasi.diagram');
 
 // Backward compatibility for old IbuB routes
 Route::get('/dokumensB', function () {
@@ -544,7 +541,7 @@ Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,Pembayaran,admin'
 });
 
 // Professional Document Routes - Pembayaran
-Route::prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
+Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
     Route::get('/', [DashboardPembayaranController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('payment-data');
@@ -559,7 +556,7 @@ Route::prefix('documents/pembayaran')->name('documents.pembayaran.')->group(func
 });
 
 // Professional Reports Routes - Pembayaran
-Route::prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
+Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
     Route::get('/', [DashboardPembayaranController::class, 'rekapan'])->name('index');
     Route::get('/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('export');
     Route::get('/delays', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('delays');
@@ -569,10 +566,14 @@ Route::prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function
 });
 
 // Professional Returns Routes - Pembayaran
-Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengembalian'])->name('returns.pembayaran.index');
+Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengembalian'])
+    ->middleware(['auth', 'role:admin,Pembayaran,pembayaran'])
+    ->name('returns.pembayaran.index');
 
 // Professional Diagram Routes - Pembayaran
-Route::get('/reports/pembayaran/diagram', [DashboardPembayaranController::class, 'diagram'])->name('reports.pembayaran.diagram');
+Route::get('/reports/pembayaran/diagram', [DashboardPembayaranController::class, 'diagram'])
+    ->middleware(['auth', 'role:admin,Pembayaran,pembayaran'])
+    ->name('reports.pembayaran.diagram');
 
 // Backward compatibility for old Pembayaran routes
 Route::get('/dokumensPembayaran', function () {
@@ -624,7 +625,7 @@ Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pemba
 Route::get('/diagramPembayaran', [DashboardPembayaranController::class, 'diagram'])->name('diagramPembayaran.index');
 
 // Professional Document Routes - Akutansi
-Route::prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
+Route::middleware(['auth', 'role:admin,akutansi,Akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
     Route::get('/', [DashboardAkutansiController::class, 'dokumens'])->name('index');
     Route::get('/create', [DashboardAkutansiController::class, 'createDokumen'])->name('create');
     Route::post('/', [DashboardAkutansiController::class, 'storeDokumen'])->name('store');
@@ -632,23 +633,25 @@ Route::prefix('documents/akutansi')->name('documents.akutansi.')->group(function
     Route::get('/{dokumen}/detail', [DashboardAkutansiController::class, 'getDocumentDetail'])->name('detail');
     Route::put('/{dokumen}', [DashboardAkutansiController::class, 'updateDokumen'])->name('update');
     Route::delete('/{dokumen}', [DashboardAkutansiController::class, 'destroyDokumen'])->name('destroy');
-    Route::post('/{dokumen}/set-deadline', [DashboardAkutansiController::class, 'setDeadline'])
-        ->middleware(['autologin', 'role:akutansi,admin'])
-        ->name('set-deadline');
+    Route::post('/{dokumen}/set-deadline', [DashboardAkutansiController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/send-to-pembayaran', [DashboardAkutansiController::class, 'sendToPembayaran'])->name('send-to-pembayaran');
     Route::post('/{dokumen}/return', [DashboardAkutansiController::class, 'returnDocument'])->name('return');
 });
 
 // Professional Reports Routes - Akutansi
-Route::prefix('reports/akutansi')->name('reports.akutansi.')->group(function () {
+Route::middleware(['auth', 'role:admin,akutansi,Akutansi'])->prefix('reports/akutansi')->name('reports.akutansi.')->group(function () {
     Route::get('/', [DashboardAkutansiController::class, 'rekapan'])->name('index');
 });
 
 // Professional Returns Routes - Akutansi
-Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembalian'])->name('returns.akutansi.index');
+Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembalian'])
+    ->middleware(['auth', 'role:admin,akutansi,Akutansi'])
+    ->name('returns.akutansi.index');
 
 // Professional Diagram Routes - Akutansi
-Route::get('/reports/akutansi/diagram', [DashboardAkutansiController::class, 'diagram'])->name('reports.akutansi.diagram');
+Route::get('/reports/akutansi/diagram', [DashboardAkutansiController::class, 'diagram'])
+    ->middleware(['auth', 'role:admin,akutansi,Akutansi'])
+    ->name('reports.akutansi.diagram');
 
 // Backward compatibility for old Akutansi routes
 Route::get('/dokumensAkutansi', function () {
@@ -665,7 +668,7 @@ Route::get('/diagramAkutansi', function () {
 })->name('diagramAkutansi.index.old');
 
 // Professional Document Routes - Perpajakan
-Route::prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
+Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPerpajakanController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/edit', [DashboardPerpajakanController::class, 'editDokumen'])->name('edit');
@@ -677,17 +680,21 @@ Route::prefix('documents/perpajakan')->name('documents.perpajakan.')->group(func
 });
 
 // Professional Reports Routes - Perpajakan
-Route::prefix('reports/perpajakan')->name('reports.perpajakan.')->group(function () {
+Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('reports/perpajakan')->name('reports.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'rekapan'])->name('index');
     Route::get('/export', [DashboardPerpajakanController::class, 'exportView'])->name('export');
     Route::get('/export/download', [DashboardPerpajakanController::class, 'exportData'])->name('export.download');
 });
 
 // Professional Returns Routes - Perpajakan
-Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengembalian'])->name('returns.perpajakan.index');
+Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengembalian'])
+    ->middleware(['auth', 'role:admin,perpajakan,Perpajakan'])
+    ->name('returns.perpajakan.index');
 
 // Professional Diagram Routes - Perpajakan
-Route::get('/reports/perpajakan/diagram', [DashboardPerpajakanController::class, 'diagram'])->name('reports.perpajakan.diagram');
+Route::get('/reports/perpajakan/diagram', [DashboardPerpajakanController::class, 'diagram'])
+    ->middleware(['auth', 'role:admin,perpajakan,Perpajakan'])
+    ->name('reports.perpajakan.diagram');
 
 // Backward compatibility for old Perpajakan routes
 Route::get('/dokumensPerpajakan', function () {
