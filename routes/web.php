@@ -28,7 +28,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->name('login.store');
 });
 
-Route::middleware('autologin')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
 });
@@ -274,24 +274,24 @@ Route::get('/pembayaran/check-updates', function () {
 
 // Dashboard routes with role protection - Professional URLs
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware('autologin', 'role:admin,ibua')
+    ->middleware('auth', 'role:admin,ibua,IbuA')
     ->name('dashboard.main');
 
 // Professional dashboard routes
 Route::get('dashboard/verifikasi', [DashboardBController::class, 'index'])
-    ->middleware('autologin', 'role:admin,ibub')
+    ->middleware('auth', 'role:admin,ibub,IbuB')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
-    ->middleware('autologin', 'role:admin,Pembayaran')
+    ->middleware('auth', 'role:admin,Pembayaran,pembayaran')
     ->name('dashboard.pembayaran');
 
 Route::get('dashboard/akutansi', [DashboardAkutansiController::class, 'index'])
-    ->middleware('autologin', 'role:admin,akutansi')
+    ->middleware('auth', 'role:admin,akutansi,Akutansi')
     ->name('dashboard.akutansi');
 
 Route::get('dashboard/perpajakan', [DashboardPerpajakanController::class, 'index'])
-    ->middleware('autologin', 'role:admin,perpajakan')
+    ->middleware('auth', 'role:admin,perpajakan,Perpajakan')
     ->name('dashboard.perpajakan');
 
 // Dashboard for Verifikasi role (future implementation)
@@ -323,16 +323,16 @@ Route::get('dashboardVerifikasi', function () {
 
 // Professional API routes for rejected documents
 Route::get('/api/documents/rejected/check', [DashboardController::class, 'checkRejectedDocuments'])
-    ->middleware('autologin', 'role:admin,ibua')
+    ->middleware('auth', 'role:admin,ibua,IbuA')
     ->name('api.documents.rejected.check');
 Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
-    ->middleware('autologin', 'role:admin,ibua')
+    ->middleware('auth', 'role:admin,ibua,IbuA')
     ->name('api.documents.rejected.show');
 Route::get('/api/documents/verifikasi/rejected/check', [DashboardBController::class, 'checkRejectedDocuments'])
-    ->middleware('autologin', 'role:admin,ibub')
+    ->middleware('auth', 'role:admin,ibub,IbuB')
     ->name('api.documents.verifikasi.rejected.check');
 Route::get('/api/documents/verifikasi/rejected/{dokumen}', [DashboardBController::class, 'showRejectedDocument'])
-    ->middleware('autologin', 'role:admin,ibub')
+    ->middleware('auth', 'role:admin,ibub,IbuB')
     ->name('api.documents.verifikasi.rejected.show');
 
 // Backward compatibility for old rejected document routes
@@ -351,44 +351,44 @@ Route::get('/ibub/rejected/{dokumen}', function ($dokumen) {
 
 // Owner Dashboard routes (God View)
 Route::get('owner/dashboard', [OwnerDashboardController::class, 'index'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.dashboard');
 
 Route::get('owner/api/real-time-updates', [OwnerDashboardController::class, 'getRealTimeUpdates'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.api.real-time-updates');
 
 Route::get('owner/api/document-timeline/{id}', [OwnerDashboardController::class, 'getDocumentTimeline'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.api.document-timeline');
 
 Route::get('owner/workflow/{id}', [OwnerDashboardController::class, 'showWorkflow'])
-    ->middleware('autologin', 'role:admin,owner,Pembayaran')
+    ->middleware('auth', 'role:admin,owner,Pembayaran')
     ->name('owner.workflow');
 
 Route::get('owner/rekapan', [OwnerDashboardController::class, 'rekapan'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan');
 
 Route::get('owner/rekapan/{dokumen}/detail', [OwnerDashboardController::class, 'getDocumentDetail'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan.detail');
 
 Route::get('owner/rekapan/by-handler/{handler}', [OwnerDashboardController::class, 'rekapanByHandler'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan.byHandler');
 
 Route::get('owner/rekapan/detail/{type}', [OwnerDashboardController::class, 'rekapanDetail'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan.detailStats');
 
 Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rekapanKeterlambatan'])
-    ->middleware('autologin', 'role:admin,owner')
+    ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan-keterlambatan');
 
 // Admin shortcut to Owner Dashboard
 Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
-    ->middleware('autologin', 'role:admin')
+    ->middleware('auth', 'role:admin')
     ->name('admin.monitoring');
 
 // Professional Document Routes - IbuA (Owner)
@@ -486,7 +486,7 @@ Route::get('/diagramB', function () {
 })->name('diagramB.index.old');
 
 // Professional Approval Routes - Verifikasi (IbuB)
-Route::middleware(['autologin', 'role:ibub,admin'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:ibub,IbuB,admin'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::post('/{dokumen}/accept', [DashboardBController::class, 'acceptDocument'])
         ->name('accept');
     Route::post('/{dokumen}/reject', [DashboardBController::class, 'rejectDocument'])
@@ -507,7 +507,7 @@ Route::get('/ibub/pending-approval', function () {
 })->name('ibub.pending.approval.old');
 
 // Document Activity Tracking Routes
-Route::middleware(['autologin', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
+Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
     Route::post('/{dokumen}/activity', [\App\Http\Controllers\InboxController::class, 'trackActivity'])
         ->name('activity.track');
     Route::get('/{dokumen}/activities', [\App\Http\Controllers\InboxController::class, 'getActivities'])
@@ -516,8 +516,8 @@ Route::middleware(['autologin', 'web'])->prefix('api/documents')->name('api.docu
         ->name('activity.stop');
 });
 
-// Universal Approval Routes - Untuk semua user kecuali IbuA - dengan autologin
-Route::middleware(['autologin'])->group(function () {
+// Universal Approval Routes - Untuk semua user kecuali IbuA - dengan auth
+Route::middleware(['auth'])->group(function () {
     Route::post('/universal-approval/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])
         ->name('universal.approval.approve');
 
@@ -532,7 +532,7 @@ Route::middleware(['autologin'])->group(function () {
 });
 
 // Inbox Routes - Untuk IbuB, Perpajakan, Akutansi, Pembayaran
-Route::middleware(['autologin', 'role:IbuB,Perpajakan,Akutansi,Pembayaran,admin'])->group(function () {
+Route::middleware(['auth', 'role:IbuB,Perpajakan,Akutansi,Pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show');

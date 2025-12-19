@@ -5,66 +5,51 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * SECURITY FIX: This middleware now only checks authentication status.
+ * Auto-login functionality has been REMOVED for security reasons.
+ * All routes must use proper authentication via login page.
+ */
 class AutoLoginMiddleware
 {
     /**
      * Handle an incoming request.
+     * 
+     * SECURITY: This middleware now only checks if user is authenticated.
+     * It does NOT perform auto-login. Users must login via /login route.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is already logged in
-        if (Auth::check()) {
-            return $next($request);
+        // SECURITY: Only check if user is authenticated
+        if (!Auth::check()) {
+            Log::warning('SECURITY: Unauthenticated access attempt blocked by AutoLoginMiddleware', [
+                'path' => $request->path(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'referer' => $request->header('referer'),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                    'code' => 401
+                ], 401);
+            }
+
+            // Redirect to login page
+            return redirect('/login')
+                ->with('error', 'Silakan login terlebih dahulu untuk mengakses halaman ini.');
         }
 
-        // Auto-login based on URL parameter or default role
-        $role = $request->query('role', 'IbuA'); // Default to IbuA
-
-        // Map role names to user data
-        $roleMap = [
-            'IbuA' => ['name' => 'IbuA', 'email' => 'ibua@ptpn.com'],
-            'ibuB' => ['name' => 'IbuB', 'email' => 'ibub@ptpn.com'],
-            'Perpajakan' => ['name' => 'Perpajakan', 'email' => 'perpajakan@ptpn.com'],
-            'Akutansi' => ['name' => 'Akutansi', 'email' => 'akutansi@ptpn.com'],
-            'Pembayaran' => ['name' => 'Pembayaran', 'email' => 'pembayaran@ptpn.com']
-        ];
-
-        $userData = $roleMap[$role] ?? $roleMap['IbuA'];
-
-        // Normalize role casing to match User::ROLES
-        $normalizedRole = match ($role) {
-            'ibuB', 'IbuB', 'Ibu B' => 'IbuB',
-            'IbuA', 'ibuA', 'Ibu A' => 'IbuA',
-            'pembayaran', 'Pembayaran' => 'Pembayaran',
-            'perpajakan', 'Perpajakan' => 'Perpajakan',
-            'akutansi', 'Akutansi' => 'Akutansi',
-            'admin', 'Admin' => 'Admin',
-            default => $role
-        };
-
-        // Find or create user - use updateOrCreate to fix existing user roles
-        $user = User::updateOrCreate(
-            ['email' => $userData['email']],
-            [
-                'name' => $userData['name'],
-                'username' => strtolower(str_replace(' ', '', $userData['name'])), // Generate username from name
-                'password' => bcrypt('password'), // Default password
-                'role' => $normalizedRole,
-            ]
-        );
-
-        // Log in the user
-        Auth::login($user);
-
-        // Store current role in session for layout
-        session(['current_role' => $normalizedRole]);
-
+        // User is authenticated, proceed
         return $next($request);
     }
 }
