@@ -245,9 +245,32 @@ class Dokumen extends Model
         $targetStatus = $this->setStatusForRole($targetRoleCode, DokumenStatus::STATUS_PENDING, $senderRoleCode);
 
         // Update data for target role
-        $this->setDataForRole($targetRoleCode, [
+        // For returned documents sent to perpajakan, always reset deadline so it must be set again
+        $updateData = [
             'received_at' => now(),
-        ]);
+        ];
+        
+        // If sending to perpajakan and document was returned, always reset deadline
+        // This ensures returned documents must set deadline again
+        $isReturnedDocument = $this->returned_from_perpajakan_at || 
+                              $this->returned_from_akutansi_at || 
+                              $this->department_returned_at ||
+                              $this->returned_from_perpajakan_fixed_at;
+        
+        if ($targetRoleCode === 'perpajakan' && $isReturnedDocument) {
+            $updateData['deadline_at'] = null;
+            $updateData['deadline_days'] = null;
+            $updateData['deadline_note'] = null;
+            $updateData['processed_at'] = null; // Reset processed_at to lock document until deadline is set
+            
+            \Log::info('Reset deadline in sendToRoleInbox for returned document', [
+                'document_id' => $this->id,
+                'nomor_agenda' => $this->nomor_agenda,
+                'target_role' => $targetRoleCode
+            ]);
+        }
+        
+        $this->setDataForRole($targetRoleCode, $updateData);
 
         // Log activity
         DokumenActivityLog::create([
@@ -277,10 +300,30 @@ class Dokumen extends Model
         // Update role status to approved
         $status = $this->setStatusForRole($roleCode, DokumenStatus::STATUS_APPROVED, $approvedBy);
 
-        // Update processed time
+        // Update processed time and reset deadline for returned documents
         $roleData = $this->getDataForRole($roleCode);
         if ($roleData) {
             $roleData->processed_at = now();
+            
+            // Reset deadline for returned documents so they must set deadline again
+            // Check if document was returned (has returned_from_*_at timestamp)
+            $isReturnedDocument = $this->returned_from_perpajakan_at || 
+                                  $this->returned_from_akutansi_at || 
+                                  $this->department_returned_at;
+            
+            if ($isReturnedDocument && $roleCode === 'perpajakan') {
+                // Reset deadline for returned documents sent back to perpajakan
+                $roleData->deadline_at = null;
+                $roleData->deadline_days = null;
+                $roleData->deadline_note = null;
+                
+                \Log::info('Reset deadline for returned document approved from inbox', [
+                    'document_id' => $this->id,
+                    'nomor_agenda' => $this->nomor_agenda,
+                    'role_code' => $roleCode
+                ]);
+            }
+            
             $roleData->save();
         }
 

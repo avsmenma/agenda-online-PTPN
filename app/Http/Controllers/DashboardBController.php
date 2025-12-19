@@ -1208,8 +1208,14 @@ class DashboardBController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Update role data for perpajakan
-            $dokumen->setDataForRole('perpajakan', ['received_at' => now()]);
+            // Update role data for perpajakan - Reset deadline so it can be set again
+            $dokumen->setDataForRole('perpajakan', [
+                'received_at' => now(),
+                'deadline_at' => null, // Reset deadline so document must set deadline again
+                'deadline_days' => null,
+                'deadline_note' => null,
+                'processed_at' => null, // Reset processed_at so document is locked until deadline is set
+            ]);
 
             \DB::commit();
 
@@ -1287,6 +1293,34 @@ class DashboardBController extends Controller
 
             // Kirim ke inbox menggunakan sistem inbox yang sudah ada
             $dokumen->sendToInbox($inboxRole);
+            
+            // Reset deadline for the target handler AFTER sending to inbox
+            // This is important for returned documents that need to set deadline again
+            if ($request->next_handler === 'perpajakan') {
+                $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+                if ($perpajakanRoleData) {
+                    // Reset deadline for returned documents so they must set deadline again
+                    $perpajakanRoleData->deadline_at = null;
+                    $perpajakanRoleData->deadline_days = null;
+                    $perpajakanRoleData->deadline_note = null;
+                    $perpajakanRoleData->processed_at = null; // Reset processed_at to lock document until deadline is set
+                    $perpajakanRoleData->save();
+                    
+                    \Log::info('Reset deadline for returned document sent to perpajakan', [
+                        'document_id' => $dokumen->id,
+                        'nomor_agenda' => $dokumen->nomor_agenda
+                    ]);
+                } else {
+                    // Create role data if it doesn't exist, ensuring deadline is null
+                    $dokumen->setDataForRole('perpajakan', [
+                        'received_at' => now(),
+                        'deadline_at' => null,
+                        'deadline_days' => null,
+                        'deadline_note' => null,
+                        'processed_at' => null,
+                    ]);
+                }
+            }
             
             // Refresh dokumen untuk mendapatkan status terbaru
             $dokumen->refresh();
