@@ -157,7 +157,7 @@
   }
 
   .table-dokumen thead {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    background: #083E40;
     color: white;
     position: sticky;
     top: 0;
@@ -171,7 +171,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .table-dokumen thead th {
@@ -186,6 +186,7 @@
     white-space: nowrap;
     position: relative;
     border-right: 1px solid rgba(255, 255, 255, 0.2);
+    background: #083E40;
   }
 
   .table-dokumen thead th:last-child {
