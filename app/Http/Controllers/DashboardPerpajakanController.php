@@ -352,22 +352,73 @@ class DashboardPerpajakanController extends Controller
 
     public function editDokumen(Dokumen $dokumen)
     {
-        // Load relationships
-        $dokumen->load(['dokumenPos', 'dokumenPrs']);
-
-        // Only allow if current_handler is perpajakan
+        // Only allow editing if current_handler is perpajakan
         if ($dokumen->current_handler !== 'perpajakan') {
             return redirect()->route('documents.perpajakan.index')
-                ->with('error', 'Dokumen ini tidak dapat diakses.');
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
+        }
+
+        // Load relationships including dibayarKepadas
+        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Ambil data dari database cash_bank_new untuk dropdown baru
+        // Tambahkan try-catch untuk menangani error koneksi database
+        try {
+            $kategoriKriteria = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = \App\Models\SubKriteria::all();
+            $itemSubKriteria = \App\Models\ItemSubKriteria::all();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+        }
+
+        // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
+        try {
+            if ($dokumen->kategori) {
+                $foundKategori = \App\Models\KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+                if ($foundKategori) {
+                    $selectedKriteriaCfId = $foundKategori->id_kategori_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_dokumen) {
+                $foundSub = \App\Models\SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+                if ($foundSub) {
+                    $selectedSubKriteriaId = $foundSub->id_sub_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_sub_pekerjaan) {
+                $foundItem = \App\Models\ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+                if ($foundItem) {
+                    $selectedItemSubKriteriaId = $foundItem->id_item_sub_kriteria;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error finding IDs from names: ' . $e->getMessage());
+            // Continue dengan null values jika error
         }
 
         $data = array(
-            "title" => "Edit Dokumen Perpajakan",
+            "title" => "Edit Dokumen",
             "module" => "perpajakan",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
             'dokumen' => $dokumen,
+            'kategoriKriteria' => $kategoriKriteria ?? collect([]),
+            'subKriteria' => $subKriteria ?? collect([]),
+            'itemSubKriteria' => $itemSubKriteria ?? collect([]),
+            'selectedKriteriaCfId' => $selectedKriteriaCfId ?? null,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
         );
         return view('perpajakan.dokumens.editPerpajakan', $data);
     }
@@ -389,9 +440,25 @@ class DashboardPerpajakanController extends Controller
             'tanggal_masuk' => 'required|date',
             'nomor_spp' => 'required|string',
             'tanggal_spp' => 'required|date',
-            'uraian_spp' => 'nullable|string',
-            'nilai_rupiah' => 'required',
-            'kategori' => 'nullable|in:KONTRAK,LANGGANAN,BIAYA LAINNYA',
+            'uraian_spp' => 'required|string',
+            'nilai_rupiah' => 'required|string',
+            'kriteria_cf' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!\App\Models\KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
+                    $fail('Kriteria CF yang dipilih tidak valid.');
+                }
+            }],
+            'sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!\App\Models\SubKriteria::where('id_sub_kriteria', $value)->exists()) {
+                    $fail('Sub Kriteria yang dipilih tidak valid.');
+                }
+            }],
+            'item_sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (!\App\Models\ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
+                    $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                }
+            }],
+            // Keep old fields as nullable for backward compatibility
+            'kategori' => 'nullable|string',
             'jenis_dokumen' => 'nullable|string',
             'jenis_sub_pekerjaan' => 'nullable|string',
             'jenis_pembayaran' => 'nullable|string',
@@ -402,6 +469,7 @@ class DashboardPerpajakanController extends Controller
             'tanggal_spk' => 'nullable|date',
             'tanggal_berakhir_spk' => 'nullable|date',
             'keterangan' => 'nullable|string',
+            'kebun' => 'nullable|string',
             'nomor_po' => 'array',
             'nomor_po.*' => 'nullable|string',
             'nomor_pr' => 'array',
@@ -415,6 +483,32 @@ class DashboardPerpajakanController extends Controller
             'dpp_pph' => 'nullable|string',
             'ppn_terhutang' => 'nullable|string',
             'link_dokumen_pajak' => 'nullable|string',
+            // Perpajakan Extended Fields
+            'komoditi_perpajakan' => 'nullable|string',
+            'alamat_pembeli' => 'nullable|string',
+            'no_kontrak' => 'nullable|string',
+            'no_invoice' => 'nullable|string',
+            'tanggal_invoice' => 'nullable|date',
+            'dpp_invoice' => 'nullable|string',
+            'ppn_invoice' => 'nullable|string',
+            'dpp_ppn_invoice' => 'nullable|string',
+            'tanggal_pengajuan_pajak' => 'nullable|date',
+            'dpp_faktur' => 'nullable|string',
+            'ppn_faktur' => 'nullable|string',
+            'selisih_pajak' => 'nullable|string',
+            'keterangan_pajak' => 'nullable|string',
+            'penggantian_pajak' => 'nullable|string',
+            'dpp_penggantian' => 'nullable|string',
+            'ppn_penggantian' => 'nullable|string',
+            'selisih_ppn' => 'nullable|string',
+        ], [
+            'nomor_agenda.unique' => 'Nomor agenda sudah digunakan. Silakan gunakan nomor lain.',
+            'tahun.integer' => 'Tahun harus berupa angka.',
+            'tahun.min' => 'Tahun minimal 2020.',
+            'tahun.max' => 'Tahun maksimal 2030.',
+            'kriteria_cf.required' => 'Kriteria CF wajib dipilih.',
+            'sub_kriteria.required' => 'Sub Kriteria wajib dipilih.',
+            'item_sub_kriteria.required' => 'Item Sub Kriteria wajib dipilih.',
         ]);
 
         if ($validator->fails()) {
@@ -427,7 +521,7 @@ class DashboardPerpajakanController extends Controller
         try {
             \DB::beginTransaction();
 
-            // Format nilai rupiah
+            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
             $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
             if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
                 return redirect()->back()
@@ -435,6 +529,23 @@ class DashboardPerpajakanController extends Controller
                     ->with('error', 'Nilai rupiah harus lebih dari 0.');
             }
             $nilaiRupiah = (float) $nilaiRupiah;
+
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+            
+            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                $kategoriKriteria = \App\Models\KategoriKriteria::find($request->kriteria_cf);
+            }
+            
+            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                $subKriteria = \App\Models\SubKriteria::find($request->sub_kriteria);
+            }
+            
+            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                $itemSubKriteria = \App\Models\ItemSubKriteria::find($request->item_sub_kriteria);
+            }
 
             // Format dpp_pph (remove formatting dots)
             $dppPph = null;
@@ -512,7 +623,7 @@ class DashboardPerpajakanController extends Controller
             }
 
             // Update dokumen
-            // Note: kategori and jenis_dokumen are required fields, so use existing value if not provided
+            // Simpan nama dari ID untuk backward compatibility
             $updateData = [
                 'nomor_agenda' => $request->nomor_agenda,
                 'bulan' => $request->bulan,
@@ -520,11 +631,12 @@ class DashboardPerpajakanController extends Controller
                 'tanggal_masuk' => $request->tanggal_masuk,
                 'nomor_spp' => $request->nomor_spp,
                 'tanggal_spp' => $request->tanggal_spp,
-                'uraian_spp' => $request->uraian_spp ?? $dokumen->uraian_spp,
+                'uraian_spp' => $request->uraian_spp,
                 'nilai_rupiah' => $nilaiRupiah,
-                'kategori' => !empty($request->kategori) ? $request->kategori : $dokumen->kategori,
-                'jenis_dokumen' => !empty($request->jenis_dokumen) ? $request->jenis_dokumen : $dokumen->jenis_dokumen,
-                'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan),
                 'jenis_pembayaran' => $request->jenis_pembayaran,
                 'kebun' => $request->kebun,
                 'dibayar_kepada' => $request->dibayar_kepada,

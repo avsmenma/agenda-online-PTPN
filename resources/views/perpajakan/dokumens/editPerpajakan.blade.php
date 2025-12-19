@@ -7,8 +7,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-weight: 700;
-    margin-bottom: 24px;
   }
 
   .form-container {
@@ -18,6 +16,22 @@
     box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
     border: 1px solid rgba(8, 62, 64, 0.08);
     margin-bottom: 30px;
+  }
+
+  .form-title {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .form-title span {
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* Accordion Section Styles */
@@ -86,12 +100,24 @@
   }
 
   .accordion-content.active {
-    max-height: 3000px;
+    max-height: 2000px;
   }
 
   .accordion-body {
     padding: 24px;
     border-top: 1px solid rgba(8, 62, 64, 0.1);
+  }
+
+  .section-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .form-group {
@@ -128,6 +154,12 @@
     background-color: #fffef8;
   }
 
+  .form-group input:hover,
+  .form-group textarea:hover,
+  .form-group select:hover {
+    border-color: rgba(8, 62, 64, 0.25);
+  }
+
   .form-group textarea {
     min-height: 100px;
     resize: vertical;
@@ -145,153 +177,259 @@
     gap: 20px;
   }
 
+  /* Dynamic Field Styles */
   .dynamic-field {
     position: relative;
-    padding-right: 40px;
+    padding-right: 80px;
   }
 
-  .btn-remove {
+  .add-field-btn {
+    position: absolute;
+    right: 40px;
+    top: 32px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #889717;
+    background: linear-gradient(135deg, #ffffff 0%, #f9faf5 100%);
+    color: #083E40;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(136, 151, 23, 0.2);
+  }
+
+  .add-field-btn:hover {
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 4px 16px rgba(136, 151, 23, 0.3);
+  }
+
+  .remove-field-btn {
     position: absolute;
     right: 0;
     top: 32px;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #dc3545;
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    color: #dc3545;
     cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .btn-remove:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-  }
-
-  .btn-add {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.2);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
   }
 
-  .btn-add:hover {
+  .remove-field-btn:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+  }
+
+  .dynamic-field:first-of-type .remove-field-btn,
+  .dynamic-field[data-field-type="po"]:first-of-type .remove-field-btn,
+  .dynamic-field[data-field-type="pr"]:first-of-type .remove-field-btn {
+    display: none !important;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 2px solid rgba(8, 62, 64, 0.1);
+  }
+
+  .btn-reset {
+    padding: 12px 32px;
+    border: 2px solid rgba(8, 62, 64, 0.2);
+    background-color: white;
+    color: #083E40;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-reset:hover {
+    background-color: #083E40;
+    color: white;
+    border-color: #083E40;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(136, 151, 23, 0.3);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
   }
 
   .btn-submit {
-    padding: 14px 32px;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
+    padding: 12px 32px;
     border: none;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    color: white;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.3);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+    transition: left 0.5s ease;
+  }
+
+  .btn-submit:hover::before {
+    left: 100%;
   }
 
   .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(8, 62, 64, 0.3);
+    box-shadow: 0 6px 24px rgba(8, 62, 64, 0.4), 0 2px 8px rgba(136, 151, 23, 0.3);
   }
 
-  .btn-cancel {
-    padding: 14px 32px;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+  .btn-submit:active {
+    transform: translateY(0);
   }
 
-  .btn-cancel:hover {
-    background: #5a6268;
-    transform: translateY(-2px);
-    color: white;
+  .optional-label {
+    color: #889717;
+    font-weight: 500;
+    font-size: 12px;
+    opacity: 0.8;
   }
 
-  .alert {
+  .info-alert {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
+    border-left: 4px solid #2196F3;
     padding: 16px 20px;
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     display: flex;
-    align-items: center;
+    align-items: start;
     gap: 12px;
   }
 
-  .alert-success {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-    border-left: 4px solid #28a745;
-    color: #155724;
+  .info-alert i {
+    color: #2196F3;
+    font-size: 20px;
+    margin-top: 2px;
   }
 
-  .alert-error {
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-    border-left: 4px solid #dc3545;
-    color: #721c24;
+  .info-alert-content {
+    flex: 1;
   }
 
+  .info-alert-title {
+    font-weight: 600;
+    color: #1976D2;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+
+  .info-alert-text {
+    color: #424242;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* Perpajakan Section Special Styling */
+  .perpajakan-section {
+    border: 2px solid #ffc107;
+  }
+
+  .perpajakan-section .accordion-header {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+    border-left-color: #ffc107;
+  }
+
+  .perpajakan-section .accordion-header:hover {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.15) 0%, transparent 100%);
+  }
+
+  .perpajakan-section .accordion-title i {
+    color: #ffc107;
+  }
+
+  .perpajakan-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+  }
+
+  /* Responsive Design */
   @media (max-width: 768px) {
-    .form-row, .form-row-3 {
+    .form-row,
+    .form-row-3 {
       grid-template-columns: 1fr;
+    }
+
+    .accordion-header {
+      padding: 14px 16px;
+    }
+
+    .accordion-body {
+      padding: 16px;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .btn-reset,
+    .btn-submit {
+      width: 100%;
+      text-align: center;
     }
   }
 </style>
 
-<div class="container-fluid">
-  <h2>{{ $title }}</h2>
+<div class="card mb-4 p-3" style="background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 16px; box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05); border: 1px solid rgba(8, 62, 64, 0.08);">
+    <h2 class="form-title">Edit <span>Dokumen - Team Perpajakan</span></h2>
+</div>
 
-  @if(session('success'))
-    <div class="alert alert-success">
-      <i class="fa-solid fa-check-circle"></i>
-      {{ session('success') }}
-    </div>
-  @endif
+<!-- Info Alert -->
+<div class="info-alert">
+  <i class="fa-solid fa-circle-info"></i>
+  <div class="info-alert-content">
+    <div class="info-alert-title">Informasi Edit Dokumen</div>
+    <p class="info-alert-text">
+      Sebagai Team Perpajakan, Anda dapat mengedit semua data dokumen. Perubahan yang Anda lakukan akan tersimpan dan dapat dilihat oleh semua pihak terkait.
+    </p>
+  </div>
+</div>
 
-  @if(session('error'))
-    <div class="alert alert-error">
-      <i class="fa-solid fa-exclamation-circle"></i>
-      {{ session('error') }}
-    </div>
-  @endif
-
-  @if ($errors->any())
-    <div class="alert alert-error">
-      <i class="fa-solid fa-exclamation-circle"></i>
-      <div>
-        <strong>Terdapat kesalahan:</strong>
-        <ul style="margin: 8px 0 0 20px;">
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      </div>
-    </div>
-  @endif
-
-  <form action="{{ route('documents.perpajakan.update', $dokumen->id) }}" method="POST" class="form-container">
+<div class="form-container">
+  <form action="{{ route('documents.perpajakan.update', $dokumen->id) }}" method="POST" id="editForm">
     @csrf
     @method('PUT')
 
@@ -299,36 +437,110 @@
     <div class="accordion-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
-          <i class="fa-solid fa-file-alt"></i>
+          <i class="fa-solid fa-file-lines"></i>
           <span>Informasi Dasar Dokumen</span>
+          <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
       <div class="accordion-content active">
         <div class="accordion-body">
-          <div class="form-row-3">
+          <div class="form-row">
             <div class="form-group">
-              <label for="nomor_agenda">Nomor Agenda <span class="text-danger">*</span></label>
-              <input type="text" id="nomor_agenda" name="nomor_agenda" value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}" required>
+              <label>Nomor Agenda <span style="color: red;">*</span></label>
+              <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" required value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
+              @error('nomor_agenda')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
             <div class="form-group">
-              <label for="bulan">Bulan <span class="text-danger">*</span></label>
-              <select id="bulan" name="bulan" required>
+              <label>Bulan <span style="color: red;">*</span></label>
+              <select name="bulan" required>
                 <option value="">Pilih Bulan</option>
-                @foreach(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $bulanOption)
-                  <option value="{{ $bulanOption }}" {{ old('bulan', $dokumen->bulan) == $bulanOption ? 'selected' : '' }}>{{ $bulanOption }}</option>
+                @foreach(['Januari', 'Februari', 'Maret', 'April', 'May', 'Juni', 'July', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $bulan)
+                  <option value="{{ $bulan }}" {{ old('bulan', $dokumen->bulan) == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
                 @endforeach
               </select>
-            </div>
-            <div class="form-group">
-              <label for="tahun">Tahun <span class="text-danger">*</span></label>
-              <input type="number" id="tahun" name="tahun" value="{{ old('tahun', $dokumen->tahun) }}" min="2020" max="2030" required>
+              @error('bulan')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="tanggal_masuk">Tanggal Masuk <span class="text-danger">*</span></label>
-            <input type="datetime-local" id="tanggal_masuk" name="tanggal_masuk" value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('Y-m-d\TH:i') : '') }}" required>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tahun <span style="color: red;">*</span></label>
+              <input type="number" name="tahun" placeholder="2025" value="{{ old('tahun', $dokumen->tahun) }}" required min="2020" max="2030">
+              @error('tahun')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal Masuk <span style="color: red;">*</span></label>
+              <input type="datetime-local" name="tanggal_masuk" required value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk->format('Y-m-d\TH:i')) }}">
+              @error('tanggal_masuk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Dibayar Kepada</label>
+              @php
+                // Get dibayar_kepada from relationship if available, otherwise use direct field
+                $dibayarKepadaValue = old('dibayar_kepada');
+                if (!$dibayarKepadaValue) {
+                  if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
+                    $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
+                  } else {
+                    $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '';
+                  }
+                }
+              @endphp
+              <input type="text" name="dibayar_kepada" value="{{ $dibayarKepadaValue }}" placeholder="Nama penerima">
+              @error('dibayar_kepada')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>No Berita Acara</label>
+              <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024" value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
+              @error('no_berita_acara')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal Berita Acara</label>
+              <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
+              @error('tanggal_berita_acara')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>No SPK</label>
+              <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk', $dokumen->no_spk) }}">
+              @error('no_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal SPK</label>
+              <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
+              @error('tanggal_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Tanggal Berakhir SPK</label>
+              <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
+              @error('tanggal_berakhir_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
           </div>
         </div>
       </div>
@@ -338,8 +550,9 @@
     <div class="accordion-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
-          <i class="fa-solid fa-file-invoice"></i>
+          <i class="fa-solid fa-file-invoice-dollar"></i>
           <span>Informasi SPP</span>
+          <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
@@ -347,80 +560,97 @@
         <div class="accordion-body">
           <div class="form-row">
             <div class="form-group">
-              <label for="nomor_spp">Nomor SPP <span class="text-danger">*</span></label>
-              <input type="text" id="nomor_spp" name="nomor_spp" value="{{ old('nomor_spp', $dokumen->nomor_spp) }}" required>
+              <label>Nomor SPP <span style="color: red;">*</span></label>
+              <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" required value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
+              @error('nomor_spp')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
             <div class="form-group">
-              <label for="tanggal_spp">Tanggal SPP <span class="text-danger">*</span></label>
-              <input type="date" id="tanggal_spp" name="tanggal_spp" value="{{ old('tanggal_spp', $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : '') }}" required>
+              <label>Tanggal SPP <span style="color: red;">*</span></label>
+              <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp', $dokumen->tanggal_spp->format('Y-m-d\TH:i')) }}">
+              @error('tanggal_spp')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
 
           <div class="form-group">
-            <label for="uraian_spp">Uraian SPP</label>
-            <textarea id="uraian_spp" name="uraian_spp">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
+            <label>Uraian SPP <span style="color: red;">*</span></label>
+            <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran..." required>{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
+            @error('uraian_spp')
+              <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+            @enderror
           </div>
 
           <div class="form-group">
-            <label for="nilai_rupiah">Nilai Rupiah <span class="text-danger">*</span></label>
-            <input type="text" id="nilai_rupiah" name="nilai_rupiah" value="{{ old('nilai_rupiah', number_format($dokumen->nilai_rupiah, 0, ',', '.')) }}" required>
-            <small class="text-muted">Format: 1.000.000</small>
+            <label>Nilai Rupiah <span style="color: red;">*</span></label>
+            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah', number_format($dokumen->nilai_rupiah, 0, '', '.')) }}">
+            @error('nilai_rupiah')
+              <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+            @enderror
           </div>
 
           <div class="form-group">
-            <label for="ejaan_nilai_rupiah">Ejaan Nilai Rupiah</label>
-            <input type="text" id="ejaan_nilai_rupiah" name="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <label>Ejaan Nilai Rupiah</label>
+            <input type="text" name="ejaan_nilai_rupiah" id="edit-ejaan-nilai-rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Detail Dokumen -->
+    <!-- Section 3: Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
     <div class="accordion-section">
-      <div class="accordion-header" onclick="toggleAccordion(this)">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
-          <i class="fa-solid fa-list-alt"></i>
-          <span>Detail Dokumen</span>
+          <i class="fa-solid fa-tags"></i>
+          <span>Kriteria CF, Sub Kriteria, Item Sub Kriteria</span>
+          <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
-      <div class="accordion-content">
+      <div class="accordion-content active">
         <div class="accordion-body">
-          <div class="form-row-3">
+          <div class="form-row">
             <div class="form-group">
-              <label for="kategori">Kategori</label>
-              <select id="kategori" name="kategori">
-                <option value="">Pilih Kategori</option>
-                <option value="KONTRAK" {{ old('kategori', $dokumen->kategori) == 'KONTRAK' ? 'selected' : '' }}>KONTRAK</option>
-                <option value="LANGGANAN" {{ old('kategori', $dokumen->kategori) == 'LANGGANAN' ? 'selected' : '' }}>LANGGANAN</option>
-                <option value="BIAYA LAINNYA" {{ old('kategori', $dokumen->kategori) == 'BIAYA LAINNYA' ? 'selected' : '' }}>BIAYA LAINNYA</option>
+              <label>Kriteria CF <span style="color: red;">*</span></label>
+              <select id="kriteria_cf" name="kriteria_cf" required>
+                <option value="">Pilih Kriteria CF</option>
+                @if(isset($kategoriKriteria) && $kategoriKriteria->count() > 0)
+                  @foreach($kategoriKriteria as $kategori)
+                    <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+                      {{ $kategori->nama_kriteria }}
+                    </option>
+                  @endforeach
+                @endif
               </select>
+              @error('kriteria_cf')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
             <div class="form-group">
-              <label for="jenis_dokumen">Jenis Dokumen</label>
-              <input type="text" id="jenis_dokumen" name="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen) }}">
+              <label>Sub Kriteria <span style="color: red;">*</span></label>
+              <select id="sub_kriteria" name="sub_kriteria" required>
+                <option value="">Pilih Kriteria CF terlebih dahulu</option>
+              </select>
+              @error('sub_kriteria')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
             <div class="form-group">
-              <label for="jenis_sub_pekerjaan">Jenis Sub Pekerjaan</label>
-              <input type="text" id="jenis_sub_pekerjaan" name="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan) }}">
+              <label>Item Sub Kriteria <span style="color: red;">*</span></label>
+              <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+                <option value="">Pilih Sub Kriteria terlebih dahulu</option>
+              </select>
+              @error('item_sub_kriteria')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
-
           <div class="form-row">
             <div class="form-group">
-              <label for="jenis_pembayaran">Jenis Pembayaran</label>
-              <input type="text" id="jenis_pembayaran" name="jenis_pembayaran" value="{{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) }}">
-            </div>
-            <div class="form-group">
-              <label for="dibayar_kepada">Dibayar Kepada</label>
-              <input type="text" id="dibayar_kepada" name="dibayar_kepada" value="{{ old('dibayar_kepada', $dokumen->dibayar_kepada) }}">
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="kebun">Kebun</label>
-              <select id="kebun" name="kebun">
+              <label>Kebun <span class="optional-label">(Opsional)</span></label>
+              <select name="kebun">
                 <option value="">Pilih Kebun</option>
                 @php
                   $kebunOptions = [
@@ -442,38 +672,10 @@
                   <option value="{{ $kebun }}" {{ ($currentKebun == $kebun || $currentKebunClean == $kebun) ? 'selected' : '' }}>{{ $kebun }}</option>
                 @endforeach
               </select>
+              @error('kebun')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="no_berita_acara">No Berita Acara</label>
-              <input type="text" id="no_berita_acara" name="no_berita_acara" value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
-            </div>
-            <div class="form-group">
-              <label for="tanggal_berita_acara">Tanggal Berita Acara</label>
-              <input type="date" id="tanggal_berita_acara" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
-            </div>
-          </div>
-
-          <div class="form-row-3">
-            <div class="form-group">
-              <label for="no_spk">No SPK</label>
-              <input type="text" id="no_spk" name="no_spk" value="{{ old('no_spk', $dokumen->no_spk) }}">
-            </div>
-            <div class="form-group">
-              <label for="tanggal_spk">Tanggal SPK</label>
-              <input type="date" id="tanggal_spk" name="tanggal_spk" value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
-            </div>
-            <div class="form-group">
-              <label for="tanggal_berakhir_spk">Tanggal Berakhir SPK</label>
-              <input type="date" id="tanggal_berakhir_spk" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="keterangan">Keterangan</label>
-            <textarea id="keterangan" name="keterangan">{{ old('keterangan', $dokumen->keterangan) }}</textarea>
           </div>
         </div>
       </div>
@@ -485,73 +687,64 @@
         <div class="accordion-title">
           <i class="fa-solid fa-hashtag"></i>
           <span>Nomor PO & PR</span>
+          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Opsional</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
       <div class="accordion-content">
         <div class="accordion-body">
-          <div class="form-row">
-            <div>
-              <label>Nomor PO</label>
-              <div id="po-container">
-                @if($dokumen->dokumenPos->count() > 0)
-                  @foreach($dokumen->dokumenPos as $index => $po)
-                    <div class="form-group dynamic-field">
-                      <input type="text" name="nomor_po[]" value="{{ old('nomor_po.'.$index, $po->nomor_po) }}" placeholder="Nomor PO">
-                      @if($index > 0)
-                        <button type="button" class="btn-remove" onclick="removeField(this)">
-                          <i class="fa-solid fa-times"></i>
-                        </button>
-                      @endif
-                    </div>
-                  @endforeach
-                @else
-                  <div class="form-group dynamic-field">
-                    <input type="text" name="nomor_po[]" placeholder="Nomor PO">
-                  </div>
-                @endif
+          <!-- Nomor PO -->
+          <div id="po-container">
+            @if($dokumen->dokumenPos->count() > 0)
+              @foreach($dokumen->dokumenPos as $index => $po)
+              <div class="form-group dynamic-field" data-field-type="po">
+                <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+                <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ old('nomor_po.' . $index, $po->nomor_po) }}">
+                <button type="button" class="add-field-btn">+</button>
+                <button type="button" class="remove-field-btn" style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
               </div>
-              <button type="button" class="btn-add" onclick="addPOField()">
-                <i class="fa-solid fa-plus"></i> Tambah Nomor PO
-              </button>
+              @endforeach
+            @else
+            <div class="form-group dynamic-field" data-field-type="po">
+              <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+              <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ old('nomor_po.0') }}">
+              <button type="button" class="add-field-btn">+</button>
+              <button type="button" class="remove-field-btn" style="display: none;">−</button>
             </div>
+            @endif
+          </div>
 
-            <div>
-              <label>Nomor PR</label>
-              <div id="pr-container">
-                @if($dokumen->dokumenPrs->count() > 0)
-                  @foreach($dokumen->dokumenPrs as $index => $pr)
-                    <div class="form-group dynamic-field">
-                      <input type="text" name="nomor_pr[]" value="{{ old('nomor_pr.'.$index, $pr->nomor_pr) }}" placeholder="Nomor PR">
-                      @if($index > 0)
-                        <button type="button" class="btn-remove" onclick="removeField(this)">
-                          <i class="fa-solid fa-times"></i>
-                        </button>
-                      @endif
-                    </div>
-                  @endforeach
-                @else
-                  <div class="form-group dynamic-field">
-                    <input type="text" name="nomor_pr[]" placeholder="Nomor PR">
-                  </div>
-                @endif
+          <!-- Nomor PR -->
+          <div id="pr-container">
+            @if($dokumen->dokumenPrs->count() > 0)
+              @foreach($dokumen->dokumenPrs as $index => $pr)
+              <div class="form-group dynamic-field" data-field-type="pr">
+                <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+                <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ old('nomor_pr.' . $index, $pr->nomor_pr) }}">
+                <button type="button" class="add-field-btn">+</button>
+                <button type="button" class="remove-field-btn" style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
               </div>
-              <button type="button" class="btn-add" onclick="addPRField()">
-                <i class="fa-solid fa-plus"></i> Tambah Nomor PR
-              </button>
+              @endforeach
+            @else
+            <div class="form-group dynamic-field" data-field-type="pr">
+              <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+              <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ old('nomor_pr.0') }}">
+              <button type="button" class="add-field-btn">+</button>
+              <button type="button" class="remove-field-btn" style="display: none;">−</button>
             </div>
+            @endif
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 5: INFORMASI PERPAJAKAN (NEW) -->
-    <div class="accordion-section" style="border: 2px solid #ffc107;">
-      <div class="accordion-header active" onclick="toggleAccordion(this)" style="background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%); border-left-color: #ffc107;">
+    <!-- Section 5: Informasi Perpajakan -->
+    <div class="accordion-section perpajakan-section">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
-          <i class="fa-solid fa-file-invoice-dollar" style="color: #ffc107;"></i>
-          <span>Informasi Team Perpajakan</span>
-          <span style="background: #ffc107; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; margin-left: 8px;">KHUSUS PERPAJAKAN</span>
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span>Informasi Perpajakan</span>
+          <span class="perpajakan-badge">KHUSUS PERPAJAKAN</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
@@ -567,7 +760,7 @@
             </ul>
           </div>
 
-          <!-- Row 1: Komoditi & Status -->
+          <!-- Row 1: Komoditi -->
           <div class="form-row">
             <div class="form-group">
               <label for="komoditi_perpajakan">
@@ -627,13 +820,13 @@
               <label for="dpp_invoice">
                 <i class="fa-solid fa-money-bill me-1"></i>DPP Invoice
               </label>
-              <input type="text" id="dpp_invoice" name="dpp_invoice" value="{{ old('dpp_invoice', $dokumen->dpp_invoice ? number_format($dokumen->dpp_invoice, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="dpp_invoice" name="dpp_invoice" value="{{ old('dpp_invoice', $dokumen->dpp_invoice ? number_format($dokumen->dpp_invoice, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
             <div class="form-group">
               <label for="ppn_invoice">
                 <i class="fa-solid fa-percent me-1"></i>PPN Invoice
               </label>
-              <input type="text" id="ppn_invoice" name="ppn_invoice" value="{{ old('ppn_invoice', $dokumen->ppn_invoice ? number_format($dokumen->ppn_invoice, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="ppn_invoice" name="ppn_invoice" value="{{ old('ppn_invoice', $dokumen->ppn_invoice ? number_format($dokumen->ppn_invoice, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
           </div>
 
@@ -643,7 +836,7 @@
               <label for="dpp_ppn_invoice">
                 <i class="fa-solid fa-calculator me-1"></i>DPP + PPN Invoice
               </label>
-              <input type="text" id="dpp_ppn_invoice" name="dpp_ppn_invoice" value="{{ old('dpp_ppn_invoice', $dokumen->dpp_ppn_invoice ? number_format($dokumen->dpp_ppn_invoice, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="dpp_ppn_invoice" name="dpp_ppn_invoice" value="{{ old('dpp_ppn_invoice', $dokumen->dpp_ppn_invoice ? number_format($dokumen->dpp_ppn_invoice, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan" readonly style="background-color: #f5f5f5;">
             </div>
             <div class="form-group">
               <label for="tanggal_pengajuan_pajak">
@@ -682,19 +875,19 @@
               <label for="dpp_faktur">
                 <i class="fa-solid fa-money-bill-wave me-1"></i>DPP Faktur
               </label>
-              <input type="text" id="dpp_faktur" name="dpp_faktur" value="{{ old('dpp_faktur', $dokumen->dpp_faktur ? number_format($dokumen->dpp_faktur, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="dpp_faktur" name="dpp_faktur" value="{{ old('dpp_faktur', $dokumen->dpp_faktur ? number_format($dokumen->dpp_faktur, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
             <div class="form-group">
               <label for="ppn_faktur">
                 <i class="fa-solid fa-percent me-1"></i>PPN Faktur
               </label>
-              <input type="text" id="ppn_faktur" name="ppn_faktur" value="{{ old('ppn_faktur', $dokumen->ppn_faktur ? number_format($dokumen->ppn_faktur, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="ppn_faktur" name="ppn_faktur" value="{{ old('ppn_faktur', $dokumen->ppn_faktur ? number_format($dokumen->ppn_faktur, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
             <div class="form-group">
               <label for="selisih_pajak">
                 <i class="fa-solid fa-scale-balanced me-1"></i>Selisih
               </label>
-              <input type="text" id="selisih_pajak" name="selisih_pajak" value="{{ old('selisih_pajak', $dokumen->selisih_pajak ? number_format($dokumen->selisih_pajak, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="selisih_pajak" name="selisih_pajak" value="{{ old('selisih_pajak', $dokumen->selisih_pajak ? number_format($dokumen->selisih_pajak, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
           </div>
 
@@ -719,13 +912,13 @@
               <label for="penggantian_pajak">
                 <i class="fa-solid fa-money-bill-transfer me-1"></i>Penggantian
               </label>
-              <input type="text" id="penggantian_pajak" name="penggantian_pajak" value="{{ old('penggantian_pajak', $dokumen->penggantian_pajak ? number_format($dokumen->penggantian_pajak, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="penggantian_pajak" name="penggantian_pajak" value="{{ old('penggantian_pajak', $dokumen->penggantian_pajak ? number_format($dokumen->penggantian_pajak, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
             <div class="form-group">
               <label for="dpp_penggantian">
                 <i class="fa-solid fa-money-bill-wave me-1"></i>DPP Penggantian
               </label>
-              <input type="text" id="dpp_penggantian" name="dpp_penggantian" value="{{ old('dpp_penggantian', $dokumen->dpp_penggantian ? number_format($dokumen->dpp_penggantian, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="dpp_penggantian" name="dpp_penggantian" value="{{ old('dpp_penggantian', $dokumen->dpp_penggantian ? number_format($dokumen->dpp_penggantian, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
           </div>
 
@@ -735,13 +928,13 @@
               <label for="ppn_penggantian">
                 <i class="fa-solid fa-percent me-1"></i>PPN Penggantian
               </label>
-              <input type="text" id="ppn_penggantian" name="ppn_penggantian" value="{{ old('ppn_penggantian', $dokumen->ppn_penggantian ? number_format($dokumen->ppn_penggantian, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="ppn_penggantian" name="ppn_penggantian" value="{{ old('ppn_penggantian', $dokumen->ppn_penggantian ? number_format($dokumen->ppn_penggantian, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
             <div class="form-group">
               <label for="selisih_ppn">
                 <i class="fa-solid fa-scale-balanced me-1"></i>Selisih PPN
               </label>
-              <input type="text" id="selisih_ppn" name="selisih_ppn" value="{{ old('selisih_ppn', $dokumen->selisih_ppn ? number_format($dokumen->selisih_ppn, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="selisih_ppn" name="selisih_ppn" value="{{ old('selisih_ppn', $dokumen->selisih_ppn ? number_format($dokumen->selisih_ppn, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
           </div>
 
@@ -774,14 +967,14 @@
               <label for="dpp_pph">
                 <i class="fa-solid fa-money-bill-wave me-1"></i>DPP PPh
               </label>
-              <input type="text" id="dpp_pph" name="dpp_pph" value="{{ old('dpp_pph', $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="dpp_pph" name="dpp_pph" value="{{ old('dpp_pph', $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
               <small class="text-muted">Dasar Pengenaan Pajak</small>
             </div>
             <div class="form-group">
               <label for="ppn_terhutang">
                 <i class="fa-solid fa-calculator me-1"></i>PPN Terhutang
               </label>
-              <input type="text" id="ppn_terhutang" name="ppn_terhutang" value="{{ old('ppn_terhutang', $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '') }}" placeholder="0" class="format-rupiah">
+              <input type="text" id="ppn_terhutang" name="ppn_terhutang" value="{{ old('ppn_terhutang', $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, '', '.') : '') }}" placeholder="0" class="format-rupiah-perpajakan">
             </div>
           </div>
 
@@ -797,213 +990,279 @@
       </div>
     </div>
 
-    <!-- Submit Buttons -->
-    <div style="padding: 24px 0; display: flex; gap: 12px; justify-content: flex-end;">
-      <a href="{{ route('documents.perpajakan.index') }}" class="btn-cancel">
-        <i class="fa-solid fa-times"></i>
-        Batal
-      </a>
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <a href="{{ route('documents.perpajakan.index') }}" class="btn-reset" style="text-decoration: none; display: inline-block;">Batal</a>
       <button type="submit" class="btn-submit">
-        <i class="fa-solid fa-save"></i>
-        Simpan Perubahan
+        <i class="fa-solid fa-save me-2"></i>Update Dokumen
       </button>
     </div>
   </form>
 </div>
 
 <script>
-// Accordion toggle
+// Accordion Toggle
 function toggleAccordion(header) {
   const content = header.nextElementSibling;
-  const isActive = header.classList.contains('active');
+  const icon = header.querySelector('.accordion-icon');
 
-  if (isActive) {
-    header.classList.remove('active');
-    content.classList.remove('active');
-  } else {
-    header.classList.add('active');
-    content.classList.add('active');
-  }
+  header.classList.toggle('active');
+  content.classList.toggle('active');
 }
 
-// Add PO field
-function addPOField() {
-  const container = document.getElementById('po-container');
-  const newField = document.createElement('div');
-  newField.className = 'form-group dynamic-field';
-  newField.innerHTML = `
-    <input type="text" name="nomor_po[]" placeholder="Nomor PO">
-    <button type="button" class="btn-remove" onclick="removeField(this)">
-      <i class="fa-solid fa-times"></i>
-    </button>
-  `;
-  container.appendChild(newField);
-}
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Data untuk cascading dropdown dari cash_bank database
+  const subKriteriaData = @json($subKriteria ?? []);
+  const itemSubKriteriaData = @json($itemSubKriteria ?? []);
 
-// Add PR field
-function addPRField() {
-  const container = document.getElementById('pr-container');
-  const newField = document.createElement('div');
-  newField.className = 'form-group dynamic-field';
-  newField.innerHTML = `
-    <input type="text" name="nomor_pr[]" placeholder="Nomor PR">
-    <button type="button" class="btn-remove" onclick="removeField(this)">
-      <i class="fa-solid fa-times"></i>
-    </button>
-  `;
-  container.appendChild(newField);
-}
+  // Function to update sub kriteria dropdown
+  function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
+    const subKriteriaSelect = document.getElementById('sub_kriteria');
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
 
-// Remove field
-function removeField(button) {
-  button.parentElement.remove();
-}
+    // Clear existing options
+    subKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria</option>';
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
 
-// Function to convert number to Indonesian terbilang
-function terbilangRupiah(number) {
-  number = parseFloat(number.toString().replace(/\./g, '')) || 0;
-  
-  if (number == 0) {
-    return 'nol rupiah';
-  }
-
-  const angka = [
-    '', 'satu', 'dua', 'tiga', 'empat', 'lima',
-    'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
-    'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
-    'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
-  ];
-
-  let hasil = '';
-
-  // Handle triliun
-  if (number >= 1000000000000) {
-    const triliun = Math.floor(number / 1000000000000);
-    hasil += terbilangSatuan(triliun, angka) + ' triliun ';
-    number = number % 1000000000000;
-  }
-
-  // Handle milyar
-  if (number >= 1000000000) {
-    const milyar = Math.floor(number / 1000000000);
-    hasil += terbilangSatuan(milyar, angka) + ' milyar ';
-    number = number % 1000000000;
-  }
-
-  // Handle juta
-  if (number >= 1000000) {
-    const juta = Math.floor(number / 1000000);
-    hasil += terbilangSatuan(juta, angka) + ' juta ';
-    number = number % 1000000;
-  }
-
-  // Handle ribu
-  if (number >= 1000) {
-    const ribu = Math.floor(number / 1000);
-    if (ribu == 1) {
-      hasil += 'seribu ';
-    } else {
-      hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+    if (!kategoriKriteriaId) {
+      return;
     }
-    number = number % 1000;
-  }
 
-  // Handle ratusan, puluhan, dan satuan
-  if (number > 0) {
-    hasil += terbilangSatuan(number, angka);
-  }
+    // Filter sub kriteria berdasarkan id_kategori_kriteria
+    const filteredSubKriteria = subKriteriaData.filter(sub => 
+      sub.id_kategori_kriteria == kategoriKriteriaId
+    );
 
-  return hasil.trim() + ' rupiah';
-}
-
-function terbilangSatuan(number, angka) {
-  let hasil = '';
-  number = parseInt(number);
-
-  if (number == 0) {
-    return '';
-  }
-
-  // Handle ratusan
-  if (number >= 100) {
-    const ratus = Math.floor(number / 100);
-    if (ratus == 1) {
-      hasil += 'seratus ';
-    } else {
-      hasil += angka[ratus] + ' ratus ';
-    }
-    number = number % 100;
-  }
-
-  // Handle puluhan dan satuan (0-99)
-  if (number > 0) {
-    if (number < 20) {
-      hasil += angka[number] + ' ';
-    } else {
-      const puluhan = Math.floor(number / 10);
-      const satuan = number % 10;
-      
-      if (puluhan == 1) {
-        hasil += angka[10 + satuan] + ' ';
-      } else {
-        hasil += angka[puluhan] + ' puluh ';
-        if (satuan > 0) {
-          hasil += angka[satuan] + ' ';
-        }
+    // Populate sub kriteria options
+    filteredSubKriteria.forEach(sub => {
+      const option = document.createElement('option');
+      option.value = sub.id_sub_kriteria;
+      option.textContent = sub.nama_sub_kriteria;
+      if (selectedValue && selectedValue == sub.id_sub_kriteria) {
+        option.selected = true;
       }
-    }
-  }
-
-  return hasil.trim();
-}
-
-// Format rupiah input - all currency fields
-const rupiahInputs = [
-  'dpp_pph', 'ppn_terhutang',
-  'dpp_invoice', 'ppn_invoice', 'dpp_ppn_invoice',
-  'dpp_faktur', 'ppn_faktur', 'selisih_pajak',
-  'penggantian_pajak', 'dpp_penggantian', 'ppn_penggantian', 'selisih_ppn'
-];
-rupiahInputs.forEach(id => {
-  const input = document.getElementById(id);
-  if (input) {
-    input.addEventListener('input', function(e) {
-      let value = e.target.value.replace(/[^\d]/g, '');
-      e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      subKriteriaSelect.appendChild(option);
     });
   }
-});
 
-// Format nilai_rupiah input with dots and auto-generate ejaan
-const nilaiRupiahInput = document.getElementById('nilai_rupiah');
-const ejaanRupiahInput = document.getElementById('ejaan_nilai_rupiah');
+  // Function to update item sub kriteria dropdown
+  function updateItemSubKriteria(subKriteriaId, selectedValue = null) {
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
 
-if (nilaiRupiahInput) {
-  // Format on input
-  nilaiRupiahInput.addEventListener('input', function() {
-    // Format with dots
-    let value = this.value.replace(/[^\d]/g, '');
-    if (value) {
-      value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      this.value = value;
-    } else {
-      this.value = '';
+    // Clear existing options
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Item Sub Kriteria</option>';
+
+    if (!subKriteriaId) {
+      return;
     }
 
-    // Update ejaan
-    if (ejaanRupiahInput) {
-      const numericValue = value.replace(/\./g, '');
-      if (numericValue && numericValue > 0) {
-        ejaanRupiahInput.value = terbilangRupiah(numericValue);
-      } else {
-        ejaanRupiahInput.value = '';
+    // Filter item sub kriteria berdasarkan id_sub_kriteria
+    const filteredItemSubKriteria = itemSubKriteriaData.filter(item => 
+      item.id_sub_kriteria == subKriteriaId
+    );
+
+    // Populate item sub kriteria options
+    filteredItemSubKriteria.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id_item_sub_kriteria;
+      option.textContent = item.nama_item_sub_kriteria;
+      if (selectedValue && selectedValue == item.id_item_sub_kriteria) {
+        option.selected = true;
+      }
+      itemSubKriteriaSelect.appendChild(option);
+    });
+  }
+
+  // Initialize dropdowns if values already selected
+  const kriteriaCfSelect = document.getElementById('kriteria_cf');
+  const subKriteriaSelect = document.getElementById('sub_kriteria');
+  const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+  
+  const oldKriteriaCf = '{{ old("kriteria_cf", $selectedKriteriaCfId ?? "") }}';
+  const oldSubKriteria = '{{ old("sub_kriteria", $selectedSubKriteriaId ?? "") }}';
+  const oldItemSubKriteria = '{{ old("item_sub_kriteria", $selectedItemSubKriteriaId ?? "") }}';
+
+  if (oldKriteriaCf && oldKriteriaCf !== '') {
+    updateSubKriteria(oldKriteriaCf, oldSubKriteria);
+    if (oldSubKriteria && oldSubKriteria !== '') {
+      updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
+    }
+  }
+
+  // Event listener untuk dropdown kriteria CF
+  kriteriaCfSelect.addEventListener('change', function() {
+    updateSubKriteria(this.value);
+    // Reset item sub kriteria
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+  });
+
+  // Event listener untuk dropdown sub kriteria
+  subKriteriaSelect.addEventListener('change', function() {
+    updateItemSubKriteria(this.value);
+  });
+
+  // Event delegation untuk tombol tambah dan kurang
+  document.addEventListener('click', function(e) {
+    // Handle tombol tambah (+)
+    if (e.target.classList.contains('add-field-btn')) {
+      e.preventDefault();
+      const fieldGroup = e.target.closest('.dynamic-field');
+      const newField = fieldGroup.cloneNode(true);
+
+      // Reset nilai input
+      newField.querySelector('input').value = '';
+
+      // Show remove button on new field
+      const newRemoveBtn = newField.querySelector('.remove-field-btn');
+      if (newRemoveBtn) {
+        newRemoveBtn.style.display = 'flex';
+      }
+
+      // Hide remove button on first field
+      const fieldType = fieldGroup.getAttribute('data-field-type');
+      const allFields = document.querySelectorAll(`[data-field-type="${fieldType}"]`);
+      if (allFields.length >= 1) {
+        const firstField = allFields[0];
+        const firstRemoveBtn = firstField.querySelector('.remove-field-btn');
+        if (firstRemoveBtn) {
+          firstRemoveBtn.style.display = 'none';
+        }
+      }
+
+      // Insert after current field
+      fieldGroup.parentNode.insertBefore(newField, fieldGroup.nextSibling);
+    }
+
+    // Handle tombol kurang (-)
+    if (e.target.classList.contains('remove-field-btn')) {
+      e.preventDefault();
+      const fieldGroup = e.target.closest('.dynamic-field');
+      const fieldType = fieldGroup.getAttribute('data-field-type');
+      const allFields = document.querySelectorAll(`[data-field-type="${fieldType}"]`);
+
+      // Only remove if there's more than one field
+      if (allFields.length > 1) {
+        fieldGroup.remove();
+
+        // Hide remove button on first field if only one remains
+        const remainingFields = document.querySelectorAll(`[data-field-type="${fieldType}"]`);
+        if (remainingFields.length === 1) {
+          const firstRemoveBtn = remainingFields[0].querySelector('.remove-field-btn');
+          if (firstRemoveBtn) {
+            firstRemoveBtn.style.display = 'none';
+          }
+        }
       }
     }
   });
 
-  // Format on paste
-  nilaiRupiahInput.addEventListener('paste', function(e) {
-    setTimeout(() => {
+  // Function to convert number to Indonesian terbilang
+  function terbilangRupiah(number) {
+    number = parseFloat(number.toString().replace(/\./g, '')) || 0;
+    
+    if (number == 0) {
+      return 'nol rupiah';
+    }
+
+    const angka = [
+      '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+      'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+      'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+      'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+    ];
+
+    let hasil = '';
+
+    // Handle triliun
+    if (number >= 1000000000000) {
+      const triliun = Math.floor(number / 1000000000000);
+      hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+      number = number % 1000000000000;
+    }
+
+    // Handle milyar
+    if (number >= 1000000000) {
+      const milyar = Math.floor(number / 1000000000);
+      hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+      number = number % 1000000000;
+    }
+
+    // Handle juta
+    if (number >= 1000000) {
+      const juta = Math.floor(number / 1000000);
+      hasil += terbilangSatuan(juta, angka) + ' juta ';
+      number = number % 1000000;
+    }
+
+    // Handle ribu
+    if (number >= 1000) {
+      const ribu = Math.floor(number / 1000);
+      if (ribu == 1) {
+        hasil += 'seribu ';
+      } else {
+        hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+      }
+      number = number % 1000;
+    }
+
+    // Handle ratusan, puluhan, dan satuan
+    if (number > 0) {
+      hasil += terbilangSatuan(number, angka);
+    }
+
+    return hasil.trim() + ' rupiah';
+  }
+
+  function terbilangSatuan(number, angka) {
+    let hasil = '';
+    number = parseInt(number);
+
+    if (number == 0) {
+      return '';
+    }
+
+    // Handle ratusan
+    if (number >= 100) {
+      const ratus = Math.floor(number / 100);
+      if (ratus == 1) {
+        hasil += 'seratus ';
+      } else {
+        hasil += angka[ratus] + ' ratus ';
+      }
+      number = number % 100;
+    }
+
+    // Handle puluhan dan satuan (0-99)
+    if (number > 0) {
+      if (number < 20) {
+        hasil += angka[number] + ' ';
+      } else {
+        const puluhan = Math.floor(number / 10);
+        const satuan = number % 10;
+        
+        if (puluhan == 1) {
+          hasil += angka[10 + satuan] + ' ';
+        } else {
+          hasil += angka[puluhan] + ' puluh ';
+          if (satuan > 0) {
+            hasil += angka[satuan] + ' ';
+          }
+        }
+      }
+    }
+
+    return hasil.trim();
+  }
+
+  // Format nilai rupiah input with dots and auto-generate ejaan
+  const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
+  const ejaanRupiahInput = document.getElementById('edit-ejaan-nilai-rupiah');
+
+  if (nilaiRupiahInput) {
+    // Format on input
+    nilaiRupiahInput.addEventListener('input', function() {
+      // Format with dots
       let value = this.value.replace(/[^\d]/g, '');
       if (value) {
         value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -1021,59 +1280,108 @@ if (nilaiRupiahInput) {
           ejaanRupiahInput.value = '';
         }
       }
-    }, 10);
+    });
+
+    // Format on paste
+    nilaiRupiahInput.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        let value = this.value.replace(/[^\d]/g, '');
+        if (value) {
+          value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          this.value = value;
+        } else {
+          this.value = '';
+        }
+
+        // Update ejaan
+        if (ejaanRupiahInput) {
+          const numericValue = value.replace(/\./g, '');
+          if (numericValue && numericValue > 0) {
+            ejaanRupiahInput.value = terbilangRupiah(numericValue);
+          } else {
+            ejaanRupiahInput.value = '';
+          }
+        }
+      }, 10);
+    });
+
+    // Format initial value if exists
+    if (nilaiRupiahInput.value) {
+      nilaiRupiahInput.dispatchEvent(new Event('input'));
+    }
+  }
+
+  // Format rupiah untuk semua field perpajakan
+  const perpajakanRupiahFields = document.querySelectorAll('.format-rupiah-perpajakan');
+  perpajakanRupiahFields.forEach(field => {
+    field.addEventListener('input', function() {
+      let value = this.value.replace(/[^\d]/g, '');
+      if (value) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        this.value = value;
+      } else {
+        this.value = '';
+      }
+    });
+
+    field.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        let value = this.value.replace(/[^\d]/g, '');
+        if (value) {
+          value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          this.value = value;
+        } else {
+          this.value = '';
+        }
+      }, 10);
+    });
   });
 
-  // Format initial value if exists and generate ejaan
-  if (nilaiRupiahInput.value) {
-    // Ensure format is correct (with dots)
-    let value = nilaiRupiahInput.value.replace(/[^\d]/g, '');
-    if (value) {
-      value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      nilaiRupiahInput.value = value;
+  // Auto-calculate DPP + PPN Invoice
+  const dppInvoice = document.getElementById('dpp_invoice');
+  const ppnInvoice = document.getElementById('ppn_invoice');
+  const dppPpnInvoice = document.getElementById('dpp_ppn_invoice');
+
+  function calculateDppPpnInvoice() {
+    const dpp = parseFloat((dppInvoice?.value || '0').replace(/\./g, '')) || 0;
+    const ppn = parseFloat((ppnInvoice?.value || '0').replace(/\./g, '')) || 0;
+    const total = dpp + ppn;
+    if (dppPpnInvoice) {
+      dppPpnInvoice.value = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+  }
+
+  if (dppInvoice) dppInvoice.addEventListener('input', calculateDppPpnInvoice);
+  if (ppnInvoice) ppnInvoice.addEventListener('input', calculateDppPpnInvoice);
+
+  // Initialize DPP+PPN Invoice if values exist
+  if (dppInvoice && ppnInvoice && (dppInvoice.value || ppnInvoice.value)) {
+    calculateDppPpnInvoice();
+  }
+
+  // Remove format dots from all rupiah fields before form submit
+  document.querySelector('form').addEventListener('submit', function(e) {
+    // Remove dots from nilai_rupiah
+    const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
+    if (nilaiRupiahInput && nilaiRupiahInput.value) {
+      nilaiRupiahInput.value = nilaiRupiahInput.value.replace(/\./g, '');
     }
     
-    // Generate ejaan for initial value
-    if (ejaanRupiahInput) {
-      const numericValue = value.replace(/\./g, '');
-      if (numericValue && numericValue > 0) {
-        ejaanRupiahInput.value = terbilangRupiah(numericValue);
-      }
+    // Remove ejaan_nilai_rupiah from form submission (it's readonly/display only)
+    const ejaanInput = document.getElementById('edit-ejaan-nilai-rupiah');
+    if (ejaanInput) {
+      ejaanInput.disabled = true; // Disable so it won't be submitted
     }
-  }
-}
 
-// Auto-calculate DPP + PPN Invoice
-const dppInvoice = document.getElementById('dpp_invoice');
-const ppnInvoice = document.getElementById('ppn_invoice');
-const dppPpnInvoice = document.getElementById('dpp_ppn_invoice');
+    // Remove dots from all perpajakan rupiah fields
+    perpajakanRupiahFields.forEach(field => {
+      if (field.value) {
+        field.value = field.value.replace(/\./g, '');
+      }
+    });
+  });
 
-function calculateDppPpnInvoice() {
-  const dpp = parseFloat((dppInvoice?.value || '0').replace(/\./g, '')) || 0;
-  const ppn = parseFloat((ppnInvoice?.value || '0').replace(/\./g, '')) || 0;
-  const total = dpp + ppn;
-  if (dppPpnInvoice) {
-    dppPpnInvoice.value = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  }
-}
-
-if (dppInvoice) dppInvoice.addEventListener('input', calculateDppPpnInvoice);
-if (ppnInvoice) ppnInvoice.addEventListener('input', calculateDppPpnInvoice);
-
-// Remove format dots from nilai_rupiah before form submit
-document.querySelector('form').addEventListener('submit', function(e) {
-  const nilaiRupiahInput = document.getElementById('nilai_rupiah');
-  if (nilaiRupiahInput && nilaiRupiahInput.value) {
-    // Remove all dots before submitting
-    nilaiRupiahInput.value = nilaiRupiahInput.value.replace(/\./g, '');
-  }
-  
-  // Remove ejaan_nilai_rupiah from form submission (it's readonly/display only)
-  const ejaanInput = document.getElementById('ejaan_nilai_rupiah');
-  if (ejaanInput) {
-    ejaanInput.disabled = true; // Disable so it won't be submitted
-  }
-});
+}); // End DOMContentLoaded
 </script>
 
 @endsection
