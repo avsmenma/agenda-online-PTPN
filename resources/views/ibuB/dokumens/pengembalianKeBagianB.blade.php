@@ -1095,6 +1095,7 @@
 </div>
 
 <!-- Modal for Send Back to Perpajakan Confirmation -->
+<!-- Modal Konfirmasi Pengiriman ke Team Perpajakan -->
 <div class="modal fade" id="sendBackToPerpajakanConfirmationModal" tabindex="-1" aria-labelledby="sendBackToPerpajakanConfirmationModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -1118,6 +1119,37 @@
           <i class="fa-solid fa-times me-2"></i>Batal
         </button>
         <button type="button" class="btn btn-success px-4" id="confirmSendBackToPerpajakanBtn">
+          <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Konfirmasi Pengiriman ke Team Selanjutnya -->
+<div class="modal fade" id="sendToNextHandlerConfirmationModal" tabindex="-1" aria-labelledby="sendToNextHandlerConfirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
+        <h5 class="modal-title" id="sendToNextHandlerConfirmationModalLabel">
+          <i class="fa-solid fa-question-circle me-2"></i>Konfirmasi Pengiriman Dokumen
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i class="fa-solid fa-question-circle" style="font-size: 52px; color: #083E40;"></i>
+        </div>
+        <h5 class="fw-bold mb-3">Apakah Anda yakin dokumen ini sudah diperbaiki dan ingin dikirim ke team selanjutnya?</h5>
+        <p class="text-muted mb-0" id="sendToNextHandlerMessage">
+          Dokumen akan dikirim ke team yang sesuai dan akan muncul di inbox mereka untuk proses verifikasi selanjutnya.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn btn-success px-4" id="confirmSendToNextHandlerBtn">
           <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim
         </button>
       </div>
@@ -1550,9 +1582,44 @@ function loadDocumentDetail(docId) {
 
 // Send document to next handler
 function sendToNextHandler(docId) {
-  if (confirm('Apakah Anda yakin ingin mengirim dokumen ini ke proses selanjutnya?')) {
-    window.location.href = `/dokumensB/${docId}/send-to-next`;
+  // Get document data to determine target department
+  const docData = documentsData[docId];
+  if (!docData) {
+    alert('Data dokumen tidak ditemukan');
+    return;
   }
+
+  // Determine target department/handler
+  let targetHandler = null;
+  let handlerName = '';
+  
+  if (docData.target_department) {
+    targetHandler = docData.target_department;
+    const handlerNameMap = {
+      'perpajakan': 'Team Perpajakan',
+      'akutansi': 'Team Akutansi',
+      'pembayaran': 'Team Pembayaran'
+    };
+    handlerName = handlerNameMap[targetHandler] || targetHandler;
+  } else {
+    // Default to perpajakan if no target_department
+    targetHandler = 'perpajakan';
+    handlerName = 'Team Perpajakan';
+  }
+
+  // Set document ID and handler info in modal
+  document.getElementById('confirmSendToNextHandlerBtn').setAttribute('data-doc-id', docId);
+  document.getElementById('confirmSendToNextHandlerBtn').setAttribute('data-next-handler', targetHandler);
+  
+  // Update modal message
+  const messageEl = document.getElementById('sendToNextHandlerMessage');
+  if (messageEl) {
+    messageEl.textContent = `Dokumen akan dikirim ke ${handlerName} dan akan muncul di inbox mereka untuk proses verifikasi selanjutnya.`;
+  }
+
+  // Show confirmation modal
+  const confirmationModal = new bootstrap.Modal(document.getElementById('sendToNextHandlerConfirmationModal'));
+  confirmationModal.show();
 }
 
 // Send document back to perpajakan after repair
@@ -1603,11 +1670,71 @@ function confirmSendBackToPerpajakan() {
   });
 }
 
-// Initialize confirmation button
+// Confirm and send to next handler
+function confirmSendToNextHandler() {
+  const btn = document.getElementById('confirmSendToNextHandlerBtn');
+  const docId = btn.getAttribute('data-doc-id');
+  const nextHandler = btn.getAttribute('data-next-handler');
+  
+  if (!docId || !nextHandler) {
+    console.error('Document ID or next handler not found');
+    alert('Data tidak lengkap. Silakan coba lagi.');
+    return;
+  }
+
+  const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('sendToNextHandlerConfirmationModal'));
+  confirmationModal.hide();
+
+  // Disable button and show loading
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Mengirim...</span>';
+
+  // Send AJAX request
+  fetch(`/documents/verifikasi/${docId}/send-to-next`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({
+      next_handler: nextHandler
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Show success notification
+      showNotification('success', data.message || 'Dokumen berhasil dikirim!');
+      // Reload page after short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      alert('❌ Gagal mengirim dokumen: ' + (data.message || 'Terjadi kesalahan'));
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('❌ Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+  });
+}
+
+// Initialize confirmation buttons
 document.addEventListener('DOMContentLoaded', function() {
   const confirmSendBackBtn = document.getElementById('confirmSendBackToPerpajakanBtn');
   if (confirmSendBackBtn) {
     confirmSendBackBtn.addEventListener('click', confirmSendBackToPerpajakan);
+  }
+
+  const confirmSendToNextBtn = document.getElementById('confirmSendToNextHandlerBtn');
+  if (confirmSendToNextBtn) {
+    confirmSendToNextBtn.addEventListener('click', confirmSendToNextHandler);
   }
 });
 </script>

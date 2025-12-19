@@ -1259,6 +1259,29 @@ class DashboardBController extends Controller
 
             $inboxRole = $inboxRoleMap[$request->next_handler] ?? $request->next_handler;
 
+            // Jika dokumen adalah dokumen yang dikembalikan (returned_to_department),
+            // bersihkan status pengembalian sebelum dikirim
+            $isReturnedDocument = $dokumen->status === 'returned_to_department';
+            
+            if ($isReturnedDocument) {
+                // Clear return-related fields before sending
+                $dokumen->update([
+                    'target_department' => null,
+                    'department_returned_at' => null,
+                    'department_return_reason' => null,
+                    'returned_from_perpajakan_at' => null,
+                    'returned_from_akutansi_at' => null,
+                    'pengembalian_awaiting_fix' => false,
+                    'returned_from_perpajakan_fixed_at' => now(), // Mark as fixed
+                ]);
+
+                \Log::info('Cleared return status before sending document', [
+                    'document_id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'next_handler' => $request->next_handler
+                ]);
+            }
+
             // Simpan status original sebelum dikirim ke inbox
             $originalStatus = $dokumen->status;
 
