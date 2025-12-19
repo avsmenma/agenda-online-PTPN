@@ -926,13 +926,8 @@
               </div>
               <div class="col-md-4">
                 <div class="form-group">
-                  <label class="form-label-custom">Kategori Investasi <span class="text-danger">*</span></label>
-                  <select class="form-control-custom" id="edit-kategori" name="kategori" required>
-                    <option value="">Pilih Kategori</option>
-                    <option value="Investasi on farm">Investasi on farm</option>
-                    <option value="Investasi off farm">Investasi off farm</option>
-                    <option value="Exploitasi">Exploitasi</option>
-                  </select>
+                  <label class="form-label-custom">Kriteria CF <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control-custom" id="edit-kategori" name="kategori" required placeholder="Masukkan Kriteria CF">
                 </div>
               </div>
             </div>
@@ -962,8 +957,9 @@
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label class="form-label-custom">Jenis Pembayaran</label>
-                  <input type="text" class="form-control-custom" id="edit-jenis-pembayaran" name="jenis_pembayaran">
+                  <label class="form-label-custom">Ejaan Nilai Rupiah</label>
+                  <input type="text" class="form-control-custom" id="edit-ejaan-nilai-rupiah" name="ejaan_nilai_rupiah" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                  <small class="form-text-custom">Ejaan otomatis berdasarkan nilai rupiah</small>
                 </div>
               </div>
               <div class="col-md-6">
@@ -1206,10 +1202,36 @@ function formatDateTimeLocal(dateString) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-// Format date untuk date input
+// Format date untuk date input - handle various date formats
 function formatDate(dateString) {
   if (!dateString) return '';
+  
+  // Handle null or undefined
+  if (dateString === null || dateString === undefined || dateString === 'null' || dateString === 'undefined') return '';
+  
+  // If already in YYYY-MM-DD format, return as is
+  if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Handle Laravel date format (YYYY-MM-DD HH:MM:SS or YYYY-MM-DD)
+  if (typeof dateString === 'string') {
+    // Extract date part if it's a datetime string
+    const dateMatch = dateString.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      return dateMatch[1];
+    }
+  }
+  
+  // Try to parse the date
   const date = new Date(dateString);
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    console.warn('Invalid date:', dateString);
+    return '';
+  }
+  
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -1244,19 +1266,40 @@ function openEditModal(docId) {
   // Format nilai rupiah with dots
   const nilaiRupiah = dokumen.nilai_rupiah ? dokumen.nilai_rupiah.toString().replace(/[^\d]/g, '') : '';
   document.getElementById('edit-nilai-rupiah').value = nilaiRupiah ? nilaiRupiah.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
-  document.getElementById('edit-jenis-pembayaran').value = dokumen.jenis_pembayaran || '';
+  
+  // Calculate and display ejaan nilai rupiah
+  if (nilaiRupiah && parseInt(nilaiRupiah) > 0) {
+    document.getElementById('edit-ejaan-nilai-rupiah').value = terbilangRupiah(parseInt(nilaiRupiah));
+  } else {
+    document.getElementById('edit-ejaan-nilai-rupiah').value = '';
+  }
+  
   document.getElementById('edit-dibayar-kepada').value = dokumen.dibayar_kepada || '';
   document.getElementById('edit-kebun').value = dokumen.kebun || '';
   document.getElementById('edit-bagian').value = dokumen.bagian || '';
   document.getElementById('edit-nama-pengirim').value = dokumen.nama_pengirim || '';
 
-  // Section 3: Referensi Pendukung
+  // Section 3: Referensi Pendukung - Load all data properly
   document.getElementById('edit-no-spk').value = dokumen.no_spk || '';
-  document.getElementById('edit-tanggal-spk').value = formatDate(dokumen.tanggal_spk);
-  document.getElementById('edit-tanggal-berakhir-spk').value = formatDate(dokumen.tanggal_berakhir_spk);
+  // Format tanggal SPK - handle both date string and null
+  const tanggalSpk = dokumen.tanggal_spk ? formatDate(dokumen.tanggal_spk) : '';
+  document.getElementById('edit-tanggal-spk').value = tanggalSpk;
+  
+  // Format tanggal berakhir SPK
+  const tanggalBerakhirSpk = dokumen.tanggal_berakhir_spk ? formatDate(dokumen.tanggal_berakhir_spk) : '';
+  document.getElementById('edit-tanggal-berakhir-spk').value = tanggalBerakhirSpk;
+  
+  // Load nomor mirror
   document.getElementById('edit-nomor-mirror').value = dokumen.nomor_mirror || '';
+  
+  // Load no berita acara
   document.getElementById('edit-no-berita-acara').value = dokumen.no_berita_acara || '';
-  document.getElementById('edit-tanggal-berita-acara').value = formatDate(dokumen.tanggal_berita_acara);
+  
+  // Format tanggal berita acara
+  const tanggalBeritaAcara = dokumen.tanggal_berita_acara ? formatDate(dokumen.tanggal_berita_acara) : '';
+  document.getElementById('edit-tanggal-berita-acara').value = tanggalBeritaAcara;
+  
+  // Load keterangan
   document.getElementById('edit-keterangan').value = dokumen.keterangan || '';
 
   // Load PO and PR data
@@ -1267,15 +1310,24 @@ function openEditModal(docId) {
   poContainer.innerHTML = '';
   prContainer.innerHTML = '';
 
-  // Load PO data - handle both snake_case and camelCase
-  const poData = dokumen.dokumen_pos || dokumen.dokumenPos || [];
+  // Load PO data - handle both snake_case and camelCase, and also handle array format
+  let poData = [];
+  if (dokumen.dokumen_pos) {
+    poData = Array.isArray(dokumen.dokumen_pos) ? dokumen.dokumen_pos : [];
+  } else if (dokumen.dokumenPos) {
+    poData = Array.isArray(dokumen.dokumenPos) ? dokumen.dokumenPos : [];
+  }
+  
   if (poData && poData.length > 0) {
     poData.forEach((po, index) => {
-      const poValue = po.nomor_po || po.nomorPo || '';
+      const poValue = (po.nomor_po || po.nomorPo || '').toString();
       const poField = document.createElement('div');
       poField.className = 'po-item mb-2';
+      poField.style.display = 'flex';
+      poField.style.gap = '8px';
+      poField.style.alignItems = 'center';
       poField.innerHTML = `
-        <input type="text" class="form-control-custom" name="nomor_po[]" value="${String(poValue).replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" placeholder="Masukkan nomor PO" style="flex: 1;">
+        <input type="text" class="form-control-custom" name="nomor_po[]" value="${poValue.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" placeholder="Masukkan nomor PO" style="flex: 1;">
         ${index > 0 ? '<button type="button" class="btn-remove-field" onclick="removeField(this)"><i class="fa-solid fa-times"></i></button>' : ''}
       `;
       poContainer.appendChild(poField);
@@ -1284,21 +1336,33 @@ function openEditModal(docId) {
     // Add one empty PO field
     const poField = document.createElement('div');
     poField.className = 'po-item mb-2';
+    poField.style.display = 'flex';
+    poField.style.gap = '8px';
+    poField.style.alignItems = 'center';
     poField.innerHTML = `
       <input type="text" class="form-control-custom" name="nomor_po[]" placeholder="Masukkan nomor PO" style="flex: 1;">
     `;
     poContainer.appendChild(poField);
   }
 
-  // Load PR data - handle both snake_case and camelCase
-  const prData = dokumen.dokumen_prs || dokumen.dokumenPrs || [];
+  // Load PR data - handle both snake_case and camelCase, and also handle array format
+  let prData = [];
+  if (dokumen.dokumen_prs) {
+    prData = Array.isArray(dokumen.dokumen_prs) ? dokumen.dokumen_prs : [];
+  } else if (dokumen.dokumenPrs) {
+    prData = Array.isArray(dokumen.dokumenPrs) ? dokumen.dokumenPrs : [];
+  }
+  
   if (prData && prData.length > 0) {
     prData.forEach((pr, index) => {
-      const prValue = pr.nomor_pr || pr.nomorPr || '';
+      const prValue = (pr.nomor_pr || pr.nomorPr || '').toString();
       const prField = document.createElement('div');
       prField.className = 'pr-item mb-2';
+      prField.style.display = 'flex';
+      prField.style.gap = '8px';
+      prField.style.alignItems = 'center';
       prField.innerHTML = `
-        <input type="text" class="form-control-custom" name="nomor_pr[]" value="${String(prValue).replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" placeholder="Masukkan nomor PR" style="flex: 1;">
+        <input type="text" class="form-control-custom" name="nomor_pr[]" value="${prValue.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" placeholder="Masukkan nomor PR" style="flex: 1;">
         ${index > 0 ? '<button type="button" class="btn-remove-field" onclick="removeField(this)"><i class="fa-solid fa-times"></i></button>' : ''}
       `;
       prContainer.appendChild(prField);
@@ -1307,6 +1371,9 @@ function openEditModal(docId) {
     // Add one empty PR field
     const prField = document.createElement('div');
     prField.className = 'pr-item mb-2';
+    prField.style.display = 'flex';
+    prField.style.gap = '8px';
+    prField.style.alignItems = 'center';
     prField.innerHTML = `
       <input type="text" class="form-control-custom" name="nomor_pr[]" placeholder="Masukkan nomor PR" style="flex: 1;">
     `;
@@ -1352,7 +1419,7 @@ document.getElementById('editDokumenForm').addEventListener('submit', function(e
   // Remove dots from nilai rupiah before sending
   const nilaiRupiahValue = document.getElementById('edit-nilai-rupiah').value.replace(/[^\d]/g, '');
   formDataToSend.append('nilai_rupiah', nilaiRupiahValue);
-  formDataToSend.append('jenis_pembayaran', document.getElementById('edit-jenis-pembayaran').value);
+  // Removed jenis_pembayaran - no longer needed
   formDataToSend.append('dibayar_kepada', document.getElementById('edit-dibayar-kepada').value);
   formDataToSend.append('kebun', document.getElementById('edit-kebun').value);
   formDataToSend.append('bagian', document.getElementById('edit-bagian').value);
@@ -1527,19 +1594,125 @@ function formatRupiahInput(input) {
   }
 }
 
-// Apply format rupiah to edit-nilai-rupiah input
+// Function to convert number to Indonesian terbilang
+function terbilangRupiah(number) {
+  number = parseFloat(number) || 0;
+  
+  if (number == 0) {
+    return 'nol rupiah';
+  }
+
+  const angka = [
+    '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+    'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+    'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+    'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+  ];
+
+  let hasil = '';
+
+  // Handle triliun
+  if (number >= 1000000000000) {
+    const triliun = Math.floor(number / 1000000000000);
+    hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+    number = number % 1000000000000;
+  }
+
+  // Handle milyar
+  if (number >= 1000000000) {
+    const milyar = Math.floor(number / 1000000000);
+    hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+    number = number % 1000000000;
+  }
+
+  // Handle juta
+  if (number >= 1000000) {
+    const juta = Math.floor(number / 1000000);
+    hasil += terbilangSatuan(juta, angka) + ' juta ';
+    number = number % 1000000;
+  }
+
+  // Handle ribu
+  if (number >= 1000) {
+    const ribu = Math.floor(number / 1000);
+    if (ribu == 1) {
+      hasil += 'seribu ';
+    } else {
+      hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+    }
+    number = number % 1000;
+  }
+
+  // Handle ratusan, puluhan, dan satuan
+  if (number > 0) {
+    hasil += terbilangSatuan(number, angka);
+  }
+
+  return hasil.trim() + ' rupiah';
+}
+
+function terbilangSatuan(number, angka) {
+  let hasil = '';
+  number = parseInt(number);
+  
+  if (number >= 100) {
+    const ratus = Math.floor(number / 100);
+    if (ratus == 1) {
+      hasil += 'seratus ';
+    } else {
+      hasil += angka[ratus] + ' ratus ';
+    }
+    number = number % 100;
+  }
+  
+  if (number >= 20) {
+    const puluh = Math.floor(number / 10);
+    hasil += angka[puluh] + ' puluh ';
+    number = number % 10;
+  }
+  
+  if (number > 0) {
+    hasil += angka[number] + ' ';
+  }
+  
+  return hasil.trim();
+}
+
+// Apply format rupiah to edit-nilai-rupiah input and update ejaan
 document.addEventListener('DOMContentLoaded', function() {
   const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
+  const ejaanInput = document.getElementById('edit-ejaan-nilai-rupiah');
+  
   if (nilaiRupiahInput) {
     // Format on input
     nilaiRupiahInput.addEventListener('input', function() {
       formatRupiahInput(this);
+      
+      // Update ejaan nilai rupiah
+      if (ejaanInput) {
+        const numericValue = this.value.replace(/[^\d]/g, '');
+        if (numericValue && parseInt(numericValue) > 0) {
+          ejaanInput.value = terbilangRupiah(parseInt(numericValue));
+        } else {
+          ejaanInput.value = '';
+        }
+      }
     });
     
     // Format on paste
     nilaiRupiahInput.addEventListener('paste', function(e) {
       setTimeout(() => {
         formatRupiahInput(this);
+        
+        // Update ejaan nilai rupiah
+        if (ejaanInput) {
+          const numericValue = this.value.replace(/[^\d]/g, '');
+          if (numericValue && parseInt(numericValue) > 0) {
+            ejaanInput.value = terbilangRupiah(parseInt(numericValue));
+          } else {
+            ejaanInput.value = '';
+          }
+        }
       }, 10);
     });
   }
