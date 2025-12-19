@@ -202,7 +202,6 @@
   .table-dokumen thead th:nth-child(6) { width: 160px; min-width: 160px; }
   .table-dokumen thead th:nth-child(7) { width: 180px; min-width: 180px; }
   .table-dokumen thead th:nth-child(8) { width: 400px; min-width: 300px; }
-  .table-dokumen thead th:nth-child(9) { width: 200px; min-width: 180px; }
 
   .table-dokumen tbody tr.main-row {
     cursor: pointer;
@@ -663,7 +662,6 @@
               <th>Status Dokumen</th>
               <th>Tanggal Dikembalikan</th>
               <th>Alasan</th>
-              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -692,7 +690,15 @@
                 @endif
               </td>
               <td class="tanggal-column">
-                <small>{{ $dokumen->returned_from_perpajakan_at ? $dokumen->returned_from_perpajakan_at->format('d/m/Y H:i') : '-' }}</small>
+                <small>
+                  @if($dokumen->returned_from_perpajakan_at)
+                    {{ $dokumen->returned_from_perpajakan_at->format('d/m/Y H:i') }}
+                  @elseif($dokumen->department_returned_at)
+                    {{ $dokumen->department_returned_at->format('d/m/Y H:i') }}
+                  @else
+                    -
+                  @endif
+                </small>
               </td>
               <td class="alasan-column">
                 <div class="alasan-bubble">
@@ -700,21 +706,9 @@
                   <span class="alasan-text">{{ $dokumen->alasan_pengembalian ?? '-' }}</span>
                 </div>
               </td>
-              <td onclick="event.stopPropagation()">
-                <div class="action-buttons">
-                  <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
-                    <i class="fa-solid fa-pen"></i>
-                    <span>Edit</span>
-                  </a>
-                  <button type="button" class="btn-action btn-send" onclick="sendBackToVerification({{ $dokumen->id }})" title="Kirim ke Verifikasi">
-                    <i class="fa-solid fa-undo"></i>
-                    <span>Kembali</span>
-                  </button>
-                </div>
-              </td>
             </tr>
             <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none;">
-              <td colspan="9">
+              <td colspan="8">
                 <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                   <div class="text-center p-4">
                     <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
@@ -766,6 +760,16 @@ function toggleDetail(docId) {
 }
 
 function loadDocumentDetail(docId) {
+  const detailContent = document.getElementById(`detail-content-${docId}`);
+  
+  // Show loading
+  detailContent.innerHTML = `
+    <div class="text-center p-4">
+      <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+      <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+    </div>
+  `;
+
   fetch(`/documents/perpajakan/${docId}/detail`, {
     headers: {
       'Accept': 'application/json',
@@ -779,53 +783,103 @@ function loadDocumentDetail(docId) {
       return response.json();
     })
     .then(data => {
-      const detailContent = document.getElementById(`detail-content-${docId}`);
-      if (detailContent && data.success && data.html) {
-        detailContent.innerHTML = data.html;
-      } else if (detailContent && data.html) {
-        // Fallback: jika response langsung HTML
-        detailContent.innerHTML = data.html;
+      if (detailContent && data.success && data.dokumen) {
+        // Generate HTML from JSON data
+        const html = generateDetailHtml(data.dokumen);
+        detailContent.innerHTML = html;
       } else {
         throw new Error('Invalid response format');
       }
     })
     .catch(error => {
       console.error('Error loading document detail:', error);
-      const detailContent = document.getElementById(`detail-content-${docId}`);
       if (detailContent) {
         detailContent.innerHTML = '<div class="text-center p-4 text-danger"><i class="fa-solid fa-exclamation-triangle me-2"></i>Gagal memuat detail dokumen</div>';
       }
     });
 }
 
-function sendBackToVerification(docId) {
-  if (confirm("Apakah Anda yakin ingin mengirim dokumen ini kembali ke proses verifikasi?")) {
-    // AJAX call to send back to verification
-    fetch(`/documents/perpajakan/${docId}/send-to-next`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: JSON.stringify({
-        next_handler: 'ibuB'
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('Dokumen berhasil dikirim kembali ke verifikasi!');
-        location.reload();
-      } else {
-        alert('Gagal mengirim dokumen: ' + (data.message || 'Terjadi kesalahan'));
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Terjadi kesalahan saat mengirim dokumen.');
-    });
+function generateDetailHtml(dokumen) {
+  let html = '<div class="detail-grid">';
+  
+  // Document Information Section
+  const detailItems = {
+    'Tanggal Masuk': dokumen.tanggal_masuk || '-',
+    'Bulan': dokumen.bulan || '-',
+    'Tahun': dokumen.tahun || '-',
+    'No SPP': dokumen.nomor_spp || '-',
+    'Tanggal SPP': dokumen.tanggal_spp || '-',
+    'Uraian SPP': dokumen.uraian_spp || '-',
+    'Nilai Rp': formatRupiah(dokumen.nilai_rupiah) || '-',
+    'Kriteria CF': dokumen.kategori || '-',
+    'Jenis Dokumen': dokumen.jenis_dokumen || '-',
+    'Jenis Sub Pekerjaan': dokumen.jenis_sub_pekerjaan || '-',
+    'Jenis Pembayaran': dokumen.jenis_pembayaran || '-',
+    'Dibayar Kepada': dokumen.dibayar_kepada || '-',
+    'Kebun': dokumen.kebun || '-',
+    'No SPK': dokumen.no_spk || '-',
+    'Tanggal SPK': dokumen.tanggal_spk || '-',
+    'Tanggal Berakhir SPK': dokumen.tanggal_berakhir_spk || '-',
+    'No Berita Acara': dokumen.no_berita_acara || '-',
+    'Tanggal Berita Acara': dokumen.tanggal_berita_acara || '-',
+  };
+
+  // Add PO/PR numbers if available
+  if (dokumen.dokumen_pos && dokumen.dokumen_pos.length > 0) {
+    const poNumbers = dokumen.dokumen_pos.map(po => po.nomor_po).join(', ');
+    detailItems['Nomor PO'] = poNumbers;
   }
+
+  if (dokumen.dokumen_prs && dokumen.dokumen_prs.length > 0) {
+    const prNumbers = dokumen.dokumen_prs.map(pr => pr.nomor_pr).join(', ');
+    detailItems['Nomor PR'] = prNumbers;
+  }
+
+  // Perpajakan fields
+  if (dokumen.komoditi_perpajakan) detailItems['Komoditi Perpajakan'] = dokumen.komoditi_perpajakan;
+  if (dokumen.status_perpajakan) detailItems['Status Perpajakan'] = dokumen.status_perpajakan;
+  if (dokumen.npwp) detailItems['NPWP'] = dokumen.npwp;
+  if (dokumen.alamat_pembeli) detailItems['Alamat Pembeli'] = dokumen.alamat_pembeli;
+  if (dokumen.no_kontrak) detailItems['No Kontrak'] = dokumen.no_kontrak;
+  if (dokumen.no_invoice) detailItems['No Invoice'] = dokumen.no_invoice;
+  if (dokumen.tanggal_invoice) detailItems['Tanggal Invoice'] = dokumen.tanggal_invoice;
+  if (dokumen.dpp_invoice) detailItems['DPP Invoice'] = formatRupiah(dokumen.dpp_invoice);
+  if (dokumen.ppn_invoice) detailItems['PPN Invoice'] = formatRupiah(dokumen.ppn_invoice);
+  if (dokumen.dpp_ppn_invoice) detailItems['DPP + PPN Invoice'] = formatRupiah(dokumen.dpp_ppn_invoice);
+  if (dokumen.tanggal_pengajuan_pajak) detailItems['Tanggal Pengajuan Pajak'] = dokumen.tanggal_pengajuan_pajak;
+  if (dokumen.no_faktur) detailItems['No Faktur'] = dokumen.no_faktur;
+  if (dokumen.tanggal_faktur) detailItems['Tanggal Faktur'] = dokumen.tanggal_faktur;
+  if (dokumen.dpp_faktur) detailItems['DPP Faktur'] = formatRupiah(dokumen.dpp_faktur);
+  if (dokumen.ppn_faktur) detailItems['PPN Faktur'] = formatRupiah(dokumen.ppn_faktur);
+  if (dokumen.selisih_pajak) detailItems['Selisih Pajak'] = formatRupiah(dokumen.selisih_pajak);
+  if (dokumen.keterangan_pajak) detailItems['Keterangan Pajak'] = dokumen.keterangan_pajak;
+  if (dokumen.penggantian_pajak) detailItems['Penggantian Pajak'] = dokumen.penggantian_pajak;
+  if (dokumen.dpp_penggantian) detailItems['DPP Penggantian'] = formatRupiah(dokumen.dpp_penggantian);
+  if (dokumen.ppn_penggantian) detailItems['PPN Penggantian'] = formatRupiah(dokumen.ppn_penggantian);
+  if (dokumen.selisih_ppn) detailItems['Selisih PPN'] = formatRupiah(dokumen.selisih_ppn);
+  if (dokumen.tanggal_selesai_verifikasi_pajak) detailItems['Tanggal Selesai Verifikasi Pajak'] = dokumen.tanggal_selesai_verifikasi_pajak;
+  if (dokumen.jenis_pph) detailItems['Jenis PPH'] = dokumen.jenis_pph;
+  if (dokumen.dpp_pph) detailItems['DPP PPH'] = formatRupiah(dokumen.dpp_pph);
+  if (dokumen.ppn_terhutang) detailItems['PPN Terhutang'] = formatRupiah(dokumen.ppn_terhutang);
+  if (dokumen.link_dokumen_pajak) detailItems['Link Dokumen Pajak'] = dokumen.link_dokumen_pajak;
+
+  // Generate detail items HTML
+  for (const [label, value] of Object.entries(detailItems)) {
+    html += `
+      <div class="detail-item">
+        <div class="detail-label">${label}</div>
+        <div class="detail-value">${value}</div>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function formatRupiah(angka) {
+  if (!angka) return '-';
+  return 'Rp. ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 </script>
 

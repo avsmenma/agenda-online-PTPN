@@ -1172,6 +1172,7 @@ class DashboardPerpajakanController extends Controller
                 'current_handler' => 'ibuB',
                 'target_department' => 'perpajakan',
                 'department_returned_at' => now(),
+                'returned_from_perpajakan_at' => now(), // Set timestamp when document is returned from perpajakan
                 'department_return_reason' => $request->return_reason,
                 'alasan_pengembalian' => $request->return_reason,
                 // Reset tax status since document is being returned
