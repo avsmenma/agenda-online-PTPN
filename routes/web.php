@@ -33,9 +33,18 @@ Route::middleware('autologin')->group(function () {
     Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
 });
 
-// Custom broadcast authentication route - Define BEFORE broadcast routes
+// SECURITY FIX: Custom broadcast authentication route with CSRF protection
 Route::post('/custom-broadcasting/auth', function (\Illuminate\Http\Request $request) {
     try {
+        // SECURITY: Validate CSRF token
+        if (!$request->has('_token') || !hash_equals(session()->token(), $request->input('_token'))) {
+            \Log::warning('SECURITY: CSRF token mismatch in broadcast auth', [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+            return response()->json(['error' => 'Invalid CSRF token'], 403);
+        }
+
         \Log::info('🔐 Custom broadcast auth attempt', [
             'channel_name' => $request->input('channel_name'),
             'socket_id' => $request->input('socket_id'),
@@ -51,9 +60,25 @@ Route::post('/custom-broadcasting/auth', function (\Illuminate\Http\Request $req
         $channelName = $request->input('channel_name');
         $socketId = $request->input('socket_id');
 
-        // For development: always approve private channels for authenticated users
+        // SECURITY: Validate and sanitize inputs
+        if (empty($channelName) || empty($socketId)) {
+            \Log::warning('SECURITY: Empty channel_name or socket_id in broadcast auth');
+            return response()->json(['error' => 'Invalid request parameters'], 400);
+        }
+
+        // SECURITY: Sanitize channel name to prevent injection
+        $channelName = preg_replace('/[^a-zA-Z0-9\-_.]/', '', $channelName);
+        $socketId = preg_replace('/[^a-zA-Z0-9\-_.]/', '', $socketId);
+
+        // Only approve private channels for authenticated users
         if (str_starts_with($channelName, 'private-')) {
-            $authData = $socketId . ':' . md5($socketId . ':' . config('broadcasting.connections.pusher.key', ''));
+            $pusherKey = config('broadcasting.connections.pusher.key', '');
+            if (empty($pusherKey)) {
+                \Log::error('SECURITY: Pusher key not configured');
+                return response()->json(['error' => 'Server configuration error'], 500);
+            }
+
+            $authData = $socketId . ':' . md5($socketId . ':' . $pusherKey);
 
             \Log::info('✅ Custom broadcast auth successful', [
                 'channel' => $channelName,
@@ -74,32 +99,56 @@ Route::post('/custom-broadcasting/auth', function (\Illuminate\Http\Request $req
         ]);
         return response()->json(['error' => 'Authentication failed'], 403);
     }
-})->middleware(['web'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+})->middleware(['web', 'auth']); // SECURITY: Require authentication and CSRF protection
 
 Route::get('/', function () {
     return redirect('/login');
 });
 
-// Test routes for welcome messages
-Route::get('/test-welcome/{module}', function ($module) {
-    return view('test-welcome', ['module' => $module, 'title' => 'Testing Welcome Messages']);
-});
+// SECURITY: Test routes removed or protected
+// Only allow test routes in development environment
+if (app()->environment('local', 'development')) {
+    Route::get('/test-welcome/{module}', function ($module) {
+        return view('test-welcome', ['module' => $module, 'title' => 'Testing Welcome Messages']);
+    })->middleware('auth');
 
-Route::get('/simple-test', function () {
-    $service = app('App\Services\WelcomeMessageService');
-    $message = $service->getWelcomeMessage('IbuA');
-    return "Welcome Message: " . $message;
-});
+    Route::get('/simple-test', function () {
+        $service = app('App\Services\WelcomeMessageService');
+        $message = $service->getWelcomeMessage('IbuA');
+        return "Welcome Message: " . $message;
+    })->middleware('auth');
+} else {
+    // In production, return 404 for test routes
+    Route::get('/test-welcome/{module}', function () {
+        abort(404);
+    });
+    Route::get('/simple-test', function () {
+        abort(404);
+    });
+}
 
-Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage']);
+Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage'])->middleware('auth');
 
 // Broadcasting Authentication Route
 Broadcast::routes(['middleware' => ['web']]);
 
+// SECURITY: All API routes must be authenticated
 // Professional API routes for document updates
 Route::get('/api/documents/verifikasi/check-updates', function () {
+    // SECURITY: Validate user is authenticated
+    if (!auth()->check()) {
+        \Log::warning('SECURITY: Unauthenticated API access attempt', [
+            'route' => '/api/documents/verifikasi/check-updates',
+            'ip' => request()->ip(),
+        ]);
+        return response()->json(['error' => 'Unauthenticated'], 401);
+    }
+    
     try {
+        // SECURITY: Validate and sanitize input
         $lastChecked = request()->input('last_checked', 0);
+        $lastChecked = is_numeric($lastChecked) ? (int)$lastChecked : 0;
+        $lastChecked = max(0, min($lastChecked, time())); // Prevent future timestamps
         $lastCheckedDate = $lastChecked > 0 
             ? \Carbon\Carbon::createFromTimestamp($lastChecked)
             : \Carbon\Carbon::now()->subDays(1);
@@ -196,7 +245,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             'message' => 'Failed to check updates: ' . $e->getMessage()
         ], 500);
     }
-})->name('api.documents.verifikasi.check-updates');
+})->middleware('auth')->name('api.documents.verifikasi.check-updates');
 
 Route::get('/api/documents/perpajakan/check-updates', [DashboardPerpajakanController::class, 'checkUpdates'])
     ->name('api.documents.perpajakan.check-updates');
@@ -657,141 +706,138 @@ Route::get('/diagramPerpajakan', function () {
     return redirect()->route('reports.perpajakan.diagram', [], 301);
 })->name('diagramPerpajakan.index.old');
 
-// Test route for broadcasting (remove in production)
-Route::get('/test-broadcast', function () {
-    $dokumen = \App\Models\Dokumen::where('current_handler', 'ibuB')
-        ->orWhere('status', 'sent_to_ibub')
-        ->latest()
-        ->first();
+// SECURITY: Test routes removed or protected - Only available in development
+if (app()->environment('local', 'development')) {
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/test-broadcast', function () {
+            $dokumen = \App\Models\Dokumen::where('current_handler', 'ibuB')
+                ->orWhere('status', 'sent_to_ibub')
+                ->latest()
+                ->first();
 
-    if (!$dokumen) {
-        return response()->json([
-            'error' => 'No document found for testing'
-        ], 404);
-    }
+            if (!$dokumen) {
+                return response()->json([
+                    'error' => 'No document found for testing'
+                ], 404);
+            }
 
-    try {
-        broadcast(new \App\Events\DocumentSent($dokumen, 'test', 'ibuB'));
-        \Log::info('Test broadcast sent', ['document_id' => $dokumen->id]);
+            try {
+                broadcast(new \App\Events\DocumentSent($dokumen, 'test', 'ibuB'));
+                \Log::info('Test broadcast sent', ['document_id' => $dokumen->id]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Test broadcast sent!',
-            'document_id' => $dokumen->id,
-            'channel' => 'documents.ibuB'
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Test broadcast failed: ' . $e->getMessage());
-        return response()->json([
-            'error' => 'Broadcast failed: ' . $e->getMessage()
-        ], 500);
-    }
-});
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Test broadcast sent!',
+                    'document_id' => $dokumen->id,
+                    'channel' => 'documents.ibuB'
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Test broadcast failed: ' . $e->getMessage());
+                return response()->json([
+                    'error' => 'Broadcast failed: ' . $e->getMessage()
+                ], 500);
+            }
+        });
 
-// Test route for returned documents broadcasting
-Route::get('/test-returned-broadcast', function () {
-    $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
-        ->where('status', 'returned_to_ibua')
-        ->latest()
-        ->first();
+        Route::get('/test-returned-broadcast', function () {
+            $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
+                ->where('status', 'returned_to_ibua')
+                ->latest()
+                ->first();
 
-    if (!$dokumen) {
-        return response()->json([
-            'error' => 'No returned document found for testing'
-        ], 404);
-    }
+            if (!$dokumen) {
+                return response()->json([
+                    'error' => 'No returned document found for testing'
+                ], 404);
+            }
 
-    try {
-        broadcast(new \App\Events\DocumentReturned($dokumen, $dokumen->alasan_pengembalian ?: 'Test alasan pengembalian', 'ibuB'));
-        \Log::info('Test returned broadcast sent', ['document_id' => $dokumen->id]);
+            try {
+                broadcast(new \App\Events\DocumentReturned($dokumen, $dokumen->alasan_pengembalian ?: 'Test alasan pengembalian', 'ibuB'));
+                \Log::info('Test returned broadcast sent', ['document_id' => $dokumen->id]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Test returned broadcast sent!',
-            'document_id' => $dokumen->id,
-            'channel' => 'documents.ibuA'
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Test returned broadcast failed: ' . $e->getMessage());
-        return response()->json([
-            'error' => 'Broadcast failed: ' . $e->getMessage()
-        ], 500);
-    }
-});
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Test returned broadcast sent!',
+                    'document_id' => $dokumen->id,
+                    'channel' => 'documents.ibuA'
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Test returned broadcast failed: ' . $e->getMessage());
+                return response()->json([
+                    'error' => 'Broadcast failed: ' . $e->getMessage()
+                ], 500);
+            }
+        });
 
-// Test route to check broadcast authentication
-Route::get('/test-broadcast-auth', function () {
-    $user = auth()->user();
-    return response()->json([
-        'authenticated' => auth()->check(),
-        'user_id' => $user?->id,
-        'user_role' => $user?->role,
-        'user_name' => $user?->name,
-        'session_id' => session()->getId(),
-        'csrf_token' => csrf_token()
-    ]);
-})->middleware('autologin');
+        Route::get('/test-broadcast-auth', function () {
+            $user = auth()->user();
+            return response()->json([
+                'authenticated' => auth()->check(),
+                'user_id' => $user?->id,
+                'user_role' => $user?->role,
+                'user_name' => $user?->name,
+                'session_id' => session()->getId(),
+                'csrf_token' => csrf_token()
+            ]);
+        });
 
-// Simple test route to trigger notification without broadcast
-Route::get('/test-trigger-notification', function () {
-    // Update an existing document to trigger notification
-    $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
-        ->where('status', 'returned_to_ibua')
-        ->first();
+        Route::get('/test-trigger-notification', function () {
+            $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
+                ->where('status', 'returned_to_ibua')
+                ->first();
 
-    if (!$dokumen) {
-        return response()->json([
-            'error' => 'No returned document found'
-        ]);
-    }
+            if (!$dokumen) {
+                return response()->json([
+                    'error' => 'No returned document found'
+                ]);
+            }
 
-    // Update the returned_at timestamp to make it look like a recent return
-    $dokumen->update([
-        'returned_to_ibua_at' => \Illuminate\Support\Carbon::now()->subMinutes(1),
-        'alasan_pengembalian' => 'Test notification trigger at ' . \Illuminate\Support\Carbon::now()->format('H:i:s')
-    ]);
+            $dokumen->update([
+                'returned_to_ibua_at' => \Illuminate\Support\Carbon::now()->subMinutes(1),
+                'alasan_pengembalian' => 'Test notification trigger at ' . \Illuminate\Support\Carbon::now()->format('H:i:s')
+            ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Test notification triggered!',
-        'document_id' => $dokumen->id,
-        'returned_at' => $dokumen->returned_to_ibua_at,
-    ]);
-});
+            return response()->json([
+                'success' => true,
+                'message' => 'Test notification triggered!',
+                'document_id' => $dokumen->id,
+                'returned_at' => $dokumen->returned_to_ibua_at,
+            ]);
+        });
+    });
+} else {
+    // SECURITY: In production, return 404 for all test routes
+    Route::get('/test-broadcast', function () { abort(404); });
+    Route::get('/test-returned-broadcast', function () { abort(404); });
+    Route::get('/test-broadcast-auth', function () { abort(404); });
+    Route::get('/test-trigger-notification', function () { abort(404); });
+}
 
-// Role Switching Routes - untuk development/testing
-Route::middleware('autologin')->group(function () {
-    // Quick role switching URLs
-    Route::get('/switch-role/{role}', function ($role) {
-        // Logout user yang sedang login
-        Auth::logout();
+// SECURITY: Role switching routes removed - Critical security vulnerability
+// These routes allowed unauthorized role switching via URL manipulation
+// If needed for development, protect with admin-only access
+if (app()->environment('local', 'development')) {
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/switch-role/{role}', function ($role) {
+            \Log::warning('SECURITY: Role switching attempted', [
+                'user_id' => auth()->id(),
+                'requested_role' => $role,
+                'ip' => request()->ip(),
+            ]);
+            abort(403, 'Role switching disabled for security');
+        })->name('switch.role');
 
-        // Validasi role
-        $validRoles = ['IbuA', 'ibuB', 'Perpajakan', 'Akutansi', 'Pembayaran'];
-        if (!in_array($role, $validRoles)) {
-            $role = 'IbuA'; // Default ke IbuA jika role tidak valid
-        }
+        Route::get('/dev-dashboard/{role?}', function ($role = 'IbuA') {
+            abort(403, 'Development dashboard disabled for security');
+        })->name('dev.dashboard');
 
-        // Redirect dengan parameter role
-        return redirect('/dashboard?role=' . $role);
-    })->name('switch.role');
-
-    // Development dashboard - auto-login berdasarkan parameter
-    Route::get('/dev-dashboard/{role?}', function ($role = 'IbuA') {
-        $roleMap = [
-            'IbuA' => '/dashboard',
-            'ibuB' => '/dashboardB',
-            'Perpajakan' => '/dashboardPerpajakan',
-            'Akutansi' => '/dashboardAkutansi',
-            'Pembayaran' => '/dashboardPembayaran'
-        ];
-
-        $url = $roleMap[$role] ?? '/dashboard';
-        return redirect($url . '?role=' . $role);
-    })->name('dev.dashboard');
-
-    // Master development route - semua dashboard dengan role switching
-    Route::get('/dev-all', function () {
-        return view('dev.role-switcher');
-    })->name('dev.all');
-});
+        Route::get('/dev-all', function () {
+            abort(403, 'Development routes disabled for security');
+        })->name('dev.all');
+    });
+} else {
+    // In production, return 404
+    Route::get('/switch-role/{role}', function () { abort(404); });
+    Route::get('/dev-dashboard/{role?}', function () { abort(404); });
+    Route::get('/dev-all', function () { abort(404); });
+}

@@ -661,9 +661,18 @@ class DashboardPembayaranController extends Controller
             return $belumDibayar > 0;
         })->count();
 
+        // SECURITY FIX: Use parameterized query to prevent SQL injection
         // Calculate total terbayar tahun ini - sum of all JUMLAH_DIBAYAR
+        // Validate field name to prevent SQL injection
+        $allowedFields = ['JUMLAH_DIBAYAR', 'JUMLAH_DIBAYAR1', 'JUMLAH_DIBAYAR2', 'JUMLAH_DIBAYAR3', 'JUMLAH_DIBAYAR4'];
+        if (!in_array($jumlahDibayarField, $allowedFields)) {
+            \Log::error('SECURITY: Invalid field name in query', ['field' => $jumlahDibayarField]);
+            $jumlahDibayarField = 'JUMLAH_DIBAYAR'; // Default safe field
+        }
+        
+        // Use DB::raw with proper escaping
         $totalTerbayarTahunIni = $model::whereNotNull($jumlahDibayarField)
-            ->whereRaw("COALESCE({$jumlahDibayarField}, 0) > 0")
+            ->whereRaw("COALESCE(`" . str_replace('`', '', $jumlahDibayarField) . "`, 0) > 0")
             ->sum($jumlahDibayarField);
 
         // Jatuh tempo minggu ini (umur hutang > 60 hari)

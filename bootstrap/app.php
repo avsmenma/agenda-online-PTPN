@@ -11,9 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // SECURITY: Add security headers globally
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
-            'autologin' => \App\Http\Middleware\AutoLoginMiddleware::class,
+            'autologin' => \App\Http\Middleware\AutoLoginMiddleware::class, // SECURITY: Now only checks auth, no auto-login
+            'prevent.url.manipulation' => \App\Http\Middleware\PreventUrlManipulation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
