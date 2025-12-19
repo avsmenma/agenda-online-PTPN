@@ -26,10 +26,10 @@ class SecurityHeaders
         
         // Content Security Policy
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.pusher.com https://cdn.jsdelivr.net; " .
-               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " .
+               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.pusher.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com; " .
+               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " .
                "img-src 'self' data: https:; " .
-               "font-src 'self' https://cdn.jsdelivr.net data:; " .
+               "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " .
                "connect-src 'self' https://*.pusher.com wss://*.pusher.com; " .
                "frame-src 'self'; " .
                "object-src 'none'; " .
