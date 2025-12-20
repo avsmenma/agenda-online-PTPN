@@ -620,7 +620,7 @@
               <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>
               <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
               <td>
-                @if($dokumen->returned_from_perpajakan_fixed_at || ($dokumen->current_handler == 'perpajakan' && !$dokumen->pengembalian_awaiting_fix && $dokumen->returned_from_perpajakan_at))
+                @if($dokumen->returned_from_perpajakan_fixed_at || ($dokumen->current_handler == 'perpajakan' && !$dokumen->pengembalian_awaiting_fix))
                   <span class="badge-status badge-success">
                     <i class="fa-solid fa-check-circle"></i>
                     Sudah diperbaiki
@@ -634,9 +634,7 @@
               </td>
               <td class="tanggal-column">
                 <small>
-                  @if($dokumen->returned_from_perpajakan_at)
-                    {{ $dokumen->returned_from_perpajakan_at->format('d/m/Y H:i') }}
-                  @elseif($dokumen->department_returned_at)
+                  @if($dokumen->department_returned_at)
                     {{ $dokumen->department_returned_at->format('d/m/Y H:i') }}
                   @else
                     -

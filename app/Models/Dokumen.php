@@ -252,9 +252,7 @@ class Dokumen extends Model
         
         // If sending to perpajakan and document was returned, always reset deadline
         // This ensures returned documents must set deadline again
-        $isReturnedDocument = $this->returned_from_perpajakan_at || 
-                              $this->returned_from_akutansi_at || 
-                              $this->department_returned_at ||
+        $isReturnedDocument = $this->department_returned_at ||
                               $this->returned_from_perpajakan_fixed_at;
         
         if ($targetRoleCode === 'perpajakan' && $isReturnedDocument) {
@@ -306,10 +304,9 @@ class Dokumen extends Model
             $roleData->processed_at = now();
             
             // Reset deadline for returned documents so they must set deadline again
-            // Check if document was returned (has returned_from_*_at timestamp)
-            $isReturnedDocument = $this->returned_from_perpajakan_at || 
-                                  $this->returned_from_akutansi_at || 
-                                  $this->department_returned_at;
+            // Check if document was returned (has department_returned_at timestamp)
+            $isReturnedDocument = $this->department_returned_at ||
+                                  $this->returned_from_perpajakan_fixed_at;
             
             if ($isReturnedDocument && $roleCode === 'perpajakan') {
                 // Reset deadline for returned documents sent back to perpajakan

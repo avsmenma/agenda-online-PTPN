@@ -1097,20 +1097,19 @@ class DashboardPerpajakanController extends Controller
         $totalReturned = (clone $baseQuery)->count();
 
         // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika sesuai dengan view: tidak ada returned_from_perpajakan_fixed_at DAN 
-        // (current_handler != 'perpajakan' ATAU ada pengembalian_awaiting_fix ATAU tidak ada returned_from_perpajakan_at)
+        // Logika: tidak ada returned_from_perpajakan_fixed_at DAN 
+        // (current_handler != 'perpajakan' ATAU ada pengembalian_awaiting_fix)
         $totalMenungguPerbaikan = (clone $baseQuery)
             ->whereNull('returned_from_perpajakan_fixed_at')
             ->where(function ($q) {
                 $q->where('current_handler', '!=', 'perpajakan')
-                  ->orWhere('pengembalian_awaiting_fix', true)
-                  ->orWhereNull('returned_from_perpajakan_at');
+                  ->orWhere('pengembalian_awaiting_fix', true);
             })
             ->count();
 
         // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali ke perpajakan
-        // Logika sesuai dengan view: ada returned_from_perpajakan_fixed_at ATAU 
-        // (current_handler == 'perpajakan' DAN tidak ada pengembalian_awaiting_fix DAN ada returned_from_perpajakan_at)
+        // Logika: ada returned_from_perpajakan_fixed_at ATAU 
+        // (current_handler == 'perpajakan' DAN tidak ada pengembalian_awaiting_fix)
         $totalSudahDiperbaiki = (clone $baseQuery)
             ->where(function ($q) {
                 $q->whereNotNull('returned_from_perpajakan_fixed_at')
@@ -1120,8 +1119,7 @@ class DashboardPerpajakanController extends Controller
                            ->where(function ($handlerQ) {
                                $handlerQ->where('pengembalian_awaiting_fix', false)
                                         ->orWhereNull('pengembalian_awaiting_fix');
-                           })
-                           ->whereNotNull('returned_from_perpajakan_at');
+                           });
                   });
             })
             ->count();
@@ -1187,7 +1185,6 @@ class DashboardPerpajakanController extends Controller
                 'current_handler' => 'ibuB',
                 'target_department' => 'perpajakan',
                 'department_returned_at' => now(),
-                'returned_from_perpajakan_at' => now(), // Set timestamp when document is returned from perpajakan
                 'department_return_reason' => $request->return_reason,
                 'alasan_pengembalian' => $request->return_reason,
                 // Reset tax status since document is being returned
