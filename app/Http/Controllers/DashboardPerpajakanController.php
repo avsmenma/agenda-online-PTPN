@@ -1089,25 +1089,40 @@ class DashboardPerpajakanController extends Controller
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
-        // Calculate statistics
-        $totalReturned = Dokumen::where('status', 'returned_to_department')
-            ->where('target_department', 'perpajakan')
-            ->count();
+        // Calculate statistics for returned documents
+        $baseQuery = Dokumen::where('status', 'returned_to_department')
+            ->where('target_department', 'perpajakan');
 
-        $totalPending = Dokumen::where('current_handler', 'ibuB')
-            ->where('status', 'returned_to_department')
-            ->where('target_department', 'perpajakan')
-            ->whereDoesntHave('roleData', function ($roleQ) {
-                $roleQ->where('role_code', 'perpajakan')
-                    ->whereNotNull('processed_at');
+        // Total dokumen dikembalikan
+        $totalReturned = (clone $baseQuery)->count();
+
+        // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
+        // Logika sesuai dengan view: tidak ada returned_from_perpajakan_fixed_at DAN 
+        // (current_handler != 'perpajakan' ATAU ada pengembalian_awaiting_fix ATAU tidak ada returned_from_perpajakan_at)
+        $totalMenungguPerbaikan = (clone $baseQuery)
+            ->whereNull('returned_from_perpajakan_fixed_at')
+            ->where(function ($q) {
+                $q->where('current_handler', '!=', 'perpajakan')
+                  ->orWhere('pengembalian_awaiting_fix', true)
+                  ->orWhereNull('returned_from_perpajakan_at');
             })
             ->count();
 
-        $totalCompleted = Dokumen::where('status', 'returned_to_department')
-            ->where('target_department', 'perpajakan')
-            ->whereHas('roleData', function ($roleQ) {
-                $roleQ->where('role_code', 'perpajakan')
-                    ->whereNotNull('processed_at');
+        // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali ke perpajakan
+        // Logika sesuai dengan view: ada returned_from_perpajakan_fixed_at ATAU 
+        // (current_handler == 'perpajakan' DAN tidak ada pengembalian_awaiting_fix DAN ada returned_from_perpajakan_at)
+        $totalSudahDiperbaiki = (clone $baseQuery)
+            ->where(function ($q) {
+                $q->whereNotNull('returned_from_perpajakan_fixed_at')
+                  ->orWhere(function ($subQ) {
+                      // Dokumen yang sudah kembali ke perpajakan setelah diperbaiki
+                      $subQ->where('current_handler', 'perpajakan')
+                           ->where(function ($handlerQ) {
+                               $handlerQ->where('pengembalian_awaiting_fix', false)
+                                        ->orWhereNull('pengembalian_awaiting_fix');
+                           })
+                           ->whereNotNull('returned_from_perpajakan_at');
+                  });
             })
             ->count();
 
@@ -1119,8 +1134,8 @@ class DashboardPerpajakanController extends Controller
             'menuDaftarDokumenDikembalikan' => 'Active',
             'dokumens' => $dokumens,
             'totalReturned' => $totalReturned,
-            'totalPending' => $totalPending,
-            'totalCompleted' => $totalCompleted,
+            'totalMenungguPerbaikan' => $totalMenungguPerbaikan,
+            'totalSudahDiperbaiki' => $totalSudahDiperbaiki,
         );
         return view('perpajakan.dokumens.pengembalianPerpajakan', $data);
     }

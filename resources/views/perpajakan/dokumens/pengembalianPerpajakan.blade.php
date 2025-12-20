@@ -552,9 +552,9 @@
       <div class="stat-content">
         <div class="stat-label">
           <i class="fa-solid fa-clock"></i>
-          Menunggu Verifikasi
+          Menunggu Perbaikan
         </div>
-        <div class="stat-value">{{ $totalPending ?? 0 }}</div>
+        <div class="stat-value">{{ $totalMenungguPerbaikan ?? 0 }}</div>
       </div>
       <div class="stat-icon-wrapper">
         <i class="fa-solid fa-clock stat-icon"></i>
@@ -565,9 +565,9 @@
       <div class="stat-content">
         <div class="stat-label">
           <i class="fa-solid fa-check-circle"></i>
-          Selesai Diverifikasi
+          Sudah Diperbaiki
         </div>
-        <div class="stat-value">{{ $totalCompleted ?? 0 }}</div>
+        <div class="stat-value">{{ $totalSudahDiperbaiki ?? 0 }}</div>
       </div>
       <div class="stat-icon-wrapper">
         <i class="fa-solid fa-check-circle stat-icon"></i>
