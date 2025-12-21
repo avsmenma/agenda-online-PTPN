@@ -285,7 +285,7 @@
     font-size: 13px;
     border-bottom: 1px solid rgba(26, 77, 62, 0.05);
     text-align: center;
-    font-weight: 400;
+    font-weight: 500;
     color: #374151;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
