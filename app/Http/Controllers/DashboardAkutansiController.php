@@ -1448,7 +1448,7 @@ class DashboardAkutansiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikembalikan ke Ibu Yuni.'
+                'message' => 'Dokumen berhasil dikembalikan ke Team Verifikasi.'
             ]);
 
         } catch (\Exception $e) {

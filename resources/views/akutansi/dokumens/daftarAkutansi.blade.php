@@ -2200,7 +2200,7 @@
                       </a>
                       @endif
                       @if($dokumen->can_edit)
-                      <button type="button" class="btn-action btn-kembalikan" style="flex: 1;" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan Dokumen ke Ibu Yuni">
+                      <button type="button" class="btn-action btn-kembalikan" style="flex: 1;" onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan Dokumen ke Team Verifikasi">
                         <i class="fa-solid fa-undo"></i>
                         <span>Balik</span>
                       </button>
@@ -2330,7 +2330,7 @@
     <div class="modal-content">
       <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
         <h5 class="modal-title">
-          <i class="fa-solid fa-undo me-2"></i>Kembalikan Dokumen ke Ibu Yuni
+          <i class="fa-solid fa-undo me-2"></i>Kembalikan Dokumen ke Team Verifikasi
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
@@ -2339,14 +2339,14 @@
 
         <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(200, 35, 51, 0.1) 100%); border-left: 4px solid #dc3545;">
           <i class="fa-solid fa-exclamation-triangle me-2"></i>
-          <strong>Perhatian:</strong> Dokumen akan dikembalikan ke Ibu Yuni dan akan muncul di halaman pengembalian dokumen. Pastikan Anda telah mengisi alasan pengembalian dengan jelas.
+          <strong>Perhatian:</strong> Dokumen akan dikembalikan ke Team Verifikasi dan akan muncul di halaman pengembalian dokumen. Pastikan Anda telah mengisi alasan pengembalian dengan jelas.
         </div>
 
         <div class="form-group mb-3">
           <label for="returnReason" class="form-label">
             <strong>Alasan Pengembalian <span class="text-danger">*</span></strong>
           </label>
-          <textarea class="form-control" id="returnReason" rows="4" placeholder="Jelaskan kenapa dokumen ini dikembalikan ke Ibu Yuni..." maxlength="500" required></textarea>
+          <textarea class="form-control" id="returnReason" rows="4" placeholder="Jelaskan kenapa dokumen ini dikembalikan ke Team Verifikasi..." maxlength="500" required></textarea>
           <div class="form-text">
             <small class="text-muted">Mohon isi alasan pengembalian secara detail dan jelas.</small><br>
             <span id="returnCharCount">0</span>/500 karakter
@@ -2357,7 +2357,7 @@
           <i class="fa-solid fa-info-circle me-2"></i>
           <strong>Informasi:</strong> Dokumen yang dikembalikan akan:
           <ul class="mb-0 mt-2">
-            <li>Muncul di halaman "Pengembalian Dokumen Ibu Yuni"</li>
+            <li>Muncul di halaman "Pengembalian Dokumen Team Verifikasi"</li>
             <li>Muncul di halaman "Pengembalian Dokumen Team Akutansi"</li>
             <li>Hilang dari daftar dokumen aktif akutansi</li>
           </ul>
@@ -2389,7 +2389,7 @@
         <div class="text-center mb-3">
           <i class="fa-solid fa-exclamation-triangle" style="font-size: 52px; color: #dc3545;"></i>
         </div>
-        <h5 class="fw-bold mb-3 text-center">Apakah Anda yakin ingin mengembalikan dokumen ini ke Ibu Yuni?</h5>
+        <h5 class="fw-bold mb-3 text-center">Apakah Anda yakin ingin mengembalikan dokumen ini ke Team Verifikasi?</h5>
         <div class="alert alert-light border" style="background-color: #f8f9fa;">
           <div class="d-flex align-items-start">
             <i class="fa-solid fa-info-circle me-2 mt-1" style="color: #dc3545;"></i>
@@ -2400,7 +2400,7 @@
           </div>
         </div>
         <p class="text-muted mb-0 text-center small">
-          Dokumen akan dikembalikan ke Ibu Yuni dan akan muncul di halaman pengembalian dokumen.
+          Dokumen akan dikembalikan ke Team Verifikasi dan akan muncul di halaman pengembalian dokumen.
         </p>
       </div>
       <div class="modal-footer border-0 justify-content-center gap-2">
@@ -2429,10 +2429,10 @@
         <div class="mb-3">
           <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #28a745;"></i>
         </div>
-        <h5 class="fw-bold mb-3">Dokumen berhasil dikembalikan ke Ibu Yuni!</h5>
+        <h5 class="fw-bold mb-3">Dokumen berhasil dikembalikan ke Team Verifikasi!</h5>
         <p class="text-muted mb-0">
           Dokumen akan muncul di:
-          <br>• Halaman "Pengembalian Dokumen Ibu Yuni"
+          <br>• Halaman "Pengembalian Dokumen Team Verifikasi"
           <br>• Halaman "Pengembalian Dokumen Team Akutansi"
         </p>
       </div>

@@ -711,7 +711,7 @@
                   @break
                 @case('sent_to_ibub')
                   <span class="badge badge-sent">
-                    <i class="fas fa-paper-plane"></i> Terkirim ke Ibu Yuni
+                    <i class="fas fa-paper-plane"></i> Terkirim ke Team Verifikasi
                   </span>
                   @break
                 @case('sent_to_perpajakan')
