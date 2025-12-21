@@ -747,18 +747,23 @@ class DashboardAkutansiController extends Controller
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
-        // Calculate statistics
+        // Calculate statistics for returned documents
         $baseQuery = Dokumen::where('status', 'returned_to_department')
             ->where('target_department', 'akutansi');
 
+        // Total dokumen dikembalikan
         $totalReturned = (clone $baseQuery)->count();
 
-        $totalPending = (clone $baseQuery)
+        // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
+        // Logika: masih di ibuB (belum dikirim kembali ke akutansi)
+        $totalMenungguPerbaikan = (clone $baseQuery)
             ->where('current_handler', 'ibuB')
             ->count();
 
-        $totalCompleted = (clone $baseQuery)
-            ->where('current_handler', '!=', 'ibuB')
+        // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali ke akutansi
+        // Logika: sudah kembali ke akutansi (current_handler == 'akutansi')
+        $totalSudahDiperbaiki = (clone $baseQuery)
+            ->where('current_handler', 'akutansi')
             ->count();
 
         $data = array(
@@ -769,8 +774,8 @@ class DashboardAkutansiController extends Controller
             'menuDaftarDokumenDikembalikan' => 'Active',
             'dokumens' => $dokumens,
             'totalReturned' => $totalReturned,
-            'totalPending' => $totalPending,
-            'totalCompleted' => $totalCompleted,
+            'totalMenungguPerbaikan' => $totalMenungguPerbaikan,
+            'totalSudahDiperbaiki' => $totalSudahDiperbaiki,
         );
         return view('akutansi.dokumens.pengembalianAkutansi', $data);
     }

@@ -9,20 +9,159 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin-bottom: 0;
   }
 
-  .table-dokumen {
+  /* Statistics Cards - Modern Design with Left Border & Icon */
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+
+  .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #083E40;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 120px;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.15);
+    border-left-width: 5px;
+  }
+
+  .stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-label i {
+    font-size: 16px;
+    color: #083E40;
+  }
+
+  .stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #083E40;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+  }
+
+  .stat-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    box-shadow: 0 2px 8px rgba(8, 62, 64, 0.2);
+  }
+
+  .stat-icon {
+    font-size: 28px;
+    color: white;
+  }
+
+  /* Search Box - Enhanced */
+  .search-box {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    padding: 20px 24px;
     border-radius: 16px;
-    overflow: hidden;
+    margin-bottom: 24px;
     box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
     border: 1px solid rgba(8, 62, 64, 0.08);
   }
 
+  .search-box .input-group-text {
+    background: white;
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    padding: 10px 14px;
+    color: #083E40;
+  }
+
+  .search-box .form-control {
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    transition: all 0.3s ease;
+  }
+
+  .search-box .form-control:focus {
+    outline: none;
+    border-color: #889717;
+    box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
+  }
+
+  .search-box .btn-primary {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .search-box .btn-primary:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+  }
+
+  /* Table Styling - Green Theme */
+  .table-dokumen {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    border-radius: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
+  }
+
+  .table-dokumen table {
+    min-width: 1400px;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
   .table-dokumen thead {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    background: #083E40;
     color: white;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .table-dokumen thead::after {
@@ -32,500 +171,700 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, #889717 50%, transparent 100%);
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .table-dokumen thead th {
-    padding: 16px 12px;
-    font-weight: 600;
-    font-size: 13px;
+    padding: 18px 16px;
+    font-weight: 700;
+    font-size: 14px;
     border: none;
     text-align: center;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    color: white;
+    text-transform: uppercase;
+    white-space: nowrap;
+    position: relative;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    background: #083E40;
   }
+
+  .table-dokumen thead th:last-child {
+    border-right: none;
+  }
+
+  /* Column width settings */
+  .table-dokumen thead th:nth-child(1) { width: 60px; min-width: 60px; }
+  .table-dokumen thead th:nth-child(2) { width: 150px; min-width: 150px; }
+  .table-dokumen thead th:nth-child(3) { width: 180px; min-width: 180px; }
+  .table-dokumen thead th:nth-child(4) { width: 250px; min-width: 200px; }
+  .table-dokumen thead th:nth-child(5) { width: 140px; min-width: 140px; }
+  .table-dokumen thead th:nth-child(6) { width: 160px; min-width: 160px; }
+  .table-dokumen thead th:nth-child(7) { width: 180px; min-width: 180px; }
+  .table-dokumen thead th:nth-child(8) { width: 400px; min-width: 300px; }
 
   .table-dokumen tbody tr.main-row {
     cursor: pointer;
     transition: all 0.3s ease;
-    border-left: 3px solid transparent;
+    border-left: 4px solid #083E40;
+    border-bottom: 1px solid rgba(8, 62, 64, 0.1);
+    background: #ffffff;
   }
 
   .table-dokumen tbody tr.main-row:hover {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #889717;
-    transform: scale(1.005);
-  }
-
-  .table-dokumen tbody tr.main-row.highlight {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%) !important;
-    border-left: 3px solid #889717;
+    background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(8, 62, 64, 0.04) 100%);
+    border-left-color: #889717;
+    transform: translateX(2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.15);
   }
 
   .table-dokumen tbody tr.main-row.selected {
-    background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #083E40;
+    background: linear-gradient(135deg, rgba(136, 151, 23, 0.12) 0%, rgba(8, 62, 64, 0.06) 100%);
+    border-left-color: #889717;
   }
 
   .table-dokumen tbody td {
-    padding: 14px 12px;
-    font-size: 13px;
+    padding: 16px;
     vertical-align: middle;
     border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+    border-right: 1px solid rgba(8, 62, 64, 0.05);
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
-  .row{
-    margin-right:10px;
-    justify-content : space-between;
-    gap: 24px;
+  .table-dokumen tbody td:last-child {
+    border-right: none;
   }
 
-  .row > [class*='col-'] {
-    padding-left: 12px;
-    padding-right: 12px;
+  /* Alasan Column - Bubble Chat Style */
+  .alasan-column {
+    max-width: 400px;
+    min-width: 300px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.6;
+    text-align: left !important;
+    padding: 16px 20px !important;
   }
 
-   .detail-row {
-    display: none;
-    background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+  .alasan-bubble {
+    background: linear-gradient(135deg, #f0f9f9 0%, #e0f2f2 100%);
+    color: #083E40;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border-left: 4px solid #083E40;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(8, 62, 64, 0.1);
+  }
+
+  .alasan-bubble::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 20px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #083E40;
+  }
+
+  .alasan-icon {
+    font-size: 18px;
+    color: #083E40;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .alasan-text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .nilai-column {
+    font-weight: 700;
+    color: #083E40;
+    font-size: 14px;
+  }
+
+  .tanggal-column small {
+    background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: #0066cc;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .uraian-column {
+    text-align: left !important;
+    max-width: 300px;
+    min-width: 200px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.5;
+  }
+
+  .nomor-column {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+
+  /* Badge Status */
+  .badge-status {
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .badge-status:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .badge-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: 2px solid transparent;
+  }
+
+  .badge-returned {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: white;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  }
+
+  /* Detail Row */
+  .detail-row {
+    display: none !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-left: 4px solid #889717;
   }
 
-.detail-row.show {
-    display: table-row;
+  .detail-row.show {
+    display: table-row !important;
     animation: slideDown 0.3s ease;
   }
 
   @keyframes slideDown {
     from {
       opacity: 0;
+      transform: translateY(-10px);
     }
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
 
   .detail-content {
     padding: 24px;
-    border-radius: 8px;
+    border-top: 2px solid rgba(8, 62, 64, 0.1);
   }
 
   .detail-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
   }
 
   .detail-item {
     display: flex;
     flex-direction: column;
+    gap: 4px;
     padding: 12px;
     background: white;
     border-radius: 8px;
-    border-left: 3px solid #889717;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(8, 62, 64, 0.08);
+    transition: all 0.2s ease;
   }
 
   .detail-item:hover {
-    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.1);
-    transform: translateY(-2px);
-  }
-
-  .detail-label {
-    font-weight: 600;
-    color: #083E40;
-    font-size: 12px;
-    margin-bottom: 6px;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-  }
-
-  .detail-value {
-    color: #333;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .badge-status {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .badge-Dikembalikan {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    color: white;
-  }
-
-  .badge-dikembalikan {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-  }
-
-  .btn-action {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .btn-edit {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-  }
-  .btn-kirim {
-    background: linear-gradient(135deg, #0401ccff 0%, #020daaff 100%);
-    color: white;
-  }
-
-  .btn-delete {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-  }
-
-  .btn-view {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    color: white;
-  }
-
-  .btn-action:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  }
-
-  .btn-action:active {
+    border-color: #889717;
+    box-shadow: 0 2px 8px rgba(136, 151, 23, 0.1);
     transform: translateY(-1px);
   }
 
-  .filter-section {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+  .detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #083E40;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .filter-section select,
-  .filter-section input {
-    padding: 10px 14px;
-    border: 2px solid rgba(8, 62, 64, 0.1);
-    border-radius: 10px;
+  .detail-value {
     font-size: 13px;
-    transition: all 0.3s ease;
+    color: #333;
+    font-weight: 500;
+    word-break: break-word;
   }
 
-  .filter-section select:focus,
-  .filter-section input:focus {
-    outline: none;
-    border-color: #889717;
-    box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
   }
 
-  .btn-filter {
-    padding: 10px 24px;
+  .empty-state i {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+    color: #083E40;
+  }
+
+  .empty-state h5 {
+    color: #083E40;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    color: #6c757d;
+    margin-bottom: 20px;
+  }
+
+  .empty-state .btn-primary {
     background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
     border: none;
+    padding: 12px 24px;
     border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
-  }
-  .btn-paraf {
-    padding: 10px 24px;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
   }
 
-  .btn-filter:hover {
+  .empty-state .btn-primary:hover {
+    background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(8, 62, 64, 0.3);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
   }
 
-  .chevron-icon {
-    transition: transform 0.4s ease;
-    color: #fff;
-  }
-
-  .chevron-icon.rotate {
-    transform: rotate(180deg);
-  }
-
+  /* Pagination */
   .pagination {
     display: flex;
     justify-content: center;
     gap: 8px;
     margin-top: 24px;
+    padding: 20px;
   }
 
-  .pagination button {
-    padding: 10px 16px;
+  .pagination .page-link {
     border: 2px solid rgba(8, 62, 64, 0.1);
     background-color: white;
-    cursor: pointer;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
     color: #083E40;
-  }
-
-  .pagination button:hover {
-    border-color: #889717;
-    background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, transparent 100%);
-    transform: translateY(-2px);
-  }
-
-  .pagination button.active {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-    color: white;
-    border-color: transparent;
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-  }
-
-  .btn-chevron {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white;
-  }
-
-  .btn-chevron:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
-  }
-
-  .card-info {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-    border-radius: 16px;
-    color: white;
-    padding: 32px 24px;
-    box-shadow: 0 8px 24px rgba(8, 62, 64, 0.2), 0 2px 8px rgba(136, 151, 23, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    min-height: 160px;
-    width: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .card-info::before {
-    /* content: ''; */
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    transition: all 0.5s ease;
-  }
-
-  .card-info:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(8, 62, 64, 0.3), 0 4px 12px rgba(136, 151, 23, 0.2);
-  }
-
-  .card-info:hover::before {
-    top: -60%;
-    right: -60%;
-  }
-
-  .card-info .icon-box {
-    background: rgba(255,255,255,0.25);
-    padding: 16px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-  }
-
-  .card-info:hover .icon-box {
-    background: rgba(255,255,255,0.35);
-    transform: scale(1.1) rotate(5deg);
-  }
-
-  .card-info i {
-    color: white;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-  }
-
-  .card-title-small {
-    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
     font-weight: 600;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-    opacity: 0.95;
+    transition: all 0.3s ease;
   }
 
-  .card-number {
-    font-size: 28px;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  .pagination .page-link:hover {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border-color: #083E40;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
   }
 
-  /* Checkbox styling */
-  input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: #889717;
+  .pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border-color: #083E40;
   }
 
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats-container {
+      grid-template-columns: 1fr;
+    }
+
+    .table-dokumen {
+      border-radius: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .detail-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .detail-item {
+      padding: 8px;
+    }
+
+    .stat-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .stat-icon-wrapper {
+      margin: 0 auto;
+    }
+  }
 </style>
-<!-- <div class="card mb-4 p-3" style="background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 10px; box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05); border: 1px solid rgba(8, 62, 64, 0.08);">
-    <h2 class="form-title">{{ $title }}</h2>
-</div> -->
-<h2 style="margin-bottom: 50px; font-weight: 700;">{{ $title }}</h2>
 
-<div class="row justify-content-center  pb-0 mb-3" style="width :100%;">
-
-    <!-- Card 1 -->
-    <div class=" col-xl-3 col-md-6 mb-4 "style="width :30%;" >
-        <div class="card-info w-100">
-            <div class="flex-grow-1">
-                <div class="card-title-small">T. Dokumen yang Dibaca</div>
-                <div class="card-number">40,000</div>
-            </div>
-            <div class="icon-box ms-3">
-                <i class="fas fa-refresh fa-2x"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card 2 -->
-    <div class="col-xl-3 col-md-6 mb-4 px-xl-2 " style="width :30%;" >
-        <div class="card-info">
-            <div class="flex-grow-1">
-                <div class="card-title-small">T. Dokumen Dikembalikan</div>
-                <div class="card-number">40,000</div>
-            </div>
-            <div class="icon-box ms-3">
-                <i class="fas fa-book-open fa-2x"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card 3 -->
-    <div class="col-xl-3 col-md-6 mb-4"style="width :30%;">
-        <div class="card-info">
-            <div class="flex-grow-1">
-                <div class="card-title-small">Dokumen Dikirim</div>
-                <div class="card-number">40,000</div>
-            </div>
-            <div class="icon-box ms-3">
-                <i class="fas fa-paper-plane fa-2x"></i>
-            </div>
-        </div>
-    </div>
-
-</div>
-<!-- Tabel Dokumen -->
-  <div class="table-dokumen">
-    <table class="table mb-0">
-      <thead>
-        <tr>
-          <th style="width: 50px;">No</th>
-          <th>Nomor Surat</th>
-          <th>Tanggal Masuk</th>
-          <th>Nomor SPP</th>
-          <th>Tanggal SPP</th>
-          <th>Uraian Ketidaklengkapan</th>
-          <th>Keterangan Deadline</th>
-          <th>Status</th>
-          <th style="width: 150px;">Aksi</th>
-          <th style="width: 150px;">Status Paraf</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td colspan="10" class="text-center py-4">
-            <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Tidak ada data pengembalian dokumen yang tersedia.</p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="form-title">Daftar Pengembalian Dokumen Team Akutansi ke Team Verifikasi</h2>
   </div>
 
+  <!-- Statistics Cards -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-label">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          Total Dokumen Dikembalikan
+        </div>
+        <div class="stat-value">{{ $totalReturned ?? 0 }}</div>
+      </div>
+      <div class="stat-icon-wrapper">
+        <i class="fa-solid fa-file-invoice-dollar stat-icon"></i>
+      </div>
+    </div>
 
-<!-- Pagination -->
-<div class="pagination">
-  <button>«</button>
-  <button class="active">1</button>
-  <button>2</button>
-  <button>3</button>
-  <button>4</button>
-  <button>5</button>
-  <button>»</button>
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-label">
+          <i class="fa-solid fa-clock"></i>
+          Menunggu Perbaikan
+        </div>
+        <div class="stat-value">{{ $totalMenungguPerbaikan ?? 0 }}</div>
+      </div>
+      <div class="stat-icon-wrapper">
+        <i class="fa-solid fa-clock stat-icon"></i>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-label">
+          <i class="fa-solid fa-check-circle"></i>
+          Sudah Diperbaiki
+        </div>
+        <div class="stat-value">{{ $totalSudahDiperbaiki ?? 0 }}</div>
+      </div>
+      <div class="stat-icon-wrapper">
+        <i class="fa-solid fa-check-circle stat-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Box -->
+  <div class="search-box">
+    <form action="{{ route('returns.akutansi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
+      <div class="input-group" style="flex: 1; min-width: 300px;">
+        <span class="input-group-text">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </span>
+        <input type="text" class="form-control" name="search" placeholder="Cari nomor agenda, nomor SPP, atau uraian..." value="{{ request('search') }}">
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-filter me-2"></i>Filter
+      </button>
+    </form>
+  </div>
+
+  <!-- Documents Table -->
+  <div class="table-responsive">
+    <div class="table-dokumen">
+      @if(isset($dokumens) && $dokumens->count() > 0)
+        <table class="table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nomor Agenda</th>
+              <th>Nomor SPP</th>
+              <th>Uraian</th>
+              <th>Nilai</th>
+              <th>Status Dokumen</th>
+              <th>Tanggal Dikembalikan</th>
+              <th>Alasan</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($dokumens as $index => $dokumen)
+            <tr class="main-row" data-id="{{ $dokumen->id }}" onclick="event.stopPropagation(); toggleDetail({{ $dokumen->id }});">
+              <td>{{ $dokumens->firstItem() + $index }}</td>
+              <td class="nomor-column">
+                <strong>{{ $dokumen->nomor_agenda }}</strong>
+                <br>
+                <small class="text-muted" style="font-size: 11px;">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
+              </td>
+              <td class="nomor-column">{{ $dokumen->nomor_spp }}</td>
+              <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>
+              <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
+              <td>
+                @if($dokumen->current_handler == 'akutansi')
+                  <span class="badge-status badge-success">
+                    <i class="fa-solid fa-check-circle"></i>
+                    Sudah diperbaiki
+                  </span>
+                @else
+                  <span class="badge-status badge-returned">
+                    <i class="fa-solid fa-clock"></i>
+                    Menunggu perbaikan
+                  </span>
+                @endif
+              </td>
+              <td class="tanggal-column">
+                <small>
+                  @if($dokumen->department_returned_at)
+                    {{ $dokumen->department_returned_at->format('d/m/Y H:i') }}
+                  @else
+                    -
+                  @endif
+                </small>
+              </td>
+              <td class="alasan-column">
+                <div class="alasan-bubble">
+                  <i class="fa-solid fa-comment-dots alasan-icon"></i>
+                  <span class="alasan-text">{{ $dokumen->alasan_pengembalian ?? '-' }}</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none !important;">
+              <td colspan="8" style="padding: 0;">
+                <div class="detail-content" id="detail-content-{{ $dokumen->id }}" style="padding: 24px;">
+                  <div class="text-center p-4">
+                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                    <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center" style="padding: 20px;">
+          <div class="text-muted" style="font-size: 13px; color: #6c757d;">
+            Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari total {{ $dokumens->total() }} dokumen
+          </div>
+          {{ $dokumens->links() }}
+        </div>
+      @else
+        <div class="empty-state">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <h5>Belum ada dokumen</h5>
+          <p>Tidak ada dokumen yang dikembalikan ke team verifikasi saat ini.</p>
+          <a href="{{ route('documents.akutansi.index') }}" class="btn btn-primary">
+            <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Daftar Dokumen Team Akutansi
+          </a>
+        </div>
+      @endif
+    </div>
+  </div>
 </div>
 
 <script>
-function toggleDetail(rowId) {
-  const detailRow = document.getElementById('detail-' + rowId);
-  const chevron = document.getElementById('chevron-' + rowId);
+// Prevent event bubbling issues and ensure proper event handling
+document.addEventListener('DOMContentLoaded', function() {
+  // Close all detail rows when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.table-dokumen tbody tr')) {
+      const openRows = document.querySelectorAll('.detail-row.show');
+      openRows.forEach(row => {
+        row.style.display = 'none';
+        row.classList.remove('show');
+        const docId = row.id.replace('detail-', '');
+        const mainRow = document.querySelector(`tr.main-row[data-id="${docId}"]`);
+        if (mainRow) {
+          mainRow.classList.remove('selected');
+        }
+      });
+    }
+  });
 
-  detailRow.classList.toggle('show');
-  chevron.classList.toggle('rotate');
+  // Handle row clicks
+  const mainRows = document.querySelectorAll('.table-dokumen tbody tr.main-row');
+  mainRows.forEach(row => {
+    row.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      const docId = this.getAttribute('data-id');
+      if (docId) {
+        toggleDetail(parseInt(docId));
+      }
+    });
+  });
+});
+
+function toggleDetail(docId) {
+  const detailRow = document.getElementById('detail-' + docId);
+  const mainRow = document.querySelector(`tr.main-row[data-id="${docId}"]`);
+
+  if (!detailRow) {
+    console.error('Detail row not found for document:', docId);
+    return;
+  }
+
+  // Close all other detail rows first
+  const allDetailRows = document.querySelectorAll('.detail-row.show');
+  allDetailRows.forEach(row => {
+    if (row.id !== 'detail-' + docId) {
+      row.style.display = 'none';
+      row.classList.remove('show');
+      const otherDocId = row.id.replace('detail-', '');
+      const otherMainRow = document.querySelector(`tr.main-row[data-id="${otherDocId}"]`);
+      if (otherMainRow) {
+        otherMainRow.classList.remove('selected');
+      }
+    }
+  });
+
+  // Toggle visibility
+  const isHidden = detailRow.style.display === 'none' || !detailRow.classList.contains('show');
+  
+  if (isHidden) {
+    // Show detail row
+    detailRow.style.display = 'table-row';
+    detailRow.classList.add('show');
+    
+    // Add selected class to main row
+    if (mainRow) {
+      mainRow.classList.add('selected');
+    }
+
+    // Scroll to detail row
+    detailRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Load detail content via AJAX
+    loadDocumentDetail(docId);
+  } else {
+    // Hide detail row
+    detailRow.style.display = 'none';
+    detailRow.classList.remove('show');
+    
+    // Remove selected class from main row
+    if (mainRow) {
+      mainRow.classList.remove('selected');
+    }
+  }
 }
 
-function confirmKirim() {
-    if (confirm("Apakah Anda yakin ingin mengirim dokumen ini?")) {
-        // aksi kalau user pilih YES
-        console.log("Dokumen akan dikirim");
-        // Di sini bisa tambahkan kode untuk mengirim dokumen
-        alert("Dokumen berhasil dikirim!");
-        return true;
-    } else {
-        // aksi kalau user pilih NO
-        console.log("Pengiriman dibatalkan");
-        return false;
+function loadDocumentDetail(docId) {
+  const detailContent = document.getElementById(`detail-content-${docId}`);
+  
+  // Show loading
+  detailContent.innerHTML = `
+    <div class="text-center p-4">
+      <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+      <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+    </div>
+  `;
+
+  fetch(`/documents/akutansi/${docId}/detail`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
     }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (detailContent && data.success && data.dokumen) {
+        // Generate HTML from JSON data
+        const html = generateDetailHtml(data.dokumen);
+        detailContent.innerHTML = html;
+      } else {
+        throw new Error('Invalid response format');
+      }
+    })
+    .catch(error => {
+      console.error('Error loading document detail:', error);
+      if (detailContent) {
+        detailContent.innerHTML = '<div class="text-center p-4 text-danger"><i class="fa-solid fa-exclamation-triangle me-2"></i>Gagal memuat detail dokumen</div>';
+      }
+    });
 }
 
-function confirmParaf(btn) {
-    if (confirm("Apakah Anda yakin ingin memberikan paraf pada dokumen ini?")) {
-        // aksi kalau user pilih YES
-        console.log("Paraf dikonfirmasi");
+function generateDetailHtml(dokumen) {
+  let html = '<div class="detail-grid">';
+  
+  // Document Information Section
+  const detailItems = {
+    'Tanggal Masuk': dokumen.tanggal_masuk || '-',
+    'Bulan': dokumen.bulan || '-',
+    'Tahun': dokumen.tahun || '-',
+    'No SPP': dokumen.nomor_spp || '-',
+    'Tanggal SPP': dokumen.tanggal_spp || '-',
+    'Uraian SPP': dokumen.uraian_spp || '-',
+    'Nilai Rp': formatRupiah(dokumen.nilai_rupiah) || '-',
+    'Kriteria CF': dokumen.kategori || '-',
+    'Jenis Dokumen': dokumen.jenis_dokumen || '-',
+    'Jenis Sub Pekerjaan': dokumen.jenis_sub_pekerjaan || '-',
+    'Jenis Pembayaran': dokumen.jenis_pembayaran || '-',
+    'Dibayar Kepada': dokumen.dibayar_kepada || '-',
+    'Kebun': dokumen.kebun || '-',
+    'No SPK': dokumen.no_spk || '-',
+    'Tanggal SPK': dokumen.tanggal_spk || '-',
+    'Tanggal Berakhir SPK': dokumen.tanggal_berakhir_spk || '-',
+    'No Berita Acara': dokumen.no_berita_acara || '-',
+    'Tanggal Berita Acara': dokumen.tanggal_berita_acara || '-',
+  };
 
-        // Disable button
-        btn.disabled = true;
+  // Add PO/PR numbers if available
+  if (dokumen.dokumen_pos && dokumen.dokumen_pos.length > 0) {
+    const poNumbers = dokumen.dokumen_pos.map(po => po.nomor_po).join(', ');
+    detailItems['Nomor PO'] = poNumbers;
+  }
 
-        // Ubah teks button
-        btn.textContent = "Selesai Paraf";
+  if (dokumen.dokumen_prs && dokumen.dokumen_prs.length > 0) {
+    const prNumbers = dokumen.dokumen_prs.map(pr => pr.nomor_pr).join(', ');
+    detailItems['Nomor PR'] = prNumbers;
+  }
 
-        // Ubah class button
-        btn.classList.remove('btn-paraf');
-        btn.classList.add('btn-paraf-selesai');
+  // Akutansi fields
+  if (dokumen.nomor_miro) detailItems['Nomor MIRO'] = dokumen.nomor_miro;
 
-        alert("Paraf berhasil diberikan!");
-        return true;
-    } else {
-        // aksi kalau user pilih NO
-        console.log("Paraf dibatalkan");
-        return false;
-    }
+  // Generate detail items HTML
+  for (const [label, value] of Object.entries(detailItems)) {
+    html += `
+      <div class="detail-item">
+        <div class="detail-label">${label}</div>
+        <div class="detail-value">${value}</div>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function formatRupiah(angka) {
+  if (!angka) return '-';
+  return 'Rp. ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 </script>
 
