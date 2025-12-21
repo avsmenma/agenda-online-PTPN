@@ -809,7 +809,9 @@ class DashboardPerpajakanController extends Controller
             }
 
             $deadlineDays = (int) $request->deadline_days;
-            $deadlineAt = now()->addDays($deadlineDays);
+            // Calculate deadline using Asia/Jakarta timezone to match user's local time (WIB)
+            // This ensures deadline is calculated from the same time as user's local time
+            $deadlineAt = now('Asia/Jakarta')->addDays($deadlineDays);
             $deadlineNote = isset($request->deadline_note) && trim($request->deadline_note) !== ''
                 ? trim($request->deadline_note)
                 : null;
@@ -860,10 +862,15 @@ class DashboardPerpajakanController extends Controller
                 'deadline_at' => $updatedRoleData?->deadline_at
             ]);
 
+            // Format deadline using Asia/Jakarta timezone for display
+            $deadlineFormatted = $updatedRoleData?->deadline_at 
+                ? $updatedRoleData->deadline_at->setTimezone('Asia/Jakarta')->format('d M Y, H:i')
+                : null;
+
             return response()->json([
                 'success' => true,
                 'message' => "Deadline berhasil ditetapkan ({$deadlineDays} hari). Dokumen sekarang terbuka untuk diproses.",
-                'deadline' => $updatedRoleData?->deadline_at?->format('d M Y, H:i'),
+                'deadline' => $deadlineFormatted,
             ]);
 
         } catch (\Exception $e) {

@@ -2067,14 +2067,14 @@
                 $deadlineNote = null;
                 
                 if ($roleData && $roleData->deadline_at) {
-                  // Use Carbon instance from relationship
-                  $deadlineAt = $roleData->deadline_at;
+                  // Use Carbon instance from relationship and convert to Asia/Jakarta timezone
+                  $deadlineAt = $roleData->deadline_at->setTimezone('Asia/Jakarta');
                   $deadlineNote = $roleData->deadline_note;
                 } elseif ($dokumen->deadline_at) {
                   // Fallback: if deadline_at is set as alias (string), convert to Carbon
                   $deadlineAt = is_string($dokumen->deadline_at) 
-                    ? \Carbon\Carbon::parse($dokumen->deadline_at) 
-                    : $dokumen->deadline_at;
+                    ? \Carbon\Carbon::parse($dokumen->deadline_at)->setTimezone('Asia/Jakarta')
+                    : $dokumen->deadline_at->setTimezone('Asia/Jakarta');
                   $deadlineNote = $dokumen->deadline_note;
                 }
                 

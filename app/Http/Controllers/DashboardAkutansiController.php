@@ -660,8 +660,19 @@ class DashboardAkutansiController extends Controller
                 ? trim($validated['deadline_note'])
                 : null;
 
-            // Update using transaction
-            $deadlineAt = now()->addDays($deadlineDays);
+            // Calculate deadline using Asia/Jakarta timezone to match user's local time (WIB)
+            // This ensures deadline is calculated from the same time as user's local time
+            $currentTime = now('Asia/Jakarta');
+            $deadlineAt = $currentTime->copy()->addDays($deadlineDays);
+            
+            Log::info('Deadline calculation for Akutansi', [
+                'document_id' => $dokumen->id,
+                'current_time_wib' => $currentTime->format('Y-m-d H:i:s T'),
+                'deadline_days' => $deadlineDays,
+                'deadline_at_wib' => $deadlineAt->format('Y-m-d H:i:s T'),
+                'deadline_at_utc' => $deadlineAt->utc()->format('Y-m-d H:i:s T'),
+            ]);
+            
             DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
                 // Update dokumen_role_data with deadline
                 $dokumen->setDataForRole('akutansi', [
@@ -707,10 +718,15 @@ class DashboardAkutansiController extends Controller
                 'deadline_at' => $updatedRoleData?->deadline_at
             ]);
 
+            // Format deadline using Asia/Jakarta timezone for display
+            $deadlineFormatted = $updatedRoleData?->deadline_at 
+                ? $updatedRoleData->deadline_at->setTimezone('Asia/Jakarta')->format('d M Y, H:i')
+                : null;
+
             return response()->json([
                 'success' => true,
                 'message' => "Deadline berhasil ditetapkan ({$deadlineDays} hari). Dokumen sekarang terbuka untuk diproses.",
-                'deadline' => $updatedRoleData?->deadline_at?->format('d M Y, H:i'),
+                'deadline' => $deadlineFormatted,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error setting Akutansi deadline: ' . json_encode($e->errors()));
