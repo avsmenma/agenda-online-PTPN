@@ -739,28 +739,26 @@ class DashboardAkutansiController extends Controller
     public function pengembalian(Request $request)
     {
         // Get all documents that have been returned by akutansi
-        $query = Dokumen::whereNotNull('returned_from_akutansi_at')
-            ->where('status', 'returned_to_department')
+        $query = Dokumen::where('status', 'returned_to_department')
+            ->where('target_department', 'akutansi')
             ->with(['dokumenPos', 'dokumenPrs'])
-            ->orderBy('returned_from_akutansi_at', 'desc');
+            ->orderByDesc('department_returned_at');
 
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics
-        $totalReturned = Dokumen::whereNotNull('returned_from_akutansi_at')
-            ->where('status', 'returned_to_department')
+        $baseQuery = Dokumen::where('status', 'returned_to_department')
+            ->where('target_department', 'akutansi');
+
+        $totalReturned = (clone $baseQuery)->count();
+
+        $totalPending = (clone $baseQuery)
+            ->where('current_handler', 'ibuB')
             ->count();
 
-        $totalPending = Dokumen::where('current_handler', 'ibuB')
-            ->where('status', 'returned_to_department')
-            ->whereNotNull('returned_from_akutansi_at')
-            ->whereNull('processed_akutansi_at')
-            ->count();
-
-        $totalCompleted = Dokumen::whereNotNull('returned_from_akutansi_at')
-            ->where('status', 'returned_to_department')
-            ->whereNotNull('processed_akutansi_at')
+        $totalCompleted = (clone $baseQuery)
+            ->where('current_handler', '!=', 'ibuB')
             ->count();
 
         $data = array(
@@ -1414,12 +1412,12 @@ class DashboardAkutansiController extends Controller
             $updateData = [
                 'status' => 'returned_to_department',
                 'current_handler' => 'ibuB',
-                'returned_from_akutansi_at' => now(),
+                'target_department' => 'akutansi',
+                'department_returned_at' => now(),
+                'department_return_reason' => $request->return_reason,
                 'alasan_pengembalian' => $request->return_reason,
                 // Reset akutansi status since document is being returned
                 'nomor_miro' => null,
-                // Clear sent timestamps (these columns may have been removed, but safe to try)
-                'sent_to_akutansi_at' => null,
             ];
             
             // Clear deadline from dokumen_role_data for akutansi
