@@ -143,44 +143,48 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
         ]);
         return response()->json(['error' => 'Unauthenticated'], 401);
     }
-    
+
     try {
         // SECURITY: Validate and sanitize input
         $lastChecked = request()->input('last_checked', 0);
-        $lastChecked = is_numeric($lastChecked) ? (int)$lastChecked : 0;
+        $lastChecked = is_numeric($lastChecked) ? (int) $lastChecked : 0;
         $lastChecked = max(0, min($lastChecked, time())); // Prevent future timestamps
-        $lastCheckedDate = $lastChecked > 0 
+        $lastCheckedDate = $lastChecked > 0
             ? \Carbon\Carbon::createFromTimestamp($lastChecked)
             : \Carbon\Carbon::now()->subDays(1);
 
         // Cek dokumen yang berubah status setelah lastChecked
         // Beda antara dokumen baru dari IbuA vs dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
-        $newDocuments = \App\Models\Dokumen::where(function($query) use ($lastCheckedDate) {
-                // Dokumen yang masih di ibuB dan updated setelah lastChecked (dokumen baru dari IbuA)
-                $query->where(function($q) use ($lastCheckedDate) {
-                    $q->where('current_handler', 'ibuB')
-                      ->where('updated_at', '>', $lastCheckedDate)
-                      ->whereIn('status', ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
-                })
-                // Atau dokumen yang baru di-approve oleh perpajakan/akutansi/pembayaran setelah lastChecked
-                ->orWhere(function($q) use ($lastCheckedDate) {
-                    $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
-                      ->where('updated_at', '>', $lastCheckedDate);
-                });
+        $newDocuments = \App\Models\Dokumen::where(function ($query) use ($lastCheckedDate) {
+            // Dokumen yang masih di ibuB dan updated setelah lastChecked (dokumen baru dari IbuA)
+            $query->where(function ($q) use ($lastCheckedDate) {
+                $q->where('current_handler', 'ibuB')
+                    ->where('updated_at', '>', $lastCheckedDate)
+                    ->whereIn('status', ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
             })
-            ->with(['roleData' => function($query) {
-                $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
-            }])
-            ->with(['roleStatuses' => function($query) {
-                $query->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
-            }])
+                // Atau dokumen yang baru di-approve oleh perpajakan/akutansi/pembayaran setelah lastChecked
+                ->orWhere(function ($q) use ($lastCheckedDate) {
+                    $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
+                        ->where('updated_at', '>', $lastCheckedDate);
+                });
+        })
+            ->with([
+                'roleData' => function ($query) {
+                    $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
+                }
+            ])
+            ->with([
+                'roleStatuses' => function ($query) {
+                    $query->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
+                }
+            ])
             ->latest('updated_at')
             ->take(10)
             ->get();
 
-        $totalDocuments = \App\Models\Dokumen::where(function($query) {
+        $totalDocuments = \App\Models\Dokumen::where(function ($query) {
             $query->where('current_handler', 'ibuB')
-                  ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
         })->count();
 
         return response()->json([
@@ -189,11 +193,11 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             'total_documents' => $totalDocuments,
             'new_documents' => $newDocuments->map(function ($doc) {
                 $roleData = $doc->roleData->firstWhere('role_code', 'ibub');
-                
+
                 // Tentukan apakah ini dokumen baru dari IbuA atau dokumen yang sudah di-approve
-                $isNewFromIbuA = $doc->current_handler === 'ibuB' && 
-                                 in_array($doc->status, ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
-                
+                $isNewFromIbuA = $doc->current_handler === 'ibuB' &&
+                    in_array($doc->status, ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
+
                 // Cek apakah dokumen sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
                 $approvedBy = null;
                 $approvedAt = null;
@@ -219,7 +223,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
                         }
                     }
                 }
-                
+
                 return [
                     'id' => $doc->id,
                     'nomor_agenda' => $doc->nomor_agenda,
@@ -622,6 +626,15 @@ Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pemba
     Route::get('/download-csv-template', [DashboardPembayaranController::class, 'downloadCsvTemplate'])->name('download-csv-template');
     Route::post('/check-updates', [DashboardPembayaranController::class, 'checkUpdates']);
 });
+
+// CSV Import Routes - Pembayaran
+Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CsvImportController::class, 'index'])->name('index');
+    Route::post('/upload', [\App\Http\Controllers\CsvImportController::class, 'upload'])->name('upload');
+    Route::post('/preview', [\App\Http\Controllers\CsvImportController::class, 'preview'])->name('preview');
+    Route::post('/import', [\App\Http\Controllers\CsvImportController::class, 'import'])->name('execute');
+});
+
 Route::get('/diagramPembayaran', [DashboardPembayaranController::class, 'diagram'])->name('diagramPembayaran.index');
 
 // Professional Document Routes - Akutansi
@@ -814,10 +827,14 @@ if (app()->environment('local', 'development')) {
     });
 } else {
     // SECURITY: In production, return 404 for all test routes
-    Route::get('/test-broadcast', function () { abort(404); });
-    Route::get('/test-returned-broadcast', function () { abort(404); });
-    Route::get('/test-broadcast-auth', function () { abort(404); });
-    Route::get('/test-trigger-notification', function () { abort(404); });
+    Route::get('/test-broadcast', function () {
+        abort(404); });
+    Route::get('/test-returned-broadcast', function () {
+        abort(404); });
+    Route::get('/test-broadcast-auth', function () {
+        abort(404); });
+    Route::get('/test-trigger-notification', function () {
+        abort(404); });
 }
 
 // SECURITY: Role switching routes removed - Critical security vulnerability
@@ -844,7 +861,10 @@ if (app()->environment('local', 'development')) {
     });
 } else {
     // In production, return 404
-    Route::get('/switch-role/{role}', function () { abort(404); });
-    Route::get('/dev-dashboard/{role?}', function () { abort(404); });
-    Route::get('/dev-all', function () { abort(404); });
+    Route::get('/switch-role/{role}', function () {
+        abort(404); });
+    Route::get('/dev-dashboard/{role?}', function () {
+        abort(404); });
+    Route::get('/dev-all', function () {
+        abort(404); });
 }

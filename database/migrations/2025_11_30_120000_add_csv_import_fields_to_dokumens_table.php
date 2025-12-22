@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -45,10 +44,30 @@ return new class extends Migration
                 $table->string('KATEGORI')->nullable()->after('jenis_dokumen');
             }
 
+            // Import tracking fields
+            if (!Schema::hasColumn('dokumens', 'imported_from_csv')) {
+                $table->boolean('imported_from_csv')->default(false);
+            }
+
+            if (!Schema::hasColumn('dokumens', 'csv_import_batch_id')) {
+                $table->string('csv_import_batch_id', 50)->nullable();
+            }
+
+            if (!Schema::hasColumn('dokumens', 'csv_row_number')) {
+                $table->integer('csv_row_number')->nullable();
+            }
+
+            if (!Schema::hasColumn('dokumens', 'csv_imported_at')) {
+                $table->timestamp('csv_imported_at')->nullable();
+            }
+
             // Add index for better performance
             $table->index(['nama_kebuns']);
             $table->index(['tanggal_spp']);
             $table->index(['status_pembayaran']);
+            $table->index(['imported_from_csv']);
+            $table->index(['csv_import_batch_id']);
+
         });
     }
 
@@ -61,6 +80,8 @@ return new class extends Migration
             $table->dropIndex(['nama_kebuns']);
             $table->dropIndex(['tanggal_spp']);
             $table->dropIndex(['status_pembayaran']);
+            $table->dropIndex(['imported_from_csv']);
+            $table->dropIndex(['csv_import_batch_id']);
 
             $table->dropColumn([
                 'nama_kebuns',
@@ -70,7 +91,11 @@ return new class extends Migration
                 'NO_MIRO_SES',
                 'DIBAYAR',
                 'BELUM_DIBAYAR',
-                'KATEGORI'
+                'KATEGORI',
+                'imported_from_csv',
+                'csv_import_batch_id',
+                'csv_row_number',
+                'csv_imported_at',
             ]);
         });
     }
