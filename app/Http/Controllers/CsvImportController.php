@@ -25,13 +25,6 @@ class CsvImportController extends Controller
         ]);
 
         try {
-            // Ensure csv_imports directory exists
-            $directory = 'csv_imports';
-            if (!Storage::exists($directory)) {
-                Storage::makeDirectory($directory);
-                Log::info('Created csv_imports directory');
-            }
-
             $file = $request->file('csv_file');
 
             // Sanitize filename - remove spaces and special characters
@@ -39,41 +32,60 @@ class CsvImportController extends Controller
             $sanitizedName = preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName);
             $filename = time() . '_' . $sanitizedName;
 
-            // Store file
-            $path = $file->storeAs('csv_imports', $filename);
+            // Ensure directory exists with proper permissions
+            $storageBasePath = storage_path('app');
+            $csvImportsPath = $storageBasePath . '/csv_imports';
 
-            Log::info('File uploaded', [
-                'path' => $path,
+            if (!is_dir($csvImportsPath)) {
+                mkdir($csvImportsPath, 0755, true);
+                Log::info('Created csv_imports directory', ['path' => $csvImportsPath]);
+            }
+
+            // Store file directly using move()
+            $destinationPath = $csvImportsPath . '/' . $filename;
+            $file->move($csvImportsPath, $filename);
+
+            Log::info('File moved to destination', [
+                'destination' => $destinationPath,
                 'filename' => $filename,
-                'size' => $file->getSize()
+                'exists' => file_exists($destinationPath)
             ]);
 
-            // Get full path and verify file exists
-            $fullPath = storage_path('app/' . $path);
+            // Verify file exists
+            if (!file_exists($destinationPath)) {
+                Log::error('File not found after move', [
+                    'destination' => $destinationPath,
+                    'csv_imports_exists' => is_dir($csvImportsPath),
+                    'csv_imports_writable' => is_writable($csvImportsPath)
+                ]);
 
-            if (!file_exists($fullPath)) {
-                Log::error('File not found after upload', ['path' => $fullPath]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'File upload gagal: File tidak ditemukan setelah upload'
+                    'message' => 'File upload gagal: File tidak dapat disimpan'
                 ], 500);
             }
 
             // Parse CSV untuk preview
-            $previewData = $this->parseAndPreviewCsv($fullPath);
+            $previewData = $this->parseAndPreviewCsv($destinationPath);
+
+            // Return relative path for later use
+            $relativePath = 'csv_imports/' . $filename;
 
             return response()->json([
                 'success' => true,
                 'message' => 'File berhasil di-upload',
-                'file_path' => $path,
+                'file_path' => $relativePath,
                 'filename' => $filename,
                 'preview' => $previewData,
             ]);
 
         } catch (\Exception $e) {
             Log::error('CSV Upload Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -143,9 +155,11 @@ class CsvImportController extends Controller
         ]);
 
         try {
+            // Build full path directly
             $fullPath = storage_path('app/' . $request->file_path);
 
             if (!file_exists($fullPath)) {
+                Log::error('CSV file not found for preview', ['path' => $fullPath]);
                 return response()->json([
                     'success' => false,
                     'message' => 'File tidak ditemukan'
@@ -269,9 +283,11 @@ class CsvImportController extends Controller
         ]);
 
         try {
+            // Build full path directly
             $fullPath = storage_path('app/' . $request->file_path);
 
             if (!file_exists($fullPath)) {
+                Log::error('CSV file not found for import', ['path' => $fullPath]);
                 return response()->json([
                     'success' => false,
                     'message' => 'File tidak ditemukan'
