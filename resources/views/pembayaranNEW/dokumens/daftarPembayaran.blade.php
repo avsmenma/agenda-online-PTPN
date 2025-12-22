@@ -2317,18 +2317,21 @@ window.openDocumentDetailModal = function(dokumenId, event) {
     modalElement.classList.remove('x-cloak');
     
     // Ensure modal content is visible immediately
-    const modalContainer = modalElement.querySelector('.relative.flex');
-    const modalContent = modalElement.querySelector('.bg-white');
+    const modalContainer = modalElement.querySelector('.fixed.inset-0.flex');
+    const modalContent = modalElement.querySelector('.bg-white.rounded-2xl');
     if (modalContainer) {
         modalContainer.style.display = 'flex';
         modalContainer.style.visibility = 'visible';
         modalContainer.style.opacity = '1';
+        modalContainer.style.alignItems = 'center';
+        modalContainer.style.justifyContent = 'center';
     }
     if (modalContent) {
         modalContent.style.display = 'block';
         modalContent.style.visibility = 'visible';
         modalContent.style.opacity = '1';
         modalContent.style.background = 'white';
+        modalContent.style.margin = '0 auto';
     }
     
     // Wait for Alpine.js to be ready
@@ -2449,7 +2452,7 @@ window.loadDocumentDetail = function(dokumenId) {
      @open-document-modal.window="openModal($event.detail.dokumenId)"
      @keydown.escape.window="if (typeof closeModal === 'function') { closeModal(); }"
      class="document-modal-overlay"
-     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; width: 100vw; height: 100vh;"
+     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; width: 100vw; height: 100vh; overflow-y: auto;"
      x-transition:enter="ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -2458,12 +2461,15 @@ window.loadDocumentDetail = function(dokumenId) {
      x-transition:leave-end="opacity-0">
     
     {{-- Backdrop --}}
-    <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity backdrop-blur-sm" @click="closeModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99998; pointer-events: auto; width: 100vw; height: 100vh;"></div>
+    <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity backdrop-blur-sm" 
+         @click="closeModal()" 
+         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99998; pointer-events: auto; width: 100vw; height: 100vh; margin: 0; padding: 0;"></div>
     
-    {{-- Modal Container --}}
-    <div class="relative flex min-h-full items-center justify-center p-4" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; pointer-events: none; width: 100vw; height: 100vh; display: flex !important; visibility: visible !important;">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden transform transition-all"
-             style="pointer-events: auto; background: white !important; display: block !important; visibility: visible !important; opacity: 1 !important;"
+    {{-- Modal Container - Centered --}}
+    <div class="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none" 
+         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; display: flex !important; align-items: center !important; justify-content: center !important; pointer-events: none; width: 100vw; height: 100vh; margin: 0; padding: 16px;">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden transform transition-all pointer-events-auto"
+             style="pointer-events: auto; background: white !important; display: block !important; visibility: visible !important; opacity: 1 !important; width: 100%; max-width: 72rem; max-height: 90vh; margin: 0 auto; position: relative;"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
              x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -2502,7 +2508,7 @@ window.loadDocumentDetail = function(dokumenId) {
             </div>
             
             {{-- Modal Body --}}
-            <div class="overflow-y-auto max-h-[calc(90vh-80px)] p-6" style="background: white;">
+            <div class="overflow-y-auto max-h-[calc(90vh-80px)] p-6" style="background: white; overflow-y: auto;">
                 {{-- Loading State --}}
                 <div x-show="loading" 
                      x-cloak 
@@ -3015,12 +3021,21 @@ function documentDetailModal() {
                     modalElement.style.visibility = 'visible';
                     modalElement.style.opacity = '1';
                     
+                    // Ensure modal container is visible
+                    const modalContainer = modalElement.querySelector('.fixed.inset-0.flex');
+                    if (modalContainer) {
+                        modalContainer.style.display = 'flex';
+                        modalContainer.style.alignItems = 'center';
+                        modalContainer.style.justifyContent = 'center';
+                    }
+                    
                     // Ensure modal content is visible
-                    const modalContent = modalElement.querySelector('.bg-white');
+                    const modalContent = modalElement.querySelector('.bg-white.rounded-2xl');
                     if (modalContent) {
                         modalContent.style.display = 'block';
                         modalContent.style.visibility = 'visible';
                         modalContent.style.opacity = '1';
+                        modalContent.style.margin = '0 auto';
                     }
                 }
             }, 100);
@@ -3144,28 +3159,6 @@ body.modal-open {
     overflow: hidden;
 }
 
-/* Ensure modal backdrop is visible */
-#documentDetailModal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 9999 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-#documentDetailModal .fixed.inset-0 {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-}
-
 /* Ensure modal backdrop is visible and always on top */
 .document-modal-overlay,
 #documentDetailModal {
@@ -3183,7 +3176,7 @@ body.modal-open {
     background: transparent !important;
 }
 
-.document-modal-overlay .fixed.inset-0,
+/* Backdrop styling */
 #documentDetailModal .fixed.inset-0 {
     position: fixed !important;
     top: 0 !important;
@@ -3191,13 +3184,56 @@ body.modal-open {
     right: 0 !important;
     bottom: 0 !important;
     z-index: 99998 !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(4px);
 }
 
-/* Ensure modal content is visible */
-#documentDetailModal .bg-white {
+/* Modal container - centered */
+#documentDetailModal > .fixed.inset-0.flex {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+/* Modal content - white box */
+#documentDetailModal .bg-white.rounded-2xl {
     background-color: white !important;
     opacity: 1 !important;
     visibility: visible !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 72rem !important;
+    max-height: 90vh !important;
+    display: block !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 1rem !important;
+}
+
+/* Ensure backdrop covers entire screen */
+#documentDetailModal > .fixed.inset-0:first-of-type {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99998 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Ensure modal content is styled correctly - let Alpine.js control visibility */
