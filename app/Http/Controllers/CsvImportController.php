@@ -29,14 +29,37 @@ class CsvImportController extends Controller
             $directory = 'csv_imports';
             if (!Storage::exists($directory)) {
                 Storage::makeDirectory($directory);
+                Log::info('Created csv_imports directory');
             }
 
             $file = $request->file('csv_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
+
+            // Sanitize filename - remove spaces and special characters
+            $originalName = $file->getClientOriginalName();
+            $sanitizedName = preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName);
+            $filename = time() . '_' . $sanitizedName;
+
+            // Store file
             $path = $file->storeAs('csv_imports', $filename);
 
-            // Parse CSV untuk preview
+            Log::info('File uploaded', [
+                'path' => $path,
+                'filename' => $filename,
+                'size' => $file->getSize()
+            ]);
+
+            // Get full path and verify file exists
             $fullPath = storage_path('app/' . $path);
+
+            if (!file_exists($fullPath)) {
+                Log::error('File not found after upload', ['path' => $fullPath]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File upload gagal: File tidak ditemukan setelah upload'
+                ], 500);
+            }
+
+            // Parse CSV untuk preview
             $previewData = $this->parseAndPreviewCsv($fullPath);
 
             return response()->json([
@@ -48,7 +71,9 @@ class CsvImportController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('CSV Upload Error: ' . $e->getMessage());
+            Log::error('CSV Upload Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -58,6 +83,12 @@ class CsvImportController extends Controller
 
     private function parseAndPreviewCsv($filePath)
     {
+        // Check if file exists
+        if (!file_exists($filePath)) {
+            Log::error('CSV file not found', ['path' => $filePath]);
+            throw new \Exception("File tidak ditemukan: {$filePath}");
+        }
+
         // Detect encoding
         $content = file_get_contents($filePath);
         $encoding = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
