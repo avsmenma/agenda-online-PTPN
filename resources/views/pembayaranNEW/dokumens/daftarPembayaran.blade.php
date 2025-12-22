@@ -2292,96 +2292,16 @@ window.openDocumentDetailModal = function(dokumenId, event) {
     
     console.log('openDocumentDetailModal called with dokumenId:', dokumenId);
     
-    const modalElement = document.getElementById('documentDetailModal');
-    if (!modalElement) {
-        console.error('Modal element not found');
-        alert('Modal tidak ditemukan. Silakan refresh halaman.');
-        return false;
-    }
-    
-    // Show modal immediately (before Alpine.js processes)
-    modalElement.style.display = 'block';
-    modalElement.style.position = 'fixed';
-    modalElement.style.top = '0';
-    modalElement.style.left = '0';
-    modalElement.style.right = '0';
-    modalElement.style.bottom = '0';
-    modalElement.style.zIndex = '99999';
-    modalElement.style.width = '100vw';
-    modalElement.style.height = '100vh';
-    modalElement.style.visibility = 'visible';
-    modalElement.style.opacity = '1';
-    
-    // Remove x-cloak to ensure visibility
-    modalElement.removeAttribute('x-cloak');
-    modalElement.classList.remove('x-cloak');
-    
-    // Ensure modal content is visible immediately
-    const modalContainer = modalElement.querySelector('.fixed.inset-0.flex');
-    const modalContent = modalElement.querySelector('.bg-white.rounded-2xl');
-    if (modalContainer) {
-        modalContainer.style.display = 'flex';
-        modalContainer.style.visibility = 'visible';
-        modalContainer.style.opacity = '1';
-        modalContainer.style.alignItems = 'center';
-        modalContainer.style.justifyContent = 'center';
-    }
-    if (modalContent) {
-        modalContent.style.display = 'block';
-        modalContent.style.visibility = 'visible';
-        modalContent.style.opacity = '1';
-        modalContent.style.background = 'white';
-        modalContent.style.margin = '0 auto';
-    }
-    
-    // Wait for Alpine.js to be ready
-    if (typeof Alpine !== 'undefined') {
-        // Use custom event - Alpine will handle it via @open-document-modal.window
-        setTimeout(() => {
-            console.log('Dispatching open-document-modal event for dokumenId:', dokumenId);
-            window.dispatchEvent(new CustomEvent('open-document-modal', { 
-                detail: { dokumenId: dokumenId },
-                bubbles: true,
-                cancelable: true
-            }));
-        }, 50);
-    } else {
-        // Fallback: Direct modal manipulation if Alpine.js not loaded
-        console.warn('Alpine.js not loaded, using fallback');
-        if (typeof loadDocumentDetail === 'function') {
-            loadDocumentDetail(dokumenId);
-        }
-    }
-    
-    // Prevent any navigation
-    return false;
-};
-
-// Fallback function to load document detail (if Alpine.js not available)
-window.loadDocumentDetail = function(dokumenId) {
-    const modalElement = document.getElementById('documentDetailModal');
-    if (!modalElement) {
-        console.error('Modal element not found in loadDocumentDetail');
-        return;
-    }
-    
-    console.log('loadDocumentDetail called for dokumenId:', dokumenId);
-    
     // Show loading state
-    const loadingEl = modalElement.querySelector('[x-show="loading"]');
-    const errorEl = modalElement.querySelector('[x-show="error && !loading"]');
-    const modernView = modalElement.querySelector('[x-show="!loading && !error && viewMode === \'modern\'"]');
-    const excelView = modalElement.querySelector('[x-show="!loading && !error && viewMode === \'excel\'"]');
+    const loadingEl = document.getElementById('view-loading');
+    const errorEl = document.getElementById('view-error');
+    const contentEl = document.getElementById('view-content');
     
-    // Show loading, hide others
-    if (loadingEl) {
-        loadingEl.style.display = 'flex';
-        loadingEl.removeAttribute('x-cloak');
-    }
+    if (loadingEl) loadingEl.style.display = 'block';
     if (errorEl) errorEl.style.display = 'none';
-    if (modernView) modernView.style.display = 'none';
-    if (excelView) excelView.style.display = 'none';
+    if (contentEl) contentEl.style.display = 'none';
     
+    // Fetch document detail
     fetch(`/dokumensPembayaran/${dokumenId}/detail`, {
         method: 'GET',
         headers: {
@@ -2393,40 +2313,22 @@ window.loadDocumentDetail = function(dokumenId) {
         credentials: 'same-origin'
     })
     .then(response => {
-        console.log('Fallback response status:', response.status);
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            return response.text().then(text => {
-                console.error('Fallback response is not JSON. Content-Type:', contentType);
-                console.error('Response body:', text);
-                throw new Error('Server returned non-JSON response. Status: ' + response.status);
-            });
-        }
-        
         if (!response.ok) {
             return response.json().then(err => {
                 throw new Error(err.message || 'Gagal memuat data dokumen. Status: ' + response.status);
             });
         }
-        
         return response.json();
     })
     .then(result => {
-        console.log('Fallback document detail response:', result);
         if (result.success && result.data) {
-            // Hide loading, show content
+            populateDocumentDetail(result.data);
             if (loadingEl) loadingEl.style.display = 'none';
-            if (modernView) {
-                modernView.style.display = 'block';
-                modernView.removeAttribute('x-cloak');
-            }
+            if (contentEl) contentEl.style.display = 'block';
             
-            // Try to update Alpine.js component if available
-            if (window.documentDetailModalInstance) {
-                window.documentDetailModalInstance.data = result.data;
-                window.documentDetailModalInstance.loading = false;
-                window.documentDetailModalInstance.error = null;
-            }
+            // Show Bootstrap modal
+            const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+            modal.show();
         } else {
             throw new Error(result.message || 'Data tidak ditemukan');
         }
@@ -2436,809 +2338,456 @@ window.loadDocumentDetail = function(dokumenId) {
         if (loadingEl) loadingEl.style.display = 'none';
         if (errorEl) {
             errorEl.style.display = 'block';
-            errorEl.removeAttribute('x-cloak');
             const errorText = errorEl.querySelector('span');
             if (errorText) errorText.textContent = error.message || 'Terjadi kesalahan saat memuat data dokumen';
         }
+        
+        // Show modal even with error
+        const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+        modal.show();
     });
+    
+    return false;
 };
+
+function populateDocumentDetail(data) {
+    // Helper functions
+    const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === '-') return '-';
+        if (dateStr.includes('/')) return dateStr; // Already formatted
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+    
+    const formatDateTime = (dateStr) => {
+        if (!dateStr || dateStr === '-') return '-';
+        if (dateStr.includes('/') && dateStr.includes(':')) return dateStr; // Already formatted
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('id-ID', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    };
+    
+    const formatNumber = (num) => {
+        if (!num || num === '-') return '-';
+        return new Intl.NumberFormat('id-ID').format(num);
+    };
+    
+    // Identitas Dokumen
+    document.getElementById('view-nomor-agenda').textContent = data.nomor_agenda || '-';
+    document.getElementById('view-nomor-spp').textContent = data.nomor_spp || '-';
+    document.getElementById('view-tanggal-spp').textContent = formatDate(data.tanggal_spp);
+    document.getElementById('view-bulan').textContent = data.bulan || '-';
+    document.getElementById('view-tahun').textContent = data.tahun || '-';
+    document.getElementById('view-tanggal-masuk').textContent = formatDateTime(data.tanggal_masuk);
+    document.getElementById('view-kategori').textContent = data.kategori || '-';
+    document.getElementById('view-jenis-dokumen').textContent = data.jenis_dokumen || '-';
+    document.getElementById('view-jenis-sub-pekerjaan').textContent = data.jenis_sub_pekerjaan || '-';
+    
+    // Detail Keuangan & Vendor
+    document.getElementById('view-uraian-spp').textContent = data.uraian_spp || '-';
+    document.getElementById('view-nilai-rupiah').textContent = data.nilai_rupiah_formatted || (data.nilai_rupiah ? 'Rp. ' + formatNumber(data.nilai_rupiah) : '-');
+    
+    // Ejaan nilai rupiah
+    if (data.nilai_rupiah && data.nilai_rupiah > 0) {
+        document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(data.nilai_rupiah);
+    } else {
+        document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+    }
+    
+    document.getElementById('view-dibayar-kepada').textContent = data.dibayar_kepada || '-';
+    document.getElementById('view-kebun').textContent = data.kebun || '-';
+    
+    // Referensi Pendukung
+    document.getElementById('view-no-spk').textContent = data.no_spk || '-';
+    document.getElementById('view-tanggal-spk').textContent = formatDate(data.tanggal_spk);
+    document.getElementById('view-tanggal-berakhir-spk').textContent = formatDate(data.tanggal_berakhir_spk);
+    document.getElementById('view-nomor-mirror').textContent = data.nomor_mirror || '-';
+    document.getElementById('view-no-berita-acara').textContent = data.no_berita_acara || '-';
+    document.getElementById('view-tanggal-berita-acara').textContent = formatDate(data.tanggal_berita_acara);
+    
+    // Nomor PO & PR
+    document.getElementById('view-nomor-po').textContent = data.no_po || '-';
+    document.getElementById('view-nomor-pr').textContent = data.no_pr || '-';
+    
+    // Set document ID for edit button
+    document.getElementById('view-dokumen-id').value = data.id || '';
+}
+
+// Function to convert number to Indonesian terbilang
+function terbilangRupiah(number) {
+    number = parseFloat(number) || 0;
+    
+    if (number == 0) {
+        return 'nol rupiah';
+    }
+
+    const angka = [
+        '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+        'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+        'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+        'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+    ];
+
+    let hasil = '';
+
+    // Handle triliun
+    if (number >= 1000000000000) {
+        const triliun = Math.floor(number / 1000000000000);
+        hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+        number = number % 1000000000000;
+    }
+
+    // Handle milyar
+    if (number >= 1000000000) {
+        const milyar = Math.floor(number / 1000000000);
+        hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+        number = number % 1000000000;
+    }
+
+    // Handle juta
+    if (number >= 1000000) {
+        const juta = Math.floor(number / 1000000);
+        hasil += terbilangSatuan(juta, angka) + ' juta ';
+        number = number % 1000000;
+    }
+
+    // Handle ribu
+    if (number >= 1000) {
+        const ribu = Math.floor(number / 1000);
+        if (ribu == 1) {
+            hasil += 'seribu ';
+        } else {
+            hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+        }
+        number = number % 1000;
+    }
+
+    // Handle ratusan, puluhan, dan satuan
+    if (number > 0) {
+        hasil += terbilangSatuan(number, angka);
+    }
+
+    return hasil.trim() + ' rupiah';
+}
+
+function terbilangSatuan(number, angka) {
+    let hasil = '';
+    number = parseInt(number);
+
+    if (number == 0) {
+        return '';
+    }
+
+    // Handle ratusan
+    if (number >= 100) {
+        const ratus = Math.floor(number / 100);
+        if (ratus == 1) {
+            hasil += 'seratus ';
+        } else {
+            hasil += angka[ratus] + ' ratus ';
+        }
+        number = number % 100;
+    }
+
+    // Handle puluhan dan satuan (0-99)
+    if (number > 0) {
+        if (number < 20) {
+            hasil += angka[number] + ' ';
+        } else {
+            const puluhan = Math.floor(number / 10);
+            const satuan = number % 10;
+            
+            if (puluhan == 1) {
+                hasil += angka[10 + satuan] + ' ';
+            } else {
+                hasil += angka[puluhan] + ' puluh ';
+                if (satuan > 0) {
+                    hasil += angka[satuan] + ' ';
+                }
+            }
+        }
+    }
+
+    return hasil.trim();
+}
+
 </script>
 
-{{-- Smart Dual-View Modal Component --}}
-<div id="documentDetailModal"
-     x-data="documentDetailModal()" 
-     x-show="show" 
-     x-cloak
-     @open-document-modal.window="openModal($event.detail.dokumenId)"
-     @keydown.escape.window="if (typeof closeModal === 'function') { closeModal(); }"
-     class="document-modal-overlay"
-     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; width: 100vw; height: 100vh; overflow-y: auto;"
-     x-transition:enter="ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="ease-in duration-200"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0">
-    
-    {{-- Backdrop --}}
-    <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity backdrop-blur-sm" 
-         @click="closeModal()" 
-         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99998; pointer-events: auto; width: 100vw; height: 100vh; margin: 0; padding: 0;"></div>
-    
-    {{-- Modal Container - Centered --}}
-    <div class="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none" 
-         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; display: flex !important; align-items: center !important; justify-content: center !important; pointer-events: none; width: 100vw; height: 100vh; margin: 0; padding: 16px;">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden transform transition-all pointer-events-auto"
-             style="pointer-events: auto; background: white !important; display: block !important; visibility: visible !important; opacity: 1 !important; width: 100%; max-width: 72rem; max-height: 90vh; margin: 0 auto; position: relative;"
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             @click.stop>
-            
-            {{-- Header --}}
-            <div class="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between z-10">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-xl font-bold text-white">Detail Dokumen</h3>
-                    <span x-show="loading" class="text-white text-sm">
-                        <i class="fas fa-spinner fa-spin"></i> Memuat...
-                    </span>
-                </div>
-                
-                {{-- View Switcher --}}
-                <div class="flex items-center gap-3">
-                    <div class="bg-white/20 rounded-lg p-1 flex gap-1">
-                        <button @click="viewMode = 'modern'" 
-                                :class="viewMode === 'modern' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'"
-                                class="px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2">
-                            <i class="fas fa-file-alt"></i> Modern
-                        </button>
-                        <button @click="viewMode = 'excel'" 
-                                :class="viewMode === 'excel' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'"
-                                class="px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2">
-                            <i class="fas fa-table"></i> Excel
-                        </button>
-                    </div>
-                    <button @click="closeModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-            </div>
-            
-            {{-- Modal Body --}}
-            <div class="overflow-y-auto max-h-[calc(90vh-80px)] p-6" style="background: white; overflow-y: auto;">
-                {{-- Loading State --}}
-                <div x-show="loading" 
-                     x-cloak 
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     x-transition:leave="transition ease-in duration-100"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="flex items-center justify-center py-20" 
-                     style="min-height: 200px;">
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin text-4xl text-emerald-600 mb-4"></i>
-                        <p class="text-gray-600">Memuat data dokumen...</p>
-                    </div>
-                </div>
-                
-                {{-- Error State --}}
-                <div x-show="error && !loading" 
-                     x-cloak 
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     class="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div class="flex items-center gap-2 text-red-800">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <span x-text="error"></span>
-                    </div>
-                </div>
-                
-                {{-- Modern View --}}
-                <div x-show="!loading && !error && viewMode === 'modern' && data !== null && data !== undefined" 
-                     x-cloak 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     class="space-y-6">
-                    {{-- Header Section: No SPP, Judul Pekerjaan, Nilai Rp --}}
-                    <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-8 border-2 border-emerald-200 shadow-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div class="bg-white rounded-xl p-5 shadow-md border border-emerald-100">
-                                <label class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2 block flex items-center gap-2">
-                                    <i class="fas fa-file-invoice text-emerald-600"></i>
-                                    No. SPP
-                                </label>
-                                <p class="text-xl font-bold text-gray-900 leading-tight" x-text="data && data.nomor_spp ? data.nomor_spp : '-'"></p>
-                            </div>
-                            <div class="md:col-span-2 bg-white rounded-xl p-5 shadow-md border border-emerald-100">
-                                <label class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2 block flex items-center gap-2">
-                                    <i class="fas fa-briefcase text-emerald-600"></i>
-                                    Judul Pekerjaan
-                                </label>
-                                <p class="text-xl font-semibold text-gray-900 leading-relaxed" x-text="data && data.uraian_spp ? data.uraian_spp : '-'"></p>
-                            </div>
-                            <div class="md:col-span-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-6 shadow-lg">
-                                <label class="text-xs font-bold text-white uppercase tracking-wider mb-2 block flex items-center gap-2">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    Nilai Rupiah
-                                </label>
-                                <p class="text-4xl font-bold text-white" x-text="data && data.nilai_rupiah_formatted ? data.nilai_rupiah_formatted : '-'"></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {{-- Body: Grid 2 Columns --}}
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {{-- Left Column: Data Tanggal & Vendor --}}
-                        <div class="space-y-6">
-                            {{-- Section: Data Tanggal --}}
-                            <div class="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-lg">
-                                <h4 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 pb-3 border-b-2 border-emerald-200">
-                                    <div class="bg-emerald-100 p-3 rounded-lg">
-                                        <i class="fas fa-calendar-alt text-emerald-600 text-xl"></i>
-                                    </div>
-                                    <span>Data Tanggal</span>
-                                </h4>
-                                <div class="space-y-4">
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-calendar-check text-emerald-500"></i>
-                                                Tanggal Masuk
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900" x-text="data && data.tanggal_masuk ? data.tanggal_masuk : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-file-invoice text-emerald-500"></i>
-                                                Tanggal SPP
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900" x-text="data && data.tanggal_spp ? data.tanggal_spp : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-file-alt text-emerald-500"></i>
-                                                Tanggal Berita Acara
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900" x-text="data && data.tanggal_berita_acara ? data.tanggal_berita_acara : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-file-contract text-emerald-500"></i>
-                                                Tanggal SPK
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900" x-text="data && data.tanggal_spk ? data.tanggal_spk : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-calendar-times text-emerald-500"></i>
-                                                Tanggal Berakhir SPK
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900" x-text="data && data.tanggal_berakhir_spk ? data.tanggal_berakhir_spk : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-emerald-50 rounded-lg p-4 border-2 border-emerald-200">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-emerald-700 flex items-center gap-2">
-                                                <i class="fas fa-money-check-alt text-emerald-600"></i>
-                                                Tanggal Dibayar
-                                            </span>
-                                            <span class="text-base font-bold text-emerald-700" x-text="data && data.tanggal_dibayar ? data.tanggal_dibayar : '-'"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {{-- Section: Data Vendor --}}
-                            <div class="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-lg">
-                                <h4 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 pb-3 border-b-2 border-emerald-200">
-                                    <div class="bg-emerald-100 p-3 rounded-lg">
-                                        <i class="fas fa-building text-emerald-600 text-xl"></i>
-                                    </div>
-                                    <span>Data Vendor</span>
-                                </h4>
-                                <div class="space-y-4">
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-user-tie text-emerald-500"></i>
-                                                Dibayar Kepada
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right max-w-xs" x-text="data && data.dibayar_kepada ? data.dibayar_kepada : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-seedling text-emerald-500"></i>
-                                                Kebun
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.kebun ? data.kebun : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-sitemap text-emerald-500"></i>
-                                                Bagian
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.bagian ? data.bagian : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-tags text-emerald-500"></i>
-                                                Kategori
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.kategori ? data.kategori : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-file text-emerald-500"></i>
-                                                Jenis Dokumen
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.jenis_dokumen ? data.jenis_dokumen : '-'"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {{-- Right Column: Data Pajak & Akuntansi --}}
-                        <div class="space-y-6">
-                            {{-- Section: Data Pajak --}}
-                            <div class="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-lg">
-                                <h4 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 pb-3 border-b-2 border-emerald-200">
-                                    <div class="bg-emerald-100 p-3 rounded-lg">
-                                        <i class="fas fa-receipt text-emerald-600 text-xl"></i>
-                                    </div>
-                                    <span>Data Pajak</span>
-                                </h4>
-                                <div class="space-y-4">
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-id-card text-emerald-500"></i>
-                                                NPWP
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right font-mono" x-text="data && data.npwp ? data.npwp : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-check-circle text-emerald-500"></i>
-                                                Status Perpajakan
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.status_perpajakan ? data.status_perpajakan : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-file-invoice-dollar text-emerald-500"></i>
-                                                No. Faktur
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.no_faktur ? data.no_faktur : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-calendar text-emerald-500"></i>
-                                                Tanggal Faktur
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.tanggal_faktur ? data.tanggal_faktur : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-percent text-emerald-500"></i>
-                                                Jenis PPH
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.jenis_pph ? data.jenis_pph : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-emerald-50 rounded-lg p-4 border-2 border-emerald-200">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-emerald-700 flex items-center gap-2">
-                                                <i class="fas fa-coins text-emerald-600"></i>
-                                                DPP PPH
-                                            </span>
-                                            <span class="text-base font-bold text-emerald-700" x-text="data && data.dpp_pph ? 'Rp ' + data.dpp_pph : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-emerald-50 rounded-lg p-4 border-2 border-emerald-200">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-emerald-700 flex items-center gap-2">
-                                                <i class="fas fa-money-bill-wave text-emerald-600"></i>
-                                                PPN Terhutang
-                                            </span>
-                                            <span class="text-base font-bold text-emerald-700" x-text="data && data.ppn_terhutang ? 'Rp ' + data.ppn_terhutang : '-'"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {{-- Section: Data Akuntansi --}}
-                            <div class="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-lg">
-                                <h4 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 pb-3 border-b-2 border-emerald-200">
-                                    <div class="bg-emerald-100 p-3 rounded-lg">
-                                        <i class="fas fa-calculator text-emerald-600 text-xl"></i>
-                                    </div>
-                                    <span>Data Akuntansi</span>
-                                </h4>
-                                <div class="space-y-4">
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-shopping-cart text-emerald-500"></i>
-                                                No. PO
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.no_po ? data.no_po : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-clipboard-list text-emerald-500"></i>
-                                                No. PR
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.no_pr ? data.no_pr : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-file-signature text-emerald-500"></i>
-                                                No. Berita Acara
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.no_berita_acara ? data.no_berita_acara : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-handshake text-emerald-500"></i>
-                                                No. SPK
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.no_spk ? data.no_spk : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-gray-700 flex items-center gap-2">
-                                                <i class="fas fa-copy text-emerald-500"></i>
-                                                No. Mirror
-                                            </span>
-                                            <span class="text-base font-bold text-gray-900 text-right" x-text="data && data.nomor_mirror ? data.nomor_mirror : '-'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border-2 border-emerald-200">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-base font-semibold text-emerald-700 flex items-center gap-2">
-                                                <i class="fas fa-info-circle text-emerald-600"></i>
-                                                Status Pembayaran
-                                            </span>
-                                            <span class="px-4 py-2 rounded-full text-sm font-bold shadow-md"
-                                                  :class="data && data.payment_status ? {
-                                                      'bg-green-500 text-white': data.payment_status === 'sudah_dibayar',
-                                                      'bg-yellow-400 text-white': data.payment_status === 'siap_bayar',
-                                                      'bg-gray-400 text-white': data.payment_status === 'belum_siap_bayar'
-                                                  } : {}"
-                                                  x-text="data && data.payment_status ? (data.payment_status === 'sudah_dibayar' ? 'Sudah Dibayar' : (data.payment_status === 'siap_bayar' ? 'Siap Bayar' : 'Belum Siap Bayar')) : '-'"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                {{-- Excel View --}}
-                <div x-show="!loading && !error && viewMode === 'excel' && data !== null && data !== undefined" 
-                     x-cloak 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     class="overflow-x-auto" 
-                     style="background: white;">
-                    <table class="w-full border-collapse border border-gray-400 text-sm font-mono">
-                        <thead>
-                            <tr class="bg-green-600">
-                                <th class="border border-gray-400 px-2 py-1 text-left text-white font-bold">Field</th>
-                                <th class="border border-gray-400 px-2 py-1 text-left text-white font-bold">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">No. SPP</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.nomor_spp ? data.nomor_spp : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Uraian SPP</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.uraian_spp ? data.uraian_spp : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Nilai Rupiah</td>
-                                <td class="border border-gray-400 px-2 py-1 font-bold" x-text="data && data.nilai_rupiah_formatted ? data.nilai_rupiah_formatted : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Tanggal Masuk</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.tanggal_masuk ? data.tanggal_masuk : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Tanggal SPP</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.tanggal_spp ? data.tanggal_spp : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Dibayar Kepada</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.dibayar_kepada ? data.dibayar_kepada : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Kebun</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.kebun ? data.kebun : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Bagian</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.bagian ? data.bagian : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Kategori</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.kategori ? data.kategori : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Jenis Dokumen</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.jenis_dokumen ? data.jenis_dokumen : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">No. Berita Acara</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.no_berita_acara ? data.no_berita_acara : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Tanggal Berita Acara</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.tanggal_berita_acara ? data.tanggal_berita_acara : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">No. SPK</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.no_spk ? data.no_spk : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Tanggal SPK</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.tanggal_spk ? data.tanggal_spk : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">NPWP</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.npwp ? data.npwp : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Status Perpajakan</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.status_perpajakan ? data.status_perpajakan : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">No. Faktur</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.no_faktur ? data.no_faktur : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Tanggal Faktur</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.tanggal_faktur ? data.tanggal_faktur : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">DPP PPH</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.dpp_pph ? 'Rp ' + data.dpp_pph : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">PPN Terhutang</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.ppn_terhutang ? 'Rp ' + data.ppn_terhutang : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">No. PO</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.no_po ? data.no_po : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">No. PR</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.no_pr ? data.no_pr : '-'"></td>
-                            </tr>
-                            <tr class="bg-gray-50">
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Tanggal Dibayar</td>
-                                <td class="border border-gray-400 px-2 py-1" x-text="data && data.tanggal_dibayar ? data.tanggal_dibayar : '-'"></td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-400 px-2 py-1 font-semibold bg-gray-100">Status Pembayaran</td>
-                                <td class="border border-gray-400 px-2 py-1 font-bold" x-text="data && data.payment_status ? (data.payment_status === 'sudah_dibayar' ? 'Sudah Dibayar' : (data.payment_status === 'siap_bayar' ? 'Siap Bayar' : 'Belum Siap Bayar')) : '-'"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<!-- Modal View Document Detail -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
+    <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+      <!-- Sticky Header -->
+      <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+        <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-file-lines me-2"></i>
+          Detail Dokumen Lengkap
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Scrollable Body -->
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+        <input type="hidden" id="view-dokumen-id">
+        
+        <!-- Loading State -->
+        <div id="view-loading" style="display: none; text-align: center; padding: 40px;">
+          <i class="fas fa-spinner fa-spin fa-3x text-emerald-600 mb-3"></i>
+          <p class="text-muted">Memuat data dokumen...</p>
         </div>
+        
+        <!-- Error State -->
+        <div id="view-error" style="display: none; background: #fee; border: 1px solid #fcc; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <div class="d-flex align-items-center gap-2 text-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span></span>
+          </div>
+        </div>
+        
+        <!-- Content -->
+        <div id="view-content" style="display: none;">
+          <!-- Section 1: Identitas Dokumen -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-id-card"></i>
+                IDENTITAS DOKUMEN
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Nomor Agenda</label>
+                  <div class="detail-value" id="view-nomor-agenda">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Nomor SPP</label>
+                  <div class="detail-value" id="view-nomor-spp">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Tanggal SPP</label>
+                  <div class="detail-value" id="view-tanggal-spp">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Bulan</label>
+                  <div class="detail-value" id="view-bulan">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Tahun</label>
+                  <div class="detail-value" id="view-tahun">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Tanggal Masuk</label>
+                  <div class="detail-value" id="view-tanggal-masuk">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Kriteria CF</label>
+                  <div class="detail-value" id="view-kategori">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Sub Kriteria</label>
+                  <div class="detail-value" id="view-jenis-dokumen">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Item Sub Kriteria</label>
+                  <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Detail Keuangan & Vendor -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                DETAIL KEUANGAN & VENDOR
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="detail-item">
+                  <label class="detail-label">Uraian SPP</label>
+                  <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Nilai Rupiah</label>
+                  <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Ejaan Nilai Rupiah</label>
+                  <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Dibayar Kepada (Vendor)</label>
+                  <div class="detail-value" id="view-dibayar-kepada">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Kebun / Unit Kerja</label>
+                  <div class="detail-value" id="view-kebun">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Referensi Pendukung -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-contract"></i>
+                REFERENSI PENDUKUNG
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <div class="detail-item">
+                  <label class="detail-label">No. SPK</label>
+                  <div class="detail-value" id="view-no-spk">-</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="detail-item">
+                  <label class="detail-label">Tanggal SPK</label>
+                  <div class="detail-value" id="view-tanggal-spk">-</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="detail-item">
+                  <label class="detail-label">Tanggal Berakhir SPK</label>
+                  <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="detail-item">
+                  <label class="detail-label">No. Mirror</label>
+                  <div class="detail-value" id="view-nomor-mirror">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">No. Berita Acara</label>
+                  <div class="detail-value" id="view-no-berita-acara">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Tanggal Berita Acara</label>
+                  <div class="detail-value" id="view-tanggal-berita-acara">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Nomor PO & PR -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-hashtag"></i>
+                NOMOR PO & PR
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Nomor PO</label>
+                  <div class="detail-value" id="view-nomor-po">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Nomor PR</label>
+                  <div class="detail-value" id="view-nomor-pr">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6; padding: 16px 24px; flex-shrink: 0;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+        <button type="button" class="btn btn-primary" onclick="editDocumentFromModal()" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none;">
+          <i class="fa-solid fa-pencil me-2"></i>Edit Dokumen
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-function documentDetailModal() {
-    const component = {
-        show: false,
-        loading: false,
-        error: null,
-        data: null, // Initialize as null
-        viewMode: 'modern', // 'modern' or 'excel'
-        
-        // Helper method to safely access data properties
-        safeData(prop, defaultValue = '-') {
-            return this.data && this.data[prop] !== null && this.data[prop] !== undefined ? this.data[prop] : defaultValue;
-        },
-        
-        // Helper method to safely format currency
-        safeCurrency(prop, defaultValue = '-') {
-            if (!this.data || !this.data[prop]) return defaultValue;
-            return 'Rp ' + this.data[prop];
-        },
-        
-        openModal(dokumenId) {
-            console.log('Opening modal for dokumen ID:', dokumenId);
-            this.show = true;
-            this.loading = true;
-            this.error = null;
-            this.data = null;
-            
-            // Prevent body scroll
-            document.body.classList.add('modal-open');
-            
-            // Force show modal immediately (fallback if Alpine.js hasn't initialized)
-            setTimeout(() => {
-                const modalElement = document.getElementById('documentDetailModal');
-                if (modalElement) {
-                    modalElement.style.display = 'block';
-                    modalElement.style.position = 'fixed';
-                    modalElement.style.top = '0';
-                    modalElement.style.left = '0';
-                    modalElement.style.right = '0';
-                    modalElement.style.bottom = '0';
-                    modalElement.style.zIndex = '99999';
-                    modalElement.style.width = '100vw';
-                    modalElement.style.height = '100vh';
-                    modalElement.style.margin = '0';
-                    modalElement.style.padding = '0';
-                    modalElement.style.visibility = 'visible';
-                    modalElement.style.opacity = '1';
-                    
-                    // Ensure modal container is visible
-                    const modalContainer = modalElement.querySelector('.fixed.inset-0.flex');
-                    if (modalContainer) {
-                        modalContainer.style.display = 'flex';
-                        modalContainer.style.alignItems = 'center';
-                        modalContainer.style.justifyContent = 'center';
-                    }
-                    
-                    // Ensure modal content is visible
-                    const modalContent = modalElement.querySelector('.bg-white.rounded-2xl');
-                    if (modalContent) {
-                        modalContent.style.display = 'block';
-                        modalContent.style.visibility = 'visible';
-                        modalContent.style.opacity = '1';
-                        modalContent.style.margin = '0 auto';
-                    }
-                }
-            }, 100);
-            
-            // Fetch document detail via AJAX
-            fetch(`/dokumensPembayaran/${dokumenId}/detail`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                },
-                credentials: 'same-origin'
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                
-                // Check if response is JSON
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    console.error('Response is not JSON. Content-Type:', contentType);
-                    return response.text().then(text => {
-                        console.error('Response body:', text);
-                        throw new Error('Server returned non-JSON response. Status: ' + response.status);
-                    });
-                }
-                
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || 'Gagal memuat data dokumen. Status: ' + response.status);
-                    });
-                }
-                
-                return response.json();
-            })
-            .then(result => {
-                console.log('Document detail response:', result);
-                if (result.success && result.data) {
-                    // Set data and update loading state using proper Alpine.js reactivity
-                    const self = this;
-                    self.data = result.data;
-                    self.loading = false;
-                    self.error = null;
-                    console.log('Data loaded successfully:', self.data);
-                    console.log('Loading set to false, error set to null');
-                    
-                    // Use requestAnimationFrame to ensure DOM updates synchronously
-                    requestAnimationFrame(() => {
-                        console.log('After RAF - State:', {
-                            loading: self.loading,
-                            error: self.error,
-                            hasData: !!self.data,
-                            viewMode: self.viewMode
-                        });
-                    });
-                } else {
-                    throw new Error(result.message || 'Data tidak ditemukan');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading document detail:', error);
-                if (typeof Alpine !== 'undefined' && Alpine.nextTick) {
-                    Alpine.nextTick(() => {
-                        this.error = error.message || 'Terjadi kesalahan saat memuat data dokumen';
-                        this.data = null;
-                        this.loading = false;
-                    });
-                } else {
-                    this.error = error.message || 'Terjadi kesalahan saat memuat data dokumen';
-                    this.data = null;
-                    this.loading = false;
-                }
-            });
-        },
-        
-        closeModal() {
-            console.log('Closing modal');
-            this.show = false;
-            this.data = null;
-            this.error = null;
-            
-            // Restore body scroll
-            document.body.classList.remove('modal-open');
-            
-            // Force hide modal
-            const modalElement = document.getElementById('documentDetailModal');
-            if (modalElement) {
-                modalElement.style.display = 'none';
-            }
-        }
-    };
-    
-    // Expose methods globally for direct access (after Alpine initializes)
-    setTimeout(() => {
-        window.documentDetailModalInstance = component;
-    }, 100);
-    
-    return component;
+function editDocumentFromModal() {
+  const dokumenId = document.getElementById('view-dokumen-id').value;
+  if (dokumenId) {
+    // Close modal first
+    const modal = bootstrap.Modal.getInstance(document.getElementById('viewDocumentModal'));
+    if (modal) {
+      modal.hide();
+    }
+    // Open edit modal
+    if (typeof window.openEditPembayaranModal === 'function') {
+      window.openEditPembayaranModal(parseInt(dokumenId));
+    } else {
+      console.error('openEditPembayaranModal function not found');
+    }
+  }
 }
 </script>
 
 <style>
-[x-cloak] { 
-    display: none !important; 
+.detail-item {
+  margin-bottom: 0;
 }
 
-/* Ensure modal is always on top */
-.fixed.inset-0.z-\[9999\] {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 9999 !important;
+.detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 4px;
+  display: block;
 }
 
-/* Prevent body scroll when modal is open */
-body.modal-open {
-    overflow: hidden;
-}
-
-/* Ensure modal backdrop is visible and always on top */
-.document-modal-overlay,
-#documentDetailModal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 99999 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-y: auto !important;
-    background: transparent !important;
-}
-
-/* Backdrop styling */
-#documentDetailModal .fixed.inset-0 {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 99998 !important;
-    background-color: rgba(0, 0, 0, 0.6) !important;
-    backdrop-filter: blur(4px);
-}
-
-/* Modal container - centered */
-#documentDetailModal > .fixed.inset-0.flex {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 99999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    pointer-events: none !important;
-    padding: 16px !important;
-    margin: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-}
-
-/* Modal content - white box */
-#documentDetailModal .bg-white.rounded-2xl {
-    background-color: white !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    position: relative !important;
-    margin: 0 auto !important;
-    width: 100% !important;
-    max-width: 72rem !important;
-    max-height: 90vh !important;
-    display: block !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-    border-radius: 1rem !important;
-}
-
-/* Ensure backdrop covers entire screen */
-#documentDetailModal > .fixed.inset-0:first-of-type {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 99998 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Ensure modal content is styled correctly - let Alpine.js control visibility */
-#documentDetailModal [x-cloak] {
-    display: none !important;
+.detail-value {
+  font-size: 14px;
+  color: #212529;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
 }
 </style>
 
