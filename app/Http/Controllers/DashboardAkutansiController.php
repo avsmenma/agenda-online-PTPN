@@ -661,22 +661,30 @@ class DashboardAkutansiController extends Controller
                 : null;
 
             // Calculate deadline using Asia/Jakarta timezone to match user's local time (WIB)
-            // This ensures deadline is calculated from the same time as user's local time
-            $currentTime = now('Asia/Jakarta');
+            // Important: Carbon will automatically convert to UTC when saving to database
+            // When retrieved, we need to convert back to Asia/Jakarta for display
+            $currentTime = \Carbon\Carbon::now('Asia/Jakarta');
             $deadlineAt = $currentTime->copy()->addDays($deadlineDays);
+            
+            // Ensure deadline_at is in UTC for database storage (Carbon will handle this automatically)
+            // But we need to make sure the timezone is set correctly before saving
+            $deadlineAtForDB = $deadlineAt->utc();
             
             Log::info('Deadline calculation for Akutansi', [
                 'document_id' => $dokumen->id,
                 'current_time_wib' => $currentTime->format('Y-m-d H:i:s T'),
+                'current_time_utc' => $currentTime->utc()->format('Y-m-d H:i:s T'),
                 'deadline_days' => $deadlineDays,
                 'deadline_at_wib' => $deadlineAt->format('Y-m-d H:i:s T'),
-                'deadline_at_utc' => $deadlineAt->utc()->format('Y-m-d H:i:s T'),
+                'deadline_at_utc' => $deadlineAtForDB->format('Y-m-d H:i:s T'),
+                'deadline_at_utc_to_wib' => $deadlineAtForDB->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s T'),
             ]);
             
-            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
+            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAtForDB) {
                 // Update dokumen_role_data with deadline
+                // Note: Carbon will automatically convert to UTC when saving to database
                 $dokumen->setDataForRole('akutansi', [
-                    'deadline_at' => $deadlineAt,
+                    'deadline_at' => $deadlineAtForDB,
                     'deadline_days' => $deadlineDays,
                     'deadline_note' => $deadlineNote,
                     'received_at' => $dokumen->getDataForRole('akutansi')?->received_at ?? now(),
@@ -719,9 +727,20 @@ class DashboardAkutansiController extends Controller
             ]);
 
             // Format deadline using Asia/Jakarta timezone for display
-            $deadlineFormatted = $updatedRoleData?->deadline_at 
-                ? $updatedRoleData->deadline_at->setTimezone('Asia/Jakarta')->format('d M Y, H:i')
-                : null;
+            // When retrieved from database, deadline_at is in UTC, so we need to convert to Asia/Jakarta
+            $deadlineFormatted = null;
+            if ($updatedRoleData && $updatedRoleData->deadline_at) {
+                // Convert from UTC (database) to Asia/Jakarta (WIB) for display
+                $deadlineWIB = $updatedRoleData->deadline_at->setTimezone('Asia/Jakarta');
+                $deadlineFormatted = $deadlineWIB->format('d M Y, H:i');
+                
+                Log::info('Deadline formatted for display', [
+                    'document_id' => $dokumen->id,
+                    'deadline_at_db_utc' => $updatedRoleData->deadline_at->format('Y-m-d H:i:s T'),
+                    'deadline_at_wib' => $deadlineWIB->format('Y-m-d H:i:s T'),
+                    'deadline_formatted' => $deadlineFormatted,
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
