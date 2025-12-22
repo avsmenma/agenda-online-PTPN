@@ -879,14 +879,14 @@
                    onclick="event.stopPropagation();">
                   <i class="fas fa-eye"></i>
                 </a>
-              @php
-                // Cek apakah kedua field sudah diisi untuk menentukan apakah tombol Edit masih perlu ditampilkan
-                // Tombol Edit tetap aktif bahkan jika status sudah "sudah_dibayar", selama salah satu field masih kosong
-                $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
-              @endphp
-              
-              @if($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
+              @elseif($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
                 {{-- Status "Siap Bayar" atau "Sudah Dibayar" - Cek kelengkapan data --}}
+                @php
+                  // Cek apakah kedua field sudah diisi untuk menentukan apakah tombol Edit masih perlu ditampilkan
+                  // Tombol Edit tetap aktif bahkan jika status sudah "sudah_dibayar", selama salah satu field masih kosong
+                  $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
+                @endphp
+                
                 @if($isComplete)
                   {{-- Kedua field sudah diisi - Tampilkan tombol Selesai (disabled) --}}
                   <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;" title="Data pembayaran sudah lengkap">
