@@ -484,9 +484,6 @@ class CsvImportController extends Controller
             'nama_kebuns' => trim($row['KEBUN'] ?? null), // Keep for compatibility
             'dibayar_kepada' => trim($row['VENDOR'] ?? null),
 
-            // Additional CSV fields (for reference)
-            'KATEGORI' => $kategori, // Keep uppercase for compatibility
-
             // CSV Import metadata (will be added later in executeImport)
             '_vendor' => trim($row['VENDOR'] ?? null),
         ];
@@ -566,7 +563,36 @@ class CsvImportController extends Controller
         if (empty($value)) {
             return 0;
         }
-        $cleaned = preg_replace('/[^0-9.-]/', '', $value);
-        return (float) $cleaned;
+        
+        // Remove all non-numeric characters except minus and comma (for decimal)
+        $cleaned = preg_replace('/[^0-9,.-]/', '', trim($value));
+        
+        // Handle Indonesian number format: dots are thousand separators, comma is decimal separator
+        // Example: "159.094.195" or "17.659.007" should become 159094195 or 17659007
+        // Example: "1.234,56" should become 1234.56
+        
+        // Check if comma exists (decimal separator in Indonesian format)
+        if (strpos($cleaned, ',') !== false) {
+            // Replace dots (thousand separators) with nothing
+            $cleaned = str_replace('.', '', $cleaned);
+            // Replace comma (decimal separator) with dot
+            $cleaned = str_replace(',', '.', $cleaned);
+        } else {
+            // No comma, so dots are thousand separators - remove them all
+            $cleaned = str_replace('.', '', $cleaned);
+        }
+        
+        // Remove any remaining non-numeric characters except minus and dot
+        $cleaned = preg_replace('/[^0-9.-]/', '', $cleaned);
+        
+        // Convert to float
+        $result = (float) $cleaned;
+        
+        // Ensure non-negative (unless explicitly negative)
+        if ($result < 0 && strpos($value, '-') === false) {
+            $result = abs($result);
+        }
+        
+        return $result;
     }
 }
