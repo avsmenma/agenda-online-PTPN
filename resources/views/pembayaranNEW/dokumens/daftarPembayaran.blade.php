@@ -358,6 +358,15 @@
     background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%);
     border-left-color: #889717;
   }
+  
+  .table-enhanced tbody tr.no-click-row {
+    cursor: default !important;
+  }
+  
+  .table-enhanced tbody tr.no-click-row:hover {
+    background-color: transparent !important;
+    border-left-color: transparent !important;
+  }
 
   .table-enhanced tbody tr.non-clickable-row {
     opacity: 0.7;
@@ -786,9 +795,15 @@
           }
         @endphp
         <tr 
-          onclick="openDocumentDetailModal({{ $dokumen->id }}, event); return false;"
-          style="cursor: pointer;"
-          class="clickable-row"
+          @if($paymentStatus !== 'belum_siap_bayar')
+            onclick="openDocumentDetailModal({{ $dokumen->id }}, event); return false;"
+            style="cursor: pointer;"
+            class="clickable-row"
+          @else
+            style="cursor: default;"
+            class="no-click-row"
+            title="Dokumen belum siap bayar. Klik icon mata untuk melihat tracking."
+          @endif
           data-dokumen-id="{{ $dokumen->id }}"
         >
           <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
@@ -842,15 +857,16 @@
               @endswitch
             @endif
           </td>
-          <td class="col-action">
+          <td class="col-action" onclick="event.stopPropagation();">
             <div class="action-buttons">
               @if($paymentStatus === 'belum_siap_bayar')
                 {{-- Kondisi A: Status = "Belum Siap Bayar" - Tampilkan icon mata untuk tracking --}}
                 <a href="{{ route('owner.workflow', $dokumen->id) }}" 
                    target="_blank"
                    class="btn-action workflow-link"
-                   title="Lihat Tracking Workflow"
-                   data-workflow-id="{{ $dokumen->id }}">
+                   title="Lihat Tracking Workflow Dokumen"
+                   data-workflow-id="{{ $dokumen->id }}"
+                   onclick="event.stopPropagation();">
                   <i class="fas fa-eye"></i>
                 </a>
               @elseif($paymentStatus === 'siap_bayar')
