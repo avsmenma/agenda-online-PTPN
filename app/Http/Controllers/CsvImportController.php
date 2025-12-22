@@ -366,7 +366,20 @@ class CsvImportController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                Log::error('Import row error: ' . $e->getMessage(), ['row' => $row]);
+
+                // Get detailed error info
+                $errorMessage = $e->getMessage();
+                $errorCode = $e->getCode();
+
+                Log::error('Import row failed', [
+                    'error' => $errorMessage,
+                    'code' => $errorCode,
+                    'nomor_agenda' => $row['AGENDA'] ?? 'N/A',
+                    'row_data' => $row,
+                    'transformed_data' => $dokumenData ?? [],
+                    'trace' => $e->getTraceAsString()
+                ]);
+
                 $failed++;
             }
         }
@@ -384,17 +397,37 @@ class CsvImportController extends Controller
     private function transformRow($row)
     {
         return [
+            // Core required fields
             'nomor_agenda' => $row['AGENDA'] ?? null,
             'nomor_spp' => $row['NO SPP'] ?? null,
             'uraian_spp' => $row['HAL'] ?? null,
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
-            'tanggal_masuk' => $this->parseDate($row['TGL SPP'] ?? $row['TANGGAL MASUK DOKUMEN'] ?? null),
+
+            // Dates
+            'tanggal_masuk' => $this->parseDate($row['TGL SPP'] ?? $row['TANGGAL MASUK DOKUMEN'] ?? null) ?? now(),
+            'tanggal_spp' => $this->parseDate($row['TGL SPP'] ?? null),
+
+            // Contract info
             'no_kontrak' => $row['NO KONTRAK'] ?? null,
             'tanggal_kontrak' => $this->parseDate($row['TGL. KONTRAK'] ?? null),
+
+            // Berita Acara
             'no_berita_acara' => $row['NO BERITA ACARA'] ?? null,
             'tanggal_berita_acara' => $this->parseDate($row['TGL. BERITA ACARA'] ?? null),
+
+            // Status
             'status' => 'sent_to_pembayaran',
+            'status_pembayaran' => 'belum_dibayar',
+
+            // Payment info
             'tanggal_dibayar' => $this->getLastPaymentDate($row),
+
+            // Additional CSV fields
+            'KATEGORI' => $row['KATEGORI'] ?? null,
+            'nama_kebuns' => $row['KEBUN'] ?? null,
+            'dibayar_kepada' => $row['VENDOR'] ?? null,
+
+            // CSV Import metadata (will be added later in executeImport)
             '_vendor' => $row['VENDOR'] ?? null,
         ];
     }
