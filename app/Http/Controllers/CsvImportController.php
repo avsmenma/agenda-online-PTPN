@@ -337,9 +337,18 @@ class CsvImportController extends Controller
 
             $row = array_combine($headers, $data);
 
+            // Skip rows without required fields
+            if (empty(trim($row['AGENDA'] ?? '')) || empty(trim($row['NO SPP'] ?? ''))) {
+                $failed++;
+                Log::warning('Skipping row without required fields', [
+                    'row_data' => $row
+                ]);
+                continue;
+            }
+
             // Check duplicate
             if ($skipDuplicates && !empty($row['AGENDA'])) {
-                if (Dokumen::where('nomor_agenda', $row['AGENDA'])->exists()) {
+                if (Dokumen::where('nomor_agenda', trim($row['AGENDA']))->exists()) {
                     $skipped++;
                     continue;
                 }
@@ -349,6 +358,20 @@ class CsvImportController extends Controller
                 DB::beginTransaction();
 
                 $dokumenData = $this->transformRow($row);
+                
+                // Ensure required fields are not empty
+                if (empty($dokumenData['nomor_agenda']) || empty($dokumenData['nomor_spp'])) {
+                    throw new \Exception('Nomor Agenda atau Nomor SPP tidak boleh kosong');
+                }
+                
+                // Ensure kategori and jenis_dokumen are set
+                if (empty($dokumenData['kategori'])) {
+                    $dokumenData['kategori'] = 'CAPEX';
+                }
+                if (empty($dokumenData['jenis_dokumen'])) {
+                    $dokumenData['jenis_dokumen'] = 'Lainnya';
+                }
+                
                 $dokumenData['imported_from_csv'] = true;
                 $dokumenData['csv_import_batch_id'] = $batchId;
                 $dokumenData['csv_imported_at'] = now();
@@ -402,43 +425,70 @@ class CsvImportController extends Controller
         // Ensure we have Carbon instance for bulan/tahun extraction
         $carbonDate = Carbon::parse($tanggalMasuk);
 
+        // Extract kategori and jenis_dokumen from CSV
+        // KATEGORI from CSV maps to kategori field (required)
+        $kategori = trim($row['KATEGORI'] ?? '');
+        if (empty($kategori)) {
+            $kategori = 'CAPEX'; // Default value if empty
+        }
+
+        // Sub Pekerjaan from CSV maps to jenis_dokumen (required)
+        $jenisDokumen = trim($row['Sub Pekerjaan'] ?? '');
+        if (empty($jenisDokumen)) {
+            $jenisDokumen = 'Lainnya'; // Default value if empty
+        }
+
         return [
             // Core required fields
-            'nomor_agenda' => $row['AGENDA'] ?? null,
-            'nomor_spp' => $row['NO SPP'] ?? null,
-            'uraian_spp' => $row['HAL'] ?? null,
+            'nomor_agenda' => trim($row['AGENDA'] ?? ''),
+            'nomor_spp' => trim($row['NO SPP'] ?? ''),
+            'uraian_spp' => trim($row['HAL'] ?? ''),
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
 
             // Required: bulan and tahun (extracted from tanggal_masuk)
             'bulan' => $carbonDate->format('n'), // 1-12
             'tahun' => $carbonDate->format('Y'), // YYYY
 
+            // Required: kategori and jenis_dokumen
+            'kategori' => $kategori,
+            'jenis_dokumen' => $jenisDokumen,
+            'jenis_sub_pekerjaan' => trim($row['Sub Pekerjaan'] ?? null), // Optional, can be null
+
             // Dates - tanggal_spp cannot be null, use tanggal_masuk as default
             'tanggal_masuk' => $tanggalMasuk,
             'tanggal_spp' => $this->parseDate($row['TGL SPP'] ?? null) ?? $tanggalMasuk,
 
             // Contract info
-            'no_kontrak' => $row['NO KONTRAK'] ?? null,
+            'no_kontrak' => trim($row['NO KONTRAK'] ?? null),
             'tanggal_kontrak' => $this->parseDate($row['TGL. KONTRAK'] ?? null),
 
-            // Berita Acara
-            'no_berita_acara' => $row['NO BERITA ACARA'] ?? null,
-            'tanggal_berita_acara' => $this->parseDate($row['TGL. BERITA ACARA'] ?? null),
+            // Berita Acara - handle multiple possible header formats
+            'no_berita_acara' => trim($row['NO. BERITA ACARA'] ?? $row['NO BERITA ACARA'] ?? null),
+            'tanggal_berita_acara' => $this->parseDate($row['TGL. BERITA ACARA'] ?? $row['TGL BERITA ACARA'] ?? null),
+
+            // SPK info (if available in CSV) - handle multiple possible header formats
+            'no_spk' => trim($row['NO SPK'] ?? $row['NO. SPK'] ?? null),
+            'tanggal_spk' => $this->parseDate($row['TGL. SPK'] ?? $row['TGL SPK'] ?? null),
+            'tanggal_berakhir_spk' => $this->parseDate($row['TGL. BERAKHIR KONTRAK'] ?? $row['TGL BERAKHIR KONTRAK'] ?? null),
 
             // Status
             'status' => 'sent_to_pembayaran',
             'status_pembayaran' => 'belum_dibayar',
+            'current_handler' => 'pembayaran',
 
             // Payment info
             'tanggal_dibayar' => $this->getLastPaymentDate($row),
 
-            // Additional CSV fields
-            'KATEGORI' => $row['KATEGORI'] ?? null,
-            'nama_kebuns' => $row['KEBUN'] ?? null,
-            'dibayar_kepada' => $row['VENDOR'] ?? null,
+            // Kebun/Vendor info
+            'kebun' => trim($row['KEBUN'] ?? null),
+            'nama_kebuns' => trim($row['KEBUN'] ?? null), // Keep for compatibility
+            'dibayar_kepada' => trim($row['VENDOR'] ?? null),
+
+            // Additional CSV fields (for reference)
+            'KATEGORI' => $kategori, // Keep uppercase for compatibility
 
             // CSV Import metadata (will be added later in executeImport)
-            '_vendor' => $row['VENDOR'] ?? null,
+            '_vendor' => trim($row['VENDOR'] ?? null),
         ];
     }
 
@@ -469,12 +519,27 @@ class CsvImportController extends Controller
             return null;
         }
 
-        $formats = ['d/m/Y', 'd-m-Y', 'Y-m-d', 'd M Y', 'd F Y'];
+        $dateStr = trim($date);
+        if (empty($dateStr) || $dateStr === '-' || $dateStr === '0') {
+            return null;
+        }
+
+        // Try multiple date formats commonly used in CSV
+        $formats = [
+            'd/m/Y',           // 20/01/2023
+            'd-m-Y',           // 20-01-2023
+            'Y-m-d',           // 2023-01-20
+            'd M Y',           // 20 Jan 2023
+            'd F Y',           // 20 January 2023
+            'd/m/Y H:i:s',     // 20/01/2023 10:30:00
+            'd-m-Y H:i:s',     // 20-01-2023 10:30:00
+            'Y-m-d H:i:s',     // 2023-01-20 10:30:00
+        ];
 
         foreach ($formats as $format) {
             try {
-                $d = Carbon::createFromFormat($format, trim($date));
-                if ($d) {
+                $d = Carbon::createFromFormat($format, $dateStr);
+                if ($d && $d->year > 1900 && $d->year < 2100) { // Sanity check
                     return $d->format('Y-m-d H:i:s');
                 }
             } catch (\Exception $e) {
@@ -482,6 +547,17 @@ class CsvImportController extends Controller
             }
         }
 
+        // Last resort: try Carbon's flexible parser
+        try {
+            $d = Carbon::parse($dateStr);
+            if ($d && $d->year > 1900 && $d->year < 2100) {
+                return $d->format('Y-m-d H:i:s');
+            }
+        } catch (\Exception $e) {
+            // Ignore
+        }
+
+        Log::warning('Failed to parse date', ['date' => $dateStr]);
         return null;
     }
 
