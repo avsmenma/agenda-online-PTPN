@@ -2055,13 +2055,14 @@ window.submitEditPembayaran = function() {
                 }
             }
             if (data.is_complete) {
-                alert('Data pembayaran berhasil disimpan! Kedua field sudah lengkap, dokumen selesai.');
+                showSuccessModal('Data pembayaran berhasil disimpan!', 'Kedua field sudah lengkap, dokumen selesai.');
             } else {
-                alert('Data pembayaran berhasil disimpan! Status otomatis berubah menjadi "Sudah Dibayar".');
+                showSuccessModal('Data pembayaran berhasil disimpan!', 'Status otomatis berubah menjadi "Sudah Dibayar".');
             }
-            location.reload();
         } else {
-            alert(data.message || 'Gagal menyimpan data pembayaran.');
+            const errorModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editPembayaranModal'));
+            if (errorModal) errorModal.hide();
+            setTimeout(() => alert(data.message || 'Gagal menyimpan data pembayaran.'), 300);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalHTML;
         }
@@ -2923,5 +2924,48 @@ function editDocumentFromModal() {
   align-items: center;
 }
 </style>
+
+<!-- Modal: Success Notification (Modern & Professional) -->
+<div class="modal fade" id="successNotificationModal" tabindex="-1" aria-labelledby="successNotificationLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 60px rgba(8, 62, 64, 0.3); overflow: hidden;">
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px 30px; text-align: center;">
+        <div style="width: 80px; height: 80px; margin: 0 auto 20px; position: relative; border-radius: 50%; background: white; border: 4px solid #10b981;">
+          <i class="fa-solid fa-check" style="font-size: 40px; color: #10b981; line-height: 72px;"></i>
+        </div>
+        <h4 style="color: white; font-weight: 700; font-size: 24px; margin: 0;">Berhasil!</h4>
+      </div>
+      <div class="modal-body" style="padding: 30px; text-align: center;">
+        <p id="successMessage" style="font-size: 16px; color: #374151; line-height: 1.6; margin: 0;"></p>
+        <p id="successSubMessage" style="font-size: 14px; color: #6b7280; margin-top: 12px; margin-bottom: 0;"></p>
+      </div>
+      <div style="height: 4px; background: #e5e7eb;">
+        <div id="successProgressBar" style="height: 100%; width: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); transition: width 3s linear;"></div>
+      </div>
+      <div style="padding: 20px; text-align: center; background: #f9fafb;">
+        <button type="button" class="btn" onclick="closeSuccessModal()" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border: none; border-radius: 12px; padding: 12px 40px; font-weight: 600;"><i class="fa-solid fa-check me-2"></i>OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showSuccessModal(message, subMessage = '') {
+  const modal = new bootstrap.Modal(document.getElementById('successNotificationModal'));
+  document.getElementById('successMessage').textContent = message;
+  document.getElementById('successSubMessage').textContent = subMessage;
+  const progressBar = document.getElementById('successProgressBar');
+  progressBar.style.width = '100%';
+  modal.show();
+  setTimeout(() => { progressBar.style.width = '0%'; }, 100);
+  setTimeout(() => { modal.hide(); location.reload(); }, 3000);
+}
+
+function closeSuccessModal() {
+  const modal = bootstrap.Modal.getInstance(document.getElementById('successNotificationModal'));
+  if (modal) modal.hide();
+  location.reload();
+}
+</script>
 
 @endsection
