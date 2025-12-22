@@ -393,10 +393,14 @@ class CsvImportController extends Controller
             'batch_id' => $batchId,
         ];
     }
+
     private function transformRow($row)
     {
         // Parse tanggal_masuk first for use as default
-        $tanggalMasuk = $this->parseDate($row['TGL SPP'] ?? $row['TANGGAL MASUK DOKUMEN'] ?? null) ?? now();
+        $tanggalMasuk = $this->parseDate($row['TGL SPP'] ?? $row['TANGGAL MASUK DOKUMEN'] ?? null) ?? now()->format('Y-m-d H:i:s');
+
+        // Ensure we have Carbon instance for bulan/tahun extraction
+        $carbonDate = Carbon::parse($tanggalMasuk);
 
         return [
             // Core required fields
@@ -406,8 +410,8 @@ class CsvImportController extends Controller
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
 
             // Required: bulan and tahun (extracted from tanggal_masuk)
-            'bulan' => $tanggalMasuk->format('n'), // 1-12
-            'tahun' => $tanggalMasuk->format('Y'), // YYYY
+            'bulan' => $carbonDate->format('n'), // 1-12
+            'tahun' => $carbonDate->format('Y'), // YYYY
 
             // Dates - tanggal_spp cannot be null, use tanggal_masuk as default
             'tanggal_masuk' => $tanggalMasuk,
