@@ -795,14 +795,24 @@
           }
         @endphp
         <tr 
-          @if($paymentStatus !== 'belum_siap_bayar')
-            onclick="openDocumentDetailModal({{ $dokumen->id }}, event); return false;"
-            style="cursor: pointer;"
-            class="clickable-row"
-          @else
+          {{-- Removed row onclick for siap_bayar status because openDocumentDetailModal is not defined
+               and was causing JavaScript errors that prevented Edit button from working.
+               For siap_bayar: users should only click Edit button, not the row itself --}}
+          @if($paymentStatus === 'belum_siap_bayar')
+            {{-- Belum siap bayar: row is not clickable, only eye icon for tracking --}}
             style="cursor: default;"
             class="no-click-row"
             title="Dokumen belum siap bayar. Klik icon mata untuk melihat tracking."
+          @elseif($paymentStatus === 'siap_bayar')
+            {{-- Siap bayar: row is not clickable, only Edit button is clickable --}}
+            style="cursor: default;"
+            class="no-click-row"
+            title="Klik tombol Edit untuk input data pembayaran."
+          @elseif($paymentStatus === 'sudah_dibayar')
+            {{-- Sudah dibayar: row is not clickable anymore --}}
+            style="cursor: default;"
+            class="no-click-row"
+            title="Dokumen sudah dibayar."
           @endif
           data-dokumen-id="{{ $dokumen->id }}"
         >
