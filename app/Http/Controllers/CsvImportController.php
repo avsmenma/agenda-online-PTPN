@@ -393,7 +393,6 @@ class CsvImportController extends Controller
             'batch_id' => $batchId,
         ];
     }
-
     private function transformRow($row)
     {
         // Parse tanggal_masuk first for use as default
@@ -405,6 +404,10 @@ class CsvImportController extends Controller
             'nomor_spp' => $row['NO SPP'] ?? null,
             'uraian_spp' => $row['HAL'] ?? null,
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
+
+            // Required: bulan and tahun (extracted from tanggal_masuk)
+            'bulan' => $tanggalMasuk->format('n'), // 1-12
+            'tahun' => $tanggalMasuk->format('Y'), // YYYY
 
             // Dates - tanggal_spp cannot be null, use tanggal_masuk as default
             'tanggal_masuk' => $tanggalMasuk,
