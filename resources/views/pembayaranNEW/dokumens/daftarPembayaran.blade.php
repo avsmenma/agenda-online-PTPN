@@ -2520,8 +2520,8 @@ function terbilangSatuan(number, angka) {
 
 <!-- Modal View Document Detail -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
-    <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+  <div class="modal-dialog modal-xl" style="max-width: 95%; width: 95%; margin: 1rem auto;">
+    <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
       <!-- Sticky Header -->
       <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
         <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
@@ -2532,7 +2532,7 @@ function terbilangSatuan(number, angka) {
       </div>
       
       <!-- Scrollable Body -->
-      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(95vh - 140px); padding: 30px; flex: 1;">
         <input type="hidden" id="view-dokumen-id">
         
         <!-- Loading State -->
