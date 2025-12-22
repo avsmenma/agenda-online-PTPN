@@ -2414,6 +2414,42 @@ function populateDocumentDetail(data) {
     document.getElementById('view-nomor-po').textContent = data.no_po || '-';
     document.getElementById('view-nomor-pr').textContent = data.no_pr || '-';
     
+    // Informasi Perpajakan
+    document.getElementById('view-npwp').textContent = data.npwp || '-';
+    document.getElementById('view-status-perpajakan').textContent = data.status_perpajakan || '-';
+    document.getElementById('view-no-faktur').textContent = data.no_faktur || '-';
+    document.getElementById('view-tanggal-faktur').textContent = formatDate(data.tanggal_faktur);
+    document.getElementById('view-jenis-pph').textContent = data.jenis_pph || '-';
+    
+    // Format DPP PPH - gunakan raw value jika ada, atau yang sudah diformat
+    if (data.dpp_pph_raw && data.dpp_pph_raw > 0) {
+        document.getElementById('view-dpp-pph').textContent = 'Rp. ' + formatNumber(data.dpp_pph_raw);
+    } else if (data.dpp_pph && data.dpp_pph !== '-') {
+        // Jika sudah diformat dari controller, langsung gunakan
+        document.getElementById('view-dpp-pph').textContent = 'Rp. ' + data.dpp_pph;
+    } else {
+        document.getElementById('view-dpp-pph').textContent = '-';
+    }
+    
+    // Format PPN Terhutang - gunakan raw value jika ada, atau yang sudah diformat
+    if (data.ppn_terhutang_raw && data.ppn_terhutang_raw > 0) {
+        document.getElementById('view-ppn-terhutang').textContent = 'Rp. ' + formatNumber(data.ppn_terhutang_raw);
+    } else if (data.ppn_terhutang && data.ppn_terhutang !== '-') {
+        // Jika sudah diformat dari controller, langsung gunakan
+        document.getElementById('view-ppn-terhutang').textContent = 'Rp. ' + data.ppn_terhutang;
+    } else {
+        document.getElementById('view-ppn-terhutang').textContent = '-';
+    }
+    
+    // Link Dokumen Pajak
+    const linkDokumenPajak = data.link_dokumen_pajak || '-';
+    if (linkDokumenPajak !== '-' && linkDokumenPajak) {
+        const linkEl = document.getElementById('view-link-dokumen-pajak');
+        linkEl.innerHTML = `<a href="${linkDokumenPajak}" target="_blank" style="color: #0d6efd; text-decoration: underline;">${linkDokumenPajak}</a>`;
+    } else {
+        document.getElementById('view-link-dokumen-pajak').textContent = '-';
+    }
+    
     // Set document ID for edit button
     document.getElementById('view-dokumen-id').value = data.id || '';
 }
@@ -2520,7 +2556,7 @@ function terbilangSatuan(number, angka) {
 
 <!-- Modal View Document Detail -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl" style="max-width: 95%; width: 95%; margin: 1rem auto;">
+  <div class="modal-dialog modal-xl" style="max-width: 98%; width: 98%; margin: 0.5rem auto;">
     <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
       <!-- Sticky Header -->
       <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
@@ -2726,6 +2762,67 @@ function terbilangSatuan(number, angka) {
                 <div class="detail-item">
                   <label class="detail-label">Nomor PR</label>
                   <div class="detail-value" id="view-nomor-pr">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Informasi Perpajakan -->
+          <div class="form-section mb-4" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 20px; border: 2px solid #ffc107;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #92400e; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                INFORMASI PERPAJAKAN
+                <span style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">KHUSUS PERPAJAKAN</span>
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">NPWP</label>
+                  <div class="detail-value" id="view-npwp">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Status Perpajakan</label>
+                  <div class="detail-value" id="view-status-perpajakan">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">No. Faktur</label>
+                  <div class="detail-value" id="view-no-faktur">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Tanggal Faktur</label>
+                  <div class="detail-value" id="view-tanggal-faktur">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Jenis PPH</label>
+                  <div class="detail-value" id="view-jenis-pph">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">DPP PPH</label>
+                  <div class="detail-value" id="view-dpp-pph" style="font-weight: 600; color: #92400e;">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">PPN Terhutang</label>
+                  <div class="detail-value" id="view-ppn-terhutang" style="font-weight: 600; color: #92400e;">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Link Dokumen Pajak</label>
+                  <div class="detail-value" id="view-link-dokumen-pajak">-</div>
                 </div>
               </div>
             </div>
