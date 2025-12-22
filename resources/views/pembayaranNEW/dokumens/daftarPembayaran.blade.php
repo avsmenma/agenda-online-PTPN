@@ -881,7 +881,7 @@
                   Selesai
                 </button>
               @else
-                  <button type="button" class="btn-action" onclick="event.stopPropagation(); event.preventDefault(); if(typeof window.openEditPembayaranModal === 'function') { window.openEditPembayaranModal({{ $dokumen->id }}); } else { console.error('openEditPembayaranModal function not found'); alert('Fungsi tidak tersedia. Silakan refresh halaman.'); }">
+                  <button type="button" class="btn-action" onclick="event.stopPropagation(); event.preventDefault(); openEditPembayaranModalHandler({{ $dokumen->id }});">
                   <i class="fa-solid fa-edit"></i>
                   Edit
                   </button>
@@ -1007,36 +1007,52 @@
 
 <!-- Modal: Edit Pembayaran -->
 <div class="modal fade" id="editPembayaranModal" tabindex="-1" aria-labelledby="editPembayaranModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editPembayaranModalLabel">
-          <i class="fa-solid fa-edit me-2"></i>Edit Pembayaran
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-radius: 12px 12px 0 0; border-bottom: none;">
+        <h5 class="modal-title" id="editPembayaranModalLabel" style="color: white; font-weight: 700;">
+          <i class="fa-solid fa-edit me-2"></i>Input Data Pembayaran
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="padding: 24px;">
         <form id="editPembayaranForm">
           <input type="hidden" id="editPembayaranDocId" name="dokumen_id" value="">
-          <div class="form-group mb-3">
-            <label for="tanggal_dibayar" class="form-label">Tanggal Pembayaran</label>
-            <input type="date" name="tanggal_dibayar" id="tanggal_dibayar" class="form-control" value="">
-            <small class="text-muted">Isi tanggal ketika pembayaran dilakukan</small>
+          
+          <div class="form-group mb-4">
+            <label for="tanggal_dibayar" class="form-label" style="font-weight: 600; color: #083E40; margin-bottom: 8px;">
+              <i class="fa-solid fa-calendar-days me-2"></i>Tanggal Pembayaran
+            </label>
+            <input type="date" name="tanggal_dibayar" id="tanggal_dibayar" class="form-control" value="" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 14px;">
+            <small class="text-muted" style="font-size: 12px; margin-top: 4px; display: block;">
+              <i class="fa-solid fa-info-circle me-1"></i>Pilih tanggal ketika pembayaran dilakukan
+            </small>
           </div>
-          <div class="form-group mb-3">
-            <label for="link_bukti_pembayaran" class="form-label">Link Bukti Pembayaran</label>
-            <input type="url" name="link_bukti_pembayaran" id="link_bukti_pembayaran" class="form-control" placeholder="https://drive.google.com/..." value="">
-            <small class="text-muted">Masukkan link PDF/Drive bukti pembayaran</small>
+          
+          <div class="form-group mb-4">
+            <label for="link_bukti_pembayaran" class="form-label" style="font-weight: 600; color: #083E40; margin-bottom: 8px;">
+              <i class="fa-brands fa-google-drive me-2"></i>Link Google Drive Bukti Pembayaran
+            </label>
+            <input type="url" name="link_bukti_pembayaran" id="link_bukti_pembayaran" class="form-control" placeholder="https://drive.google.com/file/d/..." value="" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 14px;">
+            <small class="text-muted" style="font-size: 12px; margin-top: 4px; display: block;">
+              <i class="fa-solid fa-info-circle me-1"></i>Masukkan link Google Drive untuk bukti pembayaran (PDF/File)
+            </small>
           </div>
-          <div class="alert alert-info">
-            <i class="fa-solid fa-info-circle me-2"></i>
-            <strong>Catatan:</strong> Minimal salah satu field harus diisi. Status akan otomatis berubah menjadi "Sudah Dibayar" setelah salah satu field diisi.
+          
+          <div class="alert alert-info" style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 12px; margin-bottom: 0;">
+            <i class="fa-solid fa-info-circle me-2" style="color: #0d6efd;"></i>
+            <strong style="color: #0d6efd;">Catatan:</strong> 
+            <span style="color: #0d6efd;">Minimal salah satu field harus diisi. Status akan otomatis berubah menjadi "Sudah Dibayar" setelah salah satu field diisi.</span>
           </div>
         </form>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary" onclick="submitEditPembayaran()">Simpan</button>
+      <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 16px 24px;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px; padding: 8px 20px;">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn btn-primary" onclick="submitEditPembayaran()" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none; border-radius: 8px; padding: 8px 20px;">
+          <i class="fa-solid fa-save me-2"></i>Simpan
+        </button>
       </div>
     </div>
   </div>
@@ -1883,6 +1899,18 @@ document.addEventListener('click', function(e) {
 <script>
 // Define global functions FIRST before any DOMContentLoaded handlers
 // This ensures functions are available immediately when page loads
+
+// Handler function untuk tombol edit
+function openEditPembayaranModalHandler(docId) {
+    console.log('openEditPembayaranModalHandler called with docId:', docId);
+    if (typeof window.openEditPembayaranModal === 'function') {
+        window.openEditPembayaranModal(docId);
+    } else {
+        console.error('openEditPembayaranModal function not found');
+        alert('Fungsi tidak tersedia. Silakan refresh halaman.');
+    }
+}
+
 window.openEditPembayaranModal = function(docId) {
     console.log('openEditPembayaranModal called with docId:', docId);
     
