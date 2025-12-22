@@ -396,6 +396,9 @@ class CsvImportController extends Controller
 
     private function transformRow($row)
     {
+        // Parse tanggal_masuk first for use as default
+        $tanggalMasuk = $this->parseDate($row['TGL SPP'] ?? $row['TANGGAL MASUK DOKUMEN'] ?? null) ?? now();
+
         return [
             // Core required fields
             'nomor_agenda' => $row['AGENDA'] ?? null,
@@ -403,9 +406,9 @@ class CsvImportController extends Controller
             'uraian_spp' => $row['HAL'] ?? null,
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
 
-            // Dates
-            'tanggal_masuk' => $this->parseDate($row['TGL SPP'] ?? $row['TANGGAL MASUK DOKUMEN'] ?? null) ?? now(),
-            'tanggal_spp' => $this->parseDate($row['TGL SPP'] ?? null),
+            // Dates - tanggal_spp cannot be null, use tanggal_masuk as default
+            'tanggal_masuk' => $tanggalMasuk,
+            'tanggal_spp' => $this->parseDate($row['TGL SPP'] ?? null) ?? $tanggalMasuk,
 
             // Contract info
             'no_kontrak' => $row['NO KONTRAK'] ?? null,
