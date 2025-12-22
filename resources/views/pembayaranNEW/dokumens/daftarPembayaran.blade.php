@@ -879,29 +879,27 @@
                    onclick="event.stopPropagation();">
                   <i class="fas fa-eye"></i>
                 </a>
-              @elseif($paymentStatus === 'siap_bayar')
-                {{-- Kondisi B: Status = "Siap Bayar" - Tampilkan button edit --}}
               @php
-                // Cek apakah kedua field sudah diisi
+                // Cek apakah kedua field sudah diisi untuk menentukan apakah tombol Edit masih perlu ditampilkan
+                // Tombol Edit tetap aktif bahkan jika status sudah "sudah_dibayar", selama salah satu field masih kosong
                 $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
               @endphp
-              @if($isComplete)
-                <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
-                  <i class="fa-solid fa-check-circle"></i>
-                  Selesai
-                </button>
-              @else
-                  <button type="button" class="btn-action" onclick="event.stopPropagation(); event.preventDefault(); openEditPembayaranModalHandler({{ $dokumen->id }});">
-                  <i class="fa-solid fa-edit"></i>
-                  Edit
+              
+              @if($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
+                {{-- Status "Siap Bayar" atau "Sudah Dibayar" - Cek kelengkapan data --}}
+                @if($isComplete)
+                  {{-- Kedua field sudah diisi - Tampilkan tombol Selesai (disabled) --}}
+                  <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;" title="Data pembayaran sudah lengkap">
+                    <i class="fa-solid fa-check-circle"></i>
+                    Selesai
+                  </button>
+                @else
+                  {{-- Minimal satu field masih kosong - Tampilkan tombol Edit (enabled) --}}
+                  <button type="button" class="btn-action" onclick="event.stopPropagation(); event.preventDefault(); openEditPembayaranModalHandler({{ $dokumen->id }});" title="Input/Edit data pembayaran">
+                    <i class="fa-solid fa-edit"></i>
+                    Edit
                   </button>
                 @endif
-              @elseif($paymentStatus === 'sudah_dibayar')
-                {{-- Status = "Sudah Dibayar" - Tampilkan badge selesai --}}
-                <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;">
-                  <i class="fa-solid fa-check-circle"></i>
-                  Selesai
-                </button>
               @endif
             </div>
           </td>
