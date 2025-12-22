@@ -2506,9 +2506,14 @@ window.loadDocumentDetail = function(dokumenId) {
                 {{-- Loading State --}}
                 <div x-show="loading" 
                      x-cloak 
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
                      class="flex items-center justify-center py-20" 
-                     style="min-height: 200px;"
-                     :style="loading ? 'display: flex !important;' : 'display: none !important;'">
+                     style="min-height: 200px;">
                     <div class="text-center">
                         <i class="fas fa-spinner fa-spin text-4xl text-emerald-600 mb-4"></i>
                         <p class="text-gray-600">Memuat data dokumen...</p>
@@ -2518,8 +2523,10 @@ window.loadDocumentDetail = function(dokumenId) {
                 {{-- Error State --}}
                 <div x-show="error && !loading" 
                      x-cloak 
-                     class="bg-red-50 border border-red-200 rounded-lg p-4"
-                     :style="(error && !loading) ? 'display: block !important;' : 'display: none !important;'">
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     class="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div class="flex items-center gap-2 text-red-800">
                         <i class="fas fa-exclamation-circle"></i>
                         <span x-text="error"></span>
@@ -2529,8 +2536,10 @@ window.loadDocumentDetail = function(dokumenId) {
                 {{-- Modern View --}}
                 <div x-show="!loading && !error && viewMode === 'modern' && data !== null && data !== undefined" 
                      x-cloak 
-                     class="space-y-6"
-                     :style="(!loading && !error && viewMode === 'modern' && data !== null && data !== undefined) ? 'display: block !important;' : 'display: none !important;'">
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     class="space-y-6">
                     {{-- Header Section: No SPP, Judul Pekerjaan, Nilai Rp --}}
                     <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-8 border-2 border-emerald-200 shadow-lg">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -2841,9 +2850,11 @@ window.loadDocumentDetail = function(dokumenId) {
                 {{-- Excel View --}}
                 <div x-show="!loading && !error && viewMode === 'excel' && data !== null && data !== undefined" 
                      x-cloak 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
                      class="overflow-x-auto" 
-                     style="background: white;"
-                     :style="(!loading && !error && viewMode === 'excel' && data !== null && data !== undefined) ? 'display: block !important;' : 'display: none !important;'">
+                     style="background: white;">
                     <table class="w-full border-collapse border border-gray-400 text-sm font-mono">
                         <thead>
                             <tr class="bg-green-600">
@@ -3050,30 +3061,23 @@ function documentDetailModal() {
             .then(result => {
                 console.log('Document detail response:', result);
                 if (result.success && result.data) {
-                    // Set data and update loading state
-                    this.data = result.data;
-                    this.loading = false;
-                    this.error = null;
-                    console.log('Data loaded successfully:', this.data);
+                    // Set data and update loading state using proper Alpine.js reactivity
+                    const self = this;
+                    self.data = result.data;
+                    self.loading = false;
+                    self.error = null;
+                    console.log('Data loaded successfully:', self.data);
                     console.log('Loading set to false, error set to null');
                     
-                    // Force Alpine.js reactivity by accessing properties
-                    // This ensures x-show directives are re-evaluated
-                    const _data = this.data;
-                    const _loading = this.loading;
-                    const _error = this.error;
-                    
-                    // Use $nextTick if available to ensure DOM updates
-                    if (this.$nextTick) {
-                        this.$nextTick(() => {
-                            console.log('After $nextTick - State:', {
-                                loading: this.loading,
-                                error: this.error,
-                                hasData: !!this.data,
-                                viewMode: this.viewMode
-                            });
+                    // Use requestAnimationFrame to ensure DOM updates synchronously
+                    requestAnimationFrame(() => {
+                        console.log('After RAF - State:', {
+                            loading: self.loading,
+                            error: self.error,
+                            hasData: !!self.data,
+                            viewMode: self.viewMode
                         });
-                    }
+                    });
                 } else {
                     throw new Error(result.message || 'Data tidak ditemukan');
                 }
@@ -3196,12 +3200,7 @@ body.modal-open {
     visibility: visible !important;
 }
 
-/* Ensure modal body content is visible */
-#documentDetailModal [x-show] {
-    display: block !important;
-}
-
-#documentDetailModal [x-show="false"],
+/* Ensure modal content is styled correctly - let Alpine.js control visibility */
 #documentDetailModal [x-cloak] {
     display: none !important;
 }
