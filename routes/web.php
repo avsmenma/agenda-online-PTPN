@@ -155,6 +155,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
 
         // Cek dokumen yang berubah status setelah lastChecked
         // Beda antara dokumen baru dari IbuA vs dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
+        // Exclude documents imported from CSV to prevent notification spam
         $newDocuments = \App\Models\Dokumen::where(function ($query) use ($lastCheckedDate) {
             // Dokumen yang masih di ibuB dan updated setelah lastChecked (dokumen baru dari IbuA)
             $query->where(function ($q) use ($lastCheckedDate) {
@@ -166,6 +167,11 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
                 ->orWhere(function ($q) use ($lastCheckedDate) {
                     $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
                         ->where('updated_at', '>', $lastCheckedDate);
+                })
+                // Exclude CSV imported documents
+                ->where(function($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
                 });
         })
             ->with([

@@ -3366,6 +3366,7 @@ class DashboardPembayaranController extends Controller
                 : \Carbon\Carbon::now();
 
             // Cek dokumen baru yang dikirim ke pembayaran menggunakan dokumen_role_data
+            // Exclude documents imported from CSV to prevent notification spam
             $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
                 $query->where(function($q) {
                     $q->where('current_handler', 'pembayaran')
@@ -3379,6 +3380,11 @@ class DashboardPembayaranController extends Controller
                     })
                     // Or check updated_at as fallback
                     ->orWhere('updated_at', '>', $lastCheckedDate);
+                })
+                // Exclude CSV imported documents
+                ->where(function($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
                 });
             })
             ->with(['roleData' => function($query) {

@@ -406,11 +406,17 @@ class InboxController extends Controller
 
             // Cari dokumen baru yang masuk setelah last check
             // Use DokumenStatus to find new pending documents
-            $newDocuments = Dokumen::whereHas('roleStatuses', function ($query) use ($userRole, $checkFrom) {
-                $query->where('role_code', strtolower($userRole))
-                    ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
-                    ->where('status_changed_at', '>', $checkFrom);
-            })
+            // Exclude documents imported from CSV to prevent notification spam
+            $newDocuments = Dokumen::where(function($query) {
+                    // Exclude CSV imported documents
+                    $query->where('imported_from_csv', false)
+                          ->orWhereNull('imported_from_csv');
+                })
+                ->whereHas('roleStatuses', function ($query) use ($userRole, $checkFrom) {
+                    $query->where('role_code', strtolower($userRole))
+                        ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
+                        ->where('status_changed_at', '>', $checkFrom);
+                })
                 ->with(['activityLogs', 'roleStatuses']) // Eager load for access
                 ->get()
                 ->map(function ($doc) use ($userRole) {

@@ -91,6 +91,10 @@ class Dokumen extends Model
         'DIBAYAR',
         'BELUM_DIBAYAR',
         'KATEGORI',
+        // CSV Import tracking fields
+        'imported_from_csv',
+        'csv_import_batch_id',
+        'csv_imported_at',
     ];
 
     protected $casts = [
@@ -124,6 +128,9 @@ class Dokumen extends Model
         'selisih_ppn' => 'decimal:2',
         // Pembayaran casts
         'tanggal_dibayar' => 'date',
+        // CSV Import casts
+        'imported_from_csv' => 'boolean',
+        'csv_imported_at' => 'datetime',
     ];
 
     public function dokumenPos(): HasMany
