@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\diagramController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\DashboardController;
@@ -168,10 +169,12 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
                     $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
                         ->where('updated_at', '>', $lastCheckedDate);
                 })
-                // Exclude CSV imported documents
-                ->where(function($q) {
-                    $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
+                // Exclude CSV imported documents (only if column exists)
+                ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($q) {
+                    $q->where(function($subQ) {
+                        $subQ->where('imported_from_csv', false)
+                             ->orWhereNull('imported_from_csv');
+                    });
                 });
         })
             ->with([

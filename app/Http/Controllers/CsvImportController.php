@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Dokumen;
 use Carbon\Carbon;
 
@@ -372,9 +373,16 @@ class CsvImportController extends Controller
                     $dokumenData['jenis_dokumen'] = 'Lainnya';
                 }
                 
-                $dokumenData['imported_from_csv'] = true;
-                $dokumenData['csv_import_batch_id'] = $batchId;
-                $dokumenData['csv_imported_at'] = now();
+                // Only set CSV import tracking fields if columns exist
+                if (\Schema::hasColumn('dokumens', 'imported_from_csv')) {
+                    $dokumenData['imported_from_csv'] = true;
+                }
+                if (\Schema::hasColumn('dokumens', 'csv_import_batch_id')) {
+                    $dokumenData['csv_import_batch_id'] = $batchId;
+                }
+                if (\Schema::hasColumn('dokumens', 'csv_imported_at')) {
+                    $dokumenData['csv_imported_at'] = now();
+                }
 
                 $dokumen = Dokumen::create($dokumenData);
 

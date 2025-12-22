@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardPerpajakanController extends Controller
 {
@@ -1375,10 +1376,12 @@ class DashboardPerpajakanController extends Controller
                     // Or check updated_at as fallback
                     ->orWhere('updated_at', '>', $lastCheckedDate);
                 })
-                // Exclude CSV imported documents
-                ->where(function($q) {
-                    $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
+                // Exclude CSV imported documents (only if column exists)
+                ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($q) {
+                    $q->where(function($subQ) {
+                        $subQ->where('imported_from_csv', false)
+                             ->orWhereNull('imported_from_csv');
+                    });
                 });
             })
             ->with(['roleData' => function($query) {
