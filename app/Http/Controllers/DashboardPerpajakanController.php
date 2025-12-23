@@ -1375,13 +1375,13 @@ class DashboardPerpajakanController extends Controller
                     })
                     // Or check updated_at as fallback
                     ->orWhere('updated_at', '>', $lastCheckedDate);
-                })
-                // Exclude CSV imported documents (only if column exists)
-                ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($q) {
-                    $q->where(function($subQ) {
-                        $subQ->where('imported_from_csv', false)
-                             ->orWhereNull('imported_from_csv');
-                    });
+                });
+            })
+            // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
+            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($query) {
+                $query->where(function($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
                 });
             })
             ->with(['roleData' => function($query) {
