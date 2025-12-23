@@ -15,6 +15,35 @@
     font-size: 28px;
   }
 
+  /* Statistics Cards Container */
+  .stat-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (min-width: 992px) {
+    .stat-cards-container {
+      flex-wrap: nowrap; /* Force single row on desktop */
+    }
+    
+    .stat-cards-container > * {
+      flex: 1 1 0; /* Equal width for all cards */
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 991px) {
+    .stat-cards-container {
+      flex-direction: column; /* Stack vertically on mobile/tablet */
+    }
+    
+    .stat-cards-container > * {
+      flex: 1 1 100%;
+    }
+  }
+
   /* Statistics Cards */
   .stat-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
@@ -1047,9 +1076,9 @@
 <h2>{{ $title }}</h2>
 
 <!-- Statistics Cards - Responsive Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+<div class="d-flex flex-column flex-md-row flex-lg-row gap-4 mb-4" style="display: flex; flex-wrap: wrap;">
   <!-- Card 1: Total Dokumen -->
-  <div class="stat-card">
+  <div class="stat-card" style="flex: 1 1 calc(25% - 12px); min-width: 200px;">
     <div class="stat-card-body">
       <div class="stat-content" style="flex: 1; min-width: 0;">
         <div class="stat-title">Total Dokumen</div>

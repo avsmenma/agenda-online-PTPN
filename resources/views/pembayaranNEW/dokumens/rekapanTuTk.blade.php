@@ -15,6 +15,35 @@
     font-size: 28px;
   }
 
+  /* Dashboard Scorecards Container */
+  .scorecards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (min-width: 992px) {
+    .scorecards-container {
+      flex-wrap: nowrap; /* Force single row on desktop */
+    }
+    
+    .scorecards-container > * {
+      flex: 1 1 0; /* Equal width for all cards */
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 991px) {
+    .scorecards-container {
+      flex-direction: column; /* Stack vertically on mobile/tablet */
+    }
+    
+    .scorecards-container > * {
+      flex: 1 1 100%;
+    }
+  }
+
   /* Dashboard Scorecards - Modern Design */
   .scorecard {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
@@ -1123,7 +1152,7 @@
   <h2>Rekapan TU/TK</h2>
 
   <!-- Dashboard Scorecards - Responsive Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+  <div class="scorecards-container">
     <!-- Card 1: Total Outstanding -->
     <div class="scorecard merah">
       <div class="scorecard-body">
