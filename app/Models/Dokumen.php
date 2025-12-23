@@ -198,12 +198,12 @@ class Dokumen extends Model
     public function getDataForRole(string $roleCode): ?DokumenRoleData
     {
         $roleCode = strtolower($roleCode);
-        
+
         // If roleData relationship is already loaded, use it to avoid extra query
         if ($this->relationLoaded('roleData')) {
             return $this->roleData->firstWhere('role_code', $roleCode);
         }
-        
+
         // Otherwise, query the database
         return $this->roleData()->where('role_code', $roleCode)->first();
     }
@@ -256,25 +256,25 @@ class Dokumen extends Model
         $updateData = [
             'received_at' => now(),
         ];
-        
+
         // If sending to perpajakan and document was returned, always reset deadline
         // This ensures returned documents must set deadline again
         $isReturnedDocument = $this->department_returned_at ||
-                              $this->returned_from_perpajakan_fixed_at;
-        
+            $this->returned_from_perpajakan_fixed_at;
+
         if ($targetRoleCode === 'perpajakan' && $isReturnedDocument) {
             $updateData['deadline_at'] = null;
             $updateData['deadline_days'] = null;
             $updateData['deadline_note'] = null;
             $updateData['processed_at'] = null; // Reset processed_at to lock document until deadline is set
-            
+
             \Log::info('Reset deadline in sendToRoleInbox for returned document', [
                 'document_id' => $this->id,
                 'nomor_agenda' => $this->nomor_agenda,
                 'target_role' => $targetRoleCode
             ]);
         }
-        
+
         $this->setDataForRole($targetRoleCode, $updateData);
 
         // Log activity
@@ -309,25 +309,25 @@ class Dokumen extends Model
         $roleData = $this->getDataForRole($roleCode);
         if ($roleData) {
             $roleData->processed_at = now();
-            
+
             // Reset deadline for returned documents so they must set deadline again
             // Check if document was returned (has department_returned_at timestamp)
             $isReturnedDocument = $this->department_returned_at ||
-                                  $this->returned_from_perpajakan_fixed_at;
-            
+                $this->returned_from_perpajakan_fixed_at;
+
             if ($isReturnedDocument && $roleCode === 'perpajakan') {
                 // Reset deadline for returned documents sent back to perpajakan
                 $roleData->deadline_at = null;
                 $roleData->deadline_days = null;
                 $roleData->deadline_note = null;
-                
+
                 \Log::info('Reset deadline for returned document approved from inbox', [
                     'document_id' => $this->id,
                     'nomor_agenda' => $this->nomor_agenda,
                     'role_code' => $roleCode
                 ]);
             }
-            
+
             $roleData->save();
         }
 
@@ -517,10 +517,10 @@ class Dokumen extends Model
     {
         $currentRoleCode = strtolower($currentRoleCode ?? '');
         $status = strtolower($this->status ?? '');
-        
+
         // Tentukan pengirim berdasarkan status dokumen dan role saat ini
         // Urutan alur dokumen: IbuA -> IbuB (Verifikasi) -> Perpajakan -> Akutansi -> Pembayaran
-        
+
         // Jika dokumen dikirim ke perpajakan, pengirimnya adalah team verifikasi (ibuB)
         if ($status === 'sent_to_perpajakan' || $status === 'pending_approval_perpajakan') {
             // Cek apakah ada status dari ibuB yang menunjukkan dokumen dikirim dari sana
@@ -533,7 +533,7 @@ class Dokumen extends Model
                 return 'Team Verifikasi';
             }
         }
-        
+
         // Jika dokumen dikirim ke akutansi, pengirimnya adalah team perpajakan
         if ($status === 'sent_to_akutansi' || $status === 'pending_approval_akutansi') {
             $perpajakanStatus = $this->getStatusForRole('perpajakan');
@@ -544,7 +544,7 @@ class Dokumen extends Model
                 return 'Team Perpajakan';
             }
         }
-        
+
         // Jika dokumen dikirim ke pembayaran, pengirimnya adalah team akutansi
         if ($status === 'sent_to_pembayaran' || $status === 'pending_approval_pembayaran') {
             $akutansiStatus = $this->getStatusForRole('akutansi');
@@ -555,25 +555,25 @@ class Dokumen extends Model
                 return 'Team Akutansi';
             }
         }
-        
+
         // Jika dokumen dikirim ke ibuB, pengirimnya adalah Ibu Tarapul
         if ($status === 'sent_to_ibub' || $status === 'pending_approval_ibub' || $status === 'menunggu_di_approve') {
             return 'Ibu Tarapul';
         }
-        
+
         // Fallback: berdasarkan current_handler atau created_by
         if ($this->current_handler === 'perpajakan' && $currentRoleCode === 'perpajakan') {
             return 'Team Verifikasi';
         }
-        
+
         if ($this->current_handler === 'akutansi' && $currentRoleCode === 'akutansi') {
             return 'Team Perpajakan';
         }
-        
+
         if ($this->current_handler === 'pembayaran' && $currentRoleCode === 'pembayaran') {
             return 'Team Akutansi';
         }
-        
+
         // Final fallback: gunakan getSenderDisplayName() untuk creator
         return $this->getSenderDisplayName();
     }
@@ -645,12 +645,12 @@ class Dokumen extends Model
             'akutansi' => 'akutansi',
             'pembayaran' => 'pembayaran',
         ];
-        
+
         // Update current_handler to show document is waiting for approval from target role
         // But keep original handler until approved (so sender can still see it)
         // Actually, we should update handler to show it's pending approval
         // For now, keep current_handler as is, but update status
-        
+
         // Set status based on recipient role
         // Use status that exists in enum or pending_approval_* statuses
         $statusMap = [
@@ -659,7 +659,7 @@ class Dokumen extends Model
             'akutansi' => 'pending_approval_akutansi', // Use existing enum value
             'pembayaran' => 'menunggu_di_approve', // Use generic waiting approval for pembayaran
         ];
-        
+
         if (isset($statusMap[$normalizedRole])) {
             $this->status = $statusMap[$normalizedRole];
         } else {
@@ -672,10 +672,13 @@ class Dokumen extends Model
         // Event firing is likely handled by controller or redundant now, 
         // but keeping it safe if listeners depend on it.
         // CHECK if event uses deleted fields inside it.
-        try {
-            event(new \App\Events\DocumentSentToInbox($this, $recipientRole));
-        } catch (\Exception $e) {
-            \Log::error('Failed to fire DocumentSentToInbox event: ' . $e->getMessage());
+        // Skip event during CSV import to prevent notification spam
+        if (!config('app.csv_import_mode', false)) {
+            try {
+                event(new \App\Events\DocumentSentToInbox($this, $recipientRole));
+            } catch (\Exception $e) {
+                \Log::error('Failed to fire DocumentSentToInbox event: ' . $e->getMessage());
+            }
         }
     }
 
@@ -989,20 +992,24 @@ class Dokumen extends Model
                 }
 
                 // If document is at reviewer stage waiting approval
-                if ($this->status === 'waiting_reviewer_approval' || 
-                    ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)) {
+                if (
+                    $this->status === 'waiting_reviewer_approval' ||
+                    ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)
+                ) {
                     return 'Menunggu Approval Reviewer';
                 }
 
                 // If moved to next stages (Tax/Accounting) after reviewer approval
                 // BUT: Only show "Sedang Proses" if NOT yet approved by Ibu Yuni
                 // (Approval check already done above, so if we reach here, it's not approved yet)
-                if ($this->status === 'sent_to_perpajakan' || 
-                    $this->status === 'sent_to_akutansi' || 
+                if (
+                    $this->status === 'sent_to_perpajakan' ||
+                    $this->status === 'sent_to_akutansi' ||
                     $this->status === 'sent_to_pembayaran' ||
                     $this->status === 'pending_approval_perpajakan' ||
                     $this->status === 'pending_approval_akutansi' ||
-                    $this->status === 'pending_approval_pembayaran') {
+                    $this->status === 'pending_approval_pembayaran'
+                ) {
                     // Check again if approved (double check for safety)
                     if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
                         return 'Terkirim';
@@ -1073,8 +1080,10 @@ class Dokumen extends Model
         if ($userRole === 'ibuB') {
             // Check if document is waiting for reviewer approval using new dokumen_statuses table
             $ibuBStatus = $this->getStatusForRole('ibub');
-            if ($this->status === 'waiting_reviewer_approval' || 
-                ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)) {
+            if (
+                $this->status === 'waiting_reviewer_approval' ||
+                ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)
+            ) {
                 return 'Menunggu Approval';
             }
 
