@@ -21,18 +21,16 @@ class DashboardPerpajakanController extends Controller
     {
         // Get all documents that perpajakan can see (same as dokumens() query)
         // Exclude CSV imported documents - they should only appear in pembayaran
+        // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
+        // and should not appear in Perpajakan module
         $perpajakanDocs = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'sent_to_pembayaran');
+                    ->orWhere('status', 'sent_to_akutansi');
+                    // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                    // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
+            ->excludeCsvImports()
             ->get();
 
         // Calculate accurate statistics based on actual workflow
@@ -70,15 +68,11 @@ class DashboardPerpajakanController extends Controller
         $dokumenTerbaru = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'sent_to_pembayaran');
+                    ->orWhere('status', 'sent_to_akutansi');
+                    // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                    // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
+            ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs'])
             ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
                 $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
@@ -86,10 +80,9 @@ class DashboardPerpajakanController extends Controller
             })
             ->select('dokumens.*')
             ->orderByRaw("CASE
-                WHEN current_handler = 'perpajakan' AND status NOT IN ('sent_to_akutansi', 'sent_to_pembayaran') THEN 1
+                WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
-                WHEN status = 'sent_to_pembayaran' THEN 3
-                ELSE 4
+                ELSE 3
             END")
             ->orderByDesc('perpajakan_data.received_at')
             ->orderByDesc('dokumens.updated_at')
@@ -116,20 +109,17 @@ class DashboardPerpajakanController extends Controller
     {
         // Perpajakan sees:
         // 1. Documents with current_handler = perpajakan (active documents)
-        // 2. Documents that were sent to akutansi or pembayaran (for tracking like dokumensB)
+        // 2. Documents that were sent to akutansi (for tracking)
         // Exclude CSV imported documents - they are meant only for pembayaran
+        // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
         $query = Dokumen::query()
             ->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'sent_to_pembayaran');
+                    ->orWhere('status', 'sent_to_akutansi');
+                    // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                    // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
+            ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields

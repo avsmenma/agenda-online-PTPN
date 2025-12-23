@@ -20,19 +20,17 @@ class DashboardAkutansiController extends Controller
     public function index()
     {
         // Get all documents that have been assigned to akutansi at any point
-        // Include documents sent to pembayaran (they should still appear in akutansi list)
         // Exclude CSV imported documents - they are meant only for pembayaran
+        // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
+        // and should not appear in Akutansi module. Only documents that went through
+        // Akutansi workflow (sent_to_akutansi) should appear here.
         $akutansiDocs = Dokumen::where(function ($query) {
             $query->where('current_handler', 'akutansi')
-                ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
+                ->orWhere('status', 'sent_to_akutansi');
+                // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
         })
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
+            ->excludeCsvImports()
             ->get();
 
         // Calculate accurate statistics based on actual workflow using existing fields
@@ -71,7 +69,9 @@ class DashboardAkutansiController extends Controller
             ->count();
 
         // Get latest documents currently handled by akutansi
+        // Exclude CSV imported documents - they are exclusive to Pembayaran
         $dokumenTerbaru = Dokumen::where('current_handler', 'akutansi')
+            ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs'])
             ->latest('tanggal_masuk')
             ->take(5)
@@ -187,21 +187,17 @@ class DashboardAkutansiController extends Controller
         // Akutansi sees:
         // 1. Documents currently handled by Akutansi (active)
         // 2. Documents that have been sent to Akutansi (tracking)
-        // 3. Documents that have been sent to Pembayaran (tetap muncul untuk tracking)
         // Exclude CSV imported documents - they are meant only for pembayaran
+        // Note: Removed 'sent_to_pembayaran' and related statuses because CSV imports use these statuses
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'akutansi')
-                ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'sent_to_pembayaran')
-                ->orWhere('status', 'menunggu_di_approve') // Status setelah dikirim ke pembayaran
-                ->orWhere('status', 'pending_approval_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
+                ->orWhere('status', 'sent_to_akutansi');
+                // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                // Removed: ->orWhere('status', 'menunggu_di_approve')
+                // Removed: ->orWhere('status', 'pending_approval_pembayaran')
+                // Reason: CSV imported documents have these statuses and should be exclusive to Pembayaran
         })
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
+            ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields

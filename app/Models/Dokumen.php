@@ -163,6 +163,42 @@ class Dokumen extends Model
         return $this->hasMany(DokumenActivityLog::class)->orderBy('action_at', 'desc');
     }
 
+    /**
+     * Scope to exclude CSV imported documents
+     * CSV imported documents are exclusive to Pembayaran module
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeExcludeCsvImports($query)
+    {
+        return $query->when(
+            Schema::hasColumn('dokumens', 'imported_from_csv'),
+            function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('imported_from_csv', false)
+                         ->orWhereNull('imported_from_csv');
+                });
+            }
+        );
+    }
+
+    /**
+     * Scope to include only CSV imported documents (for Pembayaran module)
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOnlyCsvImports($query)
+    {
+        return $query->when(
+            Schema::hasColumn('dokumens', 'imported_from_csv'),
+            function ($q) {
+                $q->where('imported_from_csv', true);
+            }
+        );
+    }
+
     public function documentTrackings(): HasMany
     {
         return $this->hasMany(DocumentTracking::class, 'document_id');
