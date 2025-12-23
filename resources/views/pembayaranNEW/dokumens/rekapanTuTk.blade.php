@@ -1123,7 +1123,7 @@
   <h2>Rekapan TU/TK</h2>
 
   <!-- Dashboard Scorecards - Responsive Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4 mb-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
     <!-- Card 1: Total Outstanding -->
     <div class="scorecard merah">
       <div class="scorecard-body">
