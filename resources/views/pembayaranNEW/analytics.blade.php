@@ -13,6 +13,31 @@
   }
 
   /* Filter Year Section */
+  .btn-back {
+    padding: 12px 24px;
+    border: 2px solid rgba(8, 62, 64, 0.2);
+    background-color: white;
+    color: #083E40;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .btn-back:hover {
+    background-color: #083E40;
+    color: white;
+    border-color: #083E40;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+  }
+
   .filter-year-section {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 24px;
@@ -368,7 +393,13 @@
   }
 </style>
 
-<h2>{{ $title }}</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+  <h2 style="margin: 0;">{{ $title }}</h2>
+  <a href="{{ route('reports.pembayaran.index') }}" class="btn-back">
+    <i class="fa-solid fa-arrow-left"></i>
+    Kembali ke Rekapan
+  </a>
+</div>
 
 <!-- Filter Year Section -->
 <div class="filter-year-section">
