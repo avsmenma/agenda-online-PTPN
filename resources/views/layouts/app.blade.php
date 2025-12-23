@@ -1301,7 +1301,6 @@
           request()->is('*rekapan-pembayaran*') ||
           request()->is('*rekapan-keterlambatan*') ||
           request()->is('*csv-import*') ||
-          request()->is('*rekapan-tu-tk*') ||
           request()->is('*pengembalian-dokumensPembayaran*');
       } elseif ($module === 'akutansi') {
         $isSubmenuPageForHeader = request()->routeIs('dokumensAkutansi.*') ||
@@ -1514,7 +1513,6 @@
                 request()->is('*dokumensPembayaran*') ||
                 request()->is('*rekapan-pembayaran*') ||
                 request()->is('*rekapan-keterlambatan*') ||
-                request()->is('*rekapan-tu-tk*') ||
                 request()->is('*csv-import*'),
                 'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
                 request()->routeIs('akutansi.*'),
@@ -1578,7 +1576,6 @@
           request()->is('*dokumensPembayaran*') ||
           request()->is('*rekapan-pembayaran*') ||
           request()->is('*rekapan-keterlambatan*') ||
-          request()->is('*rekapan-tu-tk*') ||
           request()->is('*csv-import*') ||
           request()->is('*pengembalian-dokumensPembayaran*');
       } elseif ($module === 'akutansi') {
@@ -1638,9 +1635,6 @@
             $isKeterlambatanActive = ($menuRekapKeterlambatan ?? '') === 'Active' ||
               request()->routeIs('rekapanKeterlambatan.*') ||
               request()->is('*rekapan-keterlambatan*');
-            $isTuTkActive = ($menuRekapanTuTk ?? '') === 'Active' ||
-              request()->routeIs('pembayaran.rekapanTuTk') ||
-              request()->is('*rekapan-tu-tk*');
           @endphp
           <a href="{{ url($dokumenUrl) }}" 
              class="{{ $isDaftarActive ? 'active' : '' }}">
@@ -1657,10 +1651,6 @@
           <a href="{{ url($pengembalianUrl) }}" 
              class="{{ $isKeterlambatanActive ? 'active' : '' }}">
             <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-          </a>
-          <a href="{{ route('reports.pembayaran.tu-tk') }}" 
-             class="{{ $isTuTkActive ? 'active' : '' }}">
-            <i class="fa-solid fa-file-invoice me-2"></i> Rekapan TU/TK
           </a>
         @elseif($module === 'akutansi')
           <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
@@ -3592,7 +3582,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let isSubmenuPage = currentPathCheck.includes('/dokumens') || 
                       currentPathCheck.includes('/rekapan') || 
                       currentPathCheck.includes('/pengembalian') ||
-                      currentPathCheck.includes('/rekapan-tu-tk') ||
                       currentPathCheck.includes('/dokumensPembayaran') || 
                       currentPathCheck.includes('/rekapan-pembayaran') || 
                       currentPathCheck.includes('/rekapan-keterlambatan') ||

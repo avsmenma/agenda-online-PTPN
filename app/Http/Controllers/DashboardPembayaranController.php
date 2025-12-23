@@ -589,8 +589,6 @@ class DashboardPembayaranController extends Controller
         );
         return view('pembayaranNEW.dokumens.rekapanKeterlambatan', $data);
     }
-
-    public function rekapanTuTk(Request $request){
         // Get data source parameter (input_ks, input_pupuk, input_tan, input_vd)
         // Prioritize request parameter over session
         $dataSource = $request->get('data_source');
