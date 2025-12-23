@@ -21,11 +21,19 @@ class DashboardAkutansiController extends Controller
     {
         // Get all documents that have been assigned to akutansi at any point
         // Include documents sent to pembayaran (they should still appear in akutansi list)
+        // Exclude CSV imported documents - they are meant only for pembayaran
         $akutansiDocs = Dokumen::where(function ($query) {
             $query->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi')
                 ->orWhere('status', 'sent_to_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
-        })->get();
+        })
+            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->get();
 
         // Calculate accurate statistics based on actual workflow using existing fields
         $totalDokumen = $akutansiDocs->count();
@@ -103,33 +111,35 @@ class DashboardAkutansiController extends Controller
             // Cek semua dokumen akutansi yang baru dikirim menggunakan dokumen_role_data
             // Exclude documents imported from CSV to prevent notification spam
             $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('current_handler', 'akutansi')
-                      ->orWhere('status', 'sent_to_akutansi');
+                        ->orWhere('status', 'sent_to_akutansi');
                 })
-                ->where(function($q) use ($lastCheckedDate) {
-                    // Check if received_at in roleData is newer
-                    $q->whereHas('roleData', function($subQ) use ($lastCheckedDate) {
-                        $subQ->where('role_code', 'akutansi')
-                             ->where('received_at', '>', $lastCheckedDate);
-                    })
-                    // Or check updated_at as fallback
-                    ->orWhere('updated_at', '>', $lastCheckedDate);
-                });
+                    ->where(function ($q) use ($lastCheckedDate) {
+                        // Check if received_at in roleData is newer
+                        $q->whereHas('roleData', function ($subQ) use ($lastCheckedDate) {
+                            $subQ->where('role_code', 'akutansi')
+                                ->where('received_at', '>', $lastCheckedDate);
+                        })
+                            // Or check updated_at as fallback
+                            ->orWhere('updated_at', '>', $lastCheckedDate);
+                    });
             })
-            // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($query) {
-                $query->where(function($q) {
-                    $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->with(['roleData' => function($query) {
-                $query->where('role_code', 'akutansi');
-            }])
-            ->latest('updated_at')
-            ->take(10)
-            ->get();
+                // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
+                ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->with([
+                    'roleData' => function ($query) {
+                        $query->where('role_code', 'akutansi');
+                    }
+                ])
+                ->latest('updated_at')
+                ->take(10)
+                ->get();
 
             $totalDocuments = Dokumen::where(function ($query) {
                 $query->where('current_handler', 'akutansi')
@@ -178,6 +188,7 @@ class DashboardAkutansiController extends Controller
         // 1. Documents currently handled by Akutansi (active)
         // 2. Documents that have been sent to Akutansi (tracking)
         // 3. Documents that have been sent to Pembayaran (tetap muncul untuk tracking)
+        // Exclude CSV imported documents - they are meant only for pembayaran
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi')
@@ -185,6 +196,12 @@ class DashboardAkutansiController extends Controller
                 ->orWhere('status', 'menunggu_di_approve') // Status setelah dikirim ke pembayaran
                 ->orWhere('status', 'pending_approval_pembayaran'); // Tetap tampilkan dokumen yang sudah dikirim ke pembayaran
         })
+            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields
@@ -224,10 +241,10 @@ class DashboardAkutansiController extends Controller
 
         // Eager load roleData and roleStatuses for akutansi to access deadline_at and status
         $query->with([
-            'roleData' => function($q) {
+            'roleData' => function ($q) {
                 $q->where('role_code', 'akutansi');
             },
-            'roleStatuses' => function($q) {
+            'roleStatuses' => function ($q) {
                 $q->where('role_code', 'akutansi');
             }
         ]);
@@ -271,18 +288,22 @@ class DashboardAkutansiController extends Controller
         $dokumens->getCollection()->transform(function ($dokumen) {
             // Ensure roleData is loaded for akutansi - reload if not loaded or empty
             if (!$dokumen->relationLoaded('roleData') || $dokumen->roleData->isEmpty()) {
-                $dokumen->load(['roleData' => function($q) {
-                    $q->where('role_code', 'akutansi');
-                }]);
+                $dokumen->load([
+                    'roleData' => function ($q) {
+                        $q->where('role_code', 'akutansi');
+                    }
+                ]);
             }
-            
+
             // Also ensure roleStatuses is loaded
             if (!$dokumen->relationLoaded('roleStatuses')) {
-                $dokumen->load(['roleStatuses' => function($q) {
-                    $q->where('role_code', 'akutansi');
-                }]);
+                $dokumen->load([
+                    'roleStatuses' => function ($q) {
+                        $q->where('role_code', 'akutansi');
+                    }
+                ]);
             }
-            
+
             $dokumen->is_locked = DokumenHelper::isDocumentLocked($dokumen);
             $dokumen->lock_status_message = DokumenHelper::getLockedStatusMessage($dokumen);
             $dokumen->can_edit = DokumenHelper::canEditDocument($dokumen, 'akutansi');
@@ -674,11 +695,11 @@ class DashboardAkutansiController extends Controller
             // When retrieved, we need to convert back to Asia/Jakarta for display
             $currentTime = \Carbon\Carbon::now('Asia/Jakarta');
             $deadlineAt = $currentTime->copy()->addDays($deadlineDays);
-            
+
             // Ensure deadline_at is in UTC for database storage (Carbon will handle this automatically)
             // But we need to make sure the timezone is set correctly before saving
             $deadlineAtForDB = $deadlineAt->utc();
-            
+
             Log::info('Deadline calculation for Akutansi', [
                 'document_id' => $dokumen->id,
                 'current_time_wib' => $currentTime->format('Y-m-d H:i:s T'),
@@ -688,7 +709,7 @@ class DashboardAkutansiController extends Controller
                 'deadline_at_utc' => $deadlineAtForDB->format('Y-m-d H:i:s T'),
                 'deadline_at_utc_to_wib' => $deadlineAtForDB->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s T'),
             ]);
-            
+
             DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAtForDB) {
                 // Update dokumen_role_data with deadline
                 // Note: Carbon will automatically convert to UTC when saving to database
@@ -709,9 +730,11 @@ class DashboardAkutansiController extends Controller
             // Refresh dokumen to get updated data and reload relationships
             $dokumen->refresh();
             // Reload roleData relationship to ensure getDataForRole() works correctly
-            $dokumen->load(['roleData' => function($q) {
-                $q->where('role_code', 'akutansi');
-            }]);
+            $dokumen->load([
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'akutansi');
+                }
+            ]);
             $updatedRoleData = $dokumen->getDataForRole('akutansi');
 
             // Log activity: deadline diatur oleh Team Akutansi
@@ -742,7 +765,7 @@ class DashboardAkutansiController extends Controller
                 // Convert from UTC (database) to Asia/Jakarta (WIB) for display
                 $deadlineWIB = $updatedRoleData->deadline_at->setTimezone('Asia/Jakarta');
                 $deadlineFormatted = $deadlineWIB->format('d M Y, H:i');
-                
+
                 Log::info('Deadline formatted for display', [
                     'document_id' => $dokumen->id,
                     'deadline_at_db_utc' => $updatedRoleData->deadline_at->format('Y-m-d H:i:s T'),
@@ -1254,17 +1277,17 @@ class DashboardAkutansiController extends Controller
             // 3. Update status to 'menunggu_di_approve'
             // Note: current_handler tetap 'akutansi' agar dokumen tetap muncul di halaman Akutansi
             $dokumen->sendToInbox('Pembayaran');
-            
+
             // Also explicitly call sendToRoleInbox to ensure status is created
             $dokumen->sendToRoleInbox('pembayaran', 'akutansi');
-            
+
             // Pastikan current_handler tetap 'akutansi' agar dokumen tetap muncul di halaman Akutansi
             // current_handler akan berubah menjadi 'pembayaran' setelah dokumen di-approve di inbox pembayaran
             if ($dokumen->current_handler !== 'akutansi') {
                 $dokumen->current_handler = 'akutansi';
                 $dokumen->save();
             }
-            
+
             // Set processed_at in dokumen_role_data for akutansi
             $roleData = $dokumen->getDataForRole('akutansi');
             if ($roleData) {
@@ -1468,7 +1491,7 @@ class DashboardAkutansiController extends Controller
                 // Reset akutansi status since document is being returned
                 'nomor_miro' => null,
             ];
-            
+
             // Clear deadline from dokumen_role_data for akutansi
             $akutansiRoleData = $dokumen->getDataForRole('akutansi');
             if ($akutansiRoleData) {
