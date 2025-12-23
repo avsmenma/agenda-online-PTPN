@@ -332,6 +332,10 @@ class CsvImportController extends Controller
 
         $batchId = 'CSV_' . now()->format('YmdHis');
 
+        // Set flag to indicate we're in CSV import mode
+        // This will suppress notifications to prevent lag/crash during bulk imports
+        config(['app.csv_import_mode' => true]);
+
         while (($data = fgetcsv($handle)) !== false) {
             if (empty(array_filter($data))) {
                 continue;
@@ -360,12 +364,12 @@ class CsvImportController extends Controller
                 DB::beginTransaction();
 
                 $dokumenData = $this->transformRow($row);
-                
+
                 // Ensure required fields are not empty
                 if (empty($dokumenData['nomor_agenda']) || empty($dokumenData['nomor_spp'])) {
                     throw new \Exception('Nomor Agenda atau Nomor SPP tidak boleh kosong');
                 }
-                
+
                 // Ensure kategori and jenis_dokumen are set
                 if (empty($dokumenData['kategori'])) {
                     $dokumenData['kategori'] = 'CAPEX';
@@ -373,7 +377,7 @@ class CsvImportController extends Controller
                 if (empty($dokumenData['jenis_dokumen'])) {
                     $dokumenData['jenis_dokumen'] = 'Lainnya';
                 }
-                
+
                 // Only set CSV import tracking fields if columns exist
                 if (\Schema::hasColumn('dokumens', 'imported_from_csv')) {
                     $dokumenData['imported_from_csv'] = true;
@@ -417,6 +421,9 @@ class CsvImportController extends Controller
         }
 
         fclose($handle);
+
+        // Reset CSV import mode flag
+        config(['app.csv_import_mode' => false]);
 
         return [
             'imported' => $imported,
@@ -572,14 +579,14 @@ class CsvImportController extends Controller
         if (empty($value)) {
             return 0;
         }
-        
+
         // Remove all non-numeric characters except minus and comma (for decimal)
         $cleaned = preg_replace('/[^0-9,.-]/', '', trim($value));
-        
+
         // Handle Indonesian number format: dots are thousand separators, comma is decimal separator
         // Example: "159.094.195" or "17.659.007" should become 159094195 or 17659007
         // Example: "1.234,56" should become 1234.56
-        
+
         // Check if comma exists (decimal separator in Indonesian format)
         if (strpos($cleaned, ',') !== false) {
             // Replace dots (thousand separators) with nothing
@@ -590,18 +597,18 @@ class CsvImportController extends Controller
             // No comma, so dots are thousand separators - remove them all
             $cleaned = str_replace('.', '', $cleaned);
         }
-        
+
         // Remove any remaining non-numeric characters except minus and dot
         $cleaned = preg_replace('/[^0-9.-]/', '', $cleaned);
-        
+
         // Convert to float
         $result = (float) $cleaned;
-        
+
         // Ensure non-negative (unless explicitly negative)
         if ($result < 0 && strpos($value, '-') === false) {
             $result = abs($result);
         }
-        
+
         return $result;
     }
 }
