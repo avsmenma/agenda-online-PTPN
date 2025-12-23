@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\DokumenHelper;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
