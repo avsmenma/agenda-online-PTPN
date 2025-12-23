@@ -378,6 +378,10 @@ class CsvImportController extends Controller
                     $dokumenData['jenis_dokumen'] = 'Lainnya';
                 }
 
+                // Set created_by to 'pembayaran' or 'csv_import' to prevent appearing in IbuA module
+                // CSV imported documents should only appear in Pembayaran module
+                $dokumenData['created_by'] = 'csv_import';
+
                 // Only set CSV import tracking fields if columns exist
                 if (\Schema::hasColumn('dokumens', 'imported_from_csv')) {
                     $dokumenData['imported_from_csv'] = true;

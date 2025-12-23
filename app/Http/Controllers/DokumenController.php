@@ -13,6 +13,7 @@ use App\Models\KategoriKriteria;
 use App\Models\SubKriteria;
 use App\Models\ItemSubKriteria;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Exception;
 use Carbon\Carbon;
 use App\Helpers\SearchHelper;
@@ -23,10 +24,22 @@ class DokumenController extends Controller
     public function index(Request $request)
     {
         // IbuA only sees documents created by ibuA
+        // Exclude CSV imported documents - they are exclusive to Pembayaran module
         // Order by nomor_agenda descending (numerically) - so new documents with lower numbers appear in correct position
         // Example: 2010, 2009, 2006 (new), 2005, 2004, 2003
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
-            ->where('created_by', 'ibuA')
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
+                  ->orWhere('created_by', 'ibuA')
+                  ->orWhere('created_by', 'IbuA');
+            })
+            // Exclude CSV imported documents (only if column exists)
+            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
+                });
+            })
             ->orderByRaw('CASE 
                 WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0

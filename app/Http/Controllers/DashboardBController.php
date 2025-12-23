@@ -18,6 +18,7 @@ use App\Models\SubKriteria;
 use App\Models\ItemSubKriteria;
 use App\Events\DocumentReturned;
 use App\Helpers\SearchHelper;
+use Illuminate\Support\Facades\Schema;
 use App\Helpers\ActivityLogHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -111,6 +112,7 @@ class DashboardBController extends Controller
 
         // Apply base filter only if no status filter is specified
         // If status filter is specified, it will override base filter
+        // Exclude CSV imported documents - they are exclusive to Pembayaran module
         if (!$request->has('status') || !$request->status) {
             $query->where(function ($q) {
                 $q->where('current_handler', 'ibuB')
@@ -122,13 +124,28 @@ class DashboardBController extends Controller
                         })
                             ->where('current_handler', 'ibuB');
                     })
-                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi/pembayaran
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi (exclude sent_to_pembayaran - those are CSV imports)
                     ->orWhere(function ($rejectQ) {
                         // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
                         $rejectQ->where('status', 'returned_to_department')
                             ->whereIn('target_department', ['perpajakan', 'akutansi'])
                             ->where('current_handler', 'ibuB');
                     });
+            })
+            // Exclude CSV imported documents (only if column exists)
+            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
+                });
+            });
+        } else {
+            // Even when status filter is applied, exclude CSV imported documents
+            $query->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
+                });
             });
         }
 

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class OwnerDashboardController extends Controller
 {
@@ -1446,6 +1447,28 @@ class OwnerDashboardController extends Controller
             $query->where(function ($q) {
                 $q->where('current_handler', 'akutansi')
                     ->orWhere('status', 'sent_to_akutansi');
+            });
+        } elseif ($handler === 'pembayaran') {
+            // Team Pembayaran: dokumen dengan current_handler = 'pembayaran' atau status sent_to_pembayaran atau CSV imported
+            $query->where(function ($q) {
+                $q->where('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere(function ($csvQ) {
+                        // Include CSV imported documents (exclusive to Pembayaran)
+                        $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                            $query->where('imported_from_csv', true);
+                        });
+                    });
+            });
+        }
+
+        // Exclude CSV imported documents from all handlers except Pembayaran
+        if ($handler !== 'pembayaran') {
+            $query->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                      ->orWhereNull('imported_from_csv');
+                });
             });
         }
 

@@ -13,6 +13,7 @@ use App\Models\DocumentPositionTracking;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\DokumenHelper;
 use Illuminate\Support\Facades\Response;
@@ -59,9 +60,22 @@ class DashboardPembayaranController extends Controller
         session(['pembayaran_per_page' => $perPage]); // Save to session
 
         // Build query for pembayaran documents
-        // Include all documents with nomor_agenda (same as rekapan method)
+        // Only show documents that belong to Pembayaran module:
+        // 1. Documents with current_handler = 'pembayaran' (active documents)
+        // 2. Documents with status = 'sent_to_pembayaran' (sent to pembayaran)
+        // 3. Documents imported from CSV (imported_from_csv = true) - these are exclusive to Pembayaran
         // Filter by status will determine which documents to show
-        $query = \App\Models\Dokumen::whereNotNull('nomor_agenda');
+        $query = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->where(function ($q) {
+                $q->where('current_handler', 'pembayaran')
+                  ->orWhere('status', 'sent_to_pembayaran')
+                  ->orWhere(function ($csvQ) {
+                      // Include CSV imported documents (exclusive to Pembayaran)
+                      $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                          $query->where('imported_from_csv', true);
+                      });
+                  });
+            });
 
         // Note: Status filter will be applied after computing computed_status
         // to ensure consistency with how status is displayed
