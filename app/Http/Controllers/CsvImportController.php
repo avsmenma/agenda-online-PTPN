@@ -15,7 +15,8 @@ class CsvImportController extends Controller
     public function index()
     {
         return view('pembayaranNEW.import.index', [
-            'title' => 'Import Data CSV - Pembayaran'
+            'title' => 'Import Data CSV - Pembayaran',
+            'module' => 'pembayaran'
         ]);
     }
 

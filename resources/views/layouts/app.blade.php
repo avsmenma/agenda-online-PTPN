@@ -1510,10 +1510,12 @@
                 'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
                 request()->routeIs('pembayaran.*') ||
                 request()->routeIs('rekapanKeterlambatan.*') ||
+                request()->routeIs('csv.import.*') ||
                 request()->is('*dokumensPembayaran*') ||
                 request()->is('*rekapan-pembayaran*') ||
                 request()->is('*rekapan-keterlambatan*') ||
-                request()->is('*rekapan-tu-tk*'),
+                request()->is('*rekapan-tu-tk*') ||
+                request()->is('*csv-import*'),
                 'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
                 request()->routeIs('akutansi.*'),
                 'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
@@ -3595,6 +3597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       currentPathCheck.includes('/rekapan-pembayaran') || 
                       currentPathCheck.includes('/rekapan-keterlambatan') ||
                       currentPathCheck.includes('/pengembalian-dokumensPembayaran') ||
+                      currentPathCheck.includes('/csv-import') ||
                       currentPathCheck.includes('/dokumensAkutansi') ||
                       currentPathCheck.includes('/rekapan-akutansi') ||
                       currentPathCheck.includes('/dokumensPerpajakan') ||
