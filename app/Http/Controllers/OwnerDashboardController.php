@@ -839,11 +839,11 @@ class OwnerDashboardController extends Controller
         $currentTime = now();
         $returnEvents = $this->getReturnEvents($dokumen);
 
-        // Stage 1: SENDER (Ibu Tarapul) - Always completed
+        // Stage 1: ibutara (Ibu Tarapul) - Always completed
         $stages[] = [
             'id' => 'sender',
             'name' => 'Ibu Tarapul',
-            'label' => 'SENDER',
+            'label' => 'ibutara',
             'status' => 'completed',
             'timestamp' => $dokumen->created_at,
             'icon' => 'fa-user',
@@ -963,7 +963,7 @@ class OwnerDashboardController extends Controller
         $stages[] = [
             'id' => 'tax',
             'name' => 'Team Perpajakan',
-            'label' => 'TAX',
+            'label' => 'team perpajakan',
             'status' => $taxStatus,
             'timestamp' => $taxTimestamp,
             'icon' => 'fa-file-invoice',
@@ -1090,7 +1090,7 @@ class OwnerDashboardController extends Controller
         $stages[] = [
             'id' => 'payment',
             'name' => 'Pembayaran',
-            'label' => 'PAYMENT',
+            'label' => 'pembayaran',
             'status' => $paymentStatus,
             'timestamp' => $paymentTimestamp,
             'icon' => 'fa-money-bill-wave',
