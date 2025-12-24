@@ -553,12 +553,26 @@
   .info-card.clickable {
     cursor: pointer;
     transition: all 0.3s ease;
+    position: relative;
+    user-select: none;
   }
 
   .info-card.clickable:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(8, 62, 64, 0.15);
     border-color: rgba(8, 62, 64, 0.3);
+  }
+
+  .info-card.clickable:active {
+    transform: translateY(-2px);
+  }
+
+  .info-card.clickable * {
+    pointer-events: none;
+  }
+
+  .info-card.clickable {
+    pointer-events: auto;
   }
 
   /* Modern Modal Popup */
@@ -1032,7 +1046,7 @@
     </div>
 
     {{-- Document Information Card --}}
-    <div class="info-card">
+    <div class="info-card clickable" id="document-info-card" data-modal-type="document">
       <div class="info-card-header">
         <div class="info-card-icon" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%);">
           <i class="fas fa-file-alt"></i>
@@ -1233,6 +1247,10 @@
 
   function renderDocumentModal() {
     const modalBody = document.getElementById('modal-body');
+    if (!modalBody) {
+      console.error('Modal body not found');
+      return;
+    }
     modalBody.innerHTML = `
       <div class="modal-section">
         <div class="modal-section-title">
@@ -1680,23 +1698,35 @@
     const modalSubtitle = document.getElementById('modal-subtitle');
     const modalIcon = document.getElementById('modal-icon');
 
+    // Check if elements exist
+    if (!modal || !modalClose || !documentCard || !taxCard || !modalTitle || !modalSubtitle || !modalIcon) {
+      console.error('Modal elements not found');
+      return;
+    }
+
     function openModal(type) {
-      if (type === 'document') {
-        modalTitle.textContent = 'Detail Informasi Dokumen';
-        modalSubtitle.textContent = 'Informasi lengkap dokumen';
-        modalIcon.innerHTML = '<i class="fas fa-file-alt"></i>';
-        modalIcon.style.background = 'linear-gradient(135deg, #083E40 0%, #889717 100%)';
-        renderDocumentModal();
-      } else if (type === 'tax') {
-        modalTitle.textContent = 'Detail Data Perpajakan';
-        modalSubtitle.textContent = 'Informasi lengkap perpajakan';
-        modalIcon.innerHTML = '<i class="fas fa-calculator"></i>';
-        modalIcon.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-        renderTaxModal();
+      console.log('Opening modal:', type);
+      try {
+        if (type === 'document') {
+          modalTitle.textContent = 'Detail Informasi Dokumen';
+          modalSubtitle.textContent = 'Informasi lengkap dokumen';
+          modalIcon.innerHTML = '<i class="fas fa-file-alt"></i>';
+          modalIcon.style.background = 'linear-gradient(135deg, #083E40 0%, #889717 100%)';
+          renderDocumentModal();
+        } else if (type === 'tax') {
+          modalTitle.textContent = 'Detail Data Perpajakan';
+          modalSubtitle.textContent = 'Informasi lengkap perpajakan';
+          modalIcon.innerHTML = '<i class="fas fa-calculator"></i>';
+          modalIcon.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+          renderTaxModal();
+        }
+        
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        console.log('Modal opened successfully');
+      } catch (error) {
+        console.error('Error opening modal:', error);
       }
-      
-      modal.classList.add('show');
-      document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
@@ -1704,15 +1734,42 @@
       document.body.style.overflow = '';
     }
 
-    documentCard.addEventListener('click', () => openModal('document'));
-    taxCard.addEventListener('click', () => openModal('tax'));
-    modalClose.addEventListener('click', closeModal);
+    // Add click event listeners
+    if (documentCard) {
+      documentCard.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Document card clicked');
+        openModal('document');
+      });
+      console.log('Document card event listener attached');
+    } else {
+      console.error('Document card not found');
+    }
+
+    if (taxCard) {
+      taxCard.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Tax card clicked');
+        openModal('tax');
+      });
+      console.log('Tax card event listener attached');
+    } else {
+      console.error('Tax card not found');
+    }
+
+    if (modalClose) {
+      modalClose.addEventListener('click', closeModal);
+    }
     
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        closeModal();
-      }
-    });
+    if (modal) {
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
+    }
 
     // Close on ESC key
     document.addEventListener('keydown', function(e) {
