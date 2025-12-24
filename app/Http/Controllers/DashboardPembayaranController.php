@@ -587,7 +587,7 @@ class DashboardPembayaranController extends Controller
             'menuDokumen' => 'Active',
             'menuRekapKeterlambatan' => 'Active',
         );
-        return view('pembayaranNEW.dokumens.rekapanKeterlambatan', $data);
+        return view('pembayaranNEW.coming-soon', $data);
     }
 
     /**
