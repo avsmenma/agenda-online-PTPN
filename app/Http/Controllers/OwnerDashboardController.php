@@ -899,7 +899,7 @@ class OwnerDashboardController extends Controller
         $stages[] = [
             'id' => 'reviewer',
             'name' => 'Ibu Yuni',
-            'label' => 'REVIEWER',
+            'label' => 'teamverifikasi',
             'status' => $reviewerStatus,
             'timestamp' => $reviewerTimestamp,
             'icon' => 'fa-user-check',
@@ -1025,7 +1025,7 @@ class OwnerDashboardController extends Controller
         $stages[] = [
             'id' => 'accounting',
             'name' => 'Team Akutansi',
-            'label' => 'ACCOUNTING',
+            'label' => 'team akutansi',
             'status' => $accountingStatus,
             'timestamp' => $accountingTimestamp,
             'icon' => 'fa-calculator',

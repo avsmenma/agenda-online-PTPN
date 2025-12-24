@@ -2,10 +2,19 @@
 
 @section('content')
 <style>
-  /* Modern Scrollbar */
+  /* Modern Professional Workflow Design */
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* Custom Scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: #f1f5f9;
@@ -15,15 +24,167 @@
     background: linear-gradient(135deg, #083E40 0%, #889717 100%);
     border-radius: 10px;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #0a4f52 0%, #9ba820 100%);
+
+  /* Professional Timeline Container */
+  .workflow-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
   }
 
-  /* Smooth Animations */
-  @keyframes slideInUp {
+  /* Header Section */
+  .workflow-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 24px rgba(8, 62, 64, 0.08);
+    border: 1px solid rgba(8, 62, 64, 0.1);
+  }
+
+  .workflow-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .workflow-title-section h1 {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .workflow-title-section .document-info {
+    font-size: 16px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .workflow-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: white;
+    border: 2px solid rgba(8, 62, 64, 0.2);
+    border-radius: 12px;
+    color: #083E40;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-back:hover {
+    background: #083E40;
+    color: white;
+    border-color: #083E40;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(8, 62, 64, 0.2);
+  }
+
+  /* Progress Bar */
+  .progress-bar-container {
+    background: #f1f5f9;
+    height: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    background-size: 200% 100%;
+    border-radius: 10px;
+    transition: width 1s ease-out;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .progress-percentage {
+    text-align: right;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  /* Professional Vertical Timeline */
+  .workflow-timeline {
+    position: relative;
+    padding: 40px 0;
+  }
+
+  .timeline-line {
+    position: absolute;
+    left: 40px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-radius: 2px;
+  }
+
+  .timeline-line-progress {
+    position: absolute;
+    left: 40px;
+    top: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    border-radius: 2px;
+    transition: height 1s ease-out;
+    box-shadow: 0 0 10px rgba(8, 62, 64, 0.3);
+  }
+
+  /* Timeline Stage Item */
+  .timeline-stage {
+    position: relative;
+    display: flex;
+    gap: 32px;
+    margin-bottom: 48px;
+    padding-left: 0;
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+  }
+
+  @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(30px);
     }
     to {
       opacity: 1;
@@ -31,105 +192,134 @@
     }
   }
 
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 20px rgba(8, 62, 64, 0.3);
+  .timeline-stage:nth-child(1) { animation-delay: 0.1s; }
+  .timeline-stage:nth-child(2) { animation-delay: 0.2s; }
+  .timeline-stage:nth-child(3) { animation-delay: 0.3s; }
+  .timeline-stage:nth-child(4) { animation-delay: 0.4s; }
+  .timeline-stage:nth-child(5) { animation-delay: 0.5s; }
+
+  /* Stage Icon/Node */
+  .timeline-node {
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .timeline-node.completed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  }
+
+  .timeline-node.active {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    box-shadow: 0 0 0 8px rgba(8, 62, 64, 0.1), 0 12px 32px rgba(8, 62, 64, 0.3);
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(8, 62, 64, 0.4), 0 12px 32px rgba(8, 62, 64, 0.3);
     }
     50% {
-      box-shadow: 0 0 30px rgba(136, 151, 23, 0.5);
-    }
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
+      box-shadow: 0 0 0 12px rgba(8, 62, 64, 0), 0 12px 32px rgba(8, 62, 64, 0.3);
     }
     100% {
-      background-position: 1000px 0;
+      box-shadow: 0 0 0 0 rgba(8, 62, 64, 0), 0 12px 32px rgba(8, 62, 64, 0.3);
     }
   }
 
-  .animate-slide-in {
-    animation: slideInUp 0.6s ease-out;
+  .timeline-node.pending {
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    color: #64748b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  /* Glassmorphism Effect */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1);
+  .timeline-node.returned {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
   }
 
-  /* Workflow Stage Cards */
-  .workflow-stage-card {
+  /* Stage Content Card */
+  .timeline-content {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08);
+    border: 2px solid #e2e8f0;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
   }
 
-  .workflow-stage-card::before {
+  .timeline-content::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
+    left: 0;
+    width: 4px;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s;
+    background: linear-gradient(180deg, #083E40 0%, #889717 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
 
-  .workflow-stage-card:hover::before {
-    left: 100%;
+  .timeline-stage.active .timeline-content {
+    border-color: #083E40;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.15);
+    transform: translateX(8px);
   }
 
-  .workflow-stage-card.active {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(8, 62, 64, 0.25);
+  .timeline-stage.active .timeline-content::before {
+    opacity: 1;
   }
 
-  .workflow-stage-card.completed {
+  .timeline-stage.completed .timeline-content {
     border-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
   }
 
-  .workflow-stage-card.pending {
-    opacity: 0.6;
-  }
-
-  .workflow-stage-card.returned {
+  .timeline-stage.returned .timeline-content {
     border-color: #f59e0b;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
   }
 
-  /* Stage Icon */
-  .stage-icon {
-    transition: all 0.3s ease;
+  /* Stage Header */
+  .stage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
   }
 
-  .workflow-stage-card.active .stage-icon {
-    animation: pulse-glow 2s ease-in-out infinite;
+  .stage-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    margin-bottom: 4px;
   }
 
-  /* Connector Line */
-  .workflow-connector {
-    position: relative;
-    height: 3px;
-    transition: all 0.4s ease;
+  .stage-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
   }
 
-  .workflow-connector.active {
-    background: linear-gradient(90deg, #10b981 0%, #059669 50%, #10b981 100%);
-    background-size: 200% 100%;
-    animation: shimmer 2s linear infinite;
-  }
-
-  .workflow-connector.completed {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  }
-
-  /* Status Badge */
-  .status-badge {
+  .stage-status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -139,29 +329,117 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    animation: slideInUp 0.4s ease-out;
   }
 
-  .status-badge.active {
+  .stage-status-badge.active {
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+  }
+
+  .stage-status-badge.completed {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
   }
 
-  .status-badge.returned {
+  .stage-status-badge.returned {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
   }
 
-  /* Hero Card */
-  .hero-card {
+  .stage-status-badge.pending {
+    background: #e2e8f0;
+    color: #64748b;
+  }
+
+  /* Stage Description */
+  .stage-description {
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  /* Stage Timestamp */
+  .stage-timestamp {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* Return/Cycle Info */
+  .stage-return-info {
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border: 1px solid #fbbf24;
+  }
+
+  .stage-return-info p {
+    font-size: 13px;
+    color: #92400e;
+    margin: 4px 0;
+  }
+
+  /* Information Grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 48px;
+  }
+
+  .info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08);
+    border: 1px solid rgba(8, 62, 64, 0.1);
+  }
+
+  .info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
+  .info-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+  }
+
+  .info-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  /* Hero Financial Card */
+  .hero-financial-card {
+    grid-column: 1 / -1;
     background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    border-radius: 24px;
+    padding: 40px;
+    color: white;
     position: relative;
     overflow: hidden;
   }
 
-  .hero-card::before {
+  .hero-financial-card::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -169,41 +447,81 @@
     width: 200%;
     height: 200%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    animation: pulse 4s ease-in-out infinite;
+    animation: rotate 20s linear infinite;
   }
 
-  @keyframes pulse {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 0.5;
-    }
-    50% {
-      transform: scale(1.1);
-      opacity: 0.8;
-    }
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
-  /* Info Card */
-  .info-card {
-    background: white;
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08);
-    border: 1px solid rgba(8, 62, 64, 0.1);
-    transition: all 0.3s ease;
+  .hero-financial-content {
+    position: relative;
+    z-index: 10;
   }
 
-  .info-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(8, 62, 64, 0.15);
+  .hero-financial-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
   }
 
-  /* Activity Log */
+  .hero-financial-value {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 32px;
+    letter-spacing: -1px;
+  }
+
+  .hero-financial-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .hero-detail-item {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .hero-detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .hero-detail-value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* Activity Logs */
+  .activity-log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
   .activity-log-item {
     position: relative;
-    padding-left: 24px;
-    padding-bottom: 16px;
-    border-left: 2px solid #e5e7eb;
+    padding-left: 32px;
+    padding-bottom: 20px;
+    border-left: 2px solid #e2e8f0;
+  }
+
+  .activity-log-item:last-child {
+    border-left: none;
   }
 
   .activity-log-item::before {
@@ -211,409 +529,354 @@
     position: absolute;
     left: -6px;
     top: 4px;
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #083E40;
-    border: 2px solid white;
-    box-shadow: 0 0 0 2px #e5e7eb;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #e2e8f0;
   }
 
-  .activity-log-item:last-child {
-    border-left: none;
+  .activity-log-text {
+    font-size: 14px;
+    color: #0f172a;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .activity-log-time {
+    font-size: 12px;
+    color: #64748b;
   }
 
   /* Responsive */
   @media (max-width: 768px) {
-    .workflow-stage-card {
-      min-width: 280px;
+    .workflow-container {
+      padding: 20px 16px;
+    }
+
+    .timeline-stage {
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .timeline-line,
+    .timeline-line-progress {
+      left: 20px;
+    }
+
+    .timeline-node {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+    }
+
+    .timeline-content {
+      padding: 20px;
+    }
+
+    .stage-name {
+      font-size: 20px;
+    }
+
+    .hero-financial-value {
+      font-size: 36px;
     }
   }
 </style>
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-slate-50 pb-20">
-  {{-- Sticky Header with Progress --}}
-  <div class="sticky top-0 z-50 glass-card border-b border-slate-200/50">
+<div class="workflow-container">
+  {{-- Header --}}
+  <div class="workflow-header">
+    <div class="workflow-header-top">
+      <div class="workflow-title-section">
+        <h1>Workflow Tracking</h1>
+        <div class="document-info">
+          <i class="fas fa-file-invoice text-emerald-500"></i>
+          <span>Memantau perjalanan dokumen <strong>{{ $dokumen->nomor_spp ?? $dokumen->nomor_agenda }}</strong></span>
+        </div>
+      </div>
+      <div class="workflow-header-actions">
+        <a href="{{ $dashboardUrl ?? '/owner/dashboard' }}" class="btn-back">
+          <i class="fas fa-arrow-left"></i>
+          Kembali
+        </a>
+      </div>
+    </div>
+
+    {{-- Progress Bar --}}
     @php
       $currentProgress = $dokumen->progress_percentage ?? 0;
       $progress = is_numeric($currentProgress) ? $currentProgress : 0;
     @endphp
-    
-    {{-- Progress Bar --}}
-    <div class="w-full h-2 bg-slate-100/50">
-      <div class="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 transition-all duration-1000 ease-out relative overflow-hidden" 
-           style="width: {{ $progress }}%">
-        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+    <div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" style="width: {{ $progress }}%"></div>
       </div>
-    </div>
-
-    {{-- Header Content --}}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="animate-slide-in">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg">
-              AGENDA #{{ $dokumen->nomor_agenda }}
-            </div>
-            <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 via-emerald-700 to-slate-900 bg-clip-text text-transparent">
-              Workflow Tracking
-            </h1>
-          </div>
-          <p class="text-sm text-slate-600 flex items-center gap-2">
-            <i class="fas fa-file-invoice text-emerald-500"></i>
-            Memantau perjalanan dokumen <span class="font-semibold text-slate-800">{{ $dokumen->nomor_spp }}</span>
-          </p>
-        </div>
-        
-        <div class="flex items-center gap-4 animate-slide-in" style="animation-delay: 0.1s">
-          @if($dokumen->deadline_at)
-            <div class="hidden md:block text-right px-4 py-2 bg-white/80 rounded-xl border border-slate-200">
-              <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Deadline</p>
-              <p class="text-sm font-bold text-slate-800">
-                {{ \Carbon\Carbon::parse($dokumen->deadline_at)->format('d M Y') }}
-              </p>
-            </div>
-          @endif
-          <a href="{{ $dashboardUrl ?? '/owner/dashboard' }}"
-             class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-emerald-300 hover:text-emerald-600 transition-all duration-300 shadow-sm hover:shadow-md">
-            <i class="fas fa-arrow-left"></i>
-            <span>Kembali</span>
-          </a>
-        </div>
-      </div>
+      <div class="progress-percentage">{{ number_format($progress, 1) }}% Selesai</div>
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  {{-- Professional Vertical Timeline --}}
+  <div class="workflow-timeline">
+    {{-- Background Timeline Line --}}
+    <div class="timeline-line"></div>
     
-    {{-- Workflow Stages --}}
-    <section class="animate-slide-in" style="animation-delay: 0.2s">
-      <div class="mb-6">
-        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-          <i class="fas fa-route text-emerald-500"></i>
-          Progres Alur Kerja
-        </h2>
-        <p class="text-sm text-slate-500 mt-1">Lacak perjalanan dokumen melalui setiap tahap</p>
-      </div>
+    {{-- Progress Timeline Line --}}
+    @php
+      $completedStages = 0;
+      $totalStages = count($workflowStages);
+      foreach ($workflowStages as $stage) {
+        $status = $stage['status'] ?? 'pending';
+        if ($status === 'completed' || $status === 'selesai') {
+          $completedStages++;
+        }
+      }
+      $timelineProgress = $totalStages > 0 ? ($completedStages / $totalStages) * 100 : 0;
+      $timelineHeight = $totalStages > 0 ? ($completedStages * (100 / $totalStages)) : 0;
+    @endphp
+    <div class="timeline-line-progress" style="height: {{ $timelineHeight }}%"></div>
 
-      {{-- Horizontal Scroll Container --}}
-      <div class="overflow-x-auto pb-6 -mx-4 px-4 custom-scrollbar">
-        <div class="flex items-start gap-6 min-w-max">
-          @foreach($workflowStages as $index => $stage)
-            @php
-              $status = $stage['status'] ?? 'pending';
-              $isLast = $loop->last;
-              $isActive = $status === 'processing' || $status === 'active';
-              $isCompleted = $status === 'completed' || $status === 'selesai';
-              $isReturned = $status === 'returned';
+    {{-- Timeline Stages --}}
+    @foreach($workflowStages as $index => $stage)
+      @php
+        $status = $stage['status'] ?? 'pending';
+        $isActive = $status === 'processing' || $status === 'active';
+        $isCompleted = $status === 'completed' || $status === 'selesai';
+        $isReturned = $status === 'returned';
+        $isPending = !$isActive && !$isCompleted && !$isReturned;
 
-              // Card Classes
-              $cardClasses = "workflow-stage-card relative w-80 flex-shrink-0 rounded-2xl p-6 border-2 transition-all duration-300";
-              
-              if ($isActive) {
-                $cardClasses .= " active border-emerald-400 bg-gradient-to-br from-emerald-50 to-white shadow-xl";
-              } elseif ($isCompleted) {
-                $cardClasses .= " completed border-emerald-300 bg-gradient-to-br from-emerald-50/50 to-white shadow-lg";
-              } elseif ($isReturned) {
-                $cardClasses .= " returned border-amber-400 bg-gradient-to-br from-amber-50 to-white shadow-lg";
-              } else {
-                $cardClasses .= " pending border-slate-200 bg-white/60";
-              }
+        $stageClass = 'timeline-stage';
+        if ($isActive) {
+          $stageClass .= ' active';
+        } elseif ($isCompleted) {
+          $stageClass .= ' completed';
+        } elseif ($isReturned) {
+          $stageClass .= ' returned';
+        } else {
+          $stageClass .= ' pending';
+        }
 
-              // Icon Classes
-              $iconClasses = "stage-icon w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold transition-all duration-300";
-              
-              if ($isActive) {
-                $iconClasses .= " bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg";
-              } elseif ($isCompleted) {
-                $iconClasses .= " bg-gradient-to-br from-emerald-400 to-emerald-500 text-white shadow-md";
-              } elseif ($isReturned) {
-                $iconClasses .= " bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-md";
-              } else {
-                $iconClasses .= " bg-slate-200 text-slate-400";
-              }
+        $nodeClass = 'timeline-node';
+        if ($isActive) {
+          $nodeClass .= ' active';
+        } elseif ($isCompleted) {
+          $nodeClass .= ' completed';
+        } elseif ($isReturned) {
+          $nodeClass .= ' returned';
+        } else {
+          $nodeClass .= ' pending';
+        }
 
-              // Title Classes
-              $titleClasses = "text-lg font-bold mb-1";
-              if ($isActive) {
-                $titleClasses .= " text-slate-900";
-              } elseif ($isCompleted) {
-                $titleClasses .= " text-emerald-700";
-              } elseif ($isReturned) {
-                $titleClasses .= " text-amber-700";
-              } else {
-                $titleClasses .= " text-slate-500";
-              }
-            @endphp
+        $badgeClass = 'stage-status-badge';
+        if ($isActive) {
+          $badgeClass .= ' active';
+        } elseif ($isCompleted) {
+          $badgeClass .= ' completed';
+        } elseif ($isReturned) {
+          $badgeClass .= ' returned';
+        } else {
+          $badgeClass .= ' pending';
+        }
 
-            {{-- Stage Card --}}
-            <div class="{{ $cardClasses }}">
-              {{-- Status Badge --}}
+        $badgeText = 'Menunggu';
+        if ($isActive) {
+          $badgeText = 'Sedang Diproses';
+        } elseif ($isCompleted) {
+          $badgeText = 'Selesai';
+        } elseif ($isReturned) {
+          $badgeText = 'Dikembalikan';
+        }
+
+        $iconClass = 'fas fa-circle';
+        if ($isCompleted) {
+          $iconClass = 'fas fa-check';
+        } elseif ($isReturned) {
+          $iconClass = 'fas fa-undo-alt';
+        } else {
+          $rawIcon = $stage['icon'] ?? 'fa-circle';
+          $iconClass = strpos($rawIcon, 'fa-') === 0 ? 'fas ' . $rawIcon : 'fas fa-' . $rawIcon;
+        }
+      @endphp
+
+      <div class="{{ $stageClass }}">
+        {{-- Timeline Node --}}
+        <div class="{{ $nodeClass }}">
+          <i class="{{ $iconClass }}"></i>
+        </div>
+
+        {{-- Stage Content --}}
+        <div class="timeline-content">
+          <div class="stage-header">
+            <div>
+              <div class="stage-label">{{ $stage['label'] ?? 'STAGE' }}</div>
+              <div class="stage-name">{{ $stage['name'] ?? 'Unknown' }}</div>
+            </div>
+            <span class="{{ $badgeClass }}">
               @if($isActive)
-                <div class="absolute -top-3 right-4 z-10">
-                  <span class="status-badge active">
-                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                    Sedang Diproses
-                  </span>
-                </div>
-              @elseif($isReturned)
-                <div class="absolute -top-3 right-4 z-10">
-                  <span class="status-badge returned">
-                    <i class="fas fa-undo-alt text-xs"></i>
-                    Dikembalikan
-                  </span>
-                </div>
+                <span class="w-2 h-2 rounded-full bg-white mr-1.5 inline-block animate-pulse"></span>
               @endif
+              {{ $badgeText }}
+            </span>
+          </div>
 
-              {{-- Card Content --}}
-              <div class="space-y-4">
-                {{-- Header --}}
-                <div class="flex items-start gap-4">
-                  <div class="{{ $iconClasses }}">
-                    @if($isCompleted)
-                      <i class="fas fa-check"></i>
-                    @elseif($isReturned)
-                      <i class="fas fa-undo-alt"></i>
-                    @else
-                      <i class="fas {{ $stage['icon'] ?? 'fa-circle' }}"></i>
-                    @endif
-                  </div>
-                  <div class="flex-1 pt-1">
-                    <p class="text-xs font-bold tracking-wider text-slate-400 uppercase mb-1">
-                      {{ $stage['label'] ?? 'STAGE' }}
-                    </p>
-                    <h3 class="{{ $titleClasses }}">
-                      {{ $stage['name'] ?? 'Unknown' }}
-                    </h3>
-                  </div>
-                </div>
+          <div class="stage-description">
+            {{ $stage['description'] ?? 'Menunggu proses' }}
+          </div>
 
-                {{-- Description --}}
-                <p class="text-sm {{ $isActive || $isCompleted ? 'text-slate-600' : 'text-slate-400' }} leading-relaxed">
-                  {{ $stage['description'] ?? 'Menunggu proses' }}
+          @if(!empty($stage['timestamp']))
+            <div class="stage-timestamp">
+              <i class="far fa-clock"></i>
+              <span>{{ \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') }}</span>
+            </div>
+          @endif
+
+          @if(($stage['hasCycle'] ?? false) || ($stage['hasReturn'] ?? false))
+            <div class="stage-return-info">
+              @if($stage['hasCycle'] ?? false)
+                <p>
+                  <i class="fas fa-history mr-2"></i>
+                  <strong>Resubmission #{{ $stage['cycleInfo']['cycleCount'] ?? 1 }}</strong>
                 </p>
-
-                {{-- Timestamp --}}
-                @if(!empty($stage['timestamp']))
-                  <div class="flex items-center gap-2 text-xs text-slate-500 pt-3 border-t border-slate-100">
-                    <i class="far fa-clock"></i>
-                    <span>{{ \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') }}</span>
-                  </div>
-                @endif
-
-                {{-- Return/Cycle Info --}}
-                @if(($stage['hasCycle'] ?? false) || ($stage['hasReturn'] ?? false))
-                  <div class="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
-                    @if($stage['hasCycle'] ?? false)
-                      <p class="text-xs font-semibold text-amber-700 mb-1">
-                        <i class="fas fa-history mr-1"></i>
-                        Resubmission #{{ $stage['cycleInfo']['cycleCount'] ?? 1 }}
-                      </p>
-                    @endif
-                    @if($stage['hasReturn'] ?? false)
-                      <p class="text-xs text-amber-600 mt-1">
-                        {{ $stage['returnInfo']['alasan'] ?? 'Tidak ada alasan' }}
-                      </p>
-                    @endif
-                  </div>
-                @endif
-              </div>
-            </div>
-
-            {{-- Connector --}}
-            @if(!$isLast)
-              @php
-                $nextStage = $workflowStages[$index + 1];
-                $nextStatus = $nextStage['status'] ?? 'pending';
-                
-                $connectorClass = "workflow-connector w-12 h-1 rounded-full mx-3 mt-12";
-                
-                if ($isCompleted && ($nextStatus === 'completed' || $nextStatus === 'selesai')) {
-                  $connectorClass .= " completed";
-                } elseif ($isCompleted && ($nextStatus === 'processing' || $nextStatus === 'active')) {
-                  $connectorClass .= " active";
-                } elseif ($isActive) {
-                  $connectorClass .= " active";
-                } else {
-                  $connectorClass .= " bg-slate-200";
-                }
-              @endphp
-              <div class="{{ $connectorClass }}"></div>
-            @endif
-          @endforeach
-        </div>
-      </div>
-    </section>
-
-    {{-- Information Grid --}}
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-slide-in" style="animation-delay: 0.3s">
-      
-      {{-- Main Info (Left Column) --}}
-      <div class="lg:col-span-8 space-y-6">
-        
-        {{-- Hero Financial Card --}}
-        <div class="hero-card rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
-          <div class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-          
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <p class="text-emerald-100 font-semibold tracking-wide uppercase text-sm mb-2">Nilai Nominal</p>
-                <h2 class="text-4xl sm:text-5xl font-bold tracking-tight">
-                  <span class="text-emerald-300">Rp</span>
-                  {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}
-                </h2>
-              </div>
-              <div class="hidden md:block">
-                <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <i class="fas fa-money-bill-wave text-4xl text-white"></i>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-white/20">
-              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <p class="text-emerald-100 text-xs uppercase font-semibold mb-2">Nomor SPP</p>
-                <p class="font-mono text-lg font-bold">{{ $dokumen->nomor_spp ?? '-' }}</p>
-              </div>
-              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <p class="text-emerald-100 text-xs uppercase font-semibold mb-2">Dibayar Kepada</p>
-                <p class="font-semibold text-lg truncate">
-                  {{ $dokumen->dibayarKepadas->first()?->nama_penerima ?? $dokumen->dibayar_kepada ?? '-' }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {{-- Document Information Card --}}
-        <div class="info-card">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-              <i class="fas fa-file-alt text-white"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900">Informasi Dokumen</h3>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="group">
-              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2 group-hover:text-emerald-600 transition-colors">
-                Uraian SPP
-              </p>
-              <p class="text-slate-800 font-semibold leading-relaxed">{{ $dokumen->uraian_spp ?? '-' }}</p>
-            </div>
-
-            <div class="group">
-              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2 group-hover:text-emerald-600 transition-colors">
-                Nomor Agenda
-              </p>
-              <p class="text-slate-800 font-semibold">{{ $dokumen->nomor_agenda ?? '-' }}</p>
-            </div>
-
-            <div class="group">
-              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2 group-hover:text-emerald-600 transition-colors">
-                Jenis Dokumen
-              </p>
-              <p class="text-slate-800 font-semibold">{{ $dokumen->jenis_dokumen ?? '-' }}</p>
-            </div>
-
-            <div class="group">
-              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2 group-hover:text-emerald-600 transition-colors">
-                Kategori
-              </p>
-              <p class="text-slate-800 font-semibold">{{ $dokumen->kategori ?? '-' }}</p>
-            </div>
-
-            <div class="group">
-              <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2 group-hover:text-emerald-600 transition-colors">
-                Bagian Pengirim
-              </p>
-              <p class="text-slate-800 font-semibold">{{ $dokumen->bagian ?? '-' }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {{-- Sidebar (Right Column) --}}
-      <div class="lg:col-span-4 space-y-6">
-        
-        {{-- Tax Data Card --}}
-        <div class="info-card">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-              <i class="fas fa-calculator text-white"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900">Data Perpajakan</h3>
-          </div>
-
-          <div class="space-y-4">
-            @if($dokumen->npwp || $dokumen->no_faktur)
-              <div class="p-4 bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-100">
-                <p class="text-xs text-slate-500 uppercase font-bold mb-2">NPWP</p>
-                <p class="font-mono text-slate-900 font-semibold">{{ $dokumen->npwp ?? '-' }}</p>
-              </div>
-              <div class="p-4 bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-100">
-                <p class="text-xs text-slate-500 uppercase font-bold mb-2">No. Faktur</p>
-                <p class="font-mono text-slate-900 font-semibold">{{ $dokumen->no_faktur ?? '-' }}</p>
-              </div>
-              @if($dokumen->jenis_pph)
-                <div class="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
-                  <p class="text-xs text-emerald-700 uppercase font-bold mb-2">Jenis PPh</p>
-                  <p class="text-slate-900 font-semibold">{{ $dokumen->jenis_pph }}</p>
-                </div>
               @endif
-            @else
-              <div class="text-center py-8 text-slate-400">
-                <i class="fas fa-search-dollar text-4xl mb-3 opacity-30"></i>
-                <p class="text-sm">Belum ada data perpajakan</p>
-              </div>
-            @endif
-          </div>
-        </div>
-
-        {{-- Activity Logs Card --}}
-        <div class="info-card">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-              <i class="fas fa-history text-white"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900">Activity Logs</h3>
-          </div>
-          
-          <div class="max-h-80 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-            @forelse($dokumen->activityLogs->sortByDesc('created_at')->take(10) as $log)
-              <div class="activity-log-item">
-                <p class="text-sm text-slate-800 font-medium mb-1">{{ $log->description ?? 'Activity' }}</p>
-                <p class="text-xs text-slate-400 flex items-center gap-2">
-                  <i class="far fa-clock"></i>
-                  {{ $log->created_at->diffForHumans() }}
+              @if($stage['hasReturn'] ?? false)
+                <p class="mt-2">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>
+                  {{ $stage['returnInfo']['alasan'] ?? 'Tidak ada alasan' }}
                 </p>
-              </div>
-            @empty
-              <div class="text-center py-8 text-slate-400">
-                <i class="fas fa-inbox text-3xl mb-2 opacity-30"></i>
-                <p class="text-sm">Tidak ada activity log</p>
-              </div>
-            @endforelse
+              @endif
+            </div>
+          @endif
+        </div>
+      </div>
+    @endforeach
+  </div>
+
+  {{-- Information Grid --}}
+  <div class="info-grid">
+    {{-- Hero Financial Card --}}
+    <div class="hero-financial-card">
+      <div class="hero-financial-content">
+        <div class="hero-financial-label">Nilai Nominal</div>
+        <div class="hero-financial-value">
+          Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}
+        </div>
+        <div class="hero-financial-details">
+          <div class="hero-detail-item">
+            <div class="hero-detail-label">Nomor SPP</div>
+            <div class="hero-detail-value">{{ $dokumen->nomor_spp ?? '-' }}</div>
+          </div>
+          <div class="hero-detail-item">
+            <div class="hero-detail-label">Dibayar Kepada</div>
+            <div class="hero-detail-value">
+              {{ $dokumen->dibayarKepadas->first()?->nama_penerima ?? $dokumen->dibayar_kepada ?? '-' }}
+            </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+
+    {{-- Document Information Card --}}
+    <div class="info-card">
+      <div class="info-card-header">
+        <div class="info-card-icon" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%);">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="info-card-title">Informasi Dokumen</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div>
+          <div class="stage-label">Uraian SPP</div>
+          <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->uraian_spp ?? '-' }}</div>
+        </div>
+        <div>
+          <div class="stage-label">Nomor Agenda</div>
+          <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->nomor_agenda ?? '-' }}</div>
+        </div>
+        <div>
+          <div class="stage-label">Jenis Dokumen</div>
+          <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
+        </div>
+        <div>
+          <div class="stage-label">Kategori</div>
+          <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->kategori ?? '-' }}</div>
+        </div>
+        <div>
+          <div class="stage-label">Bagian Pengirim</div>
+          <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->bagian ?? '-' }}</div>
+        </div>
+      </div>
+    </div>
+
+    {{-- Tax Data Card --}}
+    <div class="info-card">
+      <div class="info-card-header">
+        <div class="info-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+          <i class="fas fa-calculator"></i>
+        </div>
+        <div class="info-card-title">Data Perpajakan</div>
+      </div>
+      <div style="space-y: 16px;">
+        @if($dokumen->npwp || $dokumen->no_faktur)
+          <div style="padding: 16px; background: #f8fafc; border-radius: 12px; margin-bottom: 12px;">
+            <div class="stage-label">NPWP</div>
+            <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->npwp ?? '-' }}</div>
+          </div>
+          <div style="padding: 16px; background: #f8fafc; border-radius: 12px; margin-bottom: 12px;">
+            <div class="stage-label">No. Faktur</div>
+            <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->no_faktur ?? '-' }}</div>
+          </div>
+          @if($dokumen->jenis_pph)
+            <div style="padding: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 1px solid #86efac;">
+              <div class="stage-label" style="color: #059669;">Jenis PPh</div>
+              <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->jenis_pph }}</div>
+            </div>
+          @endif
+        @else
+          <div style="text-align: center; padding: 40px; color: #94a3b8;">
+            <i class="fas fa-search-dollar" style="font-size: 48px; opacity: 0.3; margin-bottom: 12px;"></i>
+            <p style="font-size: 14px;">Belum ada data perpajakan</p>
+          </div>
+        @endif
+      </div>
+    </div>
+
+    {{-- Activity Logs Card --}}
+    <div class="info-card">
+      <div class="info-card-header">
+        <div class="info-card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+          <i class="fas fa-history"></i>
+        </div>
+        <div class="info-card-title">Activity Logs</div>
+      </div>
+      <div class="activity-log-container custom-scrollbar">
+        @forelse($dokumen->activityLogs->sortByDesc('created_at')->take(15) as $log)
+          <div class="activity-log-item">
+            <div class="activity-log-text">{{ $log->description ?? 'Activity' }}</div>
+            <div class="activity-log-time">
+              <i class="far fa-clock mr-1"></i>
+              {{ $log->created_at->diffForHumans() }}
+            </div>
+          </div>
+        @empty
+          <div style="text-align: center; padding: 40px; color: #94a3b8;">
+            <i class="fas fa-inbox" style="font-size: 48px; opacity: 0.3; margin-bottom: 12px;"></i>
+            <p style="font-size: 14px;">Tidak ada activity log</p>
+          </div>
+        @endforelse
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-  // Smooth scroll untuk workflow stages pada mobile
+  // Smooth scroll to active stage on load
   document.addEventListener('DOMContentLoaded', function() {
-    const workflowContainer = document.querySelector('.overflow-x-auto');
-    if (workflowContainer) {
-      // Auto-scroll ke active stage pada load
-      const activeCard = workflowContainer.querySelector('.workflow-stage-card.active');
-      if (activeCard) {
-        setTimeout(() => {
-          activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }, 300);
-      }
+    const activeStage = document.querySelector('.timeline-stage.active');
+    if (activeStage) {
+      setTimeout(() => {
+        activeStage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
     }
   });
 </script>
