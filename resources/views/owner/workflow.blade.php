@@ -1,1291 +1,345 @@
-@extends('layouts/app')
+@extends('layouts.app')
 
 @section('content')
 <style>
-:root {
-  --primary-color: #0f4c5c;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  --info-color: #1e7e8d;
-  --secondary-color: #9ca3af;
-  --light-bg: #f9fafb;
-  --border-color: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --teal-600: #0d9488;
-  --teal-700: #0f766e;
-  --emerald-500: #10b981;
-  --emerald-600: #059669;
-}
-
-body {
-  background: #f3f4f6;
-  min-height: 100vh;
-  padding: 1.5rem 0;
-  transition: background-color 0.3s ease;
-}
-
-.dark body {
-  background: #0f172a; /* slate-900 */
-}
-
-.workflow-container {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-}
-
-.workflow-header {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background-color 0.3s ease;
-}
-
-.dark .workflow-header {
-  background: #1e293b; /* slate-800 */
-}
-
-.workflow-title-section h1 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: color 0.3s ease;
-}
-
-.dark .workflow-title-section h1 {
-  color: #f1f5f9; /* slate-100 */
-}
-
-.workflow-subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin: 0.25rem 0 0 0;
-  transition: color 0.3s ease;
-}
-
-.dark .workflow-subtitle {
-  color: #94a3b8; /* slate-400 */
-}
-
-.workflow-content {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  overflow-x: auto;
-  transition: background-color 0.3s ease;
-}
-
-.dark .workflow-content {
-  background: #1e293b; /* slate-800 */
-}
-
-/* Premium Card Style Workflow */
-.workflow-cards-container {
-  position: relative;
-  padding: 2rem 0;
-  margin-bottom: 2rem;
-  overflow-x: auto;
-}
-
-.workflow-cards-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 2rem;
-  position: relative;
-  min-width: fit-content;
-  padding: 0 1rem;
-}
-
-/* Base Premium Workflow Card */
-.workflow-card {
-  position: relative;
-  width: 240px;
-  min-width: 240px;
-  background: white;
-  border-radius: 0.75rem; /* rounded-xl */
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
-  border: 1px solid transparent;
-}
-
-.dark .workflow-card {
-  background: #1e293b; /* slate-800 */
-}
-
-/* Completed Card Style - Solid & Clear */
-.workflow-card.completed {
-  border: 1px solid #e5e7eb;
-  opacity: 1;
-}
-
-.workflow-card.completed .card-header {
-  background: var(--emerald-500); /* bg-emerald-500 solid */
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.workflow-card.completed .card-header-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.workflow-card.completed .card-body {
-  padding: 1.25rem;
-  background: white;
-  transition: background-color 0.3s ease;
-}
-
-.dark .workflow-card.completed .card-body {
-  background: #1e293b; /* slate-800 */
-}
-
-/* Active Card Style - The Hero with Glow Effect */
-.workflow-card.active {
-  transform: scale(1.05); /* scale-105 */
-  border: 2px solid var(--emerald-500); /* border-2 border-emerald-500 */
-  background: white;
-  box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.4); /* shadow-[0_10px_30px_-10px_rgba(16,185,129,0.4)] */
-  z-index: 10;
-  position: relative;
-}
-
-.workflow-card.active .card-header {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(13, 148, 136, 0.05) 100%);
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.workflow-card.active .card-header-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 28px;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-}
-
-.workflow-card.active .card-body {
-  padding: 1.25rem;
-  background: white;
-  transition: background-color 0.3s ease;
-}
-
-.dark .workflow-card.active .card-body {
-  background: #1e293b; /* slate-800 */
-}
-
-/* Current Position Badge - "Sedang Proses" dengan animate-pulse */
-.current-position-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-/* Pending Card Style - Dimmed */
-.workflow-card.pending {
-  background: #f8fafc; /* bg-slate-50 */
-  border: 1px dashed #cbd5e1; /* border dashed tipis */
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  opacity: 0.85;
-}
-
-.workflow-card.pending .card-header {
-  background: #f1f5f9;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.workflow-card.pending .card-header-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  font-size: 20px;
-}
-
-.workflow-card.pending .card-body {
-  padding: 1.25rem;
-  background: #f8fafc;
-}
-
-.workflow-card.pending .card-label,
-.workflow-card.pending .card-name,
-.workflow-card.pending .card-description,
-.workflow-card.pending .card-timestamp {
-  color: #94a3b8; /* text-slate-400 */
-}
-
-/* Returned Card Style */
-.workflow-card.returned {
-  border: 2px solid var(--danger-color);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
-}
-
-.workflow-card.returned .card-header {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.workflow-card.returned .card-header-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--danger-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.workflow-card.returned .card-header-icon::after {
-  content: '↩';
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: var(--danger-color);
-  color: white;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.workflow-card.returned .card-body {
-  padding: 1.25rem;
-  background: white;
-  border-bottom: 4px solid var(--danger-color);
-}
-
-/* Card Content */
-.card-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 0.75rem;
-  text-align: center;
-  transition: color 0.3s ease;
-}
-
-.workflow-card.completed .card-label,
-.workflow-card.active .card-label {
-  color: var(--text-primary);
-}
-
-.dark .workflow-card.completed .card-label,
-.dark .workflow-card.active .card-label {
-  color: #f1f5f9; /* slate-100 */
-}
-
-.dark .workflow-card.pending .card-label {
-  color: #94a3b8; /* slate-400 */
-}
-
-.card-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  text-align: center;
-  transition: color 0.3s ease;
-}
-
-.dark .workflow-card.completed .card-name,
-.dark .workflow-card.active .card-name {
-  color: #f1f5f9; /* slate-100 */
-}
-
-.dark .workflow-card.pending .card-name {
-  color: #94a3b8; /* slate-400 */
-}
-
-.card-description {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  text-align: center;
-  line-height: 1.5;
-  min-height: 36px;
-  transition: color 0.3s ease;
-}
-
-.dark .workflow-card.completed .card-description,
-.dark .workflow-card.active .card-description {
-  color: #cbd5e1; /* slate-300 */
-}
-
-/* User Avatar */
-.card-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--teal-600) 0%, var(--emerald-500) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 20px;
-  margin: 0 auto 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 3px solid white;
-}
-
-.workflow-card.active .card-avatar {
-  width: 72px;
-  height: 72px;
-  font-size: 24px;
-  border: 4px solid var(--emerald-500);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-}
-
-.workflow-card.pending .card-avatar {
-  width: 56px;
-  height: 56px;
-  font-size: 18px;
-  background: #e2e8f0;
-  color: #94a3b8;
-  border: 2px solid #cbd5e1;
-  box-shadow: none;
-}
-
-/* Card Timestamp */
-.card-timestamp {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-  transition: color 0.3s ease, border-color 0.3s ease;
-}
-
-.dark .card-timestamp {
-  border-top-color: #334155; /* slate-700 */
-}
-
-.workflow-card.completed .card-timestamp,
-.workflow-card.active .card-timestamp {
-  color: var(--emerald-600);
-  font-weight: 600;
-}
-
-.dark .workflow-card.completed .card-timestamp,
-.dark .workflow-card.active .card-timestamp {
-  color: #34d399; /* emerald-400 */
-}
-
-.card-timestamp i {
-  font-size: 10px;
-}
-
-/* Connector Between Cards - Gradient dari Hijau ke Abu-abu */
-.workflow-connector {
-  position: relative;
-  width: 2rem;
-  height: 6px;
-  align-self: center;
-  flex-shrink: 0;
-  margin: 0 0.5rem;
-}
-
-.workflow-connector-line {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  transform: translateY(-50%);
-}
-
-/* Connector untuk Completed ke Completed - Hijau Solid Tebal */
-.workflow-connector.completed .workflow-connector-line {
-  background: var(--emerald-500); /* Hijau Solid Tebal */
-  height: 6px;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-}
-
-/* Connector untuk Completed ke Active - Gradien Hijau ke Hijau Lebih Terang */
-.workflow-connector.completed-to-active .workflow-connector-line {
-  background: linear-gradient(90deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
-  height: 6px;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-}
-
-/* Connector untuk Active ke Pending - Gradien dari Hijau ke Abu-abu */
-.workflow-connector.active-to-pending .workflow-connector-line {
-  background: linear-gradient(90deg, var(--emerald-500) 0%, #94a3b8 100%);
-  height: 6px;
-}
-
-/* Connector untuk Completed ke Pending - Gradien dari Hijau ke Abu-abu */
-.workflow-connector.completed-to-pending .workflow-connector-line {
-  background: linear-gradient(90deg, var(--emerald-500) 0%, #94a3b8 100%);
-  height: 6px;
-}
-
-/* Connector untuk Pending ke Pending - Abu-abu */
-.workflow-connector.pending .workflow-connector-line {
-  background: #e5e7eb;
-  height: 4px;
-  opacity: 0.5;
-}
-
-/* Cycle Badge */
-.workflow-cycle-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: linear-gradient(135deg, var(--warning-color) 0%, var(--danger-color) 100%);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 10px;
-  font-size: 9px;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  z-index: 10;
-}
-
-/* Hover Effect */
-.workflow-card:hover {
-  transform: translateY(-4px);
-}
-
-.workflow-card.active:hover {
-  transform: scale(1.05) translateY(-4px);
-}
-
-/* Document Info Panel - Keep existing styles */
-.document-info-panel {
-  background: var(--light-bg);
-  border-radius: 10px;
-  padding: 1.25rem;
-  margin-top: 1.5rem;
-  transition: background-color 0.3s ease;
-}
-
-.dark .document-info-panel {
-  background: #0f172a; /* slate-900 */
-}
-
-.document-info-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: color 0.3s ease;
-}
-
-.dark .document-info-title {
-  color: #f1f5f9; /* slate-100 */
-}
-
-/* Accordion Styles - Keep existing */
-.accordion-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.accordion-item {
-  background: white;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  transition: all 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-}
-
-.dark .accordion-item {
-  background: #1e293b; /* slate-800 */
-  border-color: #334155; /* slate-700 */
-}
-
-.accordion-item:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.accordion-header {
-  padding: 0.875rem 1rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  transition: background 0.2s ease, background-color 0.3s ease;
-  user-select: none;
-}
-
-.accordion-header:hover {
-  background: var(--light-bg);
-}
-
-.dark .accordion-header {
-  background: #1e293b; /* slate-800 */
-}
-
-.dark .accordion-header:hover {
-  background: #0f172a; /* slate-900 */
-}
-
-.accordion-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  transition: color 0.3s ease;
-}
-
-.dark .accordion-title {
-  color: #f1f5f9; /* slate-100 */
-}
-
-.accordion-title i {
-  color: var(--primary-color);
-  font-size: 0.875rem;
-}
-
-.accordion-icon {
-  transition: transform 0.3s ease;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-}
-
-.accordion-item.active .accordion-icon {
-  transform: rotate(180deg);
-}
-
-.accordion-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, background-color 0.3s ease;
-  background: var(--light-bg);
-}
-
-.dark .accordion-content {
-  background: #0f172a; /* slate-900 */
-}
-
-.accordion-item.active .accordion-content {
-  max-height: 2000px;
-  padding: 1rem;
-}
-
-.document-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-}
-
-.document-info-item {
-  background: white;
-  padding: 0.75rem;
-  border-radius: 8px;
-  border-left: 3px solid var(--primary-color);
-  transition: all 0.2s ease, background-color 0.3s ease;
-}
-
-.dark .document-info-item {
-  background: #1e293b; /* slate-800 */
-}
-
-.document-info-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.document-info-item.tax-field {
-  border-left-color: var(--success-color);
-}
-
-.document-info-label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-bottom: 0.25rem;
-  font-weight: 600;
-  transition: color 0.3s ease;
-}
-
-.dark .document-info-label {
-  color: #94a3b8; /* slate-400 */
-}
-
-.document-info-value {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  word-break: break-word;
-  transition: color 0.3s ease;
-}
-
-.dark .document-info-value {
-  color: #f1f5f9; /* slate-100 */
-}
-
-.empty-field {
-  color: var(--text-secondary);
-  font-style: italic;
-  font-size: 0.8rem;
-}
-
-.tax-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.tax-link:hover {
-  text-decoration: underline;
-}
-
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge-selesai {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-}
-
-.badge-proses {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-  color: white;
-}
-
-.badge-success {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.badge-info {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: white;
-  color: var(--text-primary);
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  transition: all 0.2s ease;
-  border: 1px solid var(--border-color);
-}
-
-.back-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .workflow-cards-wrapper {
-    gap: 1.5rem;
-  }
-  
-  .workflow-card {
-    width: 220px;
-    min-width: 220px;
-  }
-  
-  .workflow-card.active {
-    transform: scale(1.03);
-  }
-}
-
-@media (max-width: 768px) {
-  .workflow-container {
-    padding: 1rem;
-  }
-
-  .workflow-content {
-    padding: 1rem;
-  }
-  
-  .workflow-cards-container {
-    padding: 1.5rem 0;
-  }
-  
-  .workflow-cards-wrapper {
-    gap: 1rem;
-    padding: 0 0.5rem;
-  }
-  
-  .workflow-card {
-    width: 200px;
-    min-width: 200px;
-  }
-  
-  .workflow-card.active {
-    transform: scale(1.02);
-  }
-  
-  .workflow-connector {
-    width: 1.5rem;
-  }
-  
-  .card-avatar {
-    width: 56px;
-    height: 56px;
-    font-size: 18px;
-  }
-  
-  .workflow-card.active .card-avatar {
-    width: 64px;
-    height: 64px;
-    font-size: 20px;
-  }
-}
+    /* Custom Scrollbar for inner areas */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
 </style>
 
-<div class="workflow-container">
-  <div class="workflow-header">
-    <div class="workflow-title-section">
-      <h1>
-        <i class="fas fa-project-diagram"></i>
-        Workflow Tracking
-      </h1>
-      <p class="workflow-subtitle">{{ $dokumen->nomor_agenda }}</p>
-    </div>
-    <a href="{{ url('/owner/dashboard') }}" class="back-button">
-      <i class="fas fa-arrow-left"></i>
-      Kembali
-    </a>
-  </div>
-
-  <div class="workflow-content">
-    <!-- Premium Card Style Workflow -->
-    <div class="workflow-cards-container">
-      <div class="workflow-cards-wrapper">
-        @foreach($workflowStages as $index => $stage)
-          @php
-            $stageLogs = isset($activityLogsByStage) && $activityLogsByStage->has($stage['id']) 
-                ? $activityLogsByStage[$stage['id']] 
-                : collect();
-            
-            $cardStatus = 'pending';
-            if($stage['status'] === 'completed') {
-              $cardStatus = 'completed';
-            } elseif($stage['status'] === 'processing' || $stage['status'] === 'active') {
-              $cardStatus = 'active';
-            } elseif($stage['status'] === 'returned') {
-              $cardStatus = 'returned';
-            }
-            
-            // Get first letter of name for avatar
-            $avatarInitial = substr($stage['name'], 0, 1);
-          @endphp
-          
-          <!-- Workflow Card -->
-          <div class="workflow-card {{ $cardStatus }}">
-            @if($cardStatus === 'active')
-              <div class="current-position-badge">Sedang Proses</div>
-            @endif
-            
-            @if(isset($stage['hasCycle']) && $stage['hasCycle'] && isset($stage['cycleInfo']['attemptCount']) && $stage['cycleInfo']['attemptCount'] > 1)
-              <div class="workflow-cycle-badge">
-                <i class="fas fa-redo"></i> {{ $stage['cycleInfo']['attemptCount'] }}x
-              </div>
-            @endif
-            
-            <!-- Card Header -->
-            <div class="card-header">
-              <div class="card-header-icon">
-                @if($cardStatus === 'completed')
-                  <i class="fas fa-check"></i>
-                @else
-                  <i class="fas {{ $stage['icon'] }}"></i>
-                @endif
-              </div>
-            </div>
-            
-            <!-- Card Body -->
-            <div class="card-body">
-              <div class="card-label">{{ $stage['label'] }}</div>
-              
-              <!-- User Avatar -->
-              <div class="card-avatar">
-                {{ $avatarInitial }}
-              </div>
-              
-              <div class="card-name">{{ $stage['name'] }}</div>
-              <div class="card-description">{{ $stage['description'] }}</div>
-              
-              <!-- Timestamp -->
-              @if($stage['timestamp'])
-                <div class="card-timestamp">
-                  <i class="far fa-clock"></i>
-                  <span>{{ $stage['timestamp']->format('d M Y') }}</span>
-                  <span>•</span>
-                  <span>{{ $stage['timestamp']->format('H:i') }}</span>
-                </div>
-              @else
-                <div class="card-timestamp" style="color: #94a3b8;">
-                  <i class="far fa-clock"></i>
-                  <span>Menunggu</span>
-                </div>
-              @endif
-            </div>
-          </div>
-          
-          <!-- Connector -->
-          @if($index < count($workflowStages) - 1)
-            @php
-              $nextStage = $workflowStages[$index + 1];
-              $nextStatus = 'pending';
-              if($nextStage['status'] === 'completed') {
-                $nextStatus = 'completed';
-              } elseif($nextStage['status'] === 'processing' || $nextStage['status'] === 'active') {
-                $nextStatus = 'active';
-              }
-              
-              // Determine connector class based on current and next status
-              $connectorClass = '';
-              if($cardStatus === 'completed' && $nextStatus === 'completed') {
-                $connectorClass = 'completed'; // Hijau solid tebal
-              } elseif($cardStatus === 'completed' && $nextStatus === 'active') {
-                $connectorClass = 'completed-to-active'; // Gradien hijau ke hijau
-              } elseif($cardStatus === 'active' && $nextStatus === 'pending') {
-                $connectorClass = 'active-to-pending'; // Gradien hijau ke abu-abu
-              } elseif($cardStatus === 'completed' && $nextStatus === 'pending') {
-                $connectorClass = 'completed-to-pending'; // Gradien hijau ke abu-abu
-              } elseif($cardStatus === 'pending' && $nextStatus === 'pending') {
-                $connectorClass = 'pending'; // Abu-abu
-              } else {
-                $connectorClass = ''; // Default abu-abu
-              }
-            @endphp
-            <div class="workflow-connector {{ $connectorClass }}">
-              <div class="workflow-connector-line"></div>
-            </div>
-          @endif
-        @endforeach
-      </div>
-    </div>
-
-    <!-- Document Info Panel with Accordion -->
-    <div class="document-info-panel">
-      <div class="document-info-title">
-        <i class="fas fa-info-circle"></i>
-        Informasi Dokumen Lengkap
-      </div>
-      
-      <!-- Accordion Container -->
-      <div class="accordion-container">
-        <!-- Data Awal Section -->
-        <div class="accordion-item">
-          <div class="accordion-header" onclick="toggleAccordion('data-awal')">
-            <div class="accordion-title">
-              <i class="fas fa-file-alt"></i>
-              <span>Data Awal</span>
-            </div>
-            <i class="fas fa-chevron-down accordion-icon" id="icon-data-awal"></i>
-          </div>
-          <div class="accordion-content" id="content-data-awal">
-            <div class="document-info-grid">
-              <div class="document-info-item">
-                <div class="document-info-label">Nomor Agenda</div>
-                <div class="document-info-value">{{ $dokumen->nomor_agenda }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Bulan</div>
-                <div class="document-info-value">{{ $dokumen->bulan ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Tahun</div>
-                <div class="document-info-value">{{ $dokumen->tahun ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Tanggal Masuk</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d M Y, H:i') : '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Nomor SPP</div>
-                <div class="document-info-value">{{ $dokumen->nomor_spp ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Tanggal SPP</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d M Y') : '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Uraian SPP</div>
-                <div class="document-info-value">{{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Nilai Rupiah</div>
-                <div class="document-info-value">Rp. {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Kriteria CF</div>
-                <div class="document-info-value">{{ $dokumen->kategori ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Sub Kriteria</div>
-                <div class="document-info-value">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Item Sub Kriteria</div>
-                <div class="document-info-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Kebun</div>
-                <div class="document-info-value">{{ $dokumen->kebun ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Bagian</div>
-                <div class="document-info-value">{{ $dokumen->bagian ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Nama Pengirim</div>
-                <div class="document-info-value">{{ $dokumen->nama_pengirim ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Dibayar Kepada</div>
-                <div class="document-info-value">
-                  @if($dokumen->dibayarKepadas->count() > 0)
-                    {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
-                  @else
-                    {{ $dokumen->dibayar_kepada ?? '-' }}
-                  @endif
-                </div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">No Berita Acara</div>
-                <div class="document-info-value">{{ $dokumen->no_berita_acara ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Tanggal Berita Acara</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d M Y') : '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">No SPK</div>
-                <div class="document-info-value">{{ $dokumen->no_spk ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Tanggal SPK</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d M Y') : '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Tanggal Berakhir SPK</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d M Y') : '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">No PO</div>
-                <div class="document-info-value">
-                  @if($dokumen->dokumenPos->count() > 0)
-                    {{ $dokumen->dokumenPos->pluck('nomor_po')->join(', ') }}
-                  @else
-                    -
-                  @endif
-                </div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">No PR</div>
-                <div class="document-info-value">
-                  @if($dokumen->dokumenPrs->count() > 0)
-                    {{ $dokumen->dokumenPrs->pluck('nomor_pr')->join(', ') }}
-                  @else
-                    -
-                  @endif
-                </div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">No Mirror</div>
-                <div class="document-info-value">{{ $dokumen->nomor_mirror ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Status</div>
-                <div class="document-info-value">{{ $dokumen->status }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Handler</div>
-                <div class="document-info-value">{{ $dokumen->current_handler ?? '-' }}</div>
-              </div>
-              <div class="document-info-item">
-                <div class="document-info-label">Dibuat</div>
-                <div class="document-info-value">{{ $dokumen->created_at->format('d M Y, H:i') }}</div>
-              </div>
-            </div>
-          </div>
+<div class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
+    {{-- Top Progress & Header --}}
+    <div class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        {{-- Global Progress Bar --}}
+        @php
+            $currentProgress = $dokumen->progress_percentage ?? 0;
+            // Ensure numeric
+            $progress = is_numeric($currentProgress) ? $currentProgress : 0;
+        @endphp
+        <div class="w-full h-1.5 bg-slate-100">
+            <div class="h-full bg-emerald-500 transition-all duration-1000 ease-out" style="width: {{ $progress }}%"></div>
         </div>
 
-        <!-- Data Perpajakan Section -->
-        @php
-          $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) || 
-                               !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
-                               !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
-                               !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
-        @endphp
-        @if($hasPerpajakanData || $dokumen->status == 'sent_to_akutansi' || $dokumen->status == 'sent_to_pembayaran' || $dokumen->current_handler == 'akutansi' || $dokumen->current_handler == 'pembayaran')
-        <div class="accordion-item">
-          <div class="accordion-header" onclick="toggleAccordion('data-perpajakan')">
-            <div class="accordion-title">
-              <i class="fas fa-file-invoice-dollar"></i>
-              <span>Data Perpajakan</span>
-            </div>
-            <i class="fas fa-chevron-down accordion-icon" id="icon-data-perpajakan"></i>
-          </div>
-          <div class="accordion-content" id="content-data-perpajakan">
-            <div class="document-info-grid">
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">NPWP</div>
-                <div class="document-info-value">{{ $dokumen->npwp ?? '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Status Perpajakan</div>
-                <div class="document-info-value">
-                  @if($dokumen->status_perpajakan == 'selesai')
-                    <span class="badge badge-selesai">Selesai</span>
-                  @elseif($dokumen->status_perpajakan == 'sedang_diproses')
-                    <span class="badge badge-proses">Sedang Diproses</span>
-                  @else
-                    <span class="empty-field">-</span>
-                  @endif
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+                        <span class="bg-slate-900 text-white text-sm px-2 py-1 rounded">AGENDA #{{ $dokumen->nomor_agenda }}</span>
+                        <span>Workflow Tracking</span>
+                    </h1>
+                    <p class="text-sm text-slate-500 mt-1">
+                        Memantau perjalanan dokumen <span class="font-medium text-slate-700">{{ $dokumen->nomor_spp }}</span>
+                    </p>
                 </div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">No Faktur</div>
-                <div class="document-info-value">{{ $dokumen->no_faktur ?? '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Tanggal Faktur</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d M Y') : '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Tanggal Selesai Verifikasi Pajak</div>
-                <div class="document-info-value">{{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d M Y') : '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Jenis PPh</div>
-                <div class="document-info-value">{{ $dokumen->jenis_pph ?? '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">DPP PPh</div>
-                <div class="document-info-value">{{ $dokumen->dpp_pph ? 'Rp. ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">PPN Terhutang</div>
-                <div class="document-info-value">{{ $dokumen->ppn_terhutang ? 'Rp. ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}</div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Link Dokumen Pajak</div>
-                <div class="document-info-value">
-                  @if($dokumen->link_dokumen_pajak)
-                    @if(filter_var($dokumen->link_dokumen_pajak, FILTER_VALIDATE_URL))
-                      <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" class="tax-link">
-                        {{ Str::limit($dokumen->link_dokumen_pajak, 40) }} <i class="fas fa-external-link-alt"></i>
-                      </a>
-                    @else
-                      {{ $dokumen->link_dokumen_pajak }}
-                    @endif
-                  @else
-                    <span class="empty-field">-</span>
-                  @endif
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        @endif
-
-        <!-- Data Akutansi Section -->
-        @php
-          $hasAkutansiData = !empty($dokumen->nomor_miro);
-        @endphp
-        @if($hasAkutansiData || $dokumen->status == 'sent_to_pembayaran' || $dokumen->current_handler == 'pembayaran')
-        <div class="accordion-item">
-          <div class="accordion-header" onclick="toggleAccordion('data-akutansi')">
-            <div class="accordion-title">
-              <i class="fas fa-calculator"></i>
-              <span>Data Akutansi</span>
-            </div>
-            <i class="fas fa-chevron-down accordion-icon" id="icon-data-akutansi"></i>
-          </div>
-          <div class="accordion-content" id="content-data-akutansi">
-            <div class="document-info-grid">
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Nomor MIRO</div>
-                <div class="document-info-value">{{ $dokumen->nomor_miro ?? '-' }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        @endif
-
-        <!-- Data Pembayaran Section -->
-        @php
-          $statusPembayaran = $dokumen->status_pembayaran ?? null;
-          $linkBuktiPembayaran = $dokumen->link_bukti_pembayaran ?? null;
-          $hasPembayaranData = !empty($statusPembayaran) || !empty($linkBuktiPembayaran);
-          $isCompleted = in_array($dokumen->status, ['selesai', 'approved_data_sudah_terkirim', 'completed']) || $statusPembayaran === 'sudah_dibayar';
-        @endphp
-        @if($hasPembayaranData || $dokumen->current_handler == 'pembayaran' || $dokumen->status == 'sent_to_pembayaran' || $isCompleted)
-        <div class="accordion-item">
-          <div class="accordion-header" onclick="toggleAccordion('data-pembayaran')">
-            <div class="accordion-title">
-              <i class="fas fa-money-bill-wave"></i>
-              <span>Data Pembayaran</span>
-            </div>
-            <i class="fas fa-chevron-down accordion-icon" id="icon-data-pembayaran"></i>
-          </div>
-          <div class="accordion-content" id="content-data-pembayaran">
-            <div class="document-info-grid">
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Status Pembayaran</div>
-                <div class="document-info-value">
-                  @if($statusPembayaran)
-                    @php
-                      $statusLabel = match($statusPembayaran) {
-                        'siap_dibayar' => 'Siap Dibayar',
-                        'sudah_dibayar' => 'Sudah Dibayar',
-                        default => ucfirst(str_replace('_', ' ', $statusPembayaran))
-                      };
-                    @endphp
-                    <span class="badge badge-{{ $statusPembayaran == 'sudah_dibayar' ? 'success' : 'info' }}">{{ $statusLabel }}</span>
-                  @else
-                    <span class="text-muted">-</span>
-                  @endif
-                </div>
-              </div>
-              <div class="document-info-item tax-field">
-                <div class="document-info-label">Link Bukti Pembayaran</div>
-                <div class="document-info-value">
-                  @if($linkBuktiPembayaran)
-                    <a href="{{ $linkBuktiPembayaran }}" target="_blank" class="text-primary" style="text-decoration: underline;">
-                      {{ Str::limit($linkBuktiPembayaran, 50) }}
-                      <i class="fas fa-external-link-alt ml-1"></i>
+                <div class="flex items-center gap-3">
+                   <div class="text-right mr-4 hidden md:block">
+                        <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Estimasi Selesai</p>
+                        <p class="text-sm font-medium text-slate-700">{{ $dokumen->deadline_at ? \Carbon\Carbon::parse($dokumen->deadline_at)->format('d M Y') : '-' }}</p>
+                   </div>
+                   <a href="{{ $dashboardUrl ?? '/owner/dashboard' }}" class="inline-flex items-center justify-center px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:text-emerald-600 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                        <i class="fas fa-arrow-left mr-2"></i> Kembali
                     </a>
-                  @else
-                    <span class="text-muted">-</span>
-                  @endif
                 </div>
-              </div>
             </div>
-          </div>
         </div>
-        @endif
-      </div>
     </div>
-  </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        {{-- 1. Interactive Floating Path (Stepper) --}}
+        <section class="relative">
+            {{-- Horizontal Scroll Container for Mobile --}}
+            <div class="overflow-x-auto pb-8 -mx-4 px-4 scrollbar-hide">
+                <div class="flex items-center min-w-max space-x-4 p-2">
+                    
+                    @foreach($workflowStages as $index => $stage)
+                        @php
+                            $status = $stage['status'] ?? 'pending';
+                            $isLast = $loop->last;
+                            $isActive = $status === 'processing' || $status === 'active';
+                            $isCompleted = $status === 'completed' || $status === 'selesai';
+                            $isReturned = $status === 'returned';
+                            
+                            // Visual Classes Logic
+                            $cardBaseClass = "relative w-72 flex-shrink-0 rounded-2xl p-5 border transition-all duration-300 ease-in-out group select-none";
+                            
+                            if ($isActive) {
+                                // Active: Glassmorphism + Animated Border Effect (via shadow/border)
+                                $cardVisualClass = "bg-white/90 backdrop-blur-xl border-emerald-500/50 ring-4 ring-emerald-500/10 shadow-[0_20px_40px_-15px_rgba(16,185,129,0.3)] translate-y-[-4px]";
+                                $iconBgClass = "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 animate-pulse";
+                                $textTitleClass = "text-slate-900 font-bold";
+                            } elseif ($isCompleted) {
+                                // Completed: Clean Emerald
+                                $cardVisualClass = "bg-emerald-50/50 border-emerald-200 hover:border-emerald-300 hover:shadow-lg shadow-sm hover:-translate-y-1";
+                                $iconBgClass = "bg-emerald-100 text-emerald-600";
+                                $textTitleClass = "text-slate-900 font-semibold";
+                            } elseif ($isReturned) {
+                                // Returned: Amber/Red Attention
+                                $cardVisualClass = "bg-amber-50/50 border-amber-200 ring-2 ring-amber-100 hover:shadow-md";
+                                $iconBgClass = "bg-amber-100 text-amber-600";
+                                $textTitleClass = "text-amber-900 font-semibold";
+                            } else {
+                                // Pending: Muted
+                                $cardVisualClass = "bg-slate-50 border-slate-200 opacity-60 hover:opacity-100 hover:bg-white transition-opacity";
+                                $iconBgClass = "bg-slate-200 text-slate-400";
+                                $textTitleClass = "text-slate-500 font-medium";
+                            }
+                        @endphp
+
+                        {{-- Card --}}
+                        <div class="{{ $cardBaseClass }} {{ $cardVisualClass }}">
+                            
+                            {{-- Active Badge --}}
+                            @if($isActive)
+                            <div class="absolute -top-3 right-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold leading-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white mr-1.5 animate-ping"></span>
+                                    SEDANG DIPROSES
+                                </span>
+                            </div>
+                            @endif
+
+                            {{-- Return Badge --}}
+                            @if($isReturned)
+                            <div class="absolute -top-3 right-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold leading-4 bg-amber-500 text-white shadow-md">
+                                    <i class="fas fa-undo-alt mr-1"></i> DIKEMBALIKAN
+                                </span>
+                            </div>
+                            @endif
+
+                            {{-- Card Header: Icon & Title --}}
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="h-12 w-12 rounded-2xl flex items-center justify-center {{ $iconBgClass }} transition-colors duration-300">
+                                        @if($isCompleted)
+                                            <i class="fas fa-check text-xl"></i>
+                                        @else
+                                            <i class="fas {{ $stage['icon'] ?? 'fa-circle' }} text-xl"></i>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold tracking-wider text-slate-400 uppercase mb-0.5">{{ $stage['label'] }}</p>
+                                        <h3 class="{{ $textTitleClass }} text-lg">{{ $stage['name'] }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Card Content --}}
+                            <div class="space-y-3">
+                                <p class="text-sm {{ $isActive || $isCompleted ? 'text-slate-600' : 'text-slate-400' }}">
+                                    {{ $stage['description'] }}
+                                </p>
+                                
+                                @if(!empty($stage['timestamp']))
+                                <div class="flex items-center gap-2 text-xs text-slate-400 border-t border-slate-100 pt-3 mt-3">
+                                    <i class="far fa-clock"></i>
+                                    <span>{{ \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') }}</span>
+                                </div>
+                                @endif
+                                
+                                {{-- Cycle/Return Info --}}
+                                @if(($stage['hasCycle'] ?? false) || ($stage['hasReturn'] ?? false))
+                                    <div class="mt-2 text-xs text-amber-600 bg-amber-50 rounded-lg p-2 border border-amber-100">
+                                        @if($stage['hasCycle'] ?? false)
+                                            <p><i class="fas fa-history mr-1"></i> Resubmission #{{ $stage['cycleInfo']['cycleCount'] ?? 1 }}</p>
+                                        @endif
+                                        @if($stage['hasReturn'] ?? false)
+                                             <p class="mt-1 font-medium">{{ $stage['returnInfo']['alasan'] ?? 'No reason provided' }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Connector --}}
+                        @if(!$isLast)
+                            @php
+                                // Connector Logic
+                                // If current is completed, and next is active or completed -> Solid Color
+                                // If current is completed, next is pending -> Gradient fade
+                                // If current is active -> Animated Dashed
+                                
+                                $nextStage = $workflowStages[$index + 1];
+                                $nextStatus = $nextStage['status'] ?? 'pending';
+                                
+                                $connectorClass = "h-1 w-12 rounded-full mx-2"; // Default length
+                                
+                                if ($isCompleted && ($nextStatus === 'completed' || $nextStatus === 'selesai')) {
+                                    // Solid Green
+                                    $connectorVisual = "bg-emerald-400";
+                                } elseif ($isCompleted && ($nextStatus === 'processing' || $nextStatus === 'active')) {
+                                    // Gradient Green to Pulse
+                                    $connectorVisual = "bg-gradient-to-r from-emerald-400 to-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
+                                } elseif ($isActive) {
+                                    // Animated Dashed/Gradient
+                                    $connectorVisual = "bg-gradient-to-r from-emerald-500 to-slate-200 animate-pulse";
+                                } else {
+                                    // Gray
+                                    $connectorVisual = "bg-slate-200";
+                                }
+                            @endphp
+                            <div class="{{ $connectorClass }}">
+                                <div class="h-full w-full rounded-full {{ $connectorVisual }}"></div>
+                            </div>
+                        @endif
+
+                    @endforeach
+                    
+                </div>
+            </div>
+        </section>
+
+
+        {{-- 2. Bento Grid Layout for Information --}}
+        <section>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                {{-- Main Info Card (Large) --}}
+                <div class="lg:col-span-8 space-y-6">
+                    
+                    {{-- Financial Stats (Hero) --}}
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors duration-500"></div>
+                        
+                        <div class="relative z-10">
+                            <p class="text-slate-400 font-medium tracking-wide uppercase text-sm mb-2">Nilai Nominal</p>
+                            <h2 class="text-4xl sm:text-5xl font-bold tracking-tight mb-6">
+                                <span class="text-emerald-400">Rp</span> 
+                                {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}
+                            </h2>
+                            
+                            <div class="grid grid-cols-2 gap-8 border-t border-white/10 pt-6">
+                                <div>
+                                    <p class="text-slate-400 text-sm mb-1">Nomor SPP</p>
+                                    <p class="font-mono text-lg font-medium tracking-wide">{{ $dokumen->nomor_spp }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400 text-sm mb-1">Dibayar Kepada</p>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                                        <p class="font-medium truncate">{{ is_object($dokumen->dibayarKepadas) ? $dokumen->dibayarKepadas->nama_penerima : ($dokumen->dibayar_kepada ?? '-') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Data Awal Grid --}}
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
+                            <i class="fas fa-file-alt text-emerald-500"></i> Informasi Dokumen
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                            <div class="group col-span-full">
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1 group-hover:text-emerald-500 transition-colors">Uraian SPP</p>
+                                <p class="text-slate-700 font-medium text-base">{{ $dokumen->uraian_spp ?? '-' }}</p>
+                            </div>
+                            
+                            <div class="group">
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1 group-hover:text-emerald-500 transition-colors">Nomor Agenda</p>
+                                <p class="text-slate-700 font-medium text-base">{{ $dokumen->nomor_agenda ?? '-' }}</p>
+                            </div>
+
+                            <div class="group">
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1 group-hover:text-emerald-500 transition-colors">Jenis Dokumen</p>
+                                <p class="text-slate-700 font-medium text-base">{{ $dokumen->jenis_dokumen ?? '-' }}</p>
+                            </div>
+
+                            <div class="group">
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1 group-hover:text-emerald-500 transition-colors">Kategori</p>
+                                <p class="text-slate-700 font-medium text-base">{{ $dokumen->kategori ?? '-' }}</p>
+                            </div>
+
+                            <div class="group">
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1 group-hover:text-emerald-500 transition-colors">Bagian Pengirim</p>
+                                <p class="text-slate-700 font-medium text-base">{{ $dokumen->bagian ?? '-' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- Side Stats (Right Column) --}}
+                <div class="lg:col-span-4 space-y-6">
+                    
+                    {{-- Tax Data --}}
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 h-full relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <h3 class="text-lg font-semibold text-slate-900 mb-6 relative z-10 flex items-center gap-2">
+                            <i class="fas fa-calculator text-emerald-500"></i> Data Perpajakan
+                        </h3>
+                        
+                        <div class="space-y-4 relative z-10">
+                            @if($dokumen->npwp || $dokumen->no_faktur)
+                                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p class="text-xs text-slate-500 uppercase font-bold mb-1">NPWP</p>
+                                    <p class="font-mono text-slate-900 font-medium">{{ $dokumen->npwp ?? '-' }}</p>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p class="text-xs text-slate-500 uppercase font-bold mb-1">No. Faktur</p>
+                                    <p class="font-mono text-slate-900 font-medium">{{ $dokumen->no_faktur ?? '-' }}</p>
+                                </div>
+                                @if($dokumen->jenis_pph)
+                                <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                                    <p class="text-xs text-emerald-600 uppercase font-bold mb-1">Jenis PPh</p>
+                                    <p class="text-slate-900 font-medium">{{ $dokumen->jenis_pph }}</p>
+                                </div>
+                                @endif
+                            @else
+                                <div class="text-center py-8 text-slate-400">
+                                    <i class="fas fa-search-dollar text-3xl mb-2 opacity-50"></i>
+                                    <p class="text-sm">Belum ada data perpajakan</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
+                
+                {{-- Full Width Sections --}}
+                <div class="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {{-- Additional Accounting Data or Status Logs --}}
+                     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Activity Logs</h3>
+                        <div class="max-h-60 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                           @foreach($dokumen->activityLogs->sortByDesc('created_at') as $log)
+                           <div class="flex gap-3">
+                               <div class="mt-1">
+                                    <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+                               </div>
+                               <div>
+                                   <p class="text-sm text-slate-800 font-medium">{{ $log->description }}</p>
+                                   <p class="text-xs text-slate-400">{{ $log->created_at->diffForHumans() }}</p>
+                               </div>
+                           </div>
+                           @endforeach
+                        </div>
+                     </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
 </div>
-
-<script>
-// Accordion Toggle Function
-function toggleAccordion(id) {
-  const item = document.querySelector(`#content-${id}`).closest('.accordion-item');
-  const isActive = item.classList.contains('active');
-  
-  // Close all accordions
-  document.querySelectorAll('.accordion-item').forEach(acc => {
-    acc.classList.remove('active');
-  });
-  
-  // Open clicked accordion if it wasn't active
-  if (!isActive) {
-    item.classList.add('active');
-  }
-}
-</script>
-
 @endsection
