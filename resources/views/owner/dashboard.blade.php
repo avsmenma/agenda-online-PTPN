@@ -1271,11 +1271,11 @@ body {
                   <div class="stepper-step {{ $i <= $currentStep ? ($i == $currentStep ? 'active' : 'completed') : '' }}">
                     {{ $i }}
                     <div class="stepper-step-label">
-                      @if($i == 1) Sender
-                      @elseif($i == 2) Reviewer
-                      @elseif($i == 3) Tax
-                      @elseif($i == 4) Accounting
-                      @else Payment
+                      @if($i == 1) ibutara
+                      @elseif($i == 2) teamverifikasi
+                      @elseif($i == 3) team perpajakan
+                      @elseif($i == 4) team akutansi
+                      @else pembayaran
                       @endif
                     </div>
                   </div>
