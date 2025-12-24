@@ -549,6 +549,244 @@
     color: #64748b;
   }
 
+  /* Clickable Card */
+  .info-card.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .info-card.clickable:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(8, 62, 64, 0.15);
+    border-color: rgba(8, 62, 64, 0.3);
+  }
+
+  /* Modern Modal Popup */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .modal-overlay.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+  }
+
+  .modal-container {
+    background: white;
+    border-radius: 24px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-overlay.show .modal-container {
+    transform: scale(1) translateY(0);
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+    padding: 24px 32px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modal-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+  }
+
+  .modal-header-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .modal-header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  .modal-header-text h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0;
+    margin-bottom: 4px;
+  }
+
+  .modal-header-text p {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  .modal-close {
+    position: relative;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+
+  .modal-body {
+    padding: 32px;
+    overflow-y: auto;
+    flex: 1;
+    background: #f8faf9;
+  }
+
+  .modal-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(8, 62, 64, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.1);
+  }
+
+  .modal-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #083E40;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-section-title i {
+    font-size: 18px;
+  }
+
+  .modal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  .modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .modal-field-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+  }
+
+  .modal-field-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    word-break: break-word;
+  }
+
+  .modal-field-value.monospace {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+  }
+
+  .modal-field-value.highlight {
+    color: #083E40;
+    font-weight: 700;
+  }
+
+  .modal-field-value.empty {
+    color: #cbd5e1;
+    font-style: italic;
+  }
+
+  /* Tax Specific Styles */
+  .tax-summary-card {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid #86efac;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .tax-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(8, 62, 64, 0.1);
+  }
+
+  .tax-summary-row:last-child {
+    border-bottom: none;
+  }
+
+  .tax-summary-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #059669;
+  }
+
+  .tax-summary-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #083E40;
+    font-family: 'Courier New', monospace;
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .workflow-container {
@@ -581,6 +819,23 @@
 
     .hero-financial-value {
       font-size: 36px;
+    }
+
+    .modal-container {
+      width: 95%;
+      max-height: 95vh;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+    }
+
+    .modal-body {
+      padding: 24px 20px;
+    }
+
+    .modal-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
@@ -809,7 +1064,7 @@
     </div>
 
     {{-- Tax Data Card --}}
-    <div class="info-card">
+    <div class="info-card clickable" id="tax-data-card" data-modal-type="tax">
       <div class="info-card-header">
         <div class="info-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
           <i class="fas fa-calculator"></i>
@@ -869,9 +1124,604 @@
   </div>
 </div>
 
+{{-- Modal Popup --}}
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-header-content">
+        <div class="modal-header-icon" id="modal-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="modal-header-text">
+          <h2 id="modal-title">Detail Dokumen</h2>
+          <p id="modal-subtitle">Informasi lengkap dokumen</p>
+        </div>
+      </div>
+      <button class="modal-close" id="modal-close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body custom-scrollbar" id="modal-body">
+      {{-- Content will be populated by JavaScript --}}
+    </div>
+  </div>
+</div>
+
 <script>
-  // Smooth scroll to active stage on load
+  // Document data for modal
+  @php
+    $documentDataArray = [
+      'nomor_agenda' => $dokumen->nomor_agenda ?? null,
+      'nomor_spp' => $dokumen->nomor_spp ?? null,
+      'tanggal_spp' => $dokumen->tanggal_spp ? \Carbon\Carbon::parse($dokumen->tanggal_spp)->format('d M Y') : null,
+      'uraian_spp' => $dokumen->uraian_spp ?? null,
+      'nilai_rupiah' => $dokumen->nilai_rupiah ?? null,
+      'kategori' => $dokumen->kategori ?? null,
+      'jenis_dokumen' => $dokumen->jenis_dokumen ?? null,
+      'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? null,
+      'jenis_pembayaran' => $dokumen->jenis_pembayaran ?? null,
+      'kebun' => $dokumen->kebun ?? null,
+      'bagian' => $dokumen->bagian ?? null,
+      'nama_pengirim' => $dokumen->nama_pengirim ?? null,
+      'dibayar_kepada' => $dokumen->dibayarKepadas->first()?->nama_penerima ?? $dokumen->dibayar_kepada ?? null,
+      'no_berita_acara' => $dokumen->no_berita_acara ?? null,
+      'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? \Carbon\Carbon::parse($dokumen->tanggal_berita_acara)->format('d M Y') : null,
+      'no_spk' => $dokumen->no_spk ?? null,
+      'tanggal_spk' => $dokumen->tanggal_spk ? \Carbon\Carbon::parse($dokumen->tanggal_spk)->format('d M Y') : null,
+      'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? \Carbon\Carbon::parse($dokumen->tanggal_berakhir_spk)->format('d M Y') : null,
+      'nomor_miro' => $dokumen->nomor_miro ?? null,
+      'status' => $dokumen->status ?? null,
+      'keterangan' => $dokumen->keterangan ?? null,
+      'tanggal_masuk' => $dokumen->tanggal_masuk ? \Carbon\Carbon::parse($dokumen->tanggal_masuk)->format('d M Y, H:i') : null,
+    ];
+
+    $taxDataArray = [
+      'npwp' => $dokumen->npwp ?? null,
+      'status_perpajakan' => $dokumen->status_perpajakan ?? null,
+      'no_faktur' => $dokumen->no_faktur ?? null,
+      'tanggal_faktur' => $dokumen->tanggal_faktur ? \Carbon\Carbon::parse($dokumen->tanggal_faktur)->format('d M Y') : null,
+      'tanggal_selesai_verifikasi_pajak' => $dokumen->tanggal_selesai_verifikasi_pajak ? \Carbon\Carbon::parse($dokumen->tanggal_selesai_verifikasi_pajak)->format('d M Y') : null,
+      'jenis_pph' => $dokumen->jenis_pph ?? null,
+      'dpp_pph' => $dokumen->dpp_pph ?? null,
+      'ppn_terhutang' => $dokumen->ppn_terhutang ?? null,
+      'link_dokumen_pajak' => $dokumen->link_dokumen_pajak ?? null,
+      'komoditi_perpajakan' => $dokumen->komoditi_perpajakan ?? null,
+      'alamat_pembeli' => $dokumen->alamat_pembeli ?? null,
+      'no_kontrak' => $dokumen->no_kontrak ?? null,
+      'no_invoice' => $dokumen->no_invoice ?? null,
+      'tanggal_invoice' => $dokumen->tanggal_invoice ? \Carbon\Carbon::parse($dokumen->tanggal_invoice)->format('d M Y') : null,
+      'dpp_invoice' => $dokumen->dpp_invoice ?? null,
+      'ppn_invoice' => $dokumen->ppn_invoice ?? null,
+      'dpp_ppn_invoice' => $dokumen->dpp_ppn_invoice ?? null,
+      'tanggal_pengajuan_pajak' => $dokumen->tanggal_pengajuan_pajak ? \Carbon\Carbon::parse($dokumen->tanggal_pengajuan_pajak)->format('d M Y') : null,
+      'dpp_faktur' => $dokumen->dpp_faktur ?? null,
+      'ppn_faktur' => $dokumen->ppn_faktur ?? null,
+      'selisih_pajak' => $dokumen->selisih_pajak ?? null,
+      'keterangan_pajak' => $dokumen->keterangan_pajak ?? null,
+      'penggantian_pajak' => $dokumen->penggantian_pajak ?? null,
+      'dpp_penggantian' => $dokumen->dpp_penggantian ?? null,
+      'ppn_penggantian' => $dokumen->ppn_penggantian ?? null,
+      'selisih_ppn' => $dokumen->selisih_ppn ?? null,
+    ];
+  @endphp
+  const documentData = @json($documentDataArray);
+  const taxData = @json($taxDataArray);
+
+  function formatCurrency(value) {
+    if (!value) return '-';
+    return 'Rp ' + parseFloat(value).toLocaleString('id-ID');
+  }
+
+  function formatField(label, value, options = {}) {
+    if (value === null || value === undefined || value === '') return null;
+    
+    const { monospace = false, highlight = false, currency = false } = options;
+    let displayValue = value;
+    
+    if (currency && value) {
+      displayValue = formatCurrency(value);
+    }
+    
+    return {
+      label,
+      value: displayValue,
+      monospace,
+      highlight,
+      empty: false
+    };
+  }
+
+  function renderDocumentModal() {
+    const modalBody = document.getElementById('modal-body');
+    modalBody.innerHTML = `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-info-circle"></i>
+          Informasi Umum
+        </div>
+        <div class="modal-grid">
+          ${formatField('Nomor Agenda', documentData.nomor_agenda) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Nomor Agenda</div>
+              <div class="modal-field-value highlight">${documentData.nomor_agenda}</div>
+            </div>
+          ` : ''}
+          ${formatField('Nomor SPP', documentData.nomor_spp) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Nomor SPP</div>
+              <div class="modal-field-value monospace highlight">${documentData.nomor_spp}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal SPP', documentData.tanggal_spp) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal SPP</div>
+              <div class="modal-field-value">${documentData.tanggal_spp}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal Masuk', documentData.tanggal_masuk) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Masuk</div>
+              <div class="modal-field-value">${documentData.tanggal_masuk}</div>
+            </div>
+          ` : ''}
+          ${formatField('Status', documentData.status) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Status</div>
+              <div class="modal-field-value highlight">${documentData.status}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-file-invoice-dollar"></i>
+          Detail Dokumen
+        </div>
+        <div class="modal-grid">
+          ${formatField('Uraian SPP', documentData.uraian_spp) ? `
+            <div class="modal-field" style="grid-column: 1 / -1;">
+              <div class="modal-field-label">Uraian SPP</div>
+              <div class="modal-field-value">${documentData.uraian_spp}</div>
+            </div>
+          ` : ''}
+          ${formatField('Nilai Rupiah', documentData.nilai_rupiah, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Nilai Rupiah</div>
+              <div class="modal-field-value highlight">${formatCurrency(documentData.nilai_rupiah)}</div>
+            </div>
+          ` : ''}
+          ${formatField('Kategori', documentData.kategori) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Kategori</div>
+              <div class="modal-field-value">${documentData.kategori}</div>
+            </div>
+          ` : ''}
+          ${formatField('Jenis Dokumen', documentData.jenis_dokumen) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Jenis Dokumen</div>
+              <div class="modal-field-value">${documentData.jenis_dokumen}</div>
+            </div>
+          ` : ''}
+          ${formatField('Jenis Sub Pekerjaan', documentData.jenis_sub_pekerjaan) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Jenis Sub Pekerjaan</div>
+              <div class="modal-field-value">${documentData.jenis_sub_pekerjaan}</div>
+            </div>
+          ` : ''}
+          ${formatField('Jenis Pembayaran', documentData.jenis_pembayaran) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Jenis Pembayaran</div>
+              <div class="modal-field-value">${documentData.jenis_pembayaran}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-building"></i>
+          Informasi Pengirim & Penerima
+        </div>
+        <div class="modal-grid">
+          ${formatField('Kebun', documentData.kebun) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Kebun</div>
+              <div class="modal-field-value">${documentData.kebun}</div>
+            </div>
+          ` : ''}
+          ${formatField('Bagian', documentData.bagian) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Bagian Pengirim</div>
+              <div class="modal-field-value">${documentData.bagian}</div>
+            </div>
+          ` : ''}
+          ${formatField('Nama Pengirim', documentData.nama_pengirim) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Nama Pengirim</div>
+              <div class="modal-field-value">${documentData.nama_pengirim}</div>
+            </div>
+          ` : ''}
+          ${formatField('Dibayar Kepada', documentData.dibayar_kepada) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Dibayar Kepada</div>
+              <div class="modal-field-value highlight">${documentData.dibayar_kepada}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      ${(documentData.no_berita_acara || documentData.no_spk || documentData.nomor_miro) ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-file-contract"></i>
+          Dokumen Pendukung
+        </div>
+        <div class="modal-grid">
+          ${formatField('No. Berita Acara', documentData.no_berita_acara) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">No. Berita Acara</div>
+              <div class="modal-field-value monospace">${documentData.no_berita_acara}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal Berita Acara', documentData.tanggal_berita_acara) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Berita Acara</div>
+              <div class="modal-field-value">${documentData.tanggal_berita_acara}</div>
+            </div>
+          ` : ''}
+          ${formatField('No. SPK', documentData.no_spk) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">No. SPK</div>
+              <div class="modal-field-value monospace">${documentData.no_spk}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal SPK', documentData.tanggal_spk) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal SPK</div>
+              <div class="modal-field-value">${documentData.tanggal_spk}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal Berakhir SPK', documentData.tanggal_berakhir_spk) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Berakhir SPK</div>
+              <div class="modal-field-value">${documentData.tanggal_berakhir_spk}</div>
+            </div>
+          ` : ''}
+          ${formatField('Nomor MIRO', documentData.nomor_miro) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Nomor MIRO</div>
+              <div class="modal-field-value monospace highlight">${documentData.nomor_miro}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${documentData.keterangan ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-sticky-note"></i>
+          Keterangan
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-value">${documentData.keterangan}</div>
+        </div>
+      </div>
+      ` : ''}
+    `;
+  }
+
+  function renderTaxModal() {
+    const modalBody = document.getElementById('modal-body');
+    
+    // Check if there's any tax data
+    const hasTaxData = Object.values(taxData).some(v => v !== null && v !== '');
+    
+    if (!hasTaxData) {
+      modalBody.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+          <i class="fas fa-search-dollar" style="font-size: 64px; color: #cbd5e1; margin-bottom: 20px;"></i>
+          <h3 style="color: #64748b; margin-bottom: 8px;">Belum Ada Data Perpajakan</h3>
+          <p style="color: #94a3b8;">Data perpajakan untuk dokumen ini belum diisi.</p>
+        </div>
+      `;
+      return;
+    }
+
+    modalBody.innerHTML = `
+      ${taxData.npwp || taxData.no_faktur || taxData.jenis_pph ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-id-card"></i>
+          Identitas Perpajakan
+        </div>
+        <div class="modal-grid">
+          ${formatField('NPWP', taxData.npwp) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">NPWP</div>
+              <div class="modal-field-value monospace highlight">${taxData.npwp}</div>
+            </div>
+          ` : ''}
+          ${formatField('No. Faktur', taxData.no_faktur) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">No. Faktur</div>
+              <div class="modal-field-value monospace highlight">${taxData.no_faktur}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal Faktur', taxData.tanggal_faktur) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Faktur</div>
+              <div class="modal-field-value">${taxData.tanggal_faktur}</div>
+            </div>
+          ` : ''}
+          ${formatField('Jenis PPh', taxData.jenis_pph) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Jenis PPh</div>
+              <div class="modal-field-value highlight">${taxData.jenis_pph}</div>
+            </div>
+          ` : ''}
+          ${formatField('Status Perpajakan', taxData.status_perpajakan) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Status Perpajakan</div>
+              <div class="modal-field-value highlight">${taxData.status_perpajakan}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal Selesai Verifikasi', taxData.tanggal_selesai_verifikasi_pajak) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Selesai Verifikasi</div>
+              <div class="modal-field-value">${taxData.tanggal_selesai_verifikasi_pajak}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.komoditi_perpajakan || taxData.alamat_pembeli || taxData.no_kontrak ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-building"></i>
+          Informasi Pembeli
+        </div>
+        <div class="modal-grid">
+          ${formatField('Komoditi', taxData.komoditi_perpajakan) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Komoditi</div>
+              <div class="modal-field-value">${taxData.komoditi_perpajakan}</div>
+            </div>
+          ` : ''}
+          ${formatField('Alamat Pembeli', taxData.alamat_pembeli) ? `
+            <div class="modal-field" style="grid-column: 1 / -1;">
+              <div class="modal-field-label">Alamat Pembeli</div>
+              <div class="modal-field-value">${taxData.alamat_pembeli}</div>
+            </div>
+          ` : ''}
+          ${formatField('No. Kontrak', taxData.no_kontrak) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">No. Kontrak</div>
+              <div class="modal-field-value monospace">${taxData.no_kontrak}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.dpp_pph || taxData.ppn_terhutang ? `
+      <div class="tax-summary-card">
+        <div class="tax-summary-row">
+          <div class="tax-summary-label">DPP PPh</div>
+          <div class="tax-summary-value">${formatCurrency(taxData.dpp_pph)}</div>
+        </div>
+        <div class="tax-summary-row">
+          <div class="tax-summary-label">PPN Terhutang</div>
+          <div class="tax-summary-value">${formatCurrency(taxData.ppn_terhutang)}</div>
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.no_invoice || taxData.dpp_invoice || taxData.ppn_invoice ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-file-invoice"></i>
+          Data Invoice
+        </div>
+        <div class="modal-grid">
+          ${formatField('No. Invoice', taxData.no_invoice) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">No. Invoice</div>
+              <div class="modal-field-value monospace">${taxData.no_invoice}</div>
+            </div>
+          ` : ''}
+          ${formatField('Tanggal Invoice', taxData.tanggal_invoice) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Invoice</div>
+              <div class="modal-field-value">${taxData.tanggal_invoice}</div>
+            </div>
+          ` : ''}
+          ${formatField('DPP Invoice', taxData.dpp_invoice, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">DPP Invoice</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.dpp_invoice)}</div>
+            </div>
+          ` : ''}
+          ${formatField('PPN Invoice', taxData.ppn_invoice, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">PPN Invoice</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.ppn_invoice)}</div>
+            </div>
+          ` : ''}
+          ${formatField('DPP + PPN Invoice', taxData.dpp_ppn_invoice, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">DPP + PPN Invoice</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.dpp_ppn_invoice)}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.dpp_faktur || taxData.ppn_faktur || taxData.selisih_pajak ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-receipt"></i>
+          Data Faktur
+        </div>
+        <div class="modal-grid">
+          ${formatField('DPP Faktur', taxData.dpp_faktur, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">DPP Faktur</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.dpp_faktur)}</div>
+            </div>
+          ` : ''}
+          ${formatField('PPN Faktur', taxData.ppn_faktur, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">PPN Faktur</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.ppn_faktur)}</div>
+            </div>
+          ` : ''}
+          ${formatField('Selisih Pajak', taxData.selisih_pajak, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Selisih Pajak</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.selisih_pajak)}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.penggantian_pajak || taxData.dpp_penggantian || taxData.ppn_penggantian || taxData.selisih_ppn ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-exchange-alt"></i>
+          Penggantian Pajak
+        </div>
+        <div class="modal-grid">
+          ${formatField('Penggantian Pajak', taxData.penggantian_pajak) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Penggantian Pajak</div>
+              <div class="modal-field-value">${taxData.penggantian_pajak}</div>
+            </div>
+          ` : ''}
+          ${formatField('DPP Penggantian', taxData.dpp_penggantian, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">DPP Penggantian</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.dpp_penggantian)}</div>
+            </div>
+          ` : ''}
+          ${formatField('PPN Penggantian', taxData.ppn_penggantian, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">PPN Penggantian</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.ppn_penggantian)}</div>
+            </div>
+          ` : ''}
+          ${formatField('Selisih PPN', taxData.selisih_ppn, { currency: true }) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Selisih PPN</div>
+              <div class="modal-field-value highlight">${formatCurrency(taxData.selisih_ppn)}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.tanggal_pengajuan_pajak ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-calendar-check"></i>
+          Timeline Perpajakan
+        </div>
+        <div class="modal-grid">
+          ${formatField('Tanggal Pengajuan Pajak', taxData.tanggal_pengajuan_pajak) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Pengajuan Pajak</div>
+              <div class="modal-field-value">${taxData.tanggal_pengajuan_pajak}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.keterangan_pajak ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-sticky-note"></i>
+          Keterangan Pajak
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-value">${taxData.keterangan_pajak}</div>
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.link_dokumen_pajak ? `
+      <div class="modal-section">
+        <div class="modal-section-title">
+          <i class="fas fa-link"></i>
+          Link Dokumen Pajak
+        </div>
+        <div class="modal-field">
+          <a href="${taxData.link_dokumen_pajak}" target="_blank" class="modal-field-value" style="color: #083E40; text-decoration: underline;">
+            <i class="fas fa-external-link-alt mr-2"></i>
+            ${taxData.link_dokumen_pajak}
+          </a>
+        </div>
+      </div>
+      ` : ''}
+    `;
+  }
+
+  // Modal functionality
   document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('detail-modal');
+    const modalClose = document.getElementById('modal-close');
+    const documentCard = document.getElementById('document-info-card');
+    const taxCard = document.getElementById('tax-data-card');
+    const modalTitle = document.getElementById('modal-title');
+    const modalSubtitle = document.getElementById('modal-subtitle');
+    const modalIcon = document.getElementById('modal-icon');
+
+    function openModal(type) {
+      if (type === 'document') {
+        modalTitle.textContent = 'Detail Informasi Dokumen';
+        modalSubtitle.textContent = 'Informasi lengkap dokumen';
+        modalIcon.innerHTML = '<i class="fas fa-file-alt"></i>';
+        modalIcon.style.background = 'linear-gradient(135deg, #083E40 0%, #889717 100%)';
+        renderDocumentModal();
+      } else if (type === 'tax') {
+        modalTitle.textContent = 'Detail Data Perpajakan';
+        modalSubtitle.textContent = 'Informasi lengkap perpajakan';
+        modalIcon.innerHTML = '<i class="fas fa-calculator"></i>';
+        modalIcon.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        renderTaxModal();
+      }
+      
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    documentCard.addEventListener('click', () => openModal('document'));
+    taxCard.addEventListener('click', () => openModal('tax'));
+    modalClose.addEventListener('click', closeModal);
+    
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Close on ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && modal.classList.contains('show')) {
+        closeModal();
+      }
+    });
+
+    // Smooth scroll to active stage on load
     const activeStage = document.querySelector('.timeline-stage.active');
     if (activeStage) {
       setTimeout(() => {
