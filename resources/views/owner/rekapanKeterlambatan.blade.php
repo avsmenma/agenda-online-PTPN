@@ -2,8 +2,30 @@
 @section('content')
 
 <style>
+  /* Color Variables */
+  @php
+    $isPerpajakan = isset($selectedTeam) && $selectedTeam == 'perpajakan';
+    $primaryColor = $isPerpajakan ? '#1a4d3e' : '#083E40';
+    $primaryDark = $isPerpajakan ? '#0f3d2e' : '#0a4f52';
+    $secondaryColor = $isPerpajakan ? '#40916c' : '#889717';
+    $primaryRgba = $isPerpajakan ? 'rgba(26, 77, 62, 0.1)' : 'rgba(8, 62, 64, 0.1)';
+    $primaryRgbaDark = $isPerpajakan ? 'rgba(26, 77, 62, 0.2)' : 'rgba(8, 62, 64, 0.2)';
+    $primaryBorder = $isPerpajakan ? 'rgba(26, 77, 62, 0.08)' : 'rgba(8, 62, 64, 0.08)';
+    $primaryBorderHover = $isPerpajakan ? 'rgba(26, 77, 62, 0.15)' : 'rgba(8, 62, 64, 0.15)';
+  @endphp
+
+  :root {
+    --primary-color: {{ $primaryColor }};
+    --primary-dark: {{ $primaryDark }};
+    --secondary-color: {{ $secondaryColor }};
+    --primary-rgba: {{ $primaryRgba }};
+    --primary-rgba-dark: {{ $primaryRgbaDark }};
+    --primary-border: {{ $primaryBorder }};
+    --primary-border-hover: {{ $primaryBorderHover }};
+  }
+
   h2 {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -24,8 +46,8 @@
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid var(--primary-border);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -38,13 +60,13 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   }
 
   .team-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
-    border-color: rgba(8, 62, 64, 0.15);
+    box-shadow: 0 12px 40px var(--primary-rgba-dark), 0 4px 16px rgba(64, 145, 108, 0.1);
+    border-color: var(--primary-border-hover);
   }
 
   .team-card-header {
@@ -57,7 +79,7 @@
   .team-card-title {
     font-size: 16px;
     font-weight: 600;
-    color: #083E40;
+    color: var(--primary-color);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -71,7 +93,7 @@
     justify-content: center;
     font-size: 20px;
     color: white;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   }
 
   .team-card-stats {
@@ -87,7 +109,7 @@
   .team-stat-value {
     font-size: 24px;
     font-weight: 700;
-    color: #083E40;
+    color: var(--primary-color);
     margin-bottom: 4px;
     line-height: 1;
   }
@@ -106,8 +128,8 @@
     padding: 8px;
     border-radius: 16px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid var(--primary-border);
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -118,7 +140,7 @@
     border-radius: 12px;
     font-weight: 600;
     font-size: 14px;
-    color: #083E40;
+    color: var(--primary-color);
     background: transparent;
     border: 2px solid transparent;
     cursor: pointer;
@@ -128,14 +150,14 @@
   }
 
   .tab-button:hover {
-    background: rgba(8, 62, 64, 0.05);
-    color: #083E40;
+    background: var(--primary-rgba);
+    color: var(--primary-color);
   }
 
   .tab-button.active {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
-    border-color: #083E40;
+    border-color: var(--primary-color);
   }
 
   /* Chart Section */
@@ -144,8 +166,8 @@
     padding: 30px;
     border-radius: 16px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid var(--primary-border);
   }
 
   .chart-header {
@@ -155,7 +177,7 @@
   .chart-title {
     font-size: 18px;
     font-weight: 700;
-    color: #083E40;
+    color: var(--primary-color);
     margin-bottom: 8px;
   }
 
@@ -175,14 +197,14 @@
     padding: 30px;
     border-radius: 16px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid var(--primary-border);
   }
 
   .filter-title {
     font-size: 16px;
     font-weight: 600;
-    color: #083E40;
+    color: var(--primary-color);
     margin-bottom: 20px;
   }
 
@@ -190,8 +212,8 @@
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 30px;
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
+    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
+    border: 1px solid var(--primary-border);
   }
 
   .table-responsive {
@@ -206,7 +228,7 @@
   }
 
   .table-responsive::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     border-radius: 6px;
     border: 2px solid #ffffff;
   }
@@ -217,7 +239,7 @@
   }
 
   .table thead {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%) !important;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
   }
 
   .table thead th {
@@ -241,14 +263,14 @@
   }
 
   .table tbody tr.clickable-row:hover {
-    background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #889717;
+    background: linear-gradient(90deg, var(--primary-rgba) 0%, transparent 100%);
+    border-left: 3px solid var(--secondary-color);
     transform: scale(1.002);
   }
 
   .table tbody tr:hover {
-    background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #889717;
+    background: linear-gradient(90deg, var(--primary-rgba) 0%, transparent 100%);
+    border-left: 3px solid var(--secondary-color);
     transform: scale(1.002);
   }
 
@@ -282,7 +304,7 @@
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
   }
@@ -303,20 +325,20 @@
   }
 
   .pagination .page-link {
-    color: #083E40;
+    color: var(--primary-color);
     background: white;
-    border: 2px solid #083E40;
+    border: 2px solid var(--primary-color);
   }
 
   .pagination .page-link:hover {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
   }
 
   .pagination .active .page-link {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
-    border-color: #083E40;
+    border-color: var(--primary-color);
   }
 
   .form-control, .form-select {
@@ -327,12 +349,12 @@
   }
 
   .form-control:focus, .form-select:focus {
-    border-color: #083E40;
-    box-shadow: 0 0 0 0.2rem rgba(8, 62, 64, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem var(--primary-rgba);
   }
 
   .btn-filter {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -343,7 +365,7 @@
 
   .btn-filter:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+    box-shadow: 0 4px 12px var(--primary-rgba-dark);
   }
 </style>
 
@@ -441,7 +463,7 @@
 
   <!-- Table Section -->
   <div class="table-container">
-    <h6 style="font-size: 18px; font-weight: 700; color: #083E40; margin-bottom: 24px;">
+    <h6 style="font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px;">
       <span>Daftar Dokumen Terlambat</span>
     </h6>
     <div class="table-responsive">
@@ -558,21 +580,26 @@
   const monthlyStats = @json($monthlyStats);
   const months = @json($months);
   const teams = @json($teams);
+  const isPerpajakan = @json(isset($selectedTeam) && $selectedTeam == 'perpajakan');
 
-  // Chart colors
+  // Chart colors - Perpajakan uses green theme colors
   const teamColors = {
     'ibuA': 'rgba(8, 62, 64, 1)',
     'ibuB': 'rgba(136, 151, 23, 1)',
-    'perpajakan': 'rgba(40, 167, 69, 1)',
+    'perpajakan': 'rgba(26, 77, 62, 1)',
     'akutansi': 'rgba(23, 162, 184, 1)',
   };
 
   const teamColorsTransparent = {
     'ibuA': 'rgba(8, 62, 64, 0.1)',
     'ibuB': 'rgba(136, 151, 23, 0.1)',
-    'perpajakan': 'rgba(40, 167, 69, 0.1)',
+    'perpajakan': 'rgba(26, 77, 62, 0.1)',
     'akutansi': 'rgba(23, 162, 184, 0.1)',
   };
+
+  // Get CSS variable values for chart
+  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+  const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
 
   // Prepare datasets
   const datasets = [];
@@ -621,7 +648,7 @@
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(8, 62, 64, 0.9)',
+          backgroundColor: isPerpajakan ? 'rgba(26, 77, 62, 0.9)' : 'rgba(8, 62, 64, 0.9)',
           padding: 12,
           cornerRadius: 8,
           titleFont: {
@@ -638,11 +665,11 @@
         y: {
           beginAtZero: true,
           grid: {
-            color: 'rgba(8, 62, 64, 0.05)',
+            color: isPerpajakan ? 'rgba(26, 77, 62, 0.05)' : 'rgba(8, 62, 64, 0.05)',
             drawBorder: false
           },
           ticks: {
-            color: '#083E40',
+            color: primaryColor || (isPerpajakan ? '#1a4d3e' : '#083E40'),
             font: {
               size: 12,
               weight: '500'
@@ -656,7 +683,7 @@
             drawBorder: false
           },
           ticks: {
-            color: '#083E40',
+            color: primaryColor || (isPerpajakan ? '#1a4d3e' : '#083E40'),
             font: {
               size: 11,
               weight: '500'
