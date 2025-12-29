@@ -897,6 +897,22 @@ class OwnerDashboardController extends Controller
             }
         }
 
+        // Check if reviewer stage is overdue
+        $reviewerRoleData = $dokumen->getDataForRole('ibub');
+        $reviewerIsOverdue = false;
+        $reviewerDeadlineInfo = null;
+        if ($reviewerRoleData && $reviewerRoleData->deadline_at && !$reviewerRoleData->processed_at) {
+            if (now()->greaterThan($reviewerRoleData->deadline_at)) {
+                $reviewerIsOverdue = true;
+                $daysOverdue = now()->diffInDays($reviewerRoleData->deadline_at);
+                $reviewerDeadlineInfo = [
+                    'deadline_at' => $reviewerRoleData->deadline_at,
+                    'days_overdue' => $daysOverdue,
+                    'deadline_note' => $reviewerRoleData->deadline_note,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'reviewer',
             'name' => 'Ibu Yuni',
@@ -913,7 +929,9 @@ class OwnerDashboardController extends Controller
             'hasReturn' => $reviewerReturnInfo !== null,
             'returnInfo' => $reviewerReturnInfo,
             'hasCycle' => $reviewerCycleInfo['hasCycle'],
-            'cycleInfo' => $reviewerCycleInfo
+            'cycleInfo' => $reviewerCycleInfo,
+            'isOverdue' => $reviewerIsOverdue,
+            'deadlineInfo' => $reviewerDeadlineInfo
         ];
 
         // Stage 3: TAX (Team Perpajakan)
@@ -961,6 +979,22 @@ class OwnerDashboardController extends Controller
             }
         }
 
+        // Check if tax stage is overdue
+        $taxRoleData = $dokumen->getDataForRole('perpajakan');
+        $taxIsOverdue = false;
+        $taxDeadlineInfo = null;
+        if ($taxRoleData && $taxRoleData->deadline_at && !$taxRoleData->processed_at) {
+            if (now()->greaterThan($taxRoleData->deadline_at)) {
+                $taxIsOverdue = true;
+                $daysOverdue = now()->diffInDays($taxRoleData->deadline_at);
+                $taxDeadlineInfo = [
+                    'deadline_at' => $taxRoleData->deadline_at,
+                    'days_overdue' => $daysOverdue,
+                    'deadline_note' => $taxRoleData->deadline_note,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'tax',
             'name' => 'Team Perpajakan',
@@ -978,7 +1012,9 @@ class OwnerDashboardController extends Controller
             'hasReturn' => $taxReturnInfo !== null,
             'returnInfo' => $taxReturnInfo,
             'hasCycle' => $taxCycleInfo['hasCycle'],
-            'cycleInfo' => $taxCycleInfo
+            'cycleInfo' => $taxCycleInfo,
+            'isOverdue' => $taxIsOverdue,
+            'deadlineInfo' => $taxDeadlineInfo
         ];
 
         // Stage 4: ACCOUNTING (Team Akutansi)
@@ -1023,6 +1059,22 @@ class OwnerDashboardController extends Controller
             }
         }
 
+        // Check if accounting stage is overdue
+        $accountingRoleData = $dokumen->getDataForRole('akutansi');
+        $accountingIsOverdue = false;
+        $accountingDeadlineInfo = null;
+        if ($accountingRoleData && $accountingRoleData->deadline_at && !$accountingRoleData->processed_at) {
+            if (now()->greaterThan($accountingRoleData->deadline_at)) {
+                $accountingIsOverdue = true;
+                $daysOverdue = now()->diffInDays($accountingRoleData->deadline_at);
+                $accountingDeadlineInfo = [
+                    'deadline_at' => $accountingRoleData->deadline_at,
+                    'days_overdue' => $daysOverdue,
+                    'deadline_note' => $accountingRoleData->deadline_note,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'accounting',
             'name' => 'Team Akutansi',
@@ -1037,7 +1089,9 @@ class OwnerDashboardController extends Controller
                 'Status' => $dokumen->status,
             ] : [],
             'hasReturn' => $accountingReturnInfo !== null,
-            'returnInfo' => $accountingReturnInfo
+            'returnInfo' => $accountingReturnInfo,
+            'isOverdue' => $accountingIsOverdue,
+            'deadlineInfo' => $accountingDeadlineInfo
         ];
 
         // Stage 5: PAYMENT (Pembayaran)

@@ -281,6 +281,11 @@
     transform: translateX(8px);
   }
 
+  .timeline-stage .timeline-content:has(.stage-overdue-info) {
+    border-color: #ef4444;
+    border-width: 2px;
+  }
+
   .timeline-stage.active .timeline-content::before {
     opacity: 1;
   }
@@ -372,6 +377,44 @@
   }
 
   /* Return/Cycle Info */
+  .stage-overdue-info {
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-radius: 12px;
+    border: 2px solid #ef4444;
+    animation: pulse-overdue 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-overdue {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+  }
+
+  .stage-overdue-info p {
+    font-size: 14px;
+    color: #991b1b;
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .stage-overdue-info .fas {
+    color: #dc2626;
+  }
+
+  .overdue-deadline {
+    font-size: 12px;
+    color: #7f1d1d;
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
   .stage-return-info {
     margin-top: 16px;
     padding: 16px;
@@ -997,6 +1040,18 @@
             <div class="stage-timestamp">
               <i class="far fa-clock"></i>
               <span>{{ \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') }}</span>
+            </div>
+          @endif
+
+          @if(($stage['isOverdue'] ?? false) && ($status === 'processing' || $status === 'active'))
+            <div class="stage-overdue-info">
+              <p>
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>⚠️ Terlambat: {{ $stage['deadlineInfo']['days_overdue'] ?? 0 }} hari</strong>
+                @if($stage['deadlineInfo']['deadline_at'] ?? null)
+                  <span class="overdue-deadline">(Deadline: {{ \Carbon\Carbon::parse($stage['deadlineInfo']['deadline_at'])->format('d M Y, H:i') }})</span>
+                @endif
+              </p>
             </div>
           @endif
 
