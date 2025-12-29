@@ -1401,9 +1401,6 @@
               <a href="{{ url('/owner/dashboard') }}" class="{{ $menuDashboard ?? '' }}">
                   <i class="fa-solid fa-satellite-dish"></i> Dashboard Owner
               </a>
-              <a href="{{ url('/owner/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
-                  <i class="fa-solid fa-chart-pie"></i> Rekapan Dokumen
-              </a>
               <a href="{{ url('/owner/rekapan-keterlambatan') }}" class="{{ $menuRekapanKeterlambatan ?? '' }}">
                   <i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan
               </a>

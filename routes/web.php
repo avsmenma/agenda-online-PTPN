@@ -379,22 +379,6 @@ Route::get('owner/workflow/{id}', [OwnerDashboardController::class, 'showWorkflo
     ->middleware('auth', 'role:admin,owner,Pembayaran')
     ->name('owner.workflow');
 
-Route::get('owner/rekapan', [OwnerDashboardController::class, 'rekapan'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.rekapan');
-
-Route::get('owner/rekapan/{dokumen}/detail', [OwnerDashboardController::class, 'getDocumentDetail'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.rekapan.detail');
-
-Route::get('owner/rekapan/by-handler/{handler}', [OwnerDashboardController::class, 'rekapanByHandler'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.rekapan.byHandler');
-
-Route::get('owner/rekapan/detail/{type}', [OwnerDashboardController::class, 'rekapanDetail'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.rekapan.detailStats');
-
 Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rekapanKeterlambatan'])
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan-keterlambatan');
