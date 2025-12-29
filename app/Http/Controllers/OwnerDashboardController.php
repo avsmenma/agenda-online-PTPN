@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dokumen;
+use App\Models\DokumenRoleData;
 use App\Models\DocumentTracking;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -1843,78 +1844,131 @@ class OwnerDashboardController extends Controller
 
     /**
      * Display rekapan keterlambatan for owner
+     * Updated to use dokumen_role_data table for per-role deadline tracking
      */
     public function rekapanKeterlambatan(Request $request)
     {
         $now = Carbon::now();
 
+        // Query dokumen terlambat berdasarkan dokumen_role_data
+        // Dokumen terlambat: deadline_at < NOW() dan processed_at IS NULL
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->whereNotNull('deadline_at')
-            ->where('deadline_at', '<', $now)
-            ->whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap', 'selesai']);
+            ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+            ->whereNotNull('dokumen_role_data.deadline_at')
+            ->where('dokumen_role_data.deadline_at', '<', $now)
+            ->whereNull('dokumen_role_data.processed_at')
+            ->whereIn('dokumen_role_data.role_code', ['ibuA', 'ibuB', 'perpajakan', 'akutansi'])
+            ->select('dokumens.*', 
+                'dokumen_role_data.role_code as delay_role_code', 
+                'dokumen_role_data.deadline_at as delay_deadline_at', 
+                'dokumen_role_data.processed_at as delay_processed_at');
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = trim((string) $request->search);
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                        ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                        ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+                    $q->where('dokumens.nomor_agenda', 'like', '%' . $search . '%')
+                        ->orWhere('dokumens.nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('dokumens.uraian_spp', 'like', '%' . $search . '%');
                 });
             }
         }
 
-        // Filter by handler
-        $selectedHandler = $request->get('handler', '');
-        if ($selectedHandler) {
-            $query->where('current_handler', $selectedHandler);
+        // Filter by team/role
+        $selectedTeam = $request->get('team', '');
+        if ($selectedTeam) {
+            $query->where('dokumen_role_data.role_code', $selectedTeam);
         }
 
         // Filter by year
         if ($request->has('year') && $request->year) {
-            $query->where('tahun', $request->year);
+            $query->where('dokumens.tahun', $request->year);
         }
 
-        $dokumens = $query->orderBy('deadline_at', 'asc')->paginate(20)->appends($request->query());
+        $dokumens = $query->orderBy('dokumen_role_data.deadline_at', 'asc')->paginate(20)->appends($request->query());
 
-        // Calculate keterlambatan statistics
-        // Dokumen terlambat: memiliki deadline yang sudah lewat, belum selesai, dan belum terkirim ke perpajakan/akutansi
-        $totalTerlambat = Dokumen::whereNotNull('deadline_at')
+        // Team configuration
+        $teams = [
+            'ibuA' => ['name' => 'Ibu Tara', 'code' => 'ibuA'],
+            'ibuB' => ['name' => 'Team Verifikasi', 'code' => 'ibuB'],
+            'perpajakan' => ['name' => 'Team Perpajakan', 'code' => 'perpajakan'],
+            'akutansi' => ['name' => 'Team Akutansi', 'code' => 'akutansi'],
+        ];
+
+        // Calculate team statistics
+        $teamStats = [];
+        foreach ($teams as $teamCode => $teamInfo) {
+            // Count total delayed documents for this team
+            $totalDelayed = DokumenRoleData::where('role_code', $teamCode)
+                ->whereNotNull('deadline_at')
+                ->where('deadline_at', '<', $now)
+                ->whereNull('processed_at')
+                ->count();
+
+            // Calculate average delay in days
+            $delayedDocs = DokumenRoleData::where('role_code', $teamCode)
+                ->whereNotNull('deadline_at')
+                ->where('deadline_at', '<', $now)
+                ->whereNull('processed_at')
+                ->get();
+
+            $totalDelayDays = 0;
+            foreach ($delayedDocs as $doc) {
+                $delayDays = $now->diffInDays($doc->deadline_at);
+                $totalDelayDays += $delayDays;
+            }
+            $avgDelay = $delayedDocs->count() > 0 ? round($totalDelayDays / $delayedDocs->count(), 1) : 0;
+
+            // Count total documents handled by this team (with deadline set)
+            $totalHandled = DokumenRoleData::where('role_code', $teamCode)
+                ->whereNotNull('deadline_at')
+                ->count();
+
+            // Calculate percentage
+            $percentage = $totalHandled > 0 ? round(($totalDelayed / $totalHandled) * 100, 1) : 0;
+
+            $teamStats[$teamCode] = [
+                'name' => $teamInfo['name'],
+                'total' => $totalDelayed,
+                'avgDelay' => $avgDelay,
+                'percentage' => $percentage,
+                'totalHandled' => $totalHandled,
+            ];
+        }
+
+        // Calculate total delayed documents across all teams
+        $totalTerlambat = DokumenRoleData::whereIn('role_code', ['ibuA', 'ibuB', 'perpajakan', 'akutansi'])
+            ->whereNotNull('deadline_at')
             ->where('deadline_at', '<', $now)
-            ->whereNotIn('status', [
-                'approved_data_sudah_terkirim', 
-                'rejected_data_tidak_lengkap', 
-                'selesai',
-                'completed',
-                'sent_to_perpajakan',
-                'sent_to_akutansi',
-                'sent_to_pembayaran',
-                'pending_approval_perpajakan',
-                'pending_approval_akutansi',
-                'pending_approval_pembayaran',
-            ])
+            ->whereNull('processed_at')
             ->count();
 
-        $terlambatByHandler = [];
-        $handlers = ['ibuA' => 'Ibu Tarapul', 'ibuB' => 'Ibu Yuni', 'perpajakan' => 'Team Perpajakan', 'akutansi' => 'Team Akutansi'];
-        foreach ($handlers as $handlerCode => $handlerName) {
-            $terlambatByHandler[$handlerCode] = Dokumen::whereNotNull('deadline_at')
-                ->where('deadline_at', '<', $now)
-                ->where('current_handler', $handlerCode)
-                ->whereNotIn('status', [
-                    'approved_data_sudah_terkirim', 
-                    'rejected_data_tidak_lengkap', 
-                    'selesai',
-                    'completed',
-                    'sent_to_perpajakan',
-                    'sent_to_akutansi',
-                    'sent_to_pembayaran',
-                    'pending_approval_perpajakan',
-                    'pending_approval_akutansi',
-                    'pending_approval_pembayaran',
-                ])
-                ->count();
+        // Get monthly statistics for chart (last 12 months)
+        $monthlyStats = [];
+        $months = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $monthDate = Carbon::now()->subMonths($i);
+            $monthStart = $monthDate->copy()->startOfMonth();
+            $monthEnd = $monthDate->copy()->endOfMonth();
+            $monthLabel = $monthDate->format('M Y');
+            $months[] = $monthLabel;
+
+            foreach ($teams as $teamCode => $teamInfo) {
+                // Count documents that were overdue during this month
+                // (deadline_at is in this month and deadline_at < now)
+                $count = DokumenRoleData::where('role_code', $teamCode)
+                    ->whereNotNull('deadline_at')
+                    ->where('deadline_at', '<', $now)
+                    ->whereNull('processed_at')
+                    ->whereBetween('deadline_at', [$monthStart, $monthEnd])
+                    ->count();
+
+                if (!isset($monthlyStats[$teamCode])) {
+                    $monthlyStats[$teamCode] = [];
+                }
+                $monthlyStats[$teamCode][] = $count;
+            }
         }
 
         // Get available years
@@ -1924,15 +1978,21 @@ class OwnerDashboardController extends Controller
             ->pluck('tahun')
             ->toArray();
 
-        // Handler list
-        $handlerList = [
-            'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Ibu Yuni',
-            'perpajakan' => 'Team Perpajakan',
-            'akutansi' => 'Team Akutansi'
-        ];
+        // Team list for filter
+        $teamList = array_map(function ($team) {
+            return $team['name'];
+        }, $teams);
 
-        return view('owner.rekapanKeterlambatan', compact('dokumens', 'totalTerlambat', 'terlambatByHandler', 'availableYears', 'handlerList', 'selectedHandler'))
+        return view('owner.rekapanKeterlambatan', compact(
+            'dokumens', 
+            'totalTerlambat', 
+            'teamStats', 
+            'availableYears', 
+            'teams', 
+            'selectedTeam',
+            'monthlyStats',
+            'months'
+        ))
             ->with('title', 'Rekapan Keterlambatan - Owner')
             ->with('module', 'owner')
             ->with('menuDashboard', '')

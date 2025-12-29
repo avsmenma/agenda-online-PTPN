@@ -12,7 +12,15 @@
     font-size: 28px;
   }
 
-  .stat-card {
+  /* Summary Cards per Team */
+  .team-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .team-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     border-radius: 16px;
     padding: 24px;
@@ -21,49 +29,147 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    height: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
   }
 
-  .stat-card:hover {
+  .team-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+  }
+
+  .team-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 12px 40px rgba(8, 62, 64, 0.2), 0 4px 16px rgba(136, 151, 23, 0.1);
     border-color: rgba(8, 62, 64, 0.15);
   }
 
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 16px;
+  .team-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .team-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #083E40;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .team-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     color: white;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
     background: linear-gradient(135deg, #083E40 0%, #889717 100%);
   }
 
-  .stat-value {
-    font-size: 32px;
+  .team-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .team-stat-item {
+    text-align: center;
+  }
+
+  .team-stat-value {
+    font-size: 24px;
     font-weight: 700;
     color: #083E40;
     margin-bottom: 4px;
     line-height: 1;
   }
 
-  .stat-title {
-    font-size: 13px;
+  .team-stat-label {
+    font-size: 11px;
     font-weight: 600;
     color: #6c757d;
-    margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
+  /* Tab Navigation */
+  .tab-navigation {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    padding: 8px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tab-button {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #083E40;
+    background: transparent;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .tab-button:hover {
+    background: rgba(8, 62, 64, 0.05);
+    color: #083E40;
+  }
+
+  .tab-button.active {
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    color: white;
+    border-color: #083E40;
+  }
+
+  /* Chart Section */
+  .chart-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+    padding: 30px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
+    border: 1px solid rgba(8, 62, 64, 0.08);
+  }
+
+  .chart-header {
+    margin-bottom: 24px;
+  }
+
+  .chart-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #083E40;
+    margin-bottom: 8px;
+  }
+
+  .chart-subtitle {
+    font-size: 13px;
+    color: #6c757d;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 400px;
+  }
+
+  /* Filter Section */
   .filter-section {
     background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
     padding: 30px;
@@ -71,6 +177,13 @@
     margin-bottom: 30px;
     box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
     border: 1px solid rgba(8, 62, 64, 0.08);
+  }
+
+  .filter-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #083E40;
+    margin-bottom: 20px;
   }
 
   .table-container {
@@ -101,11 +214,6 @@
   .table-responsive::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 6px;
-  }
-
-  .table-responsive {
-    scrollbar-width: thin;
-    scrollbar-color: #083E40 #f1f1f1;
   }
 
   .table thead {
@@ -164,49 +272,19 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     color: white !important;
   }
 
-  .badge-draft {
-    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-    color: #333 !important;
-  }
-
-  .badge-sent {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white !important;
-  }
-
-  .badge-processing {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white !important;
-  }
-
-  .badge-completed {
-    background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-    color: white !important;
-  }
-
-  .badge-returned {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    color: white !important;
-  }
-
-  .badge-unknown {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white !important;
-  }
-
-  .handler-badge {
+  .team-badge {
     display: inline-block;
     padding: 6px 12px;
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
-    background: #f8f9fa;
-    color: #495057;
-    border: 1px solid #dee2e6;
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    color: white;
+    border: none;
   }
 
   .pagination {
@@ -241,71 +319,95 @@
     border-color: #083E40;
   }
 
-  .handler-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+  .form-control, .form-select {
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    border-radius: 8px;
+    padding: 10px 16px;
+    transition: all 0.3s ease;
   }
 
-  .handler-stat-card {
-    background: white;
-    padding: 16px;
-    border-radius: 12px;
-    border-left: 4px solid #889717;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  .form-control:focus, .form-select:focus {
+    border-color: #083E40;
+    box-shadow: 0 0 0 0.2rem rgba(8, 62, 64, 0.1);
   }
 
-  .handler-stat-name {
-    font-size: 12px;
-    color: #6c757d;
+  .btn-filter {
+    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
     font-weight: 600;
-    margin-bottom: 8px;
-    text-transform: uppercase;
+    transition: all 0.3s ease;
   }
 
-  .handler-stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: #083E40;
+  .btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
   }
 </style>
 
 <div class="container-fluid">
-  <h2><i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan</h2>
+  <h2><i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan Dokumen</h2>
 
-  <!-- Statistics Cards -->
-  <div class="row mb-4">
-    <div class="col-md-4 mb-3">
-      <div class="stat-card">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <div class="stat-title">Total Terlambat</div>
-            <div class="stat-value">{{ $totalTerlambat }}</div>
+  <!-- Summary Cards per Team -->
+  <div class="team-cards">
+    @foreach($teamStats as $teamCode => $stats)
+      <div class="team-card">
+        <div class="team-card-header">
+          <div class="team-card-title">{{ $stats['name'] }}</div>
+          <div class="team-card-icon">
+            <i class="fa-solid fa-users"></i>
           </div>
-          <div class="stat-icon">
-            <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="team-card-stats">
+          <div class="team-stat-item">
+            <div class="team-stat-value">{{ $stats['total'] }}</div>
+            <div class="team-stat-label">Total Terlambat</div>
+          </div>
+          <div class="team-stat-item">
+            <div class="team-stat-value">{{ $stats['avgDelay'] }}</div>
+            <div class="team-stat-label">Rata-rata Hari</div>
+          </div>
+          <div class="team-stat-item">
+            <div class="team-stat-value">{{ $stats['percentage'] }}%</div>
+            <div class="team-stat-label">% Terlambat</div>
           </div>
         </div>
       </div>
-    </div>
+    @endforeach
   </div>
 
-  <!-- Handler Statistics -->
-  <div class="handler-stats">
-    @foreach($terlambatByHandler as $handlerCode => $count)
-      @if($count > 0)
-        <div class="handler-stat-card">
-          <div class="handler-stat-name">{{ $handlerList[$handlerCode] ?? $handlerCode }}</div>
-          <div class="handler-stat-value">{{ $count }}</div>
-        </div>
-      @endif
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <a href="{{ url('/owner/rekapan-keterlambatan') }}" class="tab-button {{ !$selectedTeam ? 'active' : '' }}">
+      <i class="fa-solid fa-list"></i> Semua
+    </a>
+    @foreach($teams as $teamCode => $teamInfo)
+      <a href="{{ url('/owner/rekapan-keterlambatan?team=' . $teamCode) }}" class="tab-button {{ $selectedTeam == $teamCode ? 'active' : '' }}">
+        {{ $teamInfo['name'] }}
+      </a>
     @endforeach
+  </div>
+
+  <!-- Chart Section -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <div class="chart-title">Tren Keterlambatan Bulanan per Team</div>
+      <div class="chart-subtitle">Statistik keterlambatan dokumen dalam 12 bulan terakhir</div>
+    </div>
+    <div class="chart-container">
+      <canvas id="delayChart"></canvas>
+    </div>
   </div>
 
   <!-- Filter Section -->
   <div class="filter-section">
+    <div class="filter-title"><i class="fa-solid fa-filter"></i> Filter Data</div>
     <form method="GET" action="{{ url('/owner/rekapan-keterlambatan') }}" class="row g-3">
+      @if($selectedTeam)
+        <input type="hidden" name="team" value="{{ $selectedTeam }}">
+      @endif
       <div class="col-md-4">
         <label class="form-label">Cari Dokumen</label>
         <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Nomor agenda, SPP, dll">
@@ -320,17 +422,17 @@
         </select>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Handler</label>
-        <select name="handler" class="form-select">
-          <option value="">Semua Handler</option>
-          @foreach($handlerList as $code => $name)
-            <option value="{{ $code }}" {{ $selectedHandler == $code ? 'selected' : '' }}>{{ $name }}</option>
+        <label class="form-label">Team</label>
+        <select name="team" class="form-select">
+          <option value="">Semua Team</option>
+          @foreach($teams as $teamCode => $teamInfo)
+            <option value="{{ $teamCode }}" {{ $selectedTeam == $teamCode ? 'selected' : '' }}>{{ $teamInfo['name'] }}</option>
           @endforeach
         </select>
       </div>
       <div class="col-md-2">
         <label class="form-label">&nbsp;</label>
-        <button type="submit" class="btn w-100" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%); color: white; border: none;">
+        <button type="submit" class="btn btn-filter w-100">
           <i class="fa-solid fa-search"></i> Filter
         </button>
       </div>
@@ -339,7 +441,9 @@
 
   <!-- Table Section -->
   <div class="table-container">
-    <h6><span>Daftar Dokumen Terlambat</span></h6>
+    <h6 style="font-size: 18px; font-weight: 700; color: #083E40; margin-bottom: 24px;">
+      <span>Daftar Dokumen Terlambat</span>
+    </h6>
     <div class="table-responsive">
       <table class="table table-hover">
         <thead>
@@ -347,27 +451,32 @@
             <th>No</th>
             <th>Nomor Agenda</th>
             <th>Nomor SPP</th>
-            <th>Uraian SPP</th>
-            <th>Nilai Rupiah</th>
             <th>Handler</th>
             <th>Deadline</th>
             <th>Keterlambatan</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
           @forelse($dokumens as $index => $dokumen)
             @php
               $now = \Carbon\Carbon::now();
-              $deadline = \Carbon\Carbon::parse($dokumen->deadline_at);
+              $deadlineDate = $dokumen->delay_deadline_at ?? null;
+              if (!$deadlineDate) {
+                  // Fallback: try to get from dokumen's deadline_at if exists
+                  $deadlineDate = isset($dokumen->deadline_at) ? $dokumen->deadline_at : null;
+              }
+              $deadline = $deadlineDate ? \Carbon\Carbon::parse($deadlineDate) : $now;
+              $delayRoleCode = $dokumen->delay_role_code ?? 'unknown';
+              $teamName = isset($teams[$delayRoleCode]) ? $teams[$delayRoleCode]['name'] : $delayRoleCode;
               
-              // Calculate keterlambatan in a more readable format
-              // Since deadline has passed, we calculate the difference
+              // Calculate keterlambatan
               $diff = $deadline->diff($now);
               $terlambatHari = $diff->days;
               $terlambatJam = $diff->h;
               $terlambatMenit = $diff->i;
               
-              // Format keterlambatan: hari + jam + menit
+              // Format keterlambatan
               $keterlambatanParts = [];
               
               if ($terlambatHari > 0) {
@@ -376,37 +485,37 @@
               if ($terlambatJam > 0) {
                 $keterlambatanParts[] = $terlambatJam . ' jam';
               }
-              if ($terlambatMenit > 0) {
+              if ($terlambatMenit > 0 || empty($keterlambatanParts)) {
                 $keterlambatanParts[] = $terlambatMenit . ' menit';
               }
               
-              // Join parts with space, or show "0 menit" if empty
-              $keterlambatanText = !empty($keterlambatanParts) 
-                ? implode(' ', $keterlambatanParts) 
-                : '0 menit';
+              $keterlambatanText = implode(' ', $keterlambatanParts);
             @endphp
             <tr class="clickable-row" onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'" title="Klik untuk melihat detail workflow dokumen">
               <td>{{ $dokumens->firstItem() + $index }}</td>
               <td>{{ $dokumen->nomor_agenda }}</td>
               <td>{{ $dokumen->nomor_spp }}</td>
-              <td>{{ Str::limit($dokumen->uraian_spp, 50) }}</td>
-              <td>Rp. {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</td>
               <td>
-                <span class="handler-badge">
-                  {{ $handlerList[$dokumen->current_handler] ?? $dokumen->current_handler }}
+                <span class="team-badge">
+                  {{ $teamName }}
                 </span>
               </td>
-              <td>{{ $dokumen->deadline_at ? $dokumen->deadline_at->format('d M Y H:i') : '-' }}</td>
+              <td>{{ $deadline->format('d M Y H:i') }}</td>
               <td>
                 <span class="badge-terlambat">
                   <i class="fa-solid fa-exclamation-triangle"></i>
                   {{ $keterlambatanText }}
                 </span>
               </td>
+              <td>
+                <span class="badge badge-processing">
+                  Terlambat
+                </span>
+              </td>
             </tr>
           @empty
             <tr>
-              <td colspan="8" class="text-center py-5">
+              <td colspan="7" class="text-center py-5">
                 <i class="fa-solid fa-check-circle fa-3x text-success mb-3"></i>
                 <p class="text-muted">Tidak ada dokumen terlambat</p>
               </td>
@@ -443,5 +552,124 @@
   </div>
 </div>
 
-@endsection
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Data from controller
+  const monthlyStats = @json($monthlyStats);
+  const months = @json($months);
+  const teams = @json($teams);
 
+  // Chart colors
+  const teamColors = {
+    'ibuA': 'rgba(8, 62, 64, 1)',
+    'ibuB': 'rgba(136, 151, 23, 1)',
+    'perpajakan': 'rgba(40, 167, 69, 1)',
+    'akutansi': 'rgba(23, 162, 184, 1)',
+  };
+
+  const teamColorsTransparent = {
+    'ibuA': 'rgba(8, 62, 64, 0.1)',
+    'ibuB': 'rgba(136, 151, 23, 0.1)',
+    'perpajakan': 'rgba(40, 167, 69, 0.1)',
+    'akutansi': 'rgba(23, 162, 184, 0.1)',
+  };
+
+  // Prepare datasets
+  const datasets = [];
+  Object.keys(teams).forEach(teamCode => {
+    if (monthlyStats[teamCode]) {
+      datasets.push({
+        label: teams[teamCode].name,
+        data: monthlyStats[teamCode],
+        borderColor: teamColors[teamCode],
+        backgroundColor: teamColorsTransparent[teamCode],
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: teamColors[teamCode],
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      });
+    }
+  });
+
+  // Create chart
+  const ctx = document.getElementById('delayChart').getContext('2d');
+  const delayChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: {
+              size: 12,
+              weight: '600'
+            },
+            padding: 15,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(8, 62, 64, 0.9)',
+          padding: 12,
+          cornerRadius: 8,
+          titleFont: {
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 13
+          },
+          multiKeyBackground: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(8, 62, 64, 0.05)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#083E40',
+            font: {
+              size: 12,
+              weight: '500'
+            },
+            stepSize: 1
+          }
+        },
+        x: {
+          grid: {
+            display: false,
+            drawBorder: false
+          },
+          ticks: {
+            color: '#083E40',
+            font: {
+              size: 11,
+              weight: '500'
+            }
+          }
+        }
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false
+      }
+    }
+  });
+</script>
+
+@endsection
