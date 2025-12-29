@@ -2,26 +2,15 @@
 @section('content')
 
 <style>
-  /* Color Variables */
-  @php
-    $isPerpajakan = isset($selectedTeam) && $selectedTeam == 'perpajakan';
-    $primaryColor = $isPerpajakan ? '#1a4d3e' : '#083E40';
-    $primaryDark = $isPerpajakan ? '#0f3d2e' : '#0a4f52';
-    $secondaryColor = $isPerpajakan ? '#40916c' : '#889717';
-    $primaryRgba = $isPerpajakan ? 'rgba(26, 77, 62, 0.1)' : 'rgba(8, 62, 64, 0.1)';
-    $primaryRgbaDark = $isPerpajakan ? 'rgba(26, 77, 62, 0.2)' : 'rgba(8, 62, 64, 0.2)';
-    $primaryBorder = $isPerpajakan ? 'rgba(26, 77, 62, 0.08)' : 'rgba(8, 62, 64, 0.08)';
-    $primaryBorderHover = $isPerpajakan ? 'rgba(26, 77, 62, 0.15)' : 'rgba(8, 62, 64, 0.15)';
-  @endphp
-
+  /* Color Variables - Always use Perpajakan Green Theme */
   :root {
-    --primary-color: {{ $primaryColor }};
-    --primary-dark: {{ $primaryDark }};
-    --secondary-color: {{ $secondaryColor }};
-    --primary-rgba: {{ $primaryRgba }};
-    --primary-rgba-dark: {{ $primaryRgbaDark }};
-    --primary-border: {{ $primaryBorder }};
-    --primary-border-hover: {{ $primaryBorderHover }};
+    --primary-color: #1a4d3e;
+    --primary-dark: #0f3d2e;
+    --secondary-color: #40916c;
+    --primary-rgba: rgba(26, 77, 62, 0.1);
+    --primary-rgba-dark: rgba(26, 77, 62, 0.2);
+    --primary-border: rgba(26, 77, 62, 0.08);
+    --primary-border-hover: rgba(26, 77, 62, 0.15);
   }
 
   h2 {
@@ -580,9 +569,7 @@
   const monthlyStats = @json($monthlyStats);
   const months = @json($months);
   const teams = @json($teams);
-  const isPerpajakan = @json(isset($selectedTeam) && $selectedTeam == 'perpajakan');
-
-  // Chart colors - Perpajakan uses green theme colors
+  // Chart colors - Always use Perpajakan Green Theme
   const teamColors = {
     'ibuA': 'rgba(8, 62, 64, 1)',
     'ibuB': 'rgba(136, 151, 23, 1)',
@@ -648,7 +635,7 @@
           }
         },
         tooltip: {
-          backgroundColor: isPerpajakan ? 'rgba(26, 77, 62, 0.9)' : 'rgba(8, 62, 64, 0.9)',
+          backgroundColor: 'rgba(26, 77, 62, 0.9)',
           padding: 12,
           cornerRadius: 8,
           titleFont: {
@@ -665,11 +652,11 @@
         y: {
           beginAtZero: true,
           grid: {
-            color: isPerpajakan ? 'rgba(26, 77, 62, 0.05)' : 'rgba(8, 62, 64, 0.05)',
+            color: 'rgba(26, 77, 62, 0.05)',
             drawBorder: false
           },
           ticks: {
-            color: primaryColor || (isPerpajakan ? '#1a4d3e' : '#083E40'),
+            color: primaryColor || '#1a4d3e',
             font: {
               size: 12,
               weight: '500'
@@ -683,7 +670,7 @@
             drawBorder: false
           },
           ticks: {
-            color: primaryColor || (isPerpajakan ? '#1a4d3e' : '#083E40'),
+            color: primaryColor || '#1a4d3e',
             font: {
               size: 11,
               weight: '500'
