@@ -560,24 +560,41 @@
     position: relative;
     padding-left: 32px;
     padding-bottom: 20px;
+    padding: 12px 12px 12px 32px;
     border-left: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .activity-log-item:hover {
+    background: #f8fafc;
+    border-left-color: #3b82f6;
+    transform: translateX(4px);
   }
 
   .activity-log-item:last-child {
-    border-left: none;
+    border-left: 2px solid #e2e8f0;
   }
 
   .activity-log-item::before {
     content: '';
     position: absolute;
     left: -6px;
-    top: 4px;
+    top: 16px;
     width: 12px;
     height: 12px;
     border-radius: 50%;
     background: #083E40;
     border: 3px solid white;
     box-shadow: 0 0 0 2px #e2e8f0;
+    transition: all 0.2s ease;
+  }
+
+  .activity-log-item:hover::before {
+    background: #3b82f6;
+    transform: scale(1.2);
   }
 
   .activity-log-text {
@@ -1174,12 +1191,42 @@
         <div class="info-card-title">Activity Logs</div>
       </div>
       <div class="activity-log-container custom-scrollbar">
-        @forelse($dokumen->activityLogs->sortByDesc('created_at')->take(15) as $log)
-          <div class="activity-log-item">
-            <div class="activity-log-text">{{ $log->description ?? 'Activity' }}</div>
+        @forelse($dokumen->activityLogs->sortByDesc('action_at')->take(15) as $log)
+          @php
+            // Map performed_by to display name
+            $performedByMap = [
+              'ibuA' => 'Ibu Tara',
+              'IbuA' => 'Ibu Tara',
+              'ibuB' => 'Team Verifikasi',
+              'IbuB' => 'Team Verifikasi',
+              'perpajakan' => 'Team Perpajakan',
+              'Perpajakan' => 'Team Perpajakan',
+              'akutansi' => 'Team Akutansi',
+              'Akutansi' => 'Team Akutansi',
+              'pembayaran' => 'Pembayaran',
+              'Pembayaran' => 'Pembayaran',
+            ];
+            $performedByDisplay = $performedByMap[$log->performed_by ?? ''] ?? ($log->performed_by ?? 'System');
+            
+            // Format action_at
+            $actionAt = $log->action_at ?? $log->created_at;
+            $actionAtFormatted = $actionAt->format('d M Y, H:i');
+            $actionAtRelative = $actionAt->diffForHumans();
+          @endphp
+          <div class="activity-log-item" 
+               onclick="showActivityDetail({{ $log->id }})"
+               data-activity-id="{{ $log->id }}"
+               data-action-description="{{ htmlspecialchars($log->action_description ?? 'Activity', ENT_QUOTES, 'UTF-8') }}"
+               data-performed-by="{{ htmlspecialchars($performedByDisplay, ENT_QUOTES, 'UTF-8') }}"
+               data-action-at="{{ htmlspecialchars($actionAtFormatted, ENT_QUOTES, 'UTF-8') }}"
+               data-action-at-relative="{{ htmlspecialchars($actionAtRelative, ENT_QUOTES, 'UTF-8') }}"
+               data-stage="{{ htmlspecialchars($log->stage ?? '-', ENT_QUOTES, 'UTF-8') }}"
+               data-action="{{ htmlspecialchars($log->action ?? '-', ENT_QUOTES, 'UTF-8') }}"
+               data-details="{{ htmlspecialchars(json_encode($log->details ?? []), ENT_QUOTES, 'UTF-8') }}">
+            <div class="activity-log-text">{{ $log->action_description ?? 'Activity' }}</div>
             <div class="activity-log-time">
               <i class="far fa-clock mr-1"></i>
-              {{ $log->created_at->diffForHumans() }}
+              {{ $actionAtRelative }}
             </div>
           </div>
         @empty
@@ -1774,6 +1821,9 @@
           modalIcon.innerHTML = '<i class="fas fa-calculator"></i>';
           modalIcon.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
           renderTaxModal();
+        } else if (type === 'activity') {
+          // Content already set by showActivityDetail
+          // Just show the modal
         }
         
         modal.classList.add('show');
@@ -1840,6 +1890,134 @@
         activeStage.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 500);
     }
+
+    // Helper function to escape HTML (define before use in showActivityDetail)
+    window.escapeHtml = function(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    };
+
+    // Function to show activity detail
+    window.showActivityDetail = function(activityId) {
+      const activityItem = document.querySelector(`[data-activity-id="${activityId}"]`);
+      if (!activityItem) return;
+
+      const actionDescription = activityItem.getAttribute('data-action-description') || 'Activity';
+      const performedBy = activityItem.getAttribute('data-performed-by') || 'System';
+      const actionAt = activityItem.getAttribute('data-action-at') || '-';
+      const actionAtRelative = activityItem.getAttribute('data-action-at-relative') || '-';
+      const stage = activityItem.getAttribute('data-stage') || '-';
+      const action = activityItem.getAttribute('data-action') || '-';
+      const detailsJson = activityItem.getAttribute('data-details') || '{}';
+      
+      let details = {};
+      try {
+        details = JSON.parse(detailsJson);
+      } catch (e) {
+        details = {};
+      }
+
+      // Map stage to display name
+      const stageMap = {
+        'sender': 'Ibu Tara',
+        'reviewer': 'Team Verifikasi',
+        'tax': 'Team Perpajakan',
+        'accounting': 'Team Akutansi',
+        'payment': 'Pembayaran',
+      };
+      const stageDisplay = stageMap[stage] || stage;
+
+      // Build modal content
+      modalTitle.textContent = 'Detail Activity';
+      modalSubtitle.textContent = 'Informasi lengkap aktivitas';
+      modalIcon.innerHTML = '<i class="fas fa-history"></i>';
+      modalIcon.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+
+      let modalContent = `
+        <div style="display: grid; gap: 24px;">
+          <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Aktivitas</div>
+            <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 20px;">${window.escapeHtml(actionDescription)}</div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Dilakukan Oleh</div>
+              <div style="font-size: 16px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-user" style="color: #3b82f6;"></i>
+                ${window.escapeHtml(performedBy)}
+              </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Stage</div>
+              <div style="font-size: 16px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-layer-group" style="color: #10b981;"></i>
+                ${window.escapeHtml(stageDisplay)}
+              </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Waktu</div>
+              <div style="font-size: 16px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="far fa-clock" style="color: #f59e0b;"></i>
+                ${window.escapeHtml(actionAt)}
+              </div>
+              <div style="font-size: 13px; color: #64748b; margin-top: 4px;">${window.escapeHtml(actionAtRelative)}</div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Action Type</div>
+              <div style="font-size: 16px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-code" style="color: #8b5cf6;"></i>
+                ${window.escapeHtml(action)}
+              </div>
+            </div>
+          </div>
+      `;
+
+      // Add details if available
+      if (details && Object.keys(details).length > 0) {
+        modalContent += `
+          <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-info-circle" style="color: #3b82f6;"></i>
+              Detail Tambahan
+            </div>
+            <div style="display: grid; gap: 12px;">
+        `;
+        
+        for (const [key, value] of Object.entries(details)) {
+          const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          let displayValue = value;
+          if (typeof value === 'object') {
+            displayValue = JSON.stringify(value, null, 2);
+          }
+          modalContent += `
+            <div style="padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #3b82f6;">
+              <div style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">${window.escapeHtml(label)}</div>
+              <div style="font-size: 14px; font-weight: 500; color: #0f172a;">${window.escapeHtml(String(displayValue))}</div>
+            </div>
+          `;
+        }
+        
+        modalContent += `
+            </div>
+          </div>
+        `;
+      }
+
+      modalContent += `</div>`;
+      
+      document.getElementById('modal-body').innerHTML = modalContent;
+      openModal('activity');
+    };
   });
 </script>
 
