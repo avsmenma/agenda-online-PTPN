@@ -36,24 +36,39 @@ class UpdateDokumenRequest extends FormRequest
             'kriteria_cf' => [
                 'required',
                 function ($attribute, $value, $fail) {
-                    if (!\App\Models\KategoriKriteria::on('cash_bank')->where('id_kategori_kriteria', $value)->exists()) {
-                        $fail('Kriteria CF yang dipilih tidak valid.');
+                    try {
+                        if (!\App\Models\KategoriKriteria::on('cash_bank')->where('id_kategori_kriteria', $value)->exists()) {
+                            $fail('Kriteria CF yang dipilih tidak valid.');
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Error validating kriteria_cf (cash_bank not available): ' . $e->getMessage());
+                        // Skip validation jika database tidak tersedia (backward compatibility)
                     }
                 },
             ],
             'sub_kriteria' => [
                 'required',
                 function ($attribute, $value, $fail) {
-                    if (!\App\Models\SubKriteria::on('cash_bank')->where('id_sub_kriteria', $value)->exists()) {
-                        $fail('Sub Kriteria yang dipilih tidak valid.');
+                    try {
+                        if (!\App\Models\SubKriteria::on('cash_bank')->where('id_sub_kriteria', $value)->exists()) {
+                            $fail('Sub Kriteria yang dipilih tidak valid.');
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Error validating sub_kriteria (cash_bank not available): ' . $e->getMessage());
+                        // Skip validation jika database tidak tersedia (backward compatibility)
                     }
                 },
             ],
             'item_sub_kriteria' => [
                 'required',
                 function ($attribute, $value, $fail) {
-                    if (!\App\Models\ItemSubKriteria::on('cash_bank')->where('id_item_sub_kriteria', $value)->exists()) {
-                        $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                    try {
+                        if (!\App\Models\ItemSubKriteria::on('cash_bank')->where('id_item_sub_kriteria', $value)->exists()) {
+                            $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Error validating item_sub_kriteria (cash_bank not available): ' . $e->getMessage());
+                        // Skip validation jika database tidak tersedia (backward compatibility)
                     }
                 },
             ],

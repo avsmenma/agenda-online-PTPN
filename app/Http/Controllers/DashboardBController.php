@@ -570,18 +570,33 @@ class DashboardBController extends Controller
             'uraian_spp' => 'required|string',
             'nilai_rupiah' => 'required|string',
             'kriteria_cf' => ['required', 'integer', function ($attribute, $value, $fail) {
-                if (!KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
-                    $fail('Kriteria CF yang dipilih tidak valid.');
+                try {
+                    if (!KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
+                        $fail('Kriteria CF yang dipilih tidak valid.');
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error validating kriteria_cf (cash_bank not available): ' . $e->getMessage());
+                    // Skip validation jika database tidak tersedia (backward compatibility)
                 }
             }],
             'sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
-                if (!SubKriteria::where('id_sub_kriteria', $value)->exists()) {
-                    $fail('Sub Kriteria yang dipilih tidak valid.');
+                try {
+                    if (!SubKriteria::where('id_sub_kriteria', $value)->exists()) {
+                        $fail('Sub Kriteria yang dipilih tidak valid.');
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error validating sub_kriteria (cash_bank not available): ' . $e->getMessage());
+                    // Skip validation jika database tidak tersedia (backward compatibility)
                 }
             }],
             'item_sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
-                if (!ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
-                    $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                try {
+                    if (!ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
+                        $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error validating item_sub_kriteria (cash_bank not available): ' . $e->getMessage());
+                    // Skip validation jika database tidak tersedia (backward compatibility)
                 }
             }],
             // Keep old fields as nullable for backward compatibility
@@ -650,16 +665,21 @@ class DashboardBController extends Controller
             $subKriteria = null;
             $itemSubKriteria = null;
             
-            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
-                $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
-            }
-            
-            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
-                $subKriteria = SubKriteria::find($request->sub_kriteria);
-            }
-            
-            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
-                $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+                }
+                
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteria = SubKriteria::find($request->sub_kriteria);
+                }
+                
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for update (DashboardB): ' . $e->getMessage());
+                // Continue dengan null values, akan menggunakan fallback ke request->kategori/jenis_dokumen/jenis_sub_pekerjaan
             }
 
             // Update dokumen

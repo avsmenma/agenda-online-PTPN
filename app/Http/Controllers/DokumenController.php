@@ -209,9 +209,18 @@ class DokumenController extends Controller
     public function create()
     {
         // Ambil data dari database cash_bank_new
-        $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
-        $subKriteria = SubKriteria::all();
-        $itemSubKriteria = ItemSubKriteria::all();
+        // Tambahkan try-catch untuk menangani error koneksi database
+        try {
+            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = SubKriteria::all();
+            $itemSubKriteria = ItemSubKriteria::all();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+        }
         
         $data = array(
             "title" => "Tambah Dokumen",
@@ -511,16 +520,21 @@ class DokumenController extends Controller
             $subKriteria = null;
             $itemSubKriteria = null;
             
-            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
-                $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
-            }
-            
-            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
-                $subKriteria = SubKriteria::find($request->sub_kriteria);
-            }
-            
-            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
-                $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+                }
+                
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteria = SubKriteria::find($request->sub_kriteria);
+                }
+                
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for store: ' . $e->getMessage());
+                // Continue dengan null values, akan menggunakan fallback ke request->kategori/jenis_dokumen/jenis_sub_pekerjaan
             }
 
             // Create dokumen
@@ -791,16 +805,21 @@ class DokumenController extends Controller
             $subKriteria = null;
             $itemSubKriteria = null;
             
-            if ($request->has('kriteria_cf') && $request->kriteria_cf) {
-                $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
-            }
-            
-            if ($request->has('sub_kriteria') && $request->sub_kriteria) {
-                $subKriteria = SubKriteria::find($request->sub_kriteria);
-            }
-            
-            if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
-                $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+                }
+                
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteria = SubKriteria::find($request->sub_kriteria);
+                }
+                
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for update: ' . $e->getMessage());
+                // Continue dengan null values, akan menggunakan fallback ke request->kategori/jenis_dokumen/jenis_sub_pekerjaan
             }
 
             // Update dokumen
