@@ -374,7 +374,7 @@
 
   <!-- Search and Filter -->
   <div class="search-box d-flex align-items-center mb-4">
-    <form action="{{ route('pengembalianKeBidang.index') }}" method="GET" class="d-flex align-items-center w-100">
+    <form action="{{ route('returns.verifikasi.bidang') }}" method="GET" class="d-flex align-items-center w-100">
       <div class="input-group me-3" style="max-width: 300px;">
         <span class="input-group-text">
           <i class="fa-solid fa-search"></i>

@@ -458,6 +458,9 @@ class CsvImportController extends Controller
             $jenisDokumen = 'Lainnya'; // Default value if empty
         }
 
+        // Get tanggal_dibayar first to determine status_pembayaran
+        $tanggalDibayar = $this->getLastPaymentDate($row);
+
         return [
             // Core required fields
             'nomor_agenda' => trim($row['AGENDA'] ?? ''),
@@ -491,13 +494,13 @@ class CsvImportController extends Controller
             'tanggal_spk' => $this->parseDate($row['TGL. SPK'] ?? $row['TGL SPK'] ?? null),
             'tanggal_berakhir_spk' => $this->parseDate($row['TGL. BERAKHIR KONTRAK'] ?? $row['TGL BERAKHIR KONTRAK'] ?? null),
 
-            // Status
-            'status' => 'sent_to_pembayaran',
-            'status_pembayaran' => 'belum_dibayar',
-            'current_handler' => 'pembayaran',
-
             // Payment info
-            'tanggal_dibayar' => $this->getLastPaymentDate($row),
+            'tanggal_dibayar' => $tanggalDibayar,
+
+            // Status - if tanggal_dibayar exists, set status_pembayaran to sudah_dibayar
+            'status' => 'sent_to_pembayaran',
+            'status_pembayaran' => $tanggalDibayar ? 'sudah_dibayar' : 'belum_dibayar',
+            'current_handler' => 'pembayaran',
 
             // Kebun/Vendor info
             'kebun' => trim($row['KEBUN'] ?? null),
