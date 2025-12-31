@@ -101,7 +101,7 @@
                                 <i class="fas fa-shield-alt me-2"></i>
                                 Aktifkan 2FA
                             </button>
-                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+                            <a href="{{ url(Auth::user()->getDashboardRoute()) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>
                                 Batal
                             </a>

@@ -50,7 +50,7 @@
                                 Generate Ulang Recovery Codes
                             </button>
                         </form>
-                        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+                        <a href="{{ url(Auth::user()->getDashboardRoute()) }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>
                             Kembali ke Dashboard
                         </a>
