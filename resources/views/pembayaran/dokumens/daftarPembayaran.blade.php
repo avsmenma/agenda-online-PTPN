@@ -792,8 +792,8 @@
 </div>
 
 <!-- Modal View Document Detail -->
-<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl" style="max-width: 99.8%; width: 99.8%; margin: 0.1rem auto;">
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true" style="padding: 0 !important;">
+  <div class="modal-dialog modal-xl" style="max-width: 100vw !important; width: 100vw !important; margin: 0 !important; padding: 0 !important;">
     <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
       <!-- Sticky Header -->
       <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
