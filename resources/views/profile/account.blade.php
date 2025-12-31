@@ -31,7 +31,7 @@
                     <!-- Info Alert -->
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Catatan:</strong> Untuk mengubah email atau password, 2FA harus diaktifkan terlebih dahulu.
+                        <strong>Catatan:</strong> Untuk mengubah username, email, atau password, 2FA harus diaktifkan terlebih dahulu.
                     </div>
 
                     <!-- User Information -->
@@ -78,6 +78,50 @@
 
                     <hr>
 
+                    <!-- Update Username Form -->
+                    <div class="mb-4">
+                        <h5>Ubah Username</h5>
+                        <form method="POST" action="{{ route('profile.update-username') }}">
+                            @csrf
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username Baru</label>
+                                <input type="text" 
+                                       class="form-control @error('username') is-invalid @enderror" 
+                                       id="username" 
+                                       name="username" 
+                                       value="{{ old('username', $user->username) }}" 
+                                       required
+                                       pattern="[a-zA-Z0-9_-]+"
+                                       title="Username hanya boleh berisi huruf, angka, dash (-) dan underscore (_)">
+                                @error('username')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">Username hanya boleh berisi huruf, angka, dash (-) dan underscore (_)</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password_username" class="form-label">Password (Konfirmasi)</label>
+                                <input type="password" 
+                                       class="form-control @error('password') is-invalid @enderror" 
+                                       id="password_username" 
+                                       name="password" 
+                                       required
+                                       placeholder="Masukkan password Anda untuk konfirmasi">
+                                @error('password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Simpan Perubahan Username
+                            </button>
+                        </form>
+                    </div>
+
+                    <hr>
+
                     <!-- Update Email Form -->
                     <div class="mb-4">
                         <h5>Ubah Email</h5>
@@ -98,10 +142,10 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="password" class="form-label">Password (Konfirmasi)</label>
+                                <label for="password_email" class="form-label">Password (Konfirmasi)</label>
                                 <input type="password" 
                                        class="form-control @error('password') is-invalid @enderror" 
-                                       id="password" 
+                                       id="password_email" 
                                        name="password" 
                                        required
                                        placeholder="Masukkan password Anda untuk konfirmasi">

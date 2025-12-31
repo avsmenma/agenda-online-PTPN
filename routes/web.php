@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     // Profile/Account Management Routes (requires authentication)
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/account', [\App\Http\Controllers\ProfileController::class, 'showAccount'])->name('account');
+        Route::post('/update-username', [\App\Http\Controllers\ProfileController::class, 'updateUsername'])->name('update-username');
         Route::post('/update-email', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('update-email');
         Route::post('/update-password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('update-password');
     });

@@ -81,8 +81,12 @@ final class LoginRequest extends FormRequest
     {
         $credentials = $this->getCredentials();
         
-        // Find user by username instead of email
-        $user = User::where('username', $credentials['username'])->first();
+        // Find user by username OR email
+        $loginField = $credentials['username'];
+        $user = User::where(function($query) use ($loginField) {
+            $query->where('username', $loginField)
+                  ->orWhere('email', $loginField);
+        })->first();
         
         // Check if user exists and password matches
         if (!$user || !Hash::check($credentials['password'], $user->password)) {

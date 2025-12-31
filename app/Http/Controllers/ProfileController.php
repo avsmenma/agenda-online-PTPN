@@ -123,5 +123,53 @@ final class ProfileController extends Controller
         return redirect()->route('profile.account')
             ->with('success', 'Password berhasil diubah.');
     }
+
+    /**
+     * Update user username
+     */
+    public function updateUsername(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'username' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:users,username,' . Auth::id()],
+            'password' => ['required', 'string'],
+        ], [
+            'username.required' => 'Username wajib diisi',
+            'username.string' => 'Username harus berupa teks',
+            'username.max' => 'Username maksimal 255 karakter',
+            'username.alpha_dash' => 'Username hanya boleh berisi huruf, angka, dash dan underscore',
+            'username.unique' => 'Username sudah digunakan oleh user lain',
+            'password.required' => 'Password wajib diisi untuk konfirmasi perubahan username',
+        ]);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Check if 2FA is enabled (required)
+        if (!$user->hasTwoFactorEnabled()) {
+            return redirect()->route('profile.account')
+                ->with('error', '2FA harus diaktifkan terlebih dahulu untuk mengubah username.');
+        }
+
+        // Verify password
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Password tidak valid.'],
+            ]);
+        }
+
+        // Update username
+        $oldUsername = $user->username;
+        $user->username = $request->username;
+        $user->save();
+
+        Log::info('User username updated', [
+            'user_id' => $user->id,
+            'old_username' => $oldUsername,
+            'new_username' => $request->username,
+        ]);
+
+        return redirect()->route('profile.account')
+            ->with('success', 'Username berhasil diubah.');
+    }
 }
 

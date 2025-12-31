@@ -399,6 +399,9 @@
                                    required
                                    autofocus>
                         </div>
+                        <small class="text-muted" style="font-size: 12px; margin-top: 4px; display: block;">
+                            Anda bisa login menggunakan username atau email Anda
+                        </small>
                     </div>
 
                     <div class="form-group">
