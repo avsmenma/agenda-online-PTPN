@@ -1540,6 +1540,11 @@
             </a>
 
             <a href="{{ url($diagramUrl) }}" class="{{ $menuDiagram ?? '' }}"><i class="fa-solid fa-chart-simple"></i> Diagram</a>
+            
+            <!-- 2FA Security Menu -->
+            <a href="{{ route('2fa.setup') }}" class="{{ request()->routeIs('2fa.*') ? 'active' : '' }}">
+              <i class="fa-solid fa-shield-alt"></i> Keamanan 2FA
+            </a>
           @endunless
               </div>
 

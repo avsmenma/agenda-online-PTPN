@@ -27,11 +27,25 @@ use App\Http\Controllers\OwnerDashboardController;
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.store');
+    
+    // 2FA Verification Routes (accessible without auth, but requires 2fa_user_id in session)
+    Route::get('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'showVerify'])->name('2fa.verify');
+    Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify.store');
+    Route::post('/2fa/verify-recovery', [\App\Http\Controllers\TwoFactorController::class, 'verifyRecoveryCode'])->name('2fa.verify.recovery');
 });
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
+    
+    // 2FA Management Routes (requires authentication)
+    Route::prefix('2fa')->name('2fa.')->group(function () {
+        Route::get('/setup', [\App\Http\Controllers\TwoFactorController::class, 'showSetup'])->name('setup');
+        Route::post('/enable', [\App\Http\Controllers\TwoFactorController::class, 'enable'])->name('enable');
+        Route::get('/recovery-codes', [\App\Http\Controllers\TwoFactorController::class, 'showRecoveryCodes'])->name('recovery-codes');
+        Route::post('/regenerate-recovery-codes', [\App\Http\Controllers\TwoFactorController::class, 'regenerateRecoveryCodes'])->name('regenerate-recovery-codes');
+        Route::post('/disable', [\App\Http\Controllers\TwoFactorController::class, 'disable'])->name('disable');
+    });
 });
 
 // SECURITY FIX: Custom broadcast authentication route with CSRF protection

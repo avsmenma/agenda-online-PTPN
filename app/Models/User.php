@@ -47,6 +47,10 @@ final class User extends Authenticatable
         'password',
         'role',
         'table_columns_preferences',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -57,6 +61,8 @@ final class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -70,7 +76,37 @@ final class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'table_columns_preferences' => 'array',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if user has 2FA enabled
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_enabled && $this->two_factor_secret && $this->two_factor_confirmed_at;
+    }
+
+    /**
+     * Get decrypted two factor secret
+     */
+    public function getTwoFactorSecret(): ?string
+    {
+        return $this->two_factor_secret ? decrypt($this->two_factor_secret) : null;
+    }
+
+    /**
+     * Get decrypted recovery codes
+     */
+    public function getRecoveryCodes(): array
+    {
+        if (!$this->two_factor_recovery_codes) {
+            return [];
+        }
+
+        return json_decode(decrypt($this->two_factor_recovery_codes), true) ?? [];
     }
 
     /**
