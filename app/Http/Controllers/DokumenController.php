@@ -210,16 +210,19 @@ class DokumenController extends Controller
     {
         // Ambil data dari database cash_bank_new
         // Tambahkan try-catch untuk menangani error koneksi database
+        $isDropdownAvailable = false;
         try {
             $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
             $subKriteria = SubKriteria::all();
             $itemSubKriteria = ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
         } catch (\Exception $e) {
             \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
             // Fallback: gunakan collection kosong jika error
             $kategoriKriteria = collect([]);
             $subKriteria = collect([]);
             $itemSubKriteria = collect([]);
+            $isDropdownAvailable = false;
         }
         
         $data = array(
@@ -233,6 +236,7 @@ class DokumenController extends Controller
             "kategoriKriteria" => $kategoriKriteria,
             "subKriteria" => $subKriteria,
             "itemSubKriteria" => $itemSubKriteria,
+            "isDropdownAvailable" => $isDropdownAvailable,
         );
         return view('IbuA.dokumens.tambahDokumen', $data);
     }

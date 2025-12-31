@@ -23,7 +23,16 @@ class StoreDokumenRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        // Check if cash_bank database is available
+        $isDropdownAvailable = false;
+        try {
+            $count = \App\Models\KategoriKriteria::count();
+            $isDropdownAvailable = $count > 0;
+        } catch (\Exception $e) {
+            $isDropdownAvailable = false;
+        }
+
+        $rules = [
             'nomor_agenda' => 'required|string|unique:dokumens,nomor_agenda',
             'bagian' => 'required|string|in:DPM,SKH,SDM,TEP,KPL,AKN,TAN,PMO',
             'nama_pengirim' => 'nullable|string|max:255',
@@ -31,7 +40,11 @@ class StoreDokumenRequest extends FormRequest
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
             'nilai_rupiah' => 'required|string',
-            'kriteria_cf' => ['required', 'integer', function ($attribute, $value, $fail) {
+        ];
+
+        if ($isDropdownAvailable) {
+            // Jika dropdown tersedia, gunakan validasi dropdown
+            $rules['kriteria_cf'] = ['required', 'integer', function ($attribute, $value, $fail) {
                 try {
                     if (!\App\Models\KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
                         $fail('Kriteria CF yang dipilih tidak valid.');
@@ -40,8 +53,8 @@ class StoreDokumenRequest extends FormRequest
                     \Log::error('Error validating kriteria_cf (cash_bank not available): ' . $e->getMessage());
                     // Skip validation jika database tidak tersedia (backward compatibility)
                 }
-            }],
-            'sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+            }];
+            $rules['sub_kriteria'] = ['required', 'integer', function ($attribute, $value, $fail) {
                 try {
                     if (!\App\Models\SubKriteria::where('id_sub_kriteria', $value)->exists()) {
                         $fail('Sub Kriteria yang dipilih tidak valid.');
@@ -50,8 +63,8 @@ class StoreDokumenRequest extends FormRequest
                     \Log::error('Error validating sub_kriteria (cash_bank not available): ' . $e->getMessage());
                     // Skip validation jika database tidak tersedia (backward compatibility)
                 }
-            }],
-            'item_sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
+            }];
+            $rules['item_sub_kriteria'] = ['required', 'integer', function ($attribute, $value, $fail) {
                 try {
                     if (!\App\Models\ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
                         $fail('Item Sub Kriteria yang dipilih tidak valid.');
@@ -60,11 +73,21 @@ class StoreDokumenRequest extends FormRequest
                     \Log::error('Error validating item_sub_kriteria (cash_bank not available): ' . $e->getMessage());
                     // Skip validation jika database tidak tersedia (backward compatibility)
                 }
-            }],
-            // Keep old fields as nullable for backward compatibility
-            'kategori' => 'nullable|string',
-            'jenis_dokumen' => 'nullable|string',
-            'jenis_sub_pekerjaan' => 'nullable|string',
+            }];
+            $rules['kategori'] = 'nullable|string';
+            $rules['jenis_dokumen'] = 'nullable|string';
+            $rules['jenis_sub_pekerjaan'] = 'nullable|string';
+        } else {
+            // Jika dropdown tidak tersedia, gunakan input manual
+            $rules['kriteria_cf'] = 'nullable|integer';
+            $rules['sub_kriteria'] = 'nullable|integer';
+            $rules['item_sub_kriteria'] = 'nullable|integer';
+            $rules['kategori'] = 'required|string|max:255';
+            $rules['jenis_dokumen'] = 'required|string|max:255';
+            $rules['jenis_sub_pekerjaan'] = 'required|string|max:255';
+        }
+
+        return array_merge($rules, [
             'jenis_pembayaran' => 'nullable|string',
             'dibayar_kepada' => 'array',
             'dibayar_kepada.*' => 'nullable|distinct|string|max:255',
@@ -95,6 +118,9 @@ class StoreDokumenRequest extends FormRequest
             'kriteria_cf.required' => 'Kriteria CF wajib dipilih.',
             'sub_kriteria.required' => 'Sub Kriteria wajib dipilih.',
             'item_sub_kriteria.required' => 'Item Sub Kriteria wajib dipilih.',
+            'kategori.required' => 'Kategori wajib diisi.',
+            'jenis_dokumen.required' => 'Jenis Dokumen wajib diisi.',
+            'jenis_sub_pekerjaan.required' => 'Jenis Sub Pekerjaan wajib diisi.',
             'kategori.in' => 'Kategori tidak valid. Pilih salah satu dari opsi yang tersedia.',
             'tanggal_berakhir_spk.after_or_equal' => 'Tanggal berakhir SPK harus sama atau setelah tanggal SPK.',
             'dibayar_kepada.*.max' => 'Nama penerima maksimal 255 karakter.',
