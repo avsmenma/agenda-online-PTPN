@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use PragmaRX\Google2FA\Google2FA;
-use PragmaRX\Google2FA\Support\QRCode;
 
 final class TwoFactorController extends Controller
 {

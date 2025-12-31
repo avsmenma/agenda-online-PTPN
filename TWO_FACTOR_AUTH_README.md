@@ -9,7 +9,7 @@ Fitur 2FA telah diimplementasikan menggunakan TOTP (Time-based One-Time Password
 ```bash
 composer install
 ```
-Library `pragmarx/google2fa-laravel` sudah ditambahkan ke `composer.json`.
+Library `pragmarx/google2fa` sudah ditambahkan ke `composer.json`.
 
 ### 2. Run Migration
 ```bash
