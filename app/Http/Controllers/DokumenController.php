@@ -636,16 +636,19 @@ class DokumenController extends Controller
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Ambil data dari database cash_bank_new untuk dropdown baru
+        $isDropdownAvailable = false;
         try {
             $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
             $subKriteria = SubKriteria::all();
             $itemSubKriteria = ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
         } catch (\Exception $e) {
             \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
             // Fallback: gunakan collection kosong jika error
             $kategoriKriteria = collect([]);
             $subKriteria = collect([]);
             $itemSubKriteria = collect([]);
+            $isDropdownAvailable = false;
         }
 
         // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
@@ -694,6 +697,7 @@ class DokumenController extends Controller
             'selectedKriteriaCfId' => $selectedKriteriaCfId ?? null,
             'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
             'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
+            'isDropdownAvailable' => $isDropdownAvailable,
         );
 
         return view('IbuA.dokumens.editDokumen', $data);

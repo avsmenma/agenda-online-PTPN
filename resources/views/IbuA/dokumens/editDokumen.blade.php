@@ -382,18 +382,18 @@
     </div>
 
     <!-- Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
-    <div class="form-row-3">
+    @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
+    <!-- Mode Dropdown (jika database cash_bank tersedia) -->
+    <div class="form-row-3" id="dropdown-mode">
       <div class="form-group">
         <label>Kriteria CF <span style="color: red;">*</span></label>
         <select id="kriteria_cf" name="kriteria_cf" required>
           <option value="">Pilih Kriteria CF</option>
-          @if(isset($kategoriKriteria) && $kategoriKriteria->count() > 0)
-            @foreach($kategoriKriteria as $kategori)
-              <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
-                {{ $kategori->nama_kriteria }}
-              </option>
-            @endforeach
-          @endif
+          @foreach($kategoriKriteria as $kategori)
+            <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+              {{ $kategori->nama_kriteria }}
+            </option>
+          @endforeach
         </select>
         @error('kriteria_cf')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
@@ -418,6 +418,39 @@
         @enderror
       </div>
     </div>
+    @else
+    <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
+    <div class="form-row-3" id="manual-mode">
+      <div class="form-group">
+        <label>Kategori <span style="color: red;">*</span></label>
+        <input type="text" name="kategori" id="kategori" value="{{ old('kategori', $dokumen->kategori ?? '') }}" placeholder="Masukkan Kategori" required>
+        <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
+          <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual sesuai kebutuhan.
+        </small>
+        @error('kategori')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Jenis Dokumen <span style="color: red;">*</span></label>
+        <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen ?? '') }}" placeholder="Masukkan Jenis Dokumen" required>
+        @error('jenis_dokumen')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Jenis Sub Pekerjaan <span style="color: red;">*</span></label>
+        <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan ?? '') }}" placeholder="Masukkan Jenis Sub Pekerjaan" required>
+        @error('jenis_sub_pekerjaan')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <!-- Hidden fields untuk dropdown (nullable) -->
+      <input type="hidden" name="kriteria_cf" value="">
+      <input type="hidden" name="sub_kriteria" value="">
+      <input type="hidden" name="item_sub_kriteria" value="">
+    </div>
+    @endif
 
     <!-- Kebun -->
     <div class="form-row">
@@ -689,14 +722,19 @@
       }
     }
 
-    // Data untuk cascading dropdown dari cash_bank database
-    const subKriteriaData = @json($subKriteria ?? []);
-    const itemSubKriteriaData = @json($itemSubKriteria ?? []);
+    // Data untuk cascading dropdown (hanya jika dropdown mode tersedia)
+    @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
+    const subKriteriaData = @json($subKriteria);
+    const itemSubKriteriaData = @json($itemSubKriteria);
 
     // Function to update sub kriteria dropdown
     function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
       const subKriteriaSelect = document.getElementById('sub_kriteria');
       const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+      if (!subKriteriaSelect || !itemSubKriteriaSelect) {
+        return;
+      }
 
       // Clear existing options
       subKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria</option>';
@@ -727,6 +765,10 @@
     function updateItemSubKriteria(subKriteriaId, selectedValue = null) {
       const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
 
+      if (!itemSubKriteriaSelect) {
+        return;
+      }
+
       // Clear existing options
       itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Item Sub Kriteria</option>';
 
@@ -750,34 +792,39 @@
         itemSubKriteriaSelect.appendChild(option);
       });
     }
+    @endif
 
-    // Initialize dropdowns if values already selected (from old input)
+    // Initialize dropdowns if values already selected (hanya jika dropdown mode tersedia)
+    @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
     const kriteriaCfSelect = document.getElementById('kriteria_cf');
     const subKriteriaSelect = document.getElementById('sub_kriteria');
     const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
     
-    const oldKriteriaCf = '{{ old("kriteria_cf", $selectedKriteriaCfId ?? "") }}';
-    const oldSubKriteria = '{{ old("sub_kriteria", $selectedSubKriteriaId ?? "") }}';
-    const oldItemSubKriteria = '{{ old("item_sub_kriteria", $selectedItemSubKriteriaId ?? "") }}';
+    if (kriteriaCfSelect && subKriteriaSelect && itemSubKriteriaSelect) {
+      const oldKriteriaCf = '{{ old("kriteria_cf", $selectedKriteriaCfId ?? "") }}';
+      const oldSubKriteria = '{{ old("sub_kriteria", $selectedSubKriteriaId ?? "") }}';
+      const oldItemSubKriteria = '{{ old("item_sub_kriteria", $selectedItemSubKriteriaId ?? "") }}';
 
-    if (oldKriteriaCf && oldKriteriaCf !== '') {
-      updateSubKriteria(oldKriteriaCf, oldSubKriteria);
-      if (oldSubKriteria && oldSubKriteria !== '') {
-        updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
+      if (oldKriteriaCf && oldKriteriaCf !== '') {
+        updateSubKriteria(oldKriteriaCf, oldSubKriteria);
+        if (oldSubKriteria && oldSubKriteria !== '') {
+          updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
+        }
       }
+
+      // Event listener untuk dropdown kriteria CF
+      kriteriaCfSelect.addEventListener('change', function() {
+        updateSubKriteria(this.value);
+        // Reset item sub kriteria
+        itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+      });
+
+      // Event listener untuk dropdown sub kriteria
+      subKriteriaSelect.addEventListener('change', function() {
+        updateItemSubKriteria(this.value);
+      });
     }
-
-    // Event listener untuk dropdown kriteria CF
-    kriteriaCfSelect.addEventListener('change', function() {
-      updateSubKriteria(this.value);
-      // Reset item sub kriteria
-      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
-    });
-
-    // Event listener untuk dropdown sub kriteria
-    subKriteriaSelect.addEventListener('change', function() {
-      updateItemSubKriteria(this.value);
-    });
+    @endif
 
     // Handle form submission - remove dots from nilai_rupiah and disable ejaan_nilai_rupiah
     document.querySelector('form').addEventListener('submit', function(e) {

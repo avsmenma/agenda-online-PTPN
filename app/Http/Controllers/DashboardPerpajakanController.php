@@ -380,16 +380,19 @@ class DashboardPerpajakanController extends Controller
 
         // Ambil data dari database cash_bank_new untuk dropdown baru
         // Tambahkan try-catch untuk menangani error koneksi database
+        $isDropdownAvailable = false;
         try {
             $kategoriKriteria = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get();
             $subKriteria = \App\Models\SubKriteria::all();
             $itemSubKriteria = \App\Models\ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
         } catch (\Exception $e) {
             \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
             // Fallback: gunakan collection kosong jika error
             $kategoriKriteria = collect([]);
             $subKriteria = collect([]);
             $itemSubKriteria = collect([]);
+            $isDropdownAvailable = false;
         }
 
         // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
@@ -436,6 +439,7 @@ class DashboardPerpajakanController extends Controller
             'selectedKriteriaCfId' => $selectedKriteriaCfId ?? null,
             'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
             'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
+            'isDropdownAvailable' => $isDropdownAvailable,
         );
         return view('perpajakan.dokumens.editPerpajakan', $data);
     }
