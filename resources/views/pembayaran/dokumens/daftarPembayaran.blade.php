@@ -564,7 +564,8 @@
         @endphp
         <tr class="main-row {{ $isLocked ? 'locked-row' : '' }} {{ $isBelumSiapBayar ? 'no-click-row' : '' }}" 
             @if(!$isBelumSiapBayar)
-              onclick="toggleDetail({{ $dokumen->id }})" 
+              onclick="openDocumentDetailModal({{ $dokumen->id }}, event)" 
+              style="cursor: pointer;"
               title="Klik untuk melihat detail lengkap dokumen"
             @else
               style="cursor: default;"
@@ -787,8 +788,500 @@
   </div>
 </div>
 
+<!-- Modal View Document Detail -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" style="max-width: 98%; width: 98%; margin: 0.5rem auto;">
+    <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
+      <!-- Sticky Header -->
+      <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+        <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-file-lines me-2"></i>
+          Detail Dokumen Lengkap
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Scrollable Body -->
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(95vh - 140px); padding: 30px; flex: 1;">
+        <input type="hidden" id="view-dokumen-id">
+        
+        <!-- Loading State -->
+        <div id="view-loading" style="display: none; text-align: center; padding: 40px;">
+          <i class="fas fa-spinner fa-spin fa-3x mb-3" style="color: #083E40;"></i>
+          <p class="text-muted">Memuat data dokumen...</p>
+        </div>
+        
+        <!-- Error State -->
+        <div id="view-error" style="display: none; background: #fee; border: 1px solid #fcc; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <div class="d-flex align-items-center gap-2 text-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <span></span>
+          </div>
+        </div>
+        
+        <!-- Content -->
+        <div id="view-content" style="display: none;">
+          <!-- Section 1: Identitas Dokumen -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                <i class="fa-solid fa-id-card me-2"></i>IDENTITAS DOKUMEN
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div><strong>Nomor Agenda:</strong> <span id="view-nomor-agenda">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Nomor SPP:</strong> <span id="view-nomor-spp">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Tanggal SPP:</strong> <span id="view-tanggal-spp">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Bulan:</strong> <span id="view-bulan">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Tahun:</strong> <span id="view-tahun">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Tanggal Masuk:</strong> <span id="view-tanggal-masuk">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Kriteria CF:</strong> <span id="view-kategori">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Sub Kriteria:</strong> <span id="view-jenis-dokumen">-</span></div>
+              </div>
+              <div class="col-md-4">
+                <div><strong>Item Sub Kriteria:</strong> <span id="view-jenis-sub-pekerjaan">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Detail Keuangan & Vendor -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                <i class="fa-solid fa-money-bill-wave me-2"></i>DETAIL KEUANGAN & VENDOR
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <div><strong>Uraian SPP:</strong> <span id="view-uraian-spp" style="white-space: pre-wrap;">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Nilai Rupiah:</strong> <span id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Ejaan Nilai Rupiah:</strong> <span id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Dibayar Kepada:</strong> <span id="view-dibayar-kepada">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Kebun:</strong> <span id="view-kebun">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Referensi Pendukung -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                <i class="fa-solid fa-file-contract me-2"></i>REFERENSI PENDUKUNG
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <div><strong>No. SPK:</strong> <span id="view-no-spk">-</span></div>
+              </div>
+              <div class="col-md-3">
+                <div><strong>Tanggal SPK:</strong> <span id="view-tanggal-spk">-</span></div>
+              </div>
+              <div class="col-md-3">
+                <div><strong>Tanggal Berakhir SPK:</strong> <span id="view-tanggal-berakhir-spk">-</span></div>
+              </div>
+              <div class="col-md-3">
+                <div><strong>No. Mirror:</strong> <span id="view-nomor-mirror">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>No. Berita Acara:</strong> <span id="view-no-berita-acara">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Tanggal Berita Acara:</strong> <span id="view-tanggal-berita-acara">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Nomor PO & PR -->
+          <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                <i class="fa-solid fa-hashtag me-2"></i>NOMOR PO & PR
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div><strong>Nomor PO:</strong> <span id="view-nomor-po">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Nomor PR:</strong> <span id="view-nomor-pr">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Informasi Perpajakan -->
+          <div class="form-section mb-4" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 20px; border: 2px solid #ffc107;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #92400e; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                <i class="fa-solid fa-file-invoice-dollar me-2"></i>INFORMASI PERPAJAKAN
+                <span style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">KHUSUS PERPAJAKAN</span>
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div><strong>NPWP:</strong> <span id="view-npwp">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Status Perpajakan:</strong> <span id="view-status-perpajakan">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>No. Faktur:</strong> <span id="view-no-faktur">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Tanggal Faktur:</strong> <span id="view-tanggal-faktur">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Jenis PPH:</strong> <span id="view-jenis-pph">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>DPP PPH:</strong> <span id="view-dpp-pph">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>PPN Terhutang:</strong> <span id="view-ppn-terhutang">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Link Dokumen Pajak:</strong> <span id="view-link-dokumen-pajak">-</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 6: Data Pembayaran -->
+          <div class="form-section mb-4" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 12px; padding: 20px; border: 2px solid #28a745;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #155724; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+                <i class="fa-solid fa-money-bill-wave me-2"></i>DATA PEMBAYARAN
+                <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DITAMBAHKAN OLEH TEAM PEMBAYARAN</span>
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div><strong>Status Pembayaran:</strong> <span id="view-status-pembayaran">-</span></div>
+              </div>
+              <div class="col-md-6">
+                <div><strong>Tanggal Dibayar:</strong> <span id="view-tanggal-dibayar">-</span></div>
+              </div>
+              <div class="col-12">
+                <div><strong>Link Bukti Pembayaran:</strong> <span id="view-link-bukti-pembayaran">-</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="flex-shrink: 0; border-top: 1px solid #e9ecef;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-// Toggle detail row
+// Global function to open document detail modal
+window.openDocumentDetailModal = function(dokumenId, event) {
+  // Prevent default navigation
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  
+  // Show loading state
+  const loadingEl = document.getElementById('view-loading');
+  const errorEl = document.getElementById('view-error');
+  const contentEl = document.getElementById('view-content');
+  
+  if (loadingEl) loadingEl.style.display = 'block';
+  if (errorEl) errorEl.style.display = 'none';
+  if (contentEl) contentEl.style.display = 'none';
+  
+  // Fetch document detail
+  fetch(`/documents/pembayaran/${dokumenId}/detail`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+    },
+    credentials: 'same-origin'
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(err => {
+        throw new Error(err.message || 'Gagal memuat data dokumen. Status: ' + response.status);
+      });
+    }
+    return response.json();
+  })
+  .then(result => {
+    if (result.success && result.data) {
+      populateDocumentDetail(result.data);
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (contentEl) contentEl.style.display = 'block';
+      
+      // Show Bootstrap modal
+      const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+      modal.show();
+    } else {
+      throw new Error(result.message || 'Data tidak ditemukan');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading document:', error);
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (errorEl) {
+      errorEl.style.display = 'block';
+      const errorText = errorEl.querySelector('span');
+      if (errorText) errorText.textContent = error.message || 'Terjadi kesalahan saat memuat data dokumen';
+    }
+    
+    // Show modal even with error
+    const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+    modal.show();
+  });
+  
+  return false;
+};
+
+// Function to convert number to Indonesian terbilang
+function terbilangRupiah(number) {
+  number = parseFloat(number) || 0;
+  
+  if (number == 0) {
+    return 'nol rupiah';
+  }
+
+  const angka = [
+    '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+    'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+    'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+    'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+  ];
+
+  let hasil = '';
+
+  // Handle triliun
+  if (number >= 1000000000000) {
+    const triliun = Math.floor(number / 1000000000000);
+    hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+    number = number % 1000000000000;
+  }
+
+  // Handle milyar
+  if (number >= 1000000000) {
+    const milyar = Math.floor(number / 1000000000);
+    hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+    number = number % 1000000000;
+  }
+
+  // Handle juta
+  if (number >= 1000000) {
+    const juta = Math.floor(number / 1000000);
+    hasil += terbilangSatuan(juta, angka) + ' juta ';
+    number = number % 1000000;
+  }
+
+  // Handle ribu
+  if (number >= 1000) {
+    const ribu = Math.floor(number / 1000);
+    if (ribu == 1) {
+      hasil += 'seribu ';
+    } else {
+      hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+    }
+    number = number % 1000;
+  }
+
+  // Handle ratusan, puluhan, dan satuan
+  if (number > 0) {
+    hasil += terbilangSatuan(number, angka);
+  }
+
+  return hasil.trim() + ' rupiah';
+}
+
+function terbilangSatuan(number, angka) {
+  let hasil = '';
+  number = parseInt(number);
+
+  if (number == 0) {
+    return '';
+  }
+
+  // Handle ratusan
+  if (number >= 100) {
+    const ratus = Math.floor(number / 100);
+    if (ratus == 1) {
+      hasil += 'seratus ';
+    } else {
+      hasil += angka[ratus] + ' ratus ';
+    }
+    number = number % 100;
+  }
+
+  // Handle puluhan dan satuan (0-99)
+  if (number > 0) {
+    if (number < 20) {
+      hasil += angka[number] + ' ';
+    } else {
+      const puluhan = Math.floor(number / 10);
+      const satuan = number % 10;
+      
+      if (puluhan == 1) {
+        hasil += angka[10 + satuan] + ' ';
+      } else {
+        hasil += angka[puluhan] + ' puluh ';
+        if (satuan > 0) {
+          hasil += angka[satuan] + ' ';
+        }
+      }
+    }
+  }
+
+  return hasil.trim();
+}
+
+function populateDocumentDetail(data) {
+  // Helper functions
+  const formatDate = (dateStr) => {
+    if (!dateStr || dateStr === '-') return '-';
+    if (dateStr.includes('/')) return dateStr; // Already formatted
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+  
+  const formatDateTime = (dateStr) => {
+    if (!dateStr || dateStr === '-') return '-';
+    if (dateStr.includes('/') && dateStr.includes(':')) return dateStr; // Already formatted
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+  
+  const formatNumber = (num) => {
+    if (!num || num === '-') return '-';
+    return new Intl.NumberFormat('id-ID').format(num);
+  };
+  
+  // Identitas Dokumen
+  document.getElementById('view-nomor-agenda').textContent = data.nomor_agenda || '-';
+  document.getElementById('view-nomor-spp').textContent = data.nomor_spp || '-';
+  document.getElementById('view-tanggal-spp').textContent = formatDate(data.tanggal_spp_date || data.tanggal_spp);
+  document.getElementById('view-bulan').textContent = data.bulan || '-';
+  document.getElementById('view-tahun').textContent = data.tahun || '-';
+  document.getElementById('view-tanggal-masuk').textContent = formatDateTime(data.tanggal_masuk);
+  document.getElementById('view-kategori').textContent = data.kategori || '-';
+  document.getElementById('view-jenis-dokumen').textContent = data.jenis_dokumen || '-';
+  document.getElementById('view-jenis-sub-pekerjaan').textContent = data.jenis_sub_pekerjaan || '-';
+  
+  // Detail Keuangan & Vendor
+  document.getElementById('view-uraian-spp').textContent = data.uraian_spp || '-';
+  document.getElementById('view-nilai-rupiah').textContent = data.nilai_rupiah_formatted || (data.nilai_rupiah ? 'Rp ' + formatNumber(data.nilai_rupiah) : '-');
+  
+  // Ejaan nilai rupiah (terbilang)
+  if (data.nilai_rupiah && data.nilai_rupiah > 0 && typeof terbilangRupiah === 'function') {
+    document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(data.nilai_rupiah);
+  } else {
+    document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+  }
+  
+  document.getElementById('view-dibayar-kepada').textContent = data.dibayar_kepada || '-';
+  document.getElementById('view-kebun').textContent = data.kebun || '-';
+  
+  // Referensi Pendukung
+  document.getElementById('view-no-spk').textContent = data.no_spk || '-';
+  document.getElementById('view-tanggal-spk').textContent = formatDate(data.tanggal_spk_date || data.tanggal_spk);
+  document.getElementById('view-tanggal-berakhir-spk').textContent = formatDate(data.tanggal_berakhir_spk_date || data.tanggal_berakhir_spk);
+  document.getElementById('view-nomor-mirror').textContent = data.nomor_mirror || '-';
+  document.getElementById('view-no-berita-acara').textContent = data.no_berita_acara || '-';
+  document.getElementById('view-tanggal-berita-acara').textContent = formatDate(data.tanggal_berita_acara_date || data.tanggal_berita_acara);
+  
+  // Nomor PO & PR
+  document.getElementById('view-nomor-po').textContent = data.no_po || '-';
+  document.getElementById('view-nomor-pr').textContent = data.no_pr || '-';
+  
+  // Informasi Perpajakan
+  document.getElementById('view-npwp').textContent = data.npwp || '-';
+  document.getElementById('view-status-perpajakan').textContent = data.status_perpajakan || '-';
+  document.getElementById('view-no-faktur').textContent = data.no_faktur || '-';
+  document.getElementById('view-tanggal-faktur').textContent = formatDate(data.tanggal_faktur_date || data.tanggal_faktur);
+  document.getElementById('view-jenis-pph').textContent = data.jenis_pph || '-';
+  
+  // Format DPP PPH
+  if (data.dpp_pph_raw && data.dpp_pph_raw > 0) {
+    document.getElementById('view-dpp-pph').textContent = 'Rp ' + formatNumber(data.dpp_pph_raw);
+  } else if (data.dpp_pph && data.dpp_pph !== '-') {
+    document.getElementById('view-dpp-pph').textContent = 'Rp ' + data.dpp_pph;
+  } else {
+    document.getElementById('view-dpp-pph').textContent = '-';
+  }
+  
+  // Format PPN Terhutang
+  if (data.ppn_terhutang_raw && data.ppn_terhutang_raw > 0) {
+    document.getElementById('view-ppn-terhutang').textContent = 'Rp ' + formatNumber(data.ppn_terhutang_raw);
+  } else if (data.ppn_terhutang && data.ppn_terhutang !== '-') {
+    document.getElementById('view-ppn-terhutang').textContent = 'Rp ' + data.ppn_terhutang;
+  } else {
+    document.getElementById('view-ppn-terhutang').textContent = '-';
+  }
+  
+  // Link Dokumen Pajak
+  const linkDokumenPajak = data.link_dokumen_pajak || '-';
+  if (linkDokumenPajak !== '-' && linkDokumenPajak) {
+    const linkEl = document.getElementById('view-link-dokumen-pajak');
+    linkEl.innerHTML = `<a href="${linkDokumenPajak}" target="_blank" style="color: #0d6efd; text-decoration: underline;">${linkDokumenPajak}</a>`;
+  } else {
+    document.getElementById('view-link-dokumen-pajak').textContent = '-';
+  }
+  
+  // Data Pembayaran
+  const statusPembayaran = data.payment_status || data.status_pembayaran || '-';
+  document.getElementById('view-status-pembayaran').textContent = statusPembayaran === 'sudah_dibayar' ? 'Sudah Dibayar' : (statusPembayaran === 'siap_bayar' ? 'Siap Dibayar' : statusPembayaran);
+  document.getElementById('view-tanggal-dibayar').textContent = formatDate(data.tanggal_dibayar_date || data.tanggal_dibayar);
+  
+  // Link Bukti Pembayaran
+  const linkBuktiPembayaran = data.link_bukti_pembayaran || '-';
+  if (linkBuktiPembayaran !== '-' && linkBuktiPembayaran) {
+    const linkEl = document.getElementById('view-link-bukti-pembayaran');
+    linkEl.innerHTML = `<a href="${linkBuktiPembayaran}" target="_blank" style="color: #0d6efd; text-decoration: underline;">${linkBuktiPembayaran}</a>`;
+  } else {
+    document.getElementById('view-link-bukti-pembayaran').textContent = '-';
+  }
+  
+  // Set document ID for edit button (if needed)
+  document.getElementById('view-dokumen-id').value = data.id || '';
+}
+
+// Toggle detail row (kept for backward compatibility if needed)
 function toggleDetail(docId) {
   const detailRow = document.getElementById('detail-' + docId);
   const mainRow = event.currentTarget;
