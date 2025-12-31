@@ -758,7 +758,7 @@
       color: #374151;
       text-decoration: none;
       font-size: 14px;
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     .dark .profile-dropdown-item {
@@ -766,13 +766,14 @@
     }
 
     .profile-dropdown-item:hover {
-      background-color: #f1f5f9;
-      color: #0369A1;
+      background-color: #E8F5E9;
+      color: #01545A;
+      font-weight: 500;
     }
 
     .dark .profile-dropdown-item:hover {
-      background-color: #334155;
-      color: #60a5fa;
+      background-color: rgba(1, 84, 90, 0.2);
+      color: #4ade80;
     }
 
     .profile-dropdown-item i {
