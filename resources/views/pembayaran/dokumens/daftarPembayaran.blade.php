@@ -554,6 +554,9 @@
           $computedStatus = $dokumen->computed_status ?? 'belum_siap_bayar';
           $isBelumSiapBayar = ($computedStatus === 'belum_siap_bayar');
           
+          // Dokumen bisa diklik jika statusnya 'siap_bayar' atau 'sudah_dibayar'
+          $canClick = in_array($computedStatus, ['siap_bayar', 'sudah_dibayar']);
+          
           // Cek apakah dokumen sudah terkirim ke pembayaran (bisa diedit)
           $isSentToPembayaran = $dokumen->status === 'sent_to_pembayaran' || $dokumen->current_handler === 'pembayaran';
           
@@ -562,9 +565,9 @@
           $canSetDeadline = \App\Helpers\DokumenHelper::canSetDeadline($dokumen)['can_set'];
           $canEdit = \App\Helpers\DokumenHelper::canEditDocument($dokumen, 'pembayaran');
         @endphp
-        <tr class="main-row {{ $isLocked ? 'locked-row' : '' }} {{ $isBelumSiapBayar ? 'no-click-row' : '' }}" 
-            @if(!$isBelumSiapBayar)
-              onclick="openDocumentDetailModal({{ $dokumen->id }}, event)" 
+        <tr class="main-row {{ $isLocked ? 'locked-row' : '' }}" 
+            @if($canClick)
+              onclick="if(typeof window.openDocumentDetailModal === 'function') { window.openDocumentDetailModal({{ $dokumen->id }}, event); }" 
               style="cursor: pointer;"
               title="Klik untuk melihat detail lengkap dokumen"
             @else

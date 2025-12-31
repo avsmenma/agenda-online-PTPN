@@ -795,24 +795,16 @@
           }
         @endphp
         <tr 
-          {{-- Removed row onclick for siap_bayar status because openDocumentDetailModal is not defined
-               and was causing JavaScript errors that prevented Edit button from working.
-               For siap_bayar: users should only click Edit button, not the row itself --}}
           @if($paymentStatus === 'belum_siap_bayar')
             {{-- Belum siap bayar: row is not clickable, only eye icon for tracking --}}
             style="cursor: default;"
             class="no-click-row"
             title="Dokumen belum siap bayar. Klik icon mata untuk melihat tracking."
-          @elseif($paymentStatus === 'siap_bayar')
-            {{-- Siap bayar: row is not clickable, only Edit button is clickable --}}
-            style="cursor: default;"
-            class="no-click-row"
-            title="Klik tombol Edit untuk input data pembayaran."
-          @elseif($paymentStatus === 'sudah_dibayar')
-            {{-- Sudah dibayar: row is not clickable anymore --}}
-            style="cursor: default;"
-            class="no-click-row"
-            title="Dokumen sudah dibayar."
+          @elseif($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
+            {{-- Siap bayar atau sudah dibayar: row is clickable untuk melihat detail --}}
+            onclick="if(typeof window.openDocumentDetailModal === 'function') { window.openDocumentDetailModal({{ $dokumen->id }}, event); }"
+            class="clickable-row"
+            title="Klik untuk melihat detail lengkap dokumen"
           @endif
           data-dokumen-id="{{ $dokumen->id }}"
         >
@@ -867,7 +859,7 @@
               @endswitch
             @endif
           </td>
-          <td class="col-action" onclick="event.stopPropagation();">
+          <td class="col-action" onclick="if(event) { event.stopPropagation(); }">
             <div class="action-buttons">
               @if($paymentStatus === 'belum_siap_bayar')
                 {{-- Kondisi A: Status = "Belum Siap Bayar" - Tampilkan icon mata untuk tracking --}}
@@ -2339,7 +2331,7 @@ window.openDocumentDetailModal = function(dokumenId, event) {
     if (contentEl) contentEl.style.display = 'none';
     
     // Fetch document detail
-    fetch(`/dokumensPembayaran/${dokumenId}/detail`, {
+    fetch(`/documents/pembayaran/${dokumenId}/detail`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
