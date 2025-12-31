@@ -312,6 +312,26 @@
     }
   }
 
+  #viewDocumentModal.modal {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  #viewDocumentModal .modal-dialog {
+    max-width: 98% !important;
+    width: 98% !important;
+    margin: 1% auto !important;
+    padding: 0 !important;
+  }
+
+  #viewDocumentModal.show .modal-dialog {
+    transform: none !important;
+  }
+
+  #viewDocumentModal .modal-content {
+    border-radius: 0 !important;
+  }
+
   .main-row {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -792,8 +812,8 @@
 </div>
 
 <!-- Modal View Document Detail -->
-<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true" style="padding: 0 !important;">
-  <div class="modal-dialog modal-xl" style="max-width: 100vw !important; width: 100vw !important; margin: 0 !important; padding: 0 !important;">
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" style="max-width: 98%; width: 98%; margin: 1% auto;">
     <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
       <!-- Sticky Header -->
       <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
