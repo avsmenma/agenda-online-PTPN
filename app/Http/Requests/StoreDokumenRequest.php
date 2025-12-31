@@ -100,7 +100,7 @@ class StoreDokumenRequest extends FormRequest
             'nomor_po.*' => 'nullable|string',
             'nomor_pr' => 'array',
             'nomor_pr.*' => 'nullable|string',
-        ];
+        ]);
     }
 
     /**
@@ -121,7 +121,6 @@ class StoreDokumenRequest extends FormRequest
             'kategori.required' => 'Kategori wajib diisi.',
             'jenis_dokumen.required' => 'Jenis Dokumen wajib diisi.',
             'jenis_sub_pekerjaan.required' => 'Jenis Sub Pekerjaan wajib diisi.',
-            'kategori.in' => 'Kategori tidak valid. Pilih salah satu dari opsi yang tersedia.',
             'tanggal_berakhir_spk.after_or_equal' => 'Tanggal berakhir SPK harus sama atau setelah tanggal SPK.',
             'dibayar_kepada.*.max' => 'Nama penerima maksimal 255 karakter.',
             'dibayar_kepada.*.distinct' => 'Nama penerima tidak boleh duplikat dalam satu form.',

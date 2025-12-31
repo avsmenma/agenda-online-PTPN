@@ -458,7 +458,7 @@
         <label>Kategori <span style="color: red;">*</span></label>
         <input type="text" name="kategori" id="kategori" value="{{ old('kategori') }}" placeholder="Masukkan Kategori" required>
         <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
-          <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual.
+          <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual sesuai kebutuhan.
         </small>
         @error('kategori')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
