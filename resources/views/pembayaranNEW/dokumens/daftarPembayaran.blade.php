@@ -510,10 +510,10 @@
     padding-left: 0 !important;
   }
 
-  #viewDocumentModal .modal-dialog {
-    max-width: 98% !important;
-    width: 98% !important;
-    margin: 1% auto !important;
+  #viewDocumentModal .modal-dialog.modal-xl {
+    max-width: 90% !important;
+    width: 90% !important;
+    margin: 1rem auto !important;
     padding: 0 !important;
   }
 
@@ -525,7 +525,23 @@
     border-radius: 0 !important;
   }
 
-  .modal-content {
+  @media (max-width: 992px) {
+    #viewDocumentModal .modal-dialog.modal-xl {
+      max-width: 95% !important;
+      width: 95% !important;
+      margin: 0.5rem auto !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #viewDocumentModal .modal-dialog.modal-xl {
+      max-width: 98% !important;
+      width: 98% !important;
+      margin: 0.25rem auto !important;
+    }
+  }
+
+  .modal-content:not(#viewDocumentModal .modal-content) {
     background: white;
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(8, 62, 64, 0.3);
@@ -678,7 +694,7 @@
       align-items: stretch;
     }
 
-    .modal-content {
+    .modal-content:not(#viewDocumentModal .modal-content) {
       width: 95%;
     }
   }
@@ -2605,7 +2621,7 @@ function terbilangSatuan(number, angka) {
 
 <!-- Modal View Document Detail -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl" style="max-width: 98%; width: 98%; margin: 1% auto;">
+  <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
     <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
       <!-- Sticky Header -->
       <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
