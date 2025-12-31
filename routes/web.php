@@ -46,6 +46,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/regenerate-recovery-codes', [\App\Http\Controllers\TwoFactorController::class, 'regenerateRecoveryCodes'])->name('regenerate-recovery-codes');
         Route::post('/disable', [\App\Http\Controllers\TwoFactorController::class, 'disable'])->name('disable');
     });
+
+    // Profile/Account Management Routes (requires authentication)
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/account', [\App\Http\Controllers\ProfileController::class, 'showAccount'])->name('account');
+        Route::post('/update-email', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('update-email');
+        Route::post('/update-password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('update-password');
+    });
 });
 
 // SECURITY FIX: Custom broadcast authentication route with CSRF protection

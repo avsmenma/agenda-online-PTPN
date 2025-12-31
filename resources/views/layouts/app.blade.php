@@ -713,6 +713,83 @@
       /* slate-300 */
     }
 
+    /* Profile Dropdown Styles */
+    .profile-dropdown-container {
+      position: relative;
+    }
+
+    .profile-icon {
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .profile-icon:hover {
+      background-color: #f1f5f9;
+    }
+
+    .dark .profile-icon:hover {
+      background-color: #334155;
+    }
+
+    .profile-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 200px;
+      z-index: 1050;
+      overflow: hidden;
+      padding: 4px 0;
+    }
+
+    .dark .profile-dropdown-menu {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .profile-dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      color: #374151;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+
+    .dark .profile-dropdown-item {
+      color: #cbd5e1;
+    }
+
+    .profile-dropdown-item:hover {
+      background-color: #f1f5f9;
+      color: #0369A1;
+    }
+
+    .dark .profile-dropdown-item:hover {
+      background-color: #334155;
+      color: #60a5fa;
+    }
+
+    .profile-dropdown-item i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .profile-dropdown-divider {
+      height: 1px;
+      background-color: #E2E8F0;
+      margin: 4px 0;
+    }
+
+    .dark .profile-dropdown-divider {
+      background-color: #334155;
+    }
+
     .topbar {
       background-color: white;
       padding: 25px 40px;
@@ -1334,8 +1411,33 @@
             <i class="fas fa-moon theme-toggle-icon moon"></i>
             <i class="fas fa-sun theme-toggle-icon sun"></i>
           </button>
-          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666;"></i>
-          <i class="fa-solid fa-user" style="font-size: 18px; color: #666;"></i>
+          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666; cursor: pointer;"></i>
+          
+          <!-- Profile Dropdown -->
+          <div class="profile-dropdown-container" style="position: relative;">
+            <i class="fa-solid fa-user profile-icon" 
+               id="profileDropdownToggle" 
+               style="font-size: 18px; color: #666; cursor: pointer; position: relative;">
+            </i>
+            <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
+              <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
+                <i class="fa-solid fa-user-circle me-2"></i>
+                Akun
+              </a>
+              <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
+                <i class="fa-solid fa-shield-alt me-2"></i>
+                Keamanan 2FA
+              </a>
+              <div class="profile-dropdown-divider"></div>
+              <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                @csrf
+                <button type="submit" class="profile-dropdown-item" style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
+                  <i class="fa-solid fa-sign-out-alt me-2"></i>
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
       </div>
   </header>
 
@@ -1540,11 +1642,6 @@
             </a>
 
             <a href="{{ url($diagramUrl) }}" class="{{ $menuDiagram ?? '' }}"><i class="fa-solid fa-chart-simple"></i> Diagram</a>
-            
-            <!-- 2FA Security Menu -->
-            <a href="{{ route('2fa.setup') }}" class="{{ request()->routeIs('2fa.*') ? 'active' : '' }}">
-              <i class="fa-solid fa-shield-alt"></i> Keamanan 2FA
-            </a>
           @endunless
               </div>
 
@@ -3665,6 +3762,33 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   console.log('Secondary sidebar setup complete');
+
+  // Profile Dropdown Toggle
+  const profileDropdownToggle = document.getElementById('profileDropdownToggle');
+  const profileDropdownMenu = document.getElementById('profileDropdownMenu');
+  
+  if (profileDropdownToggle && profileDropdownMenu) {
+    // Toggle dropdown on click
+    profileDropdownToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      profileDropdownMenu.style.display = profileDropdownMenu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!profileDropdownToggle.contains(e.target) && !profileDropdownMenu.contains(e.target)) {
+        profileDropdownMenu.style.display = 'none';
+      }
+    });
+
+    // Close dropdown when clicking on a menu item
+    const dropdownItems = profileDropdownMenu.querySelectorAll('.profile-dropdown-item');
+    dropdownItems.forEach(item => {
+      item.addEventListener('click', function() {
+        profileDropdownMenu.style.display = 'none';
+      });
+    });
+  }
 });
 
 // Global Function: Format Rupiah Input (Auto format with dots)
