@@ -68,7 +68,7 @@ return [
             'url' => env('CASH_BANK_DB_URL'),
             'host' => env('CASH_BANK_DB_HOST', env('DB_HOST', '127.0.0.1')),
             'port' => env('CASH_BANK_DB_PORT', env('DB_PORT', '3306')),
-            'database' => env('CASH_BANK_DB_DATABASE', 'cash_bank_new'),
+            'database' => env('CASH_BANK_DB_DATABASE', 'sagitarius007'),
             'username' => env('CASH_BANK_DB_USERNAME', env('DB_USERNAME', 'root')),
             'password' => env('CASH_BANK_DB_PASSWORD', env('DB_PASSWORD', '')),
             'unix_socket' => env('CASH_BANK_DB_SOCKET', ''),
