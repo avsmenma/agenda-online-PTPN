@@ -564,7 +564,11 @@ class DashboardBController extends Controller
                 ->with('error', 'Anda tidak memiliki izin untuk mengupdate dokumen ini.');
         }
 
-        $validator = \Validator::make($request->all(), [
+        // Check if using dropdown mode (cash_bank available) or manual mode
+        $isDropdownMode = $request->filled('kriteria_cf') && $request->filled('sub_kriteria') && $request->filled('item_sub_kriteria');
+        $isManualMode = $request->filled('kategori') && $request->filled('jenis_dokumen') && $request->filled('jenis_sub_pekerjaan');
+
+        $rules = [
             'nomor_agenda' => 'required|string|unique:dokumens,nomor_agenda,' . $dokumen->id,
             'bulan' => 'required|string',
             'tahun' => 'required|integer|min:2020|max:2030',
@@ -573,40 +577,6 @@ class DashboardBController extends Controller
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
             'nilai_rupiah' => 'required|string',
-            'kriteria_cf' => ['required', 'integer', function ($attribute, $value, $fail) {
-                try {
-                    if (!KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
-                        $fail('Kriteria CF yang dipilih tidak valid.');
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error validating kriteria_cf (cash_bank not available): ' . $e->getMessage());
-                    // Skip validation jika database tidak tersedia (backward compatibility)
-                }
-            }],
-            'sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
-                try {
-                    if (!SubKriteria::where('id_sub_kriteria', $value)->exists()) {
-                        $fail('Sub Kriteria yang dipilih tidak valid.');
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error validating sub_kriteria (cash_bank not available): ' . $e->getMessage());
-                    // Skip validation jika database tidak tersedia (backward compatibility)
-                }
-            }],
-            'item_sub_kriteria' => ['required', 'integer', function ($attribute, $value, $fail) {
-                try {
-                    if (!ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
-                        $fail('Item Sub Kriteria yang dipilih tidak valid.');
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error validating item_sub_kriteria (cash_bank not available): ' . $e->getMessage());
-                    // Skip validation jika database tidak tersedia (backward compatibility)
-                }
-            }],
-            // Keep old fields as nullable for backward compatibility
-            'kategori' => 'nullable|string',
-            'jenis_dokumen' => 'nullable|string',
-            'jenis_sub_pekerjaan' => 'nullable|string',
             'jenis_pembayaran' => 'nullable|string',
             'dibayar_kepada' => 'nullable|string',
             'no_berita_acara' => 'nullable|string',
@@ -619,7 +589,57 @@ class DashboardBController extends Controller
             'nomor_po.*' => 'nullable|string',
             'nomor_pr' => 'array',
             'nomor_pr.*' => 'nullable|string',
-        ], [
+        ];
+
+        // Conditional validation based on mode
+        if ($isDropdownMode) {
+            // Dropdown mode: validate kriteria_cf, sub_kriteria, item_sub_kriteria
+            $rules['kriteria_cf'] = ['required', 'integer', function ($attribute, $value, $fail) {
+                try {
+                    if (!KategoriKriteria::where('id_kategori_kriteria', $value)->exists()) {
+                        $fail('Kriteria CF yang dipilih tidak valid.');
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error validating kriteria_cf (cash_bank not available): ' . $e->getMessage());
+                    // Skip validation jika database tidak tersedia (backward compatibility)
+                }
+            }];
+            $rules['sub_kriteria'] = ['required', 'integer', function ($attribute, $value, $fail) {
+                try {
+                    if (!SubKriteria::where('id_sub_kriteria', $value)->exists()) {
+                        $fail('Sub Kriteria yang dipilih tidak valid.');
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error validating sub_kriteria (cash_bank not available): ' . $e->getMessage());
+                    // Skip validation jika database tidak tersedia (backward compatibility)
+                }
+            }];
+            $rules['item_sub_kriteria'] = ['required', 'integer', function ($attribute, $value, $fail) {
+                try {
+                    if (!ItemSubKriteria::where('id_item_sub_kriteria', $value)->exists()) {
+                        $fail('Item Sub Kriteria yang dipilih tidak valid.');
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error validating item_sub_kriteria (cash_bank not available): ' . $e->getMessage());
+                    // Skip validation jika database tidak tersedia (backward compatibility)
+                }
+            }];
+            // Manual fields optional in dropdown mode
+            $rules['kategori'] = 'nullable|string';
+            $rules['jenis_dokumen'] = 'nullable|string';
+            $rules['jenis_sub_pekerjaan'] = 'nullable|string';
+        } else {
+            // Manual mode: validate kategori, jenis_dokumen, jenis_sub_pekerjaan
+            $rules['kategori'] = 'required|string';
+            $rules['jenis_dokumen'] = 'required|string';
+            $rules['jenis_sub_pekerjaan'] = 'required|string';
+            // Dropdown fields optional in manual mode
+            $rules['kriteria_cf'] = 'nullable';
+            $rules['sub_kriteria'] = 'nullable';
+            $rules['item_sub_kriteria'] = 'nullable';
+        }
+
+        $validator = \Validator::make($request->all(), $rules, [
             'nomor_agenda.unique' => 'Nomor agenda sudah digunakan. Silakan gunakan nomor lain.',
             'tahun.integer' => 'Tahun harus berupa angka.',
             'tahun.min' => 'Tahun minimal 2020.',
@@ -627,6 +647,9 @@ class DashboardBController extends Controller
             'kriteria_cf.required' => 'Kriteria CF wajib dipilih.',
             'sub_kriteria.required' => 'Sub Kriteria wajib dipilih.',
             'item_sub_kriteria.required' => 'Item Sub Kriteria wajib dipilih.',
+            'kategori.required' => 'Kategori wajib diisi.',
+            'jenis_dokumen.required' => 'Jenis Dokumen wajib diisi.',
+            'jenis_sub_pekerjaan.required' => 'Jenis Sub Pekerjaan wajib diisi.',
         ]);
 
         if ($validator->fails()) {

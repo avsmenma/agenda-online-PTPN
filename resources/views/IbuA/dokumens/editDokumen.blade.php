@@ -368,7 +368,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>Nilai Rupiah</label>
-        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah) }}">
+        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah', number_format((float) $dokumen->nilai_rupiah, 0, ',', '.')) }}">
         @error('nilai_rupiah')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
