@@ -804,34 +804,39 @@ class DokumenController extends Controller
                 'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
             ];
 
-            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
-            $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
-            if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Nilai rupiah harus lebih dari 0.');
+            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text (nullable)
+            $nilaiRupiah = null;
+            if ($request->filled('nilai_rupiah')) {
+                $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
+                if (!empty($nilaiRupiah) && $nilaiRupiah > 0) {
+                    $nilaiRupiah = (float) $nilaiRupiah;
+                } else {
+                    $nilaiRupiah = null;
+                }
             }
-            $nilaiRupiah = (float) $nilaiRupiah;
 
-            // Extract bulan dan tahun dari tanggal SPP untuk update
-            $tanggalSpp = Carbon::parse($request->tanggal_spp);
-            $bulanIndonesia = [
-                1 => 'Januari',
-                2 => 'Februari',
-                3 => 'Maret',
-                4 => 'April',
-                5 => 'May',
-                6 => 'Juni',
-                7 => 'July',
-                8 => 'Agustus',
-                9 => 'September',
-                10 => 'Oktober',
-                11 => 'November',
-                12 => 'Desember'
-            ];
-
-            $newBulan = $bulanIndonesia[$tanggalSpp->month];
-            $newTahun = $tanggalSpp->year;
+            // Extract bulan dan tahun dari tanggal SPP untuk update (nullable)
+            $newBulan = null;
+            $newTahun = null;
+            if ($request->filled('tanggal_spp')) {
+                $tanggalSpp = Carbon::parse($request->tanggal_spp);
+                $bulanIndonesia = [
+                    1 => 'Januari',
+                    2 => 'Februari',
+                    3 => 'Maret',
+                    4 => 'April',
+                    5 => 'May',
+                    6 => 'Juni',
+                    7 => 'July',
+                    8 => 'Agustus',
+                    9 => 'September',
+                    10 => 'Oktober',
+                    11 => 'November',
+                    12 => 'Desember'
+                ];
+                $newBulan = $bulanIndonesia[$tanggalSpp->month];
+                $newTahun = $tanggalSpp->year;
+            }
 
             // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
             $kategoriKriteria = null;
@@ -858,29 +863,31 @@ class DokumenController extends Controller
             // Update dokumen
             // IMPORTANT: Status is NOT updated here - it only changes via workflow (send, return, etc)
             // BUT: For rejected documents, we need to ensure status remains 'returned_to_ibua' so they can be resent
+            // Only update fields that are filled in the request, otherwise keep existing values
+            // Use filled() to check if field is present and not empty (handles empty string vs null)
             $updateData = [
-                'nomor_agenda' => $request->nomor_agenda,
-                'bulan' => $newBulan,
-                'tahun' => $newTahun,
+                'nomor_agenda' => $request->filled('nomor_agenda') ? $request->nomor_agenda : $dokumen->nomor_agenda,
+                'bulan' => $newBulan ?? $dokumen->bulan,
+                'tahun' => $newTahun ?? $dokumen->tahun,
                 'tanggal_masuk' => $dokumen->tanggal_masuk, // Keep original creation timestamp
-                'nomor_spp' => $request->nomor_spp,
-                'tanggal_spp' => $request->tanggal_spp,
-                'uraian_spp' => $request->uraian_spp,
-                'nilai_rupiah' => $nilaiRupiah,
+                'nomor_spp' => $request->filled('nomor_spp') ? $request->nomor_spp : $dokumen->nomor_spp,
+                'tanggal_spp' => $request->filled('tanggal_spp') ? $request->tanggal_spp : $dokumen->tanggal_spp,
+                'uraian_spp' => $request->filled('uraian_spp') ? $request->uraian_spp : $dokumen->uraian_spp,
+                'nilai_rupiah' => $nilaiRupiah ?? $dokumen->nilai_rupiah,
                 // Simpan nama dari ID untuk backward compatibility
-                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? $dokumen->kategori),
-                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? $dokumen->jenis_dokumen),
-                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan),
-                'jenis_pembayaran' => $request->jenis_pembayaran,
-                'kebun' => $request->kebun,
-                'bagian' => $request->bagian,
-                'nama_pengirim' => $request->nama_pengirim,
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->filled('kategori') ? $request->kategori : $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->filled('jenis_dokumen') ? $request->jenis_dokumen : $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->filled('jenis_sub_pekerjaan') ? $request->jenis_sub_pekerjaan : $dokumen->jenis_sub_pekerjaan),
+                'jenis_pembayaran' => $request->filled('jenis_pembayaran') ? $request->jenis_pembayaran : $dokumen->jenis_pembayaran,
+                'kebun' => $request->filled('kebun') ? $request->kebun : $dokumen->kebun,
+                'bagian' => $request->filled('bagian') ? $request->bagian : $dokumen->bagian,
+                'nama_pengirim' => $request->filled('nama_pengirim') ? $request->nama_pengirim : $dokumen->nama_pengirim,
                 // Remove old dibayar_kepada field, will handle separately
-                'no_berita_acara' => $request->no_berita_acara,
-                'tanggal_berita_acara' => $request->tanggal_berita_acara,
-                'no_spk' => $request->no_spk,
-                'tanggal_spk' => $request->tanggal_spk,
-                'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
+                'no_berita_acara' => $request->filled('no_berita_acara') ? $request->no_berita_acara : $dokumen->no_berita_acara,
+                'tanggal_berita_acara' => $request->filled('tanggal_berita_acara') ? $request->tanggal_berita_acara : $dokumen->tanggal_berita_acara,
+                'no_spk' => $request->filled('no_spk') ? $request->no_spk : $dokumen->no_spk,
+                'tanggal_spk' => $request->filled('tanggal_spk') ? $request->tanggal_spk : $dokumen->tanggal_spk,
+                'tanggal_berakhir_spk' => $request->filled('tanggal_berakhir_spk') ? $request->tanggal_berakhir_spk : $dokumen->tanggal_berakhir_spk,
                 // 'status' => REMOVED - status should only change through workflow, not manual edit
                 // 'keterangan' => REMOVED - not used anymore
             ];
