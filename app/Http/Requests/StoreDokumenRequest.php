@@ -33,7 +33,7 @@ class StoreDokumenRequest extends FormRequest
         }
 
         $rules = [
-            'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda',
+            'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda,NULL,id,deleted_at,NULL',
             'bagian' => 'nullable|string|in:DPM,SKH,SDM,TEP,KPL,AKN,TAN,PMO',
             'nama_pengirim' => 'nullable|string|max:255',
             'nomor_spp' => 'nullable|string',

@@ -558,7 +558,7 @@ class DokumenController extends Controller
                 'nomor_spp' => $request->nomor_spp,
                 'tanggal_spp' => $request->tanggal_spp,
                 'uraian_spp' => $request->uraian_spp,
-                'nilai_rupiah' => $nilaiRupiah ?? 0,
+                'nilai_rupiah' => $nilaiRupiah,
                 // Simpan nama dari ID untuk backward compatibility
                 'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? null),
                 'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? null),
@@ -624,17 +624,34 @@ class DokumenController extends Controller
                 \Log::error('Failed to log document creation: ' . $logException->getMessage());
             }
 
+            $successMessage = 'Dokumen berhasil ditambahkan.';
+            if ($dokumen->nomor_agenda) {
+                $successMessage .= ' Nomor agenda: ' . $dokumen->nomor_agenda;
+            }
+            
             return redirect()->route('documents.index')
-                ->with('success', 'Dokumen berhasil ditambahkan dengan nomor agenda: ' . $dokumen->nomor_agenda);
+                ->with('success', $successMessage);
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             DB::rollback();
 
-            \Log::error('Error creating dokumen: ' . $e->getMessage());
+            \Log::error('Error creating dokumen: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['_token', 'password']),
+            ]);
+
+            // Provide more detailed error message
+            $errorMessage = 'Terjadi kesalahan saat menyimpan dokumen.';
+            if (str_contains($e->getMessage(), 'SQLSTATE') || str_contains($e->getMessage(), 'Column')) {
+                $errorMessage .= ' Pastikan semua field yang diperlukan sudah diisi dengan benar.';
+            } else {
+                $errorMessage .= ' Silakan coba lagi atau hubungi administrator.';
+            }
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menyimpan dokumen. Silakan coba lagi.');
+                ->with('error', $errorMessage);
         }
     }
 
