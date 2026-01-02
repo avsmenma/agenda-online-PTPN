@@ -1414,16 +1414,6 @@ class DashboardPerpajakanController extends Controller
         }
     }
 
-    public function diagram()
-    {
-        $data = array(
-            "title" => "Diagram Perpajakan",
-            "module" => "perpajakan",
-            "menuDashboard" => "",
-            'menuDiagram' => 'Active',
-        );
-        return view('perpajakan.diagramPerpajakan', $data);
-    }
 
     /**
      * Check for new documents assigned to perpajakan

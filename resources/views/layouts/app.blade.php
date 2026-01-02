@@ -1488,14 +1488,6 @@
             'ibub', 'ibub' => '/dokumensB',
             default => null
           };
-          $diagramUrl = match ($module) {
-            'ibua', 'ibua' => '/diagram',
-            'ibub', 'ibub' => '/diagramB',
-            'pembayaran' => '/diagramPembayaran',
-            'akutansi' => '/diagramAkutansi',
-            'perpajakan' => '/diagramPerpajakan',
-            default => '/diagram'
-          };
         @endphp
 
         @if($isOwner)
@@ -1642,7 +1634,6 @@
               @endif
             </a>
 
-            <a href="{{ url($diagramUrl) }}" class="{{ $menuDiagram ?? '' }}"><i class="fa-solid fa-chart-simple"></i> Diagram</a>
           @endunless
               </div>
 

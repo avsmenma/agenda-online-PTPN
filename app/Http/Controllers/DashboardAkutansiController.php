@@ -975,16 +975,6 @@ class DashboardAkutansiController extends Controller
         return view('akutansi.analytics', $data);
     }
 
-    public function diagram()
-    {
-        $data = array(
-            "title" => "Diagram Akutansi",
-            "module" => "akutansi",
-            "menuDashboard" => "",
-            'menuDiagram' => 'Active',
-        );
-        return view('akutansi.diagramAkutansi', $data);
-    }
 
     /**
      * Get document detail for Akutansi view

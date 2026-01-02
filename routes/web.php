@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
-use App\Http\Controllers\diagramController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardBController;
@@ -457,7 +456,6 @@ Route::get('/api/autocomplete/document-descriptions', [AutocompleteController::c
 Route::get('/api/autocomplete/po-numbers', [AutocompleteController::class, 'getPONumbers'])->name('autocomplete.po-numbers');
 Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getPRNumbers'])->name('autocomplete.pr-numbers');
 Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index']);
-Route::get('diagram', [diagramController::class, 'index']);
 
 // Professional Document Routes - Verifikasi (IbuB)
 Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
@@ -485,10 +483,6 @@ Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('returns/verifikasi'
     Route::get('/bidang', [DashboardBController::class, 'pengembalianKeBidang'])->name('bidang');
 });
 
-// Professional Diagram Routes - Verifikasi
-Route::get('/reports/verifikasi/diagram', [DashboardBController::class, 'diagram'])
-    ->middleware(['auth', 'role:admin,ibub,IbuB'])
-    ->name('reports.verifikasi.diagram');
 
 // Backward compatibility for old IbuB routes
 Route::get('/dokumensB', function () {
@@ -500,9 +494,6 @@ Route::get('/rekapan-ibuB', function () {
 Route::get('/pengembalian-dokumensB', function () {
     return redirect()->route('returns.verifikasi.index', [], 301);
 })->name('pengembalianB.index.old');
-Route::get('/diagramB', function () {
-    return redirect()->route('reports.verifikasi.diagram', [], 301);
-})->name('diagramB.index.old');
 
 // Professional Approval Routes - Verifikasi (IbuB)
 Route::middleware(['auth', 'role:ibub,IbuB,admin'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
@@ -587,10 +578,6 @@ Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengem
     ->middleware(['auth', 'role:admin,Pembayaran,pembayaran'])
     ->name('returns.pembayaran.index');
 
-// Professional Diagram Routes - Pembayaran
-Route::get('/reports/pembayaran/diagram', [DashboardPembayaranController::class, 'diagram'])
-    ->middleware(['auth', 'role:admin,Pembayaran,pembayaran'])
-    ->name('reports.pembayaran.diagram');
 
 // Backward compatibility for old Pembayaran routes
 Route::get('/dokumensPembayaran', function () {
@@ -602,9 +589,6 @@ Route::get('/rekapan-pembayaran', function () {
 Route::get('/rekapan-keterlambatan', function () {
     return redirect()->route('reports.pembayaran.delays', [], 301);
 })->name('rekapanKeterlambatan.index.old');
-Route::get('/diagramPembayaran', function () {
-    return redirect()->route('reports.pembayaran.diagram', [], 301);
-})->name('diagramPembayaran.index.old');
 Route::get('/dokumensPembayaran/dokumens', [DashboardPembayaranController::class, 'dokumens'])->name('dokumensPembayaran.dokumens');
 Route::get('/payment/analytics', [DashboardPembayaranController::class, 'analytics'])->name('pembayaran.analytics');
 Route::get('/dokumensPembayaran/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('dokumensPembayaran.detail');
@@ -640,7 +624,6 @@ Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('csv-imp
     Route::post('/import', [\App\Http\Controllers\CsvImportController::class, 'import'])->name('execute');
 });
 
-Route::get('/diagramPembayaran', [DashboardPembayaranController::class, 'diagram'])->name('diagramPembayaran.index');
 
 // Professional Document Routes - Akutansi
 Route::middleware(['auth', 'role:admin,akutansi,Akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
@@ -666,10 +649,6 @@ Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembali
     ->middleware(['auth', 'role:admin,akutansi,Akutansi'])
     ->name('returns.akutansi.index');
 
-// Professional Diagram Routes - Akutansi
-Route::get('/reports/akutansi/diagram', [DashboardAkutansiController::class, 'diagram'])
-    ->middleware(['auth', 'role:admin,akutansi,Akutansi'])
-    ->name('reports.akutansi.diagram');
 
 // Backward compatibility for old Akutansi routes
 Route::get('/dokumensAkutansi', function () {
@@ -681,9 +660,6 @@ Route::get('/rekapan-akutansi', function () {
 Route::get('/pengembalian-dokumensAkutansi', function () {
     return redirect()->route('returns.akutansi.index', [], 301);
 })->name('pengembalianAkutansi.index.old');
-Route::get('/diagramAkutansi', function () {
-    return redirect()->route('reports.akutansi.diagram', [], 301);
-})->name('diagramAkutansi.index.old');
 
 // Professional Document Routes - Perpajakan
 Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
@@ -709,10 +685,6 @@ Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengem
     ->middleware(['auth', 'role:admin,perpajakan,Perpajakan'])
     ->name('returns.perpajakan.index');
 
-// Professional Diagram Routes - Perpajakan
-Route::get('/reports/perpajakan/diagram', [DashboardPerpajakanController::class, 'diagram'])
-    ->middleware(['auth', 'role:admin,perpajakan,Perpajakan'])
-    ->name('reports.perpajakan.diagram');
 
 // Backward compatibility for old Perpajakan routes
 Route::get('/dokumensPerpajakan', function () {
@@ -727,9 +699,6 @@ Route::get('/export-perpajakan', function () {
 Route::get('/pengembalian-dokumensPerpajakan', function () {
     return redirect()->route('returns.perpajakan.index', [], 301);
 })->name('pengembalianPerpajakan.index.old');
-Route::get('/diagramPerpajakan', function () {
-    return redirect()->route('reports.perpajakan.diagram', [], 301);
-})->name('diagramPerpajakan.index.old');
 
 // SECURITY: Test routes removed or protected - Only available in development
 if (app()->environment('local', 'development')) {

@@ -1208,16 +1208,6 @@ class DashboardBController extends Controller
         return view('ibuB.dokumens.pengembalianKeBagianB', $data);
     }
 
-    public function diagram()
-    {
-        $data = array(
-            "title" => "Diagram Team Verifikasi",
-            "module" => "ibuB",
-            "menuDashboard" => "",
-            'menuDiagram' => 'Active',
-        );
-        return view('ibuB.diagramB', $data);
-    }
 
     /**
      * Send document back to perpajakan after repair

@@ -493,31 +493,39 @@ class DokumenController extends Controller
         try {
             DB::beginTransaction();
 
-            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
-            $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
-            if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Nilai rupiah harus lebih dari 0.');
+            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text (nullable)
+            $nilaiRupiah = null;
+            if ($request->filled('nilai_rupiah')) {
+                $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
+                if (!empty($nilaiRupiah) && $nilaiRupiah > 0) {
+                    $nilaiRupiah = (float) $nilaiRupiah;
+                } else {
+                    $nilaiRupiah = null;
+                }
             }
-            $nilaiRupiah = (float) $nilaiRupiah;
 
-            // Extract bulan dan tahun dari tanggal SPP
-            $tanggalSpp = Carbon::parse($request->tanggal_spp);
-            $bulanIndonesia = [
-                1 => 'Januari',
-                2 => 'Februari',
-                3 => 'Maret',
-                4 => 'April',
-                5 => 'May',
-                6 => 'Juni',
-                7 => 'July',
-                8 => 'Agustus',
-                9 => 'September',
-                10 => 'Oktober',
-                11 => 'November',
-                12 => 'Desember'
-            ];
+            // Extract bulan dan tahun dari tanggal SPP (nullable)
+            $bulan = null;
+            $tahun = null;
+            if ($request->filled('tanggal_spp')) {
+                $tanggalSpp = Carbon::parse($request->tanggal_spp);
+                $bulanIndonesia = [
+                    1 => 'Januari',
+                    2 => 'Februari',
+                    3 => 'Maret',
+                    4 => 'April',
+                    5 => 'May',
+                    6 => 'Juni',
+                    7 => 'July',
+                    8 => 'Agustus',
+                    9 => 'September',
+                    10 => 'Oktober',
+                    11 => 'November',
+                    12 => 'Desember'
+                ];
+                $bulan = $bulanIndonesia[$tanggalSpp->month];
+                $tahun = $tanggalSpp->year;
+            }
 
             // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
             $kategoriKriteria = null;
@@ -544,13 +552,13 @@ class DokumenController extends Controller
             // Create dokumen
             $dokumen = Dokumen::create([
                 'nomor_agenda' => $request->nomor_agenda,
-                'bulan' => $bulanIndonesia[$tanggalSpp->month],
-                'tahun' => $tanggalSpp->year,
+                'bulan' => $bulan,
+                'tahun' => $tahun,
                 'tanggal_masuk' => now(), // Realtime timestamp
                 'nomor_spp' => $request->nomor_spp,
                 'tanggal_spp' => $request->tanggal_spp,
                 'uraian_spp' => $request->uraian_spp,
-                'nilai_rupiah' => $nilaiRupiah,
+                'nilai_rupiah' => $nilaiRupiah ?? 0,
                 // Simpan nama dari ID untuk backward compatibility
                 'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? null),
                 'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? null),
