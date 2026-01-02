@@ -1100,7 +1100,7 @@
       <div class="hero-financial-content">
         <div class="hero-financial-label">Nilai Nominal</div>
         <div class="hero-financial-value">
-          Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}
+          Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}
         </div>
         <div class="hero-financial-details">
           <div class="hero-detail-item">

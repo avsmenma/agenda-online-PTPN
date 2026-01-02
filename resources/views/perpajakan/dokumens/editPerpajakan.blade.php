@@ -568,7 +568,7 @@
             </div>
             <div class="form-group">
               <label>Tanggal SPP <span style="color: red;">*</span></label>
-              <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp', $dokumen->tanggal_spp->format('Y-m-d\TH:i')) }}">
+              <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
               @error('tanggal_spp')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
@@ -585,7 +585,7 @@
 
           <div class="form-group">
             <label>Nilai Rupiah <span style="color: red;">*</span></label>
-            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah', number_format($dokumen->nilai_rupiah, 0, '', '.')) }}">
+            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format($dokumen->nilai_rupiah, 0, '', '.') : '') }}">
             @error('nilai_rupiah')
               <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
             @enderror

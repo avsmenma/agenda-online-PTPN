@@ -993,7 +993,7 @@
                                 <div class="document-info-label">Nilai</div>
                                 <div class="document-info-value text-success">
                                     <i class="fas fa-money-bill-wave"></i>
-                                    <span class="select-text">Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</span>
+                                    <span class="select-text">Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>

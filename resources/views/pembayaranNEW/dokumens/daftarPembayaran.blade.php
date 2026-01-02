@@ -859,7 +859,7 @@
               @elseif($col == 'uraian_spp')
                 {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
               @elseif($col == 'nilai_rupiah')
-                <strong>{{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</strong>
+                <strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
               @elseif($col == 'status_pembayaran')

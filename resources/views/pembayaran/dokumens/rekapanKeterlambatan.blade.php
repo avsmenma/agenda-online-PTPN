@@ -600,7 +600,7 @@
             <td><strong>{{ $dokumen->nomor_agenda }}</strong></td>
             <td>{{ $dokumen->nomor_spp }}</td>
             <td>{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</td>
-            <td>Rp {{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</td>
+            <td>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
             <td>
               <span class="badge-status badge-proses">{{ $item['days_overdue'] }} Hari</span>
             </td>

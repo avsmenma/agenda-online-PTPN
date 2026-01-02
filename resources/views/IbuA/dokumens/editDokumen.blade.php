@@ -306,7 +306,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>Nomor Agenda</label>
-        <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" required value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
+        <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
         @error('nomor_agenda')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
@@ -340,7 +340,7 @@
       </div>
       <div class="form-group">
         <label>Nomor SPP</label>
-        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" required value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
+        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
         @error('nomor_spp')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
@@ -350,14 +350,14 @@
     <div class="form-row">
       <div class="form-group">
         <label>Tanggal SPP</label>
-        <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp', $dokumen->tanggal_spp->format('Y-m-d\TH:i')) }}">
+        <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
         @error('tanggal_spp')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
         <label>Uraian SPP</label>
-        <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024" required data-autocomplete="document-descriptions">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
+        <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024" data-autocomplete="document-descriptions">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
         @error('uraian_spp')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
@@ -368,7 +368,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>Nilai Rupiah</label>
-        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="123456" required value="{{ old('nilai_rupiah', number_format((float) $dokumen->nilai_rupiah, 0, ',', '.')) }}">
+        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="123456" value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format((float) $dokumen->nilai_rupiah, 0, ',', '.') : '') }}">
         @error('nilai_rupiah')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
