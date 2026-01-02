@@ -330,7 +330,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>Bagian</label>
-        <select name="bagian" required>
+        <select name="bagian">
           <option value="">Pilih Bagian</option>
           <option value="DPM" {{ old('bagian') == 'DPM' ? 'selected' : '' }}>DPM</option>
           <option value="SKH" {{ old('bagian') == 'SKH' ? 'selected' : '' }}>SKH</option>
@@ -357,7 +357,7 @@
     <!-- 1. Nomor Agenda -->
     <div class="form-group">
       <label>Nomor Agenda</label>
-      <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" required value="{{ old('nomor_agenda') }}">
+      <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda') }}">
       @error('nomor_agenda')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
       @enderror
@@ -366,7 +366,7 @@
     <!-- 2. Nomor SPP -->
     <div class="form-group">
       <label>Nomor SPP</label>
-      <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" required value="{{ old('nomor_spp') }}">
+      <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}">
       @error('nomor_spp')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
       @enderror
@@ -375,7 +375,7 @@
     <!-- 3. Tanggal SPP -->
     <div class="form-group">
       <label>Tanggal SPP</label>
-      <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp') }}">
+      <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp') }}">
       @error('tanggal_spp')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
       @enderror
@@ -384,7 +384,7 @@
     <!-- 4. Uraian SPP -->
     <div class="form-group">
       <label>Uraian SPP</label>
-      <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024" required data-autocomplete="document-descriptions">{{ old('uraian_spp') }}</textarea>
+      <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024" data-autocomplete="document-descriptions">{{ old('uraian_spp') }}</textarea>
       @error('uraian_spp')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
       @enderror
@@ -402,7 +402,7 @@
     <!-- 6. Nilai Rupiah -->
     <div class="form-group">
       <label>Nilai Rupiah</label>
-      <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah') }}">
+      <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" value="{{ old('nilai_rupiah') }}">
       @error('nilai_rupiah')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
       @enderror
@@ -419,8 +419,8 @@
     <!-- Mode Dropdown (jika database cash_bank tersedia) -->
     <div class="form-row" id="dropdown-mode">
       <div class="form-group">
-        <label>Kriteria CF <span style="color: red;">*</span></label>
-        <select id="kriteria_cf" name="kriteria_cf" required>
+        <label>Kriteria CF</label>
+        <select id="kriteria_cf" name="kriteria_cf">
           <option value="">Pilih Kriteria CF</option>
           @foreach($kategoriKriteria as $kategori)
             <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
@@ -433,8 +433,8 @@
         @enderror
       </div>
       <div class="form-group">
-        <label>Sub Kriteria <span style="color: red;">*</span></label>
-        <select id="sub_kriteria" name="sub_kriteria" required>
+        <label>Sub Kriteria</label>
+        <select id="sub_kriteria" name="sub_kriteria">
           <option value="">Pilih Kriteria CF terlebih dahulu</option>
         </select>
         @error('sub_kriteria')
@@ -442,8 +442,8 @@
         @enderror
       </div>
       <div class="form-group">
-        <label>Item Sub Kriteria <span style="color: red;">*</span></label>
-        <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+        <label>Item Sub Kriteria</label>
+        <select id="item_sub_kriteria" name="item_sub_kriteria">
           <option value="">Pilih Sub Kriteria terlebih dahulu</option>
         </select>
         @error('item_sub_kriteria')
@@ -455,8 +455,8 @@
     <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
     <div class="form-row" id="manual-mode">
       <div class="form-group">
-        <label>Kategori <span style="color: red;">*</span></label>
-        <input type="text" name="kategori" id="kategori" value="{{ old('kategori') }}" placeholder="Masukkan Kategori" required>
+        <label>Kategori</label>
+        <input type="text" name="kategori" id="kategori" value="{{ old('kategori') }}" placeholder="Masukkan Kategori">
         <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
           <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual sesuai kebutuhan.
         </small>
@@ -465,15 +465,15 @@
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Dokumen <span style="color: red;">*</span></label>
-        <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen') }}" placeholder="Masukkan Jenis Dokumen" required>
+        <label>Jenis Dokumen</label>
+        <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen') }}" placeholder="Masukkan Jenis Dokumen">
         @error('jenis_dokumen')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Sub Pekerjaan <span style="color: red;">*</span></label>
-        <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan') }}" placeholder="Masukkan Jenis Sub Pekerjaan" required>
+        <label>Jenis Sub Pekerjaan</label>
+        <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan') }}" placeholder="Masukkan Jenis Sub Pekerjaan">
         @error('jenis_sub_pekerjaan')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
