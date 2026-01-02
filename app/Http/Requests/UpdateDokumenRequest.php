@@ -30,13 +30,13 @@ class UpdateDokumenRequest extends FormRequest
         $isManualMode = $this->filled('kategori') && $this->filled('jenis_dokumen') && $this->filled('jenis_sub_pekerjaan');
 
         $rules = [
-            'nomor_agenda' => 'required|string|unique:dokumens,nomor_agenda,' . $dokumenId,
-            'bagian' => 'required|string|in:DPM,SKH,SDM,TEP,KPL,AKN,TAN,PMO',
+            'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda,' . $dokumenId,
+            'bagian' => 'nullable|string|in:DPM,SKH,SDM,TEP,KPL,AKN,TAN,PMO',
             'nama_pengirim' => 'nullable|string|max:255',
-            'nomor_spp' => 'required|string',
-            'tanggal_spp' => 'required|date',
-            'uraian_spp' => 'required|string',
-            'nilai_rupiah' => 'required|string',
+            'nomor_spp' => 'nullable|string',
+            'tanggal_spp' => 'nullable|date',
+            'uraian_spp' => 'nullable|string',
+            'nilai_rupiah' => 'nullable|string',
             'jenis_pembayaran' => 'nullable|string',
             'dibayar_kepada' => 'array',
             'dibayar_kepada.*' => 'nullable|distinct|string|max:255',
@@ -51,62 +51,13 @@ class UpdateDokumenRequest extends FormRequest
             'nomor_pr.*' => 'nullable|string',
         ];
 
-        // Conditional validation based on mode
-        if ($isDropdownMode) {
-            // Dropdown mode: validate kriteria_cf, sub_kriteria, item_sub_kriteria
-            $rules['kriteria_cf'] = [
-                'required',
-                function ($attribute, $value, $fail) {
-                    try {
-                        if (!\App\Models\KategoriKriteria::on('cash_bank')->where('id_kategori_kriteria', $value)->exists()) {
-                            $fail('Kriteria CF yang dipilih tidak valid.');
-                        }
-                    } catch (\Exception $e) {
-                        \Log::error('Error validating kriteria_cf (cash_bank not available): ' . $e->getMessage());
-                        // Skip validation jika database tidak tersedia (backward compatibility)
-                    }
-                },
-            ];
-            $rules['sub_kriteria'] = [
-                'required',
-                function ($attribute, $value, $fail) {
-                    try {
-                        if (!\App\Models\SubKriteria::on('cash_bank')->where('id_sub_kriteria', $value)->exists()) {
-                            $fail('Sub Kriteria yang dipilih tidak valid.');
-                        }
-                    } catch (\Exception $e) {
-                        \Log::error('Error validating sub_kriteria (cash_bank not available): ' . $e->getMessage());
-                        // Skip validation jika database tidak tersedia (backward compatibility)
-                    }
-                },
-            ];
-            $rules['item_sub_kriteria'] = [
-                'required',
-                function ($attribute, $value, $fail) {
-                    try {
-                        if (!\App\Models\ItemSubKriteria::on('cash_bank')->where('id_item_sub_kriteria', $value)->exists()) {
-                            $fail('Item Sub Kriteria yang dipilih tidak valid.');
-                        }
-                    } catch (\Exception $e) {
-                        \Log::error('Error validating item_sub_kriteria (cash_bank not available): ' . $e->getMessage());
-                        // Skip validation jika database tidak tersedia (backward compatibility)
-                    }
-                },
-            ];
-            // Manual fields optional in dropdown mode
-            $rules['kategori'] = 'nullable|string';
-            $rules['jenis_dokumen'] = 'nullable|string';
-            $rules['jenis_sub_pekerjaan'] = 'nullable|string';
-        } else {
-            // Manual mode: validate kategori, jenis_dokumen, jenis_sub_pekerjaan
-            $rules['kategori'] = 'required|string';
-            $rules['jenis_dokumen'] = 'required|string';
-            $rules['jenis_sub_pekerjaan'] = 'required|string';
-            // Dropdown fields optional in manual mode
-            $rules['kriteria_cf'] = 'nullable';
-            $rules['sub_kriteria'] = 'nullable';
-            $rules['item_sub_kriteria'] = 'nullable';
-        }
+        // Semua field optional (tidak wajib)
+        $rules['kriteria_cf'] = 'nullable|integer';
+        $rules['sub_kriteria'] = 'nullable|integer';
+        $rules['item_sub_kriteria'] = 'nullable|integer';
+        $rules['kategori'] = 'nullable|string|max:255';
+        $rules['jenis_dokumen'] = 'nullable|string|max:255';
+        $rules['jenis_sub_pekerjaan'] = 'nullable|string|max:255';
 
         return $rules;
     }

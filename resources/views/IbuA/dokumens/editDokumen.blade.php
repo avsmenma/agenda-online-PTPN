@@ -313,7 +313,7 @@
       </div>
       <div class="form-group">
         <label>Bagian</label>
-        <select name="bagian" required>
+        <select name="bagian">
           <option value="">Pilih Bagian</option>
           <option value="DPM" {{ old('bagian', $dokumen->bagian) == 'DPM' ? 'selected' : '' }}>DPM</option>
           <option value="SKH" {{ old('bagian', $dokumen->bagian) == 'SKH' ? 'selected' : '' }}>SKH</option>
@@ -386,8 +386,8 @@
     <!-- Mode Dropdown (jika database cash_bank tersedia) -->
     <div class="form-row-3" id="dropdown-mode">
       <div class="form-group">
-        <label>Kriteria CF <span style="color: red;">*</span></label>
-        <select id="kriteria_cf" name="kriteria_cf" required>
+        <label>Kriteria CF</label>
+        <select id="kriteria_cf" name="kriteria_cf">
           <option value="">Pilih Kriteria CF</option>
           @foreach($kategoriKriteria as $kategori)
             <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
@@ -400,8 +400,8 @@
         @enderror
       </div>
       <div class="form-group">
-        <label>Sub Kriteria <span style="color: red;">*</span></label>
-        <select id="sub_kriteria" name="sub_kriteria" required>
+        <label>Sub Kriteria</label>
+        <select id="sub_kriteria" name="sub_kriteria">
           <option value="">Pilih Kriteria CF terlebih dahulu</option>
         </select>
         @error('sub_kriteria')
@@ -409,8 +409,8 @@
         @enderror
       </div>
       <div class="form-group">
-        <label>Item Sub Kriteria <span style="color: red;">*</span></label>
-        <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+        <label>Item Sub Kriteria</label>
+        <select id="item_sub_kriteria" name="item_sub_kriteria">
           <option value="">Pilih Sub Kriteria terlebih dahulu</option>
         </select>
         @error('item_sub_kriteria')
@@ -422,8 +422,8 @@
     <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
     <div class="form-row-3" id="manual-mode">
       <div class="form-group">
-        <label>Kategori <span style="color: red;">*</span></label>
-        <input type="text" name="kategori" id="kategori" value="{{ old('kategori', $dokumen->kategori ?? '') }}" placeholder="Masukkan Kategori" required>
+        <label>Kategori</label>
+        <input type="text" name="kategori" id="kategori" value="{{ old('kategori', $dokumen->kategori ?? '') }}" placeholder="Masukkan Kategori">
         <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
           <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual sesuai kebutuhan.
         </small>
@@ -432,15 +432,15 @@
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Dokumen <span style="color: red;">*</span></label>
-        <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen ?? '') }}" placeholder="Masukkan Jenis Dokumen" required>
+        <label>Jenis Dokumen</label>
+        <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen ?? '') }}" placeholder="Masukkan Jenis Dokumen">
         @error('jenis_dokumen')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Jenis Sub Pekerjaan <span style="color: red;">*</span></label>
-        <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan ?? '') }}" placeholder="Masukkan Jenis Sub Pekerjaan" required>
+        <label>Jenis Sub Pekerjaan</label>
+        <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan ?? '') }}" placeholder="Masukkan Jenis Sub Pekerjaan">
         @error('jenis_sub_pekerjaan')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror

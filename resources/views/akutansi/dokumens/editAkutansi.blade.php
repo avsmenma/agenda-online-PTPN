@@ -266,7 +266,7 @@
       <div class="form-group">
         <label>Nomor Agenda</label>
         <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda"
-               value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}" required>
+               value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
       </div>
       <div class="form-group">
         <label>Bulan</label>
@@ -292,7 +292,7 @@
       <div class="form-group">
         <label>Tahun</label>
         <input type="text" name="tahun" placeholder="2025" 
-               value="{{ old('tahun', $dokumen->tahun) }}" required>
+               value="{{ old('tahun', $dokumen->tahun) }}">
       </div>
       <div class="form-group">
         <label>Tanggal Masuk</label>
@@ -305,7 +305,7 @@
       <div class="form-group">
         <label>Nomor SPP</label>
         <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" 
-               value="{{ old('nomor_spp', $dokumen->nomor_spp) }}" required>
+               value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
       </div>
       <div class="form-group">
         <label>Tanggal SPP</label>
@@ -324,7 +324,7 @@
       <div class="form-group">
         <label>Nilai Rupiah</label>
         <input type="number" name="nilai_rupiah" placeholder="0"
-               value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah) }}" required>
+               value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah) }}">
       </div>
       <div class="form-group">
         <!-- Empty space to maintain grid layout -->

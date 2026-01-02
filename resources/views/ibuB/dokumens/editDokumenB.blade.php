@@ -416,15 +416,15 @@
         <div class="accordion-body">
           <div class="form-row">
             <div class="form-group">
-              <label>Nomor Agenda <span style="color: red;">*</span></label>
-              <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" required value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
+              <label>Nomor Agenda</label>
+              <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
               @error('nomor_agenda')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
             </div>
             <div class="form-group">
-              <label>Bulan <span style="color: red;">*</span></label>
-              <select name="bulan" required>
+              <label>Bulan</label>
+              <select name="bulan">
                 <option value="">Pilih Bulan</option>
                 @foreach(['Januari', 'Februari', 'Maret', 'April', 'May', 'Juni', 'July', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $bulan)
                   <option value="{{ $bulan }}" {{ old('bulan', $dokumen->bulan) == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
@@ -438,15 +438,15 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>Tahun <span style="color: red;">*</span></label>
-              <input type="number" name="tahun" placeholder="2025" value="{{ old('tahun', $dokumen->tahun) }}" required min="2020" max="2030">
+              <label>Tahun</label>
+              <input type="number" name="tahun" placeholder="2025" value="{{ old('tahun', $dokumen->tahun) }}" min="2020" max="2030">
               @error('tahun')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
             </div>
             <div class="form-group">
-              <label>Tanggal Masuk <span style="color: red;">*</span></label>
-              <input type="datetime-local" name="tanggal_masuk" required value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk->format('Y-m-d\TH:i')) }}">
+              <label>Tanggal Masuk</label>
+              <input type="datetime-local" name="tanggal_masuk" value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk?->format('Y-m-d\TH:i') ?? '') }}">
               @error('tanggal_masuk')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
@@ -529,15 +529,15 @@
         <div class="accordion-body">
           <div class="form-row">
             <div class="form-group">
-              <label>Nomor SPP <span style="color: red;">*</span></label>
-              <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" required value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
+              <label>Nomor SPP</label>
+              <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
               @error('nomor_spp')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
             </div>
             <div class="form-group">
-              <label>Tanggal SPP <span style="color: red;">*</span></label>
-              <input type="datetime-local" name="tanggal_spp" required value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
+              <label>Tanggal SPP</label>
+              <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
               @error('tanggal_spp')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
@@ -545,16 +545,16 @@
           </div>
 
           <div class="form-group">
-            <label>Uraian SPP <span style="color: red;">*</span></label>
-            <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran..." required>{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
+            <label>Uraian SPP</label>
+            <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran...">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
             @error('uraian_spp')
               <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
             @enderror
           </div>
 
           <div class="form-group">
-            <label>Nilai Rupiah <span style="color: red;">*</span></label>
-            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" required value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format($dokumen->nilai_rupiah, 0, '', '.') : '') }}">
+            <label>Nilai Rupiah</label>
+            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format($dokumen->nilai_rupiah, 0, '', '.') : '') }}">
             @error('nilai_rupiah')
               <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
             @enderror
@@ -584,8 +584,8 @@
           <!-- Mode Dropdown (jika database cash_bank tersedia) -->
           <div class="form-row" id="dropdown-mode">
             <div class="form-group">
-              <label>Kriteria CF <span style="color: red;">*</span></label>
-              <select id="kriteria_cf" name="kriteria_cf" required>
+              <label>Kriteria CF</label>
+              <select id="kriteria_cf" name="kriteria_cf">
                 <option value="">Pilih Kriteria CF</option>
                 @foreach($kategoriKriteria as $kategori)
                   <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
@@ -598,8 +598,8 @@
               @enderror
             </div>
             <div class="form-group">
-              <label>Sub Kriteria <span style="color: red;">*</span></label>
-              <select id="sub_kriteria" name="sub_kriteria" required>
+              <label>Sub Kriteria</label>
+              <select id="sub_kriteria" name="sub_kriteria">
                 <option value="">Pilih Kriteria CF terlebih dahulu</option>
               </select>
               @error('sub_kriteria')
@@ -607,8 +607,8 @@
               @enderror
             </div>
             <div class="form-group">
-              <label>Item Sub Kriteria <span style="color: red;">*</span></label>
-              <select id="item_sub_kriteria" name="item_sub_kriteria" required>
+              <label>Item Sub Kriteria</label>
+              <select id="item_sub_kriteria" name="item_sub_kriteria">
                 <option value="">Pilih Sub Kriteria terlebih dahulu</option>
               </select>
               @error('item_sub_kriteria')
@@ -620,8 +620,8 @@
           <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
           <div class="form-row" id="manual-mode">
             <div class="form-group">
-              <label>Kategori <span style="color: red;">*</span></label>
-              <input type="text" name="kategori" id="kategori" value="{{ old('kategori', $dokumen->kategori ?? '') }}" placeholder="Masukkan Kategori" required>
+              <label>Kategori</label>
+              <input type="text" name="kategori" id="kategori" value="{{ old('kategori', $dokumen->kategori ?? '') }}" placeholder="Masukkan Kategori">
               <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
                 <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual sesuai kebutuhan.
               </small>
@@ -630,15 +630,15 @@
               @enderror
             </div>
             <div class="form-group">
-              <label>Jenis Dokumen <span style="color: red;">*</span></label>
-              <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen ?? '') }}" placeholder="Masukkan Jenis Dokumen" required>
+              <label>Jenis Dokumen</label>
+              <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen ?? '') }}" placeholder="Masukkan Jenis Dokumen">
               @error('jenis_dokumen')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
             </div>
             <div class="form-group">
-              <label>Jenis Sub Pekerjaan <span style="color: red;">*</span></label>
-              <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan ?? '') }}" placeholder="Masukkan Jenis Sub Pekerjaan" required>
+              <label>Jenis Sub Pekerjaan</label>
+              <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan ?? '') }}" placeholder="Masukkan Jenis Sub Pekerjaan">
               @error('jenis_sub_pekerjaan')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
