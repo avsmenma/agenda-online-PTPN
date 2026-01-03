@@ -1186,6 +1186,17 @@ body {
   box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.1);
 }
 
+.filter-select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.6;
+  color: var(--text-muted);
+}
+
+.filter-select:disabled option {
+  color: var(--text-muted);
+}
+
 .filter-searchable {
   min-height: 44px;
 }
@@ -1522,7 +1533,7 @@ body {
             <label class="filter-label">
               <i class="fas fa-tag"></i> Sub Kriteria
             </label>
-            <select name="filter_sub_kriteria" id="filterSubKriteria" class="filter-select filter-searchable" onchange="updateItemSubKriteriaFilter(); applyFilter();">
+            <select name="filter_sub_kriteria" id="filterSubKriteria" class="filter-select filter-searchable" onchange="updateItemSubKriteriaFilter(); applyFilter();" disabled>
               <option value="">Pilih Kriteria CF terlebih dahulu</option>
               @foreach($filterData['sub_kriteria'] ?? [] as $id => $nama)
                 <option value="{{ $id }}" 
@@ -1537,7 +1548,7 @@ body {
             <label class="filter-label">
               <i class="fas fa-list"></i> Item Sub Kriteria
             </label>
-            <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" class="filter-select filter-searchable" onchange="applyFilter()">
+            <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" class="filter-select filter-searchable" onchange="applyFilter()" disabled>
               <option value="">Pilih Sub Kriteria terlebih dahulu</option>
               @foreach($filterData['item_sub_kriteria'] ?? [] as $id => $nama)
                 <option value="{{ $id }}" 
@@ -1565,24 +1576,12 @@ body {
             <label class="filter-label">
               <i class="fas fa-money-bill-wave"></i> Status Pembayaran
             </label>
-            <div class="filter-radio-group">
-              <label class="filter-radio">
-                <input type="radio" name="filter_status_pembayaran" value="" {{ !request('filter_status_pembayaran') ? 'checked' : '' }} onchange="applyFilter()">
-                <span>Semua</span>
-              </label>
-              <label class="filter-radio">
-                <input type="radio" name="filter_status_pembayaran" value="belum_dibayar" {{ request('filter_status_pembayaran') == 'belum_dibayar' ? 'checked' : '' }} onchange="applyFilter()">
-                <span>Belum Dibayar</span>
-              </label>
-              <label class="filter-radio">
-                <input type="radio" name="filter_status_pembayaran" value="siap_dibayar" {{ request('filter_status_pembayaran') == 'siap_dibayar' ? 'checked' : '' }} onchange="applyFilter()">
-                <span>Siap Dibayar</span>
-              </label>
-              <label class="filter-radio">
-                <input type="radio" name="filter_status_pembayaran" value="sudah_dibayar" {{ request('filter_status_pembayaran') == 'sudah_dibayar' ? 'checked' : '' }} onchange="applyFilter()">
-                <span>Sudah Dibayar</span>
-              </label>
-            </div>
+            <select name="filter_status_pembayaran" class="filter-select" onchange="applyFilter()">
+              <option value="">Semua Status Pembayaran</option>
+              <option value="belum_dibayar" {{ request('filter_status_pembayaran') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
+              <option value="siap_dibayar" {{ request('filter_status_pembayaran') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
+              <option value="sudah_dibayar" {{ request('filter_status_pembayaran') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
+            </select>
           </div>
 
           <!-- Status Dokumen (Existing) -->
@@ -2009,59 +2008,93 @@ function removeFilter(key) {
 function updateSubKriteriaFilter() {
   const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
   const subKriteriaSelect = document.getElementById('filterSubKriteria');
+  const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
   
-  // Show/hide options based on selected kriteria CF
-  Array.from(subKriteriaSelect.options).forEach(option => {
-    if (option.value === '') {
-      option.style.display = 'block';
-      return;
-    }
-    const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
-    if (kriteriaCfId && kriteriaCfIdForOption === kriteriaCfId) {
-      option.style.display = 'block';
-    } else if (!kriteriaCfId) {
-      option.style.display = 'block';
-    } else {
-      option.style.display = 'none';
-    }
-  });
-  
-  // Reset sub kriteria and item sub kriteria if kriteria CF changed
-  if (!kriteriaCfId) {
+  // Enable/disable Sub Kriteria based on Kriteria CF selection
+  if (kriteriaCfId && kriteriaCfId !== '') {
+    subKriteriaSelect.disabled = false;
+    subKriteriaSelect.style.opacity = '1';
+    subKriteriaSelect.style.cursor = 'pointer';
+    
+    // Show/hide options based on selected kriteria CF
+    Array.from(subKriteriaSelect.options).forEach(option => {
+      if (option.value === '') {
+        option.style.display = 'block';
+        return;
+      }
+      const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+      if (kriteriaCfIdForOption === kriteriaCfId) {
+        option.style.display = 'block';
+      } else {
+        option.style.display = 'none';
+      }
+    });
+  } else {
+    // Disable Sub Kriteria and reset value if Kriteria CF is not selected
+    subKriteriaSelect.disabled = true;
+    subKriteriaSelect.style.opacity = '0.6';
+    subKriteriaSelect.style.cursor = 'not-allowed';
     subKriteriaSelect.value = '';
-    updateItemSubKriteriaFilter();
+    
+    // Also disable and reset Item Sub Kriteria
+    itemSubKriteriaSelect.disabled = true;
+    itemSubKriteriaSelect.style.opacity = '0.6';
+    itemSubKriteriaSelect.style.cursor = 'not-allowed';
+    itemSubKriteriaSelect.value = '';
+    
+    // Show all options when disabled
+    Array.from(subKriteriaSelect.options).forEach(option => {
+      option.style.display = 'block';
+    });
   }
+  
+  // Update Item Sub Kriteria filter
+  updateItemSubKriteriaFilter();
 }
 
 function updateItemSubKriteriaFilter() {
   const subKriteriaId = document.getElementById('filterSubKriteria').value;
   const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+  const subKriteriaSelect = document.getElementById('filterSubKriteria');
   
-  // Show/hide options based on selected sub kriteria
-  Array.from(itemSubKriteriaSelect.options).forEach(option => {
-    if (option.value === '') {
-      option.style.display = 'block';
-      return;
-    }
-    const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
-    if (subKriteriaId && subKriteriaIdForOption === subKriteriaId) {
-      option.style.display = 'block';
-    } else if (!subKriteriaId) {
-      option.style.display = 'block';
-    } else {
-      option.style.display = 'none';
-    }
-  });
-  
-  // Reset item sub kriteria if sub kriteria changed
-  if (!subKriteriaId) {
+  // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
+  if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+    itemSubKriteriaSelect.disabled = false;
+    itemSubKriteriaSelect.style.opacity = '1';
+    itemSubKriteriaSelect.style.cursor = 'pointer';
+    
+    // Show/hide options based on selected sub kriteria
+    Array.from(itemSubKriteriaSelect.options).forEach(option => {
+      if (option.value === '') {
+        option.style.display = 'block';
+        return;
+      }
+      const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+      if (subKriteriaIdForOption === subKriteriaId) {
+        option.style.display = 'block';
+      } else {
+        option.style.display = 'none';
+      }
+    });
+  } else {
+    // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
+    itemSubKriteriaSelect.disabled = true;
+    itemSubKriteriaSelect.style.opacity = '0.6';
+    itemSubKriteriaSelect.style.cursor = 'not-allowed';
     itemSubKriteriaSelect.value = '';
+    
+    // Show all options when disabled
+    Array.from(itemSubKriteriaSelect.options).forEach(option => {
+      option.style.display = 'block';
+    });
   }
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
   updateActiveFilterCount();
+  
+  // Initialize cascading dropdowns
   updateSubKriteriaFilter();
   updateItemSubKriteriaFilter();
   
@@ -2078,6 +2111,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (hasActiveFilters) {
     toggleFilterPanel();
+  }
+  
+  // If Kriteria CF is already selected, enable Sub Kriteria
+  const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
+  if (kriteriaCfSelect && kriteriaCfSelect.value) {
+    updateSubKriteriaFilter();
   }
 });
 </script>
