@@ -23,6 +23,9 @@ class OwnerDashboardController extends Controller
         $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
+        
+        // Get filter data for dropdowns
+        $filterData = $this->getFilterData();
 
         // Calculate dashboard statistics
         $totalDokumen = Dokumen::count();
@@ -86,7 +89,8 @@ class OwnerDashboardController extends Controller
             'totalDokumenTrend',
             'dokumenSelesaiTrend',
             'dokumenProsesTrend',
-            'totalNilaiTrend'
+            'totalNilaiTrend',
+            'filterData'
         ))
             ->with('title', 'Dashboard Owner - Pusat Komando')
             ->with('module', 'owner')
@@ -156,6 +160,103 @@ class OwnerDashboardController extends Controller
                 $query->where(function ($q) {
                     $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                         ->orWhere('status_pembayaran', 'sudah_dibayar');
+                });
+            }
+        }
+
+        // Apply advanced filters
+        // Filter by bagian
+        if ($request && $request->has('filter_bagian') && !empty($request->filter_bagian)) {
+            $query->where('bagian', $request->filter_bagian);
+        }
+
+        // Filter by vendor/dibayar_kepada
+        if ($request && $request->has('filter_vendor') && !empty($request->filter_vendor)) {
+            $query->where(function ($q) use ($request) {
+                $q->where('dibayar_kepada', $request->filter_vendor)
+                    ->orWhereHas('dibayarKepadas', function ($subQ) use ($request) {
+                        $subQ->where('nama_penerima', $request->filter_vendor);
+                    });
+            });
+        }
+
+        // Filter by kriteria CF (by ID or name)
+        if ($request && $request->has('filter_kriteria_cf') && !empty($request->filter_kriteria_cf)) {
+            try {
+                $kriteriaCf = \App\Models\KategoriKriteria::on('cash_bank')
+                    ->where('id_kategori_kriteria', $request->filter_kriteria_cf)
+                    ->orWhere('nama_kriteria', $request->filter_kriteria_cf)
+                    ->first();
+                if ($kriteriaCf) {
+                    $query->where('kategori', $kriteriaCf->nama_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error filtering by kriteria CF: ' . $e->getMessage());
+            }
+        }
+
+        // Filter by sub kriteria (by ID or name)
+        if ($request && $request->has('filter_sub_kriteria') && !empty($request->filter_sub_kriteria)) {
+            try {
+                $subKriteria = \App\Models\SubKriteria::on('cash_bank')
+                    ->where('id_sub_kriteria', $request->filter_sub_kriteria)
+                    ->orWhere('nama_sub_kriteria', $request->filter_sub_kriteria)
+                    ->first();
+                if ($subKriteria) {
+                    $query->where('jenis_dokumen', $subKriteria->nama_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error filtering by sub kriteria: ' . $e->getMessage());
+            }
+        }
+
+        // Filter by item sub kriteria (by ID or name)
+        if ($request && $request->has('filter_item_sub_kriteria') && !empty($request->filter_item_sub_kriteria)) {
+            try {
+                $itemSubKriteria = \App\Models\ItemSubKriteria::on('cash_bank')
+                    ->where('id_item_sub_kriteria', $request->filter_item_sub_kriteria)
+                    ->orWhere('nama_item_sub_kriteria', $request->filter_item_sub_kriteria)
+                    ->first();
+                if ($itemSubKriteria) {
+                    $query->where('jenis_sub_pekerjaan', $itemSubKriteria->nama_item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error filtering by item sub kriteria: ' . $e->getMessage());
+            }
+        }
+
+        // Filter by kebun
+        if ($request && $request->has('filter_kebun') && !empty($request->filter_kebun)) {
+            $query->where('kebun', $request->filter_kebun);
+        }
+
+        // Filter by status pembayaran
+        if ($request && $request->has('filter_status_pembayaran') && !empty($request->filter_status_pembayaran)) {
+            $statusPembayaran = $request->filter_status_pembayaran;
+            if ($statusPembayaran === 'belum_dibayar') {
+                $query->where(function ($q) {
+                    $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', 'pending');
+                })
+                ->whereNull('tanggal_dibayar')
+                ->whereNull('link_bukti_pembayaran');
+            } elseif ($statusPembayaran === 'siap_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'siap_dibayar')
+                        ->orWhere('status_pembayaran', 'siap_bayar')
+                        ->orWhere(function ($subQ) {
+                            $subQ->where('current_handler', 'pembayaran')
+                                ->where('status', 'sent_to_pembayaran')
+                                ->whereNull('tanggal_dibayar')
+                                ->whereNull('link_bukti_pembayaran');
+                        });
+                });
+            } elseif ($statusPembayaran === 'sudah_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhereNotNull('tanggal_dibayar')
+                        ->orWhereNotNull('link_bukti_pembayaran');
                 });
             }
         }
@@ -2356,5 +2457,87 @@ class OwnerDashboardController extends Controller
         }
 
         return htmlspecialchars($link);
+    }
+
+    /**
+     * Get filter data for dropdowns
+     */
+    private function getFilterData(): array
+    {
+        // Get distinct bagian values
+        $bagianList = Dokumen::whereNotNull('bagian')
+            ->where('bagian', '!=', '')
+            ->distinct()
+            ->orderBy('bagian')
+            ->pluck('bagian', 'bagian')
+            ->toArray();
+
+        // Get distinct vendor/dibayar_kepada values
+        $vendorList = [];
+        try {
+            // From dibayar_kepadas table
+            $vendorList = DB::table('dibayar_kepadas')
+                ->whereNotNull('nama_penerima')
+                ->where('nama_penerima', '!=', '')
+                ->distinct()
+                ->orderBy('nama_penerima')
+                ->pluck('nama_penerima', 'nama_penerima')
+                ->toArray();
+            
+            // Also include from dokumens.dibayar_kepada column (legacy)
+            $legacyVendors = Dokumen::whereNotNull('dibayar_kepada')
+                ->where('dibayar_kepada', '!=', '')
+                ->distinct()
+                ->pluck('dibayar_kepada', 'dibayar_kepada')
+                ->toArray();
+            
+            $vendorList = array_merge($vendorList, $legacyVendors);
+            $vendorList = array_unique($vendorList);
+            asort($vendorList);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching vendor list: ' . $e->getMessage());
+        }
+
+        // Get distinct kebun values
+        $kebunList = Dokumen::whereNotNull('kebun')
+            ->where('kebun', '!=', '')
+            ->distinct()
+            ->orderBy('kebun')
+            ->pluck('kebun', 'kebun')
+            ->toArray();
+
+        // Get Kriteria CF, Sub Kriteria, Item Sub Kriteria from cash_bank database
+        $kriteriaCfList = [];
+        $subKriteriaList = [];
+        $itemSubKriteriaList = [];
+        
+        try {
+            $kriteriaCfList = \App\Models\KategoriKriteria::on('cash_bank')
+                ->where('tipe', 'Keluar')
+                ->orderBy('nama_kriteria')
+                ->pluck('nama_kriteria', 'id_kategori_kriteria')
+                ->toArray();
+            
+            $subKriteriaList = \App\Models\SubKriteria::on('cash_bank')
+                ->orderBy('nama_sub_kriteria')
+                ->pluck('nama_sub_kriteria', 'id_sub_kriteria')
+                ->toArray();
+            
+            $itemSubKriteriaList = \App\Models\ItemSubKriteria::on('cash_bank')
+                ->orderBy('nama_item_sub_kriteria')
+                ->pluck('nama_item_sub_kriteria', 'id_item_sub_kriteria')
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching kriteria data from cash_bank: ' . $e->getMessage());
+        }
+
+        return [
+            'bagian' => $bagianList,
+            'vendor' => $vendorList,
+            'kriteria_cf' => $kriteriaCfList,
+            'sub_kriteria' => $subKriteriaList,
+            'item_sub_kriteria' => $itemSubKriteriaList,
+            'kebun' => $kebunList,
+        ];
     }
 }

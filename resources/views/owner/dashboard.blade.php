@@ -1056,6 +1056,278 @@ body {
     text-align: center;
   }
 }
+/* Modern Filter Panel Styles */
+.modern-filter-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.filter-toggle-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-toggle-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+}
+
+.filter-toggle-btn i {
+  font-size: 1.1rem;
+}
+
+.filter-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+}
+
+.filter-panel {
+  padding: 2rem;
+  background: white;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.filter-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-label i {
+  color: var(--primary-color);
+  font-size: 0.9rem;
+}
+
+.filter-select,
+.filter-input-search {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.filter-select:focus,
+.filter-input-search:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.1);
+}
+
+.filter-searchable {
+  min-height: 44px;
+}
+
+.filter-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-light);
+  border-radius: 8px;
+}
+
+.filter-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.filter-radio:hover {
+  background: white;
+}
+
+.filter-radio input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.filter-radio span {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.filter-radio input[type="radio"]:checked + span {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.filter-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-btn-reset {
+  background: var(--bg-light);
+  color: var(--text-secondary);
+}
+
+.filter-btn-reset:hover {
+  background: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+.filter-btn-apply {
+  background: var(--primary-color);
+  color: white;
+}
+
+.filter-btn-apply:hover {
+  background: #0a4f52;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.filter-badge-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.filter-badge-item .remove-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.filter-badge-item .remove-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-toggle-bar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .filter-actions {
+    flex-direction: column;
+  }
+  
+  .filter-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>
 
 <!-- Dashboard Header - Modern Gradient & Pattern -->
@@ -1165,32 +1437,16 @@ body {
     </div>
   </div>
 
-  <!-- Control Bar & View Toggles -->
-  <div class="control-bar">
-    <div class="control-bar-left">
-      <form method="GET" action="{{ url('/owner/dashboard') }}" class="d-flex align-items-center gap-2" style="flex: 1; min-width: 0;">
-        <input type="hidden" name="per_page" value="{{ request('per_page', 10) }}">
-        <input type="text"
-               name="search"
-               class="search-input-modern"
-               value="{{ $search ?? '' }}"
-               placeholder="Cari dokumen...">
-        <select name="status" class="filter-select" style="min-width: 150px;">
-          <option value="">Semua Status</option>
-          <option value="proses" {{ request('status') == 'proses' ? 'selected' : '' }}>Proses</option>
-          <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
-        </select>
-        <button type="submit" class="action-btn">
-          <i class="fas fa-search me-1"></i> Cari
-        </button>
-        @if(isset($search) && !empty($search))
-        <a href="{{ url('/owner/dashboard') }}" class="action-btn" style="background: var(--text-muted);">
-          <i class="fas fa-times me-1"></i> Atur Ulang
-        </a>
-        @endif
-      </form>
-    </div>
-    <div class="control-bar-right">
+  <!-- Modern Filter Panel -->
+  <div class="modern-filter-container">
+    <!-- Filter Toggle Button -->
+    <div class="filter-toggle-bar">
+      <button type="button" class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()">
+        <i class="fas fa-filter"></i>
+        <span>Filter Lanjutan</span>
+        <span class="filter-badge" id="activeFilterCount">0</span>
+        <i class="fas fa-chevron-down" id="filterToggleIcon"></i>
+      </button>
       <div class="view-switcher">
         <button class="view-switcher-btn active" data-view="card" onclick="switchView('card')">
           <i class="fas fa-th"></i> Kartu
@@ -1199,6 +1455,164 @@ body {
           <i class="fas fa-table"></i> Tabel
         </button>
       </div>
+    </div>
+
+    <!-- Filter Panel (Collapsible) -->
+    <div class="filter-panel" id="filterPanel" style="display: none;">
+      <form method="GET" action="{{ url('/owner/dashboard') }}" id="filterForm" class="filter-form">
+        <input type="hidden" name="per_page" value="{{ request('per_page', 10) }}">
+        
+        <!-- Search Bar -->
+        <div class="filter-row">
+          <div class="filter-group full-width">
+            <label class="filter-label">
+              <i class="fas fa-search"></i> Cari Dokumen
+            </label>
+            <input type="text"
+                   name="search"
+                   class="filter-input-search"
+                   value="{{ $search ?? '' }}"
+                   placeholder="Cari berdasarkan nomor agenda, SPP, uraian, dll...">
+          </div>
+        </div>
+
+        <!-- Filter Grid -->
+        <div class="filter-grid">
+          <!-- Bagian -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-building"></i> Bagian
+            </label>
+            <select name="filter_bagian" class="filter-select" onchange="applyFilter()">
+              <option value="">Semua Bagian</option>
+              @foreach($filterData['bagian'] ?? [] as $key => $value)
+                <option value="{{ $key }}" {{ request('filter_bagian') == $key ? 'selected' : '' }}>{{ $value }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Vendor/Dibayar Kepada -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-handshake"></i> Vendor/Dibayar Kepada
+            </label>
+            <select name="filter_vendor" class="filter-select filter-searchable" onchange="applyFilter()">
+              <option value="">Semua Vendor</option>
+              @foreach($filterData['vendor'] ?? [] as $key => $value)
+                <option value="{{ $value }}" {{ request('filter_vendor') == $value ? 'selected' : '' }}>{{ $value }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Kriteria CF -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-tags"></i> Kriteria CF
+            </label>
+            <select name="filter_kriteria_cf" id="filterKriteriaCf" class="filter-select filter-searchable" onchange="updateSubKriteriaFilter(); applyFilter();">
+              <option value="">Semua Kriteria CF</option>
+              @foreach($filterData['kriteria_cf'] ?? [] as $id => $nama)
+                <option value="{{ $id }}" {{ request('filter_kriteria_cf') == $id ? 'selected' : '' }}>{{ $nama }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Sub Kriteria -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-tag"></i> Sub Kriteria
+            </label>
+            <select name="filter_sub_kriteria" id="filterSubKriteria" class="filter-select filter-searchable" onchange="updateItemSubKriteriaFilter(); applyFilter();">
+              <option value="">Pilih Kriteria CF terlebih dahulu</option>
+              @foreach($filterData['sub_kriteria'] ?? [] as $id => $nama)
+                <option value="{{ $id }}" 
+                        data-kriteria-cf="{{ \App\Models\SubKriteria::on('cash_bank')->where('id_sub_kriteria', $id)->value('id_kategori_kriteria') ?? '' }}"
+                        {{ request('filter_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Item Sub Kriteria -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-list"></i> Item Sub Kriteria
+            </label>
+            <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" class="filter-select filter-searchable" onchange="applyFilter()">
+              <option value="">Pilih Sub Kriteria terlebih dahulu</option>
+              @foreach($filterData['item_sub_kriteria'] ?? [] as $id => $nama)
+                <option value="{{ $id }}" 
+                        data-sub-kriteria="{{ \App\Models\ItemSubKriteria::on('cash_bank')->where('id_item_sub_kriteria', $id)->value('id_sub_kriteria') ?? '' }}"
+                        {{ request('filter_item_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Kebun -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-seedling"></i> Kebun
+            </label>
+            <select name="filter_kebun" class="filter-select filter-searchable" onchange="applyFilter()">
+              <option value="">Semua Kebun</option>
+              @foreach($filterData['kebun'] ?? [] as $key => $value)
+                <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Status Pembayaran -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-money-bill-wave"></i> Status Pembayaran
+            </label>
+            <div class="filter-radio-group">
+              <label class="filter-radio">
+                <input type="radio" name="filter_status_pembayaran" value="" {{ !request('filter_status_pembayaran') ? 'checked' : '' }} onchange="applyFilter()">
+                <span>Semua</span>
+              </label>
+              <label class="filter-radio">
+                <input type="radio" name="filter_status_pembayaran" value="belum_dibayar" {{ request('filter_status_pembayaran') == 'belum_dibayar' ? 'checked' : '' }} onchange="applyFilter()">
+                <span>Belum Dibayar</span>
+              </label>
+              <label class="filter-radio">
+                <input type="radio" name="filter_status_pembayaran" value="siap_dibayar" {{ request('filter_status_pembayaran') == 'siap_dibayar' ? 'checked' : '' }} onchange="applyFilter()">
+                <span>Siap Dibayar</span>
+              </label>
+              <label class="filter-radio">
+                <input type="radio" name="filter_status_pembayaran" value="sudah_dibayar" {{ request('filter_status_pembayaran') == 'sudah_dibayar' ? 'checked' : '' }} onchange="applyFilter()">
+                <span>Sudah Dibayar</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Status Dokumen (Existing) -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-info-circle"></i> Status Dokumen
+            </label>
+            <select name="status" class="filter-select" onchange="applyFilter()">
+              <option value="">Semua Status</option>
+              <option value="proses" {{ request('status') == 'proses' ? 'selected' : '' }}>Proses</option>
+              <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="filter-actions">
+          <button type="button" class="filter-btn filter-btn-reset" onclick="resetFilters()">
+            <i class="fas fa-redo"></i> Reset Filter
+          </button>
+          <button type="button" class="filter-btn filter-btn-apply" onclick="applyFilter()">
+            <i class="fas fa-check"></i> Terapkan Filter
+          </button>
+        </div>
+
+        <!-- Active Filters Badges -->
+        <div class="active-filters" id="activeFilters">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1480,6 +1894,191 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+});
+
+// Filter Panel Functionality
+let filterPanelExpanded = false;
+
+function toggleFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  const icon = document.getElementById('filterToggleIcon');
+  filterPanelExpanded = !filterPanelExpanded;
+  
+  if (filterPanelExpanded) {
+    panel.style.display = 'block';
+    icon.classList.remove('fa-chevron-down');
+    icon.classList.add('fa-chevron-up');
+  } else {
+    panel.style.display = 'none';
+    icon.classList.remove('fa-chevron-up');
+    icon.classList.add('fa-chevron-down');
+  }
+  
+  updateActiveFilterCount();
+}
+
+function applyFilter() {
+  const form = document.getElementById('filterForm');
+  form.submit();
+}
+
+function resetFilters() {
+  window.location.href = '{{ url("/owner/dashboard") }}';
+}
+
+function updateActiveFilterCount() {
+  const form = document.getElementById('filterForm');
+  const formData = new FormData(form);
+  let count = 0;
+  
+  // Count active filters
+  for (let [key, value] of formData.entries()) {
+    if (key.startsWith('filter_') && value && value !== '') {
+      count++;
+    }
+    if (key === 'status' && value && value !== '') {
+      count++;
+    }
+  }
+  
+  const badge = document.getElementById('activeFilterCount');
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+  
+  updateActiveFilterBadges();
+}
+
+function updateActiveFilterBadges() {
+  const form = document.getElementById('filterForm');
+  const formData = new FormData(form);
+  const badgesContainer = document.getElementById('activeFilters');
+  badgesContainer.innerHTML = '';
+  
+  const filterLabels = {
+    'filter_bagian': 'Bagian',
+    'filter_vendor': 'Vendor',
+    'filter_kriteria_cf': 'Kriteria CF',
+    'filter_sub_kriteria': 'Sub Kriteria',
+    'filter_item_sub_kriteria': 'Item Sub Kriteria',
+    'filter_kebun': 'Kebun',
+    'filter_status_pembayaran': 'Status Pembayaran',
+    'status': 'Status Dokumen'
+  };
+  
+  for (let [key, value] of formData.entries()) {
+    if ((key.startsWith('filter_') || key === 'status') && value && value !== '') {
+      const label = filterLabels[key] || key;
+      const badge = document.createElement('span');
+      badge.className = 'filter-badge-item';
+      badge.innerHTML = `
+        <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+        <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      badgesContainer.appendChild(badge);
+    }
+  }
+}
+
+function getFilterDisplayValue(key, value) {
+  // Get display value from select options
+  const select = document.querySelector(`[name="${key}"]`);
+  if (select && select.options) {
+    const option = Array.from(select.options).find(opt => opt.value === value);
+    if (option) return option.text;
+  }
+  return value;
+}
+
+function removeFilter(key) {
+  const input = document.querySelector(`[name="${key}"]`);
+  if (input) {
+    if (input.type === 'radio') {
+      // Find and check the "Semua" option
+      const semuaOption = document.querySelector(`[name="${key}"][value=""]`);
+      if (semuaOption) semuaOption.checked = true;
+    } else {
+      input.value = '';
+    }
+    applyFilter();
+  }
+}
+
+// Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
+function updateSubKriteriaFilter() {
+  const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+  const subKriteriaSelect = document.getElementById('filterSubKriteria');
+  
+  // Show/hide options based on selected kriteria CF
+  Array.from(subKriteriaSelect.options).forEach(option => {
+    if (option.value === '') {
+      option.style.display = 'block';
+      return;
+    }
+    const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+    if (kriteriaCfId && kriteriaCfIdForOption === kriteriaCfId) {
+      option.style.display = 'block';
+    } else if (!kriteriaCfId) {
+      option.style.display = 'block';
+    } else {
+      option.style.display = 'none';
+    }
+  });
+  
+  // Reset sub kriteria and item sub kriteria if kriteria CF changed
+  if (!kriteriaCfId) {
+    subKriteriaSelect.value = '';
+    updateItemSubKriteriaFilter();
+  }
+}
+
+function updateItemSubKriteriaFilter() {
+  const subKriteriaId = document.getElementById('filterSubKriteria').value;
+  const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+  
+  // Show/hide options based on selected sub kriteria
+  Array.from(itemSubKriteriaSelect.options).forEach(option => {
+    if (option.value === '') {
+      option.style.display = 'block';
+      return;
+    }
+    const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+    if (subKriteriaId && subKriteriaIdForOption === subKriteriaId) {
+      option.style.display = 'block';
+    } else if (!subKriteriaId) {
+      option.style.display = 'block';
+    } else {
+      option.style.display = 'none';
+    }
+  });
+  
+  // Reset item sub kriteria if sub kriteria changed
+  if (!subKriteriaId) {
+    itemSubKriteriaSelect.value = '';
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateActiveFilterCount();
+  updateSubKriteriaFilter();
+  updateItemSubKriteriaFilter();
+  
+  // Auto-expand filter panel if filters are active
+  const form = document.getElementById('filterForm');
+  const formData = new FormData(form);
+  let hasActiveFilters = false;
+  for (let [key, value] of formData.entries()) {
+    if ((key.startsWith('filter_') || key === 'status') && value && value !== '') {
+      hasActiveFilters = true;
+      break;
+    }
+  }
+  
+  if (hasActiveFilters) {
+    toggleFilterPanel();
+  }
 });
 </script>
 
