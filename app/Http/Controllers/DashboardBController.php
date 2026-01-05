@@ -544,9 +544,11 @@ class DashboardBController extends Controller
         // Ambil data jenis pembayaran dari database cash_bank_new
         $jenisPembayaranList = collect([]);
         try {
-            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama')->get();
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
+            \Log::info('Jenis Pembayaran fetched (ibuB): ' . $jenisPembayaranList->count() . ' records');
         } catch (\Exception $e) {
-            \Log::error('Error fetching jenis pembayaran data: ' . $e->getMessage());
+            \Log::error('Error fetching jenis pembayaran data (ibuB): ' . $e->getMessage());
+            \Log::error('Error trace: ' . $e->getTraceAsString());
             // Fallback: gunakan collection kosong jika error
             $jenisPembayaranList = collect([]);
         }

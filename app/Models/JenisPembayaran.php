@@ -8,13 +8,11 @@ class JenisPembayaran extends Model
 {
     protected $connection = 'cash_bank_new';
     protected $table = 'jenis_pembayarans';
+    protected $primaryKey = 'id_jenis_pembayaran';
     
-    public $timestamps = false;
+    public $timestamps = true; // Tabel memiliki created_at dan updated_at
     
     protected $fillable = [
-        'nama',
-        'kode',
-        'jenis_pembayaran',
         'nama_jenis_pembayaran',
     ];
 
@@ -23,7 +21,7 @@ class JenisPembayaran extends Model
      */
     public function getDisplayNameAttribute()
     {
-        return $this->nama ?? $this->nama_jenis_pembayaran ?? $this->jenis_pembayaran ?? $this->kode ?? 'Jenis Pembayaran #' . $this->id;
+        return $this->nama_jenis_pembayaran ?? 'Jenis Pembayaran #' . ($this->id_jenis_pembayaran ?? 'N/A');
     }
 
     /**
@@ -31,7 +29,22 @@ class JenisPembayaran extends Model
      */
     public function getFormValueAttribute()
     {
-        return $this->nama ?? $this->nama_jenis_pembayaran ?? $this->jenis_pembayaran ?? $this->kode ?? $this->id;
+        return $this->nama_jenis_pembayaran ?? $this->id_jenis_pembayaran;
+    }
+    
+    /**
+     * Convert stdClass to model instance jika diperlukan
+     */
+    public static function fromStdClass($stdClass)
+    {
+        $model = new static();
+        // Set attributes menggunakan setRawAttributes untuk menghindari mass assignment protection
+        $attributes = [];
+        foreach ((array)$stdClass as $key => $value) {
+            $attributes[$key] = $value;
+        }
+        $model->setRawAttributes($attributes, true);
+        return $model;
     }
 }
 
