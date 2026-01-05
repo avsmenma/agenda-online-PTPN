@@ -3034,7 +3034,7 @@
 
     <!-- Enhanced Search & Filter Box -->
     <div class="search-box">
-      <form action="{{ route('documents.verifikasi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
+      <form id="filterForm" action="{{ route('documents.verifikasi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3">
         <div class="input-group" style="flex: 1; min-width: 300px;">
           <span class="input-group-text">
             <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -5269,18 +5269,32 @@
         return;
       }
 
-      const filterForm = document.querySelector('form[action*="dokumensB"]');
+      // Try multiple selectors to find the form
+      let filterForm = document.getElementById('filterForm');
+      if (!filterForm) {
+        filterForm = document.querySelector('form[action*="verifikasi"]');
+      }
+      if (!filterForm) {
+        filterForm = document.querySelector('form[action*="dokumensB"]');
+      }
+      if (!filterForm) {
+        // Fallback: use first form on page
+        filterForm = document.querySelector('form');
+      }
+      
       if (!filterForm) {
         alert('Form tidak ditemukan.');
         return;
       }
 
+      // Remove existing column inputs
       document.querySelectorAll('input[name="columns[]"]').forEach(input => {
         if (input.type === 'hidden') {
           input.remove();
         }
       });
 
+      // Add hidden inputs for selected columns in order
       selectedColumnsOrder.forEach(columnKey => {
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
@@ -5288,6 +5302,13 @@
         hiddenInput.value = columnKey;
         filterForm.appendChild(hiddenInput);
       });
+
+      // Add enable customization flag
+      const enableInput = document.createElement('input');
+      enableInput.type = 'hidden';
+      enableInput.name = 'enable_customization';
+      enableInput.value = '1';
+      filterForm.appendChild(enableInput);
 
       closeColumnCustomizationModal();
       filterForm.submit();
