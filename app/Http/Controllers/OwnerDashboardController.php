@@ -2512,8 +2512,9 @@ class OwnerDashboardController extends Controller
             \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, RoleData IDs found: " . count($roleDataIds));
             
             // Then query Dokumen using whereIn - this ensures we get all documents
+            // Use explicit table name to avoid ambiguity after join
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-                ->whereIn('id', $roleDataIds);
+                ->whereIn('dokumens.id', $roleDataIds);
             
             // Join with dokumen_role_data to get the role-specific fields for this role
             $query->join('dokumen_role_data', function($join) use ($roleCode) {
