@@ -2499,11 +2499,36 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.processed_at as delay_processed_at',
                     'dokumen_role_data.deadline_at as delay_deadline_at');
         } else {
+            // First, let's check what's actually in dokumen_role_data
+            $roleDataCheck = \App\Models\DokumenRoleData::where('role_code', $roleCode)
+                ->whereNotNull('received_at')
+                ->whereNull('processed_at')
+                ->get();
+            
+            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, DokumenRoleData found: " . $roleDataCheck->count());
+            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, DokumenRoleData sample: " . json_encode($roleDataCheck->take(2)->map(function($rd) {
+                return [
+                    'id' => $rd->id,
+                    'dokumen_id' => $rd->dokumen_id,
+                    'role_code' => $rd->role_code,
+                    'received_at' => $rd->received_at,
+                    'processed_at' => $rd->processed_at,
+                ];
+            })));
+            
+            // Get dokumen IDs
+            $dokumenIds = $roleDataCheck->pluck('dokumen_id')->unique()->toArray();
+            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Dokumen IDs: " . json_encode($dokumenIds));
+            
+            // Check if dokumens exist
+            $dokumensExist = Dokumen::whereIn('id', $dokumenIds)->count();
+            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Dokumens exist count: {$dokumensExist}");
+            
             // Query directly from dokumen_role_data and join with dokumens
-            // This ensures we get all documents that match the role criteria
+            // Use case-insensitive comparison for role_code
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
                 ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-                ->where('dokumen_role_data.role_code', $roleCode)
+                ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
                 ->whereNotNull('dokumen_role_data.received_at')
                 ->whereNull('dokumen_role_data.processed_at')
                 ->select('dokumens.*', 
