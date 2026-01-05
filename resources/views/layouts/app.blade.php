@@ -1369,7 +1369,14 @@
     // Pre-calculate shouldShowSecondarySidebar for header
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
-    if (isset($module)) {
+    
+    // Check if owner is on rekapan keterlambatan page
+    $isOwnerRekapanKeterlambatan = $isOwner && (request()->is('*rekapan-keterlambatan*') || 
+      request()->routeIs('owner.rekapan-keterlambatan*'));
+    
+    if ($isOwnerRekapanKeterlambatan) {
+      $isSubmenuPageForHeader = true;
+    } elseif (isset($module)) {
       if ($module === 'pembayaran') {
         $isSubmenuPageForHeader = request()->routeIs('dokumensPembayaran.*') ||
           request()->routeIs('pembayaran.*') ||
@@ -1401,7 +1408,7 @@
           request()->is('*pengembalian*');
       }
     }
-    $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader;
+    $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
   @endphp
   <header>
        <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
@@ -1496,7 +1503,14 @@
               <a href="{{ url('/owner/dashboard') }}" class="{{ $menuDashboard ?? '' }}">
                   <i class="fa-solid fa-satellite-dish"></i> Dashboard Owner
               </a>
-              <a href="{{ url('/owner/rekapan-keterlambatan') }}" class="{{ $menuRekapanKeterlambatan ?? '' }}">
+              @php
+                $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') || 
+                  request()->routeIs('owner.rekapan-keterlambatan*');
+              @endphp
+              <a href="{{ url('/owner/rekapan-keterlambatan') }}" 
+                 class="{{ $menuRekapanKeterlambatan ?? '' }} sidebar-menu-trigger {{ $isRekapanKeterlambatanActive ? 'active' : '' }}"
+                 data-submenu="rekapan-keterlambatan"
+                 aria-expanded="{{ $isRekapanKeterlambatanActive ? 'true' : 'false' }}">
                   <i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan
               </a>
           </div>
@@ -1668,7 +1682,47 @@
   </div>
 
   <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
-  @unless($isOwner)
+  @if($isOwner)
+    @php
+      // Check if owner is on rekapan keterlambatan page
+      $isRekapanKeterlambatanPage = request()->is('*rekapan-keterlambatan*') || 
+        request()->routeIs('owner.rekapan-keterlambatan*');
+      $shouldShowSecondarySidebarOwner = $isRekapanKeterlambatanPage;
+    @endphp
+    <div class="secondary-sidebar {{ $shouldShowSecondarySidebarOwner ? 'active' : '' }}" 
+         id="sidebar-rekapan-keterlambatan"
+         role="complementary"
+         aria-label="Submenu Panel">
+      <div class="secondary-sidebar-header">
+        MENU REKAPAN KETERLAMBATAN
+      </div>
+      <div class="secondary-sidebar-content">
+        @php
+          $currentRole = strtolower(request()->route('roleCode') ?? '');
+        @endphp
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}" 
+           class="{{ $currentRole === 'ibua' ? 'active' : '' }}">
+          <i class="fa-solid fa-user me-2"></i> Ibu Tara
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}" 
+           class="{{ $currentRole === 'ibub' ? 'active' : '' }}">
+          <i class="fa-solid fa-users me-2"></i> Team Verifikasi
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}" 
+           class="{{ $currentRole === 'perpajakan' ? 'active' : '' }}">
+          <i class="fa-solid fa-file-invoice-dollar me-2"></i> Team Perpajakan
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}" 
+           class="{{ $currentRole === 'akutansi' ? 'active' : '' }}">
+          <i class="fa-solid fa-calculator me-2"></i> Team Akutansi
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}" 
+           class="{{ $currentRole === 'pembayaran' ? 'active' : '' }}">
+          <i class="fa-solid fa-money-bill-wave me-2"></i> Pembayaran
+        </a>
+      </div>
+    </div>
+  @else
     @php
       // Check if user is on a submenu page or menu dokumen is active
       $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
