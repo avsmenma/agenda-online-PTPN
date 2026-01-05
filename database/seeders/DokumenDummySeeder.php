@@ -4,10 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Dokumen;
-use App\Models\DokumenPR;
-use App\Models\DokumenPO;
+use App\Models\DokumenRoleData;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class DokumenDummySeeder extends Seeder
 {
@@ -16,196 +15,353 @@ class DokumenDummySeeder extends Seeder
      */
     public function run(): void
     {
-        // Data yang akan digunakan berulang (beberapa dokumen akan memiliki data yang sama)
-        $bagianList = ['DPM', 'SKH', 'SDM', 'TEP', 'KPL', 'AKN', 'TAN', 'PMO'];
-        $namaPengirimList = [
-            'Ibu Tarapul',
-            'Bapak Ahmad',
-            'Ibu Siti',
-            'Bapak Budi',
-            'Ibu Rina',
-            'Bapak Joko',
-            'Ibu Maya',
-            'Bapak Agung'
-        ];
-        
-        // Data yang akan diulang untuk beberapa dokumen
-        $vendorList = [
-            'PT ABC Perkebunan',
-            'PT XYZ Konstruksi',
-            'CV DEF Supplier',
-            'PT GHI Trading',
-            'PT JKL Services',
-            'PT MNO Agriculture',
-            'CV PQR Logistics',
-            'PT STU Manufacturing'
-        ];
-        
-        $kebunList = [
-            'Kebun A',
-            'Kebun B',
-            'Kebun C',
-            'Kebun D',
-            'Kebun E',
-            'Kebun F',
-            'Kebun G',
-            'Kebun H'
-        ];
-        
-        $kategoriList = [
-            'Operasional',
-            'Investasi',
-            'Pemeliharaan',
-            'Pengembangan'
-        ];
-        
-        $jenisDokumenList = [
-            'SPP',
-            'Kontrak',
-            'PO',
-            'BA',
-            'SPK'
-        ];
-        
-        $jenisSubPekerjaanList = [
-            'Surat Masuk/Keluar Reguler',
-            'Surat Undangan',
-            'Surat Perintah',
-            'Surat Keputusan',
-            'Surat Tugas'
-        ];
-        
-        $jenisPembayaranList = [
-            'Karyawan',
-            'Mitra',
-            'MPN',
-            'TBS',
-            'Transfer',
-            'Tunai'
-        ];
-        
-        $uraianSppList = [
-            'Pembayaran kontraktor pekerjaan konstruksi',
-            'Pembayaran vendor material bangunan',
-            'Pembayaran supplier alat berat',
-            'Pembayaran jasa konsultan',
-            'Pembayaran material konstruksi',
-            'Pembayaran tenaga kerja',
-            'Pembayaran sewa alat',
-            'Pembayaran transportasi',
-            'Pembayaran maintenance',
-            'Pembayaran operasional harian'
-        ];
-        
-        // Generate 100 dokumen
-        for ($i = 1; $i <= 100; $i++) {
-            // Generate nomor agenda (format: AGD/XXX/MM/YYYY)
-            $bulan = str_pad(rand(1, 12), 2, '0', STR_PAD_LEFT);
-            $tahun = 2024;
-            $nomorUrut = str_pad($i, 3, '0', STR_PAD_LEFT);
-            $nomorAgenda = "AGD/{$nomorUrut}/{$bulan}/{$tahun}";
-            
-            // Pastikan nomor agenda unique
-            while (Dokumen::where('nomor_agenda', $nomorAgenda)->exists()) {
-                $nomorUrut = str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
-                $nomorAgenda = "AGD/{$nomorUrut}/{$bulan}/{$tahun}";
-            }
-            
-            // Generate tanggal SPP (random dalam 6 bulan terakhir)
-            $tanggalSpp = Carbon::now()->subMonths(rand(0, 6))->subDays(rand(0, 30));
-            $tanggalMasuk = $tanggalSpp->copy()->addDays(rand(1, 5));
-            
-            // Generate tanggal BA (setelah tanggal SPP)
-            $tanggalBa = $tanggalSpp->copy()->addDays(rand(5, 15));
-            
-            // Generate tanggal SPK (setelah tanggal BA)
-            $tanggalSpk = $tanggalBa->copy()->addDays(rand(1, 10));
-            $tanggalBerakhirSpk = $tanggalSpk->copy()->addDays(rand(30, 90));
-            
-            // Generate nomor SPP
-            $bagian = $bagianList[array_rand($bagianList)];
-            $nomorSpp = rand(1, 999) . "/M/SPP/" . rand(1, 31) . "/" . str_pad(rand(1, 12), 2, '0', STR_PAD_LEFT) . "/" . $tahun;
-            
-            // Pastikan nomor SPP unique
-            while (Dokumen::where('nomor_spp', $nomorSpp)->exists()) {
-                $nomorSpp = rand(1, 999) . "/M/SPP/" . rand(1, 31) . "/" . str_pad(rand(1, 12), 2, '0', STR_PAD_LEFT) . "/" . $tahun;
-            }
-            
-            // Pilih data yang akan diulang (beberapa dokumen akan memiliki data yang sama)
-            // Untuk membuat beberapa dokumen dengan data yang sama, kita akan menggunakan modulo
-            $vendorIndex = ($i - 1) % count($vendorList);
-            $kebunIndex = ($i - 1) % count($kebunList);
-            $kategoriIndex = ($i - 1) % count($kategoriList);
-            $jenisDokumenIndex = ($i - 1) % count($jenisDokumenList);
-            $jenisSubPekerjaanIndex = ($i - 1) % count($jenisSubPekerjaanList);
-            $jenisPembayaranIndex = ($i - 1) % count($jenisPembayaranList);
-            
-            // Generate nilai rupiah (antara 10 juta sampai 1 milyar)
-            $nilaiRupiah = rand(10000000, 1000000000);
-            
-            // Generate nomor PR dan PO
-            $nomorPr = "PR/" . str_pad($i, 4, '0', STR_PAD_LEFT) . "/" . $bulan . "/" . $tahun;
-            $nomorPo = "PO/" . str_pad($i, 4, '0', STR_PAD_LEFT) . "/" . $bulan . "/" . $tahun;
-            
-            // Generate nomor BA dan SPK
-            $noBeritaAcara = "BA/" . str_pad($i, 3, '0', STR_PAD_LEFT) . "/" . $bulan . "/" . $tahun;
-            $noSpk = "SPK/" . str_pad($i, 3, '0', STR_PAD_LEFT) . "/" . $bulan . "/" . $tahun;
-            
-            // Generate nomor mirror
-            $nomorMirror = "MIR-" . str_pad($i, 4, '0', STR_PAD_LEFT);
-            
-            // Get bulan Indonesia
-            $bulanIndonesia = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-            
-            // Create dokumen
+        // Clear existing data first
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DokumenRoleData::truncate();
+        Dokumen::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $now = Carbon::now();
+
+        // Create dummy documents for different roles and delay scenarios
+        $dokumens = [];
+
+        // ===== IBUA (Ibu Tara) - 3 dokumen dengan berbagai umur =====
+        for ($i = 1; $i <= 3; $i++) {
             $dokumen = Dokumen::create([
-                'nomor_agenda' => $nomorAgenda,
-                'bulan' => $bulanIndonesia[(int)$bulan],
-                'tahun' => $tahun,
-                'tanggal_masuk' => $tanggalMasuk,
-                'nomor_spp' => $nomorSpp,
-                'tanggal_spp' => $tanggalSpp,
-                'uraian_spp' => $uraianSppList[array_rand($uraianSppList)],
-                'nilai_rupiah' => $nilaiRupiah,
-                'kategori' => $kategoriList[$kategoriIndex],
-                'jenis_dokumen' => $jenisDokumenList[$jenisDokumenIndex],
-                'jenis_sub_pekerjaan' => $jenisSubPekerjaanList[$jenisSubPekerjaanIndex],
-                'jenis_pembayaran' => $jenisPembayaranList[$jenisPembayaranIndex],
-                'kebun' => $kebunList[$kebunIndex],
-                'bagian' => $bagian,
-                'nama_pengirim' => $namaPengirimList[array_rand($namaPengirimList)],
-                'dibayar_kepada' => $vendorList[$vendorIndex],
-                'no_berita_acara' => $noBeritaAcara,
-                'tanggal_berita_acara' => $tanggalBa,
-                'no_spk' => $noSpk,
-                'tanggal_spk' => $tanggalSpk,
-                'tanggal_berakhir_spk' => $tanggalBerakhirSpk,
-                'nomor_mirror' => $nomorMirror,
-                'status' => 'draft',
-                'created_by' => 'ibuA',
+                'nomor_agenda' => 'AGD-IBUA-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'nomor_spp' => 'SPP-IBUA-' . $i,
+                'tanggal_spp' => $now->copy()->subDays(10 + $i)->format('Y-m-d H:i:s'),
+                'uraian_spp' => 'Uraian SPP untuk Ibu Tara ' . $i,
+                'nilai_rupiah' => 10000000 * $i,
+                'bulan' => $now->format('F'),
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now->copy()->subDays(10 + $i)->format('Y-m-d H:i:s'),
+                'bagian' => 'DPM',
+                'nama_pengirim' => 'Pengirim Ibu Tara ' . $i,
+                'status' => 'sedang diproses',
                 'current_handler' => 'ibuA',
+                'kategori' => 'Kategori ' . $i,
+                'jenis_dokumen' => 'Jenis Dokumen ' . $i,
+                'created_at' => $now->copy()->subDays(10 + $i),
+                'updated_at' => $now->copy()->subDays(10 + $i),
             ]);
-            
-            // Create PR
-            DokumenPR::create([
+
+            // Create role data for ibuA
+            DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'nomor_pr' => $nomorPr,
+                'role_code' => 'ibuA',
+                'received_at' => $now->copy()->subDays(10 + $i)->format('Y-m-d H:i:s'),
+                'processed_at' => null,
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(10 + $i),
+                'updated_at' => $now->copy()->subDays(10 + $i),
             ]);
-            
-            // Create PO
-            DokumenPO::create([
-                'dokumen_id' => $dokumen->id,
-                'nomor_po' => $nomorPo,
-            ]);
-            
-            $this->command->info("Created dokumen {$i}/100: {$nomorAgenda}");
+
+            $dokumens[] = $dokumen;
         }
+
+        // ===== IBUB (Team Verifikasi) - 5 dokumen dengan berbagai umur =====
+        // 1 dokumen umur 1 hari (hijau)
+        // 2 dokumen umur 2 hari (kuning)
+        // 2 dokumen umur 3+ hari (merah)
         
-        $this->command->info('Successfully created 100 dummy documents!');
+        // Dokumen 1 hari (hijau)
+        $dokumen1 = Dokumen::create([
+            'nomor_agenda' => 'AGD-IBUB-0001',
+            'nomor_spp' => 'SPP-IBUB-001',
+            'tanggal_spp' => $now->copy()->subDay()->format('Y-m-d H:i:s'),
+            'uraian_spp' => 'Uraian SPP Team Verifikasi - 1 Hari',
+            'nilai_rupiah' => 5000000,
+            'bulan' => $now->format('F'),
+            'tahun' => $now->year,
+            'tanggal_masuk' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),
+            'bagian' => 'SKH',
+            'nama_pengirim' => 'Pengirim Team Verifikasi 1',
+            'status' => 'sent_to_ibub',
+            'current_handler' => 'ibuB',
+            'kategori' => 'Kategori Verifikasi',
+            'jenis_dokumen' => 'Jenis Dokumen Verifikasi',
+            'created_at' => $now->copy()->subDays(5),
+            'updated_at' => $now->copy()->subDays(5),
+        ]);
+
+        DokumenRoleData::create([
+            'dokumen_id' => $dokumen1->id,
+            'role_code' => 'ibuA',
+            'received_at' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),
+            'processed_at' => $now->copy()->subDay()->format('Y-m-d H:i:s'),
+            'deadline_at' => null,
+            'created_at' => $now->copy()->subDays(5),
+            'updated_at' => $now->copy()->subDay(),
+        ]);
+
+        DokumenRoleData::create([
+            'dokumen_id' => $dokumen1->id,
+            'role_code' => 'ibuB',
+            'received_at' => $now->copy()->subDay()->format('Y-m-d H:i:s'),
+            'processed_at' => null,
+            'deadline_at' => null,
+            'created_at' => $now->copy()->subDay(),
+            'updated_at' => $now->copy()->subDay(),
+        ]);
+
+        // Dokumen 2 hari (kuning) - 2 dokumen
+        for ($i = 2; $i <= 3; $i++) {
+            $dokumen = Dokumen::create([
+                'nomor_agenda' => 'AGD-IBUB-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'nomor_spp' => 'SPP-IBUB-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'tanggal_spp' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),
+                'uraian_spp' => 'Uraian SPP Team Verifikasi - 2 Hari ' . $i,
+                'nilai_rupiah' => 7500000 * $i,
+                'bulan' => $now->format('F'),
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),
+                'bagian' => 'SDM',
+                'nama_pengirim' => 'Pengirim Team Verifikasi ' . $i,
+                'status' => 'sent_to_ibub',
+                'current_handler' => 'ibuB',
+                'kategori' => 'Kategori Verifikasi ' . $i,
+                'jenis_dokumen' => 'Jenis Dokumen Verifikasi ' . $i,
+                'created_at' => $now->copy()->subDays(5),
+                'updated_at' => $now->copy()->subDays(5),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuA',
+                'received_at' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(5),
+                'updated_at' => $now->copy()->subDays(2),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuB',
+                'received_at' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),
+                'processed_at' => null,
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(2),
+                'updated_at' => $now->copy()->subDays(2),
+            ]);
+        }
+
+        // Dokumen 3+ hari (merah) - 2 dokumen
+        for ($i = 4; $i <= 5; $i++) {
+            $daysAgo = $i + 1; // 5 hari dan 6 hari yang lalu
+            $dokumen = Dokumen::create([
+                'nomor_agenda' => 'AGD-IBUB-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'nomor_spp' => 'SPP-IBUB-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'tanggal_spp' => $now->copy()->subDays($daysAgo)->format('Y-m-d H:i:s'),
+                'uraian_spp' => 'Uraian SPP Team Verifikasi - 3+ Hari ' . $i,
+                'nilai_rupiah' => 10000000 * $i,
+                'bulan' => $now->format('F'),
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'bagian' => 'TEP',
+                'nama_pengirim' => 'Pengirim Team Verifikasi ' . $i,
+                'status' => 'sent_to_ibub',
+                'current_handler' => 'ibuB',
+                'kategori' => 'Kategori Verifikasi ' . $i,
+                'jenis_dokumen' => 'Jenis Dokumen Verifikasi ' . $i,
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays(10),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuA',
+                'received_at' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays($daysAgo)->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays($daysAgo),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuB',
+                'received_at' => $now->copy()->subDays($daysAgo)->format('Y-m-d H:i:s'),
+                'processed_at' => null,
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays($daysAgo),
+                'updated_at' => $now->copy()->subDays($daysAgo),
+            ]);
+        }
+
+        // ===== PERPAJAKAN - 4 dokumen dengan berbagai umur =====
+        // 1 dokumen umur 1 hari
+        // 1 dokumen umur 2 hari
+        // 2 dokumen umur 3+ hari
+        
+        $perpajakanDocs = [
+            ['days' => 1, 'nomor' => '001'],
+            ['days' => 2, 'nomor' => '002'],
+            ['days' => 4, 'nomor' => '003'],
+            ['days' => 5, 'nomor' => '004'],
+        ];
+
+        foreach ($perpajakanDocs as $index => $doc) {
+            $dokumen = Dokumen::create([
+                'nomor_agenda' => 'AGD-PAJAK-' . str_pad($doc['nomor'], 4, '0', STR_PAD_LEFT),
+                'nomor_spp' => 'SPP-PAJAK-' . $doc['nomor'],
+                'tanggal_spp' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
+                'uraian_spp' => 'Uraian SPP Team Perpajakan - ' . $doc['days'] . ' Hari',
+                'nilai_rupiah' => 15000000 * ($index + 1),
+                'bulan' => $now->format('F'),
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'bagian' => 'KPL',
+                'nama_pengirim' => 'Pengirim Team Perpajakan ' . $doc['nomor'],
+                'status' => 'sent_to_perpajakan',
+                'current_handler' => 'perpajakan',
+                'kategori' => 'Kategori Perpajakan ' . $doc['nomor'],
+                'jenis_dokumen' => 'Jenis Dokumen Perpajakan ' . $doc['nomor'],
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays(10),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuA',
+                'received_at' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays(8),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuB',
+                'received_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(8),
+                'updated_at' => $now->copy()->subDays($doc['days']),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'perpajakan',
+                'received_at' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
+                'processed_at' => null,
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays($doc['days']),
+                'updated_at' => $now->copy()->subDays($doc['days']),
+            ]);
+        }
+
+        // ===== AKUTANSI - 3 dokumen dengan berbagai umur =====
+        // 1 dokumen umur 1 hari
+        // 1 dokumen umur 2 hari
+        // 1 dokumen umur 3+ hari
+        
+        $akutansiDocs = [
+            ['days' => 1, 'nomor' => '001'],
+            ['days' => 2, 'nomor' => '002'],
+            ['days' => 4, 'nomor' => '003'],
+        ];
+
+        foreach ($akutansiDocs as $index => $doc) {
+            $dokumen = Dokumen::create([
+                'nomor_agenda' => 'AGD-AKUN-' . str_pad($doc['nomor'], 4, '0', STR_PAD_LEFT),
+                'nomor_spp' => 'SPP-AKUN-' . $doc['nomor'],
+                'tanggal_spp' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
+                'uraian_spp' => 'Uraian SPP Team Akutansi - ' . $doc['days'] . ' Hari',
+                'nilai_rupiah' => 20000000 * ($index + 1),
+                'bulan' => $now->format('F'),
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'bagian' => 'AKN',
+                'nama_pengirim' => 'Pengirim Team Akutansi ' . $doc['nomor'],
+                'status' => 'sent_to_akutansi',
+                'current_handler' => 'akutansi',
+                'kategori' => 'Kategori Akutansi ' . $doc['nomor'],
+                'jenis_dokumen' => 'Jenis Dokumen Akutansi ' . $doc['nomor'],
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays(10),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuA',
+                'received_at' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays(8),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuB',
+                'received_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays(6)->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(8),
+                'updated_at' => $now->copy()->subDays(6),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'perpajakan',
+                'received_at' => $now->copy()->subDays(6)->format('Y-m-d H:i:s'),
+                'processed_at' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays(6),
+                'updated_at' => $now->copy()->subDays($doc['days']),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'akutansi',
+                'received_at' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
+                'processed_at' => null,
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays($doc['days']),
+                'updated_at' => $now->copy()->subDays($doc['days']),
+            ]);
+        }
+
+        // ===== PEMBAYARAN - 2 dokumen =====
+        for ($i = 1; $i <= 2; $i++) {
+            $dokumen = Dokumen::create([
+                'nomor_agenda' => 'AGD-BAYAR-' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'nomor_spp' => 'SPP-BAYAR-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'tanggal_spp' => $now->copy()->subDays($i)->format('Y-m-d H:i:s'),
+                'uraian_spp' => 'Uraian SPP Pembayaran ' . $i,
+                'nilai_rupiah' => 25000000 * $i,
+                'bulan' => $now->format('F'),
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
+                'bagian' => 'TAN',
+                'nama_pengirim' => 'Pengirim Pembayaran ' . $i,
+                'status' => 'sent_to_pembayaran',
+                'current_handler' => 'pembayaran',
+                'status_pembayaran' => 'siap_dibayar',
+                'kategori' => 'Kategori Pembayaran ' . $i,
+                'jenis_dokumen' => 'Jenis Dokumen Pembayaran ' . $i,
+                'sent_to_pembayaran_at' => $now->copy()->subDays($i)->format('Y-m-d H:i:s'),
+                'created_at' => $now->copy()->subDays(10),
+                'updated_at' => $now->copy()->subDays($i),
+            ]);
+
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'pembayaran',
+                'received_at' => $now->copy()->subDays($i)->format('Y-m-d H:i:s'),
+                'processed_at' => null,
+                'deadline_at' => null,
+                'created_at' => $now->copy()->subDays($i),
+                'updated_at' => $now->copy()->subDays($i),
+            ]);
+        }
+
+        $this->command->info('Dummy dokumen berhasil dibuat!');
+        $this->command->info('Total dokumen: ' . Dokumen::count());
+        $this->command->info('Total role data: ' . DokumenRoleData::count());
     }
 }
-
