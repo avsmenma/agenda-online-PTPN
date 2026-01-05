@@ -843,6 +843,24 @@
   .table-enhanced .col-status .badge-status { margin: 0 auto; display: inline-flex; }
   .table-enhanced .col-keterangan { width: 150px; min-width: 130px; }
   .table-enhanced .col-action { width: 140px; min-width: 140px; }
+  .table-enhanced .col-uraian { 
+    width: 500px; 
+    min-width: 400px; 
+    max-width: 800px;
+    word-wrap: break-word;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+    vertical-align: top;
+  }
+  .table-enhanced .col-uraian span {
+    display: block;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+    width: 100%;
+  }
 
   .table-enhanced .col-sticky {
     position: sticky;
@@ -1986,7 +2004,7 @@
             @elseif($col == 'tanggal_spp')
               {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d-m-Y') : '-' }}
             @elseif($col == 'uraian_spp')
-              <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; max-width: 100%;">
+              <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">
                 {{ $dokumen->uraian_spp ?? '-' }}
               </span>
             @elseif($col == 'kategori')

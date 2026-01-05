@@ -1208,12 +1208,15 @@
       }
 
       .table-enhanced .col-uraian {
-        width: 350px;
-        min-width: 300px;
-        max-width: 500px;
+        width: 500px;
+        min-width: 400px;
+        max-width: 800px;
         word-wrap: break-word;
         white-space: normal;
         overflow-wrap: break-word;
+        line-height: 1.5;
+        vertical-align: top;
+        padding: 8px;
       }
       
       .table-enhanced .col-uraian span {
@@ -1221,6 +1224,8 @@
         word-wrap: break-word;
         white-space: normal;
         overflow-wrap: break-word;
+        line-height: 1.5;
+        width: 100%;
       }
 
       .table-enhanced .col-nilai {
@@ -1365,12 +1370,15 @@
       }
 
       .table-enhanced .col-uraian {
-        width: 250px;
-        min-width: 200px;
-        max-width: 400px;
+        width: 400px;
+        min-width: 300px;
+        max-width: 600px;
         word-wrap: break-word;
         white-space: normal;
         overflow-wrap: break-word;
+        line-height: 1.5;
+        vertical-align: top;
+        padding: 8px;
       }
 
       .table-enhanced .col-nilai {
@@ -1430,12 +1438,15 @@
         }
 
         .table-enhanced .col-uraian {
-          width: 180px;
-          min-width: 150px;
-          max-width: 300px;
+          width: 300px;
+          min-width: 250px;
+          max-width: 450px;
           word-wrap: break-word;
           white-space: normal;
           overflow-wrap: break-word;
+          line-height: 1.5;
+          vertical-align: top;
+          padding: 8px;
         }
 
         .table-enhanced .col-nilai {
@@ -3244,7 +3255,7 @@
                         @elseif($col == 'tanggal_spp')
                           {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y H:i') : '-' }}
                         @elseif($col == 'uraian_spp')
-                          <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; max-width: 100%;">
+                          <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">
                             {{ $dokumen->uraian_spp ?? '-' }}
                           </span>
                         @elseif($col == 'kategori')
