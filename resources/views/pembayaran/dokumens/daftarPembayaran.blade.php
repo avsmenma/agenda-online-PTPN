@@ -920,6 +920,9 @@
               <div class="col-md-4">
                 <div><strong>Item Sub Kriteria:</strong> <span id="view-jenis-sub-pekerjaan">-</span></div>
               </div>
+              <div class="col-md-4">
+                <div><strong>Jenis Pembayaran:</strong> <span id="view-jenis-pembayaran">-</span></div>
+              </div>
             </div>
           </div>
 
@@ -1266,6 +1269,7 @@ function populateDocumentDetail(data) {
   document.getElementById('view-kategori').textContent = data.kategori || '-';
   document.getElementById('view-jenis-dokumen').textContent = data.jenis_dokumen || '-';
   document.getElementById('view-jenis-sub-pekerjaan').textContent = data.jenis_sub_pekerjaan || '-';
+  document.getElementById('view-jenis-pembayaran').textContent = data.jenis_pembayaran || '-';
   
   // Detail Keuangan & Vendor
   document.getElementById('view-uraian-spp').textContent = data.uraian_spp || '-';

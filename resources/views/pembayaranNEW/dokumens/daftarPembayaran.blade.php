@@ -2482,6 +2482,7 @@ function populateDocumentDetail(data) {
     document.getElementById('view-kategori').textContent = data.kategori || '-';
     document.getElementById('view-jenis-dokumen').textContent = data.jenis_dokumen || '-';
     document.getElementById('view-jenis-sub-pekerjaan').textContent = data.jenis_sub_pekerjaan || '-';
+    document.getElementById('view-jenis-pembayaran').textContent = data.jenis_pembayaran || '-';
     
     // Detail Keuangan & Vendor
     document.getElementById('view-uraian-spp').textContent = data.uraian_spp || '-';
@@ -2761,6 +2762,12 @@ function terbilangSatuan(number, angka) {
                 <div class="detail-item">
                   <label class="detail-label">Item Sub Kriteria</label>
                   <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Jenis Pembayaran</label>
+                  <div class="detail-value" id="view-jenis-pembayaran">-</div>
                 </div>
               </div>
             </div>

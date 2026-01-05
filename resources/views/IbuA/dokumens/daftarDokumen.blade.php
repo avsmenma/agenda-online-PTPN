@@ -3736,6 +3736,7 @@ function openViewDocumentModal(docId) {
         document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
         document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
         document.getElementById('view-kategori').textContent = dok.kategori || '-';
+        document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
         
         // Detail Keuangan & Vendor
         document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
@@ -3979,6 +3980,12 @@ function terbilangSatuan(number, angka) {
               <div class="detail-item">
                 <label class="detail-label">Item Sub Kriteria</label>
                 <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="detail-item">
+                <label class="detail-label">Jenis Pembayaran</label>
+                <div class="detail-value" id="view-jenis-pembayaran">-</div>
               </div>
             </div>
           </div>
