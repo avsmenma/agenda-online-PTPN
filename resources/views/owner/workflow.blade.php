@@ -1287,6 +1287,30 @@
       'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? \Carbon\Carbon::parse($dokumen->tanggal_berakhir_spk)->format('d M Y') : null,
       'nomor_miro' => $dokumen->nomor_miro ?? null,
       'status' => $dokumen->status ?? null,
+      'status_display' => function($status) {
+        $statusMap = [
+          'draft' => 'Draft',
+          'sedang diproses' => 'Sedang Diproses',
+          'menunggu_verifikasi' => 'Menunggu Verifikasi',
+          'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+          'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
+          'proses_ibub' => 'Diproses Ibu Yuni',
+          'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
+          'proses_perpajakan' => 'Diproses Team Perpajakan',
+          'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
+          'proses_akutansi' => 'Diproses Team Akutansi',
+          'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
+          'proses_pembayaran' => 'Diproses Team Pembayaran',
+          'sent_to_pembayaran' => 'Terkirim ke Team Pembayaran',
+          'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
+          'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
+          'selesai' => 'Selesai',
+          'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+          'returned_to_department' => 'Dikembalikan ke Department',
+          'returned_to_bidang' => 'Dikembalikan ke Bidang',
+        ];
+        return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
+      }($dokumen->status ?? null),
       'keterangan' => $dokumen->keterangan ?? null,
       'tanggal_masuk' => $dokumen->tanggal_masuk ? \Carbon\Carbon::parse($dokumen->tanggal_masuk)->format('d M Y, H:i') : null,
     ];
@@ -1384,10 +1408,10 @@
               <div class="modal-field-value">${documentData.tanggal_masuk}</div>
             </div>
           ` : ''}
-          ${formatField('Status', documentData.status) ? `
+          ${formatField('Status', documentData.status_display || documentData.status) ? `
             <div class="modal-field">
               <div class="modal-field-label">Status</div>
-              <div class="modal-field-value highlight">${documentData.status}</div>
+              <div class="modal-field-value highlight">${documentData.status_display || documentData.status || '-'}</div>
             </div>
           ` : ''}
         </div>

@@ -2820,6 +2820,7 @@ class DashboardPembayaranController extends Controller
                 'no_pr' => $dokumen->dokumenPrs->count() > 0 ? $dokumen->dokumenPrs->pluck('nomor_pr')->join(', ') : '-',
                 'nomor_mirror' => $dokumen->nomor_mirror ?? '-',
                 'status' => $dokumen->status,
+                'status_display' => $this->getStatusDisplayName($dokumen->status),
                 'payment_status' => $paymentStatus,
                 'tanggal_dibayar' => $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : '-',
                 'tanggal_dibayar_date' => $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('Y-m-d') : null,
@@ -3671,6 +3672,36 @@ class DashboardPembayaranController extends Controller
             return redirect()->route('pembayaran.rekapan')
                 ->with('error', 'Terjadi kesalahan saat memuat halaman analitik: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get status display name in Indonesian
+     */
+    private function getStatusDisplayName($status)
+    {
+        $statusMap = [
+            'draft' => 'Draft',
+            'sedang diproses' => 'Sedang Diproses',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
+            'proses_ibub' => 'Diproses Ibu Yuni',
+            'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
+            'proses_perpajakan' => 'Diproses Team Perpajakan',
+            'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
+            'proses_akutansi' => 'Diproses Team Akutansi',
+            'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
+            'proses_pembayaran' => 'Diproses Team Pembayaran',
+            'sent_to_pembayaran' => 'Terkirim ke Team Pembayaran',
+            'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
+            'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
+            'selesai' => 'Selesai',
+            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_department' => 'Dikembalikan ke Department',
+            'returned_to_bidang' => 'Dikembalikan ke Bidang',
+        ];
+
+        return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
     }
 }
 

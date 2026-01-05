@@ -2449,6 +2449,13 @@ function populateDocumentDetail(data) {
     document.getElementById('view-bulan').textContent = data.bulan || '-';
     document.getElementById('view-tahun').textContent = data.tahun || '-';
     document.getElementById('view-tanggal-masuk').textContent = formatDateTime(data.tanggal_masuk);
+    
+    // Status - gunakan status_display jika tersedia, jika tidak gunakan status
+    const statusElement = document.getElementById('view-status');
+    if (statusElement) {
+        statusElement.textContent = data.status_display || data.status || '-';
+    }
+    
     document.getElementById('view-kategori').textContent = data.kategori || '-';
     document.getElementById('view-jenis-dokumen').textContent = data.jenis_dokumen || '-';
     document.getElementById('view-jenis-sub-pekerjaan').textContent = data.jenis_sub_pekerjaan || '-';
@@ -2652,6 +2659,24 @@ function terbilangSatuan(number, angka) {
         
         <!-- Content -->
         <div id="view-content" style="display: none;">
+          <!-- Section 0: Informasi Umum -->
+          <div class="form-section mb-4" style="background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%); border-radius: 12px; padding: 20px; border: 2px solid #0d6efd;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #0d6efd; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-info-circle"></i>
+                INFORMASI UMUM
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="detail-item">
+                  <label class="detail-label">STATUS</label>
+                  <div class="detail-value" id="view-status" style="font-weight: 700; color: #0d6efd;">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Section 1: Identitas Dokumen -->
           <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
             <div class="section-header mb-3">
