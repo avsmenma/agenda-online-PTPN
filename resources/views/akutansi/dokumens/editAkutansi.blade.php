@@ -353,14 +353,15 @@
       </div>
       <div class="form-group">
         <label>Jenis Pembayaran</label>
-        <select name="jenis_pembayaran">
-          <option value="">Pilih Opsi</option>
-          <option value="Karyawan" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Karyawan' ? 'selected' : '' }}>Karyawan</option>
-          <option value="Mitra" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Mitra' ? 'selected' : '' }}>Mitra</option>
-          <option value="MPN" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'MPN' ? 'selected' : '' }}>MPN</option>
-          <option value="TBS" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'TBS' ? 'selected' : '' }}>TBS</option>
-          <option value="Dropping" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Dropping' ? 'selected' : '' }}>Dropping</option>
-          <option value="Lainnya" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+        <select name="jenis_pembayaran" id="jenis_pembayaran">
+          <option value="">Pilih Jenis Pembayaran</option>
+          @if(isset($jenisPembayaranList) && $jenisPembayaranList->count() > 0)
+            @foreach($jenisPembayaranList as $jenisPembayaran)
+              <option value="{{ $jenisPembayaran->form_value }}" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == $jenisPembayaran->form_value ? 'selected' : '' }}>
+                {{ $jenisPembayaran->display_name }}
+              </option>
+            @endforeach
+          @endif
         </select>
       </div>
     </div>

@@ -441,12 +441,28 @@
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label>Item Sub Kriteria</label>
         <select id="item_sub_kriteria" name="item_sub_kriteria">
           <option value="">Pilih Sub Kriteria terlebih dahulu</option>
         </select>
         @error('item_sub_kriteria')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Jenis Pembayaran</label>
+        <select name="jenis_pembayaran" id="jenis_pembayaran">
+          <option value="">Pilih Jenis Pembayaran</option>
+          @foreach($jenisPembayaranList as $jenisPembayaran)
+            <option value="{{ $jenisPembayaran->form_value }}" {{ old('jenis_pembayaran') == $jenisPembayaran->form_value ? 'selected' : '' }}>
+              {{ $jenisPembayaran->display_name }}
+            </option>
+          @endforeach
+        </select>
+        @error('jenis_pembayaran')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>

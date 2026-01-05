@@ -541,6 +541,16 @@ class DashboardBController extends Controller
             $isDropdownAvailable = false;
         }
 
+        // Ambil data jenis pembayaran dari database cash_bank_new
+        $jenisPembayaranList = collect([]);
+        try {
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama')->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching jenis pembayaran data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $jenisPembayaranList = collect([]);
+        }
+
         // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
         $selectedKriteriaCfId = null;
         $selectedSubKriteriaId = null;
@@ -586,6 +596,7 @@ class DashboardBController extends Controller
             'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
             'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
             'isDropdownAvailable' => $isDropdownAvailable,
+            'jenisPembayaranList' => $jenisPembayaranList,
         );
         return view('ibuB.dokumens.editDokumenB', $data);
     }

@@ -616,6 +616,24 @@
               @enderror
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jenis Pembayaran</label>
+              <select name="jenis_pembayaran" id="jenis_pembayaran">
+                <option value="">Pilih Jenis Pembayaran</option>
+                @if(isset($jenisPembayaranList) && $jenisPembayaranList->count() > 0)
+                  @foreach($jenisPembayaranList as $jenisPembayaran)
+                    <option value="{{ $jenisPembayaran->form_value }}" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == $jenisPembayaran->form_value ? 'selected' : '' }}>
+                      {{ $jenisPembayaran->display_name }}
+                    </option>
+                  @endforeach
+                @endif
+              </select>
+              @error('jenis_pembayaran')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
           @else
           <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
           <div class="form-row" id="manual-mode">

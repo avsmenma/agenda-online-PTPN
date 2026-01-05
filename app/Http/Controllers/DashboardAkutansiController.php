@@ -469,6 +469,16 @@ class DashboardAkutansiController extends Controller
             !empty($dokumen->no_faktur) ||
             !empty($dokumen->npwp);
 
+        // Ambil data jenis pembayaran dari database cash_bank_new
+        $jenisPembayaranList = collect([]);
+        try {
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama')->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching jenis pembayaran data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $jenisPembayaranList = collect([]);
+        }
+
         $data = array(
             "title" => "Edit Akutansi",
             "module" => "akutansi",
@@ -477,6 +487,7 @@ class DashboardAkutansiController extends Controller
             'menuDaftarDokumen' => 'Active',
             'dokumen' => $dokumen,
             'hasPerpajakanData' => $hasPerpajakanData, // Flag untuk menampilkan section perpajakan
+            'jenisPembayaranList' => $jenisPembayaranList,
         );
         return view('akutansi.dokumens.editAkutansi', $data);
     }
