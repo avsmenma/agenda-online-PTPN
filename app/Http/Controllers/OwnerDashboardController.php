@@ -2590,7 +2590,7 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Rekapan keterlambatan per role dengan timeframe yang bisa diatur
+     * Rekapan keterlambatan per role
      */
     public function rekapanKeterlambatanByRole(Request $request, $roleCode)
     {
@@ -2611,15 +2611,6 @@ class OwnerDashboardController extends Controller
             'pembayaran' => ['name' => 'Pembayaran', 'code' => 'pembayaran'],
         ];
 
-        // Get timeframe settings from request (default: 1, 2, 3 days)
-        $timeframe1 = $request->get('timeframe1', 1); // Default: 1 day
-        $timeframe2 = $request->get('timeframe2', 2); // Default: 2 days
-        $timeframe3 = $request->get('timeframe3', 3); // Default: 3 days
-        
-        // Convert to days if needed (support for "7 hari", "1 bulan", "3 bulan")
-        $timeframe1Days = $this->convertTimeframeToDays($timeframe1);
-        $timeframe2Days = $this->convertTimeframeToDays($timeframe2);
-        $timeframe3Days = $this->convertTimeframeToDays($timeframe3);
 
         // Query dokumen berdasarkan role dengan umur dokumen sejak received_at
         // Untuk pembayaran, gunakan left join karena mungkin tidak selalu ada di dokumen_role_data
@@ -2703,25 +2694,25 @@ class OwnerDashboardController extends Controller
                 ->whereNull('processed_at')
                 ->get();
             
-            // Card 1: Dokumen dengan umur <= timeframe1 hari (hijau)
-            $card1Count = $allRoleDocs->filter(function ($doc) use ($now, $timeframe1Days) {
+            // Card 1: Dokumen dengan umur <= 1 hari (hijau)
+            $card1Count = $allRoleDocs->filter(function ($doc) use ($now) {
                 $ageDays = $now->diffInDays($doc->received_at, false);
                 $ageDays = max(0, $ageDays); // Ensure not negative
-                return $ageDays <= $timeframe1Days;
+                return $ageDays <= 1;
             })->count();
 
-            // Card 2: Dokumen dengan umur > timeframe1 dan <= timeframe2 hari (kuning)
-            $card2Count = $allRoleDocs->filter(function ($doc) use ($now, $timeframe1Days, $timeframe2Days) {
+            // Card 2: Dokumen dengan umur > 1 dan <= 2 hari (kuning)
+            $card2Count = $allRoleDocs->filter(function ($doc) use ($now) {
                 $ageDays = $now->diffInDays($doc->received_at, false);
                 $ageDays = max(0, $ageDays); // Ensure not negative
-                return $ageDays > $timeframe1Days && $ageDays <= $timeframe2Days;
+                return $ageDays > 1 && $ageDays <= 2;
             })->count();
 
-            // Card 3: Dokumen dengan umur > timeframe2 hari (merah)
-            $card3Count = $allRoleDocs->filter(function ($doc) use ($now, $timeframe2Days) {
+            // Card 3: Dokumen dengan umur > 2 hari (merah)
+            $card3Count = $allRoleDocs->filter(function ($doc) use ($now) {
                 $ageDays = $now->diffInDays($doc->received_at, false);
                 $ageDays = max(0, $ageDays); // Ensure not negative
-                return $ageDays > $timeframe2Days;
+                return $ageDays > 2;
             })->count();
         } else {
             // Untuk role lain (ibuA, pembayaran), set default values
@@ -2735,29 +2726,26 @@ class OwnerDashboardController extends Controller
             $cardStats = [
                 'card1' => [
                     'count' => $card1Count,
-                    'label' => $this->formatTimeframeLabel($timeframe1),
+                    'label' => '1 Hari',
                     'color' => 'green',
-                    'timeframe_days' => $timeframe1Days,
                 ],
                 'card2' => [
                     'count' => $card2Count,
-                    'label' => $this->formatTimeframeLabel($timeframe2),
+                    'label' => '2 Hari',
                     'color' => 'yellow',
-                    'timeframe_days' => $timeframe2Days,
                 ],
                 'card3' => [
                     'count' => $card3Count,
-                    'label' => $this->formatTimeframeLabel($timeframe3) . '+',
+                    'label' => '3+ Hari',
                     'color' => 'red',
-                    'timeframe_days' => $timeframe3Days,
                 ],
             ];
         } else {
             // Empty cardStats for roles that don't need cards
             $cardStats = [
-                'card1' => ['count' => 0, 'label' => '-', 'color' => 'green', 'timeframe_days' => 0],
-                'card2' => ['count' => 0, 'label' => '-', 'color' => 'yellow', 'timeframe_days' => 0],
-                'card3' => ['count' => 0, 'label' => '-', 'color' => 'red', 'timeframe_days' => 0],
+                'card1' => ['count' => 0, 'label' => '-', 'color' => 'green'],
+                'card2' => ['count' => 0, 'label' => '-', 'color' => 'yellow'],
+                'card3' => ['count' => 0, 'label' => '-', 'color' => 'red'],
             ];
         }
 
@@ -2815,13 +2803,7 @@ class OwnerDashboardController extends Controller
             'totalDocuments',
             'availableYears',
             'roleConfig',
-            'roleCode',
-            'timeframe1',
-            'timeframe2',
-            'timeframe3',
-            'timeframe1Days',
-            'timeframe2Days',
-            'timeframe3Days'
+            'roleCode'
         ))
             ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
             ->with('module', 'owner')
@@ -2831,60 +2813,6 @@ class OwnerDashboardController extends Controller
             ->with('dashboardUrl', '/owner/dashboard');
     }
 
-    /**
-     * Convert timeframe string to days
-     * Supports: "1", "7", "1 bulan", "3 bulan", etc.
-     */
-    private function convertTimeframeToDays($timeframe)
-    {
-        if (is_numeric($timeframe)) {
-            return (int) $timeframe;
-        }
-
-        $timeframe = strtolower(trim($timeframe));
-        
-        // Check for "bulan" (month)
-        if (strpos($timeframe, 'bulan') !== false) {
-            $number = (int) preg_replace('/[^0-9]/', '', $timeframe);
-            return $number * 30; // Approximate: 1 month = 30 days
-        }
-        
-        // Check for "hari" (day)
-        if (strpos($timeframe, 'hari') !== false) {
-            return (int) preg_replace('/[^0-9]/', '', $timeframe);
-        }
-        
-        // Default: try to extract number
-        return (int) preg_replace('/[^0-9]/', '', $timeframe) ?: 1;
-    }
-
-    /**
-     * Format timeframe label for display
-     */
-    private function formatTimeframeLabel($timeframe)
-    {
-        if (is_numeric($timeframe)) {
-            $days = (int) $timeframe;
-            if ($days == 1) {
-                return '1 Hari';
-            } elseif ($days < 30) {
-                return $days . ' Hari';
-            } elseif ($days == 30) {
-                return '1 Bulan';
-            } elseif ($days % 30 == 0) {
-                return ($days / 30) . ' Bulan';
-            } else {
-                return $days . ' Hari';
-            }
-        }
-
-        $timeframe = trim($timeframe);
-        if (strpos(strtolower($timeframe), 'bulan') !== false) {
-            return ucfirst($timeframe);
-        }
-        
-        return $timeframe . ' Hari';
-    }
 
     /**
      * Format age in days to readable format

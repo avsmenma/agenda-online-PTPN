@@ -46,56 +46,6 @@
     gap: 8px;
   }
 
-  .timeframe-inputs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-
-  .timeframe-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .timeframe-input-group label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6c757d;
-  }
-
-  .timeframe-input-group input,
-  .timeframe-input-group select {
-    padding: 10px 16px;
-    border: 2px solid var(--primary-border);
-    border-radius: 8px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-  }
-
-  .timeframe-input-group input:focus,
-  .timeframe-input-group select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem var(--primary-rgba);
-    outline: none;
-  }
-
-  .btn-apply-timeframe {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-
-  .btn-apply-timeframe:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--primary-rgba-dark);
-  }
 
   /* Card Statistics */
   .card-stats {
@@ -337,38 +287,6 @@
 <div class="container-fluid">
   <h2><i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan - {{ $roleConfig[$roleCode]['name'] }}</h2>
 
-  <!-- Timeframe Settings Panel -->
-  @if(in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi']))
-  <div class="timeframe-settings">
-    <div class="timeframe-settings-title">
-      <i class="fa-solid fa-sliders"></i> Atur Timeframe Dokumen
-    </div>
-    <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="timeframeForm">
-      <input type="hidden" name="search" value="{{ request('search') }}">
-      <input type="hidden" name="year" value="{{ request('year') }}">
-      <div class="timeframe-inputs">
-        <div class="timeframe-input-group">
-          <label>Card 1 (Hijau) - Maksimal:</label>
-          <input type="text" name="timeframe1" value="{{ $timeframe1 }}" placeholder="1 hari" id="timeframe1">
-          <small style="color: #6c757d; font-size: 11px;">Contoh: 1, 7, 1 bulan, 3 bulan</small>
-        </div>
-        <div class="timeframe-input-group">
-          <label>Card 2 (Kuning) - Maksimal:</label>
-          <input type="text" name="timeframe2" value="{{ $timeframe2 }}" placeholder="2 hari" id="timeframe2">
-          <small style="color: #6c757d; font-size: 11px;">Contoh: 2, 14, 1 bulan, 2 bulan</small>
-        </div>
-        <div class="timeframe-input-group">
-          <label>Card 3 (Merah) - Minimal:</label>
-          <input type="text" name="timeframe3" value="{{ $timeframe3 }}" placeholder="3 hari" id="timeframe3">
-          <small style="color: #6c757d; font-size: 11px;">Contoh: 3, 30, 1 bulan, 3 bulan</small>
-        </div>
-      </div>
-      <button type="submit" class="btn-apply-timeframe">
-        <i class="fa-solid fa-check"></i> Terapkan Timeframe
-      </button>
-    </form>
-  </div>
-  @endif
 
   <!-- Card Statistics -->
   @if(in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi']))
@@ -410,9 +328,6 @@
   <div class="timeframe-settings" style="margin-bottom: 30px;">
     <div class="timeframe-settings-title"><i class="fa-solid fa-filter"></i> Filter Data</div>
     <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" class="row g-3">
-      <input type="hidden" name="timeframe1" value="{{ $timeframe1 }}">
-      <input type="hidden" name="timeframe2" value="{{ $timeframe2 }}">
-      <input type="hidden" name="timeframe3" value="{{ $timeframe3 }}">
       <div class="col-md-6">
         <label class="form-label">Cari Dokumen</label>
         <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Nomor agenda, SPP, dll">
@@ -458,12 +373,12 @@
               $ageDays = $dokumen->age_days ?? 0;
               $ageFormatted = $dokumen->age_formatted ?? '-';
               
-              // Determine card color based on age
+              // Determine card color based on age (fixed: 1, 2, 3+ days)
               $ageColor = 'green';
               if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-                if ($ageDays > $timeframe2Days) {
+                if ($ageDays > 2) {
                   $ageColor = 'red';
-                } elseif ($ageDays > $timeframe1Days) {
+                } elseif ($ageDays > 1) {
                   $ageColor = 'yellow';
                 } else {
                   $ageColor = 'green';
