@@ -3872,7 +3872,16 @@ function saveColumnCustomization() {
     return;
   }
 
-  const filterForm = document.querySelector('form[action*="dokumensPerpajakan"]');
+  // Try multiple selectors to find the form
+  let filterForm = document.getElementById('filterForm');
+  if (!filterForm) {
+    filterForm = document.querySelector('form[action*="perpajakan"]');
+  }
+  if (!filterForm) {
+    // Fallback: use first form on page
+    filterForm = document.querySelector('form');
+  }
+  
   if (!filterForm) {
     alert('Form tidak ditemukan.');
     return;
@@ -3891,6 +3900,13 @@ function saveColumnCustomization() {
     hiddenInput.value = columnKey;
     filterForm.appendChild(hiddenInput);
   });
+
+  // Add enable customization flag
+  const enableInput = document.createElement('input');
+  enableInput.type = 'hidden';
+  enableInput.name = 'enable_customization';
+  enableInput.value = '1';
+  filterForm.appendChild(enableInput);
 
   closeColumnCustomizationModal();
   filterForm.submit();
