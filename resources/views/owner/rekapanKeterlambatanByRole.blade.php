@@ -777,12 +777,10 @@
             </label>
             <select name="filter_sub_kriteria" id="filterSubKriteria" class="filter-select filter-searchable" onchange="updateItemSubKriteriaFilter(); applyFilter();" disabled>
               <option value="">Pilih Kriteria CF terlebih dahulu</option>
-              @foreach($filterData['sub_kriteria'] ?? [] as $kriteriaId => $subKriterias)
-                @foreach($subKriterias as $id => $nama)
-                  <option value="{{ $id }}" 
-                          data-kriteria-cf="{{ $kriteriaId }}"
-                          {{ request('filter_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
-                @endforeach
+              @foreach($filterData['sub_kriteria'] ?? [] as $id => $nama)
+                <option value="{{ $id }}" 
+                        data-kriteria-cf="{{ \App\Models\SubKriteria::on('cash_bank')->where('id_sub_kriteria', $id)->value('id_kategori_kriteria') ?? '' }}"
+                        {{ request('filter_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
               @endforeach
             </select>
           </div>
@@ -794,12 +792,10 @@
             </label>
             <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" class="filter-select filter-searchable" onchange="applyFilter()" disabled>
               <option value="">Pilih Sub Kriteria terlebih dahulu</option>
-              @foreach($filterData['item_sub_kriteria'] ?? [] as $subKriteriaId => $itemSubKriterias)
-                @foreach($itemSubKriterias as $id => $nama)
-                  <option value="{{ $id }}" 
-                          data-sub-kriteria="{{ $subKriteriaId }}"
-                          {{ request('filter_item_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
-                @endforeach
+              @foreach($filterData['item_sub_kriteria'] ?? [] as $id => $nama)
+                <option value="{{ $id }}" 
+                        data-sub-kriteria="{{ \App\Models\ItemSubKriteria::on('cash_bank')->where('id_item_sub_kriteria', $id)->value('id_sub_kriteria') ?? '' }}"
+                        {{ request('filter_item_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
               @endforeach
             </select>
           </div>
