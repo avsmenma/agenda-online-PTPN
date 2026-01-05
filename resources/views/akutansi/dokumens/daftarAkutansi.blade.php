@@ -515,6 +515,78 @@
     animation: warning-shake 1s infinite;
   }
 
+  /* New System: Age-based deadline colors (count up from received_at) */
+  /* Green - Aman (<1 hari) */
+  .deadline-card.deadline-green {
+    --deadline-color: #10b981;
+    --deadline-color-light: #34d399;
+    --deadline-bg: #ecfdf5;
+    --deadline-text: #065f46;
+  }
+
+  .deadline-card.deadline-green {
+    background: var(--deadline-bg) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .deadline-card.deadline-green .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-green {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Yellow - Perlu Perhatian (>=1 hari <3 hari) */
+  .deadline-card.deadline-yellow {
+    --deadline-color: #f59e0b;
+    --deadline-color-light: #fbbf24;
+    --deadline-bg: #fffbeb;
+    --deadline-text: #92400e;
+  }
+
+  .deadline-card.deadline-yellow {
+    background: var(--deadline-bg) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+  }
+
+  .deadline-card.deadline-yellow .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-yellow {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  }
+
+  /* Red - Terlambat (>=3 hari) */
+  .deadline-card.deadline-red {
+    --deadline-color: #ef4444;
+    --deadline-color-light: #f87171;
+    --deadline-bg: #fef2f2;
+    --deadline-text: #991b1b;
+  }
+
+  .deadline-card.deadline-red {
+    background: var(--deadline-bg) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+  }
+
+  .deadline-card.deadline-red .deadline-time {
+    color: var(--deadline-text) !important;
+    font-weight: 800;
+  }
+
+  .deadline-indicator.deadline-red {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+    animation: danger-pulse 2s infinite;
+  }
+
   /* Completed State - Dark Green Theme */
   .deadline-card.deadline-completed {
     --deadline-color: #15803d;
@@ -2061,24 +2133,11 @@
             @endforeach
             <td class="col-deadline">
               @php
-                // Get deadline from roleData relationship for akutansi
+                // Get received_at from roleData to calculate document age (count up)
                 $roleData = $dokumen->getDataForRole('akutansi');
-                $deadlineAt = null;
-                $deadlineNote = null;
+                $receivedAt = $roleData?->received_at;
                 
-                if ($roleData && $roleData->deadline_at) {
-                  // Use Carbon instance from relationship and convert to Asia/Jakarta timezone
-                  $deadlineAt = $roleData->deadline_at->setTimezone('Asia/Jakarta');
-                  $deadlineNote = $roleData->deadline_note;
-                } elseif ($dokumen->deadline_at) {
-                  // Fallback: if deadline_at is set as alias (string), convert to Carbon
-                  $deadlineAt = is_string($dokumen->deadline_at) 
-                    ? \Carbon\Carbon::parse($dokumen->deadline_at)->setTimezone('Asia/Jakarta')
-                    : $dokumen->deadline_at->setTimezone('Asia/Jakarta');
-                  $deadlineNote = $dokumen->deadline_note;
-                }
-                
-                // Check if document is already sent to other roles (pembayaran)
+                // Check if document is already sent to other roles
                 $isSent = in_array($dokumen->status, [
                   'sent_to_pembayaran',
                   'pending_approval_pembayaran',
@@ -2092,6 +2151,33 @@
                   'approved_data_sudah_terkirim',
                 ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
                 
+                // Calculate document age from received_at (count up)
+                $ageDays = 0;
+                $ageLabel = '-';
+                $ageColor = 'gray';
+                $ageIcon = 'fa-clock';
+                
+                if ($receivedAt) {
+                  $now = \Carbon\Carbon::now();
+                  $ageDays = $now->diffInDays($receivedAt, false);
+                  $ageDays = max(0, $ageDays); // Ensure non-negative
+                  
+                  // Determine label and color based on age
+                  if ($ageDays < 1) {
+                    $ageLabel = 'Aman';
+                    $ageColor = 'green';
+                    $ageIcon = 'fa-check-circle';
+                  } elseif ($ageDays >= 1 && $ageDays < 3) {
+                    $ageLabel = 'Perlu Perhatian';
+                    $ageColor = 'yellow';
+                    $ageIcon = 'fa-exclamation-triangle';
+                  } else {
+                    $ageLabel = 'Terlambat';
+                    $ageColor = 'red';
+                    $ageIcon = 'fa-times-circle';
+                  }
+                }
+                
                 // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
                 $deadlineType = 'active';
                 if ($isCompleted) {
@@ -2100,27 +2186,24 @@
                   $deadlineType = 'sent';
                 }
               @endphp
-              @if($deadlineAt)
-                @php
-                  // Get deadline_days from roleData to determine original deadline period
-                  $deadlineDays = $roleData?->deadline_days ?? null;
-                @endphp
-                <div class="deadline-card deadline-{{ $deadlineType }}" 
-                     data-deadline="{{ $deadlineAt->format('Y-m-d H:i:s') }}"
-                     data-deadline-days="{{ $deadlineDays ?? '' }}"
+              @if($receivedAt)
+                <div class="deadline-card deadline-{{ $deadlineType }} deadline-{{ $ageColor }}" 
+                     data-received-at="{{ $receivedAt->format('Y-m-d H:i:s') }}"
+                     data-age-days="{{ $ageDays }}"
                      data-sent="{{ $isSent ? 'true' : 'false' }}"
                      data-completed="{{ $isCompleted ? 'true' : 'false' }}">
                   <div class="deadline-time">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>{{ $deadlineAt->format('d M Y, H:i') }}</span>
+                    <i class="fa-solid fa-calendar"></i>
+                    <span>{{ $receivedAt->format('d M Y, H:i') }}</span>
                   </div>
-                  <div class="deadline-indicator">
-                    <i class="fa-solid"></i>
-                    <span class="status-text">AMAN</span>
+                  <div class="deadline-indicator deadline-{{ $ageColor }}">
+                    <i class="fa-solid {{ $ageIcon }}"></i>
+                    <span class="status-text">{{ $ageLabel }}</span>
                   </div>
-                  @if($deadlineNote)
-                    <div class="deadline-note">{{ Str::limit($deadlineNote, 50) }}</div>
-                  @endif
+                  <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    <span>{{ $ageDays }} hari</span>
+                  </div>
                   @if($isSent)
                     <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
                       <i class="fa-solid fa-paper-plane"></i> Terkirim
@@ -2134,7 +2217,7 @@
               @else
                 <div class="no-deadline">
                   <i class="fa-solid fa-clock"></i>
-                  <span>Belum ada deadline</span>
+                  <span>Belum diterima</span>
                 </div>
               @endif
             </td>
@@ -2169,14 +2252,8 @@
                     'menunggu_di_approve', // Status setelah dikirim ke pembayaran via sendToInbox
                   ]);
                 @endphp
-                @if($dokumen->is_locked)
-                  <!-- Locked state - hanya tampilkan Set Deadline -->
-                  @unless($isSentToPembayaran)
-                    <button type="button" class="btn-action btn-set-deadline btn-full-width" onclick="openSetDeadlineModal({{ $dokumen->id }})" title="Tetapkan Deadline">
-                      <i class="fa-solid fa-clock"></i>
-                      <span>Set Deadline</span>
-                    </button>
-                  @endunless
+                @if(false)
+                  <!-- Locked state removed - documents are no longer locked after approval -->
                 @else
                   <!-- Unlocked state - buttons enabled -->
                   @unless($isSentToPembayaran)
