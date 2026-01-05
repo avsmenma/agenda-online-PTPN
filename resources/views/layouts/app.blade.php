@@ -1635,6 +1635,22 @@
             </a>
 
           @endunless
+
+          <!-- Tracking Dokumen Menu - Untuk semua role -->
+          @php
+            $trackingUrl = match ($module) {
+              'ibua', 'ibua' => '/tracking-dokumen',
+              'ibub', 'ibub' => '/tracking-dokumen',
+              'pembayaran' => '/tracking-dokumen',
+              'akutansi' => '/tracking-dokumen',
+              'perpajakan' => '/tracking-dokumen',
+              default => '/tracking-dokumen'
+            };
+            $isTrackingActive = request()->is('*tracking-dokumen*');
+          @endphp
+          <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
+            <i class="fa-solid fa-route"></i> Tracking Dokumen
+          </a>
               </div>
 
               <!-- Logout Button - Pindahkan ke paling bawah -->

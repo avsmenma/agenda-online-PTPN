@@ -887,6 +887,43 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * Display tracking dokumen page for all roles (without header and statistics)
+     */
+    public function trackingDokumen(Request $request)
+    {
+        // Get paginated documents with latest status and apply search filter
+        $perPage = $request->get('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+
+        $documents = $this->getDocumentsWithTracking($request, $perPage);
+        
+        // Get filter data for dropdowns
+        $filterData = $this->getFilterData();
+
+        // Determine module based on user role
+        $user = auth()->user();
+        $module = 'ibua'; // default
+        if ($user) {
+            $role = strtolower($user->role ?? '');
+            if (in_array($role, ['ibub', 'pembayaran', 'akutansi', 'perpajakan'])) {
+                $module = $role;
+            }
+        }
+
+        return view('tracking.dokumen', [
+            'documents' => $documents,
+            'filterData' => $filterData,
+            'search' => $request->get('search', ''),
+            'module' => $module,
+            'title' => 'Tracking Dokumen',
+            'menuDashboard' => '',
+            'menuDokumen' => '',
+            'menuDaftarDokumen' => '',
+            'menuRekapanDokumen' => '',
+        ]);
+    }
+
+    /**
      * Show workflow tracking page for a document
      */
     public function showWorkflow($id)

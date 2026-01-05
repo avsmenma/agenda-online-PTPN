@@ -392,6 +392,11 @@ Route::get('owner/api/real-time-updates', [OwnerDashboardController::class, 'get
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.api.real-time-updates');
 
+// Tracking Dokumen routes - Available for all roles
+Route::get('tracking-dokumen', [OwnerDashboardController::class, 'trackingDokumen'])
+    ->middleware('auth')
+    ->name('tracking.dokumen');
+
 Route::get('owner/api/document-timeline/{id}', [OwnerDashboardController::class, 'getDocumentTimeline'])
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.api.document-timeline');
