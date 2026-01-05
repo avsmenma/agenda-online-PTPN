@@ -1367,6 +1367,9 @@
 <body>
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
+    // Check if user is owner
+    $isOwner = auth()->check() && (auth()->user()->role === 'owner' || auth()->user()->role === 'Owner' || auth()->user()->role === 'OWNER' || auth()->user()->role === 'Admin' || auth()->user()->role === 'admin');
+    
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
     
@@ -1455,10 +1458,8 @@
     <hr>
 
         @php
-          // Check if user is owner
-          $isOwner = auth()->check() && (auth()->user()->role === 'owner' || auth()->user()->role === 'Owner' || auth()->user()->role === 'OWNER' || auth()->user()->role === 'Admin' || auth()->user()->role === 'admin');
-
           // Normalize module to lowercase untuk konsistensi
+          // Note: $isOwner is already defined at the top of the body section
           $module = strtolower($module ?? 'ibua');
 
           $dashboardUrl = match ($module) {
