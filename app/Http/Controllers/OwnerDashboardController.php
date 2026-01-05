@@ -2499,33 +2499,8 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.processed_at as delay_processed_at',
                     'dokumen_role_data.deadline_at as delay_deadline_at');
         } else {
-            // First, let's check what's actually in dokumen_role_data
-            $roleDataCheck = \App\Models\DokumenRoleData::where('role_code', $roleCode)
-                ->whereNotNull('received_at')
-                ->whereNull('processed_at')
-                ->get();
-            
-            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, DokumenRoleData found: " . $roleDataCheck->count());
-            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, DokumenRoleData sample: " . json_encode($roleDataCheck->take(2)->map(function($rd) {
-                return [
-                    'id' => $rd->id,
-                    'dokumen_id' => $rd->dokumen_id,
-                    'role_code' => $rd->role_code,
-                    'received_at' => $rd->received_at,
-                    'processed_at' => $rd->processed_at,
-                ];
-            })));
-            
-            // Get dokumen IDs
-            $dokumenIds = $roleDataCheck->pluck('dokumen_id')->unique()->toArray();
-            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Dokumen IDs: " . json_encode($dokumenIds));
-            
-            // Check if dokumens exist
-            $dokumensExist = Dokumen::whereIn('id', $dokumenIds)->count();
-            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Dokumens exist count: {$dokumensExist}");
-            
-            // Query directly from dokumen_role_data and join with dokumens
-            // Use case-insensitive comparison for role_code
+            // Query from DokumenRoleData and join with dokumens
+            // This ensures we only get dokumens that actually exist (inner join filters out deleted dokumens)
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
                 ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
                 ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
@@ -2536,10 +2511,6 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.received_at as delay_received_at', 
                     'dokumen_role_data.processed_at as delay_processed_at',
                     'dokumen_role_data.deadline_at as delay_deadline_at');
-            
-            // Log for debugging - get count before filters
-            $baseCount = $query->count();
-            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Base query count: {$baseCount}");
         }
 
         // Search functionality
@@ -2709,10 +2680,13 @@ class OwnerDashboardController extends Controller
         
         // Calculate card statistics hanya untuk role yang memerlukan card
         if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-            // Get all documents for this role
-            $allRoleDocs = DokumenRoleData::where('role_code', $roleCode)
-                ->whereNotNull('received_at')
-                ->whereNull('processed_at')
+            // Get all documents for this role that actually exist in dokumens table
+            // Use join to ensure we only count dokumens that exist
+            $allRoleDocs = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->whereNull('dokumen_role_data.processed_at')
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
+                ->select('dokumen_role_data.*')
                 ->get();
             
             // Card 1: Dokumen dengan umur <= 1 hari (hijau)
