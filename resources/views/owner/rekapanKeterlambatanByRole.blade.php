@@ -874,7 +874,9 @@
             
             // Get received_at for display
             $receivedAt = '-';
-            if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
+            if (isset($dokumen->effective_received_at) && $dokumen->effective_received_at) {
+              $receivedAt = \Carbon\Carbon::parse($dokumen->effective_received_at)->format('d M Y H:i');
+            } elseif (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
               $receivedAt = \Carbon\Carbon::parse($dokumen->delay_received_at)->format('d M Y H:i');
             } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
               $receivedAt = \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d M Y H:i');

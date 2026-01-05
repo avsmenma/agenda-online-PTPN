@@ -2499,7 +2499,7 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.processed_at as delay_processed_at',
                     'dokumen_role_data.deadline_at as delay_deadline_at');
         } else {
-            $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+            $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
                 ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
                 ->where('dokumen_role_data.role_code', $roleCode)
                 ->whereNotNull('dokumen_role_data.received_at')
@@ -2508,7 +2508,8 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.role_code as delay_role_code', 
                     'dokumen_role_data.received_at as delay_received_at', 
                     'dokumen_role_data.processed_at as delay_processed_at',
-                    'dokumen_role_data.deadline_at as delay_deadline_at');
+                    'dokumen_role_data.deadline_at as delay_deadline_at')
+                ->distinct(); // Avoid duplicates from join
         }
 
         // Search functionality
@@ -2589,24 +2590,53 @@ class OwnerDashboardController extends Controller
         // Get all documents first to calculate age and filter by age
         $allDokumens = $query->get();
         
+        // Debug: Log count of documents retrieved
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Documents retrieved: " . $allDokumens->count());
+        
         // Calculate age for each document and filter by age if needed
         $filterAge = $request->get('filter_age');
         $filteredDokumens = $allDokumens->map(function ($dokumen) use ($now, $roleCode) {
             // Get received_at from the joined dokumen_role_data or fallback
             $receivedAt = null;
+            
+            // First try: delay_received_at from select
             if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
                 $receivedAt = Carbon::parse($dokumen->delay_received_at);
-            } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
+            } 
+            // Second try: sent_to_pembayaran_at for pembayaran role
+            elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
                 $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
-            } elseif ($dokumen->relationLoaded('roleData')) {
+            } 
+            // Third try: Load roleData relationship if not loaded and get received_at
+            else {
+                // Reload dokumen with roleData relationship if needed
+                if (!$dokumen->relationLoaded('roleData')) {
+                    $dokumen->load('roleData');
+                }
                 $roleData = $dokumen->roleData->firstWhere('role_code', $roleCode);
-                $receivedAt = $roleData?->received_at;
+                if ($roleData && $roleData->received_at) {
+                    $receivedAt = Carbon::parse($roleData->received_at);
+                }
+            }
+            
+            // If still no received_at, try to get from dokumen_role_data directly
+            if (!$receivedAt) {
+                $roleDataDirect = \App\Models\DokumenRoleData::where('dokumen_id', $dokumen->id)
+                    ->where('role_code', $roleCode)
+                    ->whereNotNull('received_at')
+                    ->first();
+                if ($roleDataDirect && $roleDataDirect->received_at) {
+                    $receivedAt = Carbon::parse($roleDataDirect->received_at);
+                }
             }
             
             $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
             $ageDays = max(0, $ageDays);
             $dokumen->age_days = $ageDays;
             $dokumen->age_formatted = $this->formatAge($ageDays);
+            
+            // Also set effective_received_at for view usage
+            $dokumen->effective_received_at = $receivedAt ? $receivedAt->format('Y-m-d H:i:s') : null;
             
             return $dokumen;
         });
