@@ -219,10 +219,25 @@
     text-align: center;
   }
   .table-enhanced .col-uraian {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
+    width: 700px;
+    min-width: 500px;
+    max-width: 1000px;
     text-align: left;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: top;
+    padding: 12px;
+  }
+  
+  .table-enhanced .col-uraian span {
+    display: block;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    width: 100%;
   }
   .table-enhanced .col-deadline {
     width: 180px;
@@ -312,14 +327,18 @@
   }
 
   .table-enhanced .col-uraian {
+    width: 700px;
+    min-width: 500px;
+    max-width: 1000px;
     text-align: left;
     font-weight: 600;
     word-wrap: break-word;
     word-break: break-word;
     white-space: normal;
-    line-height: 1.4;
-    max-width: 300px;
-    width: 300px;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: top;
+    padding: 12px;
     hyphens: auto;
     overflow-wrap: break-word;
   }
@@ -1313,7 +1332,18 @@
     .table-enhanced .col-spp { min-width: 140px; font-weight: 600; }
     .table-enhanced .col-nilai { min-width: 140px; }
     .table-enhanced .col-tanggal-spp { min-width: 130px; }
-    .table-enhanced .col-uraian { min-width: 280px; font-weight: 600; }
+    .table-enhanced .col-uraian { 
+      width: 500px;
+      min-width: 400px;
+      max-width: 700px;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+      vertical-align: top;
+      padding: 12px;
+      font-weight: 600;
+    }
     .table-enhanced .col-deadline { min-width: 160px; }
     .table-enhanced .col-status { min-width: 140px; }
     .table-enhanced .col-action { min-width: 160px; }
@@ -2076,7 +2106,9 @@
                 @elseif($col == 'tanggal_spp')
                   {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
                 @elseif($col == 'uraian_spp')
-                  {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
+                  <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">
+                    {{ $dokumen->uraian_spp ?? '-' }}
+                  </span>
                 @elseif($col == 'kategori')
                   {{ $dokumen->kategori ?? '-' }}
                 @elseif($col == 'kebun')

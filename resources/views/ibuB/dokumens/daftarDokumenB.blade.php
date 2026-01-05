@@ -1208,15 +1208,15 @@
       }
 
       .table-enhanced .col-uraian {
-        width: 500px;
-        min-width: 400px;
-        max-width: 800px;
+        width: 700px;
+        min-width: 500px;
+        max-width: 1000px;
         word-wrap: break-word;
         white-space: normal;
         overflow-wrap: break-word;
-        line-height: 1.5;
+        line-height: 1.6;
         vertical-align: top;
-        padding: 8px;
+        padding: 12px;
       }
       
       .table-enhanced .col-uraian span {
@@ -1224,7 +1224,7 @@
         word-wrap: break-word;
         white-space: normal;
         overflow-wrap: break-word;
-        line-height: 1.5;
+        line-height: 1.6;
         width: 100%;
       }
 
@@ -1370,15 +1370,15 @@
       }
 
       .table-enhanced .col-uraian {
-        width: 400px;
-        min-width: 300px;
-        max-width: 600px;
+        width: 500px;
+        min-width: 400px;
+        max-width: 700px;
         word-wrap: break-word;
         white-space: normal;
         overflow-wrap: break-word;
-        line-height: 1.5;
+        line-height: 1.6;
         vertical-align: top;
-        padding: 8px;
+        padding: 12px;
       }
 
       .table-enhanced .col-nilai {
@@ -1438,15 +1438,15 @@
         }
 
         .table-enhanced .col-uraian {
-          width: 300px;
-          min-width: 250px;
-          max-width: 450px;
+          width: 400px;
+          min-width: 300px;
+          max-width: 600px;
           word-wrap: break-word;
           white-space: normal;
           overflow-wrap: break-word;
-          line-height: 1.5;
+          line-height: 1.6;
           vertical-align: top;
-          padding: 8px;
+          padding: 12px;
         }
 
         .table-enhanced .col-nilai {

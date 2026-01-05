@@ -213,6 +213,27 @@
     border-bottom: 1px solid rgba(8, 62, 64, 0.05);
   }
 
+  .table-enhanced .col-uraian {
+    width: 700px;
+    min-width: 500px;
+    max-width: 1000px;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: top;
+    padding: 12px;
+  }
+  
+  .table-enhanced .col-uraian span {
+    display: block;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    width: 100%;
+  }
+
   /* Status Badge */
   .badge-status {
     padding: 6px 12px;
@@ -620,7 +641,11 @@
             <td>{{ $dokumen->nomor_spp }}</td>
             <td><strong>{{ $dokumen->formatted_nilai_rupiah }}</strong></td>
             <td>{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</td>
-            <td>{{ Str::limit($dokumen->uraian_spp, 60) ?? '-' }}</td>
+            <td class="col-uraian">
+              <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">
+                {{ $dokumen->uraian_spp ?? '-' }}
+              </span>
+            </td>
             <td style="text-align: center;">
               @if($dokumen->status_pembayaran == 'sudah_dibayar')
                 <span class="badge-status badge-selesai">✓ Sudah Dibayar</span>

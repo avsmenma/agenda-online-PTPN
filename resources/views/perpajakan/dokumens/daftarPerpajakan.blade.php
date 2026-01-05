@@ -158,11 +158,26 @@
 
   /* Uraian column - improved styling like akutansi */
   .table-enhanced .col-uraian {
+    width: 700px;
+    min-width: 500px;
+    max-width: 1000px;
     text-align: left;
     word-wrap: break-word;
     word-break: break-word;
     white-space: normal;
-    line-height: 1.4;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: top;
+    padding: 12px;
+  }
+  
+  .table-enhanced .col-uraian span {
+    display: block;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    width: 100%;
   }
 
   /* Special styling for centered content */
@@ -1582,7 +1597,17 @@
     .table-enhanced .col-agenda { min-width: 130px; }
     .table-enhanced .col-spp { min-width: 130px; }
     .table-enhanced .col-nilai { min-width: 140px; }
-    .table-enhanced .col-uraian { min-width: 280px; }
+    .table-enhanced .col-uraian { 
+      width: 500px;
+      min-width: 400px;
+      max-width: 700px;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+      vertical-align: top;
+      padding: 12px;
+    }
     .table-enhanced .col-status { min-width: 140px; }
     .table-enhanced .col-action { min-width: 160px; }
   }
@@ -2127,7 +2152,9 @@
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
               @elseif($col == 'uraian_spp')
-                {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
+                <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">
+                  {{ $dokumen->uraian_spp ?? '-' }}
+                </span>
               @elseif($col == 'kategori')
                 {{ $dokumen->kategori ?? '-' }}
               @elseif($col == 'kebun')

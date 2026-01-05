@@ -395,6 +395,27 @@
     vertical-align: middle;
   }
 
+  .table-enhanced .col-uraian {
+    width: 700px;
+    min-width: 500px;
+    max-width: 1000px;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: top;
+    padding: 12px;
+  }
+  
+  .table-enhanced .col-uraian span {
+    display: block;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    width: 100%;
+  }
+
   .table-enhanced tbody tr:last-child td {
     border-bottom: none;
   }
@@ -857,7 +878,9 @@
               @elseif($col == 'nomor_spp')
                 {{ $dokumen->nomor_spp }}
               @elseif($col == 'uraian_spp')
-                {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
+                <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">
+                  {{ $dokumen->uraian_spp ?? '-' }}
+                </span>
               @elseif($col == 'nilai_rupiah')
                 <strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
               @elseif($col == 'tanggal_spp')

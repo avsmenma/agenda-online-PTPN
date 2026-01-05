@@ -844,21 +844,22 @@
   .table-enhanced .col-keterangan { width: 150px; min-width: 130px; }
   .table-enhanced .col-action { width: 140px; min-width: 140px; }
   .table-enhanced .col-uraian { 
-    width: 500px; 
-    min-width: 400px; 
-    max-width: 800px;
+    width: 700px; 
+    min-width: 500px; 
+    max-width: 1000px;
     word-wrap: break-word;
     white-space: normal !important;
     overflow-wrap: break-word;
-    line-height: 1.5;
+    line-height: 1.6;
     vertical-align: top;
+    padding: 12px;
   }
   .table-enhanced .col-uraian span {
     display: block;
     word-wrap: break-word;
     white-space: normal;
     overflow-wrap: break-word;
-    line-height: 1.5;
+    line-height: 1.6;
     width: 100%;
   }
 
