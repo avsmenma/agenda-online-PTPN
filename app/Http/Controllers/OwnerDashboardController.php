@@ -946,16 +946,27 @@ class OwnerDashboardController extends Controller
         $user = auth()->user();
         $userRole = strtolower($user->role ?? $user->name ?? 'owner');
         $module = 'owner';
-        $dashboardUrl = '/owner/dashboard';
+        $dashboardUrl = '/tracking-dokumen'; // Default to tracking dokumen for all roles
 
-        // If user is Pembayaran accessing workflow, set module to pembayaran for proper layout
-        if (
-            strtolower($userRole) === 'pembayaran' ||
-            (isset($user->name) && strtolower($user->name) === 'pembayaran') ||
-            (isset($user->role) && strtolower($user->role) === 'pembayaran')
-        ) {
+        // Set module and dashboard URL based on user role
+        if (in_array($userRole, ['ibua', 'ibutara', 'ibu a'])) {
+            $module = 'ibua';
+            $dashboardUrl = '/dashboard';
+        } elseif (in_array($userRole, ['ibub', 'ibuyuni', 'ibu b', 'team verifikasi'])) {
+            $module = 'ibub';
+            $dashboardUrl = '/dashboardB';
+        } elseif (in_array($userRole, ['pembayaran', 'team pembayaran'])) {
             $module = 'pembayaran';
             $dashboardUrl = '/dashboardPembayaran';
+        } elseif (in_array($userRole, ['akutansi', 'team akutansi'])) {
+            $module = 'akutansi';
+            $dashboardUrl = '/dashboardAkutansi';
+        } elseif (in_array($userRole, ['perpajakan', 'team perpajakan'])) {
+            $module = 'perpajakan';
+            $dashboardUrl = '/dashboardPerpajakan';
+        } elseif (in_array($userRole, ['admin', 'owner'])) {
+            $module = 'owner';
+            $dashboardUrl = '/owner/dashboard';
         }
 
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))

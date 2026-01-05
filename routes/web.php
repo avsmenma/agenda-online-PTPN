@@ -402,7 +402,7 @@ Route::get('owner/api/document-timeline/{id}', [OwnerDashboardController::class,
     ->name('owner.api.document-timeline');
 
 Route::get('owner/workflow/{id}', [OwnerDashboardController::class, 'showWorkflow'])
-    ->middleware('auth', 'role:admin,owner,Pembayaran')
+    ->middleware('auth')
     ->name('owner.workflow');
 
 Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rekapanKeterlambatan'])
