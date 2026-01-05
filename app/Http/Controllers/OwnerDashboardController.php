@@ -2499,17 +2499,34 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.processed_at as delay_processed_at',
                     'dokumen_role_data.deadline_at as delay_deadline_at');
         } else {
+            // Get dokumen IDs from dokumen_role_data first (same logic as card statistics)
+            // This ensures consistency with card statistics calculation
+            $roleDataIds = \App\Models\DokumenRoleData::where('role_code', $roleCode)
+                ->whereNotNull('received_at')
+                ->whereNull('processed_at')
+                ->pluck('dokumen_id')
+                ->unique()
+                ->toArray();
+            
+            // Log for debugging
+            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, RoleData IDs found: " . count($roleDataIds));
+            
+            // Then query Dokumen using whereIn - this ensures we get all documents
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-                ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-                ->where('dokumen_role_data.role_code', $roleCode)
-                ->whereNotNull('dokumen_role_data.received_at')
-                ->whereNull('dokumen_role_data.processed_at') // Belum diproses
-                ->select('dokumens.*', 
-                    'dokumen_role_data.role_code as delay_role_code', 
-                    'dokumen_role_data.received_at as delay_received_at', 
-                    'dokumen_role_data.processed_at as delay_processed_at',
-                    'dokumen_role_data.deadline_at as delay_deadline_at')
-                ->distinct(); // Avoid duplicates from join
+                ->whereIn('id', $roleDataIds);
+            
+            // Join with dokumen_role_data to get the role-specific fields for this role
+            $query->join('dokumen_role_data', function($join) use ($roleCode) {
+                $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                     ->where('dokumen_role_data.role_code', '=', $roleCode)
+                     ->whereNotNull('dokumen_role_data.received_at')
+                     ->whereNull('dokumen_role_data.processed_at');
+            })
+            ->select('dokumens.*', 
+                'dokumen_role_data.role_code as delay_role_code', 
+                'dokumen_role_data.received_at as delay_received_at', 
+                'dokumen_role_data.processed_at as delay_processed_at',
+                'dokumen_role_data.deadline_at as delay_deadline_at');
         }
 
         // Search functionality
