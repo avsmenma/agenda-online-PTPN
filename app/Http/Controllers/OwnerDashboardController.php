@@ -2499,35 +2499,22 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.processed_at as delay_processed_at',
                     'dokumen_role_data.deadline_at as delay_deadline_at');
         } else {
-            // Get dokumen IDs from dokumen_role_data first (same logic as card statistics)
-            // This ensures consistency with card statistics calculation
-            $roleDataIds = \App\Models\DokumenRoleData::where('role_code', $roleCode)
-                ->whereNotNull('received_at')
-                ->whereNull('processed_at')
-                ->pluck('dokumen_id')
-                ->unique()
-                ->toArray();
-            
-            // Log for debugging
-            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, RoleData IDs found: " . count($roleDataIds));
-            
-            // Then query Dokumen using whereIn - this ensures we get all documents
-            // Use explicit table name to avoid ambiguity after join
+            // Query directly from dokumen_role_data and join with dokumens
+            // This ensures we get all documents that match the role criteria
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-                ->whereIn('dokumens.id', $roleDataIds);
+                ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                ->where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->whereNull('dokumen_role_data.processed_at')
+                ->select('dokumens.*', 
+                    'dokumen_role_data.role_code as delay_role_code', 
+                    'dokumen_role_data.received_at as delay_received_at', 
+                    'dokumen_role_data.processed_at as delay_processed_at',
+                    'dokumen_role_data.deadline_at as delay_deadline_at');
             
-            // Join with dokumen_role_data to get the role-specific fields for this role
-            $query->join('dokumen_role_data', function($join) use ($roleCode) {
-                $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-                     ->where('dokumen_role_data.role_code', '=', $roleCode)
-                     ->whereNotNull('dokumen_role_data.received_at')
-                     ->whereNull('dokumen_role_data.processed_at');
-            })
-            ->select('dokumens.*', 
-                'dokumen_role_data.role_code as delay_role_code', 
-                'dokumen_role_data.received_at as delay_received_at', 
-                'dokumen_role_data.processed_at as delay_processed_at',
-                'dokumen_role_data.deadline_at as delay_deadline_at');
+            // Log for debugging - get count before filters
+            $baseCount = $query->count();
+            \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Base query count: {$baseCount}");
         }
 
         // Search functionality
@@ -2604,6 +2591,12 @@ class OwnerDashboardController extends Controller
         } else {
             $query->orderBy('dokumen_role_data.received_at', 'asc');
         }
+        
+        // Debug: Log SQL query and count before get()
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, SQL Query: " . $query->toSql());
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Query Bindings: " . json_encode($query->getBindings()));
+        $countBeforeGet = $query->count();
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Count before get(): {$countBeforeGet}");
         
         // Get all documents first to calculate age and filter by age
         $allDokumens = $query->get();
