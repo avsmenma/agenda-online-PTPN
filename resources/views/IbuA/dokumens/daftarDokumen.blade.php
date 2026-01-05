@@ -2992,13 +2992,26 @@ document.addEventListener('DOMContentLoaded', function() {
     confirmBtn.addEventListener('click', confirmSendToIbuB);
   }
 
-  // Add smooth scroll behavior
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  // Add smooth scroll behavior - only for hash links (exclude modal links)
+  document.querySelectorAll('a[href^="#"]:not(#view-edit-btn):not([id^="view-"])').forEach(anchor => {
+    // Skip if anchor is inside a modal
+    if (anchor.closest('.modal')) {
+      return;
+    }
     anchor.addEventListener('click', function (e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
+      const href = this.getAttribute('href');
+      // Only process hash links (starting with #) and ensure it's not empty
+      if (href && href.startsWith('#') && href.length > 1) {
+        e.preventDefault();
+        try {
+          const target = document.querySelector(href);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+          }
+        } catch (error) {
+          // Invalid selector, ignore
+          console.warn('Invalid hash selector:', href);
+        }
       }
     });
   });
@@ -3774,6 +3787,23 @@ function openViewDocumentModal(docId) {
         // Show modal after data is loaded
         const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
         modal.show();
+        
+        // Ensure edit button works correctly - prevent any interference
+        const editBtn = document.getElementById('view-edit-btn');
+        if (editBtn) {
+          // Remove any existing event listeners by cloning and replacing
+          const newEditBtn = editBtn.cloneNode(true);
+          editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+          
+          // Add click handler to ensure navigation works
+          newEditBtn.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href && href !== '#' && !href.startsWith('#')) {
+              // Valid URL, allow navigation
+              window.location.href = href;
+            }
+          });
+        }
       } else {
         console.error('Invalid response format:', data);
         alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));

@@ -4167,6 +4167,23 @@ function openViewDocumentModal(docId) {
   // Show modal
   const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
   modal.show();
+  
+  // Ensure edit button works correctly - prevent any interference
+  const editBtn = document.getElementById('view-edit-btn');
+  if (editBtn) {
+    // Remove any existing event listeners by cloning and replacing
+    const newEditBtn = editBtn.cloneNode(true);
+    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+    
+    // Add click handler to ensure navigation works
+    newEditBtn.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href && href !== '#' && !href.startsWith('#')) {
+        // Valid URL, allow navigation
+        window.location.href = href;
+      }
+    });
+  }
 }
 
 // Helper functions for formatting
