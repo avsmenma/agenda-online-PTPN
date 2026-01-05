@@ -189,10 +189,12 @@ class DashboardAkutansiController extends Controller
         // 2. Documents that have been sent to Akutansi (tracking)
         // Exclude CSV imported documents - they are meant only for pembayaran
         // Note: Removed 'sent_to_pembayaran' and related statuses because CSV imports use these statuses
-        $query = Dokumen::where(function ($q) {
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
+        
+        $query = Dokumen::where(function ($q) use ($hasImportedFromCsvColumn) {
             $q->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere(function ($pembayaranQ) {
+                ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
                     // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
                     $pembayaranQ->where(function ($statusQ) {
                         $statusQ->where('status', 'sent_to_pembayaran')
@@ -201,11 +203,14 @@ class DashboardAkutansiController extends Controller
                                 $completedQ->whereIn('status', ['completed', 'selesai'])
                                     ->whereNotNull('status_pembayaran');
                             });
-                    })
-                        ->where(function ($csvQ) {
+                    });
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $pembayaranQ->where(function ($csvQ) {
                             $csvQ->where('imported_from_csv', false)
                                 ->orWhereNull('imported_from_csv');
                         });
+                    }
                 });
         })
             ->excludeCsvImports()

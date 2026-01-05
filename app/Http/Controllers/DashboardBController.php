@@ -113,8 +113,10 @@ class DashboardBController extends Controller
         // Apply base filter only if no status filter is specified
         // If status filter is specified, it will override base filter
         // Exclude CSV imported documents - they are exclusive to Pembayaran module
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
+        
         if (!$request->has('status') || !$request->status) {
-            $query->where(function ($q) {
+            $query->where(function ($q) use ($hasImportedFromCsvColumn) {
                 $q->where('current_handler', 'ibuB')
                     ->orWhere(function ($subQ) {
                         // Handle both status formats (with space and underscore) for backward compatibility
@@ -125,7 +127,7 @@ class DashboardBController extends Controller
                             ->where('current_handler', 'ibuB');
                     })
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi
-                    ->orWhere(function ($pembayaranQ) {
+                    ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
                         // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
                         $pembayaranQ->where(function ($statusQ) {
                             $statusQ->where('status', 'sent_to_pembayaran')
@@ -134,11 +136,14 @@ class DashboardBController extends Controller
                                     $completedQ->whereIn('status', ['completed', 'selesai'])
                                         ->whereNotNull('status_pembayaran');
                                 });
-                        })
-                            ->where(function ($csvQ) {
+                        });
+                        // Only exclude CSV imports if column exists
+                        if ($hasImportedFromCsvColumn) {
+                            $pembayaranQ->where(function ($csvQ) {
                                 $csvQ->where('imported_from_csv', false)
                                     ->orWhereNull('imported_from_csv');
                             });
+                        }
                     })
                     ->orWhere(function ($rejectQ) {
                         // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
@@ -312,11 +317,14 @@ class DashboardBController extends Controller
                                 $completedQ->whereIn('status', ['completed', 'selesai'])
                                     ->whereNotNull('status_pembayaran');
                             });
-                    })
-                        ->where(function ($csvQ) {
+                    });
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $query->where(function ($csvQ) {
                             $csvQ->where('imported_from_csv', false)
                                 ->orWhereNull('imported_from_csv');
                         });
+                    }
                     break;
                 case 'ditolak':
                     // Dokumen yang ditolak - hanya status ditolak saja
