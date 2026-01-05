@@ -409,6 +409,12 @@ Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rek
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan-keterlambatan');
 
+// Rekapan keterlambatan per role dengan timeframe yang bisa diatur
+Route::get('owner/rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])
+    ->middleware('auth', 'role:admin,owner')
+    ->where('roleCode', 'ibuA|ibuB|perpajakan|akutansi|pembayaran')
+    ->name('owner.rekapan-keterlambatan.role');
+
 // Admin shortcut to Owner Dashboard
 Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin')

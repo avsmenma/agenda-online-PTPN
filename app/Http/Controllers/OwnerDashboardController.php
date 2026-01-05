@@ -2588,4 +2588,329 @@ class OwnerDashboardController extends Controller
             'kebun' => $kebunList,
         ];
     }
+
+    /**
+     * Rekapan keterlambatan per role dengan timeframe yang bisa diatur
+     */
+    public function rekapanKeterlambatanByRole(Request $request, $roleCode)
+    {
+        $now = Carbon::now();
+        
+        // Validasi role
+        $validRoles = ['ibuA', 'ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        if (!in_array($roleCode, $validRoles)) {
+            abort(404, 'Role tidak ditemukan');
+        }
+
+        // Role configuration
+        $roleConfig = [
+            'ibuA' => ['name' => 'Ibu Tara', 'code' => 'ibuA'],
+            'ibuB' => ['name' => 'Team Verifikasi', 'code' => 'ibuB'],
+            'perpajakan' => ['name' => 'Team Perpajakan', 'code' => 'perpajakan'],
+            'akutansi' => ['name' => 'Team Akutansi', 'code' => 'akutansi'],
+            'pembayaran' => ['name' => 'Pembayaran', 'code' => 'pembayaran'],
+        ];
+
+        // Get timeframe settings from request (default: 1, 2, 3 days)
+        $timeframe1 = $request->get('timeframe1', 1); // Default: 1 day
+        $timeframe2 = $request->get('timeframe2', 2); // Default: 2 days
+        $timeframe3 = $request->get('timeframe3', 3); // Default: 3 days
+        
+        // Convert to days if needed (support for "7 hari", "1 bulan", "3 bulan")
+        $timeframe1Days = $this->convertTimeframeToDays($timeframe1);
+        $timeframe2Days = $this->convertTimeframeToDays($timeframe2);
+        $timeframe3Days = $this->convertTimeframeToDays($timeframe3);
+
+        // Query dokumen berdasarkan role dengan umur dokumen sejak received_at
+        // Untuk pembayaran, gunakan left join karena mungkin tidak selalu ada di dokumen_role_data
+        if ($roleCode === 'pembayaran') {
+            $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+                ->leftJoin('dokumen_role_data', function($join) use ($roleCode) {
+                    $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                         ->where('dokumen_role_data.role_code', '=', $roleCode);
+                })
+                ->where(function($q) {
+                    $q->where(function($subQ) {
+                        // Dokumen yang ada di dokumen_role_data dengan received_at
+                        $subQ->whereNotNull('dokumen_role_data.received_at')
+                             ->whereNull('dokumen_role_data.processed_at');
+                    })->orWhere(function($subQ) {
+                        // Dokumen yang dikirim ke pembayaran (menggunakan sent_to_pembayaran_at)
+                        $subQ->whereNotNull('dokumens.sent_to_pembayaran_at')
+                             ->where(function($statusQ) {
+                                 $statusQ->whereNull('dokumens.status_pembayaran')
+                                        ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
+                             });
+                    });
+                })
+                ->where(function($q) {
+                    $q->where('dokumens.current_handler', 'pembayaran')
+                      ->orWhere('dokumens.status', 'sent_to_pembayaran')
+                      ->orWhere('dokumens.status', 'proses_pembayaran');
+                })
+                ->select('dokumens.*', 
+                    'dokumen_role_data.role_code as delay_role_code', 
+                    'dokumen_role_data.received_at as delay_received_at', 
+                    'dokumen_role_data.processed_at as delay_processed_at',
+                    'dokumen_role_data.deadline_at as delay_deadline_at');
+        } else {
+            $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+                ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                ->where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->whereNull('dokumen_role_data.processed_at') // Belum diproses
+                ->select('dokumens.*', 
+                    'dokumen_role_data.role_code as delay_role_code', 
+                    'dokumen_role_data.received_at as delay_received_at', 
+                    'dokumen_role_data.processed_at as delay_processed_at',
+                    'dokumen_role_data.deadline_at as delay_deadline_at');
+        }
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = trim((string) $request->search);
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('dokumens.nomor_agenda', 'like', '%' . $search . '%')
+                        ->orWhere('dokumens.nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('dokumens.uraian_spp', 'like', '%' . $search . '%');
+                });
+            }
+        }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $query->where('dokumens.tahun', $request->year);
+        }
+
+        // Order by received_at or sent_to_pembayaran_at
+        if ($roleCode === 'pembayaran') {
+            $query->orderByRaw('COALESCE(dokumen_role_data.received_at, dokumens.sent_to_pembayaran_at) ASC');
+        } else {
+            $query->orderBy('dokumen_role_data.received_at', 'asc');
+        }
+        
+        $dokumens = $query->paginate(20)->appends($request->query());
+
+        // Calculate card statistics berdasarkan umur dokumen sejak received_at
+        $cardStats = [];
+        
+        // Calculate card statistics hanya untuk role yang memerlukan card
+        if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+            // Get all documents for this role
+            $allRoleDocs = DokumenRoleData::where('role_code', $roleCode)
+                ->whereNotNull('received_at')
+                ->whereNull('processed_at')
+                ->get();
+            
+            // Card 1: Dokumen dengan umur <= timeframe1 hari (hijau)
+            $card1Count = $allRoleDocs->filter(function ($doc) use ($now, $timeframe1Days) {
+                $ageDays = $now->diffInDays($doc->received_at, false);
+                $ageDays = max(0, $ageDays); // Ensure not negative
+                return $ageDays <= $timeframe1Days;
+            })->count();
+
+            // Card 2: Dokumen dengan umur > timeframe1 dan <= timeframe2 hari (kuning)
+            $card2Count = $allRoleDocs->filter(function ($doc) use ($now, $timeframe1Days, $timeframe2Days) {
+                $ageDays = $now->diffInDays($doc->received_at, false);
+                $ageDays = max(0, $ageDays); // Ensure not negative
+                return $ageDays > $timeframe1Days && $ageDays <= $timeframe2Days;
+            })->count();
+
+            // Card 3: Dokumen dengan umur > timeframe2 hari (merah)
+            $card3Count = $allRoleDocs->filter(function ($doc) use ($now, $timeframe2Days) {
+                $ageDays = $now->diffInDays($doc->received_at, false);
+                $ageDays = max(0, $ageDays); // Ensure not negative
+                return $ageDays > $timeframe2Days;
+            })->count();
+        } else {
+            // Untuk role lain (ibuA, pembayaran), set default values
+            $card1Count = 0;
+            $card2Count = 0;
+            $card3Count = 0;
+        }
+
+        // Only set cardStats for roles that need cards
+        if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+            $cardStats = [
+                'card1' => [
+                    'count' => $card1Count,
+                    'label' => $this->formatTimeframeLabel($timeframe1),
+                    'color' => 'green',
+                    'timeframe_days' => $timeframe1Days,
+                ],
+                'card2' => [
+                    'count' => $card2Count,
+                    'label' => $this->formatTimeframeLabel($timeframe2),
+                    'color' => 'yellow',
+                    'timeframe_days' => $timeframe2Days,
+                ],
+                'card3' => [
+                    'count' => $card3Count,
+                    'label' => $this->formatTimeframeLabel($timeframe3) . '+',
+                    'color' => 'red',
+                    'timeframe_days' => $timeframe3Days,
+                ],
+            ];
+        } else {
+            // Empty cardStats for roles that don't need cards
+            $cardStats = [
+                'card1' => ['count' => 0, 'label' => '-', 'color' => 'green', 'timeframe_days' => 0],
+                'card2' => ['count' => 0, 'label' => '-', 'color' => 'yellow', 'timeframe_days' => 0],
+                'card3' => ['count' => 0, 'label' => '-', 'color' => 'red', 'timeframe_days' => 0],
+            ];
+        }
+
+        // Calculate total statistics
+        if ($roleCode === 'pembayaran') {
+            $totalDocuments = Dokumen::where(function($q) {
+                $q->where('current_handler', 'pembayaran')
+                  ->orWhere('status', 'sent_to_pembayaran')
+                  ->orWhere('status', 'proses_pembayaran');
+            })
+            ->where(function($q) {
+                $q->whereNull('status_pembayaran')
+                  ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            })
+            ->count();
+        } else {
+            $totalDocuments = DokumenRoleData::where('role_code', $roleCode)
+                ->whereNotNull('received_at')
+                ->whereNull('processed_at')
+                ->count();
+        }
+
+        // Get available years
+        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
+            ->whereNotNull('tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Add age information to each document
+        $dokumens->getCollection()->transform(function ($dokumen) use ($now, $roleCode) {
+            // Get received_at from the joined dokumen_role_data or fallback
+            $receivedAt = null;
+            if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
+                $receivedAt = Carbon::parse($dokumen->delay_received_at);
+            } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
+                // Fallback untuk pembayaran: gunakan sent_to_pembayaran_at
+                $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
+            } elseif ($dokumen->relationLoaded('roleData')) {
+                $roleData = $dokumen->roleData->firstWhere('role_code', $roleCode);
+                $receivedAt = $roleData?->received_at;
+            }
+            
+            $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
+            // Ensure age is not negative
+            $ageDays = max(0, $ageDays);
+            $dokumen->age_days = $ageDays;
+            $dokumen->age_formatted = $this->formatAge($ageDays);
+            return $dokumen;
+        });
+
+        return view('owner.rekapanKeterlambatanByRole', compact(
+            'dokumens',
+            'cardStats',
+            'totalDocuments',
+            'availableYears',
+            'roleConfig',
+            'roleCode',
+            'timeframe1',
+            'timeframe2',
+            'timeframe3',
+            'timeframe1Days',
+            'timeframe2Days',
+            'timeframe3Days'
+        ))
+            ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
+            ->with('module', 'owner')
+            ->with('menuDashboard', '')
+            ->with('menuRekapan', '')
+            ->with('menuRekapanKeterlambatan', 'active')
+            ->with('dashboardUrl', '/owner/dashboard');
+    }
+
+    /**
+     * Convert timeframe string to days
+     * Supports: "1", "7", "1 bulan", "3 bulan", etc.
+     */
+    private function convertTimeframeToDays($timeframe)
+    {
+        if (is_numeric($timeframe)) {
+            return (int) $timeframe;
+        }
+
+        $timeframe = strtolower(trim($timeframe));
+        
+        // Check for "bulan" (month)
+        if (strpos($timeframe, 'bulan') !== false) {
+            $number = (int) preg_replace('/[^0-9]/', '', $timeframe);
+            return $number * 30; // Approximate: 1 month = 30 days
+        }
+        
+        // Check for "hari" (day)
+        if (strpos($timeframe, 'hari') !== false) {
+            return (int) preg_replace('/[^0-9]/', '', $timeframe);
+        }
+        
+        // Default: try to extract number
+        return (int) preg_replace('/[^0-9]/', '', $timeframe) ?: 1;
+    }
+
+    /**
+     * Format timeframe label for display
+     */
+    private function formatTimeframeLabel($timeframe)
+    {
+        if (is_numeric($timeframe)) {
+            $days = (int) $timeframe;
+            if ($days == 1) {
+                return '1 Hari';
+            } elseif ($days < 30) {
+                return $days . ' Hari';
+            } elseif ($days == 30) {
+                return '1 Bulan';
+            } elseif ($days % 30 == 0) {
+                return ($days / 30) . ' Bulan';
+            } else {
+                return $days . ' Hari';
+            }
+        }
+
+        $timeframe = trim($timeframe);
+        if (strpos(strtolower($timeframe), 'bulan') !== false) {
+            return ucfirst($timeframe);
+        }
+        
+        return $timeframe . ' Hari';
+    }
+
+    /**
+     * Format age in days to readable format
+     */
+    private function formatAge($days)
+    {
+        if ($days == 0) {
+            return 'Hari ini';
+        } elseif ($days == 1) {
+            return '1 hari';
+        } elseif ($days < 30) {
+            return $days . ' hari';
+        } elseif ($days == 30) {
+            return '1 bulan';
+        } elseif ($days % 30 == 0) {
+            return ($days / 30) . ' bulan';
+        } else {
+            $months = floor($days / 30);
+            $remainingDays = $days % 30;
+            if ($months > 0 && $remainingDays > 0) {
+                return $months . ' bulan ' . $remainingDays . ' hari';
+            } elseif ($months > 0) {
+                return $months . ' bulan';
+            } else {
+                return $days . ' hari';
+            }
+        }
+    }
 }

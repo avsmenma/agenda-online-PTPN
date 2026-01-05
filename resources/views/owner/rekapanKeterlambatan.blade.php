@@ -401,16 +401,97 @@
     @endforeach
   </div>
 
-  <!-- Chart Section -->
-  <div class="chart-section">
-    <div class="chart-header">
-      <div class="chart-title">Tren Keterlambatan Bulanan per Team</div>
-      <div class="chart-subtitle">Statistik keterlambatan dokumen dalam 12 bulan terakhir</div>
+  <!-- Chart and Submenu Section -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+    <!-- Chart Section -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <div class="chart-title">Tren Keterlambatan Bulanan per Team</div>
+        <div class="chart-subtitle">Statistik keterlambatan dokumen dalam 12 bulan terakhir</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="delayChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <canvas id="delayChart"></canvas>
+
+    <!-- Submenu Section -->
+    <div class="submenu-section" style="background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); padding: 30px; border-radius: 16px; box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05); border: 1px solid var(--primary-border);">
+      <div class="submenu-header" style="margin-bottom: 24px;">
+        <div style="font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 8px;">
+          <i class="fa-solid fa-list"></i> Submenu Role
+        </div>
+        <div style="font-size: 13px; color: #6c757d;">
+          Klik untuk melihat detail keterlambatan per role
+        </div>
+      </div>
+      <div class="submenu-list" style="display: flex; flex-direction: column; gap: 12px;">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}" class="submenu-item" style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 12px; border: 2px solid var(--primary-border); text-decoration: none; color: var(--primary-color); transition: all 0.3s ease; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">Ibu Tara</div>
+            <div style="font-size: 12px; color: #6c757d;">Lihat detail keterlambatan</div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: #6c757d;"></i>
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}" class="submenu-item" style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 12px; border: 2px solid var(--primary-border); text-decoration: none; color: var(--primary-color); transition: all 0.3s ease; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">Team Verifikasi</div>
+            <div style="font-size: 12px; color: #6c757d;">Lihat detail keterlambatan</div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: #6c757d;"></i>
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}" class="submenu-item" style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 12px; border: 2px solid var(--primary-border); text-decoration: none; color: var(--primary-color); transition: all 0.3s ease; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">Team Perpajakan</div>
+            <div style="font-size: 12px; color: #6c757d;">Lihat detail keterlambatan</div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: #6c757d;"></i>
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}" class="submenu-item" style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 12px; border: 2px solid var(--primary-border); text-decoration: none; color: var(--primary-color); transition: all 0.3s ease; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">Team Akutansi</div>
+            <div style="font-size: 12px; color: #6c757d;">Lihat detail keterlambatan</div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: #6c757d;"></i>
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}" class="submenu-item" style="padding: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 12px; border: 2px solid var(--primary-border); text-decoration: none; color: var(--primary-color); transition: all 0.3s ease; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+            <i class="fa-solid fa-money-bill-wave"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">Pembayaran</div>
+            <div style="font-size: 12px; color: #6c757d;">Lihat detail keterlambatan</div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: #6c757d;"></i>
+        </a>
+      </div>
     </div>
   </div>
+
+  <style>
+    .submenu-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px var(--primary-rgba-dark), 0 2px 8px rgba(64, 145, 108, 0.1);
+      border-color: var(--secondary-color) !important;
+    }
+
+    @media (max-width: 992px) {
+      div[style*="grid-template-columns: 2fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
 
   <!-- Filter Section -->
   <div class="filter-section">
