@@ -191,11 +191,22 @@ class DashboardAkutansiController extends Controller
         // Note: Removed 'sent_to_pembayaran' and related statuses because CSV imports use these statuses
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'akutansi')
-                ->orWhere('status', 'sent_to_akutansi');
-                // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                // Removed: ->orWhere('status', 'menunggu_di_approve')
-                // Removed: ->orWhere('status', 'pending_approval_pembayaran')
-                // Reason: CSV imported documents have these statuses and should be exclusive to Pembayaran
+                ->orWhere('status', 'sent_to_akutansi')
+                ->orWhere(function ($pembayaranQ) {
+                    // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
+                    $pembayaranQ->where(function ($statusQ) {
+                        $statusQ->where('status', 'sent_to_pembayaran')
+                            ->orWhere(function ($completedQ) {
+                                // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                $completedQ->whereIn('status', ['completed', 'selesai'])
+                                    ->whereNotNull('status_pembayaran');
+                            });
+                    })
+                        ->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
+                });
         })
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);

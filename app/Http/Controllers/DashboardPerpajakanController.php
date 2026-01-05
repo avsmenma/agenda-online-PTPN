@@ -115,9 +115,22 @@ class DashboardPerpajakanController extends Controller
         $query = Dokumen::query()
             ->where(function ($q) {
                 $q->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi');
-                    // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                    // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
+                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhere(function ($pembayaranQ) {
+                        // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
+                        $pembayaranQ->where(function ($statusQ) {
+                            $statusQ->where('status', 'sent_to_pembayaran')
+                                ->orWhere(function ($completedQ) {
+                                    // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                    $completedQ->whereIn('status', ['completed', 'selesai'])
+                                        ->whereNotNull('status_pembayaran');
+                                });
+                        })
+                            ->where(function ($csvQ) {
+                                $csvQ->where('imported_from_csv', false)
+                                    ->orWhereNull('imported_from_csv');
+                            });
+                    });
             })
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
@@ -185,8 +198,19 @@ class DashboardPerpajakanController extends Controller
                     $query->where('status', 'sent_to_akutansi');
                     break;
                 case 'terkirim_pembayaran':
-                    // Dokumen yang sudah terkirim ke pembayaran
-                    $query->where('status', 'sent_to_pembayaran');
+                    // Dokumen yang sudah terkirim ke pembayaran atau sudah completed setelah pembayaran, exclude CSV imports
+                    $query->where(function ($statusQ) {
+                        $statusQ->where('status', 'sent_to_pembayaran')
+                            ->orWhere(function ($completedQ) {
+                                // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                $completedQ->whereIn('status', ['completed', 'selesai'])
+                                    ->whereNotNull('status_pembayaran');
+                            });
+                    })
+                        ->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
                     break;
                 case 'belum_diproses':
                     // Dokumen yang belum diproses (status_perpajakan null atau empty)

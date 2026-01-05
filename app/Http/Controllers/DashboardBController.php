@@ -124,7 +124,22 @@ class DashboardBController extends Controller
                         })
                             ->where('current_handler', 'ibuB');
                     })
-                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi (exclude sent_to_pembayaran - those are CSV imports)
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi
+                    ->orWhere(function ($pembayaranQ) {
+                        // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
+                        $pembayaranQ->where(function ($statusQ) {
+                            $statusQ->where('status', 'sent_to_pembayaran')
+                                ->orWhere(function ($completedQ) {
+                                    // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                    $completedQ->whereIn('status', ['completed', 'selesai'])
+                                        ->whereNotNull('status_pembayaran');
+                                });
+                        })
+                            ->where(function ($csvQ) {
+                                $csvQ->where('imported_from_csv', false)
+                                    ->orWhereNull('imported_from_csv');
+                            });
+                    })
                     ->orWhere(function ($rejectQ) {
                         // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
                         $rejectQ->where('status', 'returned_to_department')
@@ -289,8 +304,19 @@ class DashboardBController extends Controller
                     $query->where('status', 'sent_to_akutansi');
                     break;
                 case 'terkirim_pembayaran':
-                    // Dokumen yang terkirim ke pembayaran - hanya status ini saja
-                    $query->where('status', 'sent_to_pembayaran');
+                    // Dokumen yang terkirim ke pembayaran atau sudah completed setelah pembayaran, exclude CSV imports
+                    $query->where(function ($statusQ) {
+                        $statusQ->where('status', 'sent_to_pembayaran')
+                            ->orWhere(function ($completedQ) {
+                                // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                $completedQ->whereIn('status', ['completed', 'selesai'])
+                                    ->whereNotNull('status_pembayaran');
+                            });
+                    })
+                        ->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
                     break;
                 case 'ditolak':
                     // Dokumen yang ditolak - hanya status ditolak saja
