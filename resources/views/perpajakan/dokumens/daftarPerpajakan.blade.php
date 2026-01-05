@@ -2279,10 +2279,8 @@
               <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
             @elseif($dokumen->status == 'sent_to_pembayaran')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
-            @elseif($isPendingApprovalAkutansi)
-              <span class="badge-status badge-warning">⏳ Menunggu Approval Akutansi</span>
-            @elseif($isPendingApprovalPembayaran || $dokumen->status == 'menunggu_di_approve')
-              <span class="badge-status badge-warning">⏳ Menunggu Approval Pembayaran</span>
+            @elseif($isPendingApprovalAkutansi || $isPendingApprovalPembayaran || $dokumen->status == 'menunggu_di_approve' || $isPending)
+              <span class="badge-status badge-warning">⏳ {{ $dokumen->getDetailedApprovalText() }}</span>
             @elseif($isLocked)
               <span class="badge-status badge-locked">🔒 Terkunci</span>
             @else
@@ -2301,7 +2299,7 @@
                 <!-- Document pending approval - show waiting status -->
                 <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sedang menunggu persetujuan">
                   <i class="fa-solid fa-hourglass-half"></i>
-                  <span>Menunggu Approval</span>
+                  <span>{{ $dokumen->getDetailedApprovalText() }}</span>
                 </button>
               @else
                 <!-- Unlocked state - buttons enabled -->

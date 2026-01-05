@@ -768,7 +768,7 @@
               @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || $isPending)
                 {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
                 <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                  <i class="fas fa-clock"></i> Menunggu Approval
+                  <i class="fas fa-clock"></i> {{ $dokumen->getDetailedApprovalText() }}
                 </span>
               @elseif($statusLabel == 'Sedang Proses' || $statusLabel == 'Sedang Proses (Reviewer/Tax)' || $statusLabel == 'Sedang Proses (Reviewer/Accounting)')
                 {{-- Dokumen sedang diproses di tahap selanjutnya --}}

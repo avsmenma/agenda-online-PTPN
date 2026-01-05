@@ -1208,8 +1208,19 @@
       }
 
       .table-enhanced .col-uraian {
-        width: 250px;
-        min-width: 200px;
+        width: 350px;
+        min-width: 300px;
+        max-width: 500px;
+        word-wrap: break-word;
+        white-space: normal;
+        overflow-wrap: break-word;
+      }
+      
+      .table-enhanced .col-uraian span {
+        display: block;
+        word-wrap: break-word;
+        white-space: normal;
+        overflow-wrap: break-word;
       }
 
       .table-enhanced .col-nilai {
@@ -1354,8 +1365,12 @@
       }
 
       .table-enhanced .col-uraian {
-        width: 150px;
-        min-width: 150px;
+        width: 250px;
+        min-width: 200px;
+        max-width: 400px;
+        word-wrap: break-word;
+        white-space: normal;
+        overflow-wrap: break-word;
       }
 
       .table-enhanced .col-nilai {
@@ -1415,8 +1430,12 @@
         }
 
         .table-enhanced .col-uraian {
-          width: 120px;
-          min-width: 120px;
+          width: 180px;
+          min-width: 150px;
+          max-width: 300px;
+          word-wrap: break-word;
+          white-space: normal;
+          overflow-wrap: break-word;
         }
 
         .table-enhanced .col-nilai {
@@ -3225,7 +3244,9 @@
                         @elseif($col == 'tanggal_spp')
                           {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y H:i') : '-' }}
                         @elseif($col == 'uraian_spp')
-                          {{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}
+                          <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; max-width: 100%;">
+                            {{ $dokumen->uraian_spp ?? '-' }}
+                          </span>
                         @elseif($col == 'kategori')
                           {{ $dokumen->kategori ?? '-' }}
                         @elseif($col == 'kebun')
@@ -3379,33 +3400,10 @@
                     @elseif($dokumen->status == 'sent_to_pembayaran')
                       <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
                     @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub']) || $isPending)
-                      @php
-                        $approvalText = 'Menunggu Approval';
-                        if ($dokumen->status == 'pending_approval_perpajakan') {
-                          $approvalText = 'Menunggu Approval Perpajakan';
-                        } elseif ($dokumen->status == 'pending_approval_akutansi') {
-                          $approvalText = 'Menunggu Approval Akutansi';
-                        } elseif ($dokumen->status == 'pending_approval_ibub' || $dokumen->status == 'waiting_reviewer_approval') {
-                          $approvalText = 'Menunggu Approval Reviewer';
-                        } elseif ($isPending) {
-                          // Check which role is pending
-                          $pendingStatus = $dokumen->roleStatuses()->where('status', 'pending')->first();
-                          if ($pendingStatus) {
-                            $roleName = match($pendingStatus->role_code) {
-                              'perpajakan' => 'Perpajakan',
-                              'akutansi' => 'Akutansi',
-                              'pembayaran' => 'Pembayaran',
-                              'ibub' => 'Reviewer',
-                              default => 'Approval'
-                            };
-                            $approvalText = "Menunggu Approval {$roleName}";
-                          }
-                        }
-                      @endphp
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                         <i class="fa-solid fa-clock me-1"></i>
-                        <span>{{ $approvalText }}</span>
+                        <span>{{ $dokumen->getDetailedApprovalText() }}</span>
                       </span>
                     @elseif($dokumen->status == 'sedang diproses' && $isLocked)
                       {{-- Dokumen yang baru di-approve dari inbox tapi belum di-set deadline --}}
@@ -3454,7 +3452,7 @@
                           <button class="btn-action btn-edit locked btn-full-width" disabled
                             title="Dokumen sedang menunggu approval, tidak dapat diedit">
                             <i class="fa-solid fa-clock"></i>
-                            <span>Menunggu Approval</span>
+                            <span>{{ $dokumen->getDetailedApprovalText() }}</span>
                           </button>
                         @endif
                       @elseif($isRejected)

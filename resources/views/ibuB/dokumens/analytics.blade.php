@@ -628,7 +628,7 @@
                 </span>
               @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval')
                 <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                  Menunggu Approval
+                  {{ $dokumen->getDetailedApprovalText() }}
                 </span>
               @elseif($statusLabel == 'Terkirim')
                 <span class="badge" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 4px 12px; border-radius: 12px;">

@@ -520,6 +520,61 @@ class Dokumen extends Model
     }
 
     /**
+     * Get detailed approval text showing who should approve
+     * Returns format: "Menunggu Approval dari [Role Name]"
+     */
+    public function getDetailedApprovalText(): string
+    {
+        // Check dokumen_statuses table first (new inbox system)
+        $pendingStatus = $this->roleStatuses()
+            ->where('status', DokumenStatus::STATUS_PENDING)
+            ->first();
+
+        if ($pendingStatus) {
+            $roleNameMap = [
+                'ibub' => 'Ibu Yuni (Reviewer)',
+                'perpajakan' => 'Team Perpajakan',
+                'akutansi' => 'Team Akutansi',
+                'pembayaran' => 'Team Pembayaran',
+            ];
+
+            $roleName = $roleNameMap[strtolower($pendingStatus->role_code)] ?? ucfirst($pendingStatus->role_code);
+            return "Menunggu Approval dari {$roleName}";
+        }
+
+        // Fallback to status-based detection
+        $statusMap = [
+            'pending_approval_ibub' => 'Menunggu Approval dari Ibu Yuni (Reviewer)',
+            'pending_approval_perpajakan' => 'Menunggu Approval dari Team Perpajakan',
+            'pending_approval_akutansi' => 'Menunggu Approval dari Team Akutansi',
+            'pending_approval_pembayaran' => 'Menunggu Approval dari Team Pembayaran',
+            'waiting_reviewer_approval' => 'Menunggu Approval dari Ibu Yuni (Reviewer)',
+            'menunggu_di_approve' => 'Menunggu Approval',
+        ];
+
+        if (isset($statusMap[$this->status])) {
+            return $statusMap[$this->status];
+        }
+
+        // Check current_handler as last resort
+        if ($this->current_handler) {
+            $handlerMap = [
+                'ibuB' => 'Menunggu Approval dari Ibu Yuni (Reviewer)',
+                'perpajakan' => 'Menunggu Approval dari Team Perpajakan',
+                'akutansi' => 'Menunggu Approval dari Team Akutansi',
+                'pembayaran' => 'Menunggu Approval dari Team Pembayaran',
+            ];
+
+            if (isset($handlerMap[$this->current_handler])) {
+                return $handlerMap[$this->current_handler];
+            }
+        }
+
+        // Default fallback
+        return 'Menunggu Approval';
+    }
+
+    /**
     /**
      * Cek apakah dokumen menunggu approval untuk role tertentu (Inbox System)
      */

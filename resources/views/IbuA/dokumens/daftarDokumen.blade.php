@@ -1958,7 +1958,7 @@
                 {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
                 <span class="badge-status" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                   <i class="fa-solid fa-clock me-1"></i>
-                  <span>Menunggu Approval</span>
+                  <span>{{ $dokumen->getDetailedApprovalText() }}</span>
                 </span>
               @elseif($statusLabel == 'Sedang Proses' || $statusLabel == 'Sedang Proses (Reviewer/Tax)' || $statusLabel == 'Sedang Proses (Reviewer/Accounting)')
                 {{-- Dokumen sedang diproses di tahap selanjutnya --}}
@@ -1986,7 +1986,9 @@
             @elseif($col == 'tanggal_spp')
               {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d-m-Y') : '-' }}
             @elseif($col == 'uraian_spp')
-              {{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}
+              <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; max-width: 100%;">
+                {{ $dokumen->uraian_spp ?? '-' }}
+              </span>
             @elseif($col == 'kategori')
               {{ $dokumen->kategori ?? '-' }}
             @elseif($col == 'kebun')
