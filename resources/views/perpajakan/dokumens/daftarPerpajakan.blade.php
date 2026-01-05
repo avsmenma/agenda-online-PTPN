@@ -2095,6 +2095,10 @@
           $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
           $isPendingApprovalAkutansi = $dokumen->status == 'pending_approval_akutansi';
           $isPendingApprovalPembayaran = $dokumen->status == 'pending_approval_pembayaran' || $dokumen->status == 'menunggu_di_approve';
+          $isPending = $dokumen->roleStatuses()
+            ->where('role_code', 'perpajakan')
+            ->where('status', 'pending')
+            ->exists();
           $canSend = $dokumen->status != 'sent_to_akutansi'
             && $dokumen->status != 'sent_to_pembayaran'
             && $dokumen->status != 'pending_approval_akutansi'
