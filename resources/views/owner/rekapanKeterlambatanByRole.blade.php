@@ -92,6 +92,22 @@
     box-shadow: 0 12px 40px var(--primary-rgba-dark), 0 4px 16px rgba(64, 145, 108, 0.1);
   }
 
+  .card-stat-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .card-stat-link:hover {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .card-stat.active {
+    border: 3px solid var(--primary-color);
+    box-shadow: 0 12px 40px var(--primary-rgba-dark), 0 4px 16px rgba(64, 145, 108, 0.2);
+  }
+
   .card-stat-header {
     display: flex;
     align-items: center;
@@ -154,6 +170,341 @@
     color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+
+  /* Modern Filter Panel Styles */
+  .modern-filter-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .filter-toggle-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #f8faf8 0%, #f1f5f9 100%);
+    border-bottom: 2px solid var(--primary-border);
+  }
+
+  .filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: white;
+    border: 2px solid var(--primary-border);
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .filter-toggle-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--primary-rgba-dark);
+  }
+
+  .filter-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .filter-panel {
+    padding: 2rem;
+    background: white;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .filter-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-select,
+  .filter-input-search {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--primary-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .filter-select:focus,
+  .filter-input-search:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-rgba);
+  }
+
+  .filter-select:disabled {
+    background-color: #f1f5f9;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .filter-searchable {
+    min-height: 44px;
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 2px solid var(--primary-border);
+  }
+
+  .filter-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-btn-reset {
+    background: #f8faf8;
+    color: var(--primary-color);
+  }
+
+  .filter-btn-reset:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+  }
+
+  .filter-btn-apply {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .filter-btn-apply:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--primary-rgba-dark);
+  }
+
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--primary-border);
+  }
+
+  .filter-badge-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .filter-badge-item .remove-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+  }
+
+  .filter-badge-item .remove-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* View Switcher */
+  .view-switcher {
+    display: inline-flex;
+    background: white;
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+    border: 2px solid var(--primary-border);
+  }
+
+  .view-switcher-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .view-switcher-btn:hover {
+    background: var(--primary-rgba);
+    color: var(--primary-color);
+  }
+
+  .view-switcher-btn.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* View Container */
+  .view-container {
+    display: none;
+  }
+
+  .view-container.active {
+    display: block;
+  }
+
+  /* Card View */
+  .card-view-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .card-view-container {
+      grid-template-columns: 1fr;
+    }
+    .filter-grid {
+      grid-template-columns: 1fr;
+    }
+    .filter-toggle-bar {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+    }
+  }
+
+  .document-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--primary-border);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .document-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px var(--primary-rgba);
+    border-color: var(--secondary-color);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+  }
+
+  .card-subtitle {
+    font-size: 13px;
+    color: #6c757d;
+  }
+
+  .card-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+  }
+
+  .card-info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 8px;
+  }
+
+  .card-info-row i {
+    width: 16px;
+    color: var(--primary-color);
   }
 
   /* Table Section */
@@ -291,135 +642,277 @@
   <!-- Card Statistics -->
   @if(in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi']))
   <div class="card-stats">
-    <div class="card-stat card-green">
-      <div class="card-stat-header">
-        <div class="card-stat-title">Dokumen {{ $cardStats['card1']['label'] }}</div>
-        <div class="card-stat-icon icon-green">
-          <i class="fa-solid fa-check-circle"></i>
+    @php
+      $currentFilterAge = request('filter_age', '');
+      $isCard1Active = $currentFilterAge === '1';
+      $isCard2Active = $currentFilterAge === '2';
+      $isCard3Active = $currentFilterAge === '3+';
+    @endphp
+    <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}" 
+       class="card-stat-link {{ $isCard1Active ? 'active' : '' }}">
+      <div class="card-stat card-green {{ $isCard1Active ? 'active' : '' }}">
+        <div class="card-stat-header">
+          <div class="card-stat-title">Dokumen {{ $cardStats['card1']['label'] }}</div>
+          <div class="card-stat-icon icon-green">
+            <i class="fa-solid fa-check-circle"></i>
+          </div>
         </div>
+        <div class="card-stat-value value-green">{{ $cardStats['card1']['count'] }}</div>
+        <div class="card-stat-label">Dokumen</div>
       </div>
-      <div class="card-stat-value value-green">{{ $cardStats['card1']['count'] }}</div>
-      <div class="card-stat-label">Dokumen</div>
-    </div>
-    <div class="card-stat card-yellow">
-      <div class="card-stat-header">
-        <div class="card-stat-title">Dokumen {{ $cardStats['card2']['label'] }}</div>
-        <div class="card-stat-icon icon-yellow">
-          <i class="fa-solid fa-clock"></i>
+    </a>
+    <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}" 
+       class="card-stat-link {{ $isCard2Active ? 'active' : '' }}">
+      <div class="card-stat card-yellow {{ $isCard2Active ? 'active' : '' }}">
+        <div class="card-stat-header">
+          <div class="card-stat-title">Dokumen {{ $cardStats['card2']['label'] }}</div>
+          <div class="card-stat-icon icon-yellow">
+            <i class="fa-solid fa-clock"></i>
+          </div>
         </div>
+        <div class="card-stat-value value-yellow">{{ $cardStats['card2']['count'] }}</div>
+        <div class="card-stat-label">Dokumen</div>
       </div>
-      <div class="card-stat-value value-yellow">{{ $cardStats['card2']['count'] }}</div>
-      <div class="card-stat-label">Dokumen</div>
-    </div>
-    <div class="card-stat card-red">
-      <div class="card-stat-header">
-        <div class="card-stat-title">Dokumen {{ $cardStats['card3']['label'] }}</div>
-        <div class="card-stat-icon icon-red">
-          <i class="fa-solid fa-exclamation-triangle"></i>
+    </a>
+    <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}" 
+       class="card-stat-link {{ $isCard3Active ? 'active' : '' }}">
+      <div class="card-stat card-red {{ $isCard3Active ? 'active' : '' }}">
+        <div class="card-stat-header">
+          <div class="card-stat-title">Dokumen {{ $cardStats['card3']['label'] }}</div>
+          <div class="card-stat-icon icon-red">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+          </div>
         </div>
+        <div class="card-stat-value value-red">{{ $cardStats['card3']['count'] }}</div>
+        <div class="card-stat-label">Dokumen</div>
       </div>
-      <div class="card-stat-value value-red">{{ $cardStats['card3']['count'] }}</div>
-      <div class="card-stat-label">Dokumen</div>
-    </div>
+    </a>
   </div>
   @endif
 
-  <!-- Filter Section -->
-  <div class="timeframe-settings" style="margin-bottom: 30px;">
-    <div class="timeframe-settings-title"><i class="fa-solid fa-filter"></i> Filter Data</div>
-    <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Cari Dokumen</label>
-        <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Nomor agenda, SPP, dll">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Tahun</label>
-        <select name="year" class="form-select">
-          <option value="">Semua Tahun</option>
-          @foreach($availableYears as $year)
-            <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
-          @endforeach
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">&nbsp;</label>
-        <button type="submit" class="btn btn-filter w-100">
-          <i class="fa-solid fa-search"></i> Filter
+  <!-- Modern Filter Panel -->
+  <div class="modern-filter-container">
+    <!-- Filter Toggle Button -->
+    <div class="filter-toggle-bar">
+      <button type="button" class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel()">
+        <i class="fas fa-filter"></i>
+        <span>Filter Lanjutan</span>
+        <span class="filter-badge" id="activeFilterCount">0</span>
+        <i class="fas fa-chevron-down" id="filterToggleIcon"></i>
+      </button>
+      <div class="view-switcher">
+        <button class="view-switcher-btn active" data-view="card" onclick="switchView('card')">
+          <i class="fas fa-th"></i> Kartu
+        </button>
+        <button class="view-switcher-btn" data-view="table" onclick="switchView('table')">
+          <i class="fas fa-table"></i> Tabel
         </button>
       </div>
-    </form>
+    </div>
+
+    <!-- Filter Panel (Collapsible) -->
+    <div class="filter-panel" id="filterPanel" style="display: none;">
+      <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="filterForm" class="filter-form">
+        <input type="hidden" name="filter_age" value="{{ request('filter_age') }}">
+        
+        <!-- Search Bar -->
+        <div class="filter-row">
+          <div class="filter-group full-width">
+            <label class="filter-label">
+              <i class="fas fa-search"></i> Cari Dokumen
+            </label>
+            <input type="text"
+                   name="search"
+                   class="filter-input-search"
+                   value="{{ request('search') }}"
+                   placeholder="Cari berdasarkan nomor agenda, SPP, uraian, dll...">
+          </div>
+        </div>
+
+        <!-- Filter Grid -->
+        <div class="filter-grid">
+          <!-- Bagian -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-building"></i> Bagian
+            </label>
+            <select name="filter_bagian" class="filter-select" onchange="applyFilter()">
+              <option value="">Semua Bagian</option>
+              @foreach($filterData['bagian'] ?? [] as $key => $value)
+                <option value="{{ $key }}" {{ request('filter_bagian') == $key ? 'selected' : '' }}>{{ $value }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Vendor/Dibayar Kepada -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-handshake"></i> Vendor/Dibayar Kepada
+            </label>
+            <select name="filter_vendor" class="filter-select filter-searchable" onchange="applyFilter()">
+              <option value="">Semua Vendor</option>
+              @foreach($filterData['vendor'] ?? [] as $key => $value)
+                <option value="{{ $value }}" {{ request('filter_vendor') == $value ? 'selected' : '' }}>{{ $value }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Kriteria CF -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-tags"></i> Kriteria CF
+            </label>
+            <select name="filter_kriteria_cf" id="filterKriteriaCf" class="filter-select filter-searchable" onchange="updateSubKriteriaFilter(); applyFilter();">
+              <option value="">Semua Kriteria CF</option>
+              @foreach($filterData['kriteria_cf'] ?? [] as $id => $nama)
+                <option value="{{ $id }}" {{ request('filter_kriteria_cf') == $id ? 'selected' : '' }}>{{ $nama }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Sub Kriteria -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-tag"></i> Sub Kriteria
+            </label>
+            <select name="filter_sub_kriteria" id="filterSubKriteria" class="filter-select filter-searchable" onchange="updateItemSubKriteriaFilter(); applyFilter();" disabled>
+              <option value="">Pilih Kriteria CF terlebih dahulu</option>
+              @foreach($filterData['sub_kriteria'] ?? [] as $kriteriaId => $subKriterias)
+                @foreach($subKriterias as $id => $nama)
+                  <option value="{{ $id }}" 
+                          data-kriteria-cf="{{ $kriteriaId }}"
+                          {{ request('filter_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
+                @endforeach
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Item Sub Kriteria -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-list"></i> Item Sub Kriteria
+            </label>
+            <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" class="filter-select filter-searchable" onchange="applyFilter()" disabled>
+              <option value="">Pilih Sub Kriteria terlebih dahulu</option>
+              @foreach($filterData['item_sub_kriteria'] ?? [] as $subKriteriaId => $itemSubKriterias)
+                @foreach($itemSubKriterias as $id => $nama)
+                  <option value="{{ $id }}" 
+                          data-sub-kriteria="{{ $subKriteriaId }}"
+                          {{ request('filter_item_sub_kriteria') == $id ? 'selected' : '' }}>{{ $nama }}</option>
+                @endforeach
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Kebun -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-seedling"></i> Kebun
+            </label>
+            <select name="filter_kebun" class="filter-select filter-searchable" onchange="applyFilter()">
+              <option value="">Semua Kebun</option>
+              @foreach($filterData['kebun'] ?? [] as $key => $value)
+                <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Tahun -->
+          <div class="filter-group">
+            <label class="filter-label">
+              <i class="fas fa-calendar"></i> Tahun
+            </label>
+            <select name="year" class="filter-select" onchange="applyFilter()">
+              <option value="">Semua Tahun</option>
+              @foreach($availableYears as $year)
+                <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="filter-actions">
+          <button type="button" class="filter-btn filter-btn-reset" onclick="resetFilters()">
+            <i class="fas fa-redo"></i> Reset Filter
+          </button>
+          <button type="button" class="filter-btn filter-btn-apply" onclick="applyFilter()">
+            <i class="fas fa-check"></i> Terapkan Filter
+          </button>
+        </div>
+
+        <!-- Active Filters Badges -->
+        <div class="active-filters" id="activeFilters">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </form>
+    </div>
   </div>
 
-  <!-- Table Section -->
-  <div class="table-container">
-    <h6 style="font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px;">
-      <span>Daftar Dokumen (Total: {{ $totalDocuments }})</span>
-    </h6>
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nomor Agenda</th>
-            <th>Nomor SPP</th>
-            <th>Tanggal Masuk</th>
-            <th>Umur Dokumen</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @forelse($dokumens as $index => $dokumen)
-            @php
-              $ageDays = $dokumen->age_days ?? 0;
-              $ageFormatted = $dokumen->age_formatted ?? '-';
-              
-              // Determine card color based on age (fixed: 1, 2, 3+ days)
-              $ageColor = 'green';
-              if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-                if ($ageDays > 2) {
-                  $ageColor = 'red';
-                } elseif ($ageDays > 1) {
-                  $ageColor = 'yellow';
-                } else {
-                  $ageColor = 'green';
-                }
+  <!-- Card View -->
+  <div id="cardView" class="view-container active">
+    @if($dokumens->count() == 0)
+      <div class="empty-state" style="text-align: center; padding: 60px 20px;">
+        <i class="fa-solid fa-folder-open fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Tidak ada dokumen</h5>
+        <p class="text-muted">Dokumen akan ditampilkan di sini ketika tersedia</p>
+      </div>
+    @else
+      <div class="card-view-container">
+        @foreach($dokumens as $index => $dokumen)
+          @php
+            $ageDays = $dokumen->age_days ?? 0;
+            $ageFormatted = $dokumen->age_formatted ?? '-';
+            
+            // Determine card color based on age (fixed: 1, 2, 3+ days)
+            $ageColor = 'green';
+            if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+              if ($ageDays > 2) {
+                $ageColor = 'red';
+              } elseif ($ageDays > 1) {
+                $ageColor = 'yellow';
+              } else {
+                $ageColor = 'green';
               }
-              
-              // Get received_at for display
-              $receivedAt = '-';
-              if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
-                $receivedAt = \Carbon\Carbon::parse($dokumen->delay_received_at)->format('d M Y H:i');
-              } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
-                $receivedAt = \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d M Y H:i');
-              }
-            @endphp
-            <tr class="clickable-row" onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'" title="Klik untuk melihat detail workflow dokumen">
-              <td>{{ $dokumens->firstItem() + $index }}</td>
-              <td>{{ $dokumen->nomor_agenda }}</td>
-              <td>{{ $dokumen->nomor_spp }}</td>
-              <td>{{ $receivedAt }}</td>
-              <td>
-                <span class="age-badge age-{{ $ageColor }}">
-                  {{ $ageFormatted }}
-                </span>
-              </td>
-              <td>
-                <span class="badge badge-processing">
-                  Belum Diproses
-                </span>
-              </td>
-            </tr>
-          @empty
-            <tr>
-              <td colspan="6" class="text-center py-5">
-                <i class="fa-solid fa-check-circle fa-3x text-success mb-3"></i>
-                <p class="text-muted">Tidak ada dokumen</p>
-              </td>
-            </tr>
-          @endforelse
-        </tbody>
-      </table>
-    </div>
+            }
+            
+            // Get received_at for display
+            $receivedAt = '-';
+            if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
+              $receivedAt = \Carbon\Carbon::parse($dokumen->delay_received_at)->format('d M Y H:i');
+            } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
+              $receivedAt = \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d M Y H:i');
+            }
+          @endphp
+          <div class="document-card" onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'" title="Klik untuk melihat detail workflow dokumen">
+            <div class="card-header">
+              <div>
+                <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
+                <div class="card-subtitle">SPP: {{ $dokumen->nomor_spp }}</div>
+              </div>
+            </div>
+            <div class="card-value">
+              Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}
+            </div>
+            <div class="card-info-row">
+              <i class="fas fa-calendar"></i>
+              <span>Tanggal Masuk:</span>
+              <span>{{ $receivedAt }}</span>
+            </div>
+            <div class="card-info-row">
+              <i class="fas fa-clock"></i>
+              <span>Umur Dokumen:</span>
+              <span class="age-badge age-{{ $ageColor }}">{{ $ageFormatted }}</span>
+            </div>
+            <div class="card-info-row">
+              <i class="fas fa-info-circle"></i>
+              <span>Status:</span>
+              <span class="badge badge-processing">Belum Diproses</span>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    @endif
 
     <!-- Pagination -->
     @if($dokumens->hasPages())
@@ -446,7 +939,373 @@
       </div>
     @endif
   </div>
+
+  <!-- Table View -->
+  <div id="tableView" class="view-container">
+    @if($dokumens->count() == 0)
+      <div class="empty-state" style="text-align: center; padding: 60px 20px;">
+        <i class="fa-solid fa-folder-open fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Tidak ada dokumen</h5>
+        <p class="text-muted">Dokumen akan ditampilkan di sini ketika tersedia</p>
+      </div>
+    @else
+      <div class="table-container">
+        <h6 style="font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px;">
+          <span>Daftar Dokumen (Total: {{ $totalDocuments }})</span>
+        </h6>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nomor Agenda</th>
+                <th>Nomor SPP</th>
+                <th>Tanggal Masuk</th>
+                <th>Umur Dokumen</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($dokumens as $index => $dokumen)
+                @php
+                  $ageDays = $dokumen->age_days ?? 0;
+                  $ageFormatted = $dokumen->age_formatted ?? '-';
+                  
+                  // Determine card color based on age (fixed: 1, 2, 3+ days)
+                  $ageColor = 'green';
+                  if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+                    if ($ageDays > 2) {
+                      $ageColor = 'red';
+                    } elseif ($ageDays > 1) {
+                      $ageColor = 'yellow';
+                    } else {
+                      $ageColor = 'green';
+                    }
+                  }
+                  
+                  // Get received_at for display
+                  $receivedAt = '-';
+                  if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
+                    $receivedAt = \Carbon\Carbon::parse($dokumen->delay_received_at)->format('d M Y H:i');
+                  } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
+                    $receivedAt = \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d M Y H:i');
+                  }
+                @endphp
+                <tr class="clickable-row" onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'" title="Klik untuk melihat detail workflow dokumen">
+                  <td>{{ $dokumens->firstItem() + $index }}</td>
+                  <td>{{ $dokumen->nomor_agenda }}</td>
+                  <td>{{ $dokumen->nomor_spp }}</td>
+                  <td>{{ $receivedAt }}</td>
+                  <td>
+                    <span class="age-badge age-{{ $ageColor }}">
+                      {{ $ageFormatted }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge badge-processing">
+                      Belum Diproses
+                    </span>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      @if($dokumens->hasPages())
+        <div class="pagination">
+          @if($dokumens->onFirstPage())
+            <span class="page-link disabled">«</span>
+          @else
+            <a href="{{ $dokumens->previousPageUrl() }}" class="page-link">«</a>
+          @endif
+
+          @for($i = 1; $i <= $dokumens->lastPage(); $i++)
+            @if($i == $dokumens->currentPage())
+              <span class="page-link active">{{ $i }}</span>
+            @else
+              <a href="{{ $dokumens->url($i) }}" class="page-link">{{ $i }}</a>
+            @endif
+          @endfor
+
+          @if($dokumens->hasMorePages())
+            <a href="{{ $dokumens->nextPageUrl() }}" class="page-link">»</a>
+          @else
+            <span class="page-link disabled">»</span>
+          @endif
+        </div>
+      @endif
+    @endif
+  </div>
 </div>
+
+<script>
+// Filter Panel Functionality
+let filterPanelExpanded = false;
+
+function toggleFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  const icon = document.getElementById('filterToggleIcon');
+  filterPanelExpanded = !filterPanelExpanded;
+  
+  if (filterPanelExpanded) {
+    panel.style.display = 'block';
+    icon.classList.remove('fa-chevron-down');
+    icon.classList.add('fa-chevron-up');
+  } else {
+    panel.style.display = 'none';
+    icon.classList.remove('fa-chevron-up');
+    icon.classList.add('fa-chevron-down');
+  }
+  
+  updateActiveFilterCount();
+}
+
+function applyFilter() {
+  const form = document.getElementById('filterForm');
+  form.submit();
+}
+
+function resetFilters() {
+  const currentUrl = new URL(window.location.href);
+  const params = currentUrl.searchParams;
+  const filterAge = params.get('filter_age');
+  
+  // Clear all filter_ parameters
+  for (let key of Array.from(params.keys())) {
+    if (key.startsWith('filter_') || key === 'search' || key === 'year') {
+      params.delete(key);
+    }
+  }
+  
+  // Preserve filter_age if exists
+  if (filterAge) {
+    params.set('filter_age', filterAge);
+  }
+  
+  window.location.href = currentUrl.toString();
+}
+
+function updateActiveFilterCount() {
+  const form = document.getElementById('filterForm');
+  const formData = new FormData(form);
+  let count = 0;
+  
+  // Count active filters
+  for (let [key, value] of formData.entries()) {
+    if (key.startsWith('filter_') && value && value !== '') {
+      count++;
+    }
+    if (key === 'year' && value && value !== '') {
+      count++;
+    }
+    if (key === 'search' && value && value !== '') {
+      count++;
+    }
+  }
+  
+  const badge = document.getElementById('activeFilterCount');
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+  
+  updateActiveFilterBadges();
+}
+
+function updateActiveFilterBadges() {
+  const form = document.getElementById('filterForm');
+  const formData = new FormData(form);
+  const badgesContainer = document.getElementById('activeFilters');
+  badgesContainer.innerHTML = '';
+  
+  const filterLabels = {
+    'filter_bagian': 'Bagian',
+    'filter_vendor': 'Vendor',
+    'filter_kriteria_cf': 'Kriteria CF',
+    'filter_sub_kriteria': 'Sub Kriteria',
+    'filter_item_sub_kriteria': 'Item Sub Kriteria',
+    'filter_kebun': 'Kebun',
+    'year': 'Tahun',
+    'search': 'Pencarian',
+    'filter_age': 'Umur Dokumen'
+  };
+  
+  const filterAgeLabels = {
+    '1': '1 Hari',
+    '2': '2 Hari',
+    '3+': '3+ Hari'
+  };
+  
+  for (let [key, value] of formData.entries()) {
+    if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
+      const label = filterLabels[key] || key;
+      let displayValue = getFilterDisplayValue(key, value);
+      if (key === 'filter_age') {
+        displayValue = filterAgeLabels[value] || value;
+      }
+      const badge = document.createElement('span');
+      badge.className = 'filter-badge-item';
+      badge.innerHTML = `
+        <span>${label}: ${displayValue}</span>
+        <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      badgesContainer.appendChild(badge);
+    }
+  }
+}
+
+function getFilterDisplayValue(key, value) {
+  // Get display value from select options
+  const select = document.querySelector(`[name="${key}"]`);
+  if (select && select.options) {
+    const option = Array.from(select.options).find(opt => opt.value === value);
+    if (option) return option.text;
+  }
+  return value;
+}
+
+function removeFilter(key) {
+  const input = document.querySelector(`[name="${key}"]`);
+  if (input) {
+    input.value = '';
+    applyFilter();
+  }
+}
+
+// Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
+function updateSubKriteriaFilter() {
+  const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+  const subKriteriaSelect = document.getElementById('filterSubKriteria');
+  const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+  
+  // Enable/disable Sub Kriteria based on Kriteria CF selection
+  if (kriteriaCfId && kriteriaCfId !== '') {
+    subKriteriaSelect.disabled = false;
+    subKriteriaSelect.style.opacity = '1';
+    subKriteriaSelect.style.cursor = 'pointer';
+    
+    // Show/hide options based on selected kriteria CF
+    Array.from(subKriteriaSelect.options).forEach(option => {
+      if (option.value === '') {
+        option.style.display = 'block';
+        return;
+      }
+      const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+      if (kriteriaCfIdForOption === kriteriaCfId) {
+        option.style.display = 'block';
+      } else {
+        option.style.display = 'none';
+      }
+    });
+  } else {
+    // Disable Sub Kriteria and reset value if Kriteria CF is not selected
+    subKriteriaSelect.disabled = true;
+    subKriteriaSelect.style.opacity = '0.6';
+    subKriteriaSelect.style.cursor = 'not-allowed';
+    subKriteriaSelect.value = '';
+    
+    // Also disable and reset Item Sub Kriteria
+    itemSubKriteriaSelect.disabled = true;
+    itemSubKriteriaSelect.style.opacity = '0.6';
+    itemSubKriteriaSelect.style.cursor = 'not-allowed';
+    itemSubKriteriaSelect.value = '';
+    
+    // Show all options when disabled
+    Array.from(subKriteriaSelect.options).forEach(option => {
+      option.style.display = 'block';
+    });
+  }
+  
+  // Update Item Sub Kriteria filter
+  updateItemSubKriteriaFilter();
+}
+
+function updateItemSubKriteriaFilter() {
+  const subKriteriaId = document.getElementById('filterSubKriteria').value;
+  const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+  const subKriteriaSelect = document.getElementById('filterSubKriteria');
+  
+  // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
+  if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+    itemSubKriteriaSelect.disabled = false;
+    itemSubKriteriaSelect.style.opacity = '1';
+    itemSubKriteriaSelect.style.cursor = 'pointer';
+    
+    // Show/hide options based on selected sub kriteria
+    Array.from(itemSubKriteriaSelect.options).forEach(option => {
+      if (option.value === '') {
+        option.style.display = 'block';
+        return;
+      }
+      const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+      if (subKriteriaIdForOption === subKriteriaId) {
+        option.style.display = 'block';
+      } else {
+        option.style.display = 'none';
+      }
+    });
+  } else {
+    // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
+    itemSubKriteriaSelect.disabled = true;
+    itemSubKriteriaSelect.style.opacity = '0.6';
+    itemSubKriteriaSelect.style.cursor = 'not-allowed';
+    itemSubKriteriaSelect.value = '';
+    
+    // Show all options when disabled
+    Array.from(itemSubKriteriaSelect.options).forEach(option => {
+      option.style.display = 'block';
+    });
+  }
+}
+
+// View Switcher
+function switchView(view) {
+  // Update buttons
+  document.querySelectorAll('.view-switcher-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+  // Update views
+  document.getElementById('cardView').classList.toggle('active', view === 'card');
+  document.getElementById('tableView').classList.toggle('active', view === 'table');
+
+  // Save preference
+  localStorage.setItem('rekapanKeterlambatanView', view);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Load saved view preference
+  const savedView = localStorage.getItem('rekapanKeterlambatanView') || 'card';
+  switchView(savedView);
+  
+  // Initialize filter count and panel state
+  updateActiveFilterCount();
+  
+  // Initialize cascading dropdowns
+  updateSubKriteriaFilter();
+  updateItemSubKriteriaFilter();
+  
+  // Auto-expand filter panel if filters are active
+  const form = document.getElementById('filterForm');
+  const formData = new FormData(form);
+  let hasActiveFilters = false;
+  for (let [key, value] of formData.entries()) {
+    if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
+      hasActiveFilters = true;
+      break;
+    }
+  }
+  
+  if (hasActiveFilters) {
+    toggleFilterPanel();
+  }
+});
+</script>
 
 @endsection
 

@@ -2528,6 +2528,57 @@ class OwnerDashboardController extends Controller
             $query->where('dokumens.tahun', $request->year);
         }
 
+        // Apply advanced filters (similar to owner dashboard)
+        if ($request->has('filter_bagian') && $request->filter_bagian) {
+            $query->where('dokumens.bagian', $request->filter_bagian);
+        }
+
+        if ($request->has('filter_vendor') && $request->filter_vendor) {
+            $query->where(function ($q) use ($request) {
+                $q->where('dokumens.nama_pengirim', 'like', '%' . $request->filter_vendor . '%')
+                    ->orWhereHas('dibayarKepadas', function ($subQ) use ($request) {
+                        $subQ->where('nama_penerima', 'like', '%' . $request->filter_vendor . '%');
+                    });
+            });
+        }
+
+        if ($request->has('filter_kriteria_cf') && $request->filter_kriteria_cf) {
+            try {
+                $kriteria = \App\Models\KategoriKriteria::on('cash_bank')->find($request->filter_kriteria_cf);
+                if ($kriteria) {
+                    $query->where('dokumens.kategori', $kriteria->nama_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Cash_bank database not available for filter_kriteria_cf: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->has('filter_sub_kriteria') && $request->filter_sub_kriteria) {
+            try {
+                $subKriteria = \App\Models\SubKriteria::on('cash_bank')->find($request->filter_sub_kriteria);
+                if ($subKriteria) {
+                    $query->where('dokumens.jenis_dokumen', $subKriteria->nama_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Cash_bank database not available for filter_sub_kriteria: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->has('filter_item_sub_kriteria') && $request->filter_item_sub_kriteria) {
+            try {
+                $itemSubKriteria = \App\Models\ItemSubKriteria::on('cash_bank')->find($request->filter_item_sub_kriteria);
+                if ($itemSubKriteria) {
+                    $query->where('dokumens.jenis_sub_pekerjaan', $itemSubKriteria->nama_item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Cash_bank database not available for filter_item_sub_kriteria: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->has('filter_kebun') && $request->filter_kebun) {
+            $query->where('dokumens.kebun', $request->filter_kebun);
+        }
+
         // Order by received_at or sent_to_pembayaran_at
         if ($roleCode === 'pembayaran') {
             $query->orderByRaw('COALESCE(dokumen_role_data.received_at, dokumens.sent_to_pembayaran_at) ASC');
@@ -2535,7 +2586,57 @@ class OwnerDashboardController extends Controller
             $query->orderBy('dokumen_role_data.received_at', 'asc');
         }
         
-        $dokumens = $query->paginate(20)->appends($request->query());
+        // Get all documents first to calculate age and filter by age
+        $allDokumens = $query->get();
+        
+        // Calculate age for each document and filter by age if needed
+        $filterAge = $request->get('filter_age');
+        $filteredDokumens = $allDokumens->map(function ($dokumen) use ($now, $roleCode) {
+            // Get received_at from the joined dokumen_role_data or fallback
+            $receivedAt = null;
+            if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
+                $receivedAt = Carbon::parse($dokumen->delay_received_at);
+            } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
+                $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
+            } elseif ($dokumen->relationLoaded('roleData')) {
+                $roleData = $dokumen->roleData->firstWhere('role_code', $roleCode);
+                $receivedAt = $roleData?->received_at;
+            }
+            
+            $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
+            $ageDays = max(0, $ageDays);
+            $dokumen->age_days = $ageDays;
+            $dokumen->age_formatted = $this->formatAge($ageDays);
+            
+            return $dokumen;
+        });
+        
+        // Filter by age if filter_age is set
+        if ($filterAge) {
+            $filteredDokumens = $filteredDokumens->filter(function ($dokumen) use ($filterAge) {
+                $ageDays = $dokumen->age_days ?? 0;
+                if ($filterAge === '1') {
+                    return $ageDays <= 1;
+                } elseif ($filterAge === '2') {
+                    return $ageDays > 1 && $ageDays <= 2;
+                } elseif ($filterAge === '3+') {
+                    return $ageDays > 2;
+                }
+                return true;
+            });
+        }
+        
+        // Paginate the filtered results
+        $perPage = 20;
+        $currentPage = $request->get('page', 1);
+        $currentItems = $filteredDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $dokumens = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentItems,
+            $filteredDokumens->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         // Calculate card statistics berdasarkan umur dokumen sejak received_at
         $cardStats = [];
@@ -2629,27 +2730,9 @@ class OwnerDashboardController extends Controller
             ->pluck('tahun')
             ->toArray();
 
-        // Add age information to each document
-        $dokumens->getCollection()->transform(function ($dokumen) use ($now, $roleCode) {
-            // Get received_at from the joined dokumen_role_data or fallback
-            $receivedAt = null;
-            if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
-                $receivedAt = Carbon::parse($dokumen->delay_received_at);
-            } elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
-                // Fallback untuk pembayaran: gunakan sent_to_pembayaran_at
-                $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
-            } elseif ($dokumen->relationLoaded('roleData')) {
-                $roleData = $dokumen->roleData->firstWhere('role_code', $roleCode);
-                $receivedAt = $roleData?->received_at;
-            }
-            
-            $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
-            // Ensure age is not negative
-            $ageDays = max(0, $ageDays);
-            $dokumen->age_days = $ageDays;
-            $dokumen->age_formatted = $this->formatAge($ageDays);
-            return $dokumen;
-        });
+
+        // Get filter data for dropdowns
+        $filterData = $this->getFilterData();
 
         return view('owner.rekapanKeterlambatanByRole', compact(
             'dokumens',
@@ -2657,7 +2740,8 @@ class OwnerDashboardController extends Controller
             'totalDocuments',
             'availableYears',
             'roleConfig',
-            'roleCode'
+            'roleCode',
+            'filterData'
         ))
             ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
             ->with('module', 'owner')
