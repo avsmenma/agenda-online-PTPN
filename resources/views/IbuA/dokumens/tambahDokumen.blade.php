@@ -454,14 +454,21 @@
       </div>
       <div class="form-group">
         <label>Jenis Pembayaran</label>
-        <select name="jenis_pembayaran" id="jenis_pembayaran">
-          <option value="">Pilih Jenis Pembayaran</option>
-          @foreach($jenisPembayaranList as $jenisPembayaran)
-            <option value="{{ $jenisPembayaran->form_value }}" {{ old('jenis_pembayaran') == $jenisPembayaran->form_value ? 'selected' : '' }}>
-              {{ $jenisPembayaran->display_name }}
-            </option>
-          @endforeach
-        </select>
+        @if(isset($isJenisPembayaranAvailable) && $isJenisPembayaranAvailable && $jenisPembayaranList->count() > 0)
+          <select name="jenis_pembayaran" id="jenis_pembayaran">
+            <option value="">Pilih Jenis Pembayaran</option>
+            @foreach($jenisPembayaranList as $jenisPembayaran)
+              <option value="{{ $jenisPembayaran->form_value }}" {{ old('jenis_pembayaran') == $jenisPembayaran->form_value ? 'selected' : '' }}>
+                {{ $jenisPembayaran->display_name }}
+              </option>
+            @endforeach
+          </select>
+        @else
+          <input type="text" name="jenis_pembayaran" id="jenis_pembayaran" value="{{ old('jenis_pembayaran') }}" placeholder="Masukkan Jenis Pembayaran">
+          <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
+            <i class="fas fa-info-circle"></i> Database jenis pembayaran tidak tersedia. Silakan isi manual sesuai kebutuhan.
+          </small>
+        @endif
         @error('jenis_pembayaran')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
@@ -491,6 +498,16 @@
         <label>Jenis Sub Pekerjaan</label>
         <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan') }}" placeholder="Masukkan Jenis Sub Pekerjaan">
         @error('jenis_sub_pekerjaan')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+      <div class="form-group">
+        <label>Jenis Pembayaran</label>
+        <input type="text" name="jenis_pembayaran" id="jenis_pembayaran" value="{{ old('jenis_pembayaran') }}" placeholder="Masukkan Jenis Pembayaran">
+        <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
+          <i class="fas fa-info-circle"></i> Database jenis pembayaran tidak tersedia. Silakan isi manual sesuai kebutuhan.
+        </small>
+        @error('jenis_pembayaran')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>

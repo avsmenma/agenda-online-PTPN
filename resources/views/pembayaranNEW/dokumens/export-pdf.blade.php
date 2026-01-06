@@ -219,8 +219,8 @@
                                             case 'jenis_sub_pekerjaan':
                                                 $value = $doc->jenis_sub_pekerjaan ?? '-';
                                                 break;
-                                            case 'nomor_mirror':
-                                                $value = $doc->nomor_mirror ?? '-';
+                                            case 'nomor_miro':
+                                                $value = $doc->nomor_miro ?? '-';
                                                 break;
                                             case 'uraian_spp':
                                                 $value = $doc->uraian_spp ?? '-';
@@ -404,8 +404,8 @@
                                         case 'jenis_sub_pekerjaan':
                                             $value = $dokumen->jenis_sub_pekerjaan ?? '-';
                                             break;
-                                        case 'nomor_mirror':
-                                            $value = $dokumen->nomor_mirror ?? '-';
+                                        case 'nomor_miro':
+                                            $value = $dokumen->nomor_miro ?? '-';
                                             break;
                                         case 'uraian_spp':
                                             $value = $dokumen->uraian_spp ?? '-';

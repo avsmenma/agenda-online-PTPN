@@ -1197,7 +1197,7 @@
                               {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
                             @elseif($col == 'nilai_rupiah')
                               Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
-                            @elseif($col == 'nomor_mirror')
+                            @elseif($col == 'nomor_miro')
                               MIR-{{ 1000 + $i }}
                             @elseif($col == 'uraian_spp')
                               Contoh uraian SPP ke {{ $i }}
@@ -2502,7 +2502,7 @@ function populateDocumentDetail(data) {
     document.getElementById('view-no-spk').textContent = data.no_spk || '-';
     document.getElementById('view-tanggal-spk').textContent = formatDate(data.tanggal_spk);
     document.getElementById('view-tanggal-berakhir-spk').textContent = formatDate(data.tanggal_berakhir_spk);
-    document.getElementById('view-nomor-mirror').textContent = data.nomor_mirror || '-';
+    document.getElementById('view-nomor-miro').textContent = data.nomor_miro || '-';
     document.getElementById('view-no-berita-acara').textContent = data.no_berita_acara || '-';
     document.getElementById('view-tanggal-berita-acara').textContent = formatDate(data.tanggal_berita_acara);
     
@@ -2844,8 +2844,8 @@ function terbilangSatuan(number, angka) {
               </div>
               <div class="col-md-3">
                 <div class="detail-item">
-                  <label class="detail-label">No. Mirror</label>
-                  <div class="detail-value" id="view-nomor-mirror">-</div>
+                  <label class="detail-label">Nomor Miro</label>
+                  <div class="detail-value" id="view-nomor-miro">-</div>
                 </div>
               </div>
               <div class="col-md-6">

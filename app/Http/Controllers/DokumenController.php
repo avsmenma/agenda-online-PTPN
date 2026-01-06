@@ -227,14 +227,17 @@ class DokumenController extends Controller
 
         // Ambil data jenis pembayaran dari database cash_bank_new
         $jenisPembayaranList = collect([]);
+        $isJenisPembayaranAvailable = false;
         try {
             $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
+            $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
             \Log::info('Jenis Pembayaran fetched (create): ' . $jenisPembayaranList->count() . ' records');
         } catch (\Exception $e) {
             \Log::error('Error fetching jenis pembayaran data (create): ' . $e->getMessage());
             \Log::error('Error trace: ' . $e->getTraceAsString());
             // Fallback: gunakan collection kosong jika error
             $jenisPembayaranList = collect([]);
+            $isJenisPembayaranAvailable = false;
         }
         
         $data = array(
@@ -250,6 +253,7 @@ class DokumenController extends Controller
             "itemSubKriteria" => $itemSubKriteria,
             "isDropdownAvailable" => $isDropdownAvailable,
             "jenisPembayaranList" => $jenisPembayaranList,
+            "isJenisPembayaranAvailable" => $isJenisPembayaranAvailable,
         );
         return view('IbuA.dokumens.tambahDokumen', $data);
     }
@@ -312,7 +316,6 @@ class DokumenController extends Controller
                 'no_spk' => $dokumen->no_spk,
                 'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
                 'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
-                'nomor_mirror' => $dokumen->nomor_mirror,
                 'nomor_miro' => $dokumen->nomor_miro,
                 'no_berita_acara' => $dokumen->no_berita_acara,
                 'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,

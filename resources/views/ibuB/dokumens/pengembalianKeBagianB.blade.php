@@ -1018,8 +1018,8 @@
               </div>
               <div class="col-md-3">
                 <div class="form-group">
-                  <label class="form-label-custom">No. Mirror</label>
-                  <input type="text" class="form-control-custom" id="edit-nomor-mirror" name="nomor_mirror">
+                  <label class="form-label-custom">Nomor Miro</label>
+                  <input type="text" class="form-control-custom" id="edit-nomor-miro" name="nomor_miro">
                 </div>
               </div>
               <div class="col-md-6">
@@ -1289,8 +1289,8 @@ function openEditModal(docId) {
   const tanggalBerakhirSpk = dokumen.tanggal_berakhir_spk ? formatDate(dokumen.tanggal_berakhir_spk) : '';
   document.getElementById('edit-tanggal-berakhir-spk').value = tanggalBerakhirSpk;
   
-  // Load nomor mirror
-  document.getElementById('edit-nomor-mirror').value = dokumen.nomor_mirror || '';
+  // Load nomor miro
+  document.getElementById('edit-nomor-miro').value = dokumen.nomor_miro || '';
   
   // Load no berita acara
   document.getElementById('edit-no-berita-acara').value = dokumen.no_berita_acara || '';
@@ -1429,7 +1429,7 @@ document.getElementById('editDokumenForm').addEventListener('submit', function(e
   formDataToSend.append('no_spk', document.getElementById('edit-no-spk').value);
   formDataToSend.append('tanggal_spk', document.getElementById('edit-tanggal-spk').value);
   formDataToSend.append('tanggal_berakhir_spk', document.getElementById('edit-tanggal-berakhir-spk').value);
-  formDataToSend.append('nomor_mirror', document.getElementById('edit-nomor-mirror').value);
+  formDataToSend.append('nomor_miro', document.getElementById('edit-nomor-miro').value);
   formDataToSend.append('no_berita_acara', document.getElementById('edit-no-berita-acara').value);
   formDataToSend.append('tanggal_berita_acara', document.getElementById('edit-tanggal-berita-acara').value);
   formDataToSend.append('keterangan', document.getElementById('edit-keterangan').value);
@@ -1793,7 +1793,7 @@ function generateDocumentDetailHtml(dokumen) {
     'Tanggal Berakhir SPK': dokumen.tanggal_berakhir_spk ? formatDate(dokumen.tanggal_berakhir_spk) : '-',
     'No Berita Acara': dokumen.no_berita_acara || '-',
     'Tanggal Berita Acara': dokumen.tanggal_berita_acara ? formatDate(dokumen.tanggal_berita_acara) : '-',
-    'No Mirror': dokumen.nomor_mirror || '-',
+    'Nomor Miro': dokumen.nomor_miro || '-',
   };
 
   // Add PO/PR numbers if available

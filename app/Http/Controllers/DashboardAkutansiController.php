@@ -1167,7 +1167,7 @@ class DashboardAkutansiController extends Controller
                     'no_spk' => $dokumen->no_spk,
                     'tanggal_spk' => $dokumen->tanggal_spk,
                     'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
-                    'nomor_mirror' => $dokumen->nomor_mirror,
+                    'nomor_miro' => $dokumen->nomor_miro,
                     'no_berita_acara' => $dokumen->no_berita_acara,
                     'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
                     'dokumen_pos' => $dokumen->dokumenPos->map(fn($po) => ['nomor_po' => $po->nomor_po]),

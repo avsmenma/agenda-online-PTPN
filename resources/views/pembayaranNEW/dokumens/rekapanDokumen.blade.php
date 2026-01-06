@@ -1626,8 +1626,8 @@
                         @case('uraian_spp')
                             {{ $doc->uraian_spp ?? '-' }}
                             @break
-                        @case('nomor_mirror')
-                          {{ $doc->nomor_mirror ?? '-' }}
+                        @case('nomor_miro')
+                          {{ $doc->nomor_miro ?? '-' }}
                           @break
                         @case('nomor_spp')
                           {{ $doc->nomor_spp ?? '-' }}

@@ -970,7 +970,7 @@
                 <div><strong>Tanggal Berakhir SPK:</strong> <span id="view-tanggal-berakhir-spk">-</span></div>
               </div>
               <div class="col-md-3">
-                <div><strong>No. Mirror:</strong> <span id="view-nomor-mirror">-</span></div>
+                <div><strong>Nomor Miro:</strong> <span id="view-nomor-miro">-</span></div>
               </div>
               <div class="col-md-6">
                 <div><strong>No. Berita Acara:</strong> <span id="view-no-berita-acara">-</span></div>
@@ -1289,7 +1289,7 @@ function populateDocumentDetail(data) {
   document.getElementById('view-no-spk').textContent = data.no_spk || '-';
   document.getElementById('view-tanggal-spk').textContent = formatDate(data.tanggal_spk_date || data.tanggal_spk);
   document.getElementById('view-tanggal-berakhir-spk').textContent = formatDate(data.tanggal_berakhir_spk_date || data.tanggal_berakhir_spk);
-  document.getElementById('view-nomor-mirror').textContent = data.nomor_mirror || '-';
+  document.getElementById('view-nomor-miro').textContent = data.nomor_miro || '-';
   document.getElementById('view-no-berita-acara').textContent = data.no_berita_acara || '-';
   document.getElementById('view-tanggal-berita-acara').textContent = formatDate(data.tanggal_berita_acara_date || data.tanggal_berita_acara);
   

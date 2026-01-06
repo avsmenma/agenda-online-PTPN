@@ -2185,7 +2185,7 @@ class OwnerDashboardController extends Controller
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
             'No PO' => $dokumen->dokumenPos->count() > 0 ? htmlspecialchars($dokumen->dokumenPos->pluck('nomor_po')->join(', ')) : '-',
             'No PR' => $dokumen->dokumenPrs->count() > 0 ? htmlspecialchars($dokumen->dokumenPrs->pluck('nomor_pr')->join(', ')) : '-',
-            'No Mirror' => $dokumen->nomor_mirror ?? '-',
+            'Nomor Miro' => $dokumen->nomor_miro ?? '-',
             'Status' => $this->getStatusDisplayName($dokumen->status),
             'Current Handler' => $this->getRoleDisplayName($dokumen->current_handler),
         ];

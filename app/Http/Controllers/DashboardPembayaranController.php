@@ -3076,7 +3076,7 @@ class DashboardPembayaranController extends Controller
                 'tanggal_berakhir_spk_date' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
                 'no_po' => $dokumen->dokumenPos->count() > 0 ? $dokumen->dokumenPos->pluck('nomor_po')->join(', ') : '-',
                 'no_pr' => $dokumen->dokumenPrs->count() > 0 ? $dokumen->dokumenPrs->pluck('nomor_pr')->join(', ') : '-',
-                'nomor_mirror' => $dokumen->nomor_mirror ?? '-',
+                'nomor_miro' => $dokumen->nomor_miro ?? '-',
                 'status' => $dokumen->status,
                 'status_display' => $this->getStatusDisplayName($dokumen->status),
                 'payment_status' => $paymentStatus,
@@ -3131,7 +3131,7 @@ class DashboardPembayaranController extends Controller
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
             'No PO' => $dokumen->dokumenPos->count() > 0 ? htmlspecialchars($dokumen->dokumenPos->pluck('nomor_po')->join(', ')) : '-',
             'No PR' => $dokumen->dokumenPrs->count() > 0 ? htmlspecialchars($dokumen->dokumenPrs->pluck('nomor_pr')->join(', ')) : '-',
-            'No Mirror' => $dokumen->nomor_mirror ?? '-',
+            'Nomor Miro' => $dokumen->nomor_miro ?? '-',
         ];
 
         foreach ($detailItems as $label => $value) {

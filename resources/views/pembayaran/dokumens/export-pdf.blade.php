@@ -171,8 +171,8 @@
                                     case 'jenis_sub_pekerjaan':
                                         $value = $dokumen->jenis_sub_pekerjaan ?? '-';
                                         break;
-                                    case 'nomor_mirror':
-                                        $value = $dokumen->nomor_mirror ?? '-';
+                                    case 'nomor_miro':
+                                        $value = $dokumen->nomor_miro ?? '-';
                                         break;
                                     case 'tanggal_spp':
                                         $value = $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-';
