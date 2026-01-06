@@ -20,14 +20,16 @@ class DokumenHelper
 
         // Dokumen yang sedang menunggu approval tidak bisa diedit
         // TAPI untuk perpajakan, dokumen yang sudah dikirim ke akutansi/pembayaran tidak terkunci
-        if (in_array($dokumen->status, [
-            'waiting_reviewer_approval',
-            'pending_approval_ibub',
-            'pending_approval_perpajakan',
-        ])) {
+        if (
+            in_array($dokumen->status, [
+                'waiting_reviewer_approval',
+                'pending_approval_ibub',
+                'pending_approval_perpajakan',
+            ])
+        ) {
             return true; // Lock dokumen yang sedang menunggu approval
         }
-        
+
         // Untuk 'menunggu_di_approve' (status untuk pembayaran),
         // JANGAN lock dokumen yang sudah dikirim ke pembayaran dari role manapun
         // Dokumen dengan status ini berarti sedang menunggu approval di inbox pembayaran
@@ -43,7 +45,7 @@ class DokumenHelper
             // Switch case untuk 'akutansi' dan 'perpajakan' akan return false untuk dokumen dengan status ini
             // Tidak perlu return true di sini, biarkan switch case yang menangani
         }
-        
+
         // Untuk pending_approval_akutansi dan pending_approval_pembayaran,
         // JANGAN lock dokumen yang sudah dikirim dari role pengirim
         // Logika locking akan di-handle di switch case berdasarkan current_handler
@@ -65,16 +67,18 @@ class DokumenHelper
         $hasPendingStatus = $dokumen->roleStatuses()
             ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
             ->exists();
-        
+
         if ($hasPendingStatus) {
             // Jika current_handler adalah perpajakan dan status adalah pending_approval_akutansi/pembayaran/menunggu_di_approve,
             // berarti dokumen sudah dikirim dari perpajakan, jadi tidak lock
-            if ($dokumen->current_handler === 'perpajakan' && 
+            if (
+                $dokumen->current_handler === 'perpajakan' &&
                 in_array($dokumen->status, [
-                    'pending_approval_akutansi', 
+                    'pending_approval_akutansi',
                     'pending_approval_pembayaran',
                     'menunggu_di_approve' // Status untuk pembayaran
-                ])) {
+                ])
+            ) {
                 // Dokumen sudah dikirim, tidak lock (akan di-handle di switch case nanti)
             } else {
                 return true; // Lock dokumen yang memiliki pending status
@@ -100,11 +104,11 @@ class DokumenHelper
 
         // Base condition: must be sent to department without deadline
         $isLocked = !$hasDeadline &&
-                   in_array($dokumen->status, [
-                       'sent_to_ibub',
-                       'sedang diproses', // Dokumen yang baru di-approve dari inbox IbuB
-                       'sent_to_perpajakan'
-                   ]);
+            in_array($dokumen->status, [
+                'sent_to_ibub',
+                'sedang diproses', // Dokumen yang baru di-approve dari inbox IbuB
+                'sent_to_perpajakan'
+            ]);
 
         // NEW SYSTEM: Documents are NO LONGER locked after approval
         // Deadline is now determined by database config and calculated from received_at (count up)
@@ -150,7 +154,7 @@ class DokumenHelper
     public static function getLockedStatusMessage(Dokumen $dokumen): string
     {
         if (self::isDocumentLocked($dokumen)) {
-            $handlerName = match($dokumen->current_handler) {
+            $handlerName = match ($dokumen->current_handler) {
                 'ibuB' => 'Ibu Yuni',
                 'akutansi' => 'Team Akutansi',
                 'perpajakan' => 'Team Perpajakan',
@@ -181,13 +185,15 @@ class DokumenHelper
         }
 
         // Dokumen yang sedang menunggu approval tidak bisa diedit
-        if (in_array($dokumen->status, [
-            'menunggu_di_approve',
-            'waiting_reviewer_approval',
-            'pending_approval_ibub',
-            'pending_approval_perpajakan',
-            'pending_approval_akutansi'
-        ])) {
+        if (
+            in_array($dokumen->status, [
+                'menunggu_di_approve',
+                'waiting_reviewer_approval',
+                'pending_approval_ibub',
+                'pending_approval_perpajakan',
+                'pending_approval_akutansi'
+            ])
+        ) {
             return false;
         }
 
@@ -195,14 +201,46 @@ class DokumenHelper
         $hasPendingStatus = $dokumen->roleStatuses()
             ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
             ->exists();
-        
+
         if ($hasPendingStatus) {
             return false; // Cannot edit document with pending status
         }
 
         // If user role is provided, check if they can edit
         if ($userRole) {
-            return strtolower($dokumen->current_handler) === strtolower($userRole);
+            $userRoleLower = strtolower($userRole);
+            $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
+
+            // Khusus untuk role pembayaran: bisa edit dokumen yang sudah di pembayaran
+            // baik berdasarkan current_handler maupun berdasarkan status dokumen
+            if ($userRoleLower === 'pembayaran') {
+                // Cek apakah current_handler adalah pembayaran
+                if ($currentHandlerLower === 'pembayaran') {
+                    return true;
+                }
+
+                // Cek apakah dokumen sudah dikirim ke pembayaran
+                if ($dokumen->status === 'sent_to_pembayaran') {
+                    return true;
+                }
+
+                // Cek computed_status untuk siap_bayar atau sudah_dibayar
+                $computedStatus = strtolower($dokumen->computed_status ?? '');
+                if (in_array($computedStatus, ['siap_bayar', 'siap_dibayar', 'sudah_dibayar'])) {
+                    return true;
+                }
+
+                // Cek status_pembayaran jika ada
+                $statusPembayaran = strtolower($dokumen->status_pembayaran ?? '');
+                if (in_array($statusPembayaran, ['siap_bayar', 'siap_dibayar', 'sudah_dibayar'])) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            // Untuk role lain, gunakan logic standar
+            return $currentHandlerLower === $userRoleLower;
         }
 
         return true;
@@ -254,7 +292,7 @@ class DokumenHelper
         }
 
         // Check document status based on handler
-        $validStatuses = match($dokumen->current_handler) {
+        $validStatuses = match ($dokumen->current_handler) {
             'ibuB' => ['sent_to_ibub', 'sedang diproses'], // Include 'sedang diproses' for newly approved from inbox
             'akutansi' => ['sent_to_akutansi', 'approved_data_sudah_terkirim'],
             'perpajakan' => ['sent_to_perpajakan'], // Dokumen yang baru di-approve dari inbox Perpajakan
