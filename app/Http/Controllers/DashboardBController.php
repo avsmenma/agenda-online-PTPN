@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use App\Http\Requests\SetDeadlineRequest;
 use App\Models\Dokumen;
+use App\Models\DokumenStatus;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
 use App\Models\Bidang;
