@@ -155,7 +155,6 @@ class DashboardPerpajakanController extends Controller
                     ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
                     ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
                     ->orWhere('no_spk', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
                     ->orWhere('nomor_miro', 'like', '%' . $search . '%')
                     ->orWhere('keterangan', 'like', '%' . $search . '%')
                     ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
@@ -308,7 +307,7 @@ class DashboardPerpajakanController extends Controller
             'nomor_spp' => 'Nomor SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Miro',
+            'nomor_miro' => 'Nomor Miro',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kategori',
@@ -362,7 +361,7 @@ class DashboardPerpajakanController extends Controller
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_mirror'
+                'nomor_miro'
             ];
 
             if ($user && isset($user->table_columns_preferences['perpajakan'])) {
@@ -1750,7 +1749,6 @@ class DashboardPerpajakanController extends Controller
             'jenis_dokumen',
             'no_berita_acara',
             'no_spk',
-            'nomor_mirror',
             'nomor_miro',
             'keterangan',
             'dibayar_kepada'
