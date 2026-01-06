@@ -495,6 +495,59 @@
     border-color: #083E40;
   }
 
+  /* Department Badge Styles */
+  .dept-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .dept-badge.pembayaran {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  }
+
+  .dept-badge.akutansi {
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+  }
+
+  .dept-badge.rejected {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .btn-action {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-action.btn-fix {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: white;
+  }
+
+  .btn-action.btn-fix:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .stats-container {
@@ -597,64 +650,112 @@
         <table class="table">
           <thead>
             <tr>
-              <th>No</th>
+              <th style="width: 50px;">No</th>
               <th>Nomor Agenda</th>
               <th>Nomor SPP</th>
               <th>Uraian</th>
-              <th>Nilai</th>
-              <th>Status Dokumen</th>
-              <th>Tanggal Dikembalikan</th>
+              <th>Nilai Rupiah</th>
+              <th>TGL DOKUMEN MASUK</th>
+              <th>Dari</th>
               <th>Alasan</th>
+              <th style="width: 200px;">Aksi</th>
             </tr>
           </thead>
           <tbody>
             @foreach($dokumens as $index => $dokumen)
-            <tr class="main-row" data-id="{{ $dokumen->id }}" onclick="event.stopPropagation(); toggleDetail({{ $dokumen->id }});">
+            <tr class="main-row" onclick="openViewDocumentModal({{ $dokumen->id }})" style="cursor: pointer;">
               <td>{{ $dokumens->firstItem() + $index }}</td>
-              <td class="nomor-column">
-                <strong>{{ $dokumen->nomor_agenda }}</strong>
-                <br>
-                <small class="text-muted" style="font-size: 11px;">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
-              </td>
+              <td class="nomor-column">{{ $dokumen->nomor_agenda }}</td>
               <td class="nomor-column">{{ $dokumen->nomor_spp }}</td>
-              <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>
+              <td class="uraian-column">{{ \Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 50) }}</td>
               <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
-              <td>
-                @if($dokumen->current_handler == 'akutansi')
-                  <span class="badge-status badge-success">
-                    <i class="fa-solid fa-check-circle"></i>
-                    Sudah diperbaiki
-                  </span>
+              <td class="tanggal-column">
+                @php
+                  // Cari rejected status dari pembayaran atau akutansi
+                  $rejectedStatus = $dokumen->roleStatuses()
+                    ->whereIn('role_code', ['pembayaran', 'akutansi'])
+                    ->where('status', 'rejected')
+                    ->latest('status_changed_at')
+                    ->first();
+                  
+                  $tanggalTerima = null;
+                  if ($rejectedStatus && $rejectedStatus->status_changed_at) {
+                    $tanggalTerima = $rejectedStatus->status_changed_at;
+                  } elseif ($dokumen->department_returned_at) {
+                    $tanggalTerima = $dokumen->department_returned_at;
+                  }
+                @endphp
+                @if($tanggalTerima)
+                  <small>{{ \Carbon\Carbon::parse($tanggalTerima)->format('d/m/Y H:i') }}</small>
                 @else
-                  <span class="badge-status badge-returned">
-                    <i class="fa-solid fa-clock"></i>
-                    Menunggu perbaikan
-                  </span>
+                  <small>-</small>
                 @endif
               </td>
-              <td class="tanggal-column">
-                <small>
-                  @if($dokumen->department_returned_at)
-                    {{ $dokumen->department_returned_at->format('d/m/Y H:i') }}
-                  @else
-                    -
-                  @endif
-                </small>
+              <td class="dari-column">
+                @php
+                  // Cari rejected status dari pembayaran atau akutansi
+                  $rejectedStatus = $dokumen->roleStatuses()
+                    ->whereIn('role_code', ['pembayaran', 'akutansi'])
+                    ->where('status', 'rejected')
+                    ->latest('status_changed_at')
+                    ->first();
+                  
+                  $dariRole = null;
+                  if ($rejectedStatus) {
+                    $dariRole = $rejectedStatus->role_code;
+                  } elseif ($dokumen->target_department) {
+                    $dariRole = $dokumen->target_department;
+                  }
+                @endphp
+                @if($dariRole == 'pembayaran')
+                  <span class="dept-badge pembayaran rejected">
+                    <i class="fa-solid fa-times-circle me-1"></i>Team Pembayaran
+                  </span>
+                @elseif($dariRole == 'akutansi')
+                  <span class="dept-badge akutansi rejected">
+                    <i class="fa-solid fa-times-circle me-1"></i>Team Akutansi
+                  </span>
+                @elseif($dariRole)
+                  <span class="dept-badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+                    <i class="fa-solid fa-building me-1"></i>{{ ucfirst($dariRole) }}
+                  </span>
+                @else
+                  <small class="text-muted">-</small>
+                @endif
               </td>
               <td class="alasan-column">
+                @php
+                  // Cari rejected status dari pembayaran atau akutansi untuk mendapatkan alasan
+                  $rejectedStatus = $dokumen->roleStatuses()
+                    ->whereIn('role_code', ['pembayaran', 'akutansi'])
+                    ->where('status', 'rejected')
+                    ->latest('status_changed_at')
+                    ->first();
+                  
+                  $alasan = '';
+                  if ($rejectedStatus && $rejectedStatus->notes) {
+                    // Ambil alasan dari dokumen_statuses table (notes)
+                    $alasan = $rejectedStatus->notes;
+                  } elseif ($dokumen->department_return_reason) {
+                    $alasan = $dokumen->department_return_reason;
+                  } elseif ($dokumen->alasan_pengembalian) {
+                    // Fallback ke alasan_pengembalian
+                    $alasan = $dokumen->alasan_pengembalian;
+                  } else {
+                    $alasan = '-';
+                  }
+                @endphp
                 <div class="alasan-bubble">
-                  <i class="fa-solid fa-comment-dots alasan-icon"></i>
-                  <span class="alasan-text">{{ $dokumen->alasan_pengembalian ?? '-' }}</span>
+                  <i class="fa-solid fa-exclamation-circle alasan-icon"></i>
+                  <div class="alasan-text">{{ \Illuminate\Support\Str::limit($alasan, 100) }}</div>
                 </div>
               </td>
-            </tr>
-            <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none !important;">
-              <td colspan="8" style="padding: 0;">
-                <div class="detail-content" id="detail-content-{{ $dokumen->id }}" style="padding: 24px;">
-                  <div class="text-center p-4">
-                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-                    <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-                  </div>
+              <td onclick="event.stopPropagation()">
+                <div class="action-buttons">
+                  <a href="{{ route('documents.akutansi.edit', $dokumen->id) }}" class="btn-action btn-fix" title="Perbaiki Data" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-wrench"></i>
+                    <span>Perbaiki Data</span>
+                  </a>
                 </div>
               </td>
             </tr>
@@ -684,102 +785,125 @@
 </div>
 
 <script>
-// Prevent event bubbling issues and ensure proper event handling
-document.addEventListener('DOMContentLoaded', function() {
-  // Close all detail rows when clicking outside
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.table-dokumen tbody tr')) {
-      const openRows = document.querySelectorAll('.detail-row.show');
-      openRows.forEach(row => {
-        row.style.display = 'none';
-        row.classList.remove('show');
-        const docId = row.id.replace('detail-', '');
-        const mainRow = document.querySelector(`tr.main-row[data-id="${docId}"]`);
-        if (mainRow) {
-          mainRow.classList.remove('selected');
-        }
-      });
-    }
-  });
-
-  // Handle row clicks
-  const mainRows = document.querySelectorAll('.table-dokumen tbody tr.main-row');
-  mainRows.forEach(row => {
-    row.addEventListener('click', function(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      const docId = this.getAttribute('data-id');
-      if (docId) {
-        toggleDetail(parseInt(docId));
-      }
-    });
-  });
-});
-
-function toggleDetail(docId) {
-  const detailRow = document.getElementById('detail-' + docId);
-  const mainRow = document.querySelector(`tr.main-row[data-id="${docId}"]`);
-
-  if (!detailRow) {
-    console.error('Detail row not found for document:', docId);
-    return;
-  }
-
-  // Close all other detail rows first
-  const allDetailRows = document.querySelectorAll('.detail-row.show');
-  allDetailRows.forEach(row => {
-    if (row.id !== 'detail-' + docId) {
-      row.style.display = 'none';
-      row.classList.remove('show');
-      const otherDocId = row.id.replace('detail-', '');
-      const otherMainRow = document.querySelector(`tr.main-row[data-id="${otherDocId}"]`);
-      if (otherMainRow) {
-        otherMainRow.classList.remove('selected');
-      }
-    }
-  });
-
-  // Toggle visibility
-  const isHidden = detailRow.style.display === 'none' || !detailRow.classList.contains('show');
-  
-  if (isHidden) {
-    // Show detail row
-    detailRow.style.display = 'table-row';
-    detailRow.classList.add('show');
-    
-    // Add selected class to main row
-    if (mainRow) {
-      mainRow.classList.add('selected');
-    }
-
-    // Scroll to detail row
-    detailRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    // Load detail content via AJAX
-    loadDocumentDetail(docId);
-  } else {
-    // Hide detail row
-    detailRow.style.display = 'none';
-    detailRow.classList.remove('show');
-    
-    // Remove selected class from main row
-    if (mainRow) {
-      mainRow.classList.remove('selected');
-    }
-  }
+// Format date helper
+function formatDate(dateString) {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function loadDocumentDetail(docId) {
-  const detailContent = document.getElementById(`detail-content-${docId}`);
-  
-  // Show loading
-  detailContent.innerHTML = `
-    <div class="text-center p-4">
-      <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-      <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-    </div>
-  `;
+// Format datetime helper
+function formatDateTime(dateString) {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
+// Format number helper
+function formatNumber(num) {
+  if (!num) return '0';
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Function to convert number to Indonesian terbilang
+function terbilangRupiah(number) {
+  number = parseFloat(number) || 0;
+  
+  if (number == 0) {
+    return 'nol rupiah';
+  }
+
+  const angka = [
+    '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+    'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+    'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+    'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+  ];
+
+  let hasil = '';
+
+  // Handle triliun
+  if (number >= 1000000000000) {
+    const triliun = Math.floor(number / 1000000000000);
+    hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+    number = number % 1000000000000;
+  }
+
+  // Handle milyar
+  if (number >= 1000000000) {
+    const milyar = Math.floor(number / 1000000000);
+    hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+    number = number % 1000000000;
+  }
+
+  // Handle juta
+  if (number >= 1000000) {
+    const juta = Math.floor(number / 1000000);
+    hasil += terbilangSatuan(juta, angka) + ' juta ';
+    number = number % 1000000;
+  }
+
+  // Handle ribu
+  if (number >= 1000) {
+    const ribu = Math.floor(number / 1000);
+    if (ribu == 1) {
+      hasil += 'seribu ';
+    } else {
+      hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+    }
+    number = number % 1000;
+  }
+
+  // Handle ratusan, puluhan, dan satuan
+  if (number > 0) {
+    hasil += terbilangSatuan(number, angka);
+  }
+
+  return hasil.trim() + ' rupiah';
+}
+
+function terbilangSatuan(number, angka) {
+  let hasil = '';
+  number = parseInt(number);
+  
+  if (number >= 100) {
+    const ratus = Math.floor(number / 100);
+    if (ratus == 1) {
+      hasil += 'seratus ';
+    } else {
+      hasil += angka[ratus] + ' ratus ';
+    }
+    number = number % 100;
+  }
+  
+  if (number >= 20) {
+    const puluh = Math.floor(number / 10);
+    hasil += angka[puluh] + ' puluh ';
+    number = number % 10;
+  }
+  
+  if (number > 0) {
+    hasil += angka[number] + ' ';
+  }
+  
+  return hasil.trim();
+}
+
+// Open View Document Modal
+function openViewDocumentModal(docId) {
+  // Set document ID
+  document.getElementById('view-dokumen-id').value = docId;
+  
+  // Set edit button URL
+  document.getElementById('view-edit-btn').href = `/documents/akutansi/${docId}/edit`;
+  
+  // Load document data via AJAX
   fetch(`/documents/akutansi/${docId}/detail`, {
     headers: {
       'Accept': 'application/json',
@@ -793,79 +917,156 @@ function loadDocumentDetail(docId) {
       return response.json();
     })
     .then(data => {
-      if (detailContent && data.success && data.dokumen) {
-        // Generate HTML from JSON data
-        const html = generateDetailHtml(data.dokumen);
-        detailContent.innerHTML = html;
+      console.log('Document data received:', data);
+      if (data.success && data.dokumen) {
+        const dok = data.dokumen;
+
+        // Identitas Dokumen
+        document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
+        document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
+        document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
+        document.getElementById('view-bulan').textContent = dok.bulan || '-';
+        document.getElementById('view-tahun').textContent = dok.tahun || '-';
+        document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
+        document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
+        document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
+        document.getElementById('view-kategori').textContent = dok.kategori || '-';
+        document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+
+        // Detail Keuangan & Vendor
+        document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
+        document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+        // Ejaan nilai rupiah
+        if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
+          document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
+        } else {
+          document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+        }
+        document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
+        document.getElementById('view-kebun').textContent = dok.kebun || '-';
+
+        // Referensi Pendukung
+        document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
+        document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
+        document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
+        document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+        document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
+        document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+
+        // Nomor PO & PR
+        const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
+          ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
+          : '-';
+        const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
+          ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
+          : '-';
+        document.getElementById('view-nomor-po').textContent = poList;
+        document.getElementById('view-nomor-pr').textContent = prList;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+        modal.show();
       } else {
         throw new Error('Invalid response format');
       }
     })
     .catch(error => {
       console.error('Error loading document detail:', error);
-      if (detailContent) {
-        detailContent.innerHTML = '<div class="text-center p-4 text-danger"><i class="fa-solid fa-exclamation-triangle me-2"></i>Gagal memuat detail dokumen</div>';
-      }
+      alert('Gagal memuat detail dokumen: ' + error.message);
     });
 }
-
-function generateDetailHtml(dokumen) {
-  let html = '<div class="detail-grid">';
-  
-  // Document Information Section
-  const detailItems = {
-    'Tanggal Masuk': dokumen.tanggal_masuk || '-',
-    'Bulan': dokumen.bulan || '-',
-    'Tahun': dokumen.tahun || '-',
-    'No SPP': dokumen.nomor_spp || '-',
-    'Tanggal SPP': dokumen.tanggal_spp || '-',
-    'Uraian SPP': dokumen.uraian_spp || '-',
-    'Nilai Rp': formatRupiah(dokumen.nilai_rupiah) || '-',
-    'Kriteria CF': dokumen.kategori || '-',
-    'Jenis Dokumen': dokumen.jenis_dokumen || '-',
-    'Jenis Sub Pekerjaan': dokumen.jenis_sub_pekerjaan || '-',
-    'Jenis Pembayaran': dokumen.jenis_pembayaran || '-',
-    'Dibayar Kepada': dokumen.dibayar_kepada || '-',
-    'Kebun': dokumen.kebun || '-',
-    'No SPK': dokumen.no_spk || '-',
-    'Tanggal SPK': dokumen.tanggal_spk || '-',
-    'Tanggal Berakhir SPK': dokumen.tanggal_berakhir_spk || '-',
-    'No Berita Acara': dokumen.no_berita_acara || '-',
-    'Tanggal Berita Acara': dokumen.tanggal_berita_acara || '-',
-  };
-
-  // Add PO/PR numbers if available
-  if (dokumen.dokumen_pos && dokumen.dokumen_pos.length > 0) {
-    const poNumbers = dokumen.dokumen_pos.map(po => po.nomor_po).join(', ');
-    detailItems['Nomor PO'] = poNumbers;
-  }
-
-  if (dokumen.dokumen_prs && dokumen.dokumen_prs.length > 0) {
-    const prNumbers = dokumen.dokumen_prs.map(pr => pr.nomor_pr).join(', ');
-    detailItems['Nomor PR'] = prNumbers;
-  }
-
-  // Akutansi fields
-  if (dokumen.nomor_miro) detailItems['Nomor MIRO'] = dokumen.nomor_miro;
-
-  // Generate detail items HTML
-  for (const [label, value] of Object.entries(detailItems)) {
-    html += `
-      <div class="detail-item">
-        <div class="detail-label">${label}</div>
-        <div class="detail-value">${value}</div>
-      </div>
-    `;
-  }
-
-  html += '</div>';
-  return html;
-}
-
-function formatRupiah(angka) {
-  if (!angka) return '-';
-  return 'Rp. ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
 </script>
+
+<!-- Modal Detail Dokumen Lengkap -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; border: none;">
+        <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-file-invoice me-2"></i>
+          Detail Dokumen Lengkap
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px; background: #f8f9fa;">
+        <input type="hidden" id="view-dokumen-id" value="">
+        
+        <div class="row g-3">
+          <!-- Identitas Dokumen -->
+          <div class="col-12">
+            <div class="card" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div class="card-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; font-weight: 600;">
+                <i class="fa-solid fa-file-lines me-2"></i>Identitas Dokumen
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3"><strong>Nomor Agenda:</strong> <span id="view-nomor-agenda">-</span></div>
+                  <div class="col-md-3"><strong>Nomor SPP:</strong> <span id="view-nomor-spp">-</span></div>
+                  <div class="col-md-3"><strong>Tanggal SPP:</strong> <span id="view-tanggal-spp">-</span></div>
+                  <div class="col-md-3"><strong>Bulan:</strong> <span id="view-bulan">-</span></div>
+                  <div class="col-md-3"><strong>Tahun:</strong> <span id="view-tahun">-</span></div>
+                  <div class="col-md-3"><strong>Tanggal Masuk:</strong> <span id="view-tanggal-masuk">-</span></div>
+                  <div class="col-md-3"><strong>Jenis Dokumen:</strong> <span id="view-jenis-dokumen">-</span></div>
+                  <div class="col-md-3"><strong>Jenis Sub Pekerjaan:</strong> <span id="view-jenis-sub-pekerjaan">-</span></div>
+                  <div class="col-md-3"><strong>Kriteria CF:</strong> <span id="view-kategori">-</span></div>
+                  <div class="col-md-3"><strong>Jenis Pembayaran:</strong> <span id="view-jenis-pembayaran">-</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detail Keuangan & Vendor -->
+          <div class="col-12">
+            <div class="card" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div class="card-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; font-weight: 600;">
+                <i class="fa-solid fa-money-bill-wave me-2"></i>Detail Keuangan & Vendor
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-12"><strong>Uraian SPP:</strong> <span id="view-uraian-spp">-</span></div>
+                  <div class="col-md-6"><strong>Nilai Rupiah:</strong> <span id="view-nilai-rupiah">-</span></div>
+                  <div class="col-md-6"><strong>Ejaan Nilai Rupiah:</strong> <span id="view-ejaan-nilai-rupiah">-</span></div>
+                  <div class="col-md-6"><strong>Dibayar Kepada:</strong> <span id="view-dibayar-kepada">-</span></div>
+                  <div class="col-md-6"><strong>Kebun:</strong> <span id="view-kebun">-</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Referensi Pendukung -->
+          <div class="col-12">
+            <div class="card" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div class="card-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; font-weight: 600;">
+                <i class="fa-solid fa-file-contract me-2"></i>Referensi Pendukung
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4"><strong>Nomor PO:</strong> <span id="view-nomor-po">-</span></div>
+                  <div class="col-md-4"><strong>Nomor PR:</strong> <span id="view-nomor-pr">-</span></div>
+                  <div class="col-md-4"><strong>Nomor MIRO:</strong> <span id="view-nomor-miro">-</span></div>
+                  <div class="col-md-4"><strong>No SPK:</strong> <span id="view-no-spk">-</span></div>
+                  <div class="col-md-4"><strong>Tanggal SPK:</strong> <span id="view-tanggal-spk">-</span></div>
+                  <div class="col-md-4"><strong>Tanggal Berakhir SPK:</strong> <span id="view-tanggal-berakhir-spk">-</span></div>
+                  <div class="col-md-6"><strong>No Berita Acara:</strong> <span id="view-no-berita-acara">-</span></div>
+                  <div class="col-md-6"><strong>Tanggal Berita Acara:</strong> <span id="view-tanggal-berita-acara">-</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border: none; background: #f8f9fa; padding: 16px 24px;">
+        <a id="view-edit-btn" href="#" class="btn btn-warning" style="font-weight: 600;">
+          <i class="fa-solid fa-wrench me-2"></i>Perbaiki Data
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="font-weight: 600;">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
 
 @endsection

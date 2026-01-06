@@ -2282,9 +2282,9 @@
             </td>
             <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
               @php
-                // Check if document is rejected by akutansi
+                // Check if document is rejected by akutansi or pembayaran
                 $isRejected = $dokumen->roleStatuses()
-                  ->where('role_code', 'akutansi')
+                  ->whereIn('role_code', ['akutansi', 'pembayaran'])
                   ->where('status', 'rejected')
                   ->exists();
               @endphp

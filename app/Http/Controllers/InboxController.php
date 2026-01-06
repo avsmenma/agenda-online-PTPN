@@ -291,6 +291,15 @@ class InboxController extends Controller
                 $dokumen->department_return_reason = $request->reason;
                 $dokumen->save();
             }
+            // Pembayaran -> Akutansi
+            elseif ($roleCode === 'pembayaran') {
+                $dokumen->current_handler = 'akutansi';
+                $dokumen->status = 'returned_to_department';
+                $dokumen->target_department = 'akutansi';
+                $dokumen->department_returned_at = now();
+                $dokumen->department_return_reason = $request->reason;
+                $dokumen->save();
+            }
 
             return redirect()->route('inbox.index')
                 ->with('success', 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason);

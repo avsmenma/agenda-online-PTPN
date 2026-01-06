@@ -1012,32 +1012,71 @@ class DashboardAkutansiController extends Controller
 
     public function pengembalian(Request $request)
     {
-        // Get all documents that have been returned by akutansi
-        $query = Dokumen::where('status', 'returned_to_department')
-            ->where('target_department', 'akutansi')
-            ->with(['dokumenPos', 'dokumenPrs'])
+        // Get all documents that have been returned to akutansi
+        // Includes: documents returned from akutansi to verifikasi AND documents rejected by pembayaran
+        $query = Dokumen::where(function ($q) {
+                // Documents returned from akutansi to verifikasi
+                $q->where(function ($subQ) {
+                    $subQ->where('status', 'returned_to_department')
+                        ->where('target_department', 'akutansi');
+                })
+                // Documents rejected by pembayaran (from inbox)
+                ->orWhere(function ($pembayaranRejectQ) {
+                    $pembayaranRejectQ->where('current_handler', 'akutansi')
+                        ->whereHas('roleStatuses', function ($statusQuery) {
+                            $statusQuery->where('role_code', 'pembayaran')
+                                ->where('status', 'rejected');
+                        });
+                });
+            })
+            ->with(['dokumenPos', 'dokumenPrs', 'roleStatuses'])
             ->orderByDesc('department_returned_at');
 
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics for returned documents
-        $baseQuery = Dokumen::where('status', 'returned_to_department')
-            ->where('target_department', 'akutansi');
+        // Include both: documents returned from akutansi to verifikasi AND documents rejected by pembayaran
+        $baseQuery = Dokumen::where(function ($q) {
+            $q->where(function ($subQ) {
+                $subQ->where('status', 'returned_to_department')
+                    ->where('target_department', 'akutansi');
+            })
+            ->orWhere(function ($pembayaranRejectQ) {
+                $pembayaranRejectQ->where('current_handler', 'akutansi')
+                    ->whereHas('roleStatuses', function ($statusQuery) {
+                        $statusQuery->where('role_code', 'pembayaran')
+                            ->where('status', 'rejected');
+                    });
+            });
+        });
 
         // Total dokumen dikembalikan
         $totalReturned = (clone $baseQuery)->count();
 
         // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika: masih di ibuB (belum dikirim kembali ke akutansi)
+        // Logika: masih di ibuB (belum dikirim kembali ke akutansi) ATAU ditolak oleh pembayaran dan masih di akutansi
         $totalMenungguPerbaikan = (clone $baseQuery)
-            ->where('current_handler', 'ibuB')
+            ->where(function ($q) {
+                $q->where('current_handler', 'ibuB')
+                    ->orWhere(function ($pembayaranQ) {
+                        $pembayaranQ->where('current_handler', 'akutansi')
+                            ->whereHas('roleStatuses', function ($statusQuery) {
+                                $statusQuery->where('role_code', 'pembayaran')
+                                    ->where('status', 'rejected');
+                            });
+                    });
+            })
             ->count();
 
         // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali ke akutansi
-        // Logika: sudah kembali ke akutansi (current_handler == 'akutansi')
+        // Logika: sudah kembali ke akutansi (current_handler == 'akutansi') DAN bukan ditolak oleh pembayaran
         $totalSudahDiperbaiki = (clone $baseQuery)
             ->where('current_handler', 'akutansi')
+            ->whereDoesntHave('roleStatuses', function ($statusQuery) {
+                $statusQuery->where('role_code', 'pembayaran')
+                    ->where('status', 'rejected');
+            })
             ->count();
 
         $data = array(
