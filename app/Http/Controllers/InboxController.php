@@ -282,11 +282,23 @@ class InboxController extends Controller
             $dokumen->rejectFromRoleInbox($roleCode, $request->reason);
 
             // Update current_handler and status based on rejection
-            // Perpajakan/Akutansi -> IbuB (Verifikasi)
-            if ($roleCode === 'perpajakan' || $roleCode === 'akutansi') {
+            // Tentukan ke mana dokumen harus dikembalikan berdasarkan alur workflow
+            // Alur: Ibu Tarapul -> Verifikasi -> Perpajakan -> Akutansi -> Pembayaran
+            
+            if ($roleCode === 'perpajakan') {
+                // Perpajakan menolak -> kembali ke Verifikasi
                 $dokumen->current_handler = 'ibuB';
                 $dokumen->status = 'returned_to_department';
-                $dokumen->target_department = $roleCode;
+                $dokumen->target_department = 'perpajakan';
+                $dokumen->department_returned_at = now();
+                $dokumen->department_return_reason = $request->reason;
+                $dokumen->save();
+            }
+            elseif ($roleCode === 'akutansi') {
+                // Akutansi menolak -> kembali ke Perpajakan (pengirim sebelumnya)
+                $dokumen->current_handler = 'perpajakan';
+                $dokumen->status = 'returned_to_department';
+                $dokumen->target_department = 'akutansi';
                 $dokumen->department_returned_at = now();
                 $dokumen->department_return_reason = $request->reason;
                 $dokumen->save();

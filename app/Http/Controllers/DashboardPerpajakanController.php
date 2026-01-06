@@ -27,7 +27,17 @@ class DashboardPerpajakanController extends Controller
         $perpajakanDocs = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhere('status', 'sent_to_akutansi')
+                    // Include documents rejected by akutansi and returned to perpajakan
+                    ->orWhere(function ($rejectedQ) {
+                        $rejectedQ->where('status', 'returned_to_department')
+                            ->where('target_department', 'akutansi')
+                            ->where('current_handler', 'perpajakan')
+                            ->whereHas('roleStatuses', function ($statusQ) {
+                                $statusQ->where('role_code', 'akutansi')
+                                    ->where('status', 'rejected');
+                            });
+                    });
                     // Removed: ->orWhere('status', 'sent_to_pembayaran')
                     // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
@@ -119,6 +129,16 @@ class DashboardPerpajakanController extends Controller
             ->where(function ($q) use ($hasImportedFromCsvColumn) {
                 $q->where('current_handler', 'perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
+                    // Include documents rejected by akutansi and returned to perpajakan
+                    ->orWhere(function ($rejectedQ) {
+                        $rejectedQ->where('status', 'returned_to_department')
+                            ->where('target_department', 'akutansi')
+                            ->where('current_handler', 'perpajakan')
+                            ->whereHas('roleStatuses', function ($statusQ) {
+                                $statusQ->where('role_code', 'akutansi')
+                                    ->where('status', 'rejected');
+                            });
+                    })
                     ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
                         // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
                         $pembayaranQ->where(function ($statusQ) {

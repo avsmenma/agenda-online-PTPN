@@ -147,9 +147,10 @@ class DashboardBController extends Controller
                         }
                     })
                     ->orWhere(function ($rejectQ) {
-                        // FIX: Tampilkan dokumen yang direject dari Akutansi/Perpajakan
+                        // FIX: Tampilkan dokumen yang direject dari Perpajakan dan dikembalikan ke Verifikasi
+                        // (Dokumen yang ditolak oleh Akutansi dikembalikan ke Perpajakan, bukan Verifikasi)
                         $rejectQ->where('status', 'returned_to_department')
-                            ->whereIn('target_department', ['perpajakan', 'akutansi'])
+                            ->where('target_department', 'perpajakan')
                             ->where('current_handler', 'ibuB');
                     });
             })
