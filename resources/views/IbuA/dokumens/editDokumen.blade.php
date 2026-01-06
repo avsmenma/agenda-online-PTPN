@@ -749,8 +749,14 @@
         }, 10);
       });
 
-      // Format initial value if exists
+      // Format initial value if exists (untuk memastikan ejaan terisi saat halaman dimuat)
       if (nilaiRupiahInput.value) {
+        // Parse nilai yang sudah terformat dengan dots
+        const numericValue = nilaiRupiahInput.value.replace(/\./g, '');
+        if (numericValue && numericValue > 0 && ejaanRupiahInput) {
+          ejaanRupiahInput.value = terbilangRupiah(numericValue);
+        }
+        // Trigger input event untuk format dots
         nilaiRupiahInput.dispatchEvent(new Event('input'));
       }
     }

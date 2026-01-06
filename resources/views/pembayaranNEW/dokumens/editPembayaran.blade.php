@@ -1501,27 +1501,162 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Function to convert number to Indonesian terbilang
+  function terbilangRupiah(number) {
+    number = parseFloat(number.toString().replace(/\./g, '')) || 0;
+    
+    if (number == 0) {
+      return 'nol rupiah';
+    }
+
+    const angka = [
+      '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+      'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+      'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+      'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+    ];
+
+    let hasil = '';
+
+    // Handle triliun
+    if (number >= 1000000000000) {
+      const triliun = Math.floor(number / 1000000000000);
+      hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+      number = number % 1000000000000;
+    }
+
+    // Handle milyar
+    if (number >= 1000000000) {
+      const milyar = Math.floor(number / 1000000000);
+      hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+      number = number % 1000000000;
+    }
+
+    // Handle juta
+    if (number >= 1000000) {
+      const juta = Math.floor(number / 1000000);
+      hasil += terbilangSatuan(juta, angka) + ' juta ';
+      number = number % 1000000;
+    }
+
+    // Handle ribu
+    if (number >= 1000) {
+      const ribu = Math.floor(number / 1000);
+      if (ribu == 1) {
+        hasil += 'seribu ';
+      } else {
+        hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+      }
+      number = number % 1000;
+    }
+
+    // Handle ratusan, puluhan, dan satuan
+    if (number > 0) {
+      hasil += terbilangSatuan(number, angka);
+    }
+
+    return hasil.trim() + ' rupiah';
+  }
+
+  function terbilangSatuan(number, angka) {
+    let hasil = '';
+    number = parseInt(number);
+
+    if (number == 0) {
+      return '';
+    }
+
+    // Handle ratusan
+    if (number >= 100) {
+      const ratus = Math.floor(number / 100);
+      if (ratus == 1) {
+        hasil += 'seratus ';
+      } else {
+        hasil += angka[ratus] + ' ratus ';
+      }
+      number = number % 100;
+    }
+
+    // Handle puluhan dan satuan (0-99)
+    if (number > 0) {
+      if (number < 20) {
+        hasil += angka[number] + ' ';
+      } else {
+        const puluhan = Math.floor(number / 10);
+        const satuan = number % 10;
+        
+        if (puluhan == 1) {
+          hasil += angka[10 + satuan] + ' ';
+        } else {
+          hasil += angka[puluhan] + ' puluh ';
+          if (satuan > 0) {
+            hasil += angka[satuan] + ' ';
+          }
+        }
+      }
+    }
+
+    return hasil.trim();
+  }
+
   // Format nilai rupiah dan generate ejaan
   const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
   const ejaanInput = document.getElementById('edit-ejaan-nilai-rupiah');
 
   if (nilaiRupiahInput && ejaanInput) {
+    // Format on input
     nilaiRupiahInput.addEventListener('input', function() {
       // Remove non-numeric characters
       let value = this.value.replace(/[^0-9]/g, '');
       
       // Format with dots as thousand separators
       if (value) {
-        value = parseInt(value).toLocaleString('id-ID');
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         this.value = value;
         
-        // Generate ejaan (simplified - you may want to use a library for full conversion)
-        // For now, just show the formatted number
-        ejaanInput.value = 'Rp ' + value;
+        // Generate ejaan
+        const numericValue = value.replace(/\./g, '');
+        if (numericValue && numericValue > 0) {
+          ejaanInput.value = terbilangRupiah(numericValue);
+        } else {
+          ejaanInput.value = '';
+        }
       } else {
+        this.value = '';
         ejaanInput.value = '';
       }
     });
+
+    // Format on paste
+    nilaiRupiahInput.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        let value = this.value.replace(/[^0-9]/g, '');
+        if (value) {
+          value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          this.value = value;
+          
+          // Generate ejaan
+          const numericValue = value.replace(/\./g, '');
+          if (numericValue && numericValue > 0) {
+            ejaanInput.value = terbilangRupiah(numericValue);
+          } else {
+            ejaanInput.value = '';
+          }
+        } else {
+          this.value = '';
+          ejaanInput.value = '';
+        }
+      }, 10);
+    });
+
+    // Format initial value if exists (untuk memastikan ejaan terisi saat halaman dimuat)
+    if (nilaiRupiahInput.value) {
+      // Parse nilai yang sudah terformat dengan dots
+      const numericValue = nilaiRupiahInput.value.replace(/\./g, '');
+      if (numericValue && numericValue > 0) {
+        ejaanInput.value = terbilangRupiah(numericValue);
+      }
+    }
   }
 });
 </script>
