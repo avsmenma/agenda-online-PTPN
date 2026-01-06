@@ -179,6 +179,13 @@ class DokumenHelper
      */
     public static function canEditDocument(Dokumen $dokumen, ?string $userRole = null): bool
     {
+        // KHUSUS UNTUK ROLE PEMBAYARAN: Logic terpisah dan diprioritaskan
+        // Pembayaran memiliki aturan khusus yang berbeda dari role lain
+        if ($userRole && strtolower($userRole) === 'pembayaran') {
+            return self::canPembayaranEditDocument($dokumen);
+        }
+
+        // Logic untuk role lain (bukan pembayaran)
         // If document is locked, cannot edit
         if (self::isDocumentLocked($dokumen)) {
             return false;
@@ -211,39 +218,52 @@ class DokumenHelper
             $userRoleLower = strtolower($userRole);
             $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
 
-            // Khusus untuk role pembayaran: bisa edit dokumen yang sudah di pembayaran
-            // baik berdasarkan current_handler maupun berdasarkan status dokumen
-            if ($userRoleLower === 'pembayaran') {
-                // Cek apakah current_handler adalah pembayaran
-                if ($currentHandlerLower === 'pembayaran') {
-                    return true;
-                }
-
-                // Cek apakah dokumen sudah dikirim ke pembayaran
-                if ($dokumen->status === 'sent_to_pembayaran') {
-                    return true;
-                }
-
-                // Cek computed_status untuk siap_bayar atau sudah_dibayar
-                $computedStatus = strtolower($dokumen->computed_status ?? '');
-                if (in_array($computedStatus, ['siap_bayar', 'siap_dibayar', 'sudah_dibayar'])) {
-                    return true;
-                }
-
-                // Cek status_pembayaran jika ada
-                $statusPembayaran = strtolower($dokumen->status_pembayaran ?? '');
-                if (in_array($statusPembayaran, ['siap_bayar', 'siap_dibayar', 'sudah_dibayar'])) {
-                    return true;
-                }
-
-                return false;
-            }
-
             // Untuk role lain, gunakan logic standar
             return $currentHandlerLower === $userRoleLower;
         }
 
         return true;
+    }
+
+    /**
+     * Check if Pembayaran role can edit document
+     * Pembayaran memiliki aturan khusus: bisa edit dokumen yang sudah sampai di pembayaran
+     */
+    private static function canPembayaranEditDocument(Dokumen $dokumen): bool
+    {
+        $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
+        $status = $dokumen->status ?? '';
+
+        // 1. Jika current_handler adalah pembayaran, bisa edit
+        if ($currentHandlerLower === 'pembayaran') {
+            return true;
+        }
+
+        // 2. Jika dokumen sudah dikirim ke pembayaran
+        if ($status === 'sent_to_pembayaran') {
+            return true;
+        }
+
+        // 3. Cek computed_status untuk siap_bayar atau sudah_dibayar
+        $computedStatus = strtolower($dokumen->computed_status ?? '');
+        if (in_array($computedStatus, ['siap_bayar', 'siap_dibayar', 'sudah_dibayar'])) {
+            return true;
+        }
+
+        // 4. Cek status_pembayaran jika ada
+        $statusPembayaran = strtolower($dokumen->status_pembayaran ?? '');
+        if (in_array($statusPembayaran, ['siap_bayar', 'siap_dibayar', 'sudah_dibayar'])) {
+            return true;
+        }
+
+        // 5. Cek apakah dokumen yang tampil di daftar pembayaran (dari roleData)
+        // Ini untuk dokumen yang mungkin terlewat di kondisi atas
+        $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+        if ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
