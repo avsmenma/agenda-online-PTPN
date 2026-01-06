@@ -3202,10 +3202,31 @@
                   }
                   
                   // Check rejection status from roleStatuses
-                  $isRejected = $dokumen->roleStatuses()
+                  // Dokumen ditolak jika:
+                  // 1. Ditolak oleh ibub sendiri, ATAU
+                  // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = ibuB)
+                  $isRejectedByIbuB = $dokumen->roleStatuses()
                     ->where('role_code', 'ibub')
                     ->where('status', 'rejected')
                     ->exists();
+                  
+                  $isRejectedByOtherRole = false;
+                  $rejectedByRole = null;
+                  if ($dokumen->current_handler === 'ibuB') {
+                    // Cek apakah ada rejection dari perpajakan atau akutansi
+                    $rejectedStatus = $dokumen->roleStatuses()
+                      ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                      ->where('status', 'rejected')
+                      ->latest('status_changed_at')
+                      ->first();
+                    
+                    if ($rejectedStatus) {
+                      $isRejectedByOtherRole = true;
+                      $rejectedByRole = $rejectedStatus->role_code;
+                    }
+                  }
+                  
+                  $isRejected = $isRejectedByIbuB || $isRejectedByOtherRole;
                   
                   // Check pending status from roleStatuses
                   $isPending = $dokumen->roleStatuses()
@@ -3387,17 +3408,32 @@
                   <!-- Kolom Status: Menampilkan status badge -->
                   <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
                     @if($isRejected)
-                      {{-- Dokumen ditolak dari inbox --}}
-                      <span class="badge-status badge-dikembalikan" style="position: relative;">
-                        <i class="fa-solid fa-times-circle me-1"></i>
-                        <span>Dokumen Ditolak,
-                          <a href="{{ route('api.documents.verifikasi.rejected.show', $dokumen) }}"
-                            class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
-                            style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
-                            Alasan
-                          </a>
+                      {{-- Dokumen ditolak dari inbox atau dari perpajakan/akutansi --}}
+                      @if($isRejectedByOtherRole && $rejectedByRole)
+                        {{-- Dokumen ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi --}}
+                        <span class="badge-status badge-dikembalikan" style="position: relative;">
+                          <i class="fa-solid fa-times-circle me-1"></i>
+                          <span>Dokumen ditolak,
+                            <a href="{{ route('returns.verifikasi.index') }}?search={{ $dokumen->nomor_agenda }}"
+                              class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
+                              style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
+                              cek disini
+                            </a>
+                          </span>
                         </span>
-                      </span>
+                      @else
+                        {{-- Dokumen ditolak dari inbox (oleh ibub sendiri) --}}
+                        <span class="badge-status badge-dikembalikan" style="position: relative;">
+                          <i class="fa-solid fa-times-circle me-1"></i>
+                          <span>Dokumen Ditolak,
+                            <a href="{{ route('api.documents.verifikasi.rejected.show', $dokumen) }}"
+                              class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
+                              style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
+                              Alasan
+                            </a>
+                          </span>
+                        </span>
+                      @endif
                     @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_ibub')
                       {{-- Dokumen yang benar-benar sudah selesai diproses --}}
                       <span class="badge-status badge-selesai">✓

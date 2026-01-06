@@ -1199,7 +1199,22 @@ class Dokumen extends Model
                 return 'Menunggu Approval';
             }
 
-            // Check if there's rejection from later stages
+            // Check if there's rejection from perpajakan or akutansi (using new dokumen_statuses table)
+            // Dokumen yang ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi
+            if ($this->current_handler === 'ibuB') {
+                $rejectedStatus = $this->roleStatuses()
+                    ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                    ->where('status', DokumenStatus::STATUS_REJECTED)
+                    ->latest('status_changed_at')
+                    ->first();
+                
+                if ($rejectedStatus) {
+                    $roleName = $rejectedStatus->role_code === 'perpajakan' ? 'Team Perpajakan' : 'Team Akutansi';
+                    return "Ditolak oleh {$roleName} (Perlu Revisi)";
+                }
+            }
+
+            // Check if there's rejection from later stages (legacy)
             if ($this->last_action_status === 'rejected_by_tax') {
                 return 'Ditolak Tax (Perlu Revisi)';
             }

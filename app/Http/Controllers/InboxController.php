@@ -281,6 +281,17 @@ class InboxController extends Controller
             // Use new rejection method
             $dokumen->rejectFromRoleInbox($roleCode, $request->reason);
 
+            // Update current_handler and status based on rejection
+            // Perpajakan/Akutansi -> IbuB (Verifikasi)
+            if ($roleCode === 'perpajakan' || $roleCode === 'akutansi') {
+                $dokumen->current_handler = 'ibuB';
+                $dokumen->status = 'returned_to_department';
+                $dokumen->target_department = $roleCode;
+                $dokumen->department_returned_at = now();
+                $dokumen->department_return_reason = $request->reason;
+                $dokumen->save();
+            }
+
             return redirect()->route('inbox.index')
                 ->with('success', 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason);
 
