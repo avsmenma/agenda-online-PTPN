@@ -946,10 +946,10 @@
                   </button>
                 @else
                   {{-- Minimal satu field masih kosong - Tampilkan tombol Edit (enabled) --}}
-                  <button type="button" class="btn-action" onclick="event.stopPropagation(); event.preventDefault(); openEditPembayaranModalHandler({{ $dokumen->id }});" title="Input/Edit data pembayaran">
+                  <a href="{{ route('documents.pembayaran.edit', $dokumen->id) }}" class="btn-action" onclick="event.stopPropagation();" title="Input/Edit data pembayaran">
                     <i class="fa-solid fa-edit"></i>
                     Edit
-                  </button>
+                  </a>
                 @endif
               @endif
             </div>
