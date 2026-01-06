@@ -872,9 +872,10 @@
 
   /* State 2: ⏳ Diproses (In Progress) */
   .badge-status.badge-proses {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    background: linear-gradient(135deg, #2E6F68 0%, #2A605A 100%);
     color: white;
-    border-color: #083E40;
+    border-color: #2A605A;
+    box-shadow: 0 3px 12px rgba(46, 111, 104, 0.25);
   }
 
   .badge-status.badge-proses::after {
@@ -882,7 +883,7 @@
     display: inline-block;
     width: 6px;
     height: 6px;
-    background: white;
+    background: #4CAF50;
     border-radius: 50%;
     margin-left: 6px;
     animation: pulse 1.5s infinite;
@@ -2310,14 +2311,16 @@
                 <span class="badge-status badge-locked">🔒 Terkunci</span>
               @elseif($dokumen->status == 'selesai')
                 <span class="badge-status badge-selesai">✓ Selesai</span>
-              @elseif($dokumen->status == 'sedang diproses' && $dokumen->current_handler == 'akutansi')
-                <span class="badge-status badge-proses">⏳ Diproses</span>
-              @elseif($dokumen->status == 'sent_to_akutansi')
+              @elseif($dokumen->current_handler == 'akutansi' && !in_array($dokumen->status, ['sent_to_pembayaran', 'selesai', 'completed', 'menunggu_di_approve', 'pending_approval_pembayaran']))
+                {{-- Dokumen yang sedang ditangani akutansi dan bukan status khusus --}}
+                <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
+              @elseif($dokumen->status == 'sent_to_akutansi' && $dokumen->current_handler != 'akutansi')
+                {{-- Dokumen yang baru dikirim ke akutansi dan belum diproses --}}
                 <span class="badge-status badge-belum">⏳ Belum Diproses</span>
               @elseif(in_array($dokumen->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']))
                 <span class="badge-status badge-dikembalikan">← Dikembalikan</span>
               @else
-                <span class="badge-status badge-proses">{{ $dokumen->status }}</span>
+                <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
               @endif
             </td>
             <td class="col-action" onclick="event.stopPropagation()">
