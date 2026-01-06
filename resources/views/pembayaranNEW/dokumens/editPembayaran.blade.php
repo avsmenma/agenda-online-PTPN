@@ -76,6 +76,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
   }
 
   .accordion-title i {
@@ -100,7 +101,7 @@
   }
 
   .accordion-content.active {
-    max-height: 2000px;
+    max-height: 5000px;
   }
 
   .accordion-body {
@@ -204,6 +205,9 @@
     transition: all 0.3s ease;
     letter-spacing: 0.5px;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .btn-reset:hover {
@@ -228,6 +232,9 @@
     letter-spacing: 0.5px;
     position: relative;
     overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .btn-submit::before {
@@ -450,6 +457,13 @@
     color: #155724;
   }
 
+  /* Read-only field styling */
+  .read-only-field {
+    background-color: #f5f5f5 !important;
+    cursor: not-allowed !important;
+    opacity: 0.8;
+  }
+
   /* Responsive Design */
   @media (max-width: 768px) {
     .form-row,
@@ -493,6 +507,24 @@
   </div>
 </div>
 
+@if(session('error'))
+<div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 15px 20px; border-radius: 10px; margin-bottom: 24px; border-left: 4px solid #dc3545;">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    {{ session('error') }}
+</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 15px 20px; border-radius: 10px; margin-bottom: 24px; border-left: 4px solid #dc3545;">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <div>
+        @foreach($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <div class="form-container">
   <form action="{{ route('documents.pembayaran.update', $dokumen->id) }}" method="POST" id="editForm">
     @csrf
@@ -516,15 +548,90 @@
               <div class="info-value">{{ $dokumen->nomor_agenda ?? '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Nomor SPP</div>
-              <div class="info-value">{{ $dokumen->nomor_spp ?? '-' }}</div>
+              <div class="info-label">Bulan</div>
+              <div class="info-value">{{ $dokumen->bulan ?? '-' }}</div>
             </div>
           </div>
 
           <div class="form-row" style="margin-top: 15px;">
             <div class="info-item">
+              <div class="info-label">Tahun</div>
+              <div class="info-value">{{ $dokumen->tahun ?? '-' }}</div>
+            </div>
+            <div class="info-item">
               <div class="info-label">Tanggal Masuk</div>
               <div class="info-value">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</div>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">Dibayar Kepada</div>
+              @php
+                $dibayarKepadaValue = '';
+                if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
+                    $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
+                } else {
+                    $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '-';
+                }
+              @endphp
+              <div class="info-value">{{ $dibayarKepadaValue }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Kebun</div>
+              <div class="info-value">{{ $dokumen->kebun ?? '-' }}</div>
+            </div>
+          </div>
+
+          <div class="form-row-3" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">No Berita Acara</div>
+              <div class="info-value">{{ $dokumen->no_berita_acara ?? '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tanggal Berita Acara</div>
+              <div class="info-value">{{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Bagian</div>
+              <div class="info-value">{{ $dokumen->bagian ?? '-' }}</div>
+            </div>
+          </div>
+
+          <div class="form-row-3" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">No SPK</div>
+              <div class="info-value">{{ $dokumen->no_spk ?? '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tanggal SPK</div>
+              <div class="info-value">{{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tanggal Berakhir SPK</div>
+              <div class="info-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Informasi SPP (Read-Only) -->
+    <div class="accordion-section">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <div class="accordion-title">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span>Informasi SPP</span>
+          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+        </div>
+        <i class="fa-solid fa-chevron-down accordion-icon"></i>
+      </div>
+      <div class="accordion-content active">
+        <div class="accordion-body">
+          <div class="form-row">
+            <div class="info-item">
+              <div class="info-label">Nomor SPP</div>
+              <div class="info-value">{{ $dokumen->nomor_spp ?? '-' }}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Tanggal SPP</div>
@@ -537,32 +644,9 @@
               <div class="info-label">Nilai Rupiah</div>
               <div class="info-value currency">Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</div>
             </div>
-            <div class="info-item highlight">
-              <div class="info-label">Dibayar Kepada</div>
-              @php
-                $dibayarKepadaValue = '';
-                if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
-                    $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
-                } else {
-                    $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '-';
-                }
-              @endphp
-              <div class="info-value">{{ $dibayarKepadaValue }}</div>
-            </div>
-          </div>
-
-          <div class="form-row-3" style="margin-top: 15px;">
             <div class="info-item">
-              <div class="info-label">Kategori</div>
-              <div class="info-value">{{ $dokumen->kategori ?? '-' }}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Jenis Dokumen</div>
-              <div class="info-value">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Jenis Sub Pekerjaan</div>
-              <div class="info-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</div>
+              <div class="info-label">Ejaan Nilai Rupiah</div>
+              <div class="info-value">{{ $dokumen->ejaan_nilai_rupiah ?? '-' }}</div>
             </div>
           </div>
 
@@ -576,7 +660,91 @@
       </div>
     </div>
 
-    <!-- Section 2: Informasi Perpajakan (Read-Only, jika ada) -->
+    <!-- Section 3: Kriteria CF, Sub Kriteria, Item Sub Kriteria (Read-Only) -->
+    <div class="accordion-section">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <div class="accordion-title">
+          <i class="fa-solid fa-tags"></i>
+          <span>Kriteria CF, Sub Kriteria, Item Sub Kriteria</span>
+          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+        </div>
+        <i class="fa-solid fa-chevron-down accordion-icon"></i>
+      </div>
+      <div class="accordion-content active">
+        <div class="accordion-body">
+          <div class="form-row-3">
+            <div class="info-item">
+              <div class="info-label">Kategori (Kriteria CF)</div>
+              <div class="info-value">{{ $dokumen->kategori ?? '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Jenis Dokumen (Sub Kriteria)</div>
+              <div class="info-value">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Jenis Sub Pekerjaan (Item Sub Kriteria)</div>
+              <div class="info-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</div>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">Jenis Pembayaran</div>
+              <div class="info-value">{{ $dokumen->jenis_pembayaran ?? '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Nama Pengirim</div>
+              <div class="info-value">{{ $dokumen->nama_pengirim ?? '-' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Nomor PO & PR (Read-Only) -->
+    @if(($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0) || ($dokumen->dokumenPrs && $dokumen->dokumenPrs->count() > 0))
+    <div class="accordion-section">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div class="accordion-title">
+          <i class="fa-solid fa-hashtag"></i>
+          <span>Nomor PO & PR</span>
+          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+        </div>
+        <i class="fa-solid fa-chevron-down accordion-icon"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="accordion-body">
+          @if($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0)
+          <div class="form-group">
+            <label>Nomor PO</label>
+            <div class="info-item">
+              <div class="info-value">
+                @foreach($dokumen->dokumenPos as $po)
+                  {{ $po->nomor_po }}{{ !$loop->last ? ', ' : '' }}
+                @endforeach
+              </div>
+            </div>
+          </div>
+          @endif
+
+          @if($dokumen->dokumenPrs && $dokumen->dokumenPrs->count() > 0)
+          <div class="form-group">
+            <label>Nomor PR</label>
+            <div class="info-item">
+              <div class="info-value">
+                @foreach($dokumen->dokumenPrs as $pr)
+                  {{ $pr->nomor_pr }}{{ !$loop->last ? ', ' : '' }}
+                @endforeach
+              </div>
+            </div>
+          </div>
+          @endif
+        </div>
+      </div>
+    </div>
+    @endif
+
+    <!-- Section 5: Informasi Perpajakan (Read-Only, jika ada) -->
     @if(isset($hasPerpajakanData) && $hasPerpajakanData)
     <div class="accordion-section perpajakan-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
@@ -589,29 +757,38 @@
       </div>
       <div class="accordion-content active">
         <div class="accordion-body">
-          <div class="form-row-3">
+          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px;">
+            <strong><i class="fa-solid fa-info-circle me-1"></i>Informasi:</strong>
+            <span style="font-size: 13px;">Data di bawah ini berasal dari Team Perpajakan dan tidak dapat diedit.</span>
+          </div>
+
+          <!-- Komoditi -->
+          @if($dokumen->komoditi_perpajakan)
+          <div class="form-row">
             <div class="info-item">
-              <div class="info-label">Status Perpajakan</div>
-              <div class="info-value">{{ $dokumen->status_perpajakan ?? '-' }}</div>
+              <div class="info-label">Komoditi</div>
+              <div class="info-value">{{ $dokumen->komoditi_perpajakan }}</div>
             </div>
+          </div>
+          @endif
+
+          <!-- NPWP & Alamat -->
+          <div class="form-row">
             <div class="info-item">
-              <div class="info-label">NPWP</div>
+              <div class="info-label">NPWP Pembeli</div>
               <div class="info-value">{{ $dokumen->npwp ?? '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">No Faktur</div>
-              <div class="info-value">{{ $dokumen->no_faktur ?? '-' }}</div>
+              <div class="info-label">Alamat</div>
+              <div class="info-value">{{ $dokumen->alamat_pembeli ?? '-' }}</div>
             </div>
           </div>
 
-          <div class="form-row-3" style="margin-top: 15px;">
+          <!-- No Kontrak & No Invoice -->
+          <div class="form-row" style="margin-top: 15px;">
             <div class="info-item">
-              <div class="info-label">Tanggal Faktur</div>
-              <div class="info-value">{{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Tgl. Selesai Verifikasi Pajak</div>
-              <div class="info-value">{{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-' }}</div>
+              <div class="info-label">No Kontrak</div>
+              <div class="info-value">{{ $dokumen->no_kontrak ?? '-' }}</div>
             </div>
             <div class="info-item">
               <div class="info-label">No Invoice</div>
@@ -619,26 +796,162 @@
             </div>
           </div>
 
+          <!-- Tanggal Invoice & DPP Invoice & PPN Invoice -->
           <div class="form-row-3" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">Tanggal Invoice</div>
+              <div class="info-value">{{ $dokumen->tanggal_invoice ? $dokumen->tanggal_invoice->format('d/m/Y') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">DPP Invoice</div>
+              <div class="info-value">{{ $dokumen->dpp_invoice ? 'Rp ' . number_format($dokumen->dpp_invoice, 0, ',', '.') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">PPN Invoice</div>
+              <div class="info-value">{{ $dokumen->ppn_invoice ? 'Rp ' . number_format($dokumen->ppn_invoice, 0, ',', '.') : '-' }}</div>
+            </div>
+          </div>
+
+          <!-- DPP+PPN Invoice & Tanggal Pengajuan -->
+          <div class="form-row" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">DPP + PPN Invoice</div>
+              <div class="info-value">{{ $dokumen->dpp_ppn_invoice ? 'Rp ' . number_format($dokumen->dpp_ppn_invoice, 0, ',', '.') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tanggal Pengajuan</div>
+              <div class="info-value">{{ $dokumen->tanggal_pengajuan_pajak ? $dokumen->tanggal_pengajuan_pajak->format('d/m/Y') : '-' }}</div>
+            </div>
+          </div>
+
+          <!-- Divider: Data Faktur -->
+          @if($dokumen->no_faktur || $dokumen->tanggal_faktur)
+          <div style="border-top: 2px dashed #ffc107; margin: 24px 0; padding-top: 16px;">
+            <h6 style="color: #ffc107; font-weight: 600; margin-bottom: 16px;">
+              <i class="fa-solid fa-receipt me-2"></i>Data Faktur Pajak
+            </h6>
+          </div>
+
+          <!-- No Faktur & Tanggal Faktur -->
+          <div class="form-row">
+            <div class="info-item">
+              <div class="info-label">No Faktur</div>
+              <div class="info-value">{{ $dokumen->no_faktur ?? '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tanggal Faktur</div>
+              <div class="info-value">{{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}</div>
+            </div>
+          </div>
+
+          <!-- DPP Faktur & PPN Faktur & Selisih -->
+          <div class="form-row-3" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">DPP Faktur</div>
+              <div class="info-value">{{ $dokumen->dpp_faktur ? 'Rp ' . number_format($dokumen->dpp_faktur, 0, ',', '.') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">PPN Faktur</div>
+              <div class="info-value">{{ $dokumen->ppn_faktur ? 'Rp ' . number_format($dokumen->ppn_faktur, 0, ',', '.') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Selisih</div>
+              <div class="info-value">{{ $dokumen->selisih_pajak ? 'Rp ' . number_format($dokumen->selisih_pajak, 0, ',', '.') : '-' }}</div>
+            </div>
+          </div>
+          @endif
+
+          <!-- Divider: Data Penggantian -->
+          @if($dokumen->penggantian_pajak || $dokumen->dpp_penggantian)
+          <div style="border-top: 2px dashed #ffc107; margin: 24px 0; padding-top: 16px;">
+            <h6 style="color: #ffc107; font-weight: 600; margin-bottom: 16px;">
+              <i class="fa-solid fa-arrows-rotate me-2"></i>Data Penggantian
+            </h6>
+          </div>
+
+          <!-- Penggantian & DPP Penggantian -->
+          <div class="form-row">
+            <div class="info-item">
+              <div class="info-label">Penggantian</div>
+              <div class="info-value">{{ $dokumen->penggantian_pajak ? 'Rp ' . number_format($dokumen->penggantian_pajak, 0, ',', '.') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">DPP Penggantian</div>
+              <div class="info-value">{{ $dokumen->dpp_penggantian ? 'Rp ' . number_format($dokumen->dpp_penggantian, 0, ',', '.') : '-' }}</div>
+            </div>
+          </div>
+
+          <!-- PPN Penggantian & Selisih PPN -->
+          <div class="form-row" style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">PPN Penggantian</div>
+              <div class="info-value">{{ $dokumen->ppn_penggantian ? 'Rp ' . number_format($dokumen->ppn_penggantian, 0, ',', '.') : '-' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Selisih PPN</div>
+              <div class="info-value">{{ $dokumen->selisih_ppn ? 'Rp ' . number_format($dokumen->selisih_ppn, 0, ',', '.') : '-' }}</div>
+            </div>
+          </div>
+          @endif
+
+          <!-- Divider: Data Lainnya -->
+          <div style="border-top: 2px dashed #ffc107; margin: 24px 0; padding-top: 16px;">
+            <h6 style="color: #ffc107; font-weight: 600; margin-bottom: 16px;">
+              <i class="fa-solid fa-folder-open me-2"></i>Data Lainnya
+            </h6>
+          </div>
+
+          <!-- Tanggal Selesai Verifikasi & Jenis PPh -->
+          <div class="form-row">
+            <div class="info-item">
+              <div class="info-label">Tgl. Selesai Verifikasi Pajak</div>
+              <div class="info-value">{{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-' }}</div>
+            </div>
             <div class="info-item">
               <div class="info-label">Jenis PPh</div>
               <div class="info-value">{{ $dokumen->jenis_pph ?? '-' }}</div>
             </div>
+          </div>
+
+          <!-- DPP PPh & PPh Terhutang -->
+          <div class="form-row" style="margin-top: 15px;">
             <div class="info-item">
               <div class="info-label">DPP PPh</div>
               <div class="info-value">{{ $dokumen->dpp_pph ? 'Rp ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}</div>
             </div>
             <div class="info-item">
+              <div class="info-label">PPh Terhutang</div>
+              <div class="info-value">{{ $dokumen->pph_terhutang ? 'Rp ' . number_format($dokumen->pph_terhutang, 0, ',', '.') : '-' }}</div>
+            </div>
+          </div>
+
+          <!-- PPN Terhutang & Status Perpajakan -->
+          <div class="form-row" style="margin-top: 15px;">
+            <div class="info-item">
               <div class="info-label">PPN Terhutang</div>
               <div class="info-value">{{ $dokumen->ppn_terhutang ? 'Rp ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}</div>
             </div>
+            <div class="info-item">
+              <div class="info-label">Status Perpajakan</div>
+              <div class="info-value">{{ $dokumen->status_perpajakan ?? '-' }}</div>
+            </div>
           </div>
+
+          <!-- Keterangan Pajak -->
+          @if($dokumen->keterangan_pajak)
+          <div style="margin-top: 15px;">
+            <div class="info-item">
+              <div class="info-label">Keterangan</div>
+              <div class="info-value">{{ $dokumen->keterangan_pajak }}</div>
+            </div>
+          </div>
+          @endif
         </div>
       </div>
     </div>
     @endif
 
-    <!-- Section 3: Informasi Akutansi (Read-Only, jika ada) -->
+    <!-- Section 6: Informasi Akutansi (Read-Only, jika ada) -->
     @if(isset($hasAkutansiData) && $hasAkutansiData)
     <div class="accordion-section akutansi-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
@@ -651,6 +964,11 @@
       </div>
       <div class="accordion-content active">
         <div class="accordion-body">
+          <div style="background: #e3f2fd; border-left: 4px solid #007bff; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px;">
+            <strong><i class="fa-solid fa-info-circle me-1"></i>Informasi:</strong>
+            <span style="font-size: 13px;">Data di bawah ini berasal dari Team Akutansi dan tidak dapat diedit.</span>
+          </div>
+
           <div class="form-row">
             <div class="info-item">
               <div class="info-label">Nomor MIRO</div>
@@ -666,7 +984,7 @@
     </div>
     @endif
 
-    <!-- Section 4: Input Pembayaran (Editable) -->
+    <!-- Section 7: Input Pembayaran (Editable) -->
     <div class="accordion-section pembayaran-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
@@ -696,7 +1014,7 @@
             <i class="fa-solid fa-info-circle" style="color: #28a745; font-size: 20px; margin-top: 2px;"></i>
             <div>
               <strong style="color: #1b5e20; display: block; margin-bottom: 4px;">Petunjuk Pengisian</strong>
-              <span style="color: #2e7d32; font-size: 13px;">Isi minimal salah satu dari Tanggal Pembayaran atau Link Bukti Pembayaran untuk mengubah status dokumen menjadi "Sudah Dibayar".</span>
+              <span style="color: #2e7d32; font-size: 13px;">Isi minimal salah satu dari Tanggal Pembayaran atau Link Google Drive Bukti Pembayaran untuk mengubah status dokumen menjadi "Sudah Dibayar".</span>
             </div>
           </div>
 
@@ -714,26 +1032,6 @@
                 <i class="fa-solid fa-info-circle"></i> Pilih tanggal ketika pembayaran dilakukan
               </small>
               @error('tanggal_dibayar')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-            <div class="form-group">
-              <label>
-                <i class="fa-solid fa-receipt" style="color: #28a745;"></i>
-                Jenis Pembayaran <span class="optional-label">(Opsional)</span>
-              </label>
-              <select name="jenis_pembayaran">
-                <option value="">Pilih Jenis Pembayaran</option>
-                @if(isset($jenisPembayaranList) && $jenisPembayaranList->count() > 0)
-                  @foreach($jenisPembayaranList as $jenisPembayaran)
-                    <option value="{{ $jenisPembayaran->form_value ?? $jenisPembayaran->nama_jenis_pembayaran }}" 
-                            {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == ($jenisPembayaran->form_value ?? $jenisPembayaran->nama_jenis_pembayaran) ? 'selected' : '' }}>
-                      {{ $jenisPembayaran->display_name ?? $jenisPembayaran->nama_jenis_pembayaran }}
-                    </option>
-                  @endforeach
-                @endif
-              </select>
-              @error('jenis_pembayaran')
                 <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
               @enderror
             </div>
@@ -769,7 +1067,7 @@
               <i class="fa-solid fa-comment" style="color: #28a745;"></i>
               Catatan Pembayaran <span class="optional-label">(Opsional)</span>
             </label>
-            <textarea name="catatan_pembayaran" placeholder="Masukkan catatan tambahan jika diperlukan...">{{ old('catatan_pembayaran', $dokumen->catatan_pembayaran) }}</textarea>
+            <textarea name="catatan_pembayaran" rows="3" placeholder="Masukkan catatan tambahan jika diperlukan...">{{ old('catatan_pembayaran', $dokumen->catatan_pembayaran) }}</textarea>
             @error('catatan_pembayaran')
               <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
             @enderror
@@ -781,10 +1079,12 @@
     <!-- Form Actions -->
     <div class="form-actions">
       <a href="{{ route('documents.pembayaran.index') }}" class="btn-reset">
-        <i class="fa-solid fa-arrow-left me-2"></i>Batal
+        <i class="fa-solid fa-arrow-left"></i>
+        Kembali
       </a>
       <button type="submit" class="btn-submit">
-        <i class="fa-solid fa-save me-2"></i>Simpan Pembayaran
+        <i class="fa-solid fa-save"></i>
+        Simpan Pembayaran
       </button>
     </div>
   </form>

@@ -329,17 +329,19 @@ class DashboardPembayaranController extends Controller
         try {
             $validated = $request->validate([
                 'tanggal_dibayar' => 'nullable|date',
+                'catatan_pembayaran' => 'nullable|string|max:500',
                 'link_bukti_pembayaran' => 'nullable|url|max:1000',
             ], [
                 'tanggal_dibayar.date' => 'Format tanggal tidak valid.',
-                'link_bukti_pembayaran.url' => 'Format link tidak valid.',
-                'link_bukti_pembayaran.max' => 'Link maksimal 1000 karakter.',
+                'link_bukti_pembayaran.url' => 'Format link Google Drive tidak valid.',
+                'link_bukti_pembayaran.max' => 'Link Google Drive maksimal 1000 karakter.',
+                'catatan_pembayaran.max' => 'Catatan pembayaran maksimal 500 karakter.',
             ]);
 
-            // Minimal salah satu field harus diisi
+            // Minimal salah satu field harus diisi (tanggal atau link)
             if (empty($validated['tanggal_dibayar']) && empty($validated['link_bukti_pembayaran'])) {
                 return redirect()->back()
-                    ->with('error', 'Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.')
+                    ->with('error', 'Minimal salah satu field (Tanggal Pembayaran atau Link Google Drive Bukti Pembayaran) harus diisi.')
                     ->withInput();
             }
 
@@ -351,13 +353,18 @@ class DashboardPembayaranController extends Controller
                     $updateData['tanggal_dibayar'] = $validated['tanggal_dibayar'];
                 }
 
+                // Update catatan_pembayaran jika diisi
+                if (isset($validated['catatan_pembayaran'])) {
+                    $updateData['catatan_pembayaran'] = $validated['catatan_pembayaran'];
+                }
+
                 // Update link_bukti_pembayaran jika diisi
                 if (!empty($validated['link_bukti_pembayaran'])) {
                     $updateData['link_bukti_pembayaran'] = $validated['link_bukti_pembayaran'];
                 }
 
-                // Jika salah satu field diisi, update status menjadi sudah_dibayar
-                if (!empty($updateData)) {
+                // Jika salah satu field diisi (tanggal atau link), update status menjadi sudah_dibayar
+                if (!empty($validated['tanggal_dibayar']) || !empty($validated['link_bukti_pembayaran'])) {
                     $updateData['status_pembayaran'] = 'sudah_dibayar';
                     $updateData['status'] = 'completed';
                 }
