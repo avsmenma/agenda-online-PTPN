@@ -436,15 +436,20 @@
         </div>
     </div>
 
-    <!-- Tax Information if available -->
-    @if($dokumen->npwp || $dokumen->no_faktur || $dokumen->jenis_pph)
+    <!-- SECTION INFORMASI PERPAJAKAN (Jika dokumen pernah ke perpajakan) -->
+    @if(isset($hasPerpajakanData) && $hasPerpajakanData)
     <div class="divider"></div>
-    <div class="section-title">
-        <i class="fa-solid fa-file-invoice-dollar"></i>
-        Informasi Perpajakan
+    <div class="section-title" style="background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%); border-left-color: #ffc107;">
+        <i class="fa-solid fa-file-invoice-dollar" style="color: #ffc107;"></i>
+        Informasi Team Perpajakan
+        <span style="background: #ffc107; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; margin-left: 8px;">DATA DARI PERPAJAKAN</span>
     </div>
 
     <div class="info-grid-3">
+        <div class="info-item">
+            <div class="info-label">Status Perpajakan</div>
+            <div class="info-value">{{ $dokumen->status_perpajakan ?? '-' }}</div>
+        </div>
         <div class="info-item">
             <div class="info-label">NPWP</div>
             <div class="info-value">{{ $dokumen->npwp ?? '-' }}</div>
@@ -453,13 +458,28 @@
             <div class="info-label">No Faktur</div>
             <div class="info-value">{{ $dokumen->no_faktur ?? '-' }}</div>
         </div>
+    </div>
+
+    <div class="info-grid-3" style="margin-top: 15px;">
+        <div class="info-item">
+            <div class="info-label">Tanggal Faktur</div>
+            <div class="info-value">{{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Tgl. Selesai Verifikasi Pajak</div>
+            <div class="info-value">{{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-' }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">No Invoice</div>
+            <div class="info-value">{{ $dokumen->no_invoice ?? '-' }}</div>
+        </div>
+    </div>
+
+    <div class="info-grid-3" style="margin-top: 15px;">
         <div class="info-item">
             <div class="info-label">Jenis PPh</div>
             <div class="info-value">{{ $dokumen->jenis_pph ?? '-' }}</div>
         </div>
-    </div>
-
-    <div class="info-grid" style="margin-top: 15px;">
         <div class="info-item">
             <div class="info-label">DPP PPh</div>
             <div class="info-value">{{ $dokumen->dpp_pph ? 'Rp ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}</div>
@@ -467,6 +487,27 @@
         <div class="info-item">
             <div class="info-label">PPN Terhutang</div>
             <div class="info-value">{{ $dokumen->ppn_terhutang ? 'Rp ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}</div>
+        </div>
+    </div>
+    @endif
+
+    <!-- SECTION INFORMASI AKUTANSI (Jika dokumen pernah ke akutansi) -->
+    @if(isset($hasAkutansiData) && $hasAkutansiData)
+    <div class="divider"></div>
+    <div class="section-title" style="background: linear-gradient(90deg, rgba(0, 123, 255, 0.1) 0%, transparent 100%); border-left-color: #007bff;">
+        <i class="fa-solid fa-calculator" style="color: #007bff;"></i>
+        Informasi Team Akutansi
+        <span style="background: #007bff; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; margin-left: 8px;">DATA DARI AKUTANSI</span>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="info-label">Nomor MIRO</div>
+            <div class="info-value">{{ $dokumen->nomor_miro ?? '-' }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Tanggal MIRO</div>
+            <div class="info-value">{{ $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('d/m/Y') : '-' }}</div>
         </div>
     </div>
     @endif
@@ -508,49 +549,35 @@
             <div class="form-group">
                 <label>
                     <i class="fa-solid fa-calendar-check" style="color: #28a745;"></i>
-                    Tanggal Bayar <span class="optional-label">(Opsional)</span>
+                    Tanggal Pembayaran <span class="optional-label">(Opsional)</span>
                 </label>
                 <input type="date"
                        name="tanggal_dibayar"
                        value="{{ old('tanggal_dibayar', $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('Y-m-d') : '') }}"
-                       placeholder="Pilih tanggal pembayaran">
-            </div>
-            <div class="form-group">
-                <label>
-                    <i class="fa-solid fa-comment" style="color: #28a745;"></i>
-                    Catatan Pembayaran <span class="optional-label">(Opsional)</span>
-                </label>
-                <input type="text"
-                       name="catatan_pembayaran"
-                       value="{{ old('catatan_pembayaran', $dokumen->catatan_pembayaran) }}"
-                       placeholder="Masukkan catatan jika ada">
+                       placeholder="mm/dd/yyyy">
+                <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 11px;">
+                    <i class="fa-solid fa-info-circle"></i> Pilih tanggal ketika pembayaran dilakukan
+                </small>
             </div>
         </div>
 
         <div class="form-group">
             <label>
-                <i class="fa-solid fa-file-arrow-up" style="color: #28a745;"></i>
-                Upload Bukti Pembayaran <span class="optional-label">(Opsional)</span>
+                <i class="fa-brands fa-google-drive" style="color: #4285F4;"></i>
+                Link Google Drive Bukti Pembayaran <span class="optional-label">(Opsional)</span>
             </label>
-            <div class="file-upload-wrapper" id="dropZone">
-                <input type="file" name="bukti_pembayaran" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
-                <div class="file-upload-content">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <p>Drag & drop file atau klik untuk memilih</p>
-                    <small>Format: PDF, JPG, JPEG, PNG (Maks. 5MB)</small>
-                </div>
-            </div>
-            <div class="file-selected" id="fileSelected">
-                <i class="fa-solid fa-file-check"></i>
-                <span id="fileName"></span>
-            </div>
-
-            @if($dokumen->bukti_pembayaran)
+            <input type="url"
+                   name="link_bukti_pembayaran"
+                   value="{{ old('link_bukti_pembayaran', $dokumen->link_bukti_pembayaran) }}"
+                   placeholder="https://drive.google.com/file/d/...">
+            <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 11px;">
+                <i class="fa-solid fa-info-circle"></i> Masukkan link Google Drive untuk bukti pembayaran (PDF/File)
+            </small>
+            @if($dokumen->link_bukti_pembayaran)
             <div style="margin-top: 10px; padding: 10px 15px; background: #e8f5e9; border-radius: 8px;">
-                <i class="fa-solid fa-file-pdf" style="color: #28a745;"></i>
-                <span style="margin-left: 8px; font-size: 13px;">File saat ini: {{ basename($dokumen->bukti_pembayaran) }}</span>
-                <a href="{{ asset('storage/' . $dokumen->bukti_pembayaran) }}" target="_blank" style="margin-left: 10px; color: #28a745; font-size: 13px;">
-                    <i class="fa-solid fa-external-link-alt"></i> Lihat
+                <i class="fa-brands fa-google-drive" style="color: #28a745;"></i>
+                <a href="{{ $dokumen->link_bukti_pembayaran }}" target="_blank" style="margin-left: 8px; color: #28a745; font-size: 13px; text-decoration: underline;">
+                    <i class="fa-solid fa-external-link-alt"></i> Lihat Bukti Pembayaran
                 </a>
             </div>
             @endif

@@ -271,20 +271,113 @@ class DashboardPembayaranController extends Controller
         return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil ditambahkan');
     }
 
-    public function editDokumen($id){
+    public function editDokumen(Dokumen $dokumen){
+        // Validate that user can edit this document
+        if (!DokumenHelper::canEditDocument($dokumen, 'pembayaran')) {
+            return redirect()->route('documents.pembayaran.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
+        }
+
+        // Load document relationships
+        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Check if document has been to perpajakan
+        $perpajakanData = $dokumen->getDataForRole('perpajakan');
+        $hasPerpajakanData = ($perpajakanData && $perpajakanData->received_at) ||
+            !empty($dokumen->no_faktur) ||
+            !empty($dokumen->npwp) ||
+            !empty($dokumen->status_perpajakan);
+
+        // Check if document has been to akutansi
+        $akutansiData = $dokumen->getDataForRole('akutansi');
+        $hasAkutansiData = ($akutansiData && $akutansiData->received_at) ||
+            !empty($dokumen->nomor_miro);
+
+        // Ambil data jenis pembayaran dari database cash_bank_new
+        $jenisPembayaranList = collect([]);
+        try {
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching jenis pembayaran data (edit pembayaran): ' . $e->getMessage());
+            $jenisPembayaranList = collect([]);
+        }
+
         $data = array(
             "title" => "Edit Pembayaran",
             "module" => "pembayaran",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuEditDokumen' => 'Active',
+            'dokumen' => $dokumen,
+            'hasPerpajakanData' => $hasPerpajakanData,
+            'hasAkutansiData' => $hasAkutansiData,
+            'perpajakanData' => $perpajakanData,
+            'akutansiData' => $akutansiData,
+            'jenisPembayaranList' => $jenisPembayaranList,
         );
         return view('pembayaranNEW.dokumens.editPembayaran', $data);
     }
 
-    public function updateDokumen(Request $request, $id){
-        // Implementation for updating document
-        return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil diperbarui');
+    public function updateDokumen(Request $request, Dokumen $dokumen){
+        // Validate that user can edit this document
+        if (!DokumenHelper::canEditDocument($dokumen, 'pembayaran')) {
+            return redirect()->back()
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.')
+                ->withInput();
+        }
+
+        try {
+            $validated = $request->validate([
+                'tanggal_dibayar' => 'nullable|date',
+                'link_bukti_pembayaran' => 'nullable|url|max:1000',
+            ], [
+                'tanggal_dibayar.date' => 'Format tanggal tidak valid.',
+                'link_bukti_pembayaran.url' => 'Format link tidak valid.',
+                'link_bukti_pembayaran.max' => 'Link maksimal 1000 karakter.',
+            ]);
+
+            // Minimal salah satu field harus diisi
+            if (empty($validated['tanggal_dibayar']) && empty($validated['link_bukti_pembayaran'])) {
+                return redirect()->back()
+                    ->with('error', 'Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.')
+                    ->withInput();
+            }
+
+            DB::transaction(function () use ($dokumen, $validated) {
+                $updateData = [];
+
+                // Update tanggal_dibayar jika diisi
+                if (!empty($validated['tanggal_dibayar'])) {
+                    $updateData['tanggal_dibayar'] = $validated['tanggal_dibayar'];
+                }
+
+                // Update link_bukti_pembayaran jika diisi
+                if (!empty($validated['link_bukti_pembayaran'])) {
+                    $updateData['link_bukti_pembayaran'] = $validated['link_bukti_pembayaran'];
+                }
+
+                // Jika salah satu field diisi, update status menjadi sudah_dibayar
+                if (!empty($updateData)) {
+                    $updateData['status_pembayaran'] = 'sudah_dibayar';
+                    $updateData['status'] = 'completed';
+                }
+
+                $dokumen->update($updateData);
+            });
+
+            return redirect()->route('documents.pembayaran.index')
+                ->with('success', 'Data pembayaran berhasil diperbarui.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+        } catch (\Exception $e) {
+            Log::error('Error updating pembayaran: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memperbarui data pembayaran.')
+                ->withInput();
+        }
     }
 
     /**
