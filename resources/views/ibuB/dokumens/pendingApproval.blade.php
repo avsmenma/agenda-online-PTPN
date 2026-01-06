@@ -168,7 +168,20 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                $('#rejection-error').text(xhr.responseJSON?.message || 'Terjadi kesalahan').show();
+                let errorMessage = 'Terjadi kesalahan';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        // Handle validation errors
+                        const errors = xhr.responseJSON.errors;
+                        const firstError = Object.values(errors)[0];
+                        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+                    }
+                } else if (xhr.status === 422) {
+                    errorMessage = 'Validasi gagal. Pastikan alasan penolakan sudah diisi dengan benar.';
+                }
+                $('#rejection-error').text(errorMessage).show();
             }
         });
     });

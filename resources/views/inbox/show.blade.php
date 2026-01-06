@@ -908,7 +908,13 @@
                         name="reject_reason" 
                         rows="3" 
                         placeholder="Masukkan alasan penolakan dokumen..."
-                    ></textarea>
+                        class="@error('reason') is-invalid @enderror"
+                    >{{ old('reason') }}</textarea>
+                    @error('reason')
+                        <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                        </div>
+                    @enderror
                 </div>
 
                 <div class="action-buttons">
@@ -1014,6 +1020,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     @if(session('error'))
         showNotification('error', 'Error!', '{{ session('error') }}');
+    @endif
+
+    // Handle validation errors
+    @if($errors->has('reason'))
+        @foreach($errors->get('reason') as $error)
+            showNotification('error', 'Validasi Gagal', '{{ $error }}');
+        @endforeach
+        // Re-open reject modal if it was closed
+        const rejectModalEl = document.getElementById('rejectModal');
+        if (rejectModalEl) {
+            const bsModal = new bootstrap.Modal(rejectModalEl);
+            bsModal.show();
+        }
     @endif
 
     // Handle form submissions with loading state

@@ -239,12 +239,19 @@ class InboxController extends Controller
      */
     public function reject(Request $request, Dokumen $dokumen)
     {
-        $request->validate([
-            'reason' => 'required|string|max:500'
-        ], [
-            'reason.required' => 'Alasan penolakan harus diisi',
-            'reason.max' => 'Alasan penolakan maksimal 500 karakter'
-        ]);
+        try {
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ], [
+                'reason.required' => 'Alasan penolakan harus diisi',
+                'reason.max' => 'Alasan penolakan maksimal 500 karakter'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Redirect back to show page with validation errors
+            return redirect()->route('inbox.show', $dokumen)
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         try {
             $user = auth()->user();
