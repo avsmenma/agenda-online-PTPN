@@ -59,11 +59,16 @@
 
   .filter-section select,
   .filter-section input {
-    padding: 10px 14px;
+    padding: 10px 35px 10px 14px;
     border: 2px solid rgba(8, 62, 64, 0.1);
     border-radius: 10px;
     font-size: 13px;
     transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
   }
 
   .filter-section select:focus,
@@ -1018,6 +1023,18 @@
     font-weight: 600;
     white-space: nowrap;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+  }
+
+  .btn-action.btn-full-width span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
   }
 
   .btn-action:hover {
@@ -1991,11 +2008,20 @@
       <input type="text" id="akutansiSearchInput" class="form-control" name="search" placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
     </div>
     <div class="filter-section">
-      <select name="year" class="form-select">
+      <select name="year" class="form-select" onchange="this.form.submit()">
         <option value="">Semua Tahun</option>
         <option value="2025" {{ request('year') == '2025' ? 'selected' : '' }}>2025</option>
         <option value="2024" {{ request('year') == '2024' ? 'selected' : '' }}>2024</option>
         <option value="2023" {{ request('year') == '2023' ? 'selected' : '' }}>2023</option>
+      </select>
+    </div>
+    <div class="filter-section">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">Semua Status</option>
+        <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
+        <option value="terkirim_pembayaran" {{ request('status') == 'terkirim_pembayaran' ? 'selected' : '' }}>Terkirim ke Pembayaran</option>
+        <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve</option>
+        <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
       </select>
     </div>
     <button type="submit" class="btn-filter">
@@ -2101,8 +2127,8 @@
                   <span class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</span>
                 @elseif($col == 'nilai_rupiah')
                   <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
-                @elseif($col == 'nomor_mirror')
-                  {{ $dokumen->nomor_mirror ?? '-' }}
+                @elseif($col == 'nomor_miro')
+                  {{ $dokumen->nomor_miro ?? '-' }}
                 @elseif($col == 'tanggal_spp')
                   {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
                 @elseif($col == 'uraian_spp')
@@ -2254,7 +2280,26 @@
               @endif
             </td>
             <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-              @if(in_array($dokumen->status, ['menunggu_di_approve', 'pending_approval_pembayaran']))
+              @php
+                // Check if document is rejected by akutansi
+                $isRejected = $dokumen->roleStatuses()
+                  ->where('role_code', 'akutansi')
+                  ->where('status', 'rejected')
+                  ->exists();
+              @endphp
+              @if($isRejected)
+                {{-- Dokumen ditolak oleh akutansi --}}
+                <span class="badge-status badge-dikembalikan" style="position: relative;">
+                  <i class="fa-solid fa-times-circle me-1"></i>
+                  <span>Dokumen ditolak,
+                    <a href="{{ route('returns.akutansi.index') }}?search={{ $dokumen->nomor_agenda }}"
+                      class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
+                      style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
+                      cek disini
+                    </a>
+                  </span>
+                </span>
+              @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'pending_approval_pembayaran']))
                 <span class="badge-status badge-warning">
                   <i class="fa-solid fa-clock me-1"></i>
                   Menunggu Approve
@@ -3653,7 +3698,7 @@ document.addEventListener('DOMContentLoaded', function() {
                               {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
                             @elseif($col == 'nilai_rupiah')
                               Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
-                            @elseif($col == 'nomor_mirror')
+                            @elseif($col == 'nomor_miro')
                               MIR-{{ 1000 + $i }}
                             @elseif($col == 'npwp')
                               12.345.678.9-{{ str_pad($i, 3, '0', STR_PAD_LEFT) }}.456
@@ -3824,7 +3869,7 @@ function updatePreviewTable() {
     'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
     'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
     'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
-    'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
+    'nomor_miro': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
     'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
     'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
     'npwp': ['12.345.678.9-001.456', '12.345.678.9-002.456', '12.345.678.9-003.456', '12.345.678.9-004.456', '12.345.678.9-005.456'],

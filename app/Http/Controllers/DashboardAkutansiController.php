@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Dokumen;
+use App\Models\DokumenStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -250,6 +251,70 @@ class DashboardAkutansiController extends Controller
             $query->where('tahun', $request->year);
         }
 
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            switch ($request->status) {
+                case 'sedang_proses':
+                    // Dokumen yang sedang diproses oleh akutansi
+                    // Sesuai dengan logika di view yang menampilkan "Sedang Diproses" untuk dokumen yang:
+                    // - current_handler = 'akutansi'
+                    // - Bukan sent_to_pembayaran
+                    // - Bukan pending approval (pending_approval_*, menunggu_di_approve)
+                    // - Bukan rejected atau pending di roleStatuses
+                    $query->where(function ($q) {
+                        $q->where('current_handler', 'akutansi')
+                            ->whereNotIn('status', ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve'])
+                            ->whereDoesntHave('roleStatuses', function ($statusQ) {
+                                $statusQ->where('role_code', 'akutansi')
+                                    ->whereIn('status', ['pending', 'rejected']);
+                            });
+                    });
+                    break;
+                case 'terkirim_pembayaran':
+                    // Dokumen yang sudah terkirim ke team pembayaran
+                    $query->where(function ($statusQ) {
+                        $statusQ->where('status', 'sent_to_pembayaran')
+                            ->orWhere(function ($completedQ) {
+                                // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                $completedQ->whereIn('status', ['completed', 'selesai'])
+                                    ->whereNotNull('status_pembayaran');
+                            });
+                    });
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $query->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
+                    }
+                    break;
+                case 'menunggu_approve':
+                    // Semua dokumen dengan status menunggu approve (pending di dokumen_statuses untuk role apapun)
+                    // atau dokumen dengan status pending_approval_* atau menunggu_di_approve
+                    $query->where(function ($q) {
+                        $q->whereHas('roleStatuses', function ($statusQ) {
+                            $statusQ->where('status', DokumenStatus::STATUS_PENDING);
+                        })
+                        ->orWhereIn('status', [
+                            'pending_approval_ibub',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                            'pending_approval_pembayaran',
+                            'waiting_reviewer_approval',
+                            'menunggu_di_approve'
+                        ]);
+                    });
+                    break;
+                case 'ditolak':
+                    // Dokumen yang ditolak (rejected di dokumen_statuses untuk role akutansi)
+                    $query->whereHas('roleStatuses', function ($q) {
+                        $q->where('role_code', 'akutansi')
+                            ->where('status', DokumenStatus::STATUS_REJECTED);
+                    });
+                    break;
+            }
+        }
+
         // Eager load roleData and roleStatuses for akutansi to access deadline_at and status
         $query->with([
             'roleData' => function ($q) {
@@ -364,9 +429,9 @@ class DashboardAkutansiController extends Controller
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
 
-        // Filter out 'status' and 'keterangan' from selectedColumns if present
+        // Filter out 'status', 'keterangan', and 'nomor_mirror' from selectedColumns if present
         $selectedColumns = array_filter($selectedColumns, function ($col) {
-            return $col !== 'status' && $col !== 'keterangan';
+            return $col !== 'status' && $col !== 'keterangan' && $col !== 'nomor_mirror';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
 
@@ -400,9 +465,9 @@ class DashboardAkutansiController extends Controller
                 $selectedColumns = session('akutansi_dokumens_table_columns', $defaultColumns);
             }
 
-            // Filter out 'status' and 'keterangan' if they exist
+            // Filter out 'status', 'keterangan', and 'nomor_mirror' if they exist
             $selectedColumns = array_filter($selectedColumns, function ($col) {
-                return $col !== 'status' && $col !== 'keterangan';
+                return $col !== 'status' && $col !== 'keterangan' && $col !== 'nomor_mirror';
             });
             $selectedColumns = array_values($selectedColumns);
 
