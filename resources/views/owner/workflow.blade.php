@@ -1149,34 +1149,93 @@
       </div>
     </div>
 
-    {{-- Tax Data Card --}}
+    {{-- Combined Data Card: Perpajakan + Akutansi + Pembayaran --}}
     <div class="info-card clickable" id="tax-data-card" data-modal-type="tax">
       <div class="info-card-header">
         <div class="info-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
           <i class="fas fa-calculator"></i>
         </div>
-        <div class="info-card-title">Data Perpajakan</div>
+        <div class="info-card-title">Data Perpajakan, Akutansi & Pembayaran</div>
       </div>
       <div style="space-y: 16px;">
-        @if($dokumen->npwp || $dokumen->no_faktur)
-          <div style="padding: 16px; background: #f8fafc; border-radius: 12px; margin-bottom: 12px;">
-            <div class="stage-label">NPWP</div>
-            <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->npwp ?? '-' }}</div>
-          </div>
-          <div style="padding: 16px; background: #f8fafc; border-radius: 12px; margin-bottom: 12px;">
-            <div class="stage-label">No. Faktur</div>
-            <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->no_faktur ?? '-' }}</div>
-          </div>
-          @if($dokumen->jenis_pph)
-            <div style="padding: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border: 1px solid #86efac;">
-              <div class="stage-label" style="color: #059669;">Jenis PPh</div>
-              <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->jenis_pph }}</div>
+        @php
+          $hasPerpajakanData = $dokumen->npwp || $dokumen->no_faktur || $dokumen->jenis_pph;
+          $hasAkutansiData = $dokumen->nomor_miro;
+          $hasPembayaranData = $dokumen->tanggal_dibayar || $dokumen->link_bukti_pembayaran;
+          $hasAnyData = $hasPerpajakanData || $hasAkutansiData || $hasPembayaranData;
+        @endphp
+        
+        @if($hasAnyData)
+          {{-- Data Perpajakan Section --}}
+          @if($hasPerpajakanData)
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #f59e0b; margin-bottom: 12px; letter-spacing: 0.5px;">
+                <i class="fas fa-calculator" style="margin-right: 6px;"></i>Data Perpajakan
+              </div>
+              @if($dokumen->npwp)
+                <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px;">
+                  <div class="stage-label" style="font-size: 11px;">NPWP</div>
+                  <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->npwp }}</div>
+                </div>
+              @endif
+              @if($dokumen->no_faktur)
+                <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px;">
+                  <div class="stage-label" style="font-size: 11px;">No. Faktur</div>
+                  <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->no_faktur }}</div>
+                </div>
+              @endif
+              @if($dokumen->jenis_pph)
+                <div style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; border: 1px solid #86efac;">
+                  <div class="stage-label" style="color: #059669; font-size: 11px;">Jenis PPh</div>
+                  <div style="font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->jenis_pph }}</div>
+                </div>
+              @endif
+            </div>
+          @endif
+
+          {{-- Data Akutansi Section --}}
+          @if($hasAkutansiData)
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #083E40; margin-bottom: 12px; letter-spacing: 0.5px;">
+                <i class="fas fa-file-invoice-dollar" style="margin-right: 6px;"></i>Data Akutansi
+              </div>
+              @if($dokumen->nomor_miro)
+                <div style="padding: 12px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-radius: 8px; border: 1px solid #7dd3fc;">
+                  <div class="stage-label" style="color: #0369a1; font-size: 11px;">Nomor MIRO</div>
+                  <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->nomor_miro }}</div>
+                </div>
+              @endif
+            </div>
+          @endif
+
+          {{-- Data Pembayaran Section --}}
+          @if($hasPembayaranData)
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #059669; margin-bottom: 12px; letter-spacing: 0.5px;">
+                <i class="fas fa-money-bill-wave" style="margin-right: 6px;"></i>Data Pembayaran
+              </div>
+              @if($dokumen->tanggal_dibayar)
+                <div style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; margin-bottom: 8px; border: 1px solid #86efac;">
+                  <div class="stage-label" style="color: #059669; font-size: 11px;">Tanggal Pembayaran</div>
+                  <div style="font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d M Y') }}</div>
+                </div>
+              @endif
+              @if($dokumen->link_bukti_pembayaran)
+                <div style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; border: 1px solid #86efac;">
+                  <div class="stage-label" style="color: #059669; font-size: 11px;">Link Google Drive Bukti Pembayaran</div>
+                  <div style="margin-top: 4px;">
+                    <a href="{{ $dokumen->link_bukti_pembayaran }}" target="_blank" style="color: #059669; font-weight: 600; text-decoration: none; font-size: 13px; word-break: break-all;">
+                      <i class="fas fa-external-link-alt" style="margin-right: 4px;"></i>{{ \Illuminate\Support\Str::limit($dokumen->link_bukti_pembayaran, 50) }}
+                    </a>
+                  </div>
+                </div>
+              @endif
             </div>
           @endif
         @else
           <div style="text-align: center; padding: 40px; color: #94a3b8;">
             <i class="fas fa-search-dollar" style="font-size: 48px; opacity: 0.3; margin-bottom: 12px;"></i>
-            <p style="font-size: 14px;">Belum ada data perpajakan</p>
+            <p style="font-size: 14px;">Belum ada data perpajakan, akutansi, atau pembayaran</p>
           </div>
         @endif
       </div>
@@ -1318,6 +1377,7 @@
     ];
 
     $taxDataArray = [
+      // Data Perpajakan
       'npwp' => $dokumen->npwp ?? null,
       'status_perpajakan' => $dokumen->status_perpajakan ?? null,
       'no_faktur' => $dokumen->no_faktur ?? null,
@@ -1344,6 +1404,12 @@
       'dpp_penggantian' => $dokumen->dpp_penggantian ?? null,
       'ppn_penggantian' => $dokumen->ppn_penggantian ?? null,
       'selisih_ppn' => $dokumen->selisih_ppn ?? null,
+      // Data Akutansi
+      'nomor_miro' => $dokumen->nomor_miro ?? null,
+      // Data Pembayaran
+      'tanggal_dibayar' => $dokumen->tanggal_dibayar ? \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d M Y') : null,
+      'link_bukti_pembayaran' => $dokumen->link_bukti_pembayaran ?? null,
+      'status_pembayaran' => $dokumen->status_pembayaran ?? null,
     ];
   @endphp
   const documentData = @json($documentDataArray);
@@ -1561,15 +1627,15 @@
   function renderTaxModal() {
     const modalBody = document.getElementById('modal-body');
     
-    // Check if there's any tax data
-    const hasTaxData = Object.values(taxData).some(v => v !== null && v !== '');
+    // Check if there's any data (perpajakan, akutansi, or pembayaran)
+    const hasTaxData = taxData.npwp || taxData.no_faktur || taxData.jenis_pph || taxData.nomor_miro || taxData.tanggal_dibayar || taxData.link_bukti_pembayaran;
     
     if (!hasTaxData) {
       modalBody.innerHTML = `
         <div style="text-align: center; padding: 60px 20px;">
           <i class="fas fa-search-dollar" style="font-size: 64px; color: #cbd5e1; margin-bottom: 20px;"></i>
-          <h3 style="color: #64748b; margin-bottom: 8px;">Belum Ada Data Perpajakan</h3>
-          <p style="color: #94a3b8;">Data perpajakan untuk dokumen ini belum diisi.</p>
+          <h3 style="color: #64748b; margin-bottom: 8px;">Belum Ada Data</h3>
+          <p style="color: #94a3b8;">Data perpajakan, akutansi, atau pembayaran untuk dokumen ini belum diisi.</p>
         </div>
       `;
       return;
@@ -1813,6 +1879,57 @@
         </div>
       </div>
       ` : ''}
+
+      ${taxData.nomor_miro ? `
+      <div class="modal-section">
+        <div class="modal-section-title" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);">
+          <i class="fas fa-file-invoice-dollar"></i>
+          Data Akutansi
+        </div>
+        <div class="modal-grid">
+          ${formatField('Nomor MIRO', taxData.nomor_miro) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Nomor MIRO</div>
+              <div class="modal-field-value monospace highlight">${taxData.nomor_miro}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
+
+      ${taxData.tanggal_dibayar || taxData.link_bukti_pembayaran || taxData.status_pembayaran ? `
+      <div class="modal-section">
+        <div class="modal-section-title" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+          <i class="fas fa-money-bill-wave"></i>
+          Data Pembayaran
+        </div>
+        <div class="modal-grid">
+          ${formatField('Tanggal Pembayaran', taxData.tanggal_dibayar) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Tanggal Pembayaran</div>
+              <div class="modal-field-value highlight">${taxData.tanggal_dibayar}</div>
+            </div>
+          ` : ''}
+          ${formatField('Status Pembayaran', taxData.status_pembayaran) ? `
+            <div class="modal-field">
+              <div class="modal-field-label">Status Pembayaran</div>
+              <div class="modal-field-value highlight">${taxData.status_pembayaran}</div>
+            </div>
+          ` : ''}
+          ${formatField('Link Google Drive Bukti Pembayaran', taxData.link_bukti_pembayaran) ? `
+            <div class="modal-field" style="grid-column: 1 / -1;">
+              <div class="modal-field-label">Link Google Drive Bukti Pembayaran</div>
+              <div class="modal-field-value">
+                <a href="${taxData.link_bukti_pembayaran}" target="_blank" style="color: #059669; text-decoration: underline; word-break: break-all;">
+                  <i class="fas fa-external-link-alt" style="margin-right: 6px;"></i>
+                  ${taxData.link_bukti_pembayaran}
+                </a>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
     `;
   }
 
@@ -1842,8 +1959,8 @@
           modalIcon.style.background = 'linear-gradient(135deg, #083E40 0%, #889717 100%)';
           renderDocumentModal();
         } else if (type === 'tax') {
-          modalTitle.textContent = 'Detail Data Perpajakan';
-          modalSubtitle.textContent = 'Informasi lengkap perpajakan';
+          modalTitle.textContent = 'Detail Data Perpajakan, Akutansi & Pembayaran';
+          modalSubtitle.textContent = 'Informasi lengkap perpajakan, akutansi, dan pembayaran';
           modalIcon.innerHTML = '<i class="fas fa-calculator"></i>';
           modalIcon.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
           renderTaxModal();
