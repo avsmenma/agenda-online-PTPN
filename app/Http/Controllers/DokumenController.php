@@ -694,14 +694,17 @@ class DokumenController extends Controller
 
         // Ambil data jenis pembayaran dari database cash_bank_new
         $jenisPembayaranList = collect([]);
+        $isJenisPembayaranAvailable = false;
         try {
             $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
-            \Log::info('Jenis Pembayaran fetched (create): ' . $jenisPembayaranList->count() . ' records');
+            $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
+            \Log::info('Jenis Pembayaran fetched (edit): ' . $jenisPembayaranList->count() . ' records');
         } catch (\Exception $e) {
-            \Log::error('Error fetching jenis pembayaran data (create): ' . $e->getMessage());
+            \Log::error('Error fetching jenis pembayaran data (edit): ' . $e->getMessage());
             \Log::error('Error trace: ' . $e->getTraceAsString());
             // Fallback: gunakan collection kosong jika error
             $jenisPembayaranList = collect([]);
+            $isJenisPembayaranAvailable = false;
         }
 
         // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
@@ -752,6 +755,7 @@ class DokumenController extends Controller
             'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
             'isDropdownAvailable' => $isDropdownAvailable,
             'jenisPembayaranList' => $jenisPembayaranList,
+            'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
         );
 
         return view('IbuA.dokumens.editDokumen', $data);
