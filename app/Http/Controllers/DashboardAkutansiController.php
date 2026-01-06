@@ -1384,21 +1384,8 @@ class DashboardAkutansiController extends Controller
                 ], 403);
             }
 
-            // Check if document is ready for payment (completed by Akutansi)
-            if ($dokumen->status !== 'sedang diproses') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Dokumen harus selesai diproses oleh Akutansi sebelum dikirim ke Pembayaran.'
-                ], 403);
-            }
-
-            // Check if nomor_miro has been filled
-            if (empty($dokumen->nomor_miro)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Nomor MIRO harus diisi terlebih dahulu sebelum dokumen dapat dikirim ke Pembayaran.'
-                ], 403);
-            }
+            // Removed validation: Allow sending document in any condition
+            // Previously checked: status must be 'sedang diproses' and nomor_miro must be filled
 
             // Store previous status for tracking
             $previousStatus = $dokumen->status;
