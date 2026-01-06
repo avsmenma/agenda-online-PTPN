@@ -230,7 +230,6 @@ class DashboardAkutansiController extends Controller
                     ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
                     ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
                     ->orWhere('no_spk', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
                     ->orWhere('nomor_miro', 'like', '%' . $search . '%')
                     ->orWhere('keterangan', 'like', '%' . $search . '%')
                     ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
@@ -337,7 +336,7 @@ class DashboardAkutansiController extends Controller
             'nomor_spp' => 'Nomor SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Miro',
+            'nomor_miro' => 'Nomor Miro',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kategori',
@@ -391,7 +390,7 @@ class DashboardAkutansiController extends Controller
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_mirror'
+                'nomor_miro'
             ];
 
             if ($user && isset($user->table_columns_preferences['akutansi'])) {
@@ -1242,7 +1241,7 @@ class DashboardAkutansiController extends Controller
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
             'No PO' => $dokumen->dokumenPos->count() > 0 ? htmlspecialchars($dokumen->dokumenPos->pluck('nomor_po')->join(', ')) : '-',
             'No PR' => $dokumen->dokumenPrs->count() > 0 ? htmlspecialchars($dokumen->dokumenPrs->pluck('nomor_pr')->join(', ')) : '-',
-            'No Mirror' => $dokumen->nomor_mirror ?? '-',
+            'Nomor Miro' => $dokumen->nomor_miro ?? '-',
         ];
 
         foreach ($detailItems as $label => $value) {
@@ -1515,7 +1514,6 @@ class DashboardAkutansiController extends Controller
             'jenis_dokumen',
             'no_berita_acara',
             'no_spk',
-            'nomor_mirror',
             'nomor_miro',
             'keterangan',
             'dibayar_kepada'
