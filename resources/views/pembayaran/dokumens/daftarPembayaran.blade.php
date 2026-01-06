@@ -689,7 +689,7 @@
                   @endif
                 @elseif($canEdit && !$isLocked)
                   {{-- Dokumen sudah terkirim ke pembayaran dan tidak terkunci - bisa diedit --}}
-                  <a href="{{ route('documents.pembayaran.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+                  <a href="{{ route('documents.pembayaran.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen" onclick="event.stopPropagation();">
                     <i class="fas fa-edit"></i>
                   </a>
                   @if($dokumen->status_pembayaran != 'sudah_dibayar')
