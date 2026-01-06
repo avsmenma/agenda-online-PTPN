@@ -1109,7 +1109,7 @@ class DashboardBController extends Controller
     {
         // IbuB sees documents that were returned to department (unified return page)
         // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
-        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas'])
+        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas', 'roleStatuses'])
             ->where(function ($q) {
                 // Dokumen yang dikembalikan dari department/bagian
                 $q->where(function ($subQ) {

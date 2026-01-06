@@ -705,7 +705,7 @@
               <th>Nomor SPP</th>
               <th>Uraian</th>
               <th>Nilai Rupiah</th>
-              <th>Tanggal Terima Dokumen</th>
+              <th>TGL DOKUMEN MASUK</th>
               <th>Dari</th>
               <th>Alasan</th>
               <th style="width: 200px;">Aksi</th>
@@ -720,49 +720,67 @@
               <td class="uraian-column">{{ \Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 50) }}</td>
               <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
               <td class="tanggal-column">
-                @if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_responded_at)
-                  <small>{{ $dokumen->inbox_approval_responded_at->format('d/m/Y H:i') }}</small>
-                @elseif($dokumen->returned_from_perpajakan_at)
-                  <small>{{ $dokumen->returned_from_perpajakan_at->format('d/m/Y H:i') }}</small>
-                @elseif($dokumen->department_returned_at)
-                  <small>{{ $dokumen->department_returned_at->format('d/m/Y H:i') }}</small>
+                @php
+                  // Cari rejected status dari perpajakan atau akutansi
+                  $rejectedStatus = $dokumen->roleStatuses()
+                    ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                    ->where('status', 'rejected')
+                    ->latest('status_changed_at')
+                    ->first();
+                  
+                  $tanggalTerima = null;
+                  if ($rejectedStatus && $rejectedStatus->status_changed_at) {
+                    $tanggalTerima = $rejectedStatus->status_changed_at;
+                  } elseif ($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_responded_at) {
+                    $tanggalTerima = $dokumen->inbox_approval_responded_at;
+                  } elseif ($dokumen->returned_from_perpajakan_at) {
+                    $tanggalTerima = $dokumen->returned_from_perpajakan_at;
+                  } elseif ($dokumen->department_returned_at) {
+                    $tanggalTerima = $dokumen->department_returned_at;
+                  }
+                @endphp
+                @if($tanggalTerima)
+                  <small>{{ \Carbon\Carbon::parse($tanggalTerima)->format('d/m/Y H:i') }}</small>
                 @else
                   <small>-</small>
                 @endif
               </td>
               <td class="dari-column">
-                @if($dokumen->inbox_approval_status == 'rejected')
-                  @php
+                @php
+                  // Cari rejected status dari perpajakan atau akutansi
+                  $rejectedStatus = $dokumen->roleStatuses()
+                    ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                    ->where('status', 'rejected')
+                    ->latest('status_changed_at')
+                    ->first();
+                  
+                  $dariRole = null;
+                  if ($rejectedStatus) {
+                    $dariRole = $rejectedStatus->role_code;
+                  } elseif ($dokumen->inbox_approval_status == 'rejected') {
                     $rejectedFrom = $dokumen->inbox_approval_for ?? 'Unknown';
-                  @endphp
-                  @if($rejectedFrom == 'Perpajakan')
-                    <span class="dept-badge perpajakan rejected">
-                      <i class="fa-solid fa-times-circle me-1"></i>Ditolak Perpajakan
+                    $dariRole = strtolower($rejectedFrom);
+                  } elseif ($dokumen->returned_from_perpajakan_at) {
+                    $dariRole = 'perpajakan';
+                  } elseif ($dokumen->target_department) {
+                    $dariRole = $dokumen->target_department;
+                  }
+                @endphp
+                @if($dariRole == 'perpajakan')
+                  <span class="dept-badge perpajakan rejected">
+                    <i class="fa-solid fa-times-circle me-1"></i>Team Perpajakan
                   </span>
-                  @elseif($rejectedFrom == 'Akutansi')
-                    <span class="dept-badge akutansi rejected">
-                      <i class="fa-solid fa-times-circle me-1"></i>Ditolak Akutansi
-                    </span>
-                  @else
-                    <span class="dept-badge rejected">
-                      <i class="fa-solid fa-times-circle me-1"></i>Ditolak dari Inbox
-                    </span>
-                  @endif
-                @elseif($dokumen->returned_from_perpajakan_at)
-                  <span class="dept-badge perpajakan">
-                    <i class="fa-solid fa-building me-1"></i>Team Perpajakan
+                @elseif($dariRole == 'akutansi')
+                  <span class="dept-badge akutansi rejected">
+                    <i class="fa-solid fa-times-circle me-1"></i>Team Akutansi
                   </span>
-                @elseif($dokumen->target_department == 'akutansi')
-                  <span class="dept-badge akutansi">
-                    <i class="fa-solid fa-building me-1"></i>Team Akutansi
-                  </span>
-                @elseif($dokumen->target_department == 'pembayaran')
+                @elseif($dariRole == 'pembayaran')
                   <span class="dept-badge pembayaran">
-                    <i class="fa-solid fa-building me-1"></i>Pembayaran
+                    <i class="fa-solid fa-building me-1"></i>Team Pembayaran
                   </span>
-                @elseif($dokumen->target_department)
+                @elseif($dariRole)
                   <span class="dept-badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
-                    <i class="fa-solid fa-building me-1"></i>{{ ucfirst($dokumen->target_department) }}
+                    <i class="fa-solid fa-building me-1"></i>{{ ucfirst($dariRole) }}
                   </span>
                 @else
                   <small class="text-muted">-</small>
@@ -770,11 +788,25 @@
               </td>
               <td class="alasan-column">
                 @php
+                  // Cari rejected status dari perpajakan atau akutansi untuk mendapatkan alasan
+                  $rejectedStatus = $dokumen->roleStatuses()
+                    ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                    ->where('status', 'rejected')
+                    ->latest('status_changed_at')
+                    ->first();
+                  
                   $alasan = '';
-                  if($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason) {
+                  if ($rejectedStatus && $rejectedStatus->notes) {
+                    // Ambil alasan dari dokumen_statuses table (notes)
+                    $alasan = $rejectedStatus->notes;
+                  } elseif ($dokumen->inbox_approval_status == 'rejected' && $dokumen->inbox_approval_reason) {
+                    // Fallback ke legacy field
                     $alasan = $dokumen->inbox_approval_reason;
+                  } elseif ($dokumen->alasan_pengembalian) {
+                    // Fallback ke alasan_pengembalian
+                    $alasan = $dokumen->alasan_pengembalian;
                   } else {
-                    $alasan = $dokumen->alasan_pengembalian ?? '-';
+                    $alasan = '-';
                   }
                 @endphp
                 <div class="alasan-bubble">
