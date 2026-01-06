@@ -481,6 +481,48 @@ class DashboardAkutansiController extends Controller
             $jenisPembayaranList = collect([]);
         }
 
+        // Ambil data untuk dropdown kriteria (jika database cash_bank tersedia)
+        $isDropdownAvailable = false;
+        $kategoriKriteria = collect([]);
+        $subKriteria = collect([]);
+        $itemSubKriteria = collect([]);
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
+        try {
+            $kategoriKriteria = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = \App\Models\SubKriteria::all();
+            $itemSubKriteria = \App\Models\ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
+
+            // Get selected values if document has kategori/jenis_dokumen/jenis_sub_pekerjaan
+            if ($dokumen->kategori) {
+                $selectedKategori = \App\Models\KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+                if ($selectedKategori) {
+                    $selectedKriteriaCfId = $selectedKategori->id_kategori_kriteria;
+                }
+            }
+            if ($dokumen->jenis_dokumen) {
+                $selectedSub = \App\Models\SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+                if ($selectedSub) {
+                    $selectedSubKriteriaId = $selectedSub->id_sub_kriteria;
+                }
+            }
+            if ($dokumen->jenis_sub_pekerjaan) {
+                $selectedItem = \App\Models\ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+                if ($selectedItem) {
+                    $selectedItemSubKriteriaId = $selectedItem->id_item_sub_kriteria;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data (edit akutansi): ' . $e->getMessage());
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+            $isDropdownAvailable = false;
+        }
+
         $data = array(
             "title" => "Edit Akutansi",
             "module" => "akutansi",
@@ -490,6 +532,13 @@ class DashboardAkutansiController extends Controller
             'dokumen' => $dokumen,
             'hasPerpajakanData' => $hasPerpajakanData, // Flag untuk menampilkan section perpajakan
             'jenisPembayaranList' => $jenisPembayaranList,
+            'kategoriKriteria' => $kategoriKriteria ?? collect([]),
+            'subKriteria' => $subKriteria ?? collect([]),
+            'itemSubKriteria' => $itemSubKriteria ?? collect([]),
+            'isDropdownAvailable' => $isDropdownAvailable,
+            'selectedKriteriaCfId' => $selectedKriteriaCfId,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId,
         );
         return view('akutansi.dokumens.editAkutansi', $data);
     }
@@ -526,41 +575,59 @@ class DashboardAkutansiController extends Controller
             if (empty($request->uraian_spp)) {
                 $request->merge(['uraian_spp' => $dokumen->uraian_spp ?? '']);
             }
-            if (empty($request->nilai_rupiah)) {
-                $request->merge(['nilai_rupiah' => $dokumen->nilai_rupiah ?? 0]);
-            }
+            // Jangan merge nilai_rupiah jika empty, biarkan menggunakan nilai dari dokumen yang sudah ada
+            // Format nilai rupiah akan ditangani di bawah
 
-            // Merge request data with existing document data to ensure all required fields are present
-            // Use existing document values as defaults for required fields if not provided
-            if (empty($request->nomor_spp)) {
-                $request->merge(['nomor_spp' => $dokumen->nomor_spp ?? '']);
+            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
+            $nilaiRupiah = null;
+            if ($request->filled('nilai_rupiah')) {
+                $nilaiRupiahRaw = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
+                if (!empty($nilaiRupiahRaw) && $nilaiRupiahRaw > 0) {
+                    $nilaiRupiah = (float) $nilaiRupiahRaw;
+                }
             }
-            if (empty($request->nomor_agenda)) {
-                $request->merge(['nomor_agenda' => $dokumen->nomor_agenda ?? '']);
-            }
-            if (empty($request->uraian_spp)) {
-                $request->merge(['uraian_spp' => $dokumen->uraian_spp ?? '']);
-            }
-            if (empty($request->nilai_rupiah)) {
-                $request->merge(['nilai_rupiah' => $dokumen->nilai_rupiah ?? 0]);
+            // Jika nilai rupiah tidak diisi atau kosong, gunakan nilai dari dokumen yang sudah ada
+            if ($nilaiRupiah === null || $nilaiRupiah <= 0) {
+                $nilaiRupiah = $dokumen->nilai_rupiah ?? 0;
             }
 
             // Validate request data
             $validated = $request->validate([
                 // MIRO Fields - khusus Akutansi
                 'nomor_miro' => 'nullable|string|max:255',
+                'tanggal_miro' => 'nullable|date',
 
                 // Basic document fields
-                'nomor_agenda' => 'required|string|max:255',
-                'nomor_spp' => 'required|string|max:255',
-                'uraian_spp' => 'required|string|max:1000',
-                'nilai_rupiah' => 'required|numeric|min:0',
+                'nomor_agenda' => 'nullable|string|max:255',
+                'nomor_spp' => 'nullable|string|max:255',
+                'uraian_spp' => 'nullable|string|max:1000',
+                'nilai_rupiah' => 'nullable|string', // Changed to string to accept formatted input
                 'tanggal_masuk' => 'nullable|date',
                 'tanggal_spp' => 'nullable|date',
+                'bulan' => 'nullable|string',
+                'tahun' => 'nullable|integer|min:2020|max:2030',
+                'dibayar_kepada' => 'nullable|string',
+                'no_berita_acara' => 'nullable|string',
+                'tanggal_berita_acara' => 'nullable|date',
+                'no_spk' => 'nullable|string',
+                'tanggal_spk' => 'nullable|date',
+                'tanggal_berakhir_spk' => 'nullable|date',
+                'bagian' => 'nullable|string',
+                'nama_pengirim' => 'nullable|string',
                 'kebun' => 'nullable|string|max:255',
                 'jenis_pembayaran' => 'nullable|string|max:255',
+                'kategori' => 'nullable|string|max:255',
+                'jenis_dokumen' => 'nullable|string|max:255',
+                'jenis_sub_pekerjaan' => 'nullable|string|max:255',
+                'kriteria_cf' => 'nullable|integer',
+                'sub_kriteria' => 'nullable|integer',
+                'item_sub_kriteria' => 'nullable|integer',
+                'nomor_po' => 'array',
+                'nomor_po.*' => 'nullable|string',
+                'nomor_pr' => 'array',
+                'nomor_pr.*' => 'nullable|string',
 
-                // Tax fields
+                // Tax fields (read-only, tidak akan diupdate)
                 'status_perpajakan' => 'nullable|string|max:255',
                 'no_faktur' => 'nullable|string|max:255',
                 'tanggal_faktur' => 'nullable|date',
@@ -570,44 +637,95 @@ class DashboardAkutansiController extends Controller
                 'ppn_terhutang' => 'nullable|numeric|min:0',
             ], [
                 'nomor_miro.max' => 'Nomor MIRO maksimal 255 karakter.',
-                'nomor_agenda.required' => 'Nomor agenda wajib diisi.',
-                'nomor_spp.required' => 'Nomor SPP wajib diisi.',
-                'uraian_spp.required' => 'Uraian SPP wajib diisi.',
-                'nilai_rupiah.required' => 'Nilai rupiah wajib diisi.',
-                'nilai_rupiah.min' => 'Nilai rupiah tidak boleh negatif.',
+                'tahun.integer' => 'Tahun harus berupa angka.',
+                'tahun.min' => 'Tahun minimal 2020.',
+                'tahun.max' => 'Tahun maksimal 2030.',
             ]);
+
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+            
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = \App\Models\KategoriKriteria::find($request->kriteria_cf);
+                }
+                
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteria = \App\Models\SubKriteria::find($request->sub_kriteria);
+                }
+                
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteria = \App\Models\ItemSubKriteria::find($request->item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for update (Akutansi): ' . $e->getMessage());
+            }
 
             // Prepare update data
             $updateData = [
                 // MIRO fields
-                'nomor_miro' => $validated['nomor_miro'],
+                'nomor_miro' => $validated['nomor_miro'] ?? $dokumen->nomor_miro,
+                'tanggal_miro' => $validated['tanggal_miro'] ?? $dokumen->tanggal_miro,
 
                 // Basic fields
-                'nomor_agenda' => $validated['nomor_agenda'],
-                'nomor_spp' => $validated['nomor_spp'],
-                'uraian_spp' => $validated['uraian_spp'],
-                'nilai_rupiah' => $validated['nilai_rupiah'],
+                'nomor_agenda' => $validated['nomor_agenda'] ?? $dokumen->nomor_agenda,
+                'nomor_spp' => $validated['nomor_spp'] ?? $dokumen->nomor_spp,
+                'uraian_spp' => $validated['uraian_spp'] ?? $dokumen->uraian_spp,
+                'nilai_rupiah' => $nilaiRupiah, // Use formatted value
                 'tanggal_masuk' => $validated['tanggal_masuk'] ?? $dokumen->tanggal_masuk,
                 'tanggal_spp' => $validated['tanggal_spp'] ?? $dokumen->tanggal_spp,
+                'bulan' => $validated['bulan'] ?? $dokumen->bulan,
+                'tahun' => $validated['tahun'] ?? $dokumen->tahun,
+                'dibayar_kepada' => $validated['dibayar_kepada'] ?? $dokumen->dibayar_kepada,
+                'no_berita_acara' => $validated['no_berita_acara'] ?? $dokumen->no_berita_acara,
+                'tanggal_berita_acara' => $validated['tanggal_berita_acara'] ?? $dokumen->tanggal_berita_acara,
+                'no_spk' => $validated['no_spk'] ?? $dokumen->no_spk,
+                'tanggal_spk' => $validated['tanggal_spk'] ?? $dokumen->tanggal_spk,
+                'tanggal_berakhir_spk' => $validated['tanggal_berakhir_spk'] ?? $dokumen->tanggal_berakhir_spk,
+                'bagian' => $validated['bagian'] ?? $dokumen->bagian,
+                'nama_pengirim' => $validated['nama_pengirim'] ?? $dokumen->nama_pengirim,
                 'kebun' => $validated['kebun'] ?? $dokumen->kebun,
                 'jenis_pembayaran' => $validated['jenis_pembayaran'] ?? $dokumen->jenis_pembayaran,
-
-                // Tax fields
-                'status_perpajakan' => $validated['status_perpajakan'] ?? $dokumen->status_perpajakan,
-                'no_faktur' => $validated['no_faktur'] ?? $dokumen->no_faktur,
-                'tanggal_faktur' => $validated['tanggal_faktur'] ?? $dokumen->tanggal_faktur,
-                'tanggal_selesai_verifikasi_pajak' => $validated['tanggal_selesai_verifikasi_pajak'] ?? $dokumen->tanggal_selesai_verifikasi_pajak,
-                'jenis_pph' => $validated['jenis_pph'] ?? $dokumen->jenis_pph,
-                'dpp_pph' => $validated['dpp_pph'] ?? $dokumen->dpp_pph,
-                'ppn_terhutang' => $validated['ppn_terhutang'] ?? $dokumen->ppn_terhutang,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($validated['kategori'] ?? $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($validated['jenis_dokumen'] ?? $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($validated['jenis_sub_pekerjaan'] ?? $dokumen->jenis_sub_pekerjaan),
             ];
 
             // Store old value for logging
             $oldNomorMiro = $dokumen->nomor_miro;
 
             // Update document using transaction
-            DB::transaction(function () use ($dokumen, $updateData) {
+            DB::transaction(function () use ($dokumen, $updateData, $request) {
                 $dokumen->update($updateData);
+
+                // Update PO numbers - delete existing and create new
+                $dokumen->dokumenPos()->delete();
+                if ($request->has('nomor_po')) {
+                    foreach ($request->nomor_po as $nomorPO) {
+                        if (!empty($nomorPO)) {
+                            \App\Models\DokumenPO::create([
+                                'dokumen_id' => $dokumen->id,
+                                'nomor_po' => $nomorPO,
+                            ]);
+                        }
+                    }
+                }
+
+                // Update PR numbers - delete existing and create new
+                $dokumen->dokumenPrs()->delete();
+                if ($request->has('nomor_pr')) {
+                    foreach ($request->nomor_pr as $nomorPR) {
+                        if (!empty($nomorPR)) {
+                            \App\Models\DokumenPR::create([
+                                'dokumen_id' => $dokumen->id,
+                                'nomor_pr' => $nomorPR,
+                            ]);
+                        }
+                    }
+                }
             });
 
             $dokumen->refresh();
