@@ -259,18 +259,11 @@ class DashboardBController extends Controller
         if ($request->has('status') && $request->status) {
             $statusFilter = $request->status;
             switch ($statusFilter) {
-                case 'deadline':
-                    // Dokumen yang memiliki deadline (deadline_at tidak null) dan masih dalam scope Ibu Yuni
-                    $query->whereNotNull('ibub_data.deadline_at')
-                        ->where('dokumens.current_handler', 'ibuB')
-                        // Pastikan bukan status terkirim atau selesai
-                        ->whereNotIn('status', [
-                            'sent_to_perpajakan',
-                            'sent_to_akutansi',
-                            'sent_to_pembayaran',
-                            'selesai',
-                            'completed'
-                        ]);
+                case 'menunggu_approve':
+                    // Dokumen yang menunggu approval dari siapapun (pending status di dokumen_statuses)
+                    $query->whereHas('roleStatuses', function ($q) {
+                        $q->where('status', DokumenStatus::STATUS_PENDING);
+                    });
                     break;
                 case 'sedang_proses':
                     // Dokumen yang sedang diproses oleh Ibu Yuni - hanya status spesifik
@@ -326,23 +319,26 @@ class DashboardBController extends Controller
                     }
                     break;
                 case 'ditolak':
-                    // Dokumen yang ditolak - hanya status ditolak saja
+                    // Dokumen yang ditolak - termasuk yang ditolak oleh perpajakan/akutansi
                     $query->where(function ($q) {
-                        $q->where(function ($rejectQ) {
-                            $rejectQ->where('status', 'returned_to_department')
-                                ->orWhereHas('roleStatuses', function ($rq) {
-                                    $rq->where('role_code', 'ibub')->where('status', 'rejected');
+                        // Dokumen yang ditolak oleh ibub sendiri
+                        $q->whereHas('roleStatuses', function ($rq) {
+                            $rq->where('role_code', 'ibub')->where('status', 'rejected');
+                        })
+                        // ATAU dokumen yang ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi
+                        ->orWhere(function ($rejectQ) {
+                            $rejectQ->where('current_handler', 'ibuB')
+                                ->whereHas('roleStatuses', function ($rq) {
+                                    $rq->whereIn('role_code', ['perpajakan', 'akutansi'])
+                                        ->where('status', 'rejected');
                                 });
                         })
-                            ->where(function ($handlerQ) {
-                                // Pastikan masih dalam scope Ibu Yuni
-                                $handlerQ->where('current_handler', 'ibuB')
-                                    ->orWhere(function ($subQ) {
-                                    $subQ->where('status', 'returned_to_department')
-                                        ->whereIn('target_department', ['perpajakan', 'akutansi'])
-                                        ->where('current_handler', 'ibuB');
-                                });
-                            });
+                        // ATAU dokumen dengan status returned_to_department dari perpajakan/akutansi
+                        ->orWhere(function ($returnQ) {
+                            $returnQ->where('status', 'returned_to_department')
+                                ->where('current_handler', 'ibuB')
+                                ->whereIn('target_department', ['perpajakan', 'akutansi']);
+                        });
                     });
                     break;
             }

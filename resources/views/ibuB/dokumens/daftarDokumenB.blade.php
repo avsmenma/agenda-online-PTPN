@@ -2453,6 +2453,82 @@
         align-items: center;
       }
 
+      .year-dropdown-wrapper {
+        position: relative;
+      }
+
+      .btn-year-select {
+        padding: 10px 16px;
+        background: white;
+        color: #495057;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        white-space: nowrap;
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .btn-year-select:hover {
+        border-color: #889717;
+        background: #f8f9fa;
+      }
+
+      .btn-year-select.active {
+        border-color: #889717;
+        background: #f8f9fa;
+      }
+
+      .year-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        min-width: 150px;
+        z-index: 1000;
+        overflow: hidden;
+        display: none;
+      }
+
+      .year-dropdown-menu.show,
+      .year-dropdown-menu[style*="block"] {
+        display: block;
+      }
+
+      .year-dropdown-item {
+        display: block;
+        padding: 12px 16px;
+        color: #495057;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        border-bottom: 1px solid #f1f3f5;
+      }
+
+      .year-dropdown-item:last-child {
+        border-bottom: none;
+      }
+
+      .year-dropdown-item:hover {
+        background: #f8f9fa;
+        color: #889717;
+      }
+
+      .year-dropdown-item.active {
+        background: #e8f5e9;
+        color: #889717;
+        font-weight: 600;
+      }
+
       .filter-section select,
       .filter-section input {
         padding: 10px 14px;
@@ -3073,24 +3149,71 @@
             placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
         </div>
         <div class="filter-section">
-          <select name="year" id="year-filter" class="form-select" onchange="this.form.submit()">
-            <option value="">Semua Tahun</option>
-            <option value="2025" {{ request('year') == '2025' ? 'selected' : '' }}>2025</option>
-            <option value="2024" {{ request('year') == '2024' ? 'selected' : '' }}>2024</option>
-            <option value="2023" {{ request('year') == '2023' ? 'selected' : '' }}>2023</option>
-          </select>
-          <select name="status" id="status-filter" class="form-select" onchange="this.form.submit()">
-            <option value="">Semua Status</option>
-            <option value="deadline" {{ request('status') == 'deadline' ? 'selected' : '' }}>Deadline</option>
-            <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
-            <option value="terkirim_perpajakan" {{ request('status') == 'terkirim_perpajakan' ? 'selected' : '' }}>Terkirim ke
-              Perpajakan</option>
-            <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>Terkirim ke
-              Akutansi</option>
-            <option value="terkirim_pembayaran" {{ request('status') == 'terkirim_pembayaran' ? 'selected' : '' }}>Terkirim ke
-              Pembayaran</option>
-            <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
-          </select>
+          <div class="year-dropdown-wrapper" style="position: relative;">
+            <button type="button" class="btn-year-select" id="yearSelectBtn">
+              <span id="yearSelectText">{{ request('year') ? request('year') : 'Semua Tahun' }}</span>
+              <i class="fa-solid fa-chevron-down ms-2"></i>
+            </button>
+            <div class="year-dropdown-menu" id="yearDropdownMenu" style="display: none;">
+              <a href="#" class="year-dropdown-item {{ !request('year') ? 'active' : '' }}" data-year="">
+                Semua Tahun
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('year') == '2025' ? 'active' : '' }}" data-year="2025">
+                2025
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('year') == '2024' ? 'active' : '' }}" data-year="2024">
+                2024
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('year') == '2023' ? 'active' : '' }}" data-year="2023">
+                2023
+              </a>
+            </div>
+            <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
+          </div>
+          <div class="status-dropdown-wrapper" style="position: relative;">
+            <button type="button" class="btn-year-select" id="statusSelectBtn">
+              <span id="statusSelectText">
+                @php
+                  $statusFilter = request('status');
+                  $statusLabels = [
+                    '' => 'Semua Status',
+                    'menunggu_approve' => 'Menunggu Approve',
+                    'sedang_proses' => 'Sedang Proses',
+                    'terkirim_perpajakan' => 'Terkirim ke Perpajakan',
+                    'terkirim_akutansi' => 'Terkirim ke Akutansi',
+                    'terkirim_pembayaran' => 'Terkirim ke Pembayaran',
+                    'ditolak' => 'Dokumen Ditolak'
+                  ];
+                @endphp
+                {{ $statusLabels[$statusFilter] ?? 'Semua Status' }}
+              </span>
+              <i class="fa-solid fa-chevron-down ms-2"></i>
+            </button>
+            <div class="year-dropdown-menu" id="statusDropdownMenu" style="display: none;">
+              <a href="#" class="year-dropdown-item {{ !request('status') ? 'active' : '' }}" data-status="">
+                Semua Status
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('status') == 'menunggu_approve' ? 'active' : '' }}" data-status="menunggu_approve">
+                Menunggu Approve
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('status') == 'sedang_proses' ? 'active' : '' }}" data-status="sedang_proses">
+                Sedang Proses
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_perpajakan' ? 'active' : '' }}" data-status="terkirim_perpajakan">
+                Terkirim ke Perpajakan
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_akutansi' ? 'active' : '' }}" data-status="terkirim_akutansi">
+                Terkirim ke Akutansi
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_pembayaran' ? 'active' : '' }}" data-status="terkirim_pembayaran">
+                Terkirim ke Pembayaran
+              </a>
+              <a href="#" class="year-dropdown-item {{ request('status') == 'ditolak' ? 'active' : '' }}" data-status="ditolak">
+                Dokumen Ditolak
+              </a>
+            </div>
+            <input type="hidden" name="status" id="statusSelect" value="{{ request('status') }}">
+          </div>
         </div>
         <button type="submit" class="btn-filter">
           <i class="fa-solid fa-filter me-2"></i>Filter
@@ -5950,5 +6073,159 @@
       align-items: center;
     }
     </style>
+
+    <!-- Dropdown Filter Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Year Dropdown Handler
+        const yearSelectBtn = document.getElementById('yearSelectBtn');
+        const yearDropdownMenu = document.getElementById('yearDropdownMenu');
+        const yearSelect = document.getElementById('yearSelect');
+        const yearSelectText = document.getElementById('yearSelectText');
+        const yearDropdownItems = document.querySelectorAll('#yearDropdownMenu .year-dropdown-item');
+
+        if (yearSelectBtn && yearDropdownMenu && yearSelect) {
+            // Toggle dropdown menu
+            yearSelectBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close status dropdown if open
+                const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+                const statusSelectBtn = document.getElementById('statusSelectBtn');
+                if (statusDropdownMenu) statusDropdownMenu.style.display = 'none';
+                if (statusSelectBtn) statusSelectBtn.classList.remove('active');
+
+                // Toggle year dropdown visibility
+                if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
+                    yearDropdownMenu.style.display = 'block';
+                    yearSelectBtn.classList.add('active');
+                } else {
+                    yearDropdownMenu.style.display = 'none';
+                    yearSelectBtn.classList.remove('active');
+                }
+            });
+
+            // Handle year selection
+            yearDropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const selectedYear = this.getAttribute('data-year');
+
+                    // Update hidden input
+                    yearSelect.value = selectedYear;
+
+                    // Update button text
+                    yearSelectText.textContent = selectedYear || 'Semua Tahun';
+
+                    // Update active state
+                    yearDropdownItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Close dropdown
+                    yearDropdownMenu.style.display = 'none';
+                    yearSelectBtn.classList.remove('active');
+
+                    // Submit form
+                    const form = document.getElementById('filterForm');
+                    if (form) form.submit();
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
+                    yearDropdownMenu.style.display = 'none';
+                    yearSelectBtn.classList.remove('active');
+                }
+            });
+
+            // Prevent dropdown from closing when clicking inside
+            yearDropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        // Status Dropdown Handler
+        const statusSelectBtn = document.getElementById('statusSelectBtn');
+        const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+        const statusSelect = document.getElementById('statusSelect');
+        const statusSelectText = document.getElementById('statusSelectText');
+        const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
+
+        if (statusSelectBtn && statusDropdownMenu && statusSelect) {
+            // Toggle dropdown menu
+            statusSelectBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close year dropdown if open
+                if (yearDropdownMenu) yearDropdownMenu.style.display = 'none';
+                if (yearSelectBtn) yearSelectBtn.classList.remove('active');
+
+                // Toggle status dropdown visibility
+                if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
+                    statusDropdownMenu.style.display = 'block';
+                    statusSelectBtn.classList.add('active');
+                } else {
+                    statusDropdownMenu.style.display = 'none';
+                    statusSelectBtn.classList.remove('active');
+                }
+            });
+
+            // Handle status selection
+            statusDropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const selectedStatus = this.getAttribute('data-status');
+
+                    // Update hidden input
+                    statusSelect.value = selectedStatus;
+
+                    // Update button text
+                    const statusLabels = {
+                        '': 'Semua Status',
+                        'menunggu_approve': 'Menunggu Approve',
+                        'sedang_proses': 'Sedang Proses',
+                        'terkirim_perpajakan': 'Terkirim ke Perpajakan',
+                        'terkirim_akutansi': 'Terkirim ke Akutansi',
+                        'terkirim_pembayaran': 'Terkirim ke Pembayaran',
+                        'ditolak': 'Dokumen Ditolak'
+                    };
+                    statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
+
+                    // Update active state
+                    statusDropdownItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Close dropdown
+                    statusDropdownMenu.style.display = 'none';
+                    statusSelectBtn.classList.remove('active');
+
+                    // Submit form
+                    const form = document.getElementById('filterForm');
+                    if (form) form.submit();
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
+                    statusDropdownMenu.style.display = 'none';
+                    statusSelectBtn.classList.remove('active');
+                }
+            });
+
+            // Prevent dropdown from closing when clicking inside
+            statusDropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    });
+    </script>
 
 @endsection
