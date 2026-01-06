@@ -302,6 +302,48 @@ class DashboardPembayaranController extends Controller
             $jenisPembayaranList = collect([]);
         }
 
+        // Ambil data untuk dropdown kriteria (jika database cash_bank tersedia)
+        $isDropdownAvailable = false;
+        $kategoriKriteria = collect([]);
+        $subKriteria = collect([]);
+        $itemSubKriteria = collect([]);
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
+        try {
+            $kategoriKriteria = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = \App\Models\SubKriteria::all();
+            $itemSubKriteria = \App\Models\ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
+
+            // Get selected values if document has kategori/jenis_dokumen/jenis_sub_pekerjaan
+            if ($dokumen->kategori) {
+                $selectedKategori = \App\Models\KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+                if ($selectedKategori) {
+                    $selectedKriteriaCfId = $selectedKategori->id_kategori_kriteria;
+                }
+            }
+            if ($dokumen->jenis_dokumen) {
+                $selectedSub = \App\Models\SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+                if ($selectedSub) {
+                    $selectedSubKriteriaId = $selectedSub->id_sub_kriteria;
+                }
+            }
+            if ($dokumen->jenis_sub_pekerjaan) {
+                $selectedItem = \App\Models\ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+                if ($selectedItem) {
+                    $selectedItemSubKriteriaId = $selectedItem->id_item_sub_kriteria;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data (edit pembayaran): ' . $e->getMessage());
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+            $isDropdownAvailable = false;
+        }
+
         $data = array(
             "title" => "Edit Pembayaran",
             "module" => "pembayaran",
@@ -314,6 +356,13 @@ class DashboardPembayaranController extends Controller
             'perpajakanData' => $perpajakanData,
             'akutansiData' => $akutansiData,
             'jenisPembayaranList' => $jenisPembayaranList,
+            'kategoriKriteria' => $kategoriKriteria ?? collect([]),
+            'subKriteria' => $subKriteria ?? collect([]),
+            'itemSubKriteria' => $itemSubKriteria ?? collect([]),
+            'isDropdownAvailable' => $isDropdownAvailable,
+            'selectedKriteriaCfId' => $selectedKriteriaCfId,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId,
         );
         return view('pembayaranNEW.dokumens.editPembayaran', $data);
     }
@@ -326,64 +375,173 @@ class DashboardPembayaranController extends Controller
                 ->withInput();
         }
 
-        try {
-            $validated = $request->validate([
-                'tanggal_dibayar' => 'nullable|date',
-                'catatan_pembayaran' => 'nullable|string|max:500',
-                'link_bukti_pembayaran' => 'nullable|url|max:1000',
-            ], [
-                'tanggal_dibayar.date' => 'Format tanggal tidak valid.',
-                'link_bukti_pembayaran.url' => 'Format link Google Drive tidak valid.',
-                'link_bukti_pembayaran.max' => 'Link Google Drive maksimal 1000 karakter.',
-                'catatan_pembayaran.max' => 'Catatan pembayaran maksimal 500 karakter.',
-            ]);
+        // Check if using dropdown mode (cash_bank available) or manual mode
+        $isDropdownMode = $request->filled('kriteria_cf') && $request->filled('sub_kriteria') && $request->filled('item_sub_kriteria');
+        $isManualMode = $request->filled('kategori') && $request->filled('jenis_dokumen') && $request->filled('jenis_sub_pekerjaan');
 
-            // Minimal salah satu field harus diisi (tanggal atau link)
-            if (empty($validated['tanggal_dibayar']) && empty($validated['link_bukti_pembayaran'])) {
-                return redirect()->back()
-                    ->with('error', 'Minimal salah satu field (Tanggal Pembayaran atau Link Google Drive Bukti Pembayaran) harus diisi.')
-                    ->withInput();
+        $rules = [
+            'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda,' . $dokumen->id,
+            'bulan' => 'nullable|string',
+            'tahun' => 'nullable|integer|min:2020|max:2030',
+            'tanggal_masuk' => 'nullable|date',
+            'nomor_spp' => 'nullable|string',
+            'tanggal_spp' => 'nullable|date',
+            'uraian_spp' => 'nullable|string',
+            'nilai_rupiah' => 'nullable|string',
+            'jenis_pembayaran' => 'nullable|string',
+            'dibayar_kepada' => 'nullable|string',
+            'no_berita_acara' => 'nullable|string',
+            'tanggal_berita_acara' => 'nullable|date',
+            'no_spk' => 'nullable|string',
+            'tanggal_spk' => 'nullable|date',
+            'tanggal_berakhir_spk' => 'nullable|date',
+            'bagian' => 'nullable|string',
+            'nama_pengirim' => 'nullable|string',
+            'kebun' => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'nomor_po' => 'array',
+            'nomor_po.*' => 'nullable|string',
+            'nomor_pr' => 'array',
+            'nomor_pr.*' => 'nullable|string',
+            'tanggal_dibayar' => 'nullable|date',
+            'catatan_pembayaran' => 'nullable|string|max:500',
+            'link_bukti_pembayaran' => 'nullable|url|max:1000',
+        ];
+
+        // Semua field optional (tidak wajib)
+        $rules['kriteria_cf'] = 'nullable|integer';
+        $rules['sub_kriteria'] = 'nullable|integer';
+        $rules['item_sub_kriteria'] = 'nullable|integer';
+        $rules['kategori'] = 'nullable|string|max:255';
+        $rules['jenis_dokumen'] = 'nullable|string|max:255';
+        $rules['jenis_sub_pekerjaan'] = 'nullable|string|max:255';
+
+        $validator = \Validator::make($request->all(), $rules, [
+            'nomor_agenda.unique' => 'Nomor agenda sudah digunakan. Silakan gunakan nomor lain.',
+            'tahun.integer' => 'Tahun harus berupa angka.',
+            'tahun.min' => 'Tahun minimal 2020.',
+            'tahun.max' => 'Tahun maksimal 2030.',
+            'link_bukti_pembayaran.url' => 'Format link Google Drive tidak valid.',
+            'link_bukti_pembayaran.max' => 'Link Google Drive maksimal 1000 karakter.',
+            'catatan_pembayaran.max' => 'Catatan pembayaran maksimal 500 karakter.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan pada input data. Silakan periksa kembali.');
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
+            $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
+            if (!empty($nilaiRupiah) && $nilaiRupiah > 0) {
+                $nilaiRupiah = (float) $nilaiRupiah;
+            } else {
+                $nilaiRupiah = $dokumen->nilai_rupiah ?? 0;
             }
 
-            DB::transaction(function () use ($dokumen, $validated) {
-                $updateData = [];
-
-                // Update tanggal_dibayar jika diisi
-                if (!empty($validated['tanggal_dibayar'])) {
-                    $updateData['tanggal_dibayar'] = $validated['tanggal_dibayar'];
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+            
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = \App\Models\KategoriKriteria::find($request->kriteria_cf);
                 }
-
-                // Update catatan_pembayaran jika diisi
-                if (isset($validated['catatan_pembayaran'])) {
-                    $updateData['catatan_pembayaran'] = $validated['catatan_pembayaran'];
+                
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteria = \App\Models\SubKriteria::find($request->sub_kriteria);
                 }
-
-                // Update link_bukti_pembayaran jika diisi
-                if (!empty($validated['link_bukti_pembayaran'])) {
-                    $updateData['link_bukti_pembayaran'] = $validated['link_bukti_pembayaran'];
+                
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteria = \App\Models\ItemSubKriteria::find($request->item_sub_kriteria);
                 }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for update (Pembayaran): ' . $e->getMessage());
+                // Continue dengan null values, akan menggunakan fallback ke request->kategori/jenis_dokumen/jenis_sub_pekerjaan
+            }
 
-                // Jika salah satu field diisi (tanggal atau link), update status menjadi sudah_dibayar
-                if (!empty($validated['tanggal_dibayar']) || !empty($validated['link_bukti_pembayaran'])) {
-                    $updateData['status_pembayaran'] = 'sudah_dibayar';
-                    $updateData['status'] = 'completed';
+            // Update dokumen
+            $updateData = [
+                'nomor_agenda' => $request->nomor_agenda,
+                'bulan' => $request->bulan,
+                'tahun' => $request->tahun,
+                'tanggal_masuk' => $request->tanggal_masuk,
+                'nomor_spp' => $request->nomor_spp,
+                'tanggal_spp' => $request->tanggal_spp,
+                'uraian_spp' => $request->uraian_spp,
+                'nilai_rupiah' => $nilaiRupiah,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan),
+                'jenis_pembayaran' => $request->jenis_pembayaran,
+                'kebun' => $request->kebun,
+                'bagian' => $request->bagian,
+                'nama_pengirim' => $request->nama_pengirim,
+                'dibayar_kepada' => $request->dibayar_kepada,
+                'no_berita_acara' => $request->no_berita_acara,
+                'tanggal_berita_acara' => $request->tanggal_berita_acara,
+                'no_spk' => $request->no_spk,
+                'tanggal_spk' => $request->tanggal_spk,
+                'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
+                'keterangan' => $request->keterangan,
+                'tanggal_dibayar' => $request->tanggal_dibayar,
+                'catatan_pembayaran' => $request->catatan_pembayaran,
+                'link_bukti_pembayaran' => $request->link_bukti_pembayaran,
+            ];
+
+            // Jika tanggal atau link bukti pembayaran diisi, update status menjadi sudah_dibayar
+            if (!empty($request->tanggal_dibayar) || !empty($request->link_bukti_pembayaran)) {
+                $updateData['status_pembayaran'] = 'sudah_dibayar';
+                $updateData['status'] = 'completed';
+            }
+
+            $dokumen->update($updateData);
+
+            // Update PO numbers - delete existing and create new
+            $dokumen->dokumenPos()->delete();
+            if ($request->has('nomor_po')) {
+                foreach ($request->nomor_po as $nomorPO) {
+                    if (!empty($nomorPO)) {
+                        \App\Models\DokumenPO::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_po' => $nomorPO,
+                        ]);
+                    }
                 }
+            }
 
-                $dokumen->update($updateData);
-            });
+            // Update PR numbers - delete existing and create new
+            $dokumen->dokumenPrs()->delete();
+            if ($request->has('nomor_pr')) {
+                foreach ($request->nomor_pr as $nomorPR) {
+                    if (!empty($nomorPR)) {
+                        \App\Models\DokumenPR::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_pr' => $nomorPR,
+                        ]);
+                    }
+                }
+            }
+
+            \DB::commit();
 
             return redirect()->route('documents.pembayaran.index')
-                ->with('success', 'Data pembayaran berhasil diperbarui.');
+                ->with('success', 'Dokumen berhasil diperbarui.');
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput();
         } catch (\Exception $e) {
-            Log::error('Error updating pembayaran: ' . $e->getMessage());
+            \DB::rollback();
+            \Log::error('Error updating document in Pembayaran: ' . $e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data pembayaran.')
-                ->withInput();
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui dokumen. Silakan coba lagi.');
         }
     }
 

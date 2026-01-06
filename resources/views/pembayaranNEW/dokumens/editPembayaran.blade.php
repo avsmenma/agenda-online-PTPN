@@ -464,6 +464,72 @@
     opacity: 0.8;
   }
 
+  /* Dynamic Field Styles */
+  .dynamic-field {
+    position: relative;
+    padding-right: 80px;
+  }
+
+  .add-field-btn {
+    position: absolute;
+    right: 40px;
+    top: 32px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #28a745;
+    background: linear-gradient(135deg, #ffffff 0%, #f9faf5 100%);
+    color: #083E40;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+  }
+
+  .add-field-btn:hover {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+  }
+
+  .remove-field-btn {
+    position: absolute;
+    right: 0;
+    top: 32px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #dc3545;
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    color: #dc3545;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+  }
+
+  .remove-field-btn:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+  }
+
+  .dynamic-field:first-of-type .remove-field-btn,
+  .dynamic-field[data-field-type="po"]:first-of-type .remove-field-btn,
+  .dynamic-field[data-field-type="pr"]:first-of-type .remove-field-btn {
+    display: none !important;
+  }
+
   /* Responsive Design */
   @media (max-width: 768px) {
     .form-row,
@@ -502,7 +568,7 @@
   <div class="info-alert-content">
     <div class="info-alert-title">Informasi Edit Dokumen</div>
     <p class="info-alert-text">
-      Sebagai Team Pembayaran, Anda dapat mengisi data pembayaran. Data dari role lain (Perpajakan, Akutansi) ditampilkan sebagai referensi dan tidak dapat diedit.
+      Sebagai Team Pembayaran, Anda dapat mengedit semua data dokumen. Perubahan yang Anda lakukan akan tersimpan dan dapat dilihat oleh semua pihak terkait. Data dari role lain (Perpajakan, Akutansi) ditampilkan sebagai referensi dan tidak dapat diedit.
     </p>
   </div>
 </div>
@@ -530,219 +596,396 @@
     @csrf
     @method('PUT')
 
-    <!-- Section 1: Informasi Dasar Dokumen (Read-Only) -->
+    <!-- Section 1: Informasi Dasar Dokumen -->
     <div class="accordion-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
           <i class="fa-solid fa-file-lines"></i>
           <span>Informasi Dasar Dokumen</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+          <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
       <div class="accordion-content active">
         <div class="accordion-body">
           <div class="form-row">
-            <div class="info-item">
-              <div class="info-label">Nomor Agenda</div>
-              <div class="info-value">{{ $dokumen->nomor_agenda ?? '-' }}</div>
+            <div class="form-group">
+              <label>Nomor Agenda</label>
+              <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
+              @error('nomor_agenda')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Bulan</div>
-              <div class="info-value">{{ $dokumen->bulan ?? '-' }}</div>
+            <div class="form-group">
+              <label>Bulan</label>
+              <select name="bulan">
+                <option value="">Pilih Bulan</option>
+                @foreach(['Januari', 'Februari', 'Maret', 'April', 'May', 'Juni', 'July', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $bulan)
+                  <option value="{{ $bulan }}" {{ old('bulan', $dokumen->bulan) == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
+                @endforeach
+              </select>
+              @error('bulan')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
 
-          <div class="form-row" style="margin-top: 15px;">
-            <div class="info-item">
-              <div class="info-label">Tahun</div>
-              <div class="info-value">{{ $dokumen->tahun ?? '-' }}</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tahun</label>
+              <input type="number" name="tahun" placeholder="2025" value="{{ old('tahun', $dokumen->tahun) }}" min="2020" max="2030">
+              @error('tahun')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Tanggal Masuk</div>
-              <div class="info-value">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</div>
+            <div class="form-group">
+              <label>Tanggal Masuk</label>
+              <input type="datetime-local" name="tanggal_masuk" value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk?->format('Y-m-d\TH:i') ?? '') }}">
+              @error('tanggal_masuk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
 
-          <div class="form-row" style="margin-top: 15px;">
-            <div class="info-item">
-              <div class="info-label">Dibayar Kepada</div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Dibayar Kepada</label>
               @php
-                $dibayarKepadaValue = '';
-                if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
+                // Get dibayar_kepada from relationship if available, otherwise use direct field
+                $dibayarKepadaValue = old('dibayar_kepada');
+                if (!$dibayarKepadaValue) {
+                  if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
                     $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
-                } else {
-                    $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '-';
+                  } else {
+                    $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '';
+                  }
                 }
               @endphp
-              <div class="info-value">{{ $dibayarKepadaValue }}</div>
+              <input type="text" name="dibayar_kepada" value="{{ $dibayarKepadaValue }}" placeholder="Nama penerima">
+              @error('dibayar_kepada')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Kebun</div>
-              <div class="info-value">{{ $dokumen->kebun ?? '-' }}</div>
+            <div class="form-group">
+              <label>No Berita Acara</label>
+              <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024" value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
+              @error('no_berita_acara')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-          </div>
-
-          <div class="form-row-3" style="margin-top: 15px;">
-            <div class="info-item">
-              <div class="info-label">No Berita Acara</div>
-              <div class="info-value">{{ $dokumen->no_berita_acara ?? '-' }}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Tanggal Berita Acara</div>
-              <div class="info-value">{{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Bagian</div>
-              <div class="info-value">{{ $dokumen->bagian ?? '-' }}</div>
+            <div class="form-group">
+              <label>Tanggal Berita Acara</label>
+              <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
+              @error('tanggal_berita_acara')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
 
-          <div class="form-row-3" style="margin-top: 15px;">
-            <div class="info-item">
-              <div class="info-label">No SPK</div>
-              <div class="info-value">{{ $dokumen->no_spk ?? '-' }}</div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>No SPK</label>
+              <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk', $dokumen->no_spk) }}">
+              @error('no_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Tanggal SPK</div>
-              <div class="info-value">{{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}</div>
+            <div class="form-group">
+              <label>Tanggal SPK</label>
+              <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
+              @error('tanggal_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Tanggal Berakhir SPK</div>
-              <div class="info-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}</div>
+            <div class="form-group">
+              <label>Tanggal Berakhir SPK</label>
+              <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
+              @error('tanggal_berakhir_spk')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bagian <span class="optional-label">(Opsional)</span></label>
+              <input type="text" name="bagian" placeholder="Masukkan bagian" value="{{ old('bagian', $dokumen->bagian) }}">
+              @error('bagian')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Nama Pengirim <span class="optional-label">(Opsional)</span></label>
+              <input type="text" name="nama_pengirim" placeholder="Masukkan nama pengirim" value="{{ old('nama_pengirim', $dokumen->nama_pengirim) }}">
+              @error('nama_pengirim')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 2: Informasi SPP (Read-Only) -->
+    <!-- Section 2: Informasi SPP -->
     <div class="accordion-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
           <i class="fa-solid fa-file-invoice-dollar"></i>
           <span>Informasi SPP</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+          <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
       <div class="accordion-content active">
         <div class="accordion-body">
           <div class="form-row">
-            <div class="info-item">
-              <div class="info-label">Nomor SPP</div>
-              <div class="info-value">{{ $dokumen->nomor_spp ?? '-' }}</div>
+            <div class="form-group">
+              <label>Nomor SPP</label>
+              <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
+              @error('nomor_spp')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Tanggal SPP</div>
-              <div class="info-value">{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</div>
-            </div>
-          </div>
-
-          <div class="form-row" style="margin-top: 15px;">
-            <div class="info-item highlight">
-              <div class="info-label">Nilai Rupiah</div>
-              <div class="info-value currency">Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Ejaan Nilai Rupiah</div>
-              <div class="info-value">{{ $dokumen->ejaan_nilai_rupiah ?? '-' }}</div>
+            <div class="form-group">
+              <label>Tanggal SPP</label>
+              <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
+              @error('tanggal_spp')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
 
-          <div style="margin-top: 15px;">
-            <div class="info-item">
-              <div class="info-label">Uraian SPP</div>
-              <div class="info-value">{{ $dokumen->uraian_spp ?? '-' }}</div>
-            </div>
+          <div class="form-group">
+            <label>Uraian SPP</label>
+            <textarea name="uraian_spp" placeholder="Permintaan permohonan pembayaran...">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
+            @error('uraian_spp')
+              <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+            @enderror
+          </div>
+
+          <div class="form-group">
+            <label>Nilai Rupiah</label>
+            <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)" value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format($dokumen->nilai_rupiah, 0, '', '.') : '') }}">
+            @error('nilai_rupiah')
+              <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+            @enderror
+          </div>
+
+          <div class="form-group">
+            <label>Ejaan Nilai Rupiah</label>
+            <input type="text" name="ejaan_nilai_rupiah" id="edit-ejaan-nilai-rupiah" placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Kriteria CF, Sub Kriteria, Item Sub Kriteria (Read-Only) -->
+    <!-- Section 3: Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
     <div class="accordion-section">
       <div class="accordion-header active" onclick="toggleAccordion(this)">
         <div class="accordion-title">
           <i class="fa-solid fa-tags"></i>
           <span>Kriteria CF, Sub Kriteria, Item Sub Kriteria</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+          <span class="section-badge">Wajib</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
       <div class="accordion-content active">
         <div class="accordion-body">
-          <div class="form-row-3">
-            <div class="info-item">
-              <div class="info-label">Kategori (Kriteria CF)</div>
-              <div class="info-value">{{ $dokumen->kategori ?? '-' }}</div>
+          @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
+          <!-- Mode Dropdown (jika database cash_bank tersedia) -->
+          <div class="form-row" id="dropdown-mode">
+            <div class="form-group">
+              <label>Kriteria CF</label>
+              <select id="kriteria_cf" name="kriteria_cf">
+                <option value="">Pilih Kriteria CF</option>
+                @foreach($kategoriKriteria as $kategori)
+                  <option value="{{ $kategori->id_kategori_kriteria }}" {{ old('kriteria_cf', $selectedKriteriaCfId ?? '') == $kategori->id_kategori_kriteria ? 'selected' : '' }}>
+                    {{ $kategori->nama_kriteria }}
+                  </option>
+                @endforeach
+              </select>
+              @error('kriteria_cf')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Jenis Dokumen (Sub Kriteria)</div>
-              <div class="info-value">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
+            <div class="form-group">
+              <label>Sub Kriteria</label>
+              <select id="sub_kriteria" name="sub_kriteria">
+                <option value="">Pilih Kriteria CF terlebih dahulu</option>
+              </select>
+              @error('sub_kriteria')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Jenis Sub Pekerjaan (Item Sub Kriteria)</div>
-              <div class="info-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</div>
+            <div class="form-group">
+              <label>Item Sub Kriteria</label>
+              <select id="item_sub_kriteria" name="item_sub_kriteria">
+                <option value="">Pilih Sub Kriteria terlebih dahulu</option>
+              </select>
+              @error('item_sub_kriteria')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
-
-          <div class="form-row" style="margin-top: 15px;">
-            <div class="info-item">
-              <div class="info-label">Jenis Pembayaran</div>
-              <div class="info-value">{{ $dokumen->jenis_pembayaran ?? '-' }}</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jenis Pembayaran</label>
+              <select name="jenis_pembayaran" id="jenis_pembayaran">
+                <option value="">Pilih Jenis Pembayaran</option>
+                @if(isset($jenisPembayaranList) && $jenisPembayaranList->count() > 0)
+                  @foreach($jenisPembayaranList as $jenisPembayaran)
+                    <option value="{{ $jenisPembayaran->form_value ?? $jenisPembayaran->nama_jenis_pembayaran }}" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == ($jenisPembayaran->form_value ?? $jenisPembayaran->nama_jenis_pembayaran) ? 'selected' : '' }}>
+                      {{ $jenisPembayaran->display_name ?? $jenisPembayaran->nama_jenis_pembayaran }}
+                    </option>
+                  @endforeach
+                @endif
+              </select>
+              @error('jenis_pembayaran')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
-            <div class="info-item">
-              <div class="info-label">Nama Pengirim</div>
-              <div class="info-value">{{ $dokumen->nama_pengirim ?? '-' }}</div>
+          </div>
+          @else
+          <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
+          <div class="form-row" id="manual-mode">
+            <div class="form-group">
+              <label>Kategori</label>
+              <input type="text" name="kategori" id="kategori" value="{{ old('kategori', $dokumen->kategori ?? '') }}" placeholder="Masukkan Kategori">
+              <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">
+                <i class="fas fa-info-circle"></i> Database cash_bank tidak tersedia. Silakan isi manual sesuai kebutuhan.
+              </small>
+              @error('kategori')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Jenis Dokumen</label>
+              <input type="text" name="jenis_dokumen" id="jenis_dokumen" value="{{ old('jenis_dokumen', $dokumen->jenis_dokumen ?? '') }}" placeholder="Masukkan Jenis Dokumen">
+              @error('jenis_dokumen')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <div class="form-group">
+              <label>Jenis Sub Pekerjaan</label>
+              <input type="text" name="jenis_sub_pekerjaan" id="jenis_sub_pekerjaan" value="{{ old('jenis_sub_pekerjaan', $dokumen->jenis_sub_pekerjaan ?? '') }}" placeholder="Masukkan Jenis Sub Pekerjaan">
+              @error('jenis_sub_pekerjaan')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <!-- Hidden fields untuk dropdown (nullable) -->
+            <input type="hidden" name="kriteria_cf" value="">
+            <input type="hidden" name="sub_kriteria" value="">
+            <input type="hidden" name="item_sub_kriteria" value="">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jenis Pembayaran</label>
+              <select name="jenis_pembayaran" id="jenis_pembayaran">
+                <option value="">Pilih Jenis Pembayaran</option>
+                @if(isset($jenisPembayaranList) && $jenisPembayaranList->count() > 0)
+                  @foreach($jenisPembayaranList as $jenisPembayaran)
+                    <option value="{{ $jenisPembayaran->form_value ?? $jenisPembayaran->nama_jenis_pembayaran }}" {{ old('jenis_pembayaran', $dokumen->jenis_pembayaran) == ($jenisPembayaran->form_value ?? $jenisPembayaran->nama_jenis_pembayaran) ? 'selected' : '' }}>
+                      {{ $jenisPembayaran->display_name ?? $jenisPembayaran->nama_jenis_pembayaran }}
+                    </option>
+                  @endforeach
+                @endif
+              </select>
+              @error('jenis_pembayaran')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+          </div>
+          @endif
+          <div class="form-row">
+            <div class="form-group">
+              <label>Kebun <span class="optional-label">(Opsional)</span></label>
+              <select name="kebun">
+                <option value="">Pilih Kebun</option>
+                @php
+                  $kebunOptions = [
+                    'KEBUN-UNIT', 'REGION OFFICE', 'UNIT GRUP KALBAR', 'GUNUNG MELIAU',
+                    'PKS GUNME', 'SUNGAI DEKAN', 'RIMBA BELIAN', 'PKS RIMBA BELIA',
+                    'GUNUNG MAS', 'SINTANG', 'NGABANG', 'PKS NGABANG',
+                    'PARINDU', 'PKS PARINDU', 'KEMBAYAN', 'PKS KEMBAYAN',
+                    'PPPBB', 'UNIT GRUP KALSEL/TENG', 'DANAU SALAK', 'TAMBARANGAN',
+                    'BATULICIN', 'PELAIHARI', 'PKS PELAIHARI', 'KUMAI',
+                    'PKS PAMUKAN', 'PAMUKAN', 'PRYBB', 'RAREN BATUAH',
+                    'UNIT GRUP KALTIM', 'TABARA', 'TAJATI', 'PANDAWA',
+                    'LONGKALI', 'PKS SAMUNTAI', 'PKS LONG PINANG', 'KP JAKARTA',
+                    'KP BALIKPAPAN'
+                  ];
+                  $currentKebun = old('kebun', $dokumen->kebun);
+                  $currentKebunClean = preg_replace('/^\d+\s+/', '', $currentKebun);
+                @endphp
+                @foreach($kebunOptions as $kebun)
+                  <option value="{{ $kebun }}" {{ ($currentKebun == $kebun || $currentKebunClean == $kebun) ? 'selected' : '' }}>{{ $kebun }}</option>
+                @endforeach
+              </select>
+              @error('kebun')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 4: Nomor PO & PR (Read-Only) -->
-    @if(($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0) || ($dokumen->dokumenPrs && $dokumen->dokumenPrs->count() > 0))
+    <!-- Section 4: Nomor PO & PR -->
     <div class="accordion-section">
       <div class="accordion-header" onclick="toggleAccordion(this)">
         <div class="accordion-title">
           <i class="fa-solid fa-hashtag"></i>
           <span>Nomor PO & PR</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Readonly</span>
+          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Opsional</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
       <div class="accordion-content">
         <div class="accordion-body">
-          @if($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0)
-          <div class="form-group">
-            <label>Nomor PO</label>
-            <div class="info-item">
-              <div class="info-value">
-                @foreach($dokumen->dokumenPos as $po)
-                  {{ $po->nomor_po }}{{ !$loop->last ? ', ' : '' }}
-                @endforeach
+          <!-- Nomor PO -->
+          <div id="po-container">
+            @if($dokumen->dokumenPos->count() > 0)
+              @foreach($dokumen->dokumenPos as $index => $po)
+              <div class="form-group dynamic-field" data-field-type="po">
+                <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+                <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ old('nomor_po.' . $index, $po->nomor_po) }}">
+                <button type="button" class="add-field-btn">+</button>
+                <button type="button" class="remove-field-btn" style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
               </div>
+              @endforeach
+            @else
+            <div class="form-group dynamic-field" data-field-type="po">
+              <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+              <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ old('nomor_po.0') }}">
+              <button type="button" class="add-field-btn">+</button>
+              <button type="button" class="remove-field-btn" style="display: none;">−</button>
             </div>
+            @endif
           </div>
-          @endif
 
-          @if($dokumen->dokumenPrs && $dokumen->dokumenPrs->count() > 0)
-          <div class="form-group">
-            <label>Nomor PR</label>
-            <div class="info-item">
-              <div class="info-value">
-                @foreach($dokumen->dokumenPrs as $pr)
-                  {{ $pr->nomor_pr }}{{ !$loop->last ? ', ' : '' }}
-                @endforeach
+          <!-- Nomor PR -->
+          <div id="pr-container">
+            @if($dokumen->dokumenPrs->count() > 0)
+              @foreach($dokumen->dokumenPrs as $index => $pr)
+              <div class="form-group dynamic-field" data-field-type="pr">
+                <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+                <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ old('nomor_pr.' . $index, $pr->nomor_pr) }}">
+                <button type="button" class="add-field-btn">+</button>
+                <button type="button" class="remove-field-btn" style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
               </div>
+              @endforeach
+            @else
+            <div class="form-group dynamic-field" data-field-type="pr">
+              <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+              <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ old('nomor_pr.0') }}">
+              <button type="button" class="add-field-btn">+</button>
+              <button type="button" class="remove-field-btn" style="display: none;">−</button>
             </div>
+            @endif
           </div>
-          @endif
         </div>
       </div>
     </div>
-    @endif
 
     <!-- Section 5: Informasi Perpajakan (Read-Only, jika ada) -->
     @if(isset($hasPerpajakanData) && $hasPerpajakanData)
@@ -1099,6 +1342,188 @@ function toggleAccordion(header) {
   header.classList.toggle('active');
   content.classList.toggle('active');
 }
+
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Data untuk cascading dropdown (hanya jika dropdown mode tersedia)
+  @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
+  const subKriteriaData = @json($subKriteria);
+  const itemSubKriteriaData = @json($itemSubKriteria);
+
+  // Function to update sub kriteria dropdown
+  function updateSubKriteria(kategoriKriteriaId, selectedValue = null) {
+    const subKriteriaSelect = document.getElementById('sub_kriteria');
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+    if (!subKriteriaSelect || !itemSubKriteriaSelect) {
+      return;
+    }
+
+    // Clear existing options
+    subKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria</option>';
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+
+    if (!kategoriKriteriaId) {
+      return;
+    }
+
+    // Filter sub kriteria berdasarkan id_kategori_kriteria
+    const filteredSubKriteria = subKriteriaData.filter(sub => 
+      sub.id_kategori_kriteria == kategoriKriteriaId
+    );
+
+    // Populate sub kriteria options
+    filteredSubKriteria.forEach(sub => {
+      const option = document.createElement('option');
+      option.value = sub.id_sub_kriteria;
+      option.textContent = sub.nama_sub_kriteria;
+      if (selectedValue && selectedValue == sub.id_sub_kriteria) {
+        option.selected = true;
+      }
+      subKriteriaSelect.appendChild(option);
+    });
+  }
+
+  // Function to update item sub kriteria dropdown
+  function updateItemSubKriteria(subKriteriaId, selectedValue = null) {
+    const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+
+    if (!itemSubKriteriaSelect) {
+      return;
+    }
+
+    // Clear existing options
+    itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Item Sub Kriteria</option>';
+
+    if (!subKriteriaId) {
+      return;
+    }
+
+    // Filter item sub kriteria berdasarkan id_sub_kriteria
+    const filteredItemSubKriteria = itemSubKriteriaData.filter(item => 
+      item.id_sub_kriteria == subKriteriaId
+    );
+
+    // Populate item sub kriteria options
+    filteredItemSubKriteria.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id_item_sub_kriteria;
+      option.textContent = item.nama_item_sub_kriteria;
+      if (selectedValue && selectedValue == item.id_item_sub_kriteria) {
+        option.selected = true;
+      }
+      itemSubKriteriaSelect.appendChild(option);
+    });
+  }
+
+  // Initialize dropdowns if values already selected
+  const kriteriaCfSelect = document.getElementById('kriteria_cf');
+  const subKriteriaSelect = document.getElementById('sub_kriteria');
+  const itemSubKriteriaSelect = document.getElementById('item_sub_kriteria');
+  
+  if (kriteriaCfSelect && subKriteriaSelect && itemSubKriteriaSelect) {
+    const oldKriteriaCf = '{{ old("kriteria_cf", $selectedKriteriaCfId ?? "") }}';
+    const oldSubKriteria = '{{ old("sub_kriteria", $selectedSubKriteriaId ?? "") }}';
+    const oldItemSubKriteria = '{{ old("item_sub_kriteria", $selectedItemSubKriteriaId ?? "") }}';
+
+    if (oldKriteriaCf && oldKriteriaCf !== '') {
+      updateSubKriteria(oldKriteriaCf, oldSubKriteria);
+      if (oldSubKriteria && oldSubKriteria !== '') {
+        updateItemSubKriteria(oldSubKriteria, oldItemSubKriteria);
+      }
+    }
+
+    // Event listener untuk dropdown kriteria CF
+    kriteriaCfSelect.addEventListener('change', function() {
+      updateSubKriteria(this.value);
+      // Reset item sub kriteria
+      itemSubKriteriaSelect.innerHTML = '<option value="">Pilih Sub Kriteria terlebih dahulu</option>';
+    });
+
+    // Event listener untuk dropdown sub kriteria
+    subKriteriaSelect.addEventListener('change', function() {
+      updateItemSubKriteria(this.value);
+    });
+  }
+  @endif
+
+  // Event delegation untuk tombol tambah dan kurang
+  document.addEventListener('click', function(e) {
+    // Handle tombol tambah (+)
+    if (e.target.classList.contains('add-field-btn')) {
+      e.preventDefault();
+      const fieldGroup = e.target.closest('.dynamic-field');
+      const newField = fieldGroup.cloneNode(true);
+
+      // Reset nilai input
+      newField.querySelector('input').value = '';
+
+      // Show remove button on new field
+      const newRemoveBtn = newField.querySelector('.remove-field-btn');
+      if (newRemoveBtn) {
+        newRemoveBtn.style.display = 'flex';
+      }
+
+      // Hide remove button on first field
+      const container = fieldGroup.parentElement;
+      const firstField = container.querySelector('.dynamic-field:first-of-type');
+      if (firstField) {
+        const firstRemoveBtn = firstField.querySelector('.remove-field-btn');
+        if (firstRemoveBtn) {
+          firstRemoveBtn.style.display = 'none';
+        }
+      }
+
+      // Insert new field after current field
+      fieldGroup.parentElement.insertBefore(newField, fieldGroup.nextSibling);
+    }
+
+    // Handle tombol kurang (-)
+    if (e.target.classList.contains('remove-field-btn')) {
+      e.preventDefault();
+      const fieldGroup = e.target.closest('.dynamic-field');
+      const fieldType = fieldGroup.getAttribute('data-field-type');
+      const allFields = document.querySelectorAll(`[data-field-type="${fieldType}"]`);
+
+      // Only remove if there's more than one field
+      if (allFields.length > 1) {
+        fieldGroup.remove();
+
+        // Hide remove button on first remaining field
+        const remainingFields = document.querySelectorAll(`[data-field-type="${fieldType}"]`);
+        if (remainingFields.length > 0) {
+          const firstRemoveBtn = remainingFields[0].querySelector('.remove-field-btn');
+          if (firstRemoveBtn) {
+            firstRemoveBtn.style.display = 'none';
+          }
+        }
+      }
+    }
+  });
+
+  // Format nilai rupiah dan generate ejaan
+  const nilaiRupiahInput = document.getElementById('edit-nilai-rupiah');
+  const ejaanInput = document.getElementById('edit-ejaan-nilai-rupiah');
+
+  if (nilaiRupiahInput && ejaanInput) {
+    nilaiRupiahInput.addEventListener('input', function() {
+      // Remove non-numeric characters
+      let value = this.value.replace(/[^0-9]/g, '');
+      
+      // Format with dots as thousand separators
+      if (value) {
+        value = parseInt(value).toLocaleString('id-ID');
+        this.value = value;
+        
+        // Generate ejaan (simplified - you may want to use a library for full conversion)
+        // For now, just show the formatted number
+        ejaanInput.value = 'Rp ' + value;
+      } else {
+        ejaanInput.value = '';
+      }
+    });
+  }
+});
 </script>
 
 @endsection
