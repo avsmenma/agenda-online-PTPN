@@ -218,10 +218,20 @@ class DashboardPerpajakanController extends Controller
                     }
                     break;
                 case 'menunggu_approve':
-                    // Semua dokumen dengan status menunggu approve (pending di dokumen_statuses)
-                    $query->whereHas('roleStatuses', function ($q) {
-                        $q->where('role_code', 'perpajakan')
-                            ->where('status', DokumenStatus::STATUS_PENDING);
+                    // Semua dokumen dengan status menunggu approve (pending di dokumen_statuses untuk role apapun)
+                    // atau dokumen dengan status pending_approval_* atau menunggu_di_approve
+                    $query->where(function ($q) {
+                        $q->whereHas('roleStatuses', function ($statusQ) {
+                            $statusQ->where('status', DokumenStatus::STATUS_PENDING);
+                        })
+                        ->orWhereIn('status', [
+                            'pending_approval_ibub',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                            'pending_approval_pembayaran',
+                            'waiting_reviewer_approval',
+                            'menunggu_di_approve'
+                        ]);
                     });
                     break;
                 case 'ditolak':

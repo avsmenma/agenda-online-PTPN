@@ -1258,6 +1258,14 @@
     white-space: nowrap;
   }
 
+  .btn-action.btn-full-width span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
 
   .btn-action:hover {
     transform: translateY(-2px);
@@ -2348,7 +2356,7 @@
                 </button>
               @elseif($isPendingApprovalAkutansi || $isPendingApprovalPembayaran)
                 <!-- Document pending approval - show waiting status -->
-                <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sedang menunggu persetujuan">
+                <button class="btn-action btn-edit locked btn-full-width" disabled title="{{ $dokumen->getDetailedApprovalText() }}">
                   <i class="fa-solid fa-hourglass-half"></i>
                   <span>{{ $dokumen->getDetailedApprovalText() }}</span>
                 </button>
