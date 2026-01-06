@@ -752,7 +752,13 @@
                         </tr>
                         <tr>
                             <th>Pengirim</th>
-                            <td>{{ $dokumen->getSenderDisplayName() }}</td>
+                            <td>
+                                @php
+                                    $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                    $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
+                                @endphp
+                                {{ $senderName }}
+                            </td>
                         </tr>
                         <tr>
                             <th>Nama Pengirim</th>
@@ -970,7 +976,11 @@
                 <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <div>
-                        <strong>Perhatian:</strong> Dokumen yang ditolak akan dikembalikan ke pengirim ({{ $dokumen->getSenderDisplayName() }}) dan tidak akan masuk ke sistem persetujuan.
+                        <strong>Perhatian:</strong> Dokumen yang ditolak akan dikembalikan ke pengirim (@php
+                                $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
+                            @endphp
+                            {{ $senderName }}) dan tidak akan masuk ke sistem persetujuan.
                     </div>
                 </div>
                 <p class="confirmation-message">Apakah Anda yakin ingin menolak dokumen ini?</p>

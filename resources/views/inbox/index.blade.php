@@ -971,7 +971,11 @@
                                 <div class="document-info-label">Pengirim</div>
                                 <div class="document-info-value">
                                     <i class="fas fa-user"></i>
-                                    <span>{{ $dokumen->getSenderDisplayName() }}</span>
+                                    @php
+                                        $currentRoleCode = strtolower($userRole ?? '');
+                                        $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
+                                    @endphp
+                                    <span>{{ $senderName }}</span>
                                 </div>
                             </div>
 
