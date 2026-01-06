@@ -199,7 +199,7 @@ class DashboardBController extends Controller
                 'dokumens.tanggal_spk',
                 'dokumens.tanggal_berakhir_spk',
                 'dokumens.no_spk',
-                'dokumens.nomor_mirror',
+                'dokumens.nomor_miro',
                 'dokumens.nama_pengirim',
                 'dokumens.jenis_pembayaran',
                 'dokumens.dibayar_kepada',
@@ -235,7 +235,6 @@ class DashboardBController extends Controller
                     ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
                     ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
                     ->orWhere('no_spk', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
                     ->orWhere('nomor_miro', 'like', '%' . $search . '%')
                     ->orWhere('keterangan', 'like', '%' . $search . '%')
                     ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
@@ -408,7 +407,7 @@ class DashboardBController extends Controller
             'nomor_spp' => 'Nomor SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Miro',
+            'nomor_miro' => 'Nomor Miro',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kategori',
@@ -453,7 +452,7 @@ class DashboardBController extends Controller
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_mirror'
+                'nomor_miro'
             ];
 
             if ($user && isset($user->table_columns_preferences['ibub'])) {
@@ -740,7 +739,7 @@ class DashboardBController extends Controller
                 'no_spk' => $request->no_spk,
                 'tanggal_spk' => $request->tanggal_spk,
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
-                'nomor_mirror' => $request->nomor_mirror,
+                'nomor_miro' => $request->nomor_miro,
                 'status' => $newStatus, // Reset status to "sedang diproses" if was rejected/returned
                 'keterangan' => $request->keterangan,
             ];
@@ -886,7 +885,7 @@ class DashboardBController extends Controller
                         'no_spk' => $dokumen->no_spk,
                         'tanggal_spk' => $dokumen->tanggal_spk,
                         'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
-                        'nomor_mirror' => $dokumen->nomor_mirror,
+                        'nomor_miro' => $dokumen->nomor_miro,
                         'no_berita_acara' => $dokumen->no_berita_acara,
                         'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
                         'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {
@@ -966,7 +965,7 @@ class DashboardBController extends Controller
             'No SPK' => $dokumen->no_spk ?? '-',
             'Tanggal SPK' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
-            'No Mirror' => $dokumen->nomor_mirror ?? '-',
+            'No Mirror' => $dokumen->nomor_miro ?? '-',
             'Current Handler' => ucfirst($dokumen->current_handler),
         ];
 
@@ -2777,7 +2776,6 @@ class DashboardBController extends Controller
             'jenis_dokumen',
             'no_berita_acara',
             'no_spk',
-            'nomor_mirror',
             'nomor_miro',
             'keterangan',
             'dibayar_kepada'
