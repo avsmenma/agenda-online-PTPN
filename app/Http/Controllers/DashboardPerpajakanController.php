@@ -7,6 +7,7 @@ use App\Models\Dokumen;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
 use App\Models\DibayarKepada;
+use App\Models\DokumenStatus;
 use App\Helpers\SearchHelper;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Response;
@@ -178,32 +179,17 @@ class DashboardPerpajakanController extends Controller
         // Filter by status
         if ($request->has('status') && $request->status) {
             switch ($request->status) {
-                case 'terkunci':
-                    // Dokumen yang terkunci (belum set deadline) - check dokumen_role_data
-                    $query->where('current_handler', 'perpajakan')
-                        ->where('status', 'sent_to_perpajakan')
-                        ->whereDoesntHave('roleData', function ($roleQ) {
-                            $roleQ->where('role_code', 'perpajakan')
-                                ->whereNotNull('deadline_at');
-                        });
-                    break;
-                case 'sedang_diproses':
-                    // Dokumen yang sedang diproses oleh perpajakan
-                    $query->where('status_perpajakan', 'sedang_diproses')
-                        ->where('current_handler', 'perpajakan')
-                        ->where('status', '!=', 'sent_to_akutansi');
-                    break;
-                case 'selesai':
-                    // Dokumen yang sudah selesai diproses oleh perpajakan
-                    $query->where('status_perpajakan', 'selesai')
-                        ->where('status', '!=', 'sent_to_akutansi');
+                case 'sedang_proses':
+                    // Dokumen dengan status 'sedang diproses'
+                    $query->where('status', 'sedang diproses')
+                        ->where('current_handler', 'perpajakan');
                     break;
                 case 'terkirim_akutansi':
-                    // Dokumen yang sudah terkirim ke akutansi
+                    // Dokumen yang sudah terkirim ke team akutansi
                     $query->where('status', 'sent_to_akutansi');
                     break;
                 case 'terkirim_pembayaran':
-                    // Dokumen yang sudah terkirim ke pembayaran atau sudah completed setelah pembayaran, exclude CSV imports
+                    // Dokumen yang sudah terkirim ke team pembayaran
                     $query->where(function ($statusQ) {
                         $statusQ->where('status', 'sent_to_pembayaran')
                             ->orWhere(function ($completedQ) {
@@ -220,15 +206,19 @@ class DashboardPerpajakanController extends Controller
                         });
                     }
                     break;
-                case 'belum_diproses':
-                    // Dokumen yang belum diproses (status_perpajakan null atau empty)
-                    $query->where(function ($q) {
-                        $q->whereNull('status_perpajakan')
-                            ->orWhere('status_perpajakan', '')
-                            ->orWhere('status_perpajakan', 'belum_diproses');
-                    })
-                        ->where('current_handler', 'perpajakan')
-                        ->where('status', '!=', 'sent_to_akutansi');
+                case 'menunggu_approve':
+                    // Semua dokumen dengan status menunggu approve (pending di dokumen_statuses)
+                    $query->whereHas('roleStatuses', function ($q) {
+                        $q->where('role_code', 'perpajakan')
+                            ->where('status', DokumenStatus::STATUS_PENDING);
+                    });
+                    break;
+                case 'ditolak':
+                    // Dokumen yang ditolak (rejected di dokumen_statuses untuk role perpajakan)
+                    $query->whereHas('roleStatuses', function ($q) {
+                        $q->where('role_code', 'perpajakan')
+                            ->where('status', DokumenStatus::STATUS_REJECTED);
+                    });
                     break;
             }
         }

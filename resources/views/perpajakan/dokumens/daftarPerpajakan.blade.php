@@ -2001,11 +2001,11 @@
     <div class="filter-section">
       <select name="status" class="form-select" onchange="this.form.submit()">
         <option value="">Semua Status</option>
-        <option value="terkunci" {{ request('status') == 'terkunci' ? 'selected' : '' }}>🔒 Terkunci</option>
-        <option value="sedang_diproses" {{ request('status') == 'sedang_diproses' ? 'selected' : '' }}>⏳ Sedang Diproses</option>
-        <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>✓ Selesai</option>
-        <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>📤 Terkirim ke Akutansi</option>
-        <option value="belum_diproses" {{ request('status') == 'belum_diproses' ? 'selected' : '' }}>⏳ Belum Diproses</option>
+        <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
+        <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>Terkirim ke Akutansi</option>
+        <option value="terkirim_pembayaran" {{ request('status') == 'terkirim_pembayaran' ? 'selected' : '' }}>Terkirim ke Pembayaran</option>
+        <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve</option>
+        <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
       </select>
     </div>
     <!-- Preserve per_page and columns parameters -->
@@ -2099,12 +2099,18 @@
             ->where('role_code', 'perpajakan')
             ->where('status', 'pending')
             ->exists();
+          // Check if document is rejected by perpajakan
+          $isRejected = $dokumen->roleStatuses()
+            ->where('role_code', 'perpajakan')
+            ->where('status', 'rejected')
+            ->exists();
           $canSend = $dokumen->status != 'sent_to_akutansi'
             && $dokumen->status != 'sent_to_pembayaran'
             && $dokumen->status != 'pending_approval_akutansi'
             && $dokumen->status != 'pending_approval_pembayaran'
             && $dokumen->status != 'menunggu_di_approve'
-            && $dokumen->current_handler == 'perpajakan';
+            && $dokumen->current_handler == 'perpajakan'
+            && !$isRejected;
           $perpajakanRequiredFields = [
             'npwp' => 'NPWP',
             'no_faktur' => 'Nomor Faktur',
@@ -2306,7 +2312,19 @@
             @endif
           </td>
           <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-            @if($dokumen->status == 'sent_to_akutansi')
+            @if($isRejected)
+              {{-- Dokumen ditolak oleh perpajakan --}}
+              <span class="badge-status badge-dikembalikan" style="position: relative;">
+                <i class="fa-solid fa-times-circle me-1"></i>
+                <span>Dokumen ditolak,
+                  <a href="{{ route('returns.perpajakan.index') }}?search={{ $dokumen->nomor_agenda }}"
+                    class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
+                    style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
+                    cek disini
+                  </a>
+                </span>
+              </span>
+            @elseif($dokumen->status == 'sent_to_akutansi')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
             @elseif($dokumen->status == 'sent_to_pembayaran')
               <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
@@ -2314,6 +2332,8 @@
               <span class="badge-status badge-warning">⏳ {{ $dokumen->getDetailedApprovalText() }}</span>
             @elseif($isLocked)
               <span class="badge-status badge-locked">🔒 Terkunci</span>
+            @elseif($dokumen->status == 'sedang diproses')
+              <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @else
               <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
             @endif
