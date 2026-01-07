@@ -799,6 +799,41 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="confirm-modal">
+    <div class="confirm-modal-overlay" onclick="closeConfirmModal()"></div>
+    <div class="confirm-modal-content">
+      <div class="confirm-modal-header">
+        <div class="confirm-icon-wrapper">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <h4>Konfirmasi Pengiriman</h4>
+      </div>
+      <div class="confirm-modal-body">
+        <p>Apakah Anda yakin ingin mengirim dokumen ini ke <strong>Team Akutansi</strong> setelah diperbaiki?</p>
+        <div class="confirm-doc-info">
+          <div class="confirm-doc-icon">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+          <div class="confirm-doc-details">
+            <div class="confirm-doc-title">Dokumen akan dikirim ke</div>
+            <div class="confirm-doc-value" id="confirmTargetText">Team Akutansi</div>
+          </div>
+        </div>
+      </div>
+      <div class="confirm-modal-footer">
+        <button type="button" class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">
+          <i class="fa-solid fa-times"></i>
+          Batal
+        </button>
+        <button type="button" class="confirm-btn confirm-btn-confirm" id="confirmSendBtn">
+          <i class="fa-solid fa-paper-plane"></i>
+          Ya, Kirim Sekarang
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Document Detail Modal -->
   <div id="documentDetailModal" class="document-modal" style="display: none;">
     <div class="document-modal-overlay" onclick="closeDocumentModal()"></div>
@@ -1169,6 +1204,213 @@
         width: 100%;
       }
     }
+
+    /* Confirmation Modal Styles */
+    .confirm-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 99998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .confirm-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .confirm-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+
+    .confirm-modal-content {
+      position: relative;
+      background: white;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 440px;
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(8, 62, 64, 0.4);
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .confirm-modal.show .confirm-modal-content {
+      transform: scale(1) translateY(0);
+    }
+
+    .confirm-modal-header {
+      background: linear-gradient(135deg, #083E40 0%, #0a5a5d 100%);
+      padding: 30px 30px 20px;
+      text-align: center;
+    }
+
+    .confirm-icon-wrapper {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+      animation: confirmPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes confirmPulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .confirm-icon-wrapper i {
+      font-size: 32px;
+      color: white;
+    }
+
+    .confirm-modal-header h4 {
+      margin: 0;
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .confirm-modal-body {
+      padding: 24px 30px;
+      text-align: center;
+    }
+
+    .confirm-modal-body p {
+      margin: 0 0 16px;
+      color: #4a5568;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .confirm-doc-info {
+      background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+      border: 1px solid rgba(8, 62, 64, 0.1);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .confirm-doc-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5a5d 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .confirm-doc-icon i {
+      font-size: 20px;
+      color: white;
+    }
+
+    .confirm-doc-details {
+      text-align: left;
+      flex: 1;
+    }
+
+    .confirm-doc-title {
+      font-size: 12px;
+      color: #889717;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .confirm-doc-value {
+      font-size: 14px;
+      color: #083E40;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .confirm-modal-footer {
+      padding: 0 30px 30px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .confirm-btn {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .confirm-btn-cancel {
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      color: #64748b;
+    }
+
+    .confirm-btn-cancel:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+
+    .confirm-btn-confirm {
+      background: linear-gradient(135deg, #083E40 0%, #0a5a5d 50%, #889717 100%);
+      border: none;
+      color: white;
+      box-shadow: 0 4px 15px rgba(8, 62, 64, 0.3);
+    }
+
+    .confirm-btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(8, 62, 64, 0.4);
+    }
+
+    .confirm-btn-confirm:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 480px) {
+      .confirm-modal-content {
+        width: 95%;
+      }
+
+      .confirm-modal-footer {
+        flex-direction: column-reverse;
+      }
+    }
   </style>
   <script>
     // Prevent event bubbling issues and ensure proper event handling
@@ -1265,11 +1507,11 @@
 
       // Show loading
       detailContent.innerHTML = `
-                <div class="text-center p-4">
-                  <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-                  <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-                </div>
-              `;
+                  <div class="text-center p-4">
+                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                    <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+                  </div>
+                `;
 
       fetch(`/documents/perpajakan/${docId}/detail`, {
         headers: {
@@ -1367,11 +1609,11 @@
       // Generate detail items HTML
       for (const [label, value] of Object.entries(detailItems)) {
         html += `
-                  <div class="detail-item">
-                    <div class="detail-label">${label}</div>
-                    <div class="detail-value">${value}</div>
-                  </div>
-                `;
+                    <div class="detail-item">
+                      <div class="detail-label">${label}</div>
+                      <div class="detail-value">${value}</div>
+                    </div>
+                  `;
       }
 
       html += '</div>';
@@ -1386,26 +1628,26 @@
     // Modern Toast Notification Function
     function showToast(type, title, message, autoClose = true) {
       const container = document.getElementById('toastContainer');
-      
+
       const toast = document.createElement('div');
       toast.className = `toast-notification toast-${type}`;
       toast.innerHTML = `
-        <div class="toast-icon">
-          <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
-        </div>
-        <div class="toast-content">
-          <div class="toast-title">${title}</div>
-          <div class="toast-message">${message}</div>
-        </div>
-        <button class="toast-close" onclick="closeToast(this.parentElement)">
-          <i class="fa-solid fa-times"></i>
-        </button>
-        ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
-      `;
+          <div class="toast-icon">
+            <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
+          </div>
+          <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+          </div>
+          <button class="toast-close" onclick="closeToast(this.parentElement)">
+            <i class="fa-solid fa-times"></i>
+          </button>
+          ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
+        `;
       toast.style.position = 'relative';
-      
+
       container.appendChild(toast);
-      
+
       if (autoClose) {
         setTimeout(() => {
           closeToast(toast);
@@ -1421,13 +1663,38 @@
       }, 300);
     }
 
-    function sendToAkutansi(docId) {
-      if (!confirm('Apakah Anda yakin ingin mengirim dokumen ini ke Akutansi setelah diperbaiki?')) {
-        return;
-      }
+    let pendingDocId = null;
+    let pendingButton = null;
 
-      const button = event.target.closest('.btn-action-send');
+    function sendToAkutansi(docId) {
+      pendingDocId = docId;
+      pendingButton = event.target.closest('.btn-action-send');
+      
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+      // allow animation to finish before clearing refs if needed, but clearing now is safer checks
+      setTimeout(() => {
+        pendingDocId = null;
+        pendingButton = null;
+      }, 300);
+    }
+
+    function executeSendToAkutansi() {
+      if (!pendingDocId || !pendingButton) return;
+      
+      const docId = pendingDocId;
+      const button = pendingButton;
       const originalContent = button.innerHTML;
+      
+      closeConfirmModal();
+
       button.disabled = true;
       button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
 
@@ -1464,6 +1731,14 @@
         });
     }
 
+    // Initialize confirmation button listener
+    document.addEventListener('DOMContentLoaded', function() {
+      const confirmBtn = document.getElementById('confirmSendBtn');
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', executeSendToAkutansi);
+      }
+    });
+
     // Modal Functions
     function openDocumentModal(docId) {
       const modal = document.getElementById('documentDetailModal');
@@ -1475,11 +1750,11 @@
 
       // Show loading state
       modalBody.innerHTML = `
-            <div class="text-center p-4">
-              <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
-              <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
-            </div>
-          `;
+              <div class="text-center p-4">
+                <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+                <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+              </div>
+            `;
 
       // Fetch document details
       fetch(`/documents/perpajakan/${docId}/detail`, {
