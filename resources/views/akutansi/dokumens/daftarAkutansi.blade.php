@@ -2334,9 +2334,6 @@
                     'menunggu_di_approve', // Status setelah dikirim ke pembayaran via sendToInbox
                   ]);
                 @endphp
-                @if(false)
-                  <!-- Locked state removed - documents are no longer locked after approval -->
-                @else
                   <!-- Unlocked state - buttons enabled -->
                   @unless($isSentToPembayaran)
                     <!-- Tombol Kirim Data - selalu muncul untuk dokumen yang tidak terkunci dan belum terkirim -->
@@ -2379,7 +2376,6 @@
                       </button>
                     @endif
                   @endunless
-                @endif
               </div>
             </td>
           </tr>
