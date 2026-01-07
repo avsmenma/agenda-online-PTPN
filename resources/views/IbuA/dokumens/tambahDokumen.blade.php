@@ -546,7 +546,7 @@
     </div>
 
     <!-- 8. ALL SPK -->
-    <div class="section-title">SPK (Surat Perintah Kerja)</div>
+    <div class="section-title">SPK (Surat Perjanjian Kontrak)</div>
     <div class="form-row">
       <div class="form-group">
         <label>No SPK</label>
