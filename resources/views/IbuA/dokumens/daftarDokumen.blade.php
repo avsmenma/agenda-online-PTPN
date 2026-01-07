@@ -2792,8 +2792,8 @@
   </style>
 
   <script>
-    // Enhanced interactions and anima  t  ions
-    function toggleDetail    (rowI     d) {
+    // Enhanced interactions and animations
+    function toggleDetail(rowId) {
       const detailRow = document.getElementById('detail-' + rowId);
       const chevron = document.getElementById('chevron-' + rowId);
 
