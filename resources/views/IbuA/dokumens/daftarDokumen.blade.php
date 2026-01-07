@@ -1940,66 +1940,21 @@
               <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah }}</strong>
             @elseif($col == 'status')
               @php
-                // Gunakan role-based status display untuk Ibu Tarapul (ibuA)
-                $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('ibuA');
-                // Check approval status using new dokumen_statuses table
-                $ibuBStatus = $dokumen->getStatusForRole('ibub');
-                $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
-                $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
-                $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
+                // Logic Sederhana Khusus Ibu Tarapul: Hanya 2 Status (Belum Dikirim & Terkirim)
+                // Jika dokumen ada di tangan IbuA (Draft, Returned, Rejected) -> Belum Dikirim
+                // Jika dokumen ada di tangan role lain (IbuB, Perpajakan, Akutansi, dll) -> Terkirim
+                $isWithIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a']);
               @endphp
               
-              @if($isRejected)
-                {{-- Dokumen ditolak dari inbox --}}
-                <span class="badge-status badge-dikembalikan" style="position: relative;">
-                  <i class="fa-solid fa-times-circle me-1"></i>
-                  <span>Dokumen Ditolak, 
-                    <a href="javascript:void(0);" 
-                       class="text-white text-decoration-underline fw-bold" 
-                       onclick="event.preventDefault(); event.stopPropagation(); if(typeof window.showRejectionModal === 'function') { window.showRejectionModal({{ $dokumen->id }}); } else { console.error('showRejectionModal function not found'); alert('Fungsi tidak tersedia. Silakan refresh halaman.'); }">
-                      Alasan
-                    </a>
-                  </span>
-                </span>
-              @elseif(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+              @if($isWithIbuA)
                 <span class="badge-status badge-draft">
                   <i class="fa-solid fa-file-lines me-1"></i>
                   <span>Belum Dikirim</span>
                 </span>
-              @elseif($statusLabel == 'Terkirim' || $isApproved)
-                {{-- PRIORITY: Dokumen sudah di-approve oleh Team Verifikasi - harus ditampilkan sebagai Terkirim --}}
-                {{-- Pengecekan ini dilakukan lebih awal untuk memastikan dokumen yang sudah di-approve selalu tampil sebagai Terkirim --}}
+              @else
                 <span class="badge-status badge-terkirim">
                   <i class="fa-solid fa-check me-1"></i>
                   <span>Terkirim</span>
-                </span>
-              @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || $isPending)
-                {{-- Dokumen menunggu approval dari Reviewer (Team Verifikasi) --}}
-                <span class="badge-status" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                  <i class="fa-solid fa-clock me-1"></i>
-                  <span>{{ $dokumen->getDetailedApprovalText() }}</span>
-                </span>
-              @elseif($statusLabel == 'Sedang Proses' || $statusLabel == 'Sedang Proses (Reviewer/Tax)' || $statusLabel == 'Sedang Proses (Reviewer/Accounting)')
-                {{-- Dokumen sedang diproses di tahap selanjutnya --}}
-                <span class="badge-status badge-proses">
-                  <i class="fa-solid fa-spinner me-1"></i>
-                  <span>{{ $statusLabel }}</span>
-                </span>
-              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_ibua')
-                <span class="badge-status badge-dikembalikan">
-                  <i class="fa-solid fa-times me-1"></i>
-                  <span>Dikembalikan untuk Revisi</span>
-                </span>
-              @elseif($statusLabel == 'Selesai' || $dokumen->status == 'selesai' || $dokumen->status == 'completed')
-                <span class="badge-status badge-selesai">
-                  <i class="fa-solid fa-check-circle me-1"></i>
-                  <span>Selesai</span>
-                </span>
-              @else
-                {{-- Fallback: tampilkan status dari accessor --}}
-                <span class="badge-status badge-terkirim">
-                  <i class="fa-solid fa-check me-1"></i>
-                  <span>{{ $statusLabel }}</span>
                 </span>
               @endif
             @elseif($col == 'tanggal_spp')
