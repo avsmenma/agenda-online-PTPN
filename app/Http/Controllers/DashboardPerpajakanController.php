@@ -255,10 +255,22 @@ class DashboardPerpajakanController extends Controller
                     });
                     break;
                 case 'ditolak':
-                    // Dokumen yang ditolak (rejected di dokumen_statuses untuk role perpajakan)
-                    $query->whereHas('roleStatuses', function ($q) {
-                        $q->where('role_code', 'perpajakan')
-                            ->where('status', DokumenStatus::STATUS_REJECTED);
+                    // Dokumen yang ditolak (rejected di dokumen_statuses)
+                    // Include both: rejected by perpajakan AND rejected by akutansi (returned to perpajakan)
+                    $query->where(function ($q) {
+                        // Documents rejected by perpajakan
+                        $q->whereHas('roleStatuses', function ($statusQ) {
+                            $statusQ->where('role_code', 'perpajakan')
+                                ->where('status', DokumenStatus::STATUS_REJECTED);
+                        })
+                            // Documents rejected by akutansi (returned to perpajakan)
+                            ->orWhere(function ($akutansiQ) {
+                                $akutansiQ->where('current_handler', 'perpajakan')
+                                    ->whereHas('roleStatuses', function ($statusQ) {
+                                        $statusQ->where('role_code', 'akutansi')
+                                            ->where('status', DokumenStatus::STATUS_REJECTED);
+                                    });
+                            });
                     });
                     break;
             }
