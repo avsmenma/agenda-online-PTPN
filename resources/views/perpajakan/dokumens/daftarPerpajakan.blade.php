@@ -2179,6 +2179,8 @@
                 {{ $dokumen->kebun ?? '-' }}
               @elseif($col == 'jenis_dokumen')
                 {{ $dokumen->jenis_dokumen ?? '-' }}
+              @elseif($col == 'jenis_sub_pekerjaan')
+                {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
               @elseif($col == 'jenis_pembayaran')
                 {{ $dokumen->jenis_pembayaran ?? '-' }}
               @elseif($col == 'nama_pengirim')

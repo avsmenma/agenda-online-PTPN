@@ -885,6 +885,8 @@
                 <strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
+              @elseif($col == 'jenis_sub_pekerjaan')
+                {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
               @elseif($col == 'status_pembayaran')
                 @switch($paymentStatus)
                   @case('siap_bayar')
