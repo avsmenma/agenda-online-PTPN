@@ -12,6 +12,7 @@ use App\Models\DibayarKepada;
 use App\Models\KategoriKriteria;
 use App\Models\SubKriteria;
 use App\Models\ItemSubKriteria;
+use App\Models\Bagian;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Exception;
@@ -239,6 +240,15 @@ class DokumenController extends Controller
             $jenisPembayaranList = collect([]);
             $isJenisPembayaranAvailable = false;
         }
+
+        // Ambil data bagian dari database
+        $bagianList = collect([]);
+        try {
+            $bagianList = Bagian::active()->ordered()->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching bagian data (create): ' . $e->getMessage());
+            $bagianList = collect([]);
+        }
         
         $data = array(
             "title" => "Tambah Dokumen",
@@ -254,6 +264,7 @@ class DokumenController extends Controller
             "isDropdownAvailable" => $isDropdownAvailable,
             "jenisPembayaranList" => $jenisPembayaranList,
             "isJenisPembayaranAvailable" => $isJenisPembayaranAvailable,
+            "bagianList" => $bagianList,
         );
         return view('IbuA.dokumens.tambahDokumen', $data);
     }
@@ -707,6 +718,15 @@ class DokumenController extends Controller
             $isJenisPembayaranAvailable = false;
         }
 
+        // Ambil data bagian dari database
+        $bagianList = collect([]);
+        try {
+            $bagianList = Bagian::active()->ordered()->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching bagian data (edit): ' . $e->getMessage());
+            $bagianList = collect([]);
+        }
+
         // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
         $selectedKriteriaCfId = null;
         $selectedSubKriteriaId = null;
@@ -756,6 +776,7 @@ class DokumenController extends Controller
             'isDropdownAvailable' => $isDropdownAvailable,
             'jenisPembayaranList' => $jenisPembayaranList,
             'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
+            'bagianList' => $bagianList,
         );
 
         return view('IbuA.dokumens.editDokumen', $data);

@@ -5,24 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Dokumen;
+use App\Models\Bagian;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DokumenRekapanController extends Controller
 {
-    /**
-     * Daftar bagian yang tersedia
-     */
-    private const BAGIAN_LIST = [
-        'DPM' => 'DPM',
-        'SKH' => 'SKH',
-        'SDM' => 'SDM',
-        'TEP' => 'TEP',
-        'KPL' => 'KPL',
-        'AKN' => 'AKN',
-        'TAN' => 'TAN',
-        'PMO' => 'PMO'
-    ];
 
     /**
      * Display the rekapan page
@@ -34,8 +22,12 @@ class DokumenRekapanController extends Controller
 
         // Filter by bagian
         $selectedBagian = $request->get('bagian', '');
-        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
-            $query->where('bagian', $selectedBagian);
+        if ($selectedBagian) {
+            // Validate against database
+            $validBagian = Bagian::active()->where('kode', $selectedBagian)->exists();
+            if ($validBagian) {
+                $query->where('bagian', $selectedBagian);
+            }
         }
 
         // Search functionality
@@ -60,6 +52,9 @@ class DokumenRekapanController extends Controller
         // Get statistics
         $statistics = $this->getStatistics($selectedBagian);
 
+        // Get bagian list from database
+        $bagianList = Bagian::active()->ordered()->pluck('nama', 'kode')->toArray();
+
         $data = array(
             "title" => "Rekapan Dokumen",
             "module" => "IbuA",
@@ -71,7 +66,7 @@ class DokumenRekapanController extends Controller
             "menuDashboard" => "",
             "dokumens" => $dokumens,
             "statistics" => $statistics,
-            "bagianList" => self::BAGIAN_LIST,
+            "bagianList" => $bagianList,
             "selectedBagian" => $selectedBagian,
         );
 
@@ -85,17 +80,21 @@ class DokumenRekapanController extends Controller
     {
         $query = Dokumen::where('created_by', 'ibuA');
 
-        if ($filterBagian && in_array($filterBagian, array_keys(self::BAGIAN_LIST))) {
-            $query->where('bagian', $filterBagian);
+        if ($filterBagian) {
+            $validBagian = Bagian::active()->where('kode', $filterBagian)->exists();
+            if ($validBagian) {
+                $query->where('bagian', $filterBagian);
+            }
         }
 
         $total = $query->count();
 
         $bagianStats = [];
-        foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
-            $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagianCode);
-            $bagianStats[$bagianCode] = [
-                'name' => $bagianName,
+        $bagianList = Bagian::active()->ordered()->get();
+        foreach ($bagianList as $bagian) {
+            $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagian->kode);
+            $bagianStats[$bagian->kode] = [
+                'name' => $bagian->nama,
                 'total' => $bagianQuery->count()
             ];
         }
@@ -133,8 +132,11 @@ class DokumenRekapanController extends Controller
             ->whereYear('tanggal_masuk', $selectedYear);
 
         // Filter by bagian if selected
-        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
-            $baseQuery->where('bagian', $selectedBagian);
+        if ($selectedBagian) {
+            $validBagian = Bagian::active()->where('kode', $selectedBagian)->exists();
+            if ($validBagian) {
+                $baseQuery->where('bagian', $selectedBagian);
+            }
         }
 
         // Get yearly summary
@@ -196,7 +198,7 @@ class DokumenRekapanController extends Controller
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
             'availableYears' => $availableYears,
-            'bagianList' => self::BAGIAN_LIST,
+            'bagianList' => Bagian::active()->ordered()->pluck('nama', 'kode')->toArray(),
         ];
 
         return view('IbuA.dokumens.analytics', $data);

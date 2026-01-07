@@ -332,14 +332,9 @@
         <label>Bagian</label>
         <select name="bagian">
           <option value="">Pilih Bagian</option>
-          <option value="DPM" {{ old('bagian') == 'DPM' ? 'selected' : '' }}>DPM</option>
-          <option value="SKH" {{ old('bagian') == 'SKH' ? 'selected' : '' }}>SKH</option>
-          <option value="SDM" {{ old('bagian') == 'SDM' ? 'selected' : '' }}>SDM</option>
-          <option value="TEP" {{ old('bagian') == 'TEP' ? 'selected' : '' }}>TEP</option>
-          <option value="KPL" {{ old('bagian') == 'KPL' ? 'selected' : '' }}>KPL</option>
-          <option value="AKN" {{ old('bagian') == 'AKN' ? 'selected' : '' }}>AKN</option>
-          <option value="TAN" {{ old('bagian') == 'TAN' ? 'selected' : '' }}>TAN</option>
-          <option value="PMO" {{ old('bagian') == 'PMO' ? 'selected' : '' }}>PMO</option>
+          @foreach($bagianList as $bagian)
+            <option value="{{ $bagian->kode }}" {{ old('bagian') == $bagian->kode ? 'selected' : '' }}>{{ $bagian->nama }}</option>
+          @endforeach
         </select>
         @error('bagian')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>

@@ -32,9 +32,18 @@ class StoreDokumenRequest extends FormRequest
             $isDropdownAvailable = false;
         }
 
+        // Get valid bagian codes from database
+        $validBagianCodes = [];
+        try {
+            $validBagianCodes = \App\Models\Bagian::active()->pluck('kode')->toArray();
+        } catch (\Exception $e) {
+            // Fallback to hardcoded values if database error
+            $validBagianCodes = ['DPM', 'SKH', 'SDM', 'TEP', 'KPL', 'AKN', 'TAN', 'PMO'];
+        }
+
         $rules = [
             'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda',
-            'bagian' => 'nullable|string|in:DPM,SKH,SDM,TEP,KPL,AKN,TAN,PMO',
+            'bagian' => $validBagianCodes ? 'nullable|string|in:' . implode(',', $validBagianCodes) : 'nullable|string',
             'nama_pengirim' => 'nullable|string|max:255',
             'nomor_spp' => 'nullable|string',
             'tanggal_spp' => 'nullable|date',
