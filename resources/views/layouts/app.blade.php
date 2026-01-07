@@ -3935,47 +3935,94 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Initialize Flatpickr for all date and datetime inputs with DD/MM/YYYY format
-  document.addEventListener('DOMContentLoaded', function() {
-    // Change all date and datetime-local inputs to text type for Flatpickr
-    document.querySelectorAll("input[type='date'], input[type='datetime-local']").forEach(input => {
-      // Store original type before changing
-      const originalType = input.type;
-      const name = input.getAttribute('name') || '';
-      input.dataset.originalType = originalType;
-      input.type = 'text';
+  function initializeFlatpickrDatePickers() {
+    // Wait for Flatpickr to be loaded
+    if (typeof flatpickr === 'undefined') {
+      console.warn('Flatpickr is not loaded yet, retrying...');
+      setTimeout(initializeFlatpickrDatePickers, 100);
+      return;
+    }
+
+    // Find all date and datetime-local inputs
+    const dateInputs = document.querySelectorAll("input[type='date']");
+    const datetimeInputs = document.querySelectorAll("input[type='datetime-local']");
+    
+    // Convert all date inputs to text with Flatpickr
+    dateInputs.forEach(input => {
+      // Store original type
+      input.dataset.originalType = 'date';
       
       // Convert existing value from YYYY-MM-DD to DD/MM/YYYY if exists
-      if (input.value) {
-        if (originalType === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(input.value)) {
-          const parts = input.value.split('-');
-          input.value = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        } else if (originalType === 'datetime-local' && /^\d{4}-\d{2}-\d{2}T/.test(input.value)) {
-          const [datePart, timePart] = input.value.split('T');
-          const parts = datePart.split('-');
-          const time = timePart ? timePart.substring(0, 5) : '00:00';
-          input.value = `${parts[2]}/${parts[1]}/${parts[0]} ${time}`;
-        }
+      let currentValue = input.value;
+      if (currentValue && /^\d{4}-\d{2}-\d{2}$/.test(currentValue)) {
+        const parts = currentValue.split('-');
+        currentValue = `${parts[2]}/${parts[1]}/${parts[0]}`;
       }
+      
+      // Change type to text
+      input.type = 'text';
+      if (currentValue) {
+        input.value = currentValue;
+      }
+      
+      // Initialize Flatpickr for date inputs
+      flatpickr(input, {
+        dateFormat: "d/m/Y",
+        locale: "id",
+        allowInput: true,
+        placeholder: "dd/mm/yyyy",
+        parseDate: function(datestr, format) {
+          // Parse DD/MM/YYYY format
+          const parts = datestr.split('/');
+          if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+          }
+          return null;
+        }
+      });
     });
 
-    // Initialize date inputs (date only)
-    flatpickr("input[data-original-type='date'], input[name*='tanggal'][type='text']:not([name*='spp']):not([name*='datetime']):not([name*='masuk'])", {
-      dateFormat: "d/m/Y",
-      locale: "id",
-      allowInput: true,
-      altInput: false,
-      altFormat: "d/m/Y"
-    });
-
-    // Initialize datetime-local inputs
-    flatpickr("input[data-original-type='datetime-local'], input[name*='tanggal_spp'][type='text'], input[name*='tanggal_masuk'][type='text']", {
-      dateFormat: "d/m/Y H:i",
-      locale: "id",
-      enableTime: true,
-      time_24hr: false,
-      allowInput: true,
-      altInput: false,
-      altFormat: "d/m/Y H:i"
+    // Convert all datetime-local inputs to text with Flatpickr
+    datetimeInputs.forEach(input => {
+      // Store original type
+      input.dataset.originalType = 'datetime-local';
+      
+      // Convert existing value from YYYY-MM-DDTHH:MM to DD/MM/YYYY HH:MM if exists
+      let currentValue = input.value;
+      if (currentValue && /^\d{4}-\d{2}-\d{2}T/.test(currentValue)) {
+        const [datePart, timePart] = currentValue.split('T');
+        const parts = datePart.split('-');
+        const time = timePart ? timePart.substring(0, 5) : '00:00';
+        currentValue = `${parts[2]}/${parts[1]}/${parts[0]} ${time}`;
+      }
+      
+      // Change type to text
+      input.type = 'text';
+      if (currentValue) {
+        input.value = currentValue;
+      }
+      
+      // Initialize Flatpickr for datetime inputs
+      flatpickr(input, {
+        dateFormat: "d/m/Y H:i",
+        locale: "id",
+        enableTime: true,
+        time_24hr: false,
+        allowInput: true,
+        placeholder: "dd/mm/yyyy hh:mm",
+        parseDate: function(datestr, format) {
+          // Parse DD/MM/YYYY HH:MM format
+          const parts = datestr.split(' ');
+          if (parts.length === 2) {
+            const dateParts = parts[0].split('/');
+            const timeParts = parts[1].split(':');
+            if (dateParts.length === 3 && timeParts.length === 2) {
+              return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1]);
+            }
+          }
+          return null;
+        }
+      });
     });
 
     // Handle form submission - convert back to YYYY-MM-DD format
@@ -4010,7 +4057,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
     });
-  });
+  }
+
+  // Initialize when DOM is ready and Flatpickr is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFlatpickrDatePickers);
+  } else {
+    // DOM is already ready, but wait a bit for Flatpickr to load
+    setTimeout(initializeFlatpickrDatePickers, 100);
+  }
 });
 </script>
 

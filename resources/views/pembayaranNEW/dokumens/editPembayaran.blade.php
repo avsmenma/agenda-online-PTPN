@@ -1270,7 +1270,7 @@
                 <input type="date"
                        name="tanggal_dibayar"
                        value="{{ old('tanggal_dibayar', $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('Y-m-d') : '') }}"
-                     placeholder="mm/dd/yyyy">
+                     placeholder="dd/mm/yyyy">
               <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 11px;">
                 <i class="fa-solid fa-info-circle"></i> Pilih tanggal ketika pembayaran dilakukan
               </small>
