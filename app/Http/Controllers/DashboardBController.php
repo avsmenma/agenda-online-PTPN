@@ -790,6 +790,9 @@ class DashboardBController extends Controller
 
             \DB::commit();
 
+            // Clear any existing flash messages before setting new one
+            session()->forget(['success', 'error']);
+
             // Check if document is returned document and redirect accordingly
             $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
                 $dokumen->department_returned_at);
@@ -799,16 +802,20 @@ class DashboardBController extends Controller
             $fromPengembalian = $referer && str_contains($referer, 'pengembalian-dokumensB');
 
             if ($isReturnedDocument || $fromPengembalian) {
-                session()->flash('success', 'Dokumen berhasil diperbarui.');
-                return redirect()->route('pengembalianB.index');
+                return redirect()->route('pengembalianB.index')
+                    ->with('success', 'Dokumen berhasil diperbarui.');
             } else {
-                session()->flash('success', 'Dokumen berhasil diperbarui.');
-                return redirect()->route('documents.verifikasi.index');
+                return redirect()->route('documents.verifikasi.index')
+                    ->with('success', 'Dokumen berhasil diperbarui.');
             }
 
         } catch (\Exception $e) {
             \DB::rollback();
             \Log::error('Error updating document in IbuB: ' . $e->getMessage());
+            \Log::error('Error stack trace: ' . $e->getTraceAsString());
+
+            // Clear any existing flash messages before setting error
+            session()->forget(['success', 'error']);
 
             return redirect()->back()
                 ->withInput()
