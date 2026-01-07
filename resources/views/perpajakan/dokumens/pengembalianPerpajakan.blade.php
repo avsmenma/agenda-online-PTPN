@@ -796,6 +796,9 @@
     </div>
   </div>
 
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
   <!-- Document Detail Modal -->
   <div id="documentDetailModal" class="document-modal" style="display: none;">
     <div class="document-modal-overlay" onclick="closeDocumentModal()"></div>
@@ -1001,6 +1004,171 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Toast Notification Styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast-notification {
+      min-width: 350px;
+      max-width: 450px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(10px);
+    }
+
+    .toast-notification.toast-hiding {
+      animation: toastSlideOut 0.3s ease-in forwards;
+    }
+
+    @keyframes toastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
+    @keyframes toastSlideOut {
+      from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(100%) scale(0.95);
+      }
+    }
+
+    .toast-success {
+      background: linear-gradient(135deg, #083E40 0%, #0d5a5d 100%);
+      border-left: 4px solid #28a745;
+    }
+
+    .toast-error {
+      background: linear-gradient(135deg, #5a1a1a 0%, #8b2c2c 100%);
+      border-left: 4px solid #dc3545;
+    }
+
+    .toast-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .toast-success .toast-icon {
+      background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .toast-error .toast-icon {
+      background: linear-gradient(135deg, #dc3545 0%, #e85b6a 100%);
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+
+    .toast-icon i {
+      color: white;
+      font-size: 18px;
+    }
+
+    .toast-content {
+      flex: 1;
+    }
+
+    .toast-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .toast-message {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.4;
+    }
+
+    .toast-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .toast-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 4px;
+      right: 0;
+      height: 3px;
+      border-radius: 0 0 12px 0;
+      overflow: hidden;
+    }
+
+    .toast-progress-bar {
+      height: 100%;
+      background: rgba(255, 255, 255, 0.5);
+      animation: toastProgress 4s linear forwards;
+    }
+
+    @keyframes toastProgress {
+      from {
+        width: 100%;
+      }
+
+      to {
+        width: 0%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .toast-container {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+      }
+
+      .toast-notification {
+        min-width: auto;
+        max-width: none;
+        width: 100%;
+      }
+    }
   </style>
   <script>
     // Prevent event bubbling issues and ensure proper event handling
@@ -1097,11 +1265,11 @@
 
       // Show loading
       detailContent.innerHTML = `
-            <div class="text-center p-4">
-              <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-              <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-            </div>
-          `;
+                <div class="text-center p-4">
+                  <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                  <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+                </div>
+              `;
 
       fetch(`/documents/perpajakan/${docId}/detail`, {
         headers: {
@@ -1199,11 +1367,11 @@
       // Generate detail items HTML
       for (const [label, value] of Object.entries(detailItems)) {
         html += `
-              <div class="detail-item">
-                <div class="detail-label">${label}</div>
-                <div class="detail-value">${value}</div>
-              </div>
-            `;
+                  <div class="detail-item">
+                    <div class="detail-label">${label}</div>
+                    <div class="detail-value">${value}</div>
+                  </div>
+                `;
       }
 
       html += '</div>';
@@ -1213,6 +1381,44 @@
     function formatRupiah(angka) {
       if (!angka) return '-';
       return 'Rp. ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    // Modern Toast Notification Function
+    function showToast(type, title, message, autoClose = true) {
+      const container = document.getElementById('toastContainer');
+      
+      const toast = document.createElement('div');
+      toast.className = `toast-notification toast-${type}`;
+      toast.innerHTML = `
+        <div class="toast-icon">
+          <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
+        </div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="closeToast(this.parentElement)">
+          <i class="fa-solid fa-times"></i>
+        </button>
+        ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
+      `;
+      toast.style.position = 'relative';
+      
+      container.appendChild(toast);
+      
+      if (autoClose) {
+        setTimeout(() => {
+          closeToast(toast);
+        }, 4000);
+      }
+    }
+
+    function closeToast(toast) {
+      if (!toast || toast.classList.contains('toast-hiding')) return;
+      toast.classList.add('toast-hiding');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
     }
 
     function sendToAkutansi(docId) {
@@ -1240,17 +1446,19 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            alert('Dokumen berhasil dikirim ke Akutansi!');
-            window.location.reload();
+            showToast('success', 'Berhasil Terkirim!', 'Dokumen berhasil dikirim ke Team Akutansi untuk diproses lebih lanjut.');
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           } else {
-            alert('Gagal mengirim dokumen: ' + (data.message || 'Terjadi kesalahan'));
+            showToast('error', 'Gagal Mengirim', data.message || 'Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
             button.disabled = false;
             button.innerHTML = originalContent;
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          alert('Terjadi kesalahan saat mengirim dokumen');
+          showToast('error', 'Terjadi Kesalahan', 'Tidak dapat menghubungi server. Silakan periksa koneksi internet Anda.');
           button.disabled = false;
           button.innerHTML = originalContent;
         });
@@ -1260,18 +1468,18 @@
     function openDocumentModal(docId) {
       const modal = document.getElementById('documentDetailModal');
       const modalBody = document.getElementById('documentModalBody');
-      
+
       // Show modal with loading state
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden'; // Prevent background scroll
-      
+
       // Show loading state
       modalBody.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
-          <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
-        </div>
-      `;
+            <div class="text-center p-4">
+              <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+              <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+            </div>
+          `;
 
       // Fetch document details
       fetch(`/documents/perpajakan/${docId}/detail`, {
@@ -1306,7 +1514,7 @@
     }
 
     // Close modal on Escape key press
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         closeDocumentModal();
       }
@@ -1318,7 +1526,7 @@
       // Section: Informasi Dasar
       html += '<div class="modal-section-title"><i class="fa-solid fa-file-lines"></i>Informasi Dasar</div>';
       html += '<div class="modal-detail-grid">';
-      
+
       const basicInfo = {
         'Nomor Agenda': dokumen.nomor_agenda || '-',
         'Nomor SPP': dokumen.nomor_spp || '-',
@@ -1336,7 +1544,7 @@
       // Section: Informasi SPP
       html += '<div class="modal-section-title"><i class="fa-solid fa-file-invoice-dollar"></i>Informasi SPP</div>';
       html += '<div class="modal-detail-grid">';
-      
+
       const sppInfo = {
         'Uraian SPP': dokumen.uraian_spp || '-',
         'Nilai Rupiah': formatRupiah(dokumen.nilai_rupiah) || '-',
@@ -1356,7 +1564,7 @@
       // Section: Kontrak & SPK
       html += '<div class="modal-section-title"><i class="fa-solid fa-file-contract"></i>Kontrak & SPK</div>';
       html += '<div class="modal-detail-grid">';
-      
+
       const kontrakInfo = {
         'No SPK': dokumen.no_spk || '-',
         'Tanggal SPK': dokumen.tanggal_spk || '-',
@@ -1373,7 +1581,7 @@
       // Section: Perpajakan
       html += '<div class="modal-section-title" style="color: #ffc107;"><i class="fa-solid fa-receipt" style="color: #ffc107;"></i>Informasi Perpajakan</div>';
       html += '<div class="modal-detail-grid">';
-      
+
       const taxInfo = {};
       if (dokumen.komoditi_perpajakan) taxInfo['Komoditi'] = dokumen.komoditi_perpajakan;
       if (dokumen.status_perpajakan) taxInfo['Status Pajak'] = dokumen.status_perpajakan;
