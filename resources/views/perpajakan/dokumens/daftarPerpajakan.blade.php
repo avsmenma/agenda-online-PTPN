@@ -2107,16 +2107,31 @@
             ->where('role_code', 'perpajakan')
             ->where('status', 'pending')
             ->exists();
-          // Check if document is rejected by perpajakan
-          $isRejected = $dokumen->roleStatuses()
+          // Check if document is rejected by perpajakan OR returned from akutansi/pembayaran
+          $isRejectedByPerpajakan = $dokumen->roleStatuses()
             ->where('role_code', 'perpajakan')
             ->where('status', 'rejected')
             ->exists();
+          
+          // Check if document was rejected by akutansi and returned to department (perpajakan)
+          $isReturnedFromAkutansi = $dokumen->status == 'returned_to_department' 
+            && $dokumen->target_department == 'akutansi';
+          
+          // Check if akutansi rejected this document (using roleStatuses)
+          $isRejectedByAkutansi = $dokumen->roleStatuses()
+            ->where('role_code', 'akutansi')
+            ->where('status', 'rejected')
+            ->exists();
+          
+          // Document is rejected if it was rejected by perpajakan, or by akutansi and returned to department
+          $isRejected = $isRejectedByPerpajakan || $isReturnedFromAkutansi || $isRejectedByAkutansi;
+          
           $canSend = $dokumen->status != 'sent_to_akutansi'
             && $dokumen->status != 'sent_to_pembayaran'
             && $dokumen->status != 'pending_approval_akutansi'
             && $dokumen->status != 'pending_approval_pembayaran'
             && $dokumen->status != 'menunggu_di_approve'
+            && $dokumen->status != 'returned_to_department'
             && $dokumen->current_handler == 'perpajakan'
             && !$isRejected;
           $perpajakanRequiredFields = [
