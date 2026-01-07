@@ -2854,11 +2854,22 @@ class DashboardBController extends Controller
             // Cari dokumen yang di-reject dalam 24 jam terakhir (untuk memastikan notifikasi selalu muncul)
             // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
             $checkFrom24Hours = now()->subHours(24);
-            $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
-
-            // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
-            if ($checkFrom->gt($checkFrom24Hours)) {
-                $checkFrom = $checkFrom24Hours;
+            
+            // Initialize $checkFrom dengan default value
+            $checkFrom = $checkFrom24Hours;
+            
+            try {
+                if ($lastCheckTime) {
+                    $parsedTime = \Carbon\Carbon::parse($lastCheckTime);
+                    // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
+                    $checkFrom = $parsedTime->gt($checkFrom24Hours) ? $checkFrom24Hours : $parsedTime;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Invalid last_check_time format for IbuB, using 24 hours ago', [
+                    'last_check_time' => $lastCheckTime,
+                    'error' => $e->getMessage()
+                ]);
+                // $checkFrom already set to $checkFrom24Hours as default
             }
 
             \Log::info('IbuB checkRejectedDocuments called', [
@@ -2963,10 +2974,16 @@ class DashboardBController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error checking rejected documents for IbuB: ' . $e->getMessage());
+            \Log::error('Error checking rejected documents for IbuB: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'last_check_time' => $request->input('last_check_time')
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memeriksa dokumen yang ditolak'
+                'message' => 'Gagal memeriksa dokumen yang ditolak: ' . $e->getMessage()
             ], 500);
         }
     }
