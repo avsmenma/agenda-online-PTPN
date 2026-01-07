@@ -31,14 +31,14 @@ class DokumenController extends Controller
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
             ->where(function ($q) {
                 $q->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
-                  ->orWhere('created_by', 'ibuA')
-                  ->orWhere('created_by', 'IbuA');
+                    ->orWhere('created_by', 'ibuA')
+                    ->orWhere('created_by', 'IbuA');
             })
             // Exclude CSV imported documents (only if column exists)
             ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
+                        ->orWhereNull('imported_from_csv');
                 });
             })
             ->orderByRaw('CASE 
@@ -114,13 +114,6 @@ class DokumenController extends Controller
                             ->orWhereHas('roleStatuses', function ($q3) {
                                 $q3->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
                             });
-                    });
-                    break;
-
-                case 'dikembalikan':
-                    // Dokumen yang dikembalikan/rejected
-                    $query->whereHas('roleStatuses', function ($q) {
-                        $q->where('status', \App\Models\DokumenStatus::STATUS_REJECTED);
                     });
                     break;
             }
@@ -250,7 +243,7 @@ class DokumenController extends Controller
             \Log::error('Error fetching bagian data (create): ' . $e->getMessage());
             $bagianList = collect([]);
         }
-        
+
         $data = array(
             "title" => "Tambah Dokumen",
             "module" => "IbuA",
@@ -559,16 +552,16 @@ class DokumenController extends Controller
             $kategoriKriteria = null;
             $subKriteria = null;
             $itemSubKriteria = null;
-            
+
             try {
                 if ($request->has('kriteria_cf') && $request->kriteria_cf) {
                     $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
                 }
-                
+
                 if ($request->has('sub_kriteria') && $request->sub_kriteria) {
                     $subKriteria = SubKriteria::find($request->sub_kriteria);
                 }
-                
+
                 if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
                     $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
                 }
@@ -656,7 +649,7 @@ class DokumenController extends Controller
             if ($dokumen->nomor_agenda) {
                 $successMessage .= ' Nomor agenda: ' . $dokumen->nomor_agenda;
             }
-            
+
             return redirect()->route('documents.index')
                 ->with('success', $successMessage);
 
@@ -790,17 +783,17 @@ class DokumenController extends Controller
         // 1. Document is created by IbuA and currently with IbuA
         // 2. Document is rejected (can be edited to fix issues)
         // 3. Document is in draft or returned status
-        
+
         $currentHandler = strtolower($dokumen->current_handler ?? '');
         $createdBy = strtolower($dokumen->created_by ?? '');
         $status = strtolower($dokumen->status ?? '');
-        
+
         // Check if document is created by IbuA (case-insensitive)
         $createdByIbuA = in_array($createdBy, ['ibua', 'ibu a']);
-        
+
         // Check if document is currently with IbuA (case-insensitive)
         $currentHandlerIbuA = in_array($currentHandler, ['ibua', 'ibu a']);
-        
+
         // Check if document is rejected
         $isRejected = false;
         $ibuBStatus = $dokumen->getStatusForRole('ibub');
@@ -813,11 +806,11 @@ class DokumenController extends Controller
                 ->first();
             $isRejected = $rejectedStatus !== null;
         }
-        
+
         // Check if status allows editing
         $allowedStatuses = ['draft', 'returned_to_ibua'];
         $isAllowedStatus = in_array($status, $allowedStatuses);
-        
+
         // Allow editing if:
         // 1. Document is rejected AND with IbuA (can always be edited)
         // 2. OR document has allowed status AND with IbuA
@@ -826,7 +819,7 @@ class DokumenController extends Controller
                 ->withInput()
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
-        
+
         if (!$isRejected && !$isAllowedStatus) {
             return redirect()->back()
                 ->withInput()
@@ -897,16 +890,16 @@ class DokumenController extends Controller
             $kategoriKriteria = null;
             $subKriteria = null;
             $itemSubKriteria = null;
-            
+
             try {
                 if ($request->has('kriteria_cf') && $request->kriteria_cf) {
                     $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
                 }
-                
+
                 if ($request->has('sub_kriteria') && $request->sub_kriteria) {
                     $subKriteria = SubKriteria::find($request->sub_kriteria);
                 }
-                
+
                 if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
                     $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
                 }
@@ -946,14 +939,14 @@ class DokumenController extends Controller
                 // 'status' => REMOVED - status should only change through workflow, not manual edit
                 // 'keterangan' => REMOVED - not used anymore
             ];
-            
+
             // For rejected documents, ensure status remains 'returned_to_ibua' so they can be resent
             // Don't change status if it's already 'returned_to_ibua' (for rejected documents)
             if ($isRejected && $dokumen->status !== 'returned_to_ibua') {
                 // Keep current status, don't change it
                 // Status will remain as is, but document can still be edited
             }
-            
+
             $dokumen->update($updateData);
             $dokumen->refresh();
 
@@ -1146,10 +1139,10 @@ class DokumenController extends Controller
 
             // Check if document is created by IbuA (case-insensitive)
             $createdByIbuA = in_array(strtolower($createdBy), ['ibua', 'ibu a']);
-            
+
             // Check if document is currently with IbuA (case-insensitive)
             $currentHandlerIbuA = in_array(strtolower($currentHandler), ['ibua', 'ibu a']);
-            
+
             // Check if document is rejected (can be sent again)
             $isRejected = false;
             $ibuBStatus = $dokumen->getStatusForRole('ibub');
@@ -1163,12 +1156,12 @@ class DokumenController extends Controller
                     ->first();
                 $isRejected = $rejectedStatus !== null;
             }
-            
+
             // Check if document status is allowed (case-insensitive)
             $statusLower = strtolower($dokumen->status ?? '');
             $allowedStatuses = ['draft', 'returned_to_ibua', 'sedang diproses'];
             $isAllowedStatus = in_array($statusLower, $allowedStatuses);
-            
+
             // Allow sending if:
             // 1. Document is rejected (can always be resent) AND with IbuA
             // 2. OR document has allowed status AND with IbuA
