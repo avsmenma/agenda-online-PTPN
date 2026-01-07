@@ -518,7 +518,7 @@
 
     <!-- Nomor PR (Opsional) -->
     <div class="form-group">
-      <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+      <label>Nomor PR</label>
       @foreach($dokumen->dokumenPrs as $index => $dokumenPR)
         <div class="dynamic-field" data-field-type="pr">
           <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ $dokumenPR->nomor_pr }}" data-autocomplete="pr-numbers">
@@ -541,7 +541,7 @@
 
     <!-- Nomor PO (Opsional) -->
     <div class="form-group">
-      <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+      <label>Nomor PO</label>
       @foreach($dokumen->dokumenPos as $index => $dokumenPO)
         <div class="dynamic-field" data-field-type="po">
           <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ $dokumenPO->nomor_po }}" data-autocomplete="po-numbers">
@@ -606,7 +606,7 @@
          @enderror
       </div>
       <div class="form-group">
-        <label>No SPK <span class="optional-label">(Opsional)</span></label>
+        <label>No SPK</label>
         <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk', $dokumen->no_spk) }}">
         @error('no_spk')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
@@ -616,14 +616,14 @@
 
     <div class="form-row-2">
       <div class="form-group">
-        <label>Tanggal SPK <span class="optional-label">(Opsional)</span></label>
+        <label>Tanggal SPK</label>
         <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk', $dokumen->tanggal_spk?->format('Y-m-d')) }}">
         @error('tanggal_spk')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Tanggal Berakhir SPK <span class="optional-label">(Opsional)</span></label>
+        <label>Tanggal Berakhir SPK</label>
         <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk?->format('Y-m-d')) }}">
         @error('tanggal_berakhir_spk')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>

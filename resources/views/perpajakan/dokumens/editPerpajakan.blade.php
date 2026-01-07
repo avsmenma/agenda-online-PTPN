@@ -700,7 +700,7 @@
           @endif
           <div class="form-row">
             <div class="form-group">
-              <label>Kebun <span class="optional-label">(Opsional)</span></label>
+              <label>Kebun</label>
               <select name="kebun">
                 <option value="">Pilih Kebun</option>
                 @php
@@ -738,7 +738,6 @@
         <div class="accordion-title">
           <i class="fa-solid fa-hashtag"></i>
           <span>Nomor PO & PR</span>
-          <span class="section-badge" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">Opsional</span>
         </div>
         <i class="fa-solid fa-chevron-down accordion-icon"></i>
       </div>
@@ -749,7 +748,7 @@
             @if($dokumen->dokumenPos->count() > 0)
               @foreach($dokumen->dokumenPos as $index => $po)
               <div class="form-group dynamic-field" data-field-type="po">
-                <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+                <label>Nomor PO</label>
                 <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ old('nomor_po.' . $index, $po->nomor_po) }}">
                 <button type="button" class="add-field-btn">+</button>
                 <button type="button" class="remove-field-btn" style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
@@ -757,7 +756,7 @@
               @endforeach
             @else
             <div class="form-group dynamic-field" data-field-type="po">
-              <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+              <label>Nomor PO</label>
               <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" value="{{ old('nomor_po.0') }}">
               <button type="button" class="add-field-btn">+</button>
               <button type="button" class="remove-field-btn" style="display: none;">−</button>
@@ -770,7 +769,7 @@
             @if($dokumen->dokumenPrs->count() > 0)
               @foreach($dokumen->dokumenPrs as $index => $pr)
               <div class="form-group dynamic-field" data-field-type="pr">
-                <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+                <label>Nomor PR</label>
                 <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ old('nomor_pr.' . $index, $pr->nomor_pr) }}">
                 <button type="button" class="add-field-btn">+</button>
                 <button type="button" class="remove-field-btn" style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
@@ -778,7 +777,7 @@
               @endforeach
             @else
             <div class="form-group dynamic-field" data-field-type="pr">
-              <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+              <label>Nomor PR</label>
               <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" value="{{ old('nomor_pr.0') }}">
               <button type="button" class="add-field-btn">+</button>
               <button type="button" class="remove-field-btn" style="display: none;">−</button>
@@ -804,7 +803,7 @@
           <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px;">
             <strong><i class="fa-solid fa-info-circle me-1"></i>Panduan Pengisian:</strong>
             <ul style="margin: 8px 0 0 20px; font-size: 13px;">
-              <li>Semua field di bawah ini <strong>opsional</strong> (tidak wajib diisi)</li>
+              <li>Semua field di bawah ini tidak wajib diisi</li>
               <li>Isi sesuai dengan dokumen pajak yang tersedia</li>
               <li>Untuk field angka (DPP, PPN, dll): masukkan angka saja (contoh: 1000000), sistem akan memformat otomatis</li>
               <li>Jika field tidak diisi, nilai yang sudah ada sebelumnya akan tetap dipertahankan</li>
@@ -947,7 +946,7 @@
             <label for="keterangan_pajak">
               <i class="fa-solid fa-clipboard me-1"></i>Keterangan
             </label>
-            <textarea id="keterangan_pajak" name="keterangan_pajak" rows="2" placeholder="Keterangan tambahan (opsional)">{{ old('keterangan_pajak', $dokumen->keterangan_pajak) }}</textarea>
+            <textarea id="keterangan_pajak" name="keterangan_pajak" rows="2" placeholder="Keterangan tambahan">{{ old('keterangan_pajak', $dokumen->keterangan_pajak) }}</textarea>
           </div>
 
           <!-- Divider: Data Penggantian -->

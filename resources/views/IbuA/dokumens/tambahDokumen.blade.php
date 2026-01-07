@@ -549,14 +549,14 @@
     <div class="section-title">SPK (Surat Perintah Kerja)</div>
     <div class="form-row">
       <div class="form-group">
-        <label>No SPK <span class="optional-label">(Opsional)</span></label>
+        <label>No SPK</label>
         <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk') }}">
         @error('no_spk')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
       <div class="form-group">
-        <label>Tanggal SPK <span class="optional-label">(Opsional)</span></label>
+        <label>Tanggal SPK</label>
         <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk') }}">
         @error('tanggal_spk')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
@@ -564,7 +564,7 @@
       </div>
     </div>
     <div class="form-group">
-      <label>Tanggal Berakhir SPK <span class="optional-label">(Opsional)</span></label>
+      <label>Tanggal Berakhir SPK</label>
       <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk') }}">
       @error('tanggal_berakhir_spk')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
@@ -593,13 +593,13 @@
     <!-- 10. ALL PO/PR -->
     <div class="section-title">PO/PR (Purchase Order / Purchase Request)</div>
     <div class="form-group dynamic-field" data-field-type="po">
-      <label>Nomor PO <span class="optional-label">(Opsional)</span></label>
+      <label>Nomor PO</label>
       <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" data-autocomplete="po-numbers" value="{{ old('nomor_po.0') }}">
       <button type="button" class="add-field-btn">+</button>
       <button type="button" class="remove-field-btn" style="display: none;">−</button>
     </div>
     <div class="form-group dynamic-field" data-field-type="pr">
-      <label>Nomor PR <span class="optional-label">(Opsional)</span></label>
+      <label>Nomor PR</label>
       <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" data-autocomplete="pr-numbers" value="{{ old('nomor_pr.0') }}">
       <button type="button" class="add-field-btn">+</button>
       <button type="button" class="remove-field-btn" style="display: none;">−</button>
