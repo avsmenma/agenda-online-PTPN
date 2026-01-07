@@ -11,8 +11,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Flatpickr Indonesian Locale -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
 
   <style>
     body {
@@ -3924,6 +3930,84 @@ document.addEventListener('DOMContentLoaded', function() {
         if (input.value) {
           input.value = input.value.replace(/[^\d]/g, '');
         }
+      });
+    });
+  });
+
+  // Initialize Flatpickr for all date and datetime inputs with DD/MM/YYYY format
+  document.addEventListener('DOMContentLoaded', function() {
+    // Change all date and datetime-local inputs to text type for Flatpickr
+    document.querySelectorAll("input[type='date'], input[type='datetime-local']").forEach(input => {
+      // Store original type before changing
+      const originalType = input.type;
+      const name = input.getAttribute('name') || '';
+      input.dataset.originalType = originalType;
+      input.type = 'text';
+      
+      // Convert existing value from YYYY-MM-DD to DD/MM/YYYY if exists
+      if (input.value) {
+        if (originalType === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(input.value)) {
+          const parts = input.value.split('-');
+          input.value = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else if (originalType === 'datetime-local' && /^\d{4}-\d{2}-\d{2}T/.test(input.value)) {
+          const [datePart, timePart] = input.value.split('T');
+          const parts = datePart.split('-');
+          const time = timePart ? timePart.substring(0, 5) : '00:00';
+          input.value = `${parts[2]}/${parts[1]}/${parts[0]} ${time}`;
+        }
+      }
+    });
+
+    // Initialize date inputs (date only)
+    flatpickr("input[data-original-type='date'], input[name*='tanggal'][type='text']:not([name*='spp']):not([name*='datetime']):not([name*='masuk'])", {
+      dateFormat: "d/m/Y",
+      locale: "id",
+      allowInput: true,
+      altInput: false,
+      altFormat: "d/m/Y"
+    });
+
+    // Initialize datetime-local inputs
+    flatpickr("input[data-original-type='datetime-local'], input[name*='tanggal_spp'][type='text'], input[name*='tanggal_masuk'][type='text']", {
+      dateFormat: "d/m/Y H:i",
+      locale: "id",
+      enableTime: true,
+      time_24hr: false,
+      allowInput: true,
+      altInput: false,
+      altFormat: "d/m/Y H:i"
+    });
+
+    // Handle form submission - convert back to YYYY-MM-DD format
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        // Convert date inputs from DD/MM/YYYY back to YYYY-MM-DD for form submission
+        form.querySelectorAll("input[data-original-type='date'], input[name*='tanggal'][type='text']:not([name*='spp']):not([name*='datetime']):not([name*='masuk'])").forEach(input => {
+          if (input.value && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(input.value.trim())) {
+            const parts = input.value.trim().split('/');
+            if (parts.length === 3) {
+              const day = parts[0].padStart(2, '0');
+              const month = parts[1].padStart(2, '0');
+              const year = parts[2];
+              input.value = `${year}-${month}-${day}`;
+            }
+          }
+        });
+
+        // Convert datetime-local inputs from DD/MM/YYYY HH:MM back to YYYY-MM-DDTHH:MM for form submission
+        form.querySelectorAll("input[data-original-type='datetime-local'], input[name*='tanggal_spp'][type='text'], input[name*='tanggal_masuk'][type='text']").forEach(input => {
+          if (input.value && /^\d{1,2}\/\d{1,2}\/\d{4} \d{1,2}:\d{2}/.test(input.value.trim())) {
+            const [datePart, timePart] = input.value.trim().split(' ');
+            const parts = datePart.split('/');
+            if (parts.length === 3) {
+              const day = parts[0].padStart(2, '0');
+              const month = parts[1].padStart(2, '0');
+              const year = parts[2];
+              const time = timePart || '00:00';
+              input.value = `${year}-${month}-${day}T${time}`;
+            }
+          }
+        });
       });
     });
   });

@@ -12,6 +12,34 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ensure new role codes exist in roles table first
+        // Check if roles table exists and insert if not exists
+        if (Schema::hasTable('roles')) {
+            // Insert ibutarapul if not exists
+            DB::table('roles')->updateOrInsert(
+                ['code' => 'ibutarapul'],
+                [
+                    'code' => 'ibutarapul',
+                    'name' => 'Ibu Tarapul',
+                    'sequence' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
+            // Insert verifikasi if not exists
+            DB::table('roles')->updateOrInsert(
+                ['code' => 'verifikasi'],
+                [
+                    'code' => 'verifikasi',
+                    'name' => 'Verifikasi',
+                    'sequence' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
         // Update dokumens table
         // Update created_by: ibua -> ibutarapul
         DB::table('dokumens')
