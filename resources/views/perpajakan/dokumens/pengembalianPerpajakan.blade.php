@@ -749,7 +749,8 @@
                     </div>
                   </td>
                   <td class="action-column" onclick="event.stopPropagation();">
-                    <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}" class="btn-action btn-action-edit">
+                    <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}?redirect_to={{ urlencode(route('returns.perpajakan.index')) }}"
+                      class="btn-action btn-action-edit">
                       <i class="fa-solid fa-edit"></i>
                       Perbaiki Data
                     </a>
@@ -795,6 +796,212 @@
     </div>
   </div>
 
+  <!-- Document Detail Modal -->
+  <div id="documentDetailModal" class="document-modal" style="display: none;">
+    <div class="document-modal-overlay" onclick="closeDocumentModal()"></div>
+    <div class="document-modal-content">
+      <div class="document-modal-header">
+        <h3><i class="fa-solid fa-file-invoice-dollar me-2"></i>Detail Dokumen Lengkap</h3>
+        <button type="button" class="modal-close-btn" onclick="closeDocumentModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      <div class="document-modal-body" id="documentModalBody">
+        <div class="text-center p-4">
+          <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+          <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+        </div>
+      </div>
+      <div class="document-modal-footer">
+        <button type="button" class="btn-modal-close" onclick="closeDocumentModal()">
+          <i class="fa-solid fa-times me-2"></i>Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Document Detail Modal Styles */
+    .document-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .document-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+
+    .document-modal-content {
+      position: relative;
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(8, 62, 64, 0.3);
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .document-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 2px solid rgba(8, 62, 64, 0.1);
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .document-modal-header h3 {
+      margin: 0;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .document-modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .modal-detail-item {
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(8, 62, 64, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .modal-detail-item:hover {
+      border-color: #889717;
+      box-shadow: 0 2px 8px rgba(136, 151, 23, 0.1);
+    }
+
+    .modal-detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #083E40;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .modal-detail-value {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .modal-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #083E40;
+      margin: 20px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(136, 151, 23, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-section-title:first-child {
+      margin-top: 0;
+    }
+
+    .modal-section-title i {
+      color: #889717;
+    }
+
+    .document-modal-footer {
+      padding: 16px 24px;
+      border-top: 2px solid rgba(8, 62, 64, 0.1);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-modal-close {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-modal-close:hover {
+      background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .document-modal-content {
+        width: 95%;
+        max-height: 90vh;
+      }
+
+      .modal-detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
   <script>
     // Prevent event bubbling issues and ensure proper event handling
     document.addEventListener('DOMContentLoaded', function () {
@@ -814,15 +1021,19 @@
         }
       });
 
-      // Handle row clicks
+      // Handle row clicks - open modal for document details
       const mainRows = document.querySelectorAll('.table-dokumen tbody tr.main-row');
       mainRows.forEach(row => {
         row.addEventListener('click', function (e) {
+          // Don't open modal if clicking on action buttons
+          if (e.target.closest('.action-column')) {
+            return;
+          }
           e.stopPropagation();
           e.preventDefault();
           const docId = this.getAttribute('data-id');
           if (docId) {
-            toggleDetail(parseInt(docId));
+            openDocumentModal(parseInt(docId));
           }
         });
       });
@@ -886,11 +1097,11 @@
 
       // Show loading
       detailContent.innerHTML = `
-        <div class="text-center p-4">
-          <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-          <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-        </div>
-      `;
+            <div class="text-center p-4">
+              <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+              <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+            </div>
+          `;
 
       fetch(`/documents/perpajakan/${docId}/detail`, {
         headers: {
@@ -988,11 +1199,11 @@
       // Generate detail items HTML
       for (const [label, value] of Object.entries(detailItems)) {
         html += `
-          <div class="detail-item">
-            <div class="detail-label">${label}</div>
-            <div class="detail-value">${value}</div>
-          </div>
-        `;
+              <div class="detail-item">
+                <div class="detail-label">${label}</div>
+                <div class="detail-value">${value}</div>
+              </div>
+            `;
       }
 
       html += '</div>';
@@ -1043,6 +1254,154 @@
           button.disabled = false;
           button.innerHTML = originalContent;
         });
+    }
+
+    // Modal Functions
+    function openDocumentModal(docId) {
+      const modal = document.getElementById('documentDetailModal');
+      const modalBody = document.getElementById('documentModalBody');
+      
+      // Show modal with loading state
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Prevent background scroll
+      
+      // Show loading state
+      modalBody.innerHTML = `
+        <div class="text-center p-4">
+          <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+          <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+        </div>
+      `;
+
+      // Fetch document details
+      fetch(`/documents/perpajakan/${docId}/detail`, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success && data.dokumen) {
+            modalBody.innerHTML = generateModalHtml(data.dokumen);
+          } else {
+            throw new Error('Invalid response format');
+          }
+        })
+        .catch(error => {
+          console.error('Error loading document detail:', error);
+          modalBody.innerHTML = '<div class="text-center p-4 text-danger"><i class="fa-solid fa-exclamation-triangle me-2"></i>Gagal memuat detail dokumen</div>';
+        });
+    }
+
+    function closeDocumentModal() {
+      const modal = document.getElementById('documentDetailModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = ''; // Restore scroll
+    }
+
+    // Close modal on Escape key press
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDocumentModal();
+      }
+    });
+
+    function generateModalHtml(dokumen) {
+      let html = '';
+
+      // Section: Informasi Dasar
+      html += '<div class="modal-section-title"><i class="fa-solid fa-file-lines"></i>Informasi Dasar</div>';
+      html += '<div class="modal-detail-grid">';
+      
+      const basicInfo = {
+        'Nomor Agenda': dokumen.nomor_agenda || '-',
+        'Nomor SPP': dokumen.nomor_spp || '-',
+        'Bulan': dokumen.bulan || '-',
+        'Tahun': dokumen.tahun || '-',
+        'Tanggal Masuk': dokumen.tanggal_masuk || '-',
+        'Tanggal SPP': dokumen.tanggal_spp || '-',
+      };
+
+      for (const [label, value] of Object.entries(basicInfo)) {
+        html += `<div class="modal-detail-item"><div class="modal-detail-label">${label}</div><div class="modal-detail-value">${value}</div></div>`;
+      }
+      html += '</div>';
+
+      // Section: Informasi SPP
+      html += '<div class="modal-section-title"><i class="fa-solid fa-file-invoice-dollar"></i>Informasi SPP</div>';
+      html += '<div class="modal-detail-grid">';
+      
+      const sppInfo = {
+        'Uraian SPP': dokumen.uraian_spp || '-',
+        'Nilai Rupiah': formatRupiah(dokumen.nilai_rupiah) || '-',
+        'Kriteria CF': dokumen.kategori || '-',
+        'Jenis Dokumen': dokumen.jenis_dokumen || '-',
+        'Jenis Sub Pekerjaan': dokumen.jenis_sub_pekerjaan || '-',
+        'Jenis Pembayaran': dokumen.jenis_pembayaran || '-',
+        'Dibayar Kepada': dokumen.dibayar_kepada || '-',
+        'Kebun': dokumen.kebun || '-',
+      };
+
+      for (const [label, value] of Object.entries(sppInfo)) {
+        html += `<div class="modal-detail-item"><div class="modal-detail-label">${label}</div><div class="modal-detail-value">${value}</div></div>`;
+      }
+      html += '</div>';
+
+      // Section: Kontrak & SPK
+      html += '<div class="modal-section-title"><i class="fa-solid fa-file-contract"></i>Kontrak & SPK</div>';
+      html += '<div class="modal-detail-grid">';
+      
+      const kontrakInfo = {
+        'No SPK': dokumen.no_spk || '-',
+        'Tanggal SPK': dokumen.tanggal_spk || '-',
+        'Tanggal Berakhir SPK': dokumen.tanggal_berakhir_spk || '-',
+        'No Berita Acara': dokumen.no_berita_acara || '-',
+        'Tanggal Berita Acara': dokumen.tanggal_berita_acara || '-',
+      };
+
+      for (const [label, value] of Object.entries(kontrakInfo)) {
+        html += `<div class="modal-detail-item"><div class="modal-detail-label">${label}</div><div class="modal-detail-value">${value}</div></div>`;
+      }
+      html += '</div>';
+
+      // Section: Perpajakan
+      html += '<div class="modal-section-title" style="color: #ffc107;"><i class="fa-solid fa-receipt" style="color: #ffc107;"></i>Informasi Perpajakan</div>';
+      html += '<div class="modal-detail-grid">';
+      
+      const taxInfo = {};
+      if (dokumen.komoditi_perpajakan) taxInfo['Komoditi'] = dokumen.komoditi_perpajakan;
+      if (dokumen.status_perpajakan) taxInfo['Status Pajak'] = dokumen.status_perpajakan;
+      if (dokumen.npwp) taxInfo['NPWP'] = dokumen.npwp;
+      if (dokumen.alamat_pembeli) taxInfo['Alamat Pembeli'] = dokumen.alamat_pembeli;
+      if (dokumen.no_kontrak) taxInfo['No Kontrak'] = dokumen.no_kontrak;
+      if (dokumen.no_invoice) taxInfo['No Invoice'] = dokumen.no_invoice;
+      if (dokumen.tanggal_invoice) taxInfo['Tanggal Invoice'] = dokumen.tanggal_invoice;
+      if (dokumen.dpp_invoice) taxInfo['DPP Invoice'] = formatRupiah(dokumen.dpp_invoice);
+      if (dokumen.ppn_invoice) taxInfo['PPN Invoice'] = formatRupiah(dokumen.ppn_invoice);
+      if (dokumen.no_faktur) taxInfo['No Faktur'] = dokumen.no_faktur;
+      if (dokumen.tanggal_faktur) taxInfo['Tanggal Faktur'] = dokumen.tanggal_faktur;
+      if (dokumen.dpp_faktur) taxInfo['DPP Faktur'] = formatRupiah(dokumen.dpp_faktur);
+      if (dokumen.ppn_faktur) taxInfo['PPN Faktur'] = formatRupiah(dokumen.ppn_faktur);
+      if (dokumen.jenis_pph) taxInfo['Jenis PPH'] = dokumen.jenis_pph;
+      if (dokumen.dpp_pph) taxInfo['DPP PPH'] = formatRupiah(dokumen.dpp_pph);
+      if (dokumen.ppn_terhutang) taxInfo['PPN Terhutang'] = formatRupiah(dokumen.ppn_terhutang);
+
+      if (Object.keys(taxInfo).length === 0) {
+        html += '<div class="modal-detail-item"><div class="modal-detail-value" style="color: #6c757d;">Belum ada data perpajakan</div></div>';
+      } else {
+        for (const [label, value] of Object.entries(taxInfo)) {
+          html += `<div class="modal-detail-item"><div class="modal-detail-label">${label}</div><div class="modal-detail-value">${value}</div></div>`;
+        }
+      }
+      html += '</div>';
+
+      return html;
     }
   </script>
 

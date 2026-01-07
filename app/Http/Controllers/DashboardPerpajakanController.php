@@ -871,6 +871,12 @@ class DashboardPerpajakanController extends Controller
 
             \DB::commit();
 
+            // Check if we should redirect to a custom URL (e.g., returns page)
+            if ($request->has('redirect_to') && $request->redirect_to) {
+                return redirect($request->redirect_to)
+                    ->with('success', 'Dokumen berhasil diperbarui.');
+            }
+
             return redirect()->route('documents.perpajakan.index')
                 ->with('success', 'Dokumen berhasil diperbarui.');
 
