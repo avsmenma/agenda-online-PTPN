@@ -28,8 +28,8 @@ class DashboardAkutansiController extends Controller
         $akutansiDocs = Dokumen::where(function ($query) {
             $query->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi');
-                // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
+            // Removed: ->orWhere('status', 'sent_to_pembayaran')
+            // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
         })
             ->excludeCsvImports()
             ->get();
@@ -191,7 +191,7 @@ class DashboardAkutansiController extends Controller
         // Exclude CSV imported documents - they are meant only for pembayaran
         // Note: Removed 'sent_to_pembayaran' and related statuses because CSV imports use these statuses
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
-        
+
         $query = Dokumen::where(function ($q) use ($hasImportedFromCsvColumn) {
             $q->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi')
@@ -295,14 +295,14 @@ class DashboardAkutansiController extends Controller
                         $q->whereHas('roleStatuses', function ($statusQ) {
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
-                        ->orWhereIn('status', [
-                            'pending_approval_ibub',
-                            'pending_approval_perpajakan',
-                            'pending_approval_akutansi',
-                            'pending_approval_pembayaran',
-                            'waiting_reviewer_approval',
-                            'menunggu_di_approve'
-                        ]);
+                            ->orWhereIn('status', [
+                                'pending_approval_ibub',
+                                'pending_approval_perpajakan',
+                                'pending_approval_akutansi',
+                                'pending_approval_pembayaran',
+                                'waiting_reviewer_approval',
+                                'menunggu_di_approve'
+                            ]);
                     });
                     break;
                 case 'ditolak':
@@ -358,7 +358,8 @@ class DashboardAkutansiController extends Controller
                 dokumens.created_at
             ) DESC")
             ->orderBy('dokumens.id', 'DESC') // Secondary sort by ID untuk konsistensi
-            ->paginate(10);
+            ->paginate($request->get('per_page', 10))
+            ->appends($request->query());
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
         $dokumens->getCollection()->transform(function ($dokumen) {
@@ -711,16 +712,16 @@ class DashboardAkutansiController extends Controller
             $kategoriKriteria = null;
             $subKriteria = null;
             $itemSubKriteria = null;
-            
+
             try {
                 if ($request->has('kriteria_cf') && $request->kriteria_cf) {
                     $kategoriKriteria = \App\Models\KategoriKriteria::find($request->kriteria_cf);
                 }
-                
+
                 if ($request->has('sub_kriteria') && $request->sub_kriteria) {
                     $subKriteria = \App\Models\SubKriteria::find($request->sub_kriteria);
                 }
-                
+
                 if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
                     $itemSubKriteria = \App\Models\ItemSubKriteria::find($request->item_sub_kriteria);
                 }
@@ -1016,11 +1017,11 @@ class DashboardAkutansiController extends Controller
         // Get all documents that have been returned to akutansi
         // Includes: documents returned from akutansi to verifikasi AND documents rejected by pembayaran
         $query = Dokumen::where(function ($q) {
-                // Documents returned from akutansi to verifikasi
-                $q->where(function ($subQ) {
-                    $subQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'akutansi');
-                })
+            // Documents returned from akutansi to verifikasi
+            $q->where(function ($subQ) {
+                $subQ->where('status', 'returned_to_department')
+                    ->where('target_department', 'akutansi');
+            })
                 // Documents rejected by pembayaran (from inbox)
                 ->orWhere(function ($pembayaranRejectQ) {
                     $pembayaranRejectQ->where('current_handler', 'akutansi')
@@ -1029,7 +1030,7 @@ class DashboardAkutansiController extends Controller
                                 ->where('status', 'rejected');
                         });
                 });
-            })
+        })
             ->with(['dokumenPos', 'dokumenPrs', 'roleStatuses'])
             ->orderByDesc('department_returned_at');
 
@@ -1043,13 +1044,13 @@ class DashboardAkutansiController extends Controller
                 $subQ->where('status', 'returned_to_department')
                     ->where('target_department', 'akutansi');
             })
-            ->orWhere(function ($pembayaranRejectQ) {
-                $pembayaranRejectQ->where('current_handler', 'akutansi')
-                    ->whereHas('roleStatuses', function ($statusQuery) {
-                        $statusQuery->where('role_code', 'pembayaran')
-                            ->where('status', 'rejected');
-                    });
-            });
+                ->orWhere(function ($pembayaranRejectQ) {
+                    $pembayaranRejectQ->where('current_handler', 'akutansi')
+                        ->whereHas('roleStatuses', function ($statusQuery) {
+                            $statusQuery->where('role_code', 'pembayaran')
+                                ->where('status', 'rejected');
+                        });
+                });
         });
 
         // Total dokumen dikembalikan

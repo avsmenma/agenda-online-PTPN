@@ -40,7 +40,8 @@ class InboxController extends Controller
                         ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
                 })
                 ->latest('created_at')
-                ->paginate(10);
+                ->paginate($request->get('per_page', 10))
+                ->appends($request->query());
 
             // Count statistics using new table
             $pendingCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
@@ -96,12 +97,12 @@ class InboxController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Show detailed error in development, generic message in production
-            $errorMessage = config('app.debug') 
+            $errorMessage = config('app.debug')
                 ? 'Gagal memuat daftar dokumen inbox: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')'
                 : 'Gagal memuat daftar dokumen inbox. Silakan cek log untuk detail.';
-            
+
             return back()->with('error', $errorMessage);
         }
     }
@@ -174,12 +175,12 @@ class InboxController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Show detailed error in development, generic message in production
-            $errorMessage = config('app.debug') 
+            $errorMessage = config('app.debug')
                 ? 'Gagal memuat detail dokumen: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')'
                 : 'Gagal memuat detail dokumen. Silakan cek log untuk detail.';
-            
+
             return back()->with('error', $errorMessage);
         }
     }
@@ -197,7 +198,7 @@ class InboxController extends Controller
 
             // Refresh dokumen untuk memastikan data terbaru (mencegah race condition)
             $dokumen->refresh();
-            
+
             // Reload relationship untuk mendapatkan status terbaru
             $dokumen->load('roleStatuses');
 
@@ -210,7 +211,7 @@ class InboxController extends Controller
                     return redirect()->route('inbox.index')
                         ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan telah masuk ke daftar dokumen resmi.');
                 }
-                
+
                 // Dokumen tidak pending dan tidak approved - mungkin sudah di-reject atau tidak ada akses
                 return redirect()->route('inbox.index')
                     ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk approval.');
@@ -273,7 +274,7 @@ class InboxController extends Controller
                     return redirect()->route('inbox.index')
                         ->with('info', 'Dokumen ini sudah ditolak sebelumnya.');
                 }
-                
+
                 return redirect()->route('inbox.index')
                     ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk penolakan.');
             }
@@ -284,7 +285,7 @@ class InboxController extends Controller
             // Update current_handler and status based on rejection
             // Tentukan ke mana dokumen harus dikembalikan berdasarkan alur workflow
             // Alur: Ibu Tarapul -> Verifikasi -> Perpajakan -> Akutansi -> Pembayaran
-            
+
             if ($roleCode === 'perpajakan') {
                 // Perpajakan menolak -> kembali ke Verifikasi
                 $dokumen->current_handler = 'ibuB';
@@ -293,8 +294,7 @@ class InboxController extends Controller
                 $dokumen->department_returned_at = now();
                 $dokumen->department_return_reason = $request->reason;
                 $dokumen->save();
-            }
-            elseif ($roleCode === 'akutansi') {
+            } elseif ($roleCode === 'akutansi') {
                 // Akutansi menolak -> kembali ke Perpajakan (pengirim sebelumnya)
                 $dokumen->current_handler = 'perpajakan';
                 $dokumen->status = 'returned_to_department';
@@ -324,12 +324,12 @@ class InboxController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Show detailed error in development, generic message in production
-            $errorMessage = config('app.debug') 
+            $errorMessage = config('app.debug')
                 ? 'Gagal menolak dokumen: ' . $e->getMessage() . ' (File: ' . basename($e->getFile()) . ', Line: ' . $e->getLine() . ')'
                 : 'Gagal menolak dokumen. Silakan cek log untuk detail.';
-            
+
             return redirect()->route('inbox.index')
                 ->with('error', $errorMessage);
         }
@@ -447,13 +447,13 @@ class InboxController extends Controller
             // Cari dokumen baru yang masuk setelah last check
             // Use DokumenStatus to find new pending documents
             // Exclude documents imported from CSV to prevent notification spam
-            $newDocuments = Dokumen::when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($query) {
-                    // Exclude CSV imported documents (only if column exists)
-                    $query->where(function($q) {
-                        $q->where('imported_from_csv', false)
-                          ->orWhereNull('imported_from_csv');
-                    });
-                })
+            $newDocuments = Dokumen::when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                // Exclude CSV imported documents (only if column exists)
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
                 ->whereHas('roleStatuses', function ($query) use ($userRole, $checkFrom) {
                     $query->where('role_code', strtolower($userRole))
                         ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
@@ -527,14 +527,14 @@ class InboxController extends Controller
             }
 
             $activityType = $request->input('activity_type', DocumentActivity::TYPE_VIEWING);
-            
+
             Log::info('Activity tracking request', [
                 'dokumen_id' => $dokumenId,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
                 'activity_type' => $activityType
             ]);
-            
+
             // Validate activity type
             if (!in_array($activityType, [DocumentActivity::TYPE_VIEWING, DocumentActivity::TYPE_EDITING])) {
                 return response()->json([
@@ -574,7 +574,7 @@ class InboxController extends Controller
                     $activityType,
                     now()->toIso8601String()
                 ))->toOthers();
-                
+
                 Log::info('Activity broadcasted successfully', [
                     'dokumen_id' => $dokumenId,
                     'user_id' => $user->id,
@@ -617,12 +617,12 @@ class InboxController extends Controller
                 'dokumen_id' => $dokumenId,
                 'current_user_id' => $currentUserId
             ]);
-            
+
             // Get all activities (not just active) to see what's in database
             $allActivities = DocumentActivity::with('user')
                 ->where('dokumen_id', $dokumenId)
                 ->get();
-            
+
             Log::info('All activities in database', [
                 'dokumen_id' => $dokumenId,
                 'total_count' => $allActivities->count(),
@@ -635,7 +635,7 @@ class InboxController extends Controller
                     'is_active' => $a->last_activity_at->gte(now()->subMinutes(5))
                 ])->toArray()
             ]);
-            
+
             // Get only active activities
             $activities = DocumentActivity::with('user')
                 ->where('dokumen_id', $dokumenId)
@@ -670,9 +670,9 @@ class InboxController extends Controller
             $result = [
                 'success' => true,
                 'activities' => [
-                    'viewing' => $grouped->get(DocumentActivity::TYPE_VIEWING, []),
-                    'editing' => $grouped->get(DocumentActivity::TYPE_EDITING, []),
-                ]
+                        'viewing' => $grouped->get(DocumentActivity::TYPE_VIEWING, []),
+                        'editing' => $grouped->get(DocumentActivity::TYPE_EDITING, []),
+                    ]
             ];
 
             Log::info('Activities response', [

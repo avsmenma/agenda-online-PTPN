@@ -1770,11 +1770,10 @@
   }
 
   /* Ensure scrollbar is always visible on all browsers */
-  @supports (scrollbar-width: auto) {
-    .table-responsive {
-      scrollbar-width: auto;
-      scrollbar-color: rgba(8, 62, 64, 0.6) rgba(8, 62, 64, 0.1);
-    }
+  /* Ensure scrollbar is always visible on all browsers */
+  .table-responsive {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(8, 62, 64, 0.6) rgba(8, 62, 64, 0.1);
   }
 
   /* Ensure horizontal scrollbar appears when content overflows */
