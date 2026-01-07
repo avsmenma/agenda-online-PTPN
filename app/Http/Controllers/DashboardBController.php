@@ -515,6 +515,9 @@ class DashboardBController extends Controller
 
     public function editDokumen(Dokumen $dokumen)
     {
+        // Refresh dokumen dari database untuk memastikan data terbaru
+        $dokumen = $dokumen->fresh();
+        
         // Only allow editing if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
             return redirect()->route('documents.verifikasi.index')
@@ -854,6 +857,9 @@ class DashboardBController extends Controller
                 return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
             }
 
+            // Refresh dokumen dari database untuk memastikan data terbaru
+            $dokumen = $dokumen->fresh();
+            
             // Load required relationships
             try {
                 $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
@@ -887,12 +893,14 @@ class DashboardBController extends Controller
                             ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
                             : ($dokumen->dibayar_kepada ?? null),
                         'kebun' => $dokumen->kebun,
+                        'bagian' => $dokumen->bagian,
+                        'nama_pengirim' => $dokumen->nama_pengirim,
                         'no_spk' => $dokumen->no_spk,
-                        'tanggal_spk' => $dokumen->tanggal_spk,
-                        'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
-                        'nomor_miro' => $dokumen->nomor_miro,
-                        'no_berita_acara' => $dokumen->no_berita_acara,
-                        'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
+                        'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
+                        'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
+                        'nomor_miro' => $dokumen->nomor_miro ?? '-',
+                        'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
+                        'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
                         'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {
                             return ['nomor_po' => $po->nomor_po ?? ''];
                         })->values() : [],
