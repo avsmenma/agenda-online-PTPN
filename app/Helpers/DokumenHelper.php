@@ -69,19 +69,14 @@ class DokumenHelper
             ->exists();
 
         if ($hasPendingStatus) {
-            // Jika current_handler adalah perpajakan dan status adalah pending_approval_akutansi/pembayaran/menunggu_di_approve,
-            // berarti dokumen sudah dikirim dari perpajakan, jadi tidak lock
-            if (
-                $dokumen->current_handler === 'perpajakan' &&
-                in_array($dokumen->status, [
-                    'pending_approval_akutansi',
-                    'pending_approval_pembayaran',
-                    'menunggu_di_approve' // Status untuk pembayaran
-                ])
-            ) {
-                // Dokumen sudah dikirim, tidak lock (akan di-handle di switch case nanti)
+            // Skip lock untuk handler yang menggunakan sistem deadline baru (count-up dari received_at)
+            // Perpajakan, ibuB, dan akutansi tidak perlu di-lock berdasarkan pending status
+            // karena mereka menggunakan sistem deadline otomatis
+            if (in_array($dokumen->current_handler, ['perpajakan', 'ibuB', 'akutansi'])) {
+                // Handler menggunakan sistem baru, pending status tidak lock dokumen
+                // Biarkan logika lanjut ke switch case di bawah
             } else {
-                return true; // Lock dokumen yang memiliki pending status
+                return true; // Lock dokumen yang memiliki pending status untuk handler lainnya
             }
         }
 
