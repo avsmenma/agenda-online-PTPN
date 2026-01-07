@@ -197,6 +197,7 @@ class DashboardBController extends Controller
                 'dokumens.kategori',
                 'dokumens.kebun',
                 'dokumens.jenis_dokumen',
+                'dokumens.jenis_sub_pekerjaan',
                 'dokumens.updated_at',
                 'dokumens.tanggal_spk',
                 'dokumens.tanggal_berakhir_spk',
@@ -235,6 +236,7 @@ class DashboardBController extends Controller
                     ->orWhere('bagian', 'like', '%' . $search . '%')
                     ->orWhere('kategori', 'like', '%' . $search . '%')
                     ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_sub_pekerjaan', 'like', '%' . $search . '%')
                     ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
                     ->orWhere('no_spk', 'like', '%' . $search . '%')
                     ->orWhere('nomor_miro', 'like', '%' . $search . '%')
