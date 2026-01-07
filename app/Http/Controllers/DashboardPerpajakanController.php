@@ -38,8 +38,8 @@ class DashboardPerpajakanController extends Controller
                                     ->where('status', 'rejected');
                             });
                     });
-                    // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                    // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
+                // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
             ->excludeCsvImports()
             ->get();
@@ -80,8 +80,8 @@ class DashboardPerpajakanController extends Controller
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
                     ->orWhere('status', 'sent_to_akutansi');
-                    // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                    // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
+                // Removed: ->orWhere('status', 'sent_to_pembayaran')
+                // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs'])
@@ -124,7 +124,7 @@ class DashboardPerpajakanController extends Controller
         // Exclude CSV imported documents - they are meant only for pembayaran
         // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
-        
+
         $query = Dokumen::query()
             ->where(function ($q) use ($hasImportedFromCsvColumn) {
                 $q->where('current_handler', 'perpajakan')
@@ -244,14 +244,14 @@ class DashboardPerpajakanController extends Controller
                         $q->whereHas('roleStatuses', function ($statusQ) {
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
-                        ->orWhereIn('status', [
-                            'pending_approval_ibub',
-                            'pending_approval_perpajakan',
-                            'pending_approval_akutansi',
-                            'pending_approval_pembayaran',
-                            'waiting_reviewer_approval',
-                            'menunggu_di_approve'
-                        ]);
+                            ->orWhereIn('status', [
+                                'pending_approval_ibub',
+                                'pending_approval_perpajakan',
+                                'pending_approval_akutansi',
+                                'pending_approval_pembayaran',
+                                'waiting_reviewer_approval',
+                                'menunggu_di_approve'
+                            ]);
                     });
                     break;
                 case 'ditolak':
@@ -1218,48 +1218,78 @@ class DashboardPerpajakanController extends Controller
 
     public function pengembalian(Request $request)
     {
-        // Get all documents that have been returned by perpajakan
-        $query = Dokumen::where('status', 'returned_to_department')
-            ->where('target_department', 'perpajakan')
-            ->with(['dokumenPos', 'dokumenPrs'])
+        // Get all documents that have been returned to perpajakan
+        // Includes: documents returned FROM perpajakan to verifikasi AND documents rejected BY akutansi
+        $query = Dokumen::where(function ($q) {
+            // Documents returned from perpajakan to verifikasi (original logic)
+            $q->where(function ($subQ) {
+                $subQ->where('status', 'returned_to_department')
+                    ->where('target_department', 'perpajakan');
+            })
+                // Documents rejected by akutansi (via roleStatuses with rejected status)
+                ->orWhere(function ($akutansiRejectQ) {
+                    $akutansiRejectQ->where('current_handler', 'perpajakan')
+                        ->whereHas('roleStatuses', function ($statusQuery) {
+                            $statusQuery->where('role_code', 'akutansi')
+                                ->where('status', 'rejected');
+                        });
+                });
+        })
+            ->with(['dokumenPos', 'dokumenPrs', 'roleStatuses'])
             ->orderByDesc('department_returned_at');
+
+        // Apply search filter if provided
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('nomor_agenda', 'like', "%{$searchTerm}%")
+                    ->orWhere('nomor_spp', 'like', "%{$searchTerm}%")
+                    ->orWhere('uraian_spp', 'like', "%{$searchTerm}%");
+            });
+        }
 
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics for returned documents
-        $baseQuery = Dokumen::where('status', 'returned_to_department')
-            ->where('target_department', 'perpajakan');
+        // Include both: documents returned from perpajakan to verifikasi AND documents rejected by akutansi
+        $baseQuery = Dokumen::where(function ($q) {
+            $q->where(function ($subQ) {
+                $subQ->where('status', 'returned_to_department')
+                    ->where('target_department', 'perpajakan');
+            })
+                ->orWhere(function ($akutansiRejectQ) {
+                    $akutansiRejectQ->where('current_handler', 'perpajakan')
+                        ->whereHas('roleStatuses', function ($statusQuery) {
+                            $statusQuery->where('role_code', 'akutansi')
+                                ->where('status', 'rejected');
+                        });
+                });
+        });
 
         // Total dokumen dikembalikan
         $totalReturned = (clone $baseQuery)->count();
 
         // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika: tidak ada returned_from_perpajakan_fixed_at DAN 
-        // (current_handler != 'perpajakan' ATAU ada pengembalian_awaiting_fix)
+        // Logika: masih di ibuB (belum dikirim kembali) ATAU ditolak oleh akutansi dan masih di perpajakan
         $totalMenungguPerbaikan = (clone $baseQuery)
-            ->whereNull('returned_from_perpajakan_fixed_at')
             ->where(function ($q) {
-                $q->where('current_handler', '!=', 'perpajakan')
-                    ->orWhere('pengembalian_awaiting_fix', true);
+                $q->where('current_handler', 'ibuB')
+                    ->orWhere(function ($akutansiQ) {
+                        $akutansiQ->where('current_handler', 'perpajakan')
+                            ->whereHas('roleStatuses', function ($statusQuery) {
+                                $statusQuery->where('role_code', 'akutansi')
+                                    ->where('status', 'rejected');
+                            });
+                    });
             })
             ->count();
 
-        // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali ke perpajakan
-        // Logika: ada returned_from_perpajakan_fixed_at ATAU 
-        // (current_handler == 'perpajakan' DAN tidak ada pengembalian_awaiting_fix)
+        // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali
+        // Logika: sudah tidak di ibuB lagi DAN tidak ada rejected status dari akutansi
         $totalSudahDiperbaiki = (clone $baseQuery)
-            ->where(function ($q) {
-                $q->whereNotNull('returned_from_perpajakan_fixed_at')
-                    ->orWhere(function ($subQ) {
-                        // Dokumen yang sudah kembali ke perpajakan setelah diperbaiki
-                        $subQ->where('current_handler', 'perpajakan')
-                            ->where(function ($handlerQ) {
-                            $handlerQ->where('pengembalian_awaiting_fix', false)
-                                ->orWhereNull('pengembalian_awaiting_fix');
-                        });
-                    });
-            })
+            ->where('current_handler', '!=', 'ibuB')
+            ->where('current_handler', '!=', 'perpajakan')
             ->count();
 
         $data = array(
