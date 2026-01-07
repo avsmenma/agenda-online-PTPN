@@ -515,17 +515,14 @@ class DashboardBController extends Controller
 
     public function editDokumen(Dokumen $dokumen)
     {
-        // Refresh dokumen dari database untuk memastikan data terbaru
-        $dokumen = $dokumen->fresh();
+        // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
         
         // Only allow editing if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
-
-        // Load relationships including dibayarKepadas
-        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Ambil data dari database cash_bank_new untuk dropdown baru
         // Tambahkan try-catch untuk menangani error koneksi database
@@ -793,6 +790,9 @@ class DashboardBController extends Controller
 
             \DB::commit();
 
+            // Clear any existing flash messages before setting new one
+            session()->forget(['success', 'error']);
+
             // Check if document is returned document and redirect accordingly
             $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
                 $dokumen->department_returned_at);
@@ -802,16 +802,20 @@ class DashboardBController extends Controller
             $fromPengembalian = $referer && str_contains($referer, 'pengembalian-dokumensB');
 
             if ($isReturnedDocument || $fromPengembalian) {
-                session()->flash('success', 'Dokumen berhasil diperbarui.');
-                return redirect()->route('pengembalianB.index');
+                return redirect()->route('pengembalianB.index')
+                    ->with('success', 'Dokumen berhasil diperbarui.');
             } else {
-                session()->flash('success', 'Dokumen berhasil diperbarui.');
-                return redirect()->route('documents.verifikasi.index');
+                return redirect()->route('documents.verifikasi.index')
+                    ->with('success', 'Dokumen berhasil diperbarui.');
             }
 
         } catch (\Exception $e) {
             \DB::rollback();
             \Log::error('Error updating document in IbuB: ' . $e->getMessage());
+            \Log::error('Error stack trace: ' . $e->getTraceAsString());
+
+            // Clear any existing flash messages before setting error
+            session()->forget(['success', 'error']);
 
             return redirect()->back()
                 ->withInput()
@@ -857,19 +861,8 @@ class DashboardBController extends Controller
                 return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
             }
 
-            // Refresh dokumen dari database untuk memastikan data terbaru
-            $dokumen = $dokumen->fresh();
-            
-            // Load required relationships
-            try {
-                $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
-            } catch (\Exception $e) {
-                Log::error('Failed to load relationships', [
-                    'document_id' => $dokumen->id,
-                    'error' => $e->getMessage(),
-                ]);
-                // Continue anyway, relationships might be optional
-            }
+            // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
+            $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
 
             // If request wants JSON (for modal view)
             if (request()->wantsJson() || request()->ajax()) {
@@ -2861,11 +2854,22 @@ class DashboardBController extends Controller
             // Cari dokumen yang di-reject dalam 24 jam terakhir (untuk memastikan notifikasi selalu muncul)
             // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
             $checkFrom24Hours = now()->subHours(24);
-            $checkFrom = $lastCheckTime ? \Carbon\Carbon::parse($lastCheckTime) : $checkFrom24Hours;
-
-            // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
-            if ($checkFrom->gt($checkFrom24Hours)) {
-                $checkFrom = $checkFrom24Hours;
+            
+            // Initialize $checkFrom dengan default value
+            $checkFrom = $checkFrom24Hours;
+            
+            try {
+                if ($lastCheckTime) {
+                    $parsedTime = \Carbon\Carbon::parse($lastCheckTime);
+                    // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
+                    $checkFrom = $parsedTime->gt($checkFrom24Hours) ? $checkFrom24Hours : $parsedTime;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Invalid last_check_time format for IbuB, using 24 hours ago', [
+                    'last_check_time' => $lastCheckTime,
+                    'error' => $e->getMessage()
+                ]);
+                // $checkFrom already set to $checkFrom24Hours as default
             }
 
             \Log::info('IbuB checkRejectedDocuments called', [
@@ -2970,10 +2974,16 @@ class DashboardBController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error checking rejected documents for IbuB: ' . $e->getMessage());
+            \Log::error('Error checking rejected documents for IbuB: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'last_check_time' => $request->input('last_check_time')
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memeriksa dokumen yang ditolak'
+                'message' => 'Gagal memeriksa dokumen yang ditolak: ' . $e->getMessage()
             ], 500);
         }
     }
