@@ -150,7 +150,7 @@ class DokumenHelper
     {
         if (self::isDocumentLocked($dokumen)) {
             $handlerName = match ($dokumen->current_handler) {
-                'ibuB' => 'Ibu Yuni',
+                'ibuB' => 'Team Verifikasi',
                 'akutansi' => 'Team Akutansi',
                 'perpajakan' => 'Team Perpajakan',
                 'pembayaran' => 'Pembayaran',

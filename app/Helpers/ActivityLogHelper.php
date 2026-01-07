@@ -47,9 +47,9 @@ class ActivityLogHelper
     {
         $from = $from ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($from); // Stage pengirim, bukan penerima
-        
+
         $descriptions = [
-            'ibuB' => 'Dokumen dikirim ke Ibu Yuni',
+            'ibuB' => 'Dokumen dikirim ke Team Verifikasi',
             'perpajakan' => 'Dokumen dikirim ke Team Perpajakan',
             'akutansi' => 'Dokumen dikirim ke Team Akutansi',
             'pembayaran' => 'Dokumen dikirim ke Team Pembayaran',
@@ -72,7 +72,7 @@ class ActivityLogHelper
     public static function logReceived(Dokumen $dokumen, string $by): void
     {
         $stage = self::getStageFromHandler($by);
-        
+
         // Format: "Dokumen masuk pada tanggal" - tanggal dan jam akan ditambahkan di view
         $description = 'Dokumen masuk pada tanggal';
 
@@ -93,10 +93,10 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         // Format: "Deadline diatur pada tanggal" - tanggal dan jam akan ditambahkan di view
         $description = 'Deadline diatur pada tanggal';
-        
+
         self::log(
             $dokumen,
             'deadline_set',
@@ -114,7 +114,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         $fieldNames = [
             'no_faktur' => 'No Faktur',
             'tanggal_faktur' => 'Tanggal Faktur',
@@ -152,7 +152,7 @@ class ActivityLogHelper
         ];
 
         $fieldName = $fieldNames[$field] ?? $field;
-        
+
         // Format description dengan old dan new value
         $oldValueStr = $oldValue ?? 'kosong';
         $newValueStr = $newValue ?? 'kosong';
@@ -180,7 +180,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         self::log(
             $dokumen,
             'form_filled',
@@ -198,7 +198,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         self::log(
             $dokumen,
             'returned',
@@ -216,7 +216,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         self::log(
             $dokumen,
             'status_changed',

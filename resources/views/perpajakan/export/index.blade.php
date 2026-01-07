@@ -879,9 +879,9 @@
                                                     'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
                                                     'proses_perpajakan' => 'Diproses Team Perpajakan',
                                                     'proses_akutansi' => 'Diproses Team Akutansi',
-                                                    'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-                                                    'proses_ibub' => 'Diproses Ibu Yuni',
-                                                    'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+                                                    'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
+                                                    'proses_ibub' => 'Diproses Team Verifikasi',
+                                                    'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
                                                     'menunggu_verifikasi' => 'Menunggu Verifikasi',
                                                     'draft' => 'Draft',
                                                 ];

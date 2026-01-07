@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,39 +10,46 @@
             size: A4 landscape;
             margin: 0.5cm;
         }
+
         body {
             font-family: Arial, sans-serif;
             font-size: 7px;
             margin: 0;
             padding: 5px;
         }
+
         .header {
             text-align: center;
             margin-bottom: 10px;
             border-bottom: 2px solid #083E40;
             padding-bottom: 5px;
         }
+
         .header h1 {
             margin: 0;
             color: #083E40;
             font-size: 14px;
         }
+
         .header p {
             margin: 3px 0;
             color: #666;
             font-size: 8px;
         }
+
         .filter-info {
             margin-bottom: 8px;
             font-size: 7px;
             color: #666;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 5px;
             table-layout: auto;
         }
+
         th {
             background-color: #083E40;
             color: white;
@@ -54,6 +62,7 @@
             white-space: normal;
             line-height: 1.2;
         }
+
         td {
             padding: 3px 2px;
             border: 1px solid #ddd;
@@ -62,15 +71,19 @@
             white-space: normal;
             line-height: 1.2;
         }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         .text-right {
             text-align: right;
         }
+
         .text-center {
             text-align: center;
         }
+
         .footer {
             margin-top: 10px;
             text-align: center;
@@ -79,37 +92,43 @@
             border-top: 1px solid #ddd;
             padding-top: 5px;
         }
+
         @media print {
             body {
                 margin: 0;
             }
+
             .no-print {
                 display: none;
             }
         }
+
         /* Ensure table fits within page width */
         table {
             max-width: 100%;
             overflow: hidden;
         }
+
         /* Make text in cells more compact - allow wrapping for long text */
         td {
             max-width: 150px;
             overflow: hidden;
         }
+
         /* Special handling for long text columns like uraian_spp */
-        td:first-child + td + td + td + td + td + td + td {
+        td:first-child+td+td+td+td+td+td+td {
             max-width: 200px;
             white-space: normal;
             word-break: break-word;
         }
     </style>
     <script>
-        window.onload = function() {
+        window.onload = function () {
             window.print();
         };
     </script>
 </head>
+
 <body>
     <div class="header">
         <h1>EXPORT DATA PERPAJAKAN</h1>
@@ -118,13 +137,15 @@
 
     <div class="filter-info">
         @if($year ?? null)
-            <strong>Tahun:</strong> {{ $year }} | 
+            <strong>Tahun:</strong> {{ $year }} |
         @endif
         @if($month ?? null)
-            <strong>Bulan:</strong> {{ ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][$month - 1] }} | 
+            <strong>Bulan:</strong>
+            {{ ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][$month - 1] }}
+            |
         @endif
         @if($search ?? null)
-            <strong>Pencarian:</strong> {{ $search }} | 
+            <strong>Pencarian:</strong> {{ $search }} |
         @endif
         <strong>Total Dokumen:</strong> {{ $dokumens->count() }}
     </div>
@@ -161,7 +182,7 @@
                         <td>
                             @php
                                 $value = '';
-                                
+
                                 // Handle special columns that come from relationships
                                 if ($col === 'dibayar_kepada') {
                                     if ($doc->dibayarKepadas && $doc->dibayarKepadas->count() > 0) {
@@ -193,9 +214,9 @@
                                         'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
                                         'proses_perpajakan' => 'Diproses Team Perpajakan',
                                         'proses_akutansi' => 'Diproses Team Akutansi',
-                                        'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-                                        'proses_ibub' => 'Diproses Ibu Yuni',
-                                        'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+                                        'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
+                                        'proses_ibub' => 'Diproses Team Verifikasi',
+                                        'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
                                         'menunggu_verifikasi' => 'Menunggu Verifikasi',
                                         'draft' => 'Draft',
                                     ];
@@ -257,4 +278,5 @@
         <p>Dicetak pada: {{ date('d/m/Y H:i:s') }}</p>
     </div>
 </body>
+
 </html>

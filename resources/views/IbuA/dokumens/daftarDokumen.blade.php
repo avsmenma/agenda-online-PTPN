@@ -1967,14 +1967,14 @@
                   <span>Belum Dikirim</span>
                 </span>
               @elseif($statusLabel == 'Terkirim' || $isApproved)
-                {{-- PRIORITY: Dokumen sudah di-approve oleh Ibu Yuni - harus ditampilkan sebagai Terkirim --}}
+                {{-- PRIORITY: Dokumen sudah di-approve oleh Team Verifikasi - harus ditampilkan sebagai Terkirim --}}
                 {{-- Pengecekan ini dilakukan lebih awal untuk memastikan dokumen yang sudah di-approve selalu tampil sebagai Terkirim --}}
                 <span class="badge-status badge-terkirim">
                   <i class="fa-solid fa-check me-1"></i>
                   <span>Terkirim</span>
                 </span>
               @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval' || $dokumen->status == 'waiting_reviewer_approval' || $isPending)
-                {{-- Dokumen menunggu approval dari Reviewer (Ibu Yuni) --}}
+                {{-- Dokumen menunggu approval dari Reviewer (Team Verifikasi) --}}
                 <span class="badge-status" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                   <i class="fa-solid fa-clock me-1"></i>
                   <span>{{ $dokumen->getDetailedApprovalText() }}</span>
@@ -2048,7 +2048,7 @@
               $isSentToIbuB = ($dokumen->status ?? '') == 'sent_to_ibub'
                        || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua');
               
-              // Check if document has been approved by Ibu Yuni and sent to other roles
+              // Check if document has been approved by Team Verifikasi and sent to other roles
               $ibuBStatus = $dokumen->getStatusForRole('ibub');
               $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
               
@@ -2171,7 +2171,7 @@
               </a>
             @endif
             @if($canSend)
-            <button class="btn-action btn-send" onclick="sendToIbuB({{ $dokumen->id }})" title="Kirim ke Ibu Yuni">
+            <button class="btn-action btn-send" onclick="sendToIbuB({{ $dokumen->id }})" title="Kirim ke Team Verifikasi">
               <i class="fa-solid fa-paper-plane"></i>
               <span>Kirim</span>
             </button>

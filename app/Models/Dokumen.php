@@ -178,7 +178,7 @@ class Dokumen extends Model
             function ($q) {
                 $q->where(function ($subQ) {
                     $subQ->where('imported_from_csv', false)
-                         ->orWhereNull('imported_from_csv');
+                        ->orWhereNull('imported_from_csv');
                 });
             }
         );
@@ -532,7 +532,7 @@ class Dokumen extends Model
 
         if ($pendingStatus) {
             $roleNameMap = [
-                'ibub' => 'Ibu Yuni (Reviewer)',
+                'ibub' => 'Team Verifikasi',
                 'perpajakan' => 'Team Perpajakan',
                 'akutansi' => 'Team Akutansi',
                 'pembayaran' => 'Team Pembayaran',
@@ -544,11 +544,11 @@ class Dokumen extends Model
 
         // Fallback to status-based detection
         $statusMap = [
-            'pending_approval_ibub' => 'Menunggu Approval dari Ibu Yuni (Reviewer)',
+            'pending_approval_ibub' => 'Menunggu Approval dari Team Verifikasi',
             'pending_approval_perpajakan' => 'Menunggu Approval dari Team Perpajakan',
             'pending_approval_akutansi' => 'Menunggu Approval dari Team Akutansi',
             'pending_approval_pembayaran' => 'Menunggu Approval dari Team Pembayaran',
-            'waiting_reviewer_approval' => 'Menunggu Approval dari Ibu Yuni (Reviewer)',
+            'waiting_reviewer_approval' => 'Menunggu Approval dari Team Verifikasi',
             'menunggu_di_approve' => 'Menunggu Approval',
         ];
 
@@ -559,7 +559,7 @@ class Dokumen extends Model
         // Check current_handler as last resort
         if ($this->current_handler) {
             $handlerMap = [
-                'ibuB' => 'Menunggu Approval dari Ibu Yuni (Reviewer)',
+                'ibuB' => 'Menunggu Approval dari Team Verifikasi',
                 'perpajakan' => 'Menunggu Approval dari Team Perpajakan',
                 'akutansi' => 'Menunggu Approval dari Team Akutansi',
                 'pembayaran' => 'Menunggu Approval dari Team Pembayaran',
@@ -594,7 +594,7 @@ class Dokumen extends Model
         // Default: gunakan created_by
         $senderMap = [
             'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Ibu Yuni',
+            'ibuB' => 'Team Verifikasi',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi',
             'pembayaran' => 'Team Pembayaran',
@@ -610,7 +610,7 @@ class Dokumen extends Model
     public function getInboxSenderDisplayName(?string $currentRoleCode = null): string
     {
         $currentRoleCode = strtolower($currentRoleCode ?? '');
-        
+
         // Map role code ke display name
         $roleDisplayMap = [
             'ibua' => 'Ibu Tarapul',
@@ -626,16 +626,16 @@ class Dokumen extends Model
 
         // Cari status pending untuk role saat ini
         $currentRoleStatus = $this->getStatusForRole($currentRoleCode);
-        
+
         if ($currentRoleStatus && $currentRoleStatus->changed_by) {
             // changed_by bisa berupa role code atau nama user
             $changedBy = strtolower(trim($currentRoleStatus->changed_by));
-            
+
             // Jika changed_by adalah role code, gunakan map
             if (isset($roleDisplayMap[$changedBy])) {
                 return $roleDisplayMap[$changedBy];
             }
-            
+
             // Coba cek apakah changed_by mengandung kata kunci role
             foreach ($roleDisplayMap as $key => $displayName) {
                 if (strpos($changedBy, $key) !== false) {
@@ -646,7 +646,7 @@ class Dokumen extends Model
 
         // Tentukan pengirim berdasarkan alur dokumen dan currentRoleCode
         // Urutan alur dokumen: IbuA -> IbuB (Verifikasi) -> Perpajakan -> Akutansi -> Pembayaran
-        
+
         // Jika dokumen di inbox perpajakan, pengirimnya adalah team verifikasi (ibuB)
         if ($currentRoleCode === 'perpajakan') {
             return 'Team Verifikasi';
@@ -669,7 +669,7 @@ class Dokumen extends Model
 
         // Fallback: berdasarkan status dokumen
         $status = strtolower($this->status ?? '');
-        
+
         if ($status === 'sent_to_perpajakan' || $status === 'pending_approval_perpajakan') {
             return 'Team Verifikasi';
         }
@@ -947,7 +947,7 @@ class Dokumen extends Model
             // Cari status milestone yang sesuai
             $milestoneStatuses = [
                 'approved_data_sudah_terkirim' => 'Document Approved',
-                'approved_ibub' => 'Approved by Ibu Yuni',
+                'approved_ibub' => 'Approved by Team Verifikasi',
                 'approved_perpajakan' => 'Approved by Perpajakan',
                 'approved_akutansi' => 'Approved by Akutansi',
                 'selesai' => 'Document Selesai'
@@ -970,9 +970,9 @@ class Dokumen extends Model
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
-            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-            'proses_ibub' => 'Diproses Ibu Yuni',
+            'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
+            'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
+            'proses_ibub' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
             'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
@@ -983,7 +983,7 @@ class Dokumen extends Model
             'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
-            'returned_from_ibub' => 'Dikembalikan dari Ibu Yuni',
+            'returned_from_ibub' => 'Dikembalikan dari Team Verifikasi',
             'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
             'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
         ];
@@ -1207,7 +1207,7 @@ class Dokumen extends Model
                     ->where('status', DokumenStatus::STATUS_REJECTED)
                     ->latest('status_changed_at')
                     ->first();
-                
+
                 if ($rejectedStatus) {
                     $roleName = $rejectedStatus->role_code === 'perpajakan' ? 'Team Perpajakan' : 'Team Akutansi';
                     return "Ditolak oleh {$roleName} (Perlu Revisi)";

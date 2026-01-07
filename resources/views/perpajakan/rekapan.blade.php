@@ -478,7 +478,7 @@
                 <span class="badge badge-draft">Draft</span>
                 @break
               @case('sent_to_ibub')
-                <span class="badge badge-sent">Terkirim ke Ibu Yuni</span>
+                <span class="badge badge-sent">Terkirim ke Team Verifikasi</span>
                 @break
               @case('sent_to_perpajakan')
                 <span class="badge badge-sent">Terkirim ke Team Perpajakan</span>
