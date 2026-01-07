@@ -515,17 +515,14 @@ class DashboardBController extends Controller
 
     public function editDokumen(Dokumen $dokumen)
     {
-        // Refresh dokumen dari database untuk memastikan data terbaru
-        $dokumen = $dokumen->fresh();
+        // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
         
         // Only allow editing if current_handler is ibuB
         if ($dokumen->current_handler !== 'ibuB') {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
-
-        // Load relationships including dibayarKepadas
-        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Ambil data dari database cash_bank_new untuk dropdown baru
         // Tambahkan try-catch untuk menangani error koneksi database
@@ -857,19 +854,8 @@ class DashboardBController extends Controller
                 return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
             }
 
-            // Refresh dokumen dari database untuk memastikan data terbaru
-            $dokumen = $dokumen->fresh();
-            
-            // Load required relationships
-            try {
-                $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
-            } catch (\Exception $e) {
-                Log::error('Failed to load relationships', [
-                    'document_id' => $dokumen->id,
-                    'error' => $e->getMessage(),
-                ]);
-                // Continue anyway, relationships might be optional
-            }
+            // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
+            $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
 
             // If request wants JSON (for modal view)
             if (request()->wantsJson() || request()->ajax()) {
