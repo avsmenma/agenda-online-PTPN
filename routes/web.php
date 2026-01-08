@@ -421,7 +421,7 @@ Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->name('admin.monitoring');
 
 // Professional Document Routes - IbuA (Owner)
-Route::middleware(['auth', 'role:admin,ibua,IbuA'])->prefix('documents')->name('documents.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('documents')->name('documents.')->group(function () {
     Route::get('/', [DokumenController::class, 'index'])->name('index');
     Route::get('/create', [DokumenController::class, 'create'])->name('create');
     Route::post('/', [DokumenController::class, 'store'])->name('store');
@@ -435,7 +435,7 @@ Route::middleware(['auth', 'role:admin,ibua,IbuA'])->prefix('documents')->name('
 });
 
 // Professional Reports Routes
-Route::middleware(['auth', 'role:admin,ibua,IbuA'])->prefix('reports')->name('reports.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [DokumenRekapanController::class, 'index'])->name('index');
     Route::get('/analytics', [DokumenRekapanController::class, 'analytics'])->name('analytics');
 });
