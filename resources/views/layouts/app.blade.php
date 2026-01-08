@@ -1504,6 +1504,15 @@
       };
     @endphp
 
+    @php
+      // Check if user is a bagian user - defined here to be available throughout sidebar
+      $isBagianUser = false;
+      if (auth()->check()) {
+        $userRoleLower = strtolower(auth()->user()->role ?? '');
+        $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
+      }
+    @endphp
+
     @if($isOwner)
       <!-- Owner Menu - Clean and Simple -->
       <div style="flex: 1; display: flex; flex-direction: column;">
@@ -1616,15 +1625,6 @@
         @endif
 
         @unless($isOwner)
-          @php
-            // Check if user is a bagian user
-            $isBagianUser = false;
-            if (auth()->check()) {
-              $userRoleLower = strtolower(auth()->user()->role ?? '');
-              $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
-            }
-          @endphp
-
           @if($isBagianUser)
             {{-- Bagian-specific menu --}}
             @php
