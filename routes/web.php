@@ -308,12 +308,12 @@ Route::get('/pembayaran/check-updates', function () {
 
 // Dashboard routes with role protection - Professional URLs
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth', 'role:admin,ibua,IbuA')
+    ->middleware('auth', 'role:admin,ibua,IbuA,ibutarapul')
     ->name('dashboard.main');
 
 // Professional dashboard routes
 Route::get('dashboard/verifikasi', [DashboardBController::class, 'index'])
-    ->middleware('auth', 'role:admin,ibub,IbuB')
+    ->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
