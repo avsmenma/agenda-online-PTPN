@@ -1797,6 +1797,9 @@
         request()->routeIs('ibub.*') ||
         request()->is('*dokumensB*') ||
         request()->is('*rekapan-ibuB*');
+    } elseif ($isBagianUser) {
+      $isSubmenuPage = request()->is('*bagian/documents*') ||
+        request()->is('*bagian/tracking*');
     } else {
       $isSubmenuPage = request()->is('*dokumens*') ||
         request()->is('*rekapan*') ||
@@ -1813,6 +1816,8 @@
     } elseif ($module === 'perpajakan') {
       $submenuTitle = 'MENU PERPAJAKAN';
     } elseif ($module === 'ibub') {
+      $submenuTitle = 'MENU DOKUMEN';
+    } elseif ($isBagianUser) {
       $submenuTitle = 'MENU DOKUMEN';
     } else {
       $submenuTitle = 'MENU DOKUMEN';
@@ -1897,6 +1902,23 @@
         <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
+      @elseif($isBagianUser)
+        {{-- Bagian submenu (same pattern as IbuA) --}}
+        @php
+          $isDaftarActive = request()->routeIs('bagian.documents.index') || request()->is('*bagian/documents');
+          $isTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
+          $isEditActive = request()->routeIs('bagian.documents.edit') || request()->is('*bagian/documents/*/edit*');
+          $isRekapanActive = request()->routeIs('bagian.rekapan') || request()->is('*bagian/rekapan*');
+        @endphp
+        <a href="{{ route('bagian.documents.index') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
+        </a>
+        <a href="{{ route('bagian.documents.create') }}" class="{{ $isTambahActive ? 'active' : '' }}">
+          <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
+        </a>
+        <a href="{{ route('bagian.tracking') }}" class="{{ request()->routeIs('bagian.tracking') ? 'active' : '' }}">
+          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+        </a>
       @else
         <!-- IbuA -->
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}">
@@ -1971,10 +1993,10 @@
   <script>
   /**
    * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
-   * Digunakan pada Card dan Table Row yang bisa diklik
+   * Digunakan pada Card dan Table Row yangbisa diklik
    * 
    * @param {Event} event - Click event
-   * @param {string} url - URL tujuan navigasi
+   * @param {string} url - URL tujua    nnavigasi
    */
   window.handleItemClick = function(event, url) {
     // 1. Cek apakah user sedang menyeleksi teks
