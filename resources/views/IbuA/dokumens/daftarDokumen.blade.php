@@ -4275,6 +4275,83 @@
         }
         </style>
 
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+              <!-- Modal Header -->
+              <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; padding: 20px 24px;">
+                <h5 class="modal-title" id="deleteConfirmModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+                  <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                  Konfirmasi Hapus Dokumen
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              
+              <!-- Modal Body -->
+              <div class="modal-body" style="padding: 24px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i class="fa-solid fa-trash-can" style="font-size: 32px; color: #dc3545;"></i>
+                  </div>
+                  <h5 style="color: #1f2937; font-weight: 600; margin-bottom: 8px;">Apakah Anda yakin ingin menghapus dokumen ini?</h5>
+                  <p style="color: #6b7280; font-size: 14px; margin-bottom: 0;">Dokumen yang dihapus tidak dapat dikembalikan.</p>
+                </div>
+                
+                <!-- Document Info -->
+                <div style="background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                  <div style="display: grid; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span style="color: #6b7280; font-size: 13px; font-weight: 500;">Nomor Agenda</span>
+                      <span id="delete-nomor-agenda" style="color: #1f2937; font-weight: 600; font-size: 14px;">-</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span style="color: #6b7280; font-size: 13px; font-weight: 500;">Nomor SPP</span>
+                      <span id="delete-nomor-spp" style="color: #1f2937; font-weight: 600; font-size: 14px;">-</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span style="color: #6b7280; font-size: 13px; font-weight: 500;">Nilai</span>
+                      <span id="delete-nilai" style="color: #28a745; font-weight: 700; font-size: 14px;">-</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Warning Alert -->
+                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border: 1px solid #ffc107; border-radius: 10px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px;">
+                  <i class="fa-solid fa-exclamation-circle" style="color: #856404; font-size: 18px; margin-top: 2px;"></i>
+                  <div>
+                    <strong style="color: #856404; font-size: 13px; display: block; margin-bottom: 4px;">Perhatian!</strong>
+                    <span style="color: #856404; font-size: 12px;">Semua data dokumen termasuk nomor PO, PR, dan data terkait lainnya akan dihapus secara permanen.</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Modal Footer -->
+              <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 16px 24px; background: #f8f9fa;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px; border-radius: 8px; font-weight: 600;">
+                  <i class="fa-solid fa-times me-2"></i>Batal
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="executeDeleteDocument()" style="padding: 10px 24px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none;">
+                  <i class="fa-solid fa-trash me-2"></i>Ya, Hapus Dokumen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Toast Notification -->
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000;">
+          <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px;">
+            <div class="d-flex">
+              <div class="toast-body" style="padding: 16px 20px; font-size: 14px;">
+                <i class="fa-solid fa-check-circle me-2"></i>
+                <strong>Berhasil!</strong> Dokumen telah dihapus.
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+          </div>
+        </div>
+
         <!-- Hidden Delete Form -->
         <form id="deleteDocumentForm" method="POST" style="display: none;">
           @csrf
@@ -4282,34 +4359,79 @@
         </form>
 
         <script>
-        // Confirm and delete document
+        // Variable to store document id for deletion
+        let documentIdToDelete = null;
+
+        // Show delete confirmation modal
         function confirmDeleteDocument() {
           const dokumenId = document.getElementById('view-dokumen-id').value;
           const nomorAgenda = document.getElementById('view-nomor-agenda').textContent;
           const nomorSpp = document.getElementById('view-nomor-spp').textContent;
+          const nilaiRupiah = document.getElementById('view-nilai-rupiah') ? document.getElementById('view-nilai-rupiah').textContent : '-';
           
           if (!dokumenId) {
             alert('ID Dokumen tidak ditemukan');
             return;
           }
           
-          const message = `Apakah Anda yakin ingin menghapus dokumen ini?\n\nNomor Agenda: ${nomorAgenda}\nNomor SPP: ${nomorSpp}\n\n⚠️ PERHATIAN: Dokumen yang dihapus tidak dapat dikembalikan!`;
+          // Store document id
+          documentIdToDelete = dokumenId;
           
-          if (confirm(message)) {
-            // Show loading state
-            const deleteBtn = document.querySelector('.modal-footer .btn-danger');
-            if (deleteBtn) {
-              deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menghapus...';
-              deleteBtn.disabled = true;
-            }
-            
-            // Set form action and submit
-            const form = document.getElementById('deleteDocumentForm');
-            form.action = `/documents/${dokumenId}`;
-            form.submit();
-          }
+          // Populate modal with document info
+          document.getElementById('delete-nomor-agenda').textContent = nomorAgenda || '-';
+          document.getElementById('delete-nomor-spp').textContent = nomorSpp || '-';
+          document.getElementById('delete-nilai').textContent = nilaiRupiah || '-';
+          
+          // Reset the confirm button state
+          const confirmBtn = document.getElementById('confirmDeleteBtn');
+          confirmBtn.innerHTML = '<i class="fa-solid fa-trash me-2"></i>Ya, Hapus Dokumen';
+          confirmBtn.disabled = false;
+          
+          // Show the delete confirmation modal
+          const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+          deleteModal.show();
         }
+
+        // Execute the actual delete
+        function executeDeleteDocument() {
+          if (!documentIdToDelete) {
+            alert('ID Dokumen tidak ditemukan');
+            return;
+          }
+          
+          // Show loading state
+          const confirmBtn = document.getElementById('confirmDeleteBtn');
+          confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menghapus...';
+          confirmBtn.disabled = true;
+          
+          // Set form action and submit
+          const form = document.getElementById('deleteDocumentForm');
+          form.action = `/documents/${documentIdToDelete}`;
+          form.submit();
+        }
+
+        // Show success toast if redirected with success message
+        document.addEventListener('DOMContentLoaded', function() {
+          @if(session('success') && str_contains(session('success'), 'hapus'))
+            // Close any open modals first
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+              const bsModal = bootstrap.Modal.getInstance(modal);
+              if (bsModal) bsModal.hide();
+            });
+            
+            // Show success toast
+            setTimeout(() => {
+              const toast = new bootstrap.Toast(document.getElementById('deleteSuccessToast'), {
+                autohide: true,
+                delay: 5000
+              });
+              toast.show();
+            }, 500);
+          @endif
+        });
         </script>
+
 @endsection
 
 
