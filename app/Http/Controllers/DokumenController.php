@@ -290,10 +290,14 @@ class DokumenController extends Controller
      */
     public function getDocumentDetail(Dokumen $dokumen)
     {
-        // Only allow if created by ibuA
-        if ($dokumen->created_by !== 'ibuA') {
+        // Only allow if created by ibuA variants - case-insensitive check
+        $allowedCreators = ['ibua', 'ibu a', 'ibutarapul', 'ibu tarapul'];
+        $createdByLower = strtolower($dokumen->created_by ?? '');
+
+        if (!in_array($createdByLower, $allowedCreators)) {
             return response()->json(['success' => false, 'message' => 'Access denied'], 403);
         }
+
 
         // Load relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
