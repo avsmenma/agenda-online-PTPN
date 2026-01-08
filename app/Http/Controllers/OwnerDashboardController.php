@@ -2567,10 +2567,19 @@ class OwnerDashboardController extends Controller
         } else {
             // Query ALL documents that have ever been in this role (permanent tracking)
             // This shows both active documents AND completed documents (already sent to next role)
-            // Active = processed_at is NULL, Completed = processed_at is NOT NULL
+            // Active = current_handler is still this role
+            // Completed = current_handler has moved to another role
 
             // Filter by status: 'active', 'completed', or 'all' (default)
             $statusFilter = $request->get('status_filter', 'all');
+
+            // Map role code to expected handler
+            $roleHandlerMapping = [
+                'ibuB' => 'ibuB',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+            ];
+            $expectedHandler = $roleHandlerMapping[$roleCode] ?? $roleCode;
 
             // Query based on dokumen_role_data.received_at (permanent record)
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
@@ -2578,11 +2587,13 @@ class OwnerDashboardController extends Controller
                 ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
                 ->whereNotNull('dokumen_role_data.received_at');
 
-            // Apply status filter
+            // Apply status filter based on current_handler (not processed_at)
+            // Active = document is still being handled by this role
+            // Completed = document has moved to another role
             if ($statusFilter === 'active') {
-                $query->whereNull('dokumen_role_data.processed_at');
+                $query->whereRaw('LOWER(dokumens.current_handler) = ?', [strtolower($expectedHandler)]);
             } elseif ($statusFilter === 'completed') {
-                $query->whereNotNull('dokumen_role_data.processed_at');
+                $query->whereRaw('LOWER(dokumens.current_handler) != ?', [strtolower($expectedHandler)]);
             }
             // 'all' = no additional filter
 
@@ -2594,6 +2605,7 @@ class OwnerDashboardController extends Controller
                 'dokumen_role_data.deadline_at as delay_deadline_at'
             );
         }
+
 
 
 
