@@ -809,6 +809,33 @@
     @endif
 
 
+    <!-- Status Filter Tabs -->
+    @if(in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi']))
+      @php
+        $currentStatusFilter = request('status_filter', 'all');
+      @endphp
+      <div class="status-filter-tabs" style="margin: 1.5rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
+          class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
+          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
+                      {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+          <i class="fas fa-list"></i> Semua
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
+          class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
+          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
+                      {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+          <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
+          class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
+          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
+                      {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+          <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
+        </a>
+      </div>
+    @endif
+
     <!-- Modern Filter Panel -->
     <div class="modern-filter-container">
       <!-- Filter Toggle Button -->
@@ -828,6 +855,7 @@
           </button>
         </div>
       </div>
+
 
       <!-- Filter Panel (Collapsible) -->
       <div class="filter-panel" id="filterPanel" style="display: none;">
@@ -1008,11 +1036,18 @@
               onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'"
               title="Klik untuk melihat detail workflow dokumen">
               <div class="card-header">
-
                 <div>
                   <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
                   <div class="card-subtitle">SPP: {{ $dokumen->nomor_spp }}</div>
                 </div>
+                @if(isset($dokumen->is_completed))
+                  <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
+                        style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
+                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                    <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
+                    {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
+                  </span>
+                @endif
               </div>
               <div class="card-value">
                 Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}
@@ -1024,15 +1059,29 @@
               </div>
               <div class="card-info-row">
                 <i class="fas fa-clock"></i>
-                <span>Umur Dokumen:</span>
-                <span class="age-badge age-{{ $ageColor }}">{{ $ageFormatted }}</span>
+                <span>Waktu Proses:</span>
+                <span class="age-badge age-{{ $ageColor }}">
+                  {{ $ageFormatted }}
+                  @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                    <i class="fas fa-lock" title="Waktu permanen"></i>
+                  @endif
+                </span>
               </div>
               <div class="card-info-row">
                 <i class="fas fa-info-circle"></i>
                 <span>Status:</span>
-                <span class="badge badge-processing">Belum Diproses</span>
+                @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                  <span class="badge" style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                    <i class="fas fa-paper-plane"></i> Sudah Dikirim
+                  </span>
+                @else
+                  <span class="badge" style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                    <i class="fas fa-spinner"></i> Sedang Diproses
+                  </span>
+                @endif
               </div>
             </div>
+
           @endforeach
         </div>
       @endif
@@ -1126,14 +1175,24 @@
                     <td>
                       <span class="age-badge age-{{ $ageColor }}">
                         {{ $ageFormatted }}
+                        @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                          <i class="fas fa-lock" title="Waktu permanen"></i>
+                        @endif
                       </span>
                     </td>
                     <td>
-                      <span class="badge badge-processing">
-                        Belum Diproses
-                      </span>
+                      @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                        <span class="badge" style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                          <i class="fas fa-paper-plane"></i> Selesai
+                        </span>
+                      @else
+                        <span class="badge" style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                          <i class="fas fa-spinner"></i> Aktif
+                        </span>
+                      @endif
                     </td>
                   </tr>
+
                 @endforeach
               </tbody>
             </table>
@@ -1274,11 +1333,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-            <span>${label}: ${displayValue}</span>
-            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
+              <span>${label}: ${displayValue}</span>
+              <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                <i class="fas fa-times"></i>
+              </button>
+            `;
           badgesContainer.appendChild(badge);
         }
       }

@@ -2565,34 +2565,36 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.deadline_at as delay_deadline_at'
                 );
         } else {
-            // Query dokumen berdasarkan role - matching dashboard logic
-            // For ibuB, perpajakan, akutansi: query by current_handler, NOT by processed_at
-            // This ensures documents visible on role dashboard are also visible here
-            $roleCodeMapping = [
-                'ibuB' => 'ibuB',
-                'ibuA' => 'ibuA',
-                'perpajakan' => 'perpajakan',
-                'akutansi' => 'akutansi',
-            ];
+            // Query ALL documents that have ever been in this role (permanent tracking)
+            // This shows both active documents AND completed documents (already sent to next role)
+            // Active = processed_at is NULL, Completed = processed_at is NOT NULL
 
-            $currentHandler = $roleCodeMapping[$roleCode] ?? $roleCode;
+            // Filter by status: 'active', 'completed', or 'all' (default)
+            $statusFilter = $request->get('status_filter', 'all');
 
-            // Query based on current_handler (same as dashboard)
+            // Query based on dokumen_role_data.received_at (permanent record)
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-                ->leftJoin('dokumen_role_data', function ($join) use ($roleCode) {
-                    $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-                        ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)]);
-                })
-                ->where('dokumens.current_handler', $currentHandler)
-                ->where('dokumens.status', '!=', 'returned_to_bidang')
-                ->select(
-                    'dokumens.*',
-                    'dokumen_role_data.role_code as delay_role_code',
-                    'dokumen_role_data.received_at as delay_received_at',
-                    'dokumen_role_data.processed_at as delay_processed_at',
-                    'dokumen_role_data.deadline_at as delay_deadline_at'
-                );
+                ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
+                ->whereNotNull('dokumen_role_data.received_at');
+
+            // Apply status filter
+            if ($statusFilter === 'active') {
+                $query->whereNull('dokumen_role_data.processed_at');
+            } elseif ($statusFilter === 'completed') {
+                $query->whereNotNull('dokumen_role_data.processed_at');
+            }
+            // 'all' = no additional filter
+
+            $query->select(
+                'dokumens.*',
+                'dokumen_role_data.role_code as delay_role_code',
+                'dokumen_role_data.received_at as delay_received_at',
+                'dokumen_role_data.processed_at as delay_processed_at',
+                'dokumen_role_data.deadline_at as delay_deadline_at'
+            );
         }
+
 
 
         // Search functionality
@@ -2685,57 +2687,76 @@ class OwnerDashboardController extends Controller
         // Calculate age for each document and filter by age if needed
         $filterAge = $request->get('filter_age');
         $filteredDokumens = $allDokumens->map(function ($dokumen) use ($now, $roleCode) {
-            // Get received_at from the joined dokumen_role_data or fallback
+            // Get received_at and processed_at from the joined dokumen_role_data
             $receivedAt = null;
+            $processedAt = null;
 
-            // First try: delay_received_at from select
+            // Check if processed_at exists (completed document)
+            if (isset($dokumen->delay_processed_at) && $dokumen->delay_processed_at) {
+                $processedAt = Carbon::parse($dokumen->delay_processed_at);
+            }
+
+            // Get received_at
             if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
                 $receivedAt = Carbon::parse($dokumen->delay_received_at);
             }
-            // Second try: sent_to_pembayaran_at for pembayaran role
+            // Fallback for pembayaran role
             elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
                 $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
             }
-            // Third try: Load roleData relationship if not loaded and get received_at
+            // Third try: Load roleData relationship
             else {
-                // Reload dokumen with roleData relationship if needed
                 if (!$dokumen->relationLoaded('roleData')) {
                     $dokumen->load('roleData');
                 }
-                // Use case-insensitive comparison for role_code
                 $roleCodeLower = strtolower($roleCode);
                 $roleData = $dokumen->roleData->first(function ($rd) use ($roleCodeLower) {
                     return strtolower($rd->role_code) === $roleCodeLower;
                 });
-                if ($roleData && $roleData->received_at) {
-                    $receivedAt = Carbon::parse($roleData->received_at);
+                if ($roleData) {
+                    if ($roleData->received_at) {
+                        $receivedAt = Carbon::parse($roleData->received_at);
+                    }
+                    if ($roleData->processed_at) {
+                        $processedAt = Carbon::parse($roleData->processed_at);
+                    }
                 }
             }
 
-            // If still no received_at, try to get from dokumen_role_data directly
+            // If still no received_at, try direct query
             if (!$receivedAt) {
                 $roleDataDirect = \App\Models\DokumenRoleData::where('dokumen_id', $dokumen->id)
                     ->whereRaw('LOWER(role_code) = ?', [strtolower($roleCode)])
                     ->whereNotNull('received_at')
-
                     ->first();
-                if ($roleDataDirect && $roleDataDirect->received_at) {
+                if ($roleDataDirect) {
                     $receivedAt = Carbon::parse($roleDataDirect->received_at);
+                    if ($roleDataDirect->processed_at) {
+                        $processedAt = Carbon::parse($roleDataDirect->processed_at);
+                    }
                 }
             }
 
-            $ageHours = $receivedAt ? $receivedAt->diffInHours($now) : 0;
-            $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
+            // IMPORTANT: Calculate age based on completion status
+            // - Active documents: compare received_at to NOW (time keeps running)
+            // - Completed documents: compare received_at to processed_at (PERMANENT time)
+            $isCompleted = $processedAt !== null;
+            $endTime = $isCompleted ? $processedAt : $now;
+
+            $ageHours = $receivedAt ? $receivedAt->diffInHours($endTime) : 0;
+            $ageDays = $receivedAt ? $endTime->diffInDays($receivedAt, false) : 0;
             $ageDays = max(0, $ageDays);
+
+            $dokumen->is_completed = $isCompleted;
             $dokumen->age_days = $ageDays;
             $dokumen->age_hours = $ageHours;
             $dokumen->age_formatted = $this->formatAge($ageDays);
-
-            // Also set effective_received_at for view usage
             $dokumen->effective_received_at = $receivedAt ? $receivedAt->format('Y-m-d H:i:s') : null;
+            $dokumen->effective_processed_at = $processedAt ? $processedAt->format('Y-m-d H:i:s') : null;
 
             return $dokumen;
         });
+
 
         // Filter by age if filter_age is set (using hours to match dashboard)
         if ($filterAge) {
@@ -2768,22 +2789,19 @@ class OwnerDashboardController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        // Calculate card statistics berdasarkan umur dokumen sejak received_at
+        // Calculate card statistics berdasarkan umur dokumen
+        // Include ALL documents (active + completed) and use permanent time for completed
         $cardStats = [];
 
         // Calculate card statistics hanya untuk role yang memerlukan card
         if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-            // Use the same logic as DashboardBController - query by current_handler
             $roleCodeLower = strtolower($roleCode);
 
-            // Get all documents currently handled by this role with their roleData
-            $allRoleDocs = Dokumen::where('current_handler', $roleCode)
-                ->where('status', '!=', 'returned_to_bidang')
-                ->with([
-                    'roleData' => function ($q) use ($roleCodeLower) {
-                        $q->whereRaw('LOWER(role_code) = ?', [$roleCodeLower]);
-                    }
-                ])
+            // Get ALL documents that have ever been in this role
+            $allRoleDocs = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
+                ->select('dokumen_role_data.*')
                 ->get();
 
             // Card 1: Dokumen dengan umur < 24 jam (hijau) - AMAN
@@ -2794,20 +2812,18 @@ class OwnerDashboardController extends Controller
             $card3Count = 0;
 
             foreach ($allRoleDocs as $doc) {
-                $roleData = $doc->roleData->first();
-                if ($roleData && $roleData->received_at) {
-                    $receivedAt = Carbon::parse($roleData->received_at);
-                    $hoursDiff = $receivedAt->diffInHours($now);
+                $receivedAt = Carbon::parse($doc->received_at);
 
-                    if ($hoursDiff < 24) {
-                        $card1Count++;
-                    } elseif ($hoursDiff < 72) {
-                        $card2Count++;
-                    } else {
-                        $card3Count++;
-                    }
+                // Use processed_at as end time for completed documents (PERMANENT)
+                // Use now for active documents (time keeps running)
+                $endTime = $doc->processed_at ? Carbon::parse($doc->processed_at) : $now;
+                $hoursDiff = $receivedAt->diffInHours($endTime);
+
+                if ($hoursDiff < 24) {
+                    $card1Count++;
+                } elseif ($hoursDiff < 72) {
+                    $card2Count++;
                 } else {
-                    // If no received_at, count as >72h (needs attention)
                     $card3Count++;
                 }
             }
@@ -2817,6 +2833,7 @@ class OwnerDashboardController extends Controller
             $card2Count = 0;
             $card3Count = 0;
         }
+
 
 
         // Only set cardStats for roles that need cards
