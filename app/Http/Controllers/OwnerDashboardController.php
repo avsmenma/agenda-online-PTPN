@@ -760,19 +760,19 @@ class OwnerDashboardController extends Controller
         }
         $elapsedText = implode(' ', $elapsedParts);
 
-        // Determine color based on elapsed time
-        // < 1 day = green (aman)
-        // 1-2 days = yellow (warning)
-        // >= 2 days = red (danger)
+        // Determine color based on elapsed time (in hours)
+        // < 24 hours = green (aman)
+        // 24-72 hours = yellow (warning)
+        // >= 72 hours = red (danger)
         $class = 'safe';
         $color = 'success';
         $statusText = 'AMAN';
 
-        if ($diff->days >= 2) {
+        if ($totalHours >= 72) {
             $class = 'danger';
             $color = 'danger';
             $statusText = 'TERLAMBAT';
-        } elseif ($diff->days >= 1) {
+        } elseif ($totalHours >= 24) {
             $class = 'warning';
             $color = 'warning';
             $statusText = 'PERINGATAN';

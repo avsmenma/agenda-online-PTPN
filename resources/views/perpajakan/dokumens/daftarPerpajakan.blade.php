@@ -2415,29 +2415,46 @@
                   ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
 
                   // Calculate document age from received_at (count up)
-                  $ageDays = 0;
+                  $ageText = '-';
                   $ageLabel = '-';
                   $ageColor = 'gray';
                   $ageIcon = 'fa-clock';
+                  $ageDays = 0;
 
                   if ($receivedAt) {
                     $now = \Carbon\Carbon::now();
-                    $ageDays = $now->diffInDays($receivedAt, false);
-                    $ageDays = max(0, $ageDays); // Ensure non-negative
+                    $diff = $receivedAt->diff($now);
+                    $ageDays = $diff->days;
+                    
+                    // Format elapsed time as "X hari Y jam Z menit"
+                    $elapsedParts = [];
+                    if ($diff->days > 0) {
+                      $elapsedParts[] = $diff->days . ' hari';
+                    }
+                    if ($diff->h > 0) {
+                      $elapsedParts[] = $diff->h . ' jam';
+                    }
+                    if ($diff->i > 0 || empty($elapsedParts)) {
+                      $elapsedParts[] = $diff->i . ' menit';
+                    }
+                    $ageText = implode(' ', $elapsedParts);
 
-                    // Determine label and color based on age
-                    if ($ageDays < 1) {
-                      $ageLabel = 'Aman';
-                      $ageColor = 'green';
-                      $ageIcon = 'fa-check-circle';
-                    } elseif ($ageDays >= 1 && $ageDays < 3) {
-                      $ageLabel = 'Perlu Perhatian';
+                    // Determine label and color based on elapsed time (in hours)
+                    // Green: < 24 hours, Yellow: 24-72 hours, Red: > 72 hours
+                    $totalHours = ($diff->days * 24) + $diff->h;
+                    
+                    if ($totalHours >= 72) {
+                      $ageLabel = 'TERLAMBAT';
+                      $ageColor = 'red';
+                      $ageIcon = 'fa-times-circle';
+                    } elseif ($totalHours >= 24) {
+                      $ageLabel = 'PERINGATAN';
                       $ageColor = 'yellow';
                       $ageIcon = 'fa-exclamation-triangle';
                     } else {
-                      $ageLabel = 'Terlambat';
-                      $ageColor = 'red';
-                      $ageIcon = 'fa-times-circle';
+                      $ageLabel = 'AMAN';
+                      $ageColor = 'green';
+                      $ageIcon = 'fa-check-circle';
                     }
                   }
 
@@ -2463,7 +2480,7 @@
                     </div>
                     <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
                       <i class="fa-solid fa-hourglass-half"></i>
-                      <span>{{ $ageDays }} hari</span>
+                      <span>{{ $ageText }}</span>
                     </div>
                     @if($isSent)
                       <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
