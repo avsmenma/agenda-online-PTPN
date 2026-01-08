@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class JenisPembayaran extends Model
 {
-    protected $connection = 'cash_bank_new';
+    protected $connection = 'cash_bank';  // Same as KategoriKriteria
     protected $table = 'jenis_pembayarans';
+
     protected $primaryKey = 'id_jenis_pembayaran';
-    
+
     public $timestamps = true; // Tabel memiliki created_at dan updated_at
-    
+
     protected $fillable = [
         'nama_jenis_pembayaran',
     ];
@@ -31,7 +32,7 @@ class JenisPembayaran extends Model
     {
         return $this->nama_jenis_pembayaran ?? $this->id_jenis_pembayaran;
     }
-    
+
     /**
      * Convert stdClass to model instance jika diperlukan
      */
@@ -40,7 +41,7 @@ class JenisPembayaran extends Model
         $model = new static();
         // Set attributes menggunakan setRawAttributes untuk menghindari mass assignment protection
         $attributes = [];
-        foreach ((array)$stdClass as $key => $value) {
+        foreach ((array) $stdClass as $key => $value) {
             $attributes[$key] = $value;
         }
         $model->setRawAttributes($attributes, true);
