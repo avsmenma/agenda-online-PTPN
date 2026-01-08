@@ -2810,7 +2810,7 @@
 
             // Reload page when success modal is closed
             const successModalEl = document.getElementById('sendSuccessModal');
-            successModalEl.addEventListener('hidden.bs.modal', functio n() {
+            successModalEl.addEventListener('hidden.bs.modal', function() {
               location.reload();
             }, { once: true });
           } else {
