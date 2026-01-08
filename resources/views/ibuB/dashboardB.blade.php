@@ -539,7 +539,7 @@
             <i class="fas fa-clock"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-title">Total Dokumen Proses</div>
+            <div class="stat-title">Total Dokumen Diproses</div>
             <div class="stat-value">{{ number_format($totalDokumenProses ?? 0, 0, ',', '.') }}</div>
             <div class="stat-description">Sedang diproses</div>
           </div>
@@ -547,70 +547,79 @@
       </div>
     </div>
 
-    <!-- Total Dokumen Approved -->
+    <!-- Dokumen < 1 Hari (GREEN) -->
     <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-      <div class="stat-card">
+      <div class="stat-card"
+        style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745;">
         <div class="stat-card-body">
-          <div class="stat-icon approved">
-            <i class="fas fa-check-circle"></i>
+          <div class="stat-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <i class="fas fa-bolt"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-title">Total Dokumen Approved</div>
-            <div class="stat-value">{{ number_format($totalDokumenApproved ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Disetujui Team Verifikasi</div>
+            <div class="stat-title" style="color: #155724;">Dokumen < 1 Hari</div>
+                <div class="stat-value" style="color: #155724;">{{ number_format($dokumenLessThan24h ?? 0, 0, ',', '.') }}
+                </div>
+                <div class="stat-description" style="color: #155724;">Diterima < 24 jam</div>
+                </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Total Dokumen Rejected -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-      <div class="stat-card">
-        <div class="stat-card-body">
-          <div class="stat-icon rejected">
-            <i class="fas fa-times-circle"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-title">Total Dokumen Rejected</div>
-            <div class="stat-value">{{ number_format($totalDokumenRejected ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Dikembalikan ke Ibu Tarapul</div>
+        <!-- Dokumen 1-2 Hari (YELLOW) -->
+        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+          <div class="stat-card"
+            style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107;">
+            <div class="stat-card-body">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-title" style="color: #856404;">Dokumen 1-2 Hari</div>
+                <div class="stat-value" style="color: #856404;">{{ number_format($dokumen24to72h ?? 0, 0, ',', '.') }}
+                </div>
+                <div class="stat-description" style="color: #856404;">Diterima 24-72 jam</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Total Dokumen Pengembalian Ke Bidang -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-      <div class="stat-card">
-        <div class="stat-card-body">
-          <div class="stat-icon bidang">
-            <i class="fas fa-building"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-title">Total Pengembalian Ke Bidang</div>
-            <div class="stat-value">{{ number_format($totalDokumenPengembalianKeBidang ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Dikembalikan ke bidang</div>
+        <!-- Dokumen > 3 Hari (RED) -->
+        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+          <div class="stat-card"
+            style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545;">
+            <div class="stat-card-body">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                <i class="fas fa-exclamation-circle"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-title" style="color: #721c24;">Dokumen > 3 Hari</div>
+                <div class="stat-value" style="color: #721c24;">{{ number_format($dokumenMoreThan72h ?? 0, 0, ',', '.') }}
+                </div>
+                <div class="stat-description" style="color: #721c24;">Diterima > 72 jam</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Total Dokumen Pengembalian Dari Bagian -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-      <div class="stat-card">
-        <div class="stat-card-body">
-          <div class="stat-icon bagian">
-            <i class="fas fa-reply"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-title">Total Pengembalian Dari Bagian</div>
-            <div class="stat-value">{{ number_format($totalDokumenPengembalianDariBagian ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Dari perpajakan/akutansi</div>
+        <!-- Total Dokumen Terkirim -->
+        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                <i class="fas fa-paper-plane"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-title">Total Dokumen Terkirim</div>
+                <div class="stat-value">{{ number_format($totalTerkirim ?? 0, 0, ',', '.') }}</div>
+                <div class="stat-description">Dikirim ke tahap selanjutnya</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
 
   <!-- Search Box -->
   <div class="search-box">

@@ -20,57 +20,66 @@ class DashboardAkutansiController extends Controller
 {
     public function index()
     {
+        $now = Carbon::now();
+
         // Get all documents that have been assigned to akutansi at any point
-        // Exclude CSV imported documents - they are meant only for pembayaran
-        // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
-        // and should not appear in Akutansi module. Only documents that went through
-        // Akutansi workflow (sent_to_akutansi) should appear here.
         $akutansiDocs = Dokumen::where(function ($query) {
             $query->where('current_handler', 'akutansi')
                 ->orWhere('status', 'sent_to_akutansi');
-            // Removed: ->orWhere('status', 'sent_to_pembayaran')
-            // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
         })
             ->excludeCsvImports()
             ->get();
 
-        // Calculate accurate statistics based on actual workflow using existing fields
+        // 1. Total dokumen
         $totalDokumen = $akutansiDocs->count();
 
-        $totalSelesai = $akutansiDocs
-            ->where('status', 'selesai')
-            ->count();
-
-        $totalProses = $akutansiDocs
-            ->where('status', 'sedang diproses')
+        // 2. Total dokumen diproses - dokumen yang sedang diproses di akutansi
+        $totalDokumenProses = $akutansiDocs
             ->where('current_handler', 'akutansi')
-            ->count();
-
-        $totalBelumDiproses = $akutansiDocs
-            ->where('status', 'sent_to_akutansi')
-            ->where('current_handler', 'akutansi')
-            ->count();
-
-        $totalDikembalikan = $akutansiDocs
-            ->where(function ($doc) {
-                return in_array($doc->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']);
+            ->filter(function ($doc) {
+                return in_array($doc->status, ['sent_to_akutansi', 'sedang diproses']);
             })
             ->count();
 
-        // Total Dikirim: Documents that have been completed and are no longer handled by akutansi
-        $totalDikirim = Dokumen::where('status', 'selesai')
-            ->where(function ($query) {
-                $query->where('current_handler', '!=', 'akutansi')
-                    ->orWhereNull('current_handler');
-            })
-            ->where(function ($query) {
-                $query->where('status', 'sent_to_akutansi')
-                    ->orWhere('current_handler', 'akutansi');
-            })
+        // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
+        $akutansiDocsWithRoleData = Dokumen::where('current_handler', 'akutansi')
+            ->excludeCsvImports()
+            ->with([
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'akutansi');
+                }
+            ])
+            ->get();
+
+        $dokumenLessThan24h = 0;  // < 24 jam (green)
+        $dokumen24to72h = 0;      // 24-72 jam (yellow)
+        $dokumenMoreThan72h = 0;  // > 72 jam (red)
+
+        foreach ($akutansiDocsWithRoleData as $doc) {
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $hoursDiff = $receivedAt->diffInHours($now);
+
+                if ($hoursDiff < 24) {
+                    $dokumenLessThan24h++;
+                } elseif ($hoursDiff < 72) {
+                    $dokumen24to72h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            } else {
+                $dokumenMoreThan72h++;
+            }
+        }
+
+        // 6. Total dokumen terkirim - sudah dikirim ke pembayaran atau selesai
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_pembayaran', 'selesai'])
+            ->where('current_handler', '!=', 'akutansi')
+            ->excludeCsvImports()
             ->count();
 
         // Get latest documents currently handled by akutansi
-        // Exclude CSV imported documents - they are exclusive to Pembayaran
         $dokumenTerbaru = Dokumen::where('current_handler', 'akutansi')
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs'])
@@ -84,11 +93,11 @@ class DashboardAkutansiController extends Controller
             "menuDashboard" => "Active",
             'menuDokumen' => '',
             'totalDokumen' => $totalDokumen,
-            'totalSelesai' => $totalSelesai,
-            'totalProses' => $totalProses,
-            'totalBelumDiproses' => $totalBelumDiproses,
-            'totalDikembalikan' => $totalDikembalikan,
-            'totalDikirim' => $totalDikirim,
+            'totalDokumenProses' => $totalDokumenProses,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
+            'totalTerkirim' => $totalTerkirim,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
         return view('akutansi.dashboardAkutansi', $data);

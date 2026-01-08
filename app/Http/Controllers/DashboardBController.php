@@ -33,6 +33,7 @@ class DashboardBController extends Controller
     public function index()
     {
         // Get statistics for IbuB (only documents with current_handler = ibuB)
+        $now = Carbon::now();
 
         // 1. Total dokumen - semua dokumen yang terlihat oleh ibuB (same as dokumens() query)
         $totalDokumen = Dokumen::where(function ($q) {
@@ -47,24 +48,42 @@ class DashboardBController extends Controller
             ->whereIn('status', ['sent_to_ibub', 'sedang diproses'])
             ->count();
 
-        // 3. Total dokumen approved - dokumen yang disetujui ibuB
-        $totalDokumenApproved = Dokumen::where('current_handler', 'ibuB')
-            ->whereIn('status', ['approved_ibub', 'selesai'])
-            ->count();
+        // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
+        // Get all documents currently handled by ibuB with their roleData
+        $ibubDocuments = Dokumen::where('current_handler', 'ibuB')
+            ->where('status', '!=', 'returned_to_bidang')
+            ->with([
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'ibub');
+                }
+            ])
+            ->get();
 
-        // 4. Total dokumen rejected - dokumen yang ditolak ibuB (dibalikkan ke ibuA)
-        $totalDokumenRejected = Dokumen::where('current_handler', 'ibuB')
-            ->where('status', 'rejected_ibub')
-            ->count();
+        $dokumenLessThan24h = 0;  // < 24 jam (green)
+        $dokumen24to72h = 0;      // 24-72 jam (yellow)
+        $dokumenMoreThan72h = 0;  // > 72 jam (red)
 
-        // 5. Total dokumen pengembalian ke bidang - dokumen yang dikembalikan ke bidang
-        $totalDokumenPengembalianKeBidang = Dokumen::where('current_handler', 'ibuB')
-            ->where('status', 'returned_to_bidang')
-            ->count();
+        foreach ($ibubDocuments as $doc) {
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $hoursDiff = $receivedAt->diffInHours($now);
 
-        // 6. Total dokumen pengembalian dari bagian - dokumen yang dikembalikan dari perpajakan/akutansi/pembayaran ke ibuB
-        $totalDokumenPengembalianDariBagian = Dokumen::where('current_handler', 'ibuB')
-            ->where('status', 'returned_to_department')
+                if ($hoursDiff < 24) {
+                    $dokumenLessThan24h++;
+                } elseif ($hoursDiff < 72) {
+                    $dokumen24to72h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            } else {
+                // If no received_at, count as >72h (needs attention)
+                $dokumenMoreThan72h++;
+            }
+        }
+
+        // 6. Total dokumen terkirim - dokumen yang sudah dikirim ke perpajakan/akutansi
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi'])
             ->count();
 
         // Get latest documents (5 most recent) for ibuB - same logic as dokumens() method
@@ -89,10 +108,10 @@ class DashboardBController extends Controller
             'menuDokumen' => '',
             'totalDokumen' => $totalDokumen,
             'totalDokumenProses' => $totalDokumenProses,
-            'totalDokumenApproved' => $totalDokumenApproved,
-            'totalDokumenRejected' => $totalDokumenRejected,
-            'totalDokumenPengembalianKeBidang' => $totalDokumenPengembalianKeBidang,
-            'totalDokumenPengembalianDariBagian' => $totalDokumenPengembalianDariBagian,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
+            'totalTerkirim' => $totalTerkirim,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
         return view('ibuB.dashboardB', $data);

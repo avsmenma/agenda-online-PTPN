@@ -20,15 +20,13 @@ class DashboardPerpajakanController extends Controller
 {
     public function index()
     {
+        $now = Carbon::now();
+
         // Get all documents that perpajakan can see (same as dokumens() query)
-        // Exclude CSV imported documents - they should only appear in pembayaran
-        // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
-        // and should not appear in Perpajakan module
         $perpajakanDocs = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
-                    // Include documents rejected by akutansi and returned to perpajakan
                     ->orWhere(function ($rejectedQ) {
                         $rejectedQ->where('status', 'returned_to_department')
                             ->where('target_department', 'akutansi')
@@ -38,50 +36,62 @@ class DashboardPerpajakanController extends Controller
                                     ->where('status', 'rejected');
                             });
                     });
-                // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
             ->excludeCsvImports()
             ->get();
 
-        // Calculate accurate statistics based on actual workflow
+        // 1. Total dokumen
         $totalDokumen = $perpajakanDocs->count();
 
-        $totalSelesai = $perpajakanDocs
-            ->where('status_perpajakan', 'selesai')
+        // 2. Total dokumen diproses - dokumen yang sedang diproses di perpajakan
+        $totalDokumenProses = $perpajakanDocs
+            ->where('current_handler', 'perpajakan')
+            ->whereIn('status_perpajakan', ['sedang_diproses', ''])
             ->count();
 
-        $totalDiproses = $perpajakanDocs
-            ->where('status_perpajakan', 'sedang_diproses')
-            ->count();
+        // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
+        $perpajakanDocsWithRoleData = Dokumen::where('current_handler', 'perpajakan')
+            ->excludeCsvImports()
+            ->with([
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'perpajakan');
+                }
+            ])
+            ->get();
 
-        $totalBelumDiproses = $perpajakanDocs
-            ->where(function ($doc) {
-                return empty($doc->status_perpajakan) || $doc->status_perpajakan === '';
-            })
-            ->count();
+        $dokumenLessThan24h = 0;  // < 24 jam (green)
+        $dokumen24to72h = 0;      // 24-72 jam (yellow)
+        $dokumenMoreThan72h = 0;  // > 72 jam (red)
 
-        $totalDikembalikan = $perpajakanDocs
-            ->where('status', 'returned_to_perpajakan')
-            ->count();
+        foreach ($perpajakanDocsWithRoleData as $doc) {
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $hoursDiff = $receivedAt->diffInHours($now);
 
-        // Total Dikirim: Documents that have been completed by perpajakan and sent to next stage
-        // Since there's no "kirim" button yet, this should be documents that:
-        // 1. Have status_perpajakan = 'selesai' AND
-        // 2. Are no longer handled by perpajakan (moved to next stage like akutansi)
-        $totalDikirim = Dokumen::where('status_perpajakan', 'selesai')
+                if ($hoursDiff < 24) {
+                    $dokumenLessThan24h++;
+                } elseif ($hoursDiff < 72) {
+                    $dokumen24to72h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            } else {
+                $dokumenMoreThan72h++;
+            }
+        }
+
+        // 6. Total dokumen terkirim - sudah dikirim ke akutansi atau setelahnya
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran', 'selesai'])
             ->where('current_handler', '!=', 'perpajakan')
-            ->whereNotNull('current_handler')
+            ->excludeCsvImports()
             ->count();
 
-        // Get latest documents for perpajakan - same logic as dokumens() method
-        // Exclude CSV imported documents
+        // Get latest documents for perpajakan
         $dokumenTerbaru = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
                     ->orWhere('status', 'sent_to_akutansi');
-                // Removed: ->orWhere('status', 'sent_to_pembayaran')
-                // Reason: CSV imported documents have this status and should be exclusive to Pembayaran
             })
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs'])
@@ -106,11 +116,11 @@ class DashboardPerpajakanController extends Controller
             "menuDashboard" => "Active",
             'menuDokumen' => '',
             'totalDokumen' => $totalDokumen,
-            'totalSelesai' => $totalSelesai,
-            'totalDiproses' => $totalDiproses,
-            'totalBelumDiproses' => $totalBelumDiproses,
-            'totalDikembalikan' => $totalDikembalikan,
-            'totalDikirim' => $totalDikirim,
+            'totalDokumenProses' => $totalDokumenProses,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
+            'totalTerkirim' => $totalTerkirim,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
         return view('perpajakan.dashboardPerpajakan', $data);
