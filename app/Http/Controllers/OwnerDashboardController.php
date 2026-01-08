@@ -2565,13 +2565,26 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.deadline_at as delay_deadline_at'
                 );
         } else {
-            // Query from DokumenRoleData and join with dokumens
-            // This ensures we only get dokumens that actually exist (inner join filters out deleted dokumens)
+            // Query dokumen berdasarkan role - matching dashboard logic
+            // For ibuB, perpajakan, akutansi: query by current_handler, NOT by processed_at
+            // This ensures documents visible on role dashboard are also visible here
+            $roleCodeMapping = [
+                'ibuB' => 'ibuB',
+                'ibuA' => 'ibuA',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+            ];
+
+            $currentHandler = $roleCodeMapping[$roleCode] ?? $roleCode;
+
+            // Query based on current_handler (same as dashboard)
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-                ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-                ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
-                ->whereNotNull('dokumen_role_data.received_at')
-                ->whereNull('dokumen_role_data.processed_at')
+                ->leftJoin('dokumen_role_data', function ($join) use ($roleCode) {
+                    $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                        ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)]);
+                })
+                ->where('dokumens.current_handler', $currentHandler)
+                ->where('dokumens.status', '!=', 'returned_to_bidang')
                 ->select(
                     'dokumens.*',
                     'dokumen_role_data.role_code as delay_role_code',
@@ -2580,6 +2593,7 @@ class OwnerDashboardController extends Controller
                     'dokumen_role_data.deadline_at as delay_deadline_at'
                 );
         }
+
 
         // Search functionality
         if ($request->has('search') && $request->search) {
@@ -2688,7 +2702,11 @@ class OwnerDashboardController extends Controller
                 if (!$dokumen->relationLoaded('roleData')) {
                     $dokumen->load('roleData');
                 }
-                $roleData = $dokumen->roleData->firstWhere('role_code', $roleCode);
+                // Use case-insensitive comparison for role_code
+                $roleCodeLower = strtolower($roleCode);
+                $roleData = $dokumen->roleData->first(function ($rd) use ($roleCodeLower) {
+                    return strtolower($rd->role_code) === $roleCodeLower;
+                });
                 if ($roleData && $roleData->received_at) {
                     $receivedAt = Carbon::parse($roleData->received_at);
                 }
@@ -2697,17 +2715,20 @@ class OwnerDashboardController extends Controller
             // If still no received_at, try to get from dokumen_role_data directly
             if (!$receivedAt) {
                 $roleDataDirect = \App\Models\DokumenRoleData::where('dokumen_id', $dokumen->id)
-                    ->where('role_code', $roleCode)
+                    ->whereRaw('LOWER(role_code) = ?', [strtolower($roleCode)])
                     ->whereNotNull('received_at')
+
                     ->first();
                 if ($roleDataDirect && $roleDataDirect->received_at) {
                     $receivedAt = Carbon::parse($roleDataDirect->received_at);
                 }
             }
 
+            $ageHours = $receivedAt ? $receivedAt->diffInHours($now) : 0;
             $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
             $ageDays = max(0, $ageDays);
             $dokumen->age_days = $ageDays;
+            $dokumen->age_hours = $ageHours;
             $dokumen->age_formatted = $this->formatAge($ageDays);
 
             // Also set effective_received_at for view usage
@@ -2716,20 +2737,24 @@ class OwnerDashboardController extends Controller
             return $dokumen;
         });
 
-        // Filter by age if filter_age is set
+        // Filter by age if filter_age is set (using hours to match dashboard)
         if ($filterAge) {
             $filteredDokumens = $filteredDokumens->filter(function ($dokumen) use ($filterAge) {
-                $ageDays = $dokumen->age_days ?? 0;
+                $ageHours = $dokumen->age_hours ?? 0;
                 if ($filterAge === '1') {
-                    return $ageDays <= 1;
+                    // AMAN: < 24 hours
+                    return $ageHours < 24;
                 } elseif ($filterAge === '2') {
-                    return $ageDays > 1 && $ageDays <= 2;
+                    // PERINGATAN: 24-72 hours
+                    return $ageHours >= 24 && $ageHours < 72;
                 } elseif ($filterAge === '3+') {
-                    return $ageDays > 2;
+                    // TERLAMBAT: > 72 hours
+                    return $ageHours >= 72;
                 }
                 return true;
             });
         }
+
 
         // Paginate the filtered results
         $perPage = 20;
@@ -2748,41 +2773,51 @@ class OwnerDashboardController extends Controller
 
         // Calculate card statistics hanya untuk role yang memerlukan card
         if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-            // Get all documents for this role that actually exist in dokumens table
-            // Use join to ensure we only count dokumens that exist
-            $allRoleDocs = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
-                ->whereNotNull('dokumen_role_data.received_at')
-                ->whereNull('dokumen_role_data.processed_at')
-                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
-                ->select('dokumen_role_data.*')
+            // Use the same logic as DashboardBController - query by current_handler
+            $roleCodeLower = strtolower($roleCode);
+
+            // Get all documents currently handled by this role with their roleData
+            $allRoleDocs = Dokumen::where('current_handler', $roleCode)
+                ->where('status', '!=', 'returned_to_bidang')
+                ->with([
+                    'roleData' => function ($q) use ($roleCodeLower) {
+                        $q->whereRaw('LOWER(role_code) = ?', [$roleCodeLower]);
+                    }
+                ])
                 ->get();
 
-            // Card 1: Dokumen dengan umur <= 1 hari (hijau)
-            $card1Count = $allRoleDocs->filter(function ($doc) use ($now) {
-                $ageDays = $now->diffInDays($doc->received_at, false);
-                $ageDays = max(0, $ageDays); // Ensure not negative
-                return $ageDays <= 1;
-            })->count();
+            // Card 1: Dokumen dengan umur < 24 jam (hijau) - AMAN
+            $card1Count = 0;
+            // Card 2: Dokumen dengan umur 24-72 jam (kuning) - PERINGATAN
+            $card2Count = 0;
+            // Card 3: Dokumen dengan umur > 72 jam (merah) - TERLAMBAT
+            $card3Count = 0;
 
-            // Card 2: Dokumen dengan umur > 1 dan <= 2 hari (kuning)
-            $card2Count = $allRoleDocs->filter(function ($doc) use ($now) {
-                $ageDays = $now->diffInDays($doc->received_at, false);
-                $ageDays = max(0, $ageDays); // Ensure not negative
-                return $ageDays > 1 && $ageDays <= 2;
-            })->count();
+            foreach ($allRoleDocs as $doc) {
+                $roleData = $doc->roleData->first();
+                if ($roleData && $roleData->received_at) {
+                    $receivedAt = Carbon::parse($roleData->received_at);
+                    $hoursDiff = $receivedAt->diffInHours($now);
 
-            // Card 3: Dokumen dengan umur > 2 hari (merah)
-            $card3Count = $allRoleDocs->filter(function ($doc) use ($now) {
-                $ageDays = $now->diffInDays($doc->received_at, false);
-                $ageDays = max(0, $ageDays); // Ensure not negative
-                return $ageDays > 2;
-            })->count();
+                    if ($hoursDiff < 24) {
+                        $card1Count++;
+                    } elseif ($hoursDiff < 72) {
+                        $card2Count++;
+                    } else {
+                        $card3Count++;
+                    }
+                } else {
+                    // If no received_at, count as >72h (needs attention)
+                    $card3Count++;
+                }
+            }
         } else {
             // Untuk role lain (ibuA, pembayaran), set default values
             $card1Count = 0;
             $card2Count = 0;
             $card3Count = 0;
         }
+
 
         // Only set cardStats for roles that need cards
         if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
