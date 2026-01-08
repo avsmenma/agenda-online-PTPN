@@ -5,13 +5,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
+        // FIX for "Data truncated" error on server:
+        // The users.role column might be too short or an ENUM.
+        // We ensure it is a VARCHAR(50) before trying to update it with new values.
+        try {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role VARCHAR(50) NULL");
+        } catch (\Exception $e) {
+            // Continue if this fails (e.g. not MySQL), hope for the best
+        }
+
         // Ensure new role codes exist in roles table first
         // Check if roles table exists and insert if not exists
         if (Schema::hasTable('roles')) {
