@@ -2137,7 +2137,7 @@
                       // Jika dokumen ada di tangan role lain (IbuB, Perpajakan, Akutansi, dll) -> Terkirim
                       $isWithIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a']);
                     @endphp
-                    @if((strtolower($dokumen->current_handler ?? '') == 'ibua' || strtolower($dokumen->current_handler ?? '') == 'ibu a') && !in_array($dokumen->status, ['pending_approval_ibub', 'pending_approval_ibu_b']))
+                    @if((strtolower($dokumen->current_handler ?? '') == 'ibua' || strtolower($dokumen->current_handler ?? '') == 'ibu a') && !in_array($dokumen->status, ['pending_approval_ibub', 'pending_approval_ibu_b', 'waiting_reviewer_approval']))
                       <span class="badge-status badge-draft">
                         <i class="fa-solid fa-file-lines me-1"></i>
                         <span>Belum Dikirim</span>
