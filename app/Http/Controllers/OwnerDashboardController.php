@@ -23,7 +23,7 @@ class OwnerDashboardController extends Controller
         $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
-        
+
         // Get filter data for dropdowns
         $filterData = $this->getFilterData();
 
@@ -239,8 +239,8 @@ class OwnerDashboardController extends Controller
                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
                         ->orWhere('status_pembayaran', 'pending');
                 })
-                ->whereNull('tanggal_dibayar')
-                ->whereNull('link_bukti_pembayaran');
+                    ->whereNull('tanggal_dibayar')
+                    ->whereNull('link_bukti_pembayaran');
             } elseif ($statusPembayaran === 'siap_dibayar') {
                 $query->where(function ($q) {
                     $q->where('status_pembayaran', 'siap_dibayar')
@@ -543,7 +543,7 @@ class OwnerDashboardController extends Controller
             'overdue_documents' => Dokumen::whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
                 ->whereNotIn('status', [
-                    'approved_data_sudah_terkirim', 
+                    'approved_data_sudah_terkirim',
                     'rejected_data_tidak_lengkap',
                     'selesai',
                     'completed',
@@ -694,33 +694,97 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Get deadline information
+     * Get deadline information based on elapsed time since document approval
+     * Color coding:
+     * - Green (aman): < 1 day elapsed
+     * - Yellow (warning): 1-2 days elapsed  
+     * - Red (danger): >= 2 days elapsed
      */
     private function getDeadlineInfo($dokumen)
     {
-        if (!$dokumen->deadline_at)
-            return null;
+        // Get the approval timestamp - when the document started being processed
+        // This is when the "timer" begins
+        $startTime = null;
 
-        $now = Carbon::now();
-        $deadline = Carbon::parse($dokumen->deadline_at);
-
-        if ($now->greaterThan($deadline)) {
-            // Calculate days overdue: use diff to get exact difference, then get days
-            $diff = $now->diff($deadline);
-            $daysOverdue = (int) $diff->days;
-            return [
-                'text' => 'Terlambat ' . $daysOverdue . ' hari',
-                'class' => 'overdue'
-            ];
+        // Priority: processed_at (when IbuB approved) -> received_at from roleData -> deadline_at
+        if ($dokumen->processed_at) {
+            $startTime = Carbon::parse($dokumen->processed_at);
         } else {
-            // Calculate days remaining: use diff to get exact difference, then get days
-            $diff = $deadline->diff($now);
-            $daysRemaining = (int) $diff->days;
+            // Try to get from roleData - when received by IbuB (approval from inbox)
+            $ibubData = null;
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $ibubData = $dokumen->getDataForRole('ibub');
+            } elseif (isset($dokumen->roleData)) {
+                $ibubData = $dokumen->roleData->where('role_code', 'ibub')->first();
+            }
+
+            if ($ibubData && isset($ibubData->processed_at) && $ibubData->processed_at) {
+                $startTime = Carbon::parse($ibubData->processed_at);
+            } elseif ($ibubData && isset($ibubData->received_at) && $ibubData->received_at) {
+                $startTime = Carbon::parse($ibubData->received_at);
+            }
+        }
+
+        // If no approval time found, check deadline_at as fallback for display
+        if (!$startTime) {
+            if (!$dokumen->deadline_at) {
+                return null;
+            }
+            // Show deadline date if no start time
             return [
-                'text' => $daysRemaining . ' hari lagi',
-                'class' => 'on-time'
+                'date' => Carbon::parse($dokumen->deadline_at)->format('d M Y, H:i'),
+                'text' => 'Belum diproses',
+                'elapsed' => '',
+                'class' => 'safe',
+                'color' => 'success'
             ];
         }
+
+        $now = Carbon::now();
+
+        // Calculate elapsed time since approval
+        $diff = $startTime->diff($now);
+        $totalHours = ($diff->days * 24) + $diff->h;
+        $totalMinutes = $totalHours * 60 + $diff->i;
+
+        // Format elapsed time as "X hari Y jam Z menit"
+        $elapsedParts = [];
+        if ($diff->days > 0) {
+            $elapsedParts[] = $diff->days . ' hari';
+        }
+        if ($diff->h > 0) {
+            $elapsedParts[] = $diff->h . ' jam';
+        }
+        if ($diff->i > 0 || empty($elapsedParts)) {
+            $elapsedParts[] = $diff->i . ' menit';
+        }
+        $elapsedText = implode(' ', $elapsedParts);
+
+        // Determine color based on elapsed time
+        // < 1 day = green (aman)
+        // 1-2 days = yellow (warning)
+        // >= 2 days = red (danger)
+        $class = 'safe';
+        $color = 'success';
+        $statusText = 'AMAN';
+
+        if ($diff->days >= 2) {
+            $class = 'danger';
+            $color = 'danger';
+            $statusText = 'TERLAMBAT';
+        } elseif ($diff->days >= 1) {
+            $class = 'warning';
+            $color = 'warning';
+            $statusText = 'PERINGATAN';
+        }
+
+        return [
+            'date' => $startTime->format('d M Y, H:i'),
+            'text' => $statusText,
+            'elapsed' => $elapsedText,
+            'class' => $class,
+            'color' => $color
+        ];
     }
 
     /**
@@ -896,7 +960,7 @@ class OwnerDashboardController extends Controller
         $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
-        
+
         // Get filter data for dropdowns
         $filterData = $this->getFilterData();
 
@@ -1671,7 +1735,7 @@ class OwnerDashboardController extends Controller
             $query->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
+                        ->orWhereNull('imported_from_csv');
                 });
             });
         }
@@ -1996,8 +2060,8 @@ class OwnerDashboardController extends Controller
             $documentsQuery->whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
                 ->whereNotIn('status', [
-                    'selesai', 
-                    'approved_data_sudah_terkirim', 
+                    'selesai',
+                    'approved_data_sudah_terkirim',
                     'completed',
                     'sent_to_perpajakan',
                     'sent_to_akutansi',
@@ -2385,14 +2449,14 @@ class OwnerDashboardController extends Controller
                 ->orderBy('nama_penerima')
                 ->pluck('nama_penerima', 'nama_penerima')
                 ->toArray();
-            
+
             // Also include from dokumens.dibayar_kepada column (legacy)
             $legacyVendors = Dokumen::whereNotNull('dibayar_kepada')
                 ->where('dibayar_kepada', '!=', '')
                 ->distinct()
                 ->pluck('dibayar_kepada', 'dibayar_kepada')
                 ->toArray();
-            
+
             $vendorList = array_merge($vendorList, $legacyVendors);
             $vendorList = array_unique($vendorList);
             asort($vendorList);
@@ -2412,19 +2476,19 @@ class OwnerDashboardController extends Controller
         $kriteriaCfList = [];
         $subKriteriaList = [];
         $itemSubKriteriaList = [];
-        
+
         try {
             $kriteriaCfList = \App\Models\KategoriKriteria::on('cash_bank')
                 ->where('tipe', 'Keluar')
                 ->orderBy('nama_kriteria')
                 ->pluck('nama_kriteria', 'id_kategori_kriteria')
                 ->toArray();
-            
+
             $subKriteriaList = \App\Models\SubKriteria::on('cash_bank')
                 ->orderBy('nama_sub_kriteria')
                 ->pluck('nama_sub_kriteria', 'id_sub_kriteria')
                 ->toArray();
-            
+
             $itemSubKriteriaList = \App\Models\ItemSubKriteria::on('cash_bank')
                 ->orderBy('nama_item_sub_kriteria')
                 ->pluck('nama_item_sub_kriteria', 'id_item_sub_kriteria')
@@ -2449,7 +2513,7 @@ class OwnerDashboardController extends Controller
     public function rekapanKeterlambatanByRole(Request $request, $roleCode)
     {
         $now = Carbon::now();
-        
+
         // Validasi role
         $validRoles = ['ibuA', 'ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
         if (!in_array($roleCode, $validRoles)) {
@@ -2470,34 +2534,36 @@ class OwnerDashboardController extends Controller
         // Untuk pembayaran, gunakan left join karena mungkin tidak selalu ada di dokumen_role_data
         if ($roleCode === 'pembayaran') {
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-                ->leftJoin('dokumen_role_data', function($join) use ($roleCode) {
+                ->leftJoin('dokumen_role_data', function ($join) use ($roleCode) {
                     $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-                         ->where('dokumen_role_data.role_code', '=', $roleCode);
+                        ->where('dokumen_role_data.role_code', '=', $roleCode);
                 })
-                ->where(function($q) {
-                    $q->where(function($subQ) {
+                ->where(function ($q) {
+                    $q->where(function ($subQ) {
                         // Dokumen yang ada di dokumen_role_data dengan received_at
                         $subQ->whereNotNull('dokumen_role_data.received_at')
-                             ->whereNull('dokumen_role_data.processed_at');
-                    })->orWhere(function($subQ) {
+                            ->whereNull('dokumen_role_data.processed_at');
+                    })->orWhere(function ($subQ) {
                         // Dokumen yang dikirim ke pembayaran (menggunakan sent_to_pembayaran_at)
                         $subQ->whereNotNull('dokumens.sent_to_pembayaran_at')
-                             ->where(function($statusQ) {
-                                 $statusQ->whereNull('dokumens.status_pembayaran')
-                                        ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
-                             });
+                            ->where(function ($statusQ) {
+                            $statusQ->whereNull('dokumens.status_pembayaran')
+                                ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
+                        });
                     });
                 })
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->where('dokumens.current_handler', 'pembayaran')
-                      ->orWhere('dokumens.status', 'sent_to_pembayaran')
-                      ->orWhere('dokumens.status', 'proses_pembayaran');
+                        ->orWhere('dokumens.status', 'sent_to_pembayaran')
+                        ->orWhere('dokumens.status', 'proses_pembayaran');
                 })
-                ->select('dokumens.*', 
-                    'dokumen_role_data.role_code as delay_role_code', 
-                    'dokumen_role_data.received_at as delay_received_at', 
+                ->select(
+                    'dokumens.*',
+                    'dokumen_role_data.role_code as delay_role_code',
+                    'dokumen_role_data.received_at as delay_received_at',
                     'dokumen_role_data.processed_at as delay_processed_at',
-                    'dokumen_role_data.deadline_at as delay_deadline_at');
+                    'dokumen_role_data.deadline_at as delay_deadline_at'
+                );
         } else {
             // Query from DokumenRoleData and join with dokumens
             // This ensures we only get dokumens that actually exist (inner join filters out deleted dokumens)
@@ -2506,11 +2572,13 @@ class OwnerDashboardController extends Controller
                 ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
                 ->whereNotNull('dokumen_role_data.received_at')
                 ->whereNull('dokumen_role_data.processed_at')
-                ->select('dokumens.*', 
-                    'dokumen_role_data.role_code as delay_role_code', 
-                    'dokumen_role_data.received_at as delay_received_at', 
+                ->select(
+                    'dokumens.*',
+                    'dokumen_role_data.role_code as delay_role_code',
+                    'dokumen_role_data.received_at as delay_received_at',
                     'dokumen_role_data.processed_at as delay_processed_at',
-                    'dokumen_role_data.deadline_at as delay_deadline_at');
+                    'dokumen_role_data.deadline_at as delay_deadline_at'
+                );
         }
 
         // Search functionality
@@ -2587,33 +2655,33 @@ class OwnerDashboardController extends Controller
         } else {
             $query->orderBy('dokumen_role_data.received_at', 'asc');
         }
-        
+
         // Debug: Log SQL query and count before get()
         \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, SQL Query: " . $query->toSql());
         \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Query Bindings: " . json_encode($query->getBindings()));
         $countBeforeGet = $query->count();
         \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Count before get(): {$countBeforeGet}");
-        
+
         // Get all documents first to calculate age and filter by age
         $allDokumens = $query->get();
-        
+
         // Debug: Log count of documents retrieved
         \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Documents retrieved: " . $allDokumens->count());
-        
+
         // Calculate age for each document and filter by age if needed
         $filterAge = $request->get('filter_age');
         $filteredDokumens = $allDokumens->map(function ($dokumen) use ($now, $roleCode) {
             // Get received_at from the joined dokumen_role_data or fallback
             $receivedAt = null;
-            
+
             // First try: delay_received_at from select
             if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
                 $receivedAt = Carbon::parse($dokumen->delay_received_at);
-            } 
+            }
             // Second try: sent_to_pembayaran_at for pembayaran role
             elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
                 $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
-            } 
+            }
             // Third try: Load roleData relationship if not loaded and get received_at
             else {
                 // Reload dokumen with roleData relationship if needed
@@ -2625,7 +2693,7 @@ class OwnerDashboardController extends Controller
                     $receivedAt = Carbon::parse($roleData->received_at);
                 }
             }
-            
+
             // If still no received_at, try to get from dokumen_role_data directly
             if (!$receivedAt) {
                 $roleDataDirect = \App\Models\DokumenRoleData::where('dokumen_id', $dokumen->id)
@@ -2636,18 +2704,18 @@ class OwnerDashboardController extends Controller
                     $receivedAt = Carbon::parse($roleDataDirect->received_at);
                 }
             }
-            
+
             $ageDays = $receivedAt ? $now->diffInDays($receivedAt, false) : 0;
             $ageDays = max(0, $ageDays);
             $dokumen->age_days = $ageDays;
             $dokumen->age_formatted = $this->formatAge($ageDays);
-            
+
             // Also set effective_received_at for view usage
             $dokumen->effective_received_at = $receivedAt ? $receivedAt->format('Y-m-d H:i:s') : null;
-            
+
             return $dokumen;
         });
-        
+
         // Filter by age if filter_age is set
         if ($filterAge) {
             $filteredDokumens = $filteredDokumens->filter(function ($dokumen) use ($filterAge) {
@@ -2662,7 +2730,7 @@ class OwnerDashboardController extends Controller
                 return true;
             });
         }
-        
+
         // Paginate the filtered results
         $perPage = 20;
         $currentPage = $request->get('page', 1);
@@ -2677,7 +2745,7 @@ class OwnerDashboardController extends Controller
 
         // Calculate card statistics berdasarkan umur dokumen sejak received_at
         $cardStats = [];
-        
+
         // Calculate card statistics hanya untuk role yang memerlukan card
         if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
             // Get all documents for this role that actually exist in dokumens table
@@ -2688,7 +2756,7 @@ class OwnerDashboardController extends Controller
                 ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
                 ->select('dokumen_role_data.*')
                 ->get();
-            
+
             // Card 1: Dokumen dengan umur <= 1 hari (hijau)
             $card1Count = $allRoleDocs->filter(function ($doc) use ($now) {
                 $ageDays = $now->diffInDays($doc->received_at, false);
@@ -2746,16 +2814,16 @@ class OwnerDashboardController extends Controller
 
         // Calculate total statistics
         if ($roleCode === 'pembayaran') {
-            $totalDocuments = Dokumen::where(function($q) {
+            $totalDocuments = Dokumen::where(function ($q) {
                 $q->where('current_handler', 'pembayaran')
-                  ->orWhere('status', 'sent_to_pembayaran')
-                  ->orWhere('status', 'proses_pembayaran');
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere('status', 'proses_pembayaran');
             })
-            ->where(function($q) {
-                $q->whereNull('status_pembayaran')
-                  ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-            })
-            ->count();
+                ->where(function ($q) {
+                    $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->count();
         } else {
             $totalDocuments = DokumenRoleData::where('role_code', $roleCode)
                 ->whereNotNull('received_at')
