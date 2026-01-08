@@ -58,21 +58,22 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
-        // Count documents for this bagian
-        $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
-        $dokumenBelumDikirim = Dokumen::where('bagian', $bagianCode)
+        // Count documents for this bagian - filter by created_by to only show docs created by this bagian
+        $createdByValue = 'bagian_' . strtolower($bagianCode);
+        $totalDokumen = Dokumen::where('created_by', $createdByValue)->count();
+        $dokumenBelumDikirim = Dokumen::where('created_by', $createdByValue)
             ->where('status', 'belum dikirim')
             ->count();
-        $dokumenTerkirim = Dokumen::where('bagian', $bagianCode)
+        $dokumenTerkirim = Dokumen::where('created_by', $createdByValue)
             ->whereNotIn('status', ['belum dikirim'])
             ->count();
-        $dokumenSelesai = Dokumen::where('bagian', $bagianCode)
+        $dokumenSelesai = Dokumen::where('created_by', $createdByValue)
             ->where('status', 'sudah dibayar')
             ->count();
 
-        // Recent documents
+        // Recent documents - only show docs created by this bagian
         $recentDokumens = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->where('bagian', $bagianCode)
+            ->where('created_by', $createdByValue)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -100,8 +101,10 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
+        // Filter by created_by to only show documents created by this bagian
+        $createdByValue = 'bagian_' . strtolower($bagianCode);
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->where('bagian', $bagianCode)
+            ->where('created_by', $createdByValue)
             ->orderByRaw('CASE 
                 WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
@@ -121,6 +124,11 @@ class BagianDokumenController extends Controller
         // Status filter
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
+        }
+
+        // Year filter
+        if ($request->has('tahun') && $request->tahun) {
+            $query->where('tahun', $request->tahun);
         }
 
         $perPage = $request->get('per_page', 10);
@@ -555,8 +563,10 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
+        // Filter by created_by to only show documents created by this bagian
+        $createdByValue = 'bagian_' . strtolower($bagianCode);
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-            ->where('bagian', $bagianCode)
+            ->where('created_by', $createdByValue)
             ->orderBy('updated_at', 'desc');
 
         // Search
