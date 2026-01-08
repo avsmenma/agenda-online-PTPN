@@ -37,10 +37,10 @@ class DashboardController extends Controller
         }
 
         // Get statistics for IbuA (only documents created by ibuA)
-        $totalDokumen = Dokumen::where('created_by', 'ibuA')->count();
+        $totalDokumen = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])->count();
 
         // Total dokumen belum dikirim = dokumen yang masih draft atau belum dikirim ke ibuB
-        $totalBelumDikirim = Dokumen::where('created_by', 'ibuA')
+        $totalBelumDikirim = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
             ->whereDoesntHave('roleData', function ($query) {
                 // If roleData for 'ibub' does NOT exist (or received_at is null) it hasn't been sent
                 $query->where('role_code', 'ibub');
@@ -49,7 +49,7 @@ class DashboardController extends Controller
             ->count();
 
         // Total dokumen sudah dikirim = dokumen yang sudah dikirim ke ibuB
-        $totalSudahDikirim = Dokumen::where('created_by', 'ibuA')
+        $totalSudahDikirim = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
             ->whereHas('roleData', function ($query) {
                 // If roleData for 'ibub' exists, it has been sent
                 $query->where('role_code', 'ibub');
@@ -58,8 +58,8 @@ class DashboardController extends Controller
             ->count();
 
         // Total dokumen yang di-reject dari inbox dan dikembalikan ke IbuA
-        $totalDitolakInbox = Dokumen::where('created_by', 'ibuA')
-            ->where('current_handler', 'ibuA')
+        $totalDitolakInbox = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
+            ->whereRaw('LOWER(current_handler) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
             ->where('status', 'returned_to_ibua')
             ->whereHas('roleStatuses', function ($query) {
                 $query->where('status', 'rejected');
@@ -67,7 +67,7 @@ class DashboardController extends Controller
             ->count();
 
         // Get latest documents (5 most recent) created by ibuA
-        $dokumenTerbaru = Dokumen::where('created_by', 'ibuA')
+        $dokumenTerbaru = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
             ->with(['dibayarKepadas'])
             ->latest('tanggal_masuk')
             ->take(5)
@@ -111,10 +111,10 @@ class DashboardController extends Controller
             // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
             // Ini memastikan bahwa dokumen yang di-reject dalam 24 jam terakhir selalu ditampilkan
             $checkFrom24Hours = now()->subHours(24);
-            
+
             // Initialize $checkFrom dengan default value
             $checkFrom = $checkFrom24Hours;
-            
+
             try {
                 if ($lastCheckTime) {
                     $parsedTime = \Carbon\Carbon::parse($lastCheckTime);
@@ -143,18 +143,16 @@ class DashboardController extends Controller
             // FIX: inbox_approval_responded_at sudah dihapus, gunakan status_changed_at dari dokumen_statuses
             $rejectedDocuments = Dokumen::where(function ($query) {
                 // Hanya dokumen yang dibuat oleh IbuA
-                $query->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
-                    ->orWhere('created_by', 'ibuA')
-                    ->orWhere('created_by', 'IbuA');
+                $query->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul']);
             })
                 ->where(function ($query) {
                     // DAN status returned ke IbuA
                     $query->where('status', 'returned_to_ibua')
                         ->whereHas('roleStatuses', function ($q) use ($checkFrom) {
-                            // Filter by rejected status and check time from status_changed_at
-                            $q->where('status', 'rejected')
-                                ->where('status_changed_at', '>=', $checkFrom);
-                        });
+                        // Filter by rejected status and check time from status_changed_at
+                        $q->where('status', 'rejected')
+                            ->where('status_changed_at', '>=', $checkFrom);
+                    });
                 })
                 ->with([
                     'activityLogs' => function ($q) {
@@ -186,8 +184,8 @@ class DashboardController extends Controller
                 ->sortByDesc(function ($doc) {
                     try {
                         $rejectedStatus = $doc->roleStatuses->first();
-                        return $rejectedStatus && $rejectedStatus->status_changed_at 
-                            ? $rejectedStatus->status_changed_at->timestamp 
+                        return $rejectedStatus && $rejectedStatus->status_changed_at
+                            ? $rejectedStatus->status_changed_at->timestamp
                             : 0;
                     } catch (\Exception $e) {
                         return 0;
@@ -207,9 +205,9 @@ class DashboardController extends Controller
                         } catch (\Exception $e) {
                             \Log::warning('Error getting reject log', ['doc_id' => $doc->id, 'error' => $e->getMessage()]);
                         }
-                        
+
                         $rejectedStatus = $doc->roleStatuses->first();
-                        
+
                         // Get rejection reason from multiple sources
                         $reason = '';
                         if ($rejectedStatus && $rejectedStatus->notes) {
@@ -218,14 +216,14 @@ class DashboardController extends Controller
                             $details = $rejectLog->details ?? [];
                             $reason = $details['rejection_reason'] ?? $details['reason'] ?? '';
                         }
-                        
+
                         $doc->inbox_approval_reason = $reason;
-                        
+
                         // Add status_changed_at for compatibility
-                        $doc->inbox_approval_responded_at = $rejectedStatus && $rejectedStatus->status_changed_at 
-                            ? $rejectedStatus->status_changed_at 
+                        $doc->inbox_approval_responded_at = $rejectedStatus && $rejectedStatus->status_changed_at
+                            ? $rejectedStatus->status_changed_at
                             : null;
-                        
+
                         return $doc;
                     } catch (\Exception $e) {
                         \Log::error('Error mapping rejected document', [
@@ -247,16 +245,8 @@ class DashboardController extends Controller
 
             // Hitung total rejected (case-insensitive)
             // FIX: inbox_approval_status sudah dihapus, gunakan dokumen_statuses
-            $totalRejected = Dokumen::where(function ($query) {
-                $query->whereRaw('LOWER(created_by) = ?', ['ibua'])
-                    ->orWhere('created_by', 'ibuA')
-                    ->orWhere('created_by', 'IbuA');
-            })
-                ->where(function ($query) {
-                    $query->whereRaw('LOWER(current_handler) = ?', ['ibua'])
-                        ->orWhere('current_handler', 'ibuA')
-                        ->orWhere('current_handler', 'IbuA');
-                })
+            $totalRejected = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
+                ->whereRaw('LOWER(current_handler) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
                 ->where('status', 'returned_to_ibua')
                 ->whereHas('roleStatuses', function ($q) {
                     $q->where('status', 'rejected');
@@ -290,7 +280,7 @@ class DashboardController extends Controller
                         } elseif ($rejectLog) {
                             $rejectedBy = $rejectLog->performed_by ?? (is_array($rejectLog->details) && isset($rejectLog->details['rejected_by']) ? $rejectLog->details['rejected_by'] : 'Unknown');
                         }
-                        
+
                         // Map role to display name
                         $nameMap = [
                             'IbuB' => 'Team Verifikasi',
@@ -307,7 +297,7 @@ class DashboardController extends Controller
                         $nilaiRupiah = 'Rp 0';
                         try {
                             if (isset($doc->nilai_rupiah) && $doc->nilai_rupiah) {
-                                $nilaiRupiah = 'Rp ' . number_format((float)$doc->nilai_rupiah, 0, ',', '.');
+                                $nilaiRupiah = 'Rp ' . number_format((float) $doc->nilai_rupiah, 0, ',', '.');
                             }
                         } catch (\Exception $e) {
                             \Log::warning('Error formatting nilai rupiah', ['doc_id' => $doc->id ?? 'unknown']);
@@ -321,7 +311,7 @@ class DashboardController extends Controller
                             if ($rejectedStatus && $rejectedStatus->status_changed_at) {
                                 $rejectedAt = $rejectedStatus->status_changed_at->format('d/m/Y H:i');
                             }
-                            
+
                             // Get rejection reason from status notes or activity log
                             if ($rejectedStatus && $rejectedStatus->notes) {
                                 $rejectionReason = $rejectedStatus->notes;
@@ -381,7 +371,7 @@ class DashboardController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
-            
+
             // Return empty result instead of 500 to prevent console errors
             return response()->json([
                 'success' => false,
@@ -419,16 +409,16 @@ class DashboardController extends Controller
             // More flexible validation - allow if document is rejected OR returned to IbuA
             $isValid = false;
             $validationErrors = [];
-            
+
             // Check if document is created by IbuA (case-insensitive)
-            $createdByIbuA = in_array(strtolower($dokumen->created_by ?? ''), ['ibua', 'ibu a']);
-            
+            $createdByIbuA = in_array(strtolower($dokumen->created_by ?? ''), ['ibua', 'ibu a', 'ibutarapul']);
+
             // Check if document is currently with IbuA (case-insensitive)
-            $currentHandlerIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a']);
-            
+            $currentHandlerIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a', 'ibutarapul']);
+
             // Check if document is returned or has rejection status
             $isReturned = $dokumen->status === 'returned_to_ibua';
-            
+
             if (!$createdByIbuA) {
                 $validationErrors[] = 'Dokumen tidak dibuat oleh IbuA';
             }
@@ -438,12 +428,12 @@ class DashboardController extends Controller
             if (!$isReturned && !$hasRejection) {
                 $validationErrors[] = 'Dokumen tidak dalam status ditolak atau dikembalikan';
             }
-            
+
             // Allow if document is created by IbuA and has rejection status
             if ($createdByIbuA && ($hasRejection || $isReturned)) {
                 $isValid = true;
             }
-            
+
             if (!$isValid) {
                 \Log::warning('Invalid rejected document access attempt', [
                     'dokumen_id' => $dokumen->id,
@@ -453,7 +443,7 @@ class DashboardController extends Controller
                     'has_rejection' => $hasRejection,
                     'errors' => $validationErrors,
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak ditemukan atau tidak valid: ' . implode(', ', $validationErrors)
@@ -508,7 +498,7 @@ class DashboardController extends Controller
                     'nomor_agenda' => $dokumen->nomor_agenda ?? '-',
                     'nomor_spp' => $dokumen->nomor_spp ?? '-',
                     'uraian_spp' => $dokumen->uraian_spp ?? '-',
-                    'nilai_rupiah' => 'Rp ' . number_format((float)($dokumen->nilai_rupiah ?? 0), 0, ',', '.'),
+                    'nilai_rupiah' => 'Rp ' . number_format((float) ($dokumen->nilai_rupiah ?? 0), 0, ',', '.'),
                 ],
                 'rejected_by' => $rejectedBy,
                 'rejection_reason' => $rejectionReason,
@@ -522,7 +512,7 @@ class DashboardController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
-            
+
             // Return JSON instead of redirect to prevent HTML response
             return response()->json([
                 'success' => false,
