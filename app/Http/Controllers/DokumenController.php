@@ -30,9 +30,12 @@ class DokumenController extends Controller
         // Example: 2010, 2009, 2006 (new), 2005, 2004, 2003
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
             ->where(function ($q) {
-                $q->whereRaw('LOWER(created_by) IN (?, ?)', ['ibua', 'ibu a'])
+                $q->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
                     ->orWhere('created_by', 'ibuA')
-                    ->orWhere('created_by', 'IbuA');
+                    ->orWhere('created_by', 'IbuA')
+                    ->orWhere('created_by', 'ibutarapul')
+                    ->orWhere('created_by', 'Ibutarapul')
+                    ->orWhere('created_by', 'IbuTarapul');
             })
             // Exclude CSV imported documents (only if column exists)
             ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
