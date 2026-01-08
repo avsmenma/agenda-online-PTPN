@@ -2792,1021 +2792,235 @@
     }
   </style>
 
-  <script>   // Enhanced interactions and animations   function toggleDetail(rowId) {     const detailRow = document.getElementById('detail-' + rowId);     const chevron = document.getElementById('chevron-' + rowId);
-       if (detailRow.style.display === 'none' || !detailRow.style.display) {       // Show detail with animation       detailRow.style.display = 'table-row';       setTimeout(() => {         detailRow.classList.add('show');         chevron.classList.add('rotate');       }, 10);     } else {       // Hide detail       detailRow.classList.remove('show');       chevron.classList.remove('rotate');       setTimeout(() => {         detailRow.style.display = 'none';       }, 300);     }   }
-     // Simple Send to IbuB Function   function sendToIbuB(docId) {     // Store document ID for confirmation     document.getElementById('confirmSendToIbuBBtn').setAttribute('data-doc-id', docId);
-       // Show confirmation modal     const confirmationModal = new bootstrap.Modal(document.getElementById('sendConfirmationModal'));     confirmationModal.show();   }
-     // Confirm and send to IbuB   function confirmSendToIbuB() {     const docId = document.getElementById('confirmSendToIbuBBtn').getAttribute('data-doc-id');     if (!docId) {       console.error('Document ID not found');       return;     }
-       // Close confirmation modal     const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('sendConfirmationModal'));     confirmationModal.hide();
-       const btn = document.querySelector(`button[onclick="sendToIbuB(${docId})"]`);     if (!btn) return;
-       // Show loading state     const originalHTML = btn.innerHTML;     btn.disabled = true;     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
-       fetch(`/documents/${docId}/send-to-verifikasi`, {       method: 'POST',       headers: {         'Content-Type': 'application/json',         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')       },       body: JSON.stringify({         deadline_days: null,  // No deadline from IbuA         deadline_note: null       })     })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Show success modal
-            const successModal = new bootstrap.Modal(document.getElementById('sendSuccessModal'));
-            successModal.show();
+  <script>   /* Enhanced interactions and animations */   function toggleDetail(rowId) {     const detailRow = document.getElementById('detail-' + rowId);     const chevron = document.getElementById('chevron-' + rowId     );
+         if (detailRow.style.display === 'none' || !detailRow.style.display) {       /* Show detail with animation */       detailRow.style.display = 'table-row';       setTimeout(() => {         detailRow.classList.add('show');         chevron.classList.add('rotate');       }, 10);     } else {       /* Hide detail */       detailRow.classList.remove('show');       chevron.classList.remove('rotate');       setTimeout(() => {         detailRow.style.display = 'none';       }, 300);     }   }
+       /* Simple Send to IbuB Function */   function sendToIbuB(docId) {     /* Store document ID for confirmation */     document.getElementById('confirmSendToIbuBBtn').setAttribute('data-doc-id', docId);
+         /* Show confirmation modal */     const confirmationModal = new bootstrap.Modal(document.getElementById('sendConfirmationModal'));     confirmationModal.show();   }
+       /* Confirm and send to IbuB */   function confirmSendToIbuB() {     const docId = document.getElementById('confirmSendToIbuBBtn').getAttribute('data-doc-id');     if (!docId) {       console.error('Document ID not found');       return;     }
+         /* Close confirmation modal */     const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('sendConfirmationModal'));     confirmationModal.hide();
+         const btn = document.querySelector(`button[onclick="sendToIbuB(${docId})"]`);     if (!btn) return;
+         /* Show loading state */     const originalHTML = btn.innerHTML;     btn.disabled = true;     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+         fetch(`/documents/${docId}/send-to-verifikasi`, {       method: 'POST',       headers: {         'Content-Type': 'application/json',         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')       },       body: JSON.stringify({         deadline_days: null,  /* No deadline from IbuA */         deadline_note: null       })     })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              /* Show success modal */
+              const successModal = new bootstrap.Modal(document.getElementById('sendSuccessModal'));
+              successModal.show();
 
-            // Reload page when success modal is closed
-            const successModalEl = document.getElementById('sendSuccessModal');
-            successModalEl.addEventListener('hidden.bs.modal', function() {
-              location.reload();
-            }, { once: true });
-          } else {
-            showNotification('Gagal mengirim dokumen: ' + (data.message || 'Terjadi kesalahan'), 'error');
+              /* Reload page when success modal is closed */
+              const successModalEl = document.getElementById('sendSuccessModal');
+              successModalEl.addEventListener('hidden.bs.modal', function() {
+                location.reload();
+              }, { once: true });
+            } else {
+              showNotification('Gagal mengirim dokumen: ' + (data.message || 'Terjadi kesalahan'), 'error');
+              btn.disabled = false;
+              btn.innerHTML = originalHTML;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.', 'error');
             btn.disabled = false;
             btn.innerHTML = originalHTML;
+          });   }
+
+       let shouldReloadAfterSendSuccess = false;
+       function showSendSuccessModal(message) {     const modalEl = document.getElementById('sendSuccessModal');     if (!modalEl) {       location.reload();       return;     }
+         const textEl = document.getElementById('sendSuccessMessage');     if (textEl) {       textEl.textContent = message || 'Dokumen berhasil dikirim dan akan diproses oleh Team Verifikasi.';     }
+         shouldReloadAfterSendSuccess = true;     const modal = new bootstrap.Modal(modalEl);     modal.show();   }
+       /* Wrapper function untuk handle row click dengan text selection check */   function handleRowClick(event, documentId) {     /* Cek apakah user sedang menyeleksi teks */     const selection = window.getSelection();     const selectedText = selection.toString().trim();
+         if (selectedText.length > 0) {       /* User sedang menyeleksi teks, jangan toggle detail */       event.preventDefault();       event.stopPropagation();       return false;     }
+         /* Cek apakah yang diklik adalah link/tombol/input/select/textarea */     const target = event.target;     const tagName = target.tagName.toLowerCase();     const isInteractiveElement         = 
+            tagName === 'a' || 
+            tagName === 'button' || 
+            tagName === 'input' || 
+            tagName === 'select' || 
+            tagName === 'textarea' ||
+            target.closest('a') !== null ||
+            target.closest('button') !== null ||
+            target.closest('.btn') !== null ||
+            target.closest('.btn-action') !== null ||
+            target.closest('[role="button"]') !== null;
+
+          if (isInteractiveElement) {
+            /* User klik elemen interaktif, biarkan default behavior */
+            return true;
           }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showNotification('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.', 'error');
-          btn.disabled = false;
-          btn.innerHTML = originalHTML;
-        });   }
 
-     let shouldReloadAfterSendSuccess = false;
-     function showSendSuccessModal(message) {     const modalEl = document.getElementById('sendSuccessModal');     if (!modalEl) {       location.reload();       return;     }
-       const textEl = document.getElementById('sendSuccessMessage');     if (textEl) {       textEl.textContent = message || 'Dokumen berhasil dikirim dan akan diproses oleh Team Verifikasi.';     }
-       shouldReloadAfterSendSuccess = true;     const modal = new bootstrap.Modal(modalEl);     modal.show();   }
-     // Wrapper function untuk handle row click dengan text selection check   function handleRowClick(event, documentId) {     // Cek apakah user sedang menyeleksi teks     const selection = window.getSelection();     const selectedText = selection.toString().trim();
-       if (selectedText.length > 0) {       // User sedang menyeleksi teks, jangan toggle detail       event.preventDefault();       event.stopPropagation();       return false;     }
-       // Cek apakah yang diklik adalah link/tombol/input/select/textarea     const target = event.target;     const tagName = target.tagName.toLowerCase();     const isInteractiveElement         = 
-          tagName === 'a' || 
-          tagName === 'button' || 
-          tagName === 'input' || 
-          tagName === 'select' || 
-          tagName === 'textarea' ||
-          target.closest('a') !== null ||
-          target.closest('button') !== null ||
-          target.closest('.btn') !== null ||
-          target.closest('.btn-action') !== null ||
-          target.closest('[role="button"]') !== null;
-
-        if (isInteractiveElement) {
-          // User klik elemen interaktif, biarkan default behavior
+          /* Buka modal popup untuk menampilkan detail dokumen */
+          openViewDocumentModal(documentId);
           return true;
         }
 
-        // Buka modal popup untuk menampilkan detail dokumen
-        openViewDocumentModal(documentId);
-        return true;
-      }
+        /* Load Document Detail with Lazy Loading */
+        function loadDocumentDetail(documentId) {
+          const detailRow = document.getElementById(`detail-${documentId}`);
+          const detailContent = document.getElementById(`detail-content-${documentId}`);
+          const mainRow = document.querySelector(`tr[data-id="${documentId}"]`);
 
-      // Load Document Detail with Lazy Loading
-      function loadDocumentDetail(documentId) {
-        const detailRow = document.getElementById(`detail-${documentId}`);
-        const detailContent = document.getElementById(`detail-content-${documentId}`);
-        const mainRow = document.querySelector(`tr[data-id="${documentId}"]`);
+          /* Toggle detail visibility */
+          if (detailRow.style.display === 'none' || !detailRow.style.display) {
+            /* Show loading */
+            detailRow.style.display = 'table-row';
+            detailContent.innerHTML = `
+              <div class="loading-spinner">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Memuat detail dokumen...</span>
+              </div>
+            `;
 
-        // Toggle detail visibility
-        if (detailRow.style.display === 'none' || !detailRow.style.display) {
-          // Show loading
-          detailRow.style.display = 'table-row';
-          detailContent.innerHTML = `
-            <div class="loading-spinner">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-              <span>Memuat detail dokumen...</span>
+            /* Add highlight to main row */
+            mainRow.classList.add('selected');
+
+            /* Fetch detail data */
+            fetch(`/documents/${documentId}/detail-ibua`)
+              .then(response => response.text())
+              .then(html => {
+                detailContent.innerHTML = html;
+                detailRow.classList.add('show');
+              })
+              .catch(error => {
+                console.error('Error loading document detail:', error);
+                detailContent.innerHTML = `
+                  <div class="text-center p-4 text-danger">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    Gagal memuat detail dokumen. Silakan coba lagi.
+                  </div>
+                `;
+              });
+          } else {
+            /* Hide detail */
+            detailRow.style.display = 'none';
+            detailRow.classList.remove('show');
+            mainRow.classList.remove('selected');
+          }
+        }
+
+        /* Enhanced notification system */
+        function showNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.className = `notification notification-${type}`;
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+              <span>${message}</span>
             </div>
           `;
 
-          // Add highlight to main row
-          mainRow.classList.add('selected');
+          document.body.appendChild(notification);
 
-          // Fetch detail data
-          fetch(`/documents/${documentId}/detail-ibua`)
-            .then(response => response.text())
-            .then(html => {
-              detailContent.innerHTML = html;
-              detailRow.classList.add('show');
-            })
-            .catch(error => {
-              console.error('Error loading document detail:', error);
-              detailContent.innerHTML = `
-                <div class="text-center p-4 text-danger">
-                  <i class="fa-solid fa-exclamation-triangle me-2"></i>
-                  Gagal memuat detail dokumen. Silakan coba lagi.
-                </div>
-              `;
-            });
-        } else {
-          // Hide detail
-          detailRow.style.display = 'none';
-          detailRow.classList.remove('show');
-          mainRow.classList.remove('selected');
-        }
-      }
-
-      // Enhanced notification system
-      function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-          <div class="notification-content">
-            <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-          </div>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Trigger animation
-        setTimeout(() => {
-          notification.classList.add('show');
-        }, 10);
-
-        // Auto-hide untuk notifikasi success/error biasa setelah 4 detik
-        // Notifikasi dokumen masuk/reject tetap permanen
-        if (type === 'success' || type === 'error') {
+          /* Trigger animation */
           setTimeout(() => {
-            notification.classList.remove('show');
+            notification.classList.add('show');
+          }, 10);
+
+          /* Auto-hide untuk notifikasi success/error biasa setelah 4 detik */
+          /* Notifikasi dokumen masuk/reject tetap permanen */
+          if (type === 'success' || type === 'error') {
             setTimeout(() => {
-              if (notification.parentElement) {
-                notification.parentElement.removeChild(notification);
-              }
-            }, 300);
-          }, 4000); // 4 detik untuk notifikasi success/error biasa
-        }
-        // Jika type info atau dokumen masuk/reject, tetap permanen
-      }
-
-      // Add notification styles
-      const notificationStyles = document.createElement('style');
-      notificationStyles.textContent = `
-        .notification {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 9999;
-          transform: translateX(100%);
-          transition: all 0.3s ease;
-          max-width: 400px;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+              notification.classList.remove('show');
+              setTimeout(() => {
+                if (notification.parentElement) {
+                  notification.parentElement.removeChild(notification);
+                }
+              }, 300);
+            }, 4000); // 4 detik untuk notifikasi success/error biasa
+          }
+          // Jika type info atau dokumen masuk/reject, tetap permanen
         }
 
-        .notification.show {
-          transform: translateX(0);
-        }
-
-        .notification-content {
-          padding: 16px 20px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: white;
-          font-weight: 500;
-        }
-
-        .notification-success {
-          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
-
-        .notification-error {
-          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        }
-
-        .notification-info {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-        }
-
-        @media (max-width: 768px) {
+        // Add notification styles
+        const notificationStyles = document.createElement('style');
+        notificationStyles.textContent = `
           .notification {
-            left: 20px;
+            position: fixed;
+            top: 20px;
             right: 20px;
-            max-width: none;
-            top: 10px;
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
           }
-        }
-      `;
-      document.head.appendChild(notificationStyles);
 
-      // Function to show rejection modal (MUST be defined before DOMContentLoaded to be globally accessible)
-      window.showRejectionModal = function(dokumenId) {
-        console.log('showRejectionModal called with dokumenId:', dokumenId);
-
-        const modalEl = document.getElementById('rejectionDetailModal');
-        if (!modalEl) {
-          console.error('Modal element not found');
-          alert('Modal tidak ditemukan. Silakan refresh halaman.');
-          return;
-        }
-
-        const modal = new bootstrap.Modal(modalEl);
-        const loadingEl = document.getElementById('rejectionModalLoading');
-        const contentEl = document.getElementById('rejectionModalContent');
-        const errorEl = document.getElementById('rejectionModalError');
-
-        if (!loadingEl || !contentEl || !errorEl) {
-          console.error('Modal elements not found');
-          alert('Elemen modal tidak ditemukan. Silakan refresh halaman.');
-          return;
-        }
-
-        // Reset modal state
-        loadingEl.style.display = 'block';
-        contentEl.style.display = 'none';
-        errorEl.style.display = 'none';
-
-        // Show modal
-        modal.show();
-
-        // Fetch rejection details
-        fetch(`/api/documents/rejected/${dokumenId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            'Accept': 'application/json'
+          .notification.show {
+            transform: translateX(0);
           }
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.success) {
-            // Populate modal with data
-            document.getElementById('rejectionNomorAgenda').textContent = data.dokumen.nomor_agenda || '-';
-            document.getElementById('rejectionNomorSpp').textContent = data.dokumen.nomor_spp || '-';
-            document.getElementById('rejectionUraianSpp').textContent = data.dokumen.uraian_spp || '-';
-            document.getElementById('rejectionNilaiRupiah').textContent = data.dokumen.nilai_rupiah || '-';
-            document.getElementById('rejectionTanggal').textContent = data.rejected_at || '-';
-            document.getElementById('rejectionBy').textContent = data.rejected_by || 'Unknown';
-            document.getElementById('rejectionReason').textContent = data.rejection_reason || 'Tidak ada alasan yang diberikan';
 
-            // Show content
-            loadingEl.style.display = 'none';
-            contentEl.style.display = 'block';
-          } else {
-            throw new Error(data.message || 'Gagal memuat data');
+          .notification-content {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-weight: 500;
           }
-        })
-        .catch(error => {
-          console.error('Error loading rejection details:', error);
-          loadingEl.style.display = 'none';
-          errorEl.style.display = 'block';
-          document.getElementById('rejectionErrorMessage').textContent = 
-            'Gagal memuat detail penolakan: ' + (error.message || 'Terjadi kesalahan');
-        });
-      };
 
-      // Enhanced page initialization
-      document.addEventListener('DOMContentLoaded', function() {
-        const successModalEl = document.getElementById('sendSuccessModal');
-        if (successModalEl) {
-          successModalEl.addEventListener('hidden.bs.modal', function() {
-            if (shouldReloadAfterSendSuccess) {
-              shouldReloadAfterSendSuccess = false;
-              location.reload();
+          .notification-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+          }
+
+          .notification-error {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+          }
+
+          .notification-info {
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+          }
+
+          @media (max-width: 768px) {
+            .notification {
+              left: 20px;
+              right: 20px;
+              max-width: none;
+              top: 10px;
             }
-          });
-        }
+          }
+        `;
+        document.head.appendChild(notificationStyles);
 
-        // Initialize confirmation button click handler
-        const confirmBtn = document.getElementById('confirmSendToIbuBBtn');
-        if (confirmBtn) {
-          confirmBtn.addEventListener('click', confirmSendToIbuB);
-        }
+        // Function to show rejection modal (MUST be defined before DOMContentLoaded to be globally accessible)
+        window.showRejectionModal = function(dokumenId) {
+          console.log('showRejectionModal called with dokumenId:', dokumenId);
 
-        // Add smooth scroll behavior - only for hash links (exclude modal links)
-        document.querySelectorAll('a[href^="#"]:not(#view-edit-btn):not([id^="view-"])').forEach(anchor => {
-          // Skip if anchor is inside a modal
-          if (anchor.closest('.modal')) {
+          const modalEl = document.getElementById('rejectionDetailModal');
+          if (!modalEl) {
+            console.error('Modal element not found');
+            alert('Modal tidak ditemukan. Silakan refresh halaman.');
             return;
           }
-          anchor.addEventListener('click', function (e) {
-            const href = this.getAttribute('href');
-            // Only process hash links (starting with #) and ensure it's not empty
-            if (href && href.startsWith('#') && href.length > 1) {
-              e.preventDefault();
-              try {
-                const target = document.querySelector(href);
-                if (target) {
-                  target.scrollIntoView({ behavior: 'smooth' });
-                }
-              } catch (error) {
-                // Invalid selector, ignore
-                console.warn('Invalid hash selector:', href);
-              }
+
+          const modal = new bootstrap.Modal(modalEl);
+          const loadingEl = document.getElementById('rejectionModalLoading');
+          const contentEl = document.getElementById('rejectionModalContent');
+          const errorEl = document.getElementById('rejectionModalError');
+
+          if (!loadingEl || !contentEl || !errorEl) {
+            console.error('Modal elements not found');
+            alert('Elemen modal tidak ditemukan. Silakan refresh halaman.');
+            return;
+          }
+
+          // Reset modal state
+          loadingEl.style.display = 'block';
+          contentEl.style.display = 'none';
+          errorEl.style.display = 'none';
+
+          // Show modal
+          modal.show();
+
+          // Fetch rejection details
+          fetch(`/api/documents/rejected/${dokumenId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+              'Accept': 'application/json'
             }
-          });
-        });
-
-        // Add loading states for all buttons
-        document.querySelectorAll('.btn-action').forEach(button => {
-          button.addEventListener('click', function() {
-            if (!this.disabled) {
-              this.style.transform = 'scale(0.95)';
-              setTimeout(() => {
-                this.style.transform = '';
-              }, 100);
-            }
-          });
-        });
-      });
-
-      </script>
-
-      <script>
-      // Global variables for column customization
-      let selectedColumnsOrder = [];
-      let availableColumnsData = {};
-
-      // Initialize available columns data from PHP
-      @php
-        $columnsJson = json_encode($availableColumns);
-        echo "availableColumnsData = {$columnsJson};";
-      @endphp
-
-      // Initialize selected columns from existing selection
-      @if(count($selectedColumns) > 0)
-        selectedColumnsOrder = @json($selectedColumns);
-      @endif
-
-      // Global Functions - accessible from anywhere
-      function openColumnCustomizationModal() {
-        const modal = document.getElementById('columnCustomizationModal');
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-
-        // Initialize the modal state
-        initializeModalState();
-      }
-
-      function closeColumnCustomizationModal() {
-        const modal = document.getElementById('columnCustomizationModal');
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
-      }
-
-      function toggleColumn(columnElement) {
-        const columnKey = columnElement.dataset.column;
-        const checkbox = columnElement.querySelector('.column-item-checkbox');
-        const isChecked = checkbox.checked;
-
-        if (!isChecked) {
-          // Add to selection
-          if (!selectedColumnsOrder.includes(columnKey)) {
-            selectedColumnsOrder.push(columnKey);
-          }
-          checkbox.checked = true;
-          columnElement.classList.add('selected');
-          columnElement.setAttribute('draggable', 'true');
-        } else {
-          // Remove from selection
-          selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
-          checkbox.checked = false;
-          columnElement.classList.remove('selected');
-          columnElement.setAttribute('draggable', 'false');
-        }
-
-        updateColumnOrderBadges();
-        updatePreviewTable();
-        updateSelectedCount();
-        updateDraggableState();
-      }
-
-      function updateColumnOrderBadges() {
-        document.querySelectorAll('.column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          const orderBadge = item.querySelector('.column-item-order');
-          const index = selectedColumnsOrder.indexOf(columnKey);
-
-          if (index !== -1) {
-            orderBadge.textContent = index + 1;
-          } else {
-            orderBadge.textContent = '';
-          }
-        });
-      }
-
-      function updatePreviewTable() {
-        const previewContainer = document.getElementById('tablePreview');
-
-        if (selectedColumnsOrder.length === 0) {
-          previewContainer.innerHTML = `
-            <div class="empty-preview">
-              <i class="fa-solid fa-table fa-2x mb-2"></i>
-              <p>Belum ada kolom yang dipilih</p>
-              <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-            </div>
-          `;
-          return;
-        }
-
-        let previewHTML = `
-          <table class="preview-table">
-            <thead>
-              <tr>
-                <th>No</th>
-        `;
-
-        // Add column headers
-        selectedColumnsOrder.forEach(columnKey => {
-          const columnLabel = availableColumnsData[columnKey] || columnKey;
-          previewHTML += `<th>${columnLabel}</th>`;
-        });
-
-        previewHTML += `
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        // Add sample data rows (5 rows with realistic data)
-        const sampleData = {
-          'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
-          'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
-          'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
-          'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
-          'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
-          'status': ['✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim'],
-          'keterangan': ['Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap'],
-          'tanggal_spp': ['15/11/2024', '10/11/2024', '20/11/2024', '18/11/2024', '22/11/2024'],
-          'uraian_spp': ['Pembayaran kontraktor', 'Pembayaran vendor', 'Pembayaran supplier', 'Pembayaran jasa', 'Pembayaran material'],
-          'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
-          'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
-          'jenis_dokumen': ['SPP', 'SPP', 'SPP', 'SPP', 'SPP'],
-          'jenis_pembayaran': ['Tunai', 'Transfer', 'Tunai', 'Transfer', 'Tunai'],
-          'nama_pengirim': ['Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul'],
-          'dibayar_kepada': ['PT ABC', 'PT XYZ', 'CV DEF', 'PT GHI', 'PT JKL'],
-          'no_berita_acara': ['BA-001/2024', 'BA-002/2024', 'BA-003/2024', 'BA-004/2024', 'BA-005/2024'],
-          'tanggal_berita_acara': ['10/11/2024', '08/11/2024', '15/11/2024', '12/11/2024', '18/11/2024'],
-          'no_spk': ['SPK-001/2024', 'SPK-002/2024', 'SPK-003/2024', 'SPK-004/2024', 'SPK-005/2024'],
-          'tanggal_spk': ['01/11/2024', '05/11/2024', '10/11/2024', '08/11/2024', '12/11/2024'],
-          'tanggal_berakhir_spk': ['30/11/2024', '30/11/2024', '30/11/2024', '30/11/2024', '30/11/2024']
-        };
-
-        for (let i = 0; i < 5; i++) {
-          previewHTML += `<tr>`;
-          previewHTML += `<td>${i + 1}</td>`;
-
-          selectedColumnsOrder.forEach(columnKey => {
-            const columnLabel = availableColumnsData[columnKey] || columnKey;
-            let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
-
-            // Format special cases
-            if (columnKey === 'status') {
-              cellValue = `<span style="color: #28a745;">${cellValue}</span>`;
-            }
-
-            previewHTML += `<td>${cellValue}</td>`;
-          });
-
-          previewHTML += `<td>Edit, Kirim</td>`;
-          previewHTML += `</tr>`;
-        }
-
-        previewHTML += `
-            </tbody>
-          </table>
-        `;
-
-        previewContainer.innerHTML = previewHTML;
-      }
-
-      function updateSelectedCount() {
-        const countElement = document.getElementById('selectedColumnCount');
-        countElement.textContent = selectedColumnsOrder.length;
-
-        const saveButton = document.getElementById('saveCustomizationBtn');
-        saveButton.disabled = selectedColumnsOrder.length === 0;
-      }
-
-      function saveColumnCustomization() {
-        if (selectedColumnsOrder.length === 0) {
-          alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
-          return;
-        }
-
-        // Get the filter form
-        const filterForm = document.getElementById('filterForm');
-
-        // Remove existing column inputs
-        document.querySelectorAll('input[name="columns[]"]').forEach(input => {
-          if (input.type === 'hidden') {
-            input.remove();
-          }
-        });
-
-        // Add hidden inputs for selected columns in order
-        selectedColumnsOrder.forEach(columnKey => {
-          const hiddenInput = document.createElement('input');
-          hiddenInput.type = 'hidden';
-          hiddenInput.name = 'columns[]';
-          hiddenInput.value = columnKey;
-          filterForm.appendChild(hiddenInput);
-        });
-
-        // Add enable customization flag
-        const enableInput = document.createElement('input');
-        enableInput.type = 'hidden';
-        enableInput.name = 'enable_customization';
-        enableInput.value = '1';
-        filterForm.appendChild(enableInput);
-
-        // Close modal
-        closeColumnCustomizationModal();
-
-        // Submit form to apply changes
-        filterForm.submit();
-      }
-
-      function initializeModalState() {
-        // Update column items based on current selection
-        document.querySelectorAll('.column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          const checkbox = item.querySelector('.column-item-checkbox');
-
-          if (selectedColumnsOrder.includes(columnKey)) {
-            checkbox.checked = true;
-            item.classList.add('selected');
-            item.setAttribute('draggable', 'true');
-          } else {
-            checkbox.checked = false;
-            item.classList.remove('selected');
-            item.setAttribute('draggable', 'false');
-          }
-        });
-
-        // Initialize drag and drop
-        initializeDragAndDrop();
-
-        // Update all displays
-        updateColumnOrderBadges();
-        updatePreviewTable();
-        updateSelectedCount();
-      }
-
-      function updateDraggableState() {
-        document.querySelectorAll('.column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          if (selectedColumnsOrder.includes(columnKey)) {
-            item.setAttribute('draggable', 'true');
-          } else {
-            item.setAttribute('draggable', 'false');
-          }
-        });
-      }
-
-      let draggedElement = null;
-      let draggedIndex = -1;
-
-      function initializeDragAndDrop() {
-        const columnList = document.getElementById('columnSelectionList');
-        if (!columnList) return;
-
-        // Remove all existing event listeners by cloning
-        const newList = columnList.cloneNode(true);
-        columnList.parentNode.replaceChild(newList, columnList);
-
-        // Add drag and drop to selected items only
-        newList.querySelectorAll('.column-item.selected').forEach(item => {
-          item.addEventListener('dragstart', handleDragStart);
-          item.addEventListener('dragend', handleDragEnd);
-          item.addEventListener('dragover', handleDragOver);
-          item.addEventListener('dragenter', handleDragEnter);
-          item.addEventListener('dragleave', handleDragLeave);
-          item.addEventListener('drop', handleDrop);
-        });
-      }
-
-      function handleDragStart(e) {
-        draggedElement = this;
-        draggedIndex = selectedColumnsOrder.indexOf(this.dataset.column);
-        this.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', this.dataset.column);
-      }
-
-      function handleDragEnd(e) {
-        this.classList.remove('dragging');
-        document.querySelectorAll('.column-item').forEach(el => {
-          el.classList.remove('drag-over');
-        });
-        draggedElement = null;
-        draggedIndex = -1;
-      }
-
-      function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-
-        if (this !== draggedElement && this.classList.contains('selected')) {
-          const afterElement = getDragAfterElement(this.parentNode, e.clientY);
-          const selectedItems = Array.from(this.parentNode.querySelectorAll('.column-item.selected'));
-
-          if (afterElement == null) {
-            this.parentNode.appendChild(draggedElement);
-          } else {
-            this.parentNode.insertBefore(draggedElement, afterElement);
-          }
-        }
-
-        return false;
-      }
-
-      function handleDragEnter(e) {
-        e.preventDefault();
-        if (this !== draggedElement && this.classList.contains('selected')) {
-          this.classList.add('drag-over');
-        }
-      }
-
-      function handleDragLeave(e) {
-        this.classList.remove('drag-over');
-      }
-
-      function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        this.classList.remove('drag-over');
-
-        if (this !== draggedElement && this.classList.contains('selected')) {
-          const targetKey = this.dataset.column;
-          const draggedKey = draggedElement.dataset.column;
-
-          // Get all selected items in current DOM order
-          const columnList = document.getElementById('columnSelectionList');
-          const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
-
-          // Find new order based on DOM position
-          const newOrder = selectedItems.map(item => item.dataset.column);
-
-          // Update selectedColumnsOrder
-          selectedColumnsOrder = newOrder;
-
-          // Update UI
-          updateColumnOrderBadges();
-          updatePreviewTable();
-
-          // Re-initialize drag and drop for new order
-          setTimeout(() => {
-            initializeDragAndDrop();
-          }, 50);
-        }
-
-        return false;
-      }
-
-      function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
-
-        return draggableElements.reduce((closest, child) => {
-          const box = child.getBoundingClientRect();
-          const offset = y - box.top - box.height / 2;
-
-          if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-          } else {
-            return closest;
-          }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-      }
-
-      // Handle suggestion button clicks
-      document.addEventListener('DOMContentLoaded', function() {
-          const suggestionButtons = document.querySelectorAll('.suggestion-btn');
-
-          suggestionButtons.forEach(button => {
-              button.addEventListener('click', function() {
-                  const suggestion = this.getAttribute('data-suggestion');
-                  const searchInput = document.querySelector('input[name="search"]');
-                  const form = searchInput.closest('form');
-
-                  // Set the suggestion value to search input
-                  searchInput.value = suggestion;
-
-                  // Submit the form
-                  form.submit();
-              });
-          });
-
-          // Handle year dropdown - Fixed version
-          const yearSelectBtn = document.getElementById('yearSelectBtn');
-          const yearDropdownMenu = document.getElementById('yearDropdownMenu');
-          const yearSelect = document.getElementById('yearSelect');
-          const yearSelectText = document.getElementById('yearSelectText');
-          const yearDropdownItems = document.querySelectorAll('.year-dropdown-item');
-
-          if (yearSelectBtn && yearDropdownMenu && yearSelect) {
-              // Toggle dropdown menu
-              yearSelectBtn.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Year dropdown button clicked');
-
-                  // Toggle dropdown visibility
-                  if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
-                      yearDropdownMenu.style.display = 'block';
-                      yearSelectBtn.classList.add('active');
-                  } else {
-                      yearDropdownMenu.style.display = 'none';
-                      yearSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Handle year selection
-              yearDropdownItems.forEach(item => {
-                  item.addEventListener('click', function(e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('Year item clicked:', this.getAttribute('data-year'));
-
-                      const selectedYear = this.getAttribute('data-year');
-
-                      // Update hidden input
-                      yearSelect.value = selectedYear;
-
-                      // Update button text
-                      yearSelectText.textContent = selectedYear || 'Semua Tahun';
-
-                      // Update active state
-                      yearDropdownItems.forEach(i => i.classList.remove('active'));
-                      this.classList.add('active');
-
-                      // Close dropdown
-                      yearDropdownMenu.style.display = 'none';
-                      yearSelectBtn.classList.remove('active');
-
-                      // Submit form to apply filter (preserve search and other params)
-                      const form = document.getElementById('filterForm');
-                      const searchInput = form.querySelector('input[name="search"]');
-                      const searchValue = searchInput ? searchInput.value.trim() : '';
-
-                      // Preserve search value in URL
-                      const url = new URL(form.action);
-                      if (searchValue) {
-                          url.searchParams.set('search', searchValue);
-                      } else {
-                          url.searchParams.delete('search');
-                      }
-
-                      if (selectedYear) {
-                          url.searchParams.set('year', selectedYear);
-                      } else {
-                          url.searchParams.delete('year');
-                      }
-
-                      // Preserve status_filter
-                      const statusInput = form.querySelector('input[name="status_filter"]');
-                      if (statusInput && statusInput.value) {
-                          url.searchParams.set('status_filter', statusInput.value);
-                      } else {
-                          url.searchParams.delete('status_filter');
-                      }
-
-                      // Preserve per_page
-                      const perPage = new URLSearchParams(window.location.search).get('per_page');
-                      if (perPage) {
-                          url.searchParams.set('per_page', perPage);
-                      }
-
-                      // Preserve column customization params
-                      const columnInputs = form.querySelectorAll('input[name="columns[]"]');
-                      columnInputs.forEach(input => {
-                          url.searchParams.append('columns[]', input.value);
-                      });
-
-                      // Redirect to new URL
-                      window.location.href = url.toString();
-                  });
-              });
-
-              // Close dropdown when clicking outside
-              document.addEventListener('click', function(e) {
-                  if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
-                      yearDropdownMenu.style.display = 'none';
-                      yearSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Prevent dropdown from closing when clicking inside
-              yearDropdownMenu.addEventListener('click', function(e) {
-                  e.stopPropagation();
-              });
-          }
-
-          // Status Dropdown Handler
-          const statusSelectBtn = document.getElementById('statusSelectBtn');
-          const statusDropdownMenu = document.getElementById('statusDropdownMenu');
-          const statusSelect = document.getElementById('statusSelect');
-          const statusSelectText = document.getElementById('statusSelectText');
-          const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
-
-          if (statusSelectBtn && statusDropdownMenu && statusSelect) {
-              // Toggle dropdown menu
-              statusSelectBtn.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Status dropdown button clicked');
-
-                  // Close year dropdown if open
-                  if (yearDropdownMenu) {
-                      yearDropdownMenu.style.display = 'none';
-                      if (yearSelectBtn) yearSelectBtn.classList.remove('active');
-                  }
-
-                  // Toggle status dropdown visibility
-                  if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
-                      statusDropdownMenu.style.display = 'block';
-                      statusSelectBtn.classList.add('active');
-                  } else {
-                      statusDropdownMenu.style.display = 'none';
-                      statusSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Handle status selection
-              statusDropdownItems.forEach(item => {
-                  item.addEventListener('click', function(e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('Status item clicked:', this.getAttribute('data-status'));
-
-                      const selectedStatus = this.getAttribute('data-status');
-
-                      // Update hidden input
-                      statusSelect.value = selectedStatus;
-
-                      // Update button text
-                      const statusLabels = {
-                          '': 'Semua Status',
-                          'belum_dikirim': 'Belum Dikirim',
-                          'menunggu_approval': 'Menunggu Approve Team Verifikasi',
-                          'terkirim': 'Terkirim'
-                      };
-                      statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
-
-                      // Update active state
-                      statusDropdownItems.forEach(i => i.classList.remove('active'));
-                      this.classList.add('active');
-
-                      // Close dropdown
-                      statusDropdownMenu.style.display = 'none';
-                      statusSelectBtn.classList.remove('active');
-
-                      // Submit form to apply filter (preserve search and other params)
-                      const form = document.getElementById('filterForm');
-                      const searchInput = form.querySelector('input[name="search"]');
-                      const searchValue = searchInput ? searchInput.value.trim() : '';
-
-                      // Preserve search value in URL
-                      const url = new URL(form.action);
-                      if (searchValue) {
-                          url.searchParams.set('search', searchValue);
-                      } else {
-                          url.searchParams.delete('search');
-                      }
-
-                      // Preserve year filter
-                      const yearValue = yearSelect ? yearSelect.value : '';
-                      if (yearValue) {
-                          url.searchParams.set('year', yearValue);
-                      } else {
-                          url.searchParams.delete('year');
-                      }
-
-                      // Set status filter
-                      if (selectedStatus) {
-                          url.searchParams.set('status_filter', selectedStatus);
-                      } else {
-                          url.searchParams.delete('status_filter');
-                      }
-
-                      // Preserve column customization params
-                      const columnInputs = form.querySelectorAll('input[name="columns[]"]');
-                      columnInputs.forEach(input => {
-                          url.searchParams.append('columns[]', input.value);
-                      });
-
-                      // Preserve per_page
-                      const perPage = new URLSearchParams(window.location.search).get('per_page');
-                      if (perPage) {
-                          url.searchParams.set('per_page', perPage);
-                      }
-
-                      // Redirect to new URL
-                      window.location.href = url.toString();
-                  });
-              });
-
-              // Close dropdown when clicking outside
-              document.addEventListener('click', function(e) {
-                  if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
-                      statusDropdownMenu.style.display = 'none';
-                      statusSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Prevent dropdown from closing when clicking inside
-              statusDropdownMenu.addEventListener('click', function(e) {
-                  e.stopPropagation();
-              });
-          }
-
-          // Handle filter form submit to preserve all parameters
-          function handleFilterSubmit(event) {
-              event.preventDefault();
-              const form = document.getElementById('filterForm');
-              const searchInput = form.querySelector('input[name="search"]');
-              const yearInput = form.querySelector('input[name="year"]');
-              const statusInput = form.querySelector('input[name="status_filter"]');
-
-              // Build URL with all parameters
-              const url = new URL(form.action);
-
-              // Add search parameter
-              if (searchInput && searchInput.value.trim()) {
-                  url.searchParams.set('search', searchInput.value.trim());
-              } else {
-                  url.searchParams.delete('search');
-              }
-
-              // Add year parameter
-              if (yearInput && yearInput.value) {
-                  url.searchParams.set('year', yearInput.value);
-              } else {
-                  url.searchParams.delete('year');
-              }
-
-              // Add status_filter parameter
-              if (statusInput && statusInput.value) {
-                  url.searchParams.set('status_filter', statusInput.value);
-              } else {
-                  url.searchParams.delete('status_filter');
-              }
-
-              // Preserve per_page parameter
-              const perPage = new URLSearchParams(window.location.search).get('per_page');
-              if (perPage) {
-                  url.searchParams.set('per_page', perPage);
-              }
-
-              // Preserve column customization params
-              const columnInputs = form.querySelectorAll('input[name="columns[]"]');
-              columnInputs.forEach(input => {
-                  url.searchParams.append('columns[]', input.value);
-              });
-
-              // Redirect to new URL
-              window.location.href = url.toString();
-          }
-
-          // Close modal when clicking outside
-          document.addEventListener('click', function(e) {
-            const modal = document.getElementById('columnCustomizationModal');
-            if (modal && modal.classList.contains('show') &&
-                e.target === modal) {
-              closeColumnCustomizationModal();
-            }
-          });
-
-          // Close modal with Escape key
-          document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-              const modal = document.getElementById('columnCustomizationModal');
-              if (modal && modal.classList.contains('show')) {
-                closeColumnCustomizationModal();
-              }
-            }
-          });
-
-          // Re-initialize drag and drop when modal opens
-          const modal = document.getElementById('columnCustomizationModal');
-          if (modal) {
-            const observer = new MutationObserver(function(mutations) {
-              if (modal.classList.contains('show')) {
-                setTimeout(() => {
-                  initializeDragAndDrop();
-                }, 100);
-              }
-            });
-            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
-          }
-      });
-
-      // Open View Document Modal
-      function openViewDocumentModal(docId) {
-        // Set document ID
-        document.getElementById('view-dokumen-id').value = docId;
-
-        // Set edit button URL
-        document.getElementById('view-edit-btn').href = `/documents/${docId}/edit`;
-
-        // Load document data via AJAX
-        fetch(`/documents/${docId}/detail`, {
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        })
+          })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -3814,461 +3028,1247 @@
             return response.json();
           })
           .then(data => {
-            console.log('Document data received:', data);
-            if (data.success && data.dokumen) {
-              const dok = data.dokumen;
+            if (data.success) {
+              // Populate modal with data
+              document.getElementById('rejectionNomorAgenda').textContent = data.dokumen.nomor_agenda || '-';
+              document.getElementById('rejectionNomorSpp').textContent = data.dokumen.nomor_spp || '-';
+              document.getElementById('rejectionUraianSpp').textContent = data.dokumen.uraian_spp || '-';
+              document.getElementById('rejectionNilaiRupiah').textContent = data.dokumen.nilai_rupiah || '-';
+              document.getElementById('rejectionTanggal').textContent = data.rejected_at || '-';
+              document.getElementById('rejectionBy').textContent = data.rejected_by || 'Unknown';
+              document.getElementById('rejectionReason').textContent = data.rejection_reason || 'Tidak ada alasan yang diberikan';
 
-              // Identitas Dokumen
-              document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
-              document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
-              document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
-              document.getElementById('view-bulan').textContent = dok.bulan || '-';
-              document.getElementById('view-tahun').textContent = dok.tahun || '-';
-              document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
-              document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
-              document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
-              document.getElementById('view-kategori').textContent = dok.kategori || '-';
-              document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
-
-              // Detail Keuangan & Vendor
-              document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
-              document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
-              // Ejaan nilai rupiah
-              if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
-                document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
-              } else {
-                document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
-              }
-              document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
-              document.getElementById('view-kebun').textContent = dok.kebun || '-';
-              document.getElementById('view-bagian').textContent = dok.bagian || '-';
-              document.getElementById('view-nama-pengirim').textContent = dok.nama_pengirim || '-';
-
-              // Referensi Pendukung
-              document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
-              document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
-              document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-              document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
-              document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
-              document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
-
-              // Nomor PO & PR
-              const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
-                ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
-                : '-';
-              const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
-                ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
-                : '-';
-              document.getElementById('view-nomor-po').textContent = poList;
-              document.getElementById('view-nomor-pr').textContent = prList;
-
-              // Show modal after data is loaded
-              const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
-              modal.show();
-
-              // Ensure edit button works correctly - prevent any interference
-              const editBtn = document.getElementById('view-edit-btn');
-              if (editBtn) {
-                // Remove any existing event listeners by cloning and replacing
-                const newEditBtn = editBtn.cloneNode(true);
-                editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-
-                // Add click handler to ensure navigation works
-                newEditBtn.addEventListener('click', function(e) {
-                  const href = this.getAttribute('href');
-                  if (href && href !== '#' && !href.startsWith('#')) {
-                    // Valid URL, allow navigation
-                    window.location.href = href;
-                  }
-                });
-              }
+              // Show content
+              loadingEl.style.display = 'none';
+              contentEl.style.display = 'block';
             } else {
-              console.error('Invalid response format:', data);
-              alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
+              throw new Error(data.message || 'Gagal memuat data');
             }
           })
           .catch(error => {
-            console.error('Error loading document:', error);
-            alert('Gagal memuat data dokumen: ' + error.message);
+            console.error('Error loading rejection details:', error);
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            document.getElementById('rejectionErrorMessage').textContent = 
+              'Gagal memuat detail penolakan: ' + (error.message || 'Terjadi kesalahan');
           });
-      }
+        };
 
-      // Helper functions for formatting
-      function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      }
-
-      function formatDateTime(dateStr) {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      }
-
-      function formatNumber(num) {
-        if (!num) return '-';
-        return new Intl.NumberFormat('id-ID').format(num);
-      }
-
-      // Function to convert number to Indonesian terbilang
-      function terbilangRupiah(number) {
-        number = parseFloat(number) || 0;
-
-        if (number == 0) {
-          return 'nol rupiah';
-        }
-
-        const angka = [
-          '', 'satu', 'dua', 'tiga', 'empat', 'lima',
-          'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
-          'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
-          'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
-        ];
-
-        let hasil = '';
-
-        // Handle triliun
-        if (number >= 1000000000000) {
-          const triliun = Math.floor(number / 1000000000000);
-          hasil += terbilangSatuan(triliun, angka) + ' triliun ';
-          number = number % 1000000000000;
-        }
-
-        // Handle milyar
-        if (number >= 1000000000) {
-          const milyar = Math.floor(number / 1000000000);
-          hasil += terbilangSatuan(milyar, angka) + ' milyar ';
-          number = number % 1000000000;
-        }
-
-        // Handle juta
-        if (number >= 1000000) {
-          const juta = Math.floor(number / 1000000);
-          hasil += terbilangSatuan(juta, angka) + ' juta ';
-          number = number % 1000000;
-        }
-
-        // Handle ribu
-        if (number >= 1000) {
-          const ribu = Math.floor(number / 1000);
-          if (ribu == 1) {
-            hasil += 'seribu ';
-          } else {
-            hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+        // Enhanced page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+          const successModalEl = document.getElementById('sendSuccessModal');
+          if (successModalEl) {
+            successModalEl.addEventListener('hidden.bs.modal', function() {
+              if (shouldReloadAfterSendSuccess) {
+                shouldReloadAfterSendSuccess = false;
+                location.reload();
+              }
+            });
           }
-          number = number % 1000;
-        }
 
-        // Handle ratusan, puluhan, dan satuan
-        if (number > 0) {
-          hasil += terbilangSatuan(number, angka);
-        }
-
-        return hasil.trim() + ' rupiah';
-      }
-
-      function terbilangSatuan(number, angka) {
-        let hasil = '';
-        number = parseInt(number);
-
-        if (number == 0) {
-          return '';
-        }
-
-        // Handle ratusan
-        if (number >= 100) {
-          const ratus = Math.floor(number / 100);
-          if (ratus == 1) {
-            hasil += 'seratus ';
-          } else {
-            hasil += angka[ratus] + ' ratus ';
+          // Initialize confirmation button click handler
+          const confirmBtn = document.getElementById('confirmSendToIbuBBtn');
+          if (confirmBtn) {
+            confirmBtn.addEventListener('click', confirmSendToIbuB);
           }
-          number = number % 100;
+
+          // Add smooth scroll behavior - only for hash links (exclude modal links)
+          document.querySelectorAll('a[href^="#"]:not(#view-edit-btn):not([id^="view-"])').forEach(anchor => {
+            // Skip if anchor is inside a modal
+            if (anchor.closest('.modal')) {
+              return;
+            }
+            anchor.addEventListener('click', function (e) {
+              const href = this.getAttribute('href');
+              // Only process hash links (starting with #) and ensure it's not empty
+              if (href && href.startsWith('#') && href.length > 1) {
+                e.preventDefault();
+                try {
+                  const target = document.querySelector(href);
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                  }
+                } catch (error) {
+                  // Invalid selector, ignore
+                  console.warn('Invalid hash selector:', href);
+                }
+              }
+            });
+          });
+
+          // Add loading states for all buttons
+          document.querySelectorAll('.btn-action').forEach(button => {
+            button.addEventListener('click', function() {
+              if (!this.disabled) {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                  this.style.transform = '';
+                }, 100);
+              }
+            });
+          });
+        });
+
+        </script>
+
+        <script>
+        // Global variables for column customization
+        let selectedColumnsOrder = [];
+        let availableColumnsData = {};
+
+        // Initialize available columns data from PHP
+        @php
+          $columnsJson = json_encode($availableColumns);
+          echo "availableColumnsData = {$columnsJson};";
+        @endphp
+
+        // Initialize selected columns from existing selection
+        @if(count($selectedColumns) > 0)
+          selectedColumnsOrder = @json($selectedColumns);
+        @endif
+
+        // Global Functions - accessible from anywhere
+        function openColumnCustomizationModal() {
+          const modal = document.getElementById('columnCustomizationModal');
+          modal.classList.add('show');
+          document.body.style.overflow = 'hidden';
+
+          // Initialize the modal state
+          initializeModalState();
         }
 
-        // Handle puluhan dan satuan (0-99)
-        if (number > 0) {
-          if (number < 20) {
-            hasil += angka[number] + ' ';
-          } else {
-            const puluhan = Math.floor(number / 10);
-            const satuan = number % 10;
+        function closeColumnCustomizationModal() {
+          const modal = document.getElementById('columnCustomizationModal');
+          modal.classList.remove('show');
+          document.body.style.overflow = '';
+        }
 
-            if (puluhan == 1) {
-              hasil += angka[10 + satuan] + ' ';
+        function toggleColumn(columnElement) {
+          const columnKey = columnElement.dataset.column;
+          const checkbox = columnElement.querySelector('.column-item-checkbox');
+          const isChecked = checkbox.checked;
+
+          if (!isChecked) {
+            // Add to selection
+            if (!selectedColumnsOrder.includes(columnKey)) {
+              selectedColumnsOrder.push(columnKey);
+            }
+            checkbox.checked = true;
+            columnElement.classList.add('selected');
+            columnElement.setAttribute('draggable', 'true');
+          } else {
+            // Remove from selection
+            selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
+            checkbox.checked = false;
+            columnElement.classList.remove('selected');
+            columnElement.setAttribute('draggable', 'false');
+          }
+
+          updateColumnOrderBadges();
+          updatePreviewTable();
+          updateSelectedCount();
+          updateDraggableState();
+        }
+
+        function updateColumnOrderBadges() {
+          document.querySelectorAll('.column-item').forEach(item => {
+            const columnKey = item.dataset.column;
+            const orderBadge = item.querySelector('.column-item-order');
+            const index = selectedColumnsOrder.indexOf(columnKey);
+
+            if (index !== -1) {
+              orderBadge.textContent = index + 1;
             } else {
-              hasil += angka[puluhan] + ' puluh ';
-              if (satuan > 0) {
-                hasil += angka[satuan] + ' ';
+              orderBadge.textContent = '';
+            }
+          });
+        }
+
+        function updatePreviewTable() {
+          const previewContainer = document.getElementById('tablePreview');
+
+          if (selectedColumnsOrder.length === 0) {
+            previewContainer.innerHTML = `
+              <div class="empty-preview">
+                <i class="fa-solid fa-table fa-2x mb-2"></i>
+                <p>Belum ada kolom yang dipilih</p>
+                <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+              </div>
+            `;
+            return;
+          }
+
+          let previewHTML = `
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+          `;
+
+          // Add column headers
+          selectedColumnsOrder.forEach(columnKey => {
+            const columnLabel = availableColumnsData[columnKey] || columnKey;
+            previewHTML += `<th>${columnLabel}</th>`;
+          });
+
+          previewHTML += `
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          // Add sample data rows (5 rows with realistic data)
+          const sampleData = {
+            'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
+            'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
+            'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
+            'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
+            'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
+            'status': ['✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim', '✓ Terkirim'],
+            'keterangan': ['Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap', 'Dokumen lengkap'],
+            'tanggal_spp': ['15/11/2024', '10/11/2024', '20/11/2024', '18/11/2024', '22/11/2024'],
+            'uraian_spp': ['Pembayaran kontraktor', 'Pembayaran vendor', 'Pembayaran supplier', 'Pembayaran jasa', 'Pembayaran material'],
+            'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
+            'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
+            'jenis_dokumen': ['SPP', 'SPP', 'SPP', 'SPP', 'SPP'],
+            'jenis_pembayaran': ['Tunai', 'Transfer', 'Tunai', 'Transfer', 'Tunai'],
+            'nama_pengirim': ['Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul'],
+            'dibayar_kepada': ['PT ABC', 'PT XYZ', 'CV DEF', 'PT GHI', 'PT JKL'],
+            'no_berita_acara': ['BA-001/2024', 'BA-002/2024', 'BA-003/2024', 'BA-004/2024', 'BA-005/2024'],
+            'tanggal_berita_acara': ['10/11/2024', '08/11/2024', '15/11/2024', '12/11/2024', '18/11/2024'],
+            'no_spk': ['SPK-001/2024', 'SPK-002/2024', 'SPK-003/2024', 'SPK-004/2024', 'SPK-005/2024'],
+            'tanggal_spk': ['01/11/2024', '05/11/2024', '10/11/2024', '08/11/2024', '12/11/2024'],
+            'tanggal_berakhir_spk': ['30/11/2024', '30/11/2024', '30/11/2024', '30/11/2024', '30/11/2024']
+          };
+
+          for (let i = 0; i < 5; i++) {
+            previewHTML += `<tr>`;
+            previewHTML += `<td>${i + 1}</td>`;
+
+            selectedColumnsOrder.forEach(columnKey => {
+              const columnLabel = availableColumnsData[columnKey] || columnKey;
+              let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
+
+              // Format special cases
+              if (columnKey === 'status') {
+                cellValue = `<span style="color: #28a745;">${cellValue}</span>`;
+              }
+
+              previewHTML += `<td>${cellValue}</td>`;
+            });
+
+            previewHTML += `<td>Edit, Kirim</td>`;
+            previewHTML += `</tr>`;
+          }
+
+          previewHTML += `
+              </tbody>
+            </table>
+          `;
+
+          previewContainer.innerHTML = previewHTML;
+        }
+
+        function updateSelectedCount() {
+          const countElement = document.getElementById('selectedColumnCount');
+          countElement.textContent = selectedColumnsOrder.length;
+
+          const saveButton = document.getElementById('saveCustomizationBtn');
+          saveButton.disabled = selectedColumnsOrder.length === 0;
+        }
+
+        function saveColumnCustomization() {
+          if (selectedColumnsOrder.length === 0) {
+            alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
+            return;
+          }
+
+          // Get the filter form
+          const filterForm = document.getElementById('filterForm');
+
+          // Remove existing column inputs
+          document.querySelectorAll('input[name="columns[]"]').forEach(input => {
+            if (input.type === 'hidden') {
+              input.remove();
+            }
+          });
+
+          // Add hidden inputs for selected columns in order
+          selectedColumnsOrder.forEach(columnKey => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'columns[]';
+            hiddenInput.value = columnKey;
+            filterForm.appendChild(hiddenInput);
+          });
+
+          // Add enable customization flag
+          const enableInput = document.createElement('input');
+          enableInput.type = 'hidden';
+          enableInput.name = 'enable_customization';
+          enableInput.value = '1';
+          filterForm.appendChild(enableInput);
+
+          // Close modal
+          closeColumnCustomizationModal();
+
+          // Submit form to apply changes
+          filterForm.submit();
+        }
+
+        function initializeModalState() {
+          // Update column items based on current selection
+          document.querySelectorAll('.column-item').forEach(item => {
+            const columnKey = item.dataset.column;
+            const checkbox = item.querySelector('.column-item-checkbox');
+
+            if (selectedColumnsOrder.includes(columnKey)) {
+              checkbox.checked = true;
+              item.classList.add('selected');
+              item.setAttribute('draggable', 'true');
+            } else {
+              checkbox.checked = false;
+              item.classList.remove('selected');
+              item.setAttribute('draggable', 'false');
+            }
+          });
+
+          // Initialize drag and drop
+          initializeDragAndDrop();
+
+          // Update all displays
+          updateColumnOrderBadges();
+          updatePreviewTable();
+          updateSelectedCount();
+        }
+
+        function updateDraggableState() {
+          document.querySelectorAll('.column-item').forEach(item => {
+            const columnKey = item.dataset.column;
+            if (selectedColumnsOrder.includes(columnKey)) {
+              item.setAttribute('draggable', 'true');
+            } else {
+              item.setAttribute('draggable', 'false');
+            }
+          });
+        }
+
+        let draggedElement = null;
+        let draggedIndex = -1;
+
+        function initializeDragAndDrop() {
+          const columnList = document.getElementById('columnSelectionList');
+          if (!columnList) return;
+
+          // Remove all existing event listeners by cloning
+          const newList = columnList.cloneNode(true);
+          columnList.parentNode.replaceChild(newList, columnList);
+
+          // Add drag and drop to selected items only
+          newList.querySelectorAll('.column-item.selected').forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+            item.addEventListener('dragover', handleDragOver);
+            item.addEventListener('dragenter', handleDragEnter);
+            item.addEventListener('dragleave', handleDragLeave);
+            item.addEventListener('drop', handleDrop);
+          });
+        }
+
+        function handleDragStart(e) {
+          draggedElement = this;
+          draggedIndex = selectedColumnsOrder.indexOf(this.dataset.column);
+          this.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', this.dataset.column);
+        }
+
+        function handleDragEnd(e) {
+          this.classList.remove('dragging');
+          document.querySelectorAll('.column-item').forEach(el => {
+            el.classList.remove('drag-over');
+          });
+          draggedElement = null;
+          draggedIndex = -1;
+        }
+
+        function handleDragOver(e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+
+          if (this !== draggedElement && this.classList.contains('selected')) {
+            const afterElement = getDragAfterElement(this.parentNode, e.clientY);
+            const selectedItems = Array.from(this.parentNode.querySelectorAll('.column-item.selected'));
+
+            if (afterElement == null) {
+              this.parentNode.appendChild(draggedElement);
+            } else {
+              this.parentNode.insertBefore(draggedElement, afterElement);
+            }
+          }
+
+          return false;
+        }
+
+        function handleDragEnter(e) {
+          e.preventDefault();
+          if (this !== draggedElement && this.classList.contains('selected')) {
+            this.classList.add('drag-over');
+          }
+        }
+
+        function handleDragLeave(e) {
+          this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          this.classList.remove('drag-over');
+
+          if (this !== draggedElement && this.classList.contains('selected')) {
+            const targetKey = this.dataset.column;
+            const draggedKey = draggedElement.dataset.column;
+
+            // Get all selected items in current DOM order
+            const columnList = document.getElementById('columnSelectionList');
+            const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
+
+            // Find new order based on DOM position
+            const newOrder = selectedItems.map(item => item.dataset.column);
+
+            // Update selectedColumnsOrder
+            selectedColumnsOrder = newOrder;
+
+            // Update UI
+            updateColumnOrderBadges();
+            updatePreviewTable();
+
+            // Re-initialize drag and drop for new order
+            setTimeout(() => {
+              initializeDragAndDrop();
+            }, 50);
+          }
+
+          return false;
+        }
+
+        function getDragAfterElement(container, y) {
+          const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
+
+          return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+              return { offset: offset, element: child };
+            } else {
+              return closest;
+            }
+          }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Handle suggestion button clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            const suggestionButtons = document.querySelectorAll('.suggestion-btn');
+
+            suggestionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const suggestion = this.getAttribute('data-suggestion');
+                    const searchInput = document.querySelector('input[name="search"]');
+                    const form = searchInput.closest('form');
+
+                    // Set the suggestion value to search input
+                    searchInput.value = suggestion;
+
+                    // Submit the form
+                    form.submit();
+                });
+            });
+
+            // Handle year dropdown - Fixed version
+            const yearSelectBtn = document.getElementById('yearSelectBtn');
+            const yearDropdownMenu = document.getElementById('yearDropdownMenu');
+            const yearSelect = document.getElementById('yearSelect');
+            const yearSelectText = document.getElementById('yearSelectText');
+            const yearDropdownItems = document.querySelectorAll('.year-dropdown-item');
+
+            if (yearSelectBtn && yearDropdownMenu && yearSelect) {
+                // Toggle dropdown menu
+                yearSelectBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Year dropdown button clicked');
+
+                    // Toggle dropdown visibility
+                    if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
+                        yearDropdownMenu.style.display = 'block';
+                        yearSelectBtn.classList.add('active');
+                    } else {
+                        yearDropdownMenu.style.display = 'none';
+                        yearSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Handle year selection
+                yearDropdownItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Year item clicked:', this.getAttribute('data-year'));
+
+                        const selectedYear = this.getAttribute('data-year');
+
+                        // Update hidden input
+                        yearSelect.value = selectedYear;
+
+                        // Update button text
+                        yearSelectText.textContent = selectedYear || 'Semua Tahun';
+
+                        // Update active state
+                        yearDropdownItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Close dropdown
+                        yearDropdownMenu.style.display = 'none';
+                        yearSelectBtn.classList.remove('active');
+
+                        // Submit form to apply filter (preserve search and other params)
+                        const form = document.getElementById('filterForm');
+                        const searchInput = form.querySelector('input[name="search"]');
+                        const searchValue = searchInput ? searchInput.value.trim() : '';
+
+                        // Preserve search value in URL
+                        const url = new URL(form.action);
+                        if (searchValue) {
+                            url.searchParams.set('search', searchValue);
+                        } else {
+                            url.searchParams.delete('search');
+                        }
+
+                        if (selectedYear) {
+                            url.searchParams.set('year', selectedYear);
+                        } else {
+                            url.searchParams.delete('year');
+                        }
+
+                        // Preserve status_filter
+                        const statusInput = form.querySelector('input[name="status_filter"]');
+                        if (statusInput && statusInput.value) {
+                            url.searchParams.set('status_filter', statusInput.value);
+                        } else {
+                            url.searchParams.delete('status_filter');
+                        }
+
+                        // Preserve per_page
+                        const perPage = new URLSearchParams(window.location.search).get('per_page');
+                        if (perPage) {
+                            url.searchParams.set('per_page', perPage);
+                        }
+
+                        // Preserve column customization params
+                        const columnInputs = form.querySelectorAll('input[name="columns[]"]');
+                        columnInputs.forEach(input => {
+                            url.searchParams.append('columns[]', input.value);
+                        });
+
+                        // Redirect to new URL
+                        window.location.href = url.toString();
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
+                        yearDropdownMenu.style.display = 'none';
+                        yearSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Prevent dropdown from closing when clicking inside
+                yearDropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // Status Dropdown Handler
+            const statusSelectBtn = document.getElementById('statusSelectBtn');
+            const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+            const statusSelect = document.getElementById('statusSelect');
+            const statusSelectText = document.getElementById('statusSelectText');
+            const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
+
+            if (statusSelectBtn && statusDropdownMenu && statusSelect) {
+                // Toggle dropdown menu
+                statusSelectBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Status dropdown button clicked');
+
+                    // Close year dropdown if open
+                    if (yearDropdownMenu) {
+                        yearDropdownMenu.style.display = 'none';
+                        if (yearSelectBtn) yearSelectBtn.classList.remove('active');
+                    }
+
+                    // Toggle status dropdown visibility
+                    if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
+                        statusDropdownMenu.style.display = 'block';
+                        statusSelectBtn.classList.add('active');
+                    } else {
+                        statusDropdownMenu.style.display = 'none';
+                        statusSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Handle status selection
+                statusDropdownItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Status item clicked:', this.getAttribute('data-status'));
+
+                        const selectedStatus = this.getAttribute('data-status');
+
+                        // Update hidden input
+                        statusSelect.value = selectedStatus;
+
+                        // Update button text
+                        const statusLabels = {
+                            '': 'Semua Status',
+                            'belum_dikirim': 'Belum Dikirim',
+                            'menunggu_approval': 'Menunggu Approve Team Verifikasi',
+                            'terkirim': 'Terkirim'
+                        };
+                        statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
+
+                        // Update active state
+                        statusDropdownItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Close dropdown
+                        statusDropdownMenu.style.display = 'none';
+                        statusSelectBtn.classList.remove('active');
+
+                        // Submit form to apply filter (preserve search and other params)
+                        const form = document.getElementById('filterForm');
+                        const searchInput = form.querySelector('input[name="search"]');
+                        const searchValue = searchInput ? searchInput.value.trim() : '';
+
+                        // Preserve search value in URL
+                        const url = new URL(form.action);
+                        if (searchValue) {
+                            url.searchParams.set('search', searchValue);
+                        } else {
+                            url.searchParams.delete('search');
+                        }
+
+                        // Preserve year filter
+                        const yearValue = yearSelect ? yearSelect.value : '';
+                        if (yearValue) {
+                            url.searchParams.set('year', yearValue);
+                        } else {
+                            url.searchParams.delete('year');
+                        }
+
+                        // Set status filter
+                        if (selectedStatus) {
+                            url.searchParams.set('status_filter', selectedStatus);
+                        } else {
+                            url.searchParams.delete('status_filter');
+                        }
+
+                        // Preserve column customization params
+                        const columnInputs = form.querySelectorAll('input[name="columns[]"]');
+                        columnInputs.forEach(input => {
+                            url.searchParams.append('columns[]', input.value);
+                        });
+
+                        // Preserve per_page
+                        const perPage = new URLSearchParams(window.location.search).get('per_page');
+                        if (perPage) {
+                            url.searchParams.set('per_page', perPage);
+                        }
+
+                        // Redirect to new URL
+                        window.location.href = url.toString();
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
+                        statusDropdownMenu.style.display = 'none';
+                        statusSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Prevent dropdown from closing when clicking inside
+                statusDropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // Handle filter form submit to preserve all parameters
+            function handleFilterSubmit(event) {
+                event.preventDefault();
+                const form = document.getElementById('filterForm');
+                const searchInput = form.querySelector('input[name="search"]');
+                const yearInput = form.querySelector('input[name="year"]');
+                const statusInput = form.querySelector('input[name="status_filter"]');
+
+                // Build URL with all parameters
+                const url = new URL(form.action);
+
+                // Add search parameter
+                if (searchInput && searchInput.value.trim()) {
+                    url.searchParams.set('search', searchInput.value.trim());
+                } else {
+                    url.searchParams.delete('search');
+                }
+
+                // Add year parameter
+                if (yearInput && yearInput.value) {
+                    url.searchParams.set('year', yearInput.value);
+                } else {
+                    url.searchParams.delete('year');
+                }
+
+                // Add status_filter parameter
+                if (statusInput && statusInput.value) {
+                    url.searchParams.set('status_filter', statusInput.value);
+                } else {
+                    url.searchParams.delete('status_filter');
+                }
+
+                // Preserve per_page parameter
+                const perPage = new URLSearchParams(window.location.search).get('per_page');
+                if (perPage) {
+                    url.searchParams.set('per_page', perPage);
+                }
+
+                // Preserve column customization params
+                const columnInputs = form.querySelectorAll('input[name="columns[]"]');
+                columnInputs.forEach(input => {
+                    url.searchParams.append('columns[]', input.value);
+                });
+
+                // Redirect to new URL
+                window.location.href = url.toString();
+            }
+
+            // Close modal when clicking outside
+            document.addEventListener('click', function(e) {
+              const modal = document.getElementById('columnCustomizationModal');
+              if (modal && modal.classList.contains('show') &&
+                  e.target === modal) {
+                closeColumnCustomizationModal();
+              }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+              if (e.key === 'Escape') {
+                const modal = document.getElementById('columnCustomizationModal');
+                if (modal && modal.classList.contains('show')) {
+                  closeColumnCustomizationModal();
+                }
+              }
+            });
+
+            // Re-initialize drag and drop when modal opens
+            const modal = document.getElementById('columnCustomizationModal');
+            if (modal) {
+              const observer = new MutationObserver(function(mutations) {
+                if (modal.classList.contains('show')) {
+                  setTimeout(() => {
+                    initializeDragAndDrop();
+                  }, 100);
+                }
+              });
+              observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+            }
+        });
+
+        // Open View Document Modal
+        function openViewDocumentModal(docId) {
+          // Set document ID
+          document.getElementById('view-dokumen-id').value = docId;
+
+          // Set edit button URL
+          document.getElementById('view-edit-btn').href = `/documents/${docId}/edit`;
+
+          // Load document data via AJAX
+          fetch(`/documents/${docId}/detail`, {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log('Document data received:', data);
+              if (data.success && data.dokumen) {
+                const dok = data.dokumen;
+
+                // Identitas Dokumen
+                document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
+                document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
+                document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
+                document.getElementById('view-bulan').textContent = dok.bulan || '-';
+                document.getElementById('view-tahun').textContent = dok.tahun || '-';
+                document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
+                document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
+                document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
+                document.getElementById('view-kategori').textContent = dok.kategori || '-';
+                document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+
+                // Detail Keuangan & Vendor
+                document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
+                document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+                // Ejaan nilai rupiah
+                if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
+                  document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
+                } else {
+                  document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+                }
+                document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
+                document.getElementById('view-kebun').textContent = dok.kebun || '-';
+                document.getElementById('view-bagian').textContent = dok.bagian || '-';
+                document.getElementById('view-nama-pengirim').textContent = dok.nama_pengirim || '-';
+
+                // Referensi Pendukung
+                document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
+                document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
+                document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
+                document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+                document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
+                document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+
+                // Nomor PO & PR
+                const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
+                  ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
+                  : '-';
+                const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
+                  ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
+                  : '-';
+                document.getElementById('view-nomor-po').textContent = poList;
+                document.getElementById('view-nomor-pr').textContent = prList;
+
+                // Show modal after data is loaded
+                const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+                modal.show();
+
+                // Ensure edit button works correctly - prevent any interference
+                const editBtn = document.getElementById('view-edit-btn');
+                if (editBtn) {
+                  // Remove any existing event listeners by cloning and replacing
+                  const newEditBtn = editBtn.cloneNode(true);
+                  editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+
+                  // Add click handler to ensure navigation works
+                  newEditBtn.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href && href !== '#' && !href.startsWith('#')) {
+                      // Valid URL, allow navigation
+                      window.location.href = href;
+                    }
+                  });
+                }
+              } else {
+                console.error('Invalid response format:', data);
+                alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
+              }
+            })
+            .catch(error => {
+              console.error('Error loading document:', error);
+              alert('Gagal memuat data dokumen: ' + error.message);
+            });
+        }
+
+        // Helper functions for formatting
+        function formatDate(dateStr) {
+          if (!dateStr) return '-';
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+          if (!dateStr) return '-';
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatNumber(num) {
+          if (!num) return '-';
+          return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        // Function to convert number to Indonesian terbilang
+        function terbilangRupiah(number) {
+          number = parseFloat(number) || 0;
+
+          if (number == 0) {
+            return 'nol rupiah';
+          }
+
+          const angka = [
+            '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+            'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+            'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+            'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+          ];
+
+          let hasil = '';
+
+          // Handle triliun
+          if (number >= 1000000000000) {
+            const triliun = Math.floor(number / 1000000000000);
+            hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+            number = number % 1000000000000;
+          }
+
+          // Handle milyar
+          if (number >= 1000000000) {
+            const milyar = Math.floor(number / 1000000000);
+            hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+            number = number % 1000000000;
+          }
+
+          // Handle juta
+          if (number >= 1000000) {
+            const juta = Math.floor(number / 1000000);
+            hasil += terbilangSatuan(juta, angka) + ' juta ';
+            number = number % 1000000;
+          }
+
+          // Handle ribu
+          if (number >= 1000) {
+            const ribu = Math.floor(number / 1000);
+            if (ribu == 1) {
+              hasil += 'seribu ';
+            } else {
+              hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+            }
+            number = number % 1000;
+          }
+
+          // Handle ratusan, puluhan, dan satuan
+          if (number > 0) {
+            hasil += terbilangSatuan(number, angka);
+          }
+
+          return hasil.trim() + ' rupiah';
+        }
+
+        function terbilangSatuan(number, angka) {
+          let hasil = '';
+          number = parseInt(number);
+
+          if (number == 0) {
+            return '';
+          }
+
+          // Handle ratusan
+          if (number >= 100) {
+            const ratus = Math.floor(number / 100);
+            if (ratus == 1) {
+              hasil += 'seratus ';
+            } else {
+              hasil += angka[ratus] + ' ratus ';
+            }
+            number = number % 100;
+          }
+
+          // Handle puluhan dan satuan (0-99)
+          if (number > 0) {
+            if (number < 20) {
+              hasil += angka[number] + ' ';
+            } else {
+              const puluhan = Math.floor(number / 10);
+              const satuan = number % 10;
+
+              if (puluhan == 1) {
+                hasil += angka[10 + satuan] + ' ';
+              } else {
+                hasil += angka[puluhan] + ' puluh ';
+                if (satuan > 0) {
+                  hasil += angka[satuan] + ' ';
+                }
               }
             }
           }
+
+          return hasil.trim();
         }
+        </script>
 
-        return hasil.trim();
-      }
-      </script>
+        <!-- Modal View Document Detail -->
+        <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
+            <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+              <!-- Sticky Header -->
+              <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+                <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+                  <i class="fa-solid fa-file-lines me-2"></i>
+                  Detail Dokumen Lengkap
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
 
-      <!-- Modal View Document Detail -->
-      <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
-          <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
-            <!-- Sticky Header -->
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
-              <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
-                <i class="fa-solid fa-file-lines me-2"></i>
-                Detail Dokumen Lengkap
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+              <!-- Scrollable Body -->
+              <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+                <input type="hidden" id="view-dokumen-id">
 
-            <!-- Scrollable Body -->
-            <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
-              <input type="hidden" id="view-dokumen-id">
-
-              <!-- Section 1: Identitas Dokumen -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-id-card"></i>
-                    IDENTITAS DOKUMEN
-                  </h6>
+                <!-- Section 1: Identitas Dokumen -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-id-card"></i>
+                      IDENTITAS DOKUMEN
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor Agenda</label>
+                        <div class="detail-value" id="view-nomor-agenda">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor SPP</label>
+                        <div class="detail-value" id="view-nomor-spp">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal SPP</label>
+                        <div class="detail-value" id="view-tanggal-spp">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Bulan</label>
+                        <div class="detail-value" id="view-bulan">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Tahun</label>
+                        <div class="detail-value" id="view-tahun">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal Masuk</label>
+                        <div class="detail-value" id="view-tanggal-masuk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Kriteria CF</label>
+                        <div class="detail-value" id="view-kategori">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Sub Kriteria</label>
+                        <div class="detail-value" id="view-jenis-dokumen">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Item Sub Kriteria</label>
+                        <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Jenis Pembayaran</label>
+                        <div class="detail-value" id="view-jenis-pembayaran">-</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor Agenda</label>
-                      <div class="detail-value" id="view-nomor-agenda">-</div>
+
+                <!-- Section 2: Detail Keuangan & Vendor -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-money-bill-wave"></i>
+                      DETAIL KEUANGAN & VENDOR
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="detail-item">
+                        <label class="detail-label">Uraian SPP</label>
+                        <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nilai Rupiah</label>
+                        <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Ejaan Nilai Rupiah</label>
+                        <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Dibayar Kepada (Vendor)</label>
+                        <div class="detail-value" id="view-dibayar-kepada">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Kebun / Unit Kerja</label>
+                        <div class="detail-value" id="view-kebun">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Bagian</label>
+                        <div class="detail-value" id="view-bagian">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nama Pengirim</label>
+                        <div class="detail-value" id="view-nama-pengirim">-</div>
+                      </div>
                     </div>
                   </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor SPP</label>
-                      <div class="detail-value" id="view-nomor-spp">-</div>
+                </div>
+
+                <!-- Section 3: Referensi Pendukung -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-file-contract"></i>
+                      REFERENSI PENDUKUNG
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">No. SPK</label>
+                        <div class="detail-value" id="view-no-spk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal SPK</label>
+                        <div class="detail-value" id="view-tanggal-spk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal Berakhir SPK</label>
+                        <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor Miro</label>
+                        <div class="detail-value" id="view-nomor-miro">-</div>
+                      </div>
+                    </div>
+                        <div class="detail-value" id="view-nomor-miro">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">No. Berita Acara</label>
+                        <div class="detail-value" id="view-no-berita-acara">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal Berita Acara</label>
+                        <div class="detail-value" id="view-tanggal-berita-acara">-</div>
+                      </div>
                     </div>
                   </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal SPP</label>
-                      <div class="detail-value" id="view-tanggal-spp">-</div>
-                    </div>
+                </div>
+
+                <!-- Section 4: Nomor PO & PR -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-hashtag"></i>
+                      NOMOR PO & PR
+                    </h6>
                   </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Bulan</label>
-                      <div class="detail-value" id="view-bulan">-</div>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor PO</label>
+                        <div class="detail-value" id="view-nomor-po">-</div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Tahun</label>
-                      <div class="detail-value" id="view-tahun">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal Masuk</label>
-                      <div class="detail-value" id="view-tanggal-masuk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Kriteria CF</label>
-                      <div class="detail-value" id="view-kategori">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Sub Kriteria</label>
-                      <div class="detail-value" id="view-jenis-dokumen">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Item Sub Kriteria</label>
-                      <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Jenis Pembayaran</label>
-                      <div class="detail-value" id="view-jenis-pembayaran">-</div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor PR</label>
+                        <div class="detail-value" id="view-nomor-pr">-</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Section 2: Detail Keuangan & Vendor -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-money-bill-wave"></i>
-                    DETAIL KEUANGAN & VENDOR
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-12">
-                    <div class="detail-item">
-                      <label class="detail-label">Uraian SPP</label>
-                      <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nilai Rupiah</label>
-                      <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Ejaan Nilai Rupiah</label>
-                      <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Dibayar Kepada (Vendor)</label>
-                      <div class="detail-value" id="view-dibayar-kepada">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Kebun / Unit Kerja</label>
-                      <div class="detail-value" id="view-kebun">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Bagian</label>
-                      <div class="detail-value" id="view-bagian">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nama Pengirim</label>
-                      <div class="detail-value" id="view-nama-pengirim">-</div>
-                    </div>
-                  </div>
-                </div>
+              <!-- Sticky Footer -->
+              <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
+                  <i class="fa-solid fa-times me-2"></i>Tutup
+                </button>
+                <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
+                  <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
+                </a>
               </div>
-
-              <!-- Section 3: Referensi Pendukung -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-file-contract"></i>
-                    REFERENSI PENDUKUNG
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">No. SPK</label>
-                      <div class="detail-value" id="view-no-spk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal SPK</label>
-                      <div class="detail-value" id="view-tanggal-spk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal Berakhir SPK</label>
-                      <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor Miro</label>
-                      <div class="detail-value" id="view-nomor-miro">-</div>
-                    </div>
-                  </div>
-                      <div class="detail-value" id="view-nomor-miro">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">No. Berita Acara</label>
-                      <div class="detail-value" id="view-no-berita-acara">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal Berita Acara</label>
-                      <div class="detail-value" id="view-tanggal-berita-acara">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 4: Nomor PO & PR -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-hashtag"></i>
-                    NOMOR PO & PR
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor PO</label>
-                      <div class="detail-value" id="view-nomor-po">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor PR</label>
-                      <div class="detail-value" id="view-nomor-pr">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sticky Footer -->
-            <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
-                <i class="fa-solid fa-times me-2"></i>Tutup
-              </button>
-              <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
-                <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
-              </a>
             </div>
           </div>
         </div>
-      </div>
 
-      <style>
-      /* Detail Item Styles for View Modal */
-      .detail-item {
-        margin-bottom: 8px;
-      }
+        <style>
+        /* Detail Item Styles for View Modal */
+        .detail-item {
+          margin-bottom: 8px;
+        }
 
-      .detail-label {
-        display: block;
-        font-size: 10px;
-        font-weight: 700;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
-      }
+        .detail-label {
+          display: block;
+          font-size: 10px;
+          font-weight: 700;
+          color: #6b7280;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 4px;
+        }
 
-      .detail-value {
-        font-size: 14px;
-        color: #1f2937;
-        padding: 8px 12px;
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-      }
-      </style>
+        .detail-value {
+          font-size: 14px;
+          color: #1f2937;
+          padding: 8px 12px;
+          background: white;
+          border-radius: 6px;
+          border: 1px solid #e5e7eb;
+          min-height: 38px;
+          display: flex;
+          align-items: center;
+        }
+        </style>
 @endsection
 
