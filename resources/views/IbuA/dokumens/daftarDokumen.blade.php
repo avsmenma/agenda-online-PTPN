@@ -2142,7 +2142,7 @@
                         <i class="fa-solid fa-file-lines me-1"></i>
                         <span>Belum Dikirim</span>
                       </span>
-                    @elseif(in_array($dokumen->status, ['pending_approval_ibub', 'pending_approval_ibu_b']))
+                    @elseif(in_array($dokumen->status, ['pending_approval_ibub', 'pending_approval_ibu_b', 'waiting_reviewer_approval']))
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                         <i class="fa-solid fa-clock me-1"></i>

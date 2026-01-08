@@ -18,7 +18,7 @@ class InboxController extends Controller
      * Menampilkan daftar dokumen yang menunggu approval di inbox
      * Updated to use new dokumen_statuses table
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
             $user = auth()->user();
@@ -670,9 +670,9 @@ class InboxController extends Controller
             $result = [
                 'success' => true,
                 'activities' => [
-                        'viewing' => $grouped->get(DocumentActivity::TYPE_VIEWING, []),
-                        'editing' => $grouped->get(DocumentActivity::TYPE_EDITING, []),
-                    ]
+                    'viewing' => $grouped->get(DocumentActivity::TYPE_VIEWING, []),
+                    'editing' => $grouped->get(DocumentActivity::TYPE_EDITING, []),
+                ]
             ];
 
             Log::info('Activities response', [
