@@ -1606,72 +1606,102 @@
           @endif
 
           @unless($isOwner)
-            <!-- Menu Dokumen - Direct Link dengan Auto-Open State -->
             @php
-              // Determine route based on module
-              $menuRoute = match ($module) {
-                'pembayaran' => route('documents.pembayaran.index'),
-                'akutansi' => url($dokumenUrl),
-                'perpajakan' => url($dokumenUrl),
-                'ibub' => url($dokumenUrl),
-                default => url($dokumenUrl)
-              };
-
-              // Check if current route is within this module
-              $isModuleActive = match ($module) {
-                'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
-                request()->routeIs('pembayaran.*') ||
-                request()->routeIs('rekapanKeterlambatan.*') ||
-                request()->routeIs('csv.import.*') ||
-                request()->is('*dokumensPembayaran*') ||
-                request()->is('*rekapan-pembayaran*') ||
-                request()->is('*rekapan-keterlambatan*') ||
-                request()->is('*csv-import*'),
-                'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
-                request()->routeIs('akutansi.*'),
-                'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
-                request()->routeIs('perpajakan.*'),
-                'ibub' => request()->routeIs('dokumensB.*') ||
-                request()->routeIs('ibub.*'),
-                default => false
-              };
+              // Check if user is a bagian user
+              $isBagianUser = false;
+              if (auth()->check()) {
+                $userRoleLower = strtolower(auth()->user()->role ?? '');
+                $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
+              }
             @endphp
-            <a href="{{ $menuRoute }}" 
-               class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger" 
-               data-submenu="dokumen"
-               id="btn-pembayaran"
-               aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
-              <i class="fa-solid fa-file-lines"></i> 
-              @if($module === 'pembayaran')
-                Pembayaran
-              @elseif($module === 'akutansi')
-                Akutansi
-              @elseif($module === 'perpajakan')
-                Perpajakan
-              @elseif($module === 'ibub')
-                Dokumen
-              @else
-                Dokumen
-              @endif
-            </a>
+
+            @if($isBagianUser)
+              {{-- Bagian-specific menu --}}
+              @php
+                $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
+              @endphp
+              <a href="{{ route('bagian.documents.index') }}" 
+                 class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
+                <i class="fa-solid fa-file-lines"></i> Dokumen
+              </a>
+            @else
+              {{-- Regular Dokumen menu for other roles --}}
+              @php
+                // Determine route based on module
+                $menuRoute = match ($module) {
+                  'pembayaran' => route('documents.pembayaran.index'),
+                  'akutansi' => url($dokumenUrl),
+                  'perpajakan' => url($dokumenUrl),
+                  'ibub' => url($dokumenUrl),
+                  default => url($dokumenUrl)
+                };
+
+                // Check if current route is within this module
+                $isModuleActive = match ($module) {
+                  'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
+                  request()->routeIs('pembayaran.*') ||
+                  request()->routeIs('rekapanKeterlambatan.*') ||
+                  request()->routeIs('csv.import.*') ||
+                  request()->is('*dokumensPembayaran*') ||
+                  request()->is('*rekapan-pembayaran*') ||
+                  request()->is('*rekapan-keterlambatan*') ||
+                  request()->is('*csv-import*'),
+                  'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
+                  request()->routeIs('akutansi.*'),
+                  'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
+                  request()->routeIs('perpajakan.*'),
+                  'ibub' => request()->routeIs('dokumensB.*') ||
+                  request()->routeIs('ibub.*'),
+                  default => false
+                };
+              @endphp
+              <a href="{{ $menuRoute }}" 
+                 class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger" 
+                 data-submenu="dokumen"
+                 id="btn-pembayaran"
+                 aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
+                <i class="fa-solid fa-file-lines"></i> 
+                @if($module === 'pembayaran')
+                  Pembayaran
+                @elseif($module === 'akutansi')
+                  Akutansi
+                @elseif($module === 'perpajakan')
+                  Perpajakan
+                @elseif($module === 'ibub')
+                  Dokumen
+                @else
+                  Dokumen
+                @endif
+              </a>
+            @endif
 
           @endunless
 
           <!-- Tracking Dokumen Menu - Untuk semua role -->
-          @php
-            $trackingUrl = match ($module) {
-              'ibua', 'ibua' => '/tracking-dokumen',
-              'ibub', 'ibub' => '/tracking-dokumen',
-              'pembayaran' => '/tracking-dokumen',
-              'akutansi' => '/tracking-dokumen',
-              'perpajakan' => '/tracking-dokumen',
-              default => '/tracking-dokumen'
-            };
-            $isTrackingActive = request()->is('*tracking-dokumen*');
-          @endphp
-          <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
-            <i class="fa-solid fa-route"></i> Tracking Dokumen
-          </a>
+          @if($isBagianUser)
+            {{-- Bagian-specific tracking menu --}}
+            @php
+              $isBagianTrackingActive = request()->is('*bagian/tracking*') || request()->routeIs('bagian.tracking');
+            @endphp
+            <a href="{{ route('bagian.tracking') }}" class="{{ $isBagianTrackingActive ? 'active' : '' }}">
+              <i class="fa-solid fa-route"></i> Tracking Dokumen
+            </a>
+          @else
+            @php
+              $trackingUrl = match ($module) {
+                'ibua', 'ibua' => '/tracking-dokumen',
+                'ibub', 'ibub' => '/tracking-dokumen',
+                'pembayaran' => '/tracking-dokumen',
+                'akutansi' => '/tracking-dokumen',
+                'perpajakan' => '/tracking-dokumen',
+                default => '/tracking-dokumen'
+              };
+              $isTrackingActive = request()->is('*tracking-dokumen*');
+            @endphp
+            <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
+              <i class="fa-solid fa-route"></i> Tracking Dokumen
+            </a>
+          @endif
               </div>
 
               <!-- Logout Button - Pindahkan ke paling bawah -->
