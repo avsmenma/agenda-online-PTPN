@@ -864,7 +864,7 @@ if (app()->environment('local', 'development')) {
 // =============================================================================
 // BAGIAN DOCUMENT ROUTES - For department-specific users (AKN, DPM, KPL, etc.)
 // =============================================================================
-Route::middleware(['auth', 'role:bagian_akn,bagian_dpm,bagian_kpl,bagian_pmo,bagian_sdm,bagian_skh,bagian_tan,bagian_tep'])
+Route::middleware(['auth', 'bagian'])
     ->group(function () {
         // Dashboard
         Route::get('bagian/dashboard', [\App\Http\Controllers\BagianDokumenController::class, 'dashboard'])
