@@ -2737,10 +2737,25 @@ class OwnerDashboardController extends Controller
                 }
             }
 
-            // IMPORTANT: Calculate age based on completion status
+            // IMPORTANT: Determine completion status correctly
+            // A document is COMPLETED for this role if:
+            // 1. processed_at is set (document was processed)
+            // 2. AND current_handler has moved to a different role (document is no longer here)
+            // If current_handler is still this role, document is ACTIVE even if processed_at is set
+            $roleHandlerMapping = [
+                'ibuB' => 'ibuB',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+            ];
+            $expectedHandler = $roleHandlerMapping[$roleCode] ?? $roleCode;
+            $currentHandler = $dokumen->current_handler ?? '';
+
+            // Document is completed if processed_at exists AND current_handler has moved on
+            $isCompleted = ($processedAt !== null) && (strtolower($currentHandler) !== strtolower($expectedHandler));
+
+            // Calculate age based on completion status
             // - Active documents: compare received_at to NOW (time keeps running)
             // - Completed documents: compare received_at to processed_at (PERMANENT time)
-            $isCompleted = $processedAt !== null;
             $endTime = $isCompleted ? $processedAt : $now;
 
             $ageHours = $receivedAt ? $receivedAt->diffInHours($endTime) : 0;
@@ -2756,6 +2771,7 @@ class OwnerDashboardController extends Controller
 
             return $dokumen;
         });
+
 
 
         // Filter by age if filter_age is set (using hours to match dashboard)
