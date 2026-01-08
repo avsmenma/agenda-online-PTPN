@@ -97,6 +97,157 @@
       background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
     }
 
+    /* Deadline Card Styles - Modern Design */
+    .deadline-card-link {
+      text-decoration: none;
+      display: block;
+    }
+
+    .deadline-card {
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      border-left: 5px solid;
+    }
+
+    .deadline-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .deadline-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .deadline-indicator {
+      display: flex;
+      align-items: center;
+    }
+
+    .deadline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .deadline-dot.aman {
+      background: #28a745;
+      box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+    }
+
+    .deadline-dot.peringatan {
+      background: #ffc107;
+      box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+    }
+
+    .deadline-dot.terlambat {
+      background: #dc3545;
+      box-shadow: 0 0 8px rgba(220, 53, 69, 0.5);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .deadline-count {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .deadline-badge-wrapper {
+      margin-bottom: 12px;
+    }
+
+    .deadline-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-aman {
+      background: #28a745;
+      color: white;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+
+    .badge-peringatan {
+      background: #ffc107;
+      color: #856404;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+
+    .badge-terlambat {
+      background: #dc3545;
+      color: white;
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    .deadline-info {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .deadline-info i {
+      font-size: 14px;
+    }
+
+    .deadline-aman {
+      background: linear-gradient(135deg, #d4edda 0%, #c8e6c9 100%);
+      border-left-color: #28a745;
+    }
+
+    .deadline-aman .deadline-count,
+    .deadline-aman .deadline-info {
+      color: #155724;
+    }
+
+    .deadline-peringatan {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffe0b2 100%);
+      border-left-color: #ffc107;
+    }
+
+    .deadline-peringatan .deadline-count,
+    .deadline-peringatan .deadline-info {
+      color: #856404;
+    }
+
+    .deadline-terlambat {
+      background: linear-gradient(135deg, #f8d7da 0%, #ffcdd2 100%);
+      border-left-color: #dc3545;
+    }
+
+    .deadline-terlambat .deadline-count,
+    .deadline-terlambat .deadline-info {
+      color: #721c24;
+    }
+
     .stat-content {
       flex: 1;
       min-width: 0;
@@ -415,10 +566,10 @@
 
   <h2>{{ $title }}</h2>
 
-  <!-- Statistics Cards - 6 Cards Grid Layout -->
-  <div class="row mb-4">
+  <!-- Statistics Cards - Row 1: Total, Proses, Terkirim -->
+  <div class="row mb-3">
     <!-- Total Dokumen -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
       <div class="stat-card">
         <div class="stat-card-body">
           <div class="stat-icon total">
@@ -434,14 +585,14 @@
     </div>
 
     <!-- Total Dokumen Diproses -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
       <div class="stat-card">
         <div class="stat-card-body">
           <div class="stat-icon diproses">
             <i class="fas fa-clock"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-title">Total Dokumen Diproses</div>
+            <div class="stat-title">Dokumen Diproses</div>
             <div class="stat-value">{{ number_format($totalDokumenProses ?? 0, 0, ',', '.') }}</div>
             <div class="stat-description">Sedang dalam verifikasi</div>
           </div>
@@ -449,156 +600,171 @@
       </div>
     </div>
 
-    <!-- Dokumen < 1 Hari (GREEN) -->
-    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-      <div class="stat-card"
-        style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745;">
+    <!-- Total Dokumen Terkirim -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <div class="stat-card">
         <div class="stat-card-body">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-            <i class="fas fa-bolt"></i>
+          <div class="stat-icon dikirim">
+            <i class="fas fa-paper-plane"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-title" style="color: #155724;">Dokumen < 1 Hari</div>
-                <div class="stat-value" style="color: #155724;">{{ number_format($dokumenLessThan24h ?? 0, 0, ',', '.') }}
-                </div>
-                <div class="stat-description" style="color: #155724;">Diterima < 24 jam</div>
-                </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dokumen 1-3 Hari (YELLOW) -->
-        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-          <div class="stat-card"
-            style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107;">
-            <div class="stat-card-body">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
-                <i class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-title" style="color: #856404;">Dokumen 1-3 Hari</div>
-                <div class="stat-value" style="color: #856404;">{{ number_format($dokumen24to72h ?? 0, 0, ',', '.') }}
-                </div>
-                <div class="stat-description" style="color: #856404;">Diterima 24-72 jam</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dokumen > 3 Hari (RED) -->
-        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-          <div class="stat-card"
-            style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545;">
-            <div class="stat-card-body">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
-                <i class="fas fa-exclamation-circle"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-title" style="color: #721c24;">Dokumen > 3 Hari</div>
-                <div class="stat-value" style="color: #721c24;">{{ number_format($dokumenMoreThan72h ?? 0, 0, ',', '.') }}
-                </div>
-                <div class="stat-description" style="color: #721c24;">Diterima > 72 jam</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Total Dokumen Terkirim -->
-        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
-          <div class="stat-card">
-            <div class="stat-card-body">
-              <div class="stat-icon dikirim">
-                <i class="fas fa-paper-plane"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-title">Total Dokumen Terkirim</div>
-                <div class="stat-value">{{ number_format($totalTerkirim ?? 0, 0, ',', '.') }}</div>
-                <div class="stat-description">Dikirim ke tahap selanjutnya</div>
-              </div>
-            </div>
+            <div class="stat-title">Total Terkirim</div>
+            <div class="stat-value">{{ number_format($totalTerkirim ?? 0, 0, ',', '.') }}</div>
+            <div class="stat-description">Dikirim ke tahap selanjutnya</div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Search Box -->
-      <div class="search-box">
-        <div class="input-group">
-          <span class="input-group-text">
-            <i class="fa-solid fa-magnifying-glass text-muted"></i>
-          </span>
-          <input type="text" class="form-control" placeholder="Cari dokumen perpajakan...">
-        </div>
-      </div>
+  <!-- Statistics Cards - Row 2: Deadline Cards (Clickable) -->
+  <div class="row mb-4">
+    <!-- Dokumen AMAN (< 1 Hari - GREEN) -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <a href="{{ url('/dokumensPerpajakan?deadline_filter=aman') }}" class="deadline-card-link">
+        <div class="deadline-card deadline-aman">
+          <div class="deadline-card-header">
+            <div class="deadline-indicator">
+              <span class="deadline-dot aman"></span>
+            </div>
+            <div class="deadline-count">{{ number_format($dokumenLessThan24h ?? 0, 0, ',', '.') }} Dokumen</div>
+          </div>
+          <div class="deadline-badge-wrapper">
+            <span class="deadline-badge badge-aman">
+              <i class="fas fa-check-circle"></i> AMAN
+            </span>
+          </div>
+          <div class="deadline-info">
+            <i class="fas fa-clock"></i> Diterima < 24 jam yang lalu </div>
+          </div>
+      </a>
+    </div>
 
-      <!-- Tabel Dokumen Terbaru -->
-      <div class="table-container">
-        <h6>
-          <span>Dokumen Terbaru</span>
-          <a href="{{ route('documents.perpajakan.index') }}">View All</a>
-        </h6>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead>
-              <tr class="table table-dark">
-                <th>No</th>
-                <th>Nomor Agenda</th>
-                <th>Nomor SPP</th>
-                <th>Tanggal Masuk</th>
-                <th>Nilai Rupiah</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($dokumenTerbaru as $index => $dokumen)
-                <tr>
-                  <td>{{ $index + 1 }}</td>
-                  <td>
-                    <strong>{{ $dokumen->nomor_agenda }}</strong>
-                    <br>
-                    <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
-                  </td>
-                  <td>{{ $dokumen->nomor_spp }}</td>
-                  <td>{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</td>
-                  <td>
-                    <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
-                  </td>
-                  <td>
-                    @if($dokumen->status_perpajakan == 'selesai')
-                      <span class="badge badge-selesai">
-                        <i class="fas fa-check-circle"></i>
-                        Selesai
-                      </span>
-                    @elseif($dokumen->status_perpajakan == 'sedang_diproses')
-                      <span class="badge badge-proses">
-                        <i class="fas fa-clock"></i>
-                        Diproses
-                      </span>
-                    @else
-                      <span class="badge badge-belum">
-                        <i class="fas fa-hourglass-half"></i>
-                        Belum Diproses
-                      </span>
-                    @endif
-                  </td>
-                  <td>
-                    <a href="{{ route('documents.perpajakan.index') }}" class="btn-action btn-view" title="Lihat Detail">
-                      <i class="fa-solid fa-eye"></i>
-                      Lihat
-                    </a>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="7" class="text-center py-4">
-                    <i class="fa-solid fa-inbox fa-2x text-muted mb-2"></i>
-                    <p class="text-muted mb-0">Belum ada dokumen yang tersedia.</p>
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
+    <!-- Dokumen PERINGATAN (1-3 Hari - YELLOW) -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <a href="{{ url('/dokumensPerpajakan?deadline_filter=peringatan') }}" class="deadline-card-link">
+        <div class="deadline-card deadline-peringatan">
+          <div class="deadline-card-header">
+            <div class="deadline-indicator">
+              <span class="deadline-dot peringatan"></span>
+            </div>
+            <div class="deadline-count">{{ number_format($dokumen24to72h ?? 0, 0, ',', '.') }} Dokumen</div>
+          </div>
+          <div class="deadline-badge-wrapper">
+            <span class="deadline-badge badge-peringatan">
+              <i class="fas fa-exclamation-triangle"></i> PERINGATAN
+            </span>
+          </div>
+          <div class="deadline-info">
+            <i class="fas fa-clock"></i> Diterima 1-3 hari yang lalu
+          </div>
         </div>
-      </div>
+      </a>
+    </div>
+
+    <!-- Dokumen TERLAMBAT (> 3 Hari - RED) -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <a href="{{ url('/dokumensPerpajakan?deadline_filter=terlambat') }}" class="deadline-card-link">
+        <div class="deadline-card deadline-terlambat">
+          <div class="deadline-card-header">
+            <div class="deadline-indicator">
+              <span class="deadline-dot terlambat"></span>
+            </div>
+            <div class="deadline-count">{{ number_format($dokumenMoreThan72h ?? 0, 0, ',', '.') }} Dokumen</div>
+          </div>
+          <div class="deadline-badge-wrapper">
+            <span class="deadline-badge badge-terlambat">
+              <i class="fas fa-exclamation-circle"></i> TERLAMBAT
+            </span>
+          </div>
+          <div class="deadline-info">
+            <i class="fas fa-clock"></i> Diterima > 3 hari yang lalu
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+
+  <!-- Search Box -->
+  <div class="search-box">
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="fa-solid fa-magnifying-glass text-muted"></i>
+      </span>
+      <input type="text" class="form-control" placeholder="Cari dokumen perpajakan...">
+    </div>
+  </div>
+
+  <!-- Tabel Dokumen Terbaru -->
+  <div class="table-container">
+    <h6>
+      <span>Dokumen Terbaru</span>
+      <a href="{{ route('documents.perpajakan.index') }}">View All</a>
+    </h6>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr class="table table-dark">
+            <th>No</th>
+            <th>Nomor Agenda</th>
+            <th>Nomor SPP</th>
+            <th>Tanggal Masuk</th>
+            <th>Nilai Rupiah</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($dokumenTerbaru as $index => $dokumen)
+            <tr>
+              <td>{{ $index + 1 }}</td>
+              <td>
+                <strong>{{ $dokumen->nomor_agenda }}</strong>
+                <br>
+                <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
+              </td>
+              <td>{{ $dokumen->nomor_spp }}</td>
+              <td>{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</td>
+              <td>
+                <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
+              </td>
+              <td>
+                @if($dokumen->status_perpajakan == 'selesai')
+                  <span class="badge badge-selesai">
+                    <i class="fas fa-check-circle"></i>
+                    Selesai
+                  </span>
+                @elseif($dokumen->status_perpajakan == 'sedang_diproses')
+                  <span class="badge badge-proses">
+                    <i class="fas fa-clock"></i>
+                    Diproses
+                  </span>
+                @else
+                  <span class="badge badge-belum">
+                    <i class="fas fa-hourglass-half"></i>
+                    Belum Diproses
+                  </span>
+                @endif
+              </td>
+              <td>
+                <a href="{{ route('documents.perpajakan.index') }}" class="btn-action btn-view" title="Lihat Detail">
+                  <i class="fa-solid fa-eye"></i>
+                  Lihat
+                </a>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="7" class="text-center py-4">
+                <i class="fa-solid fa-inbox fa-2x text-muted mb-2"></i>
+                <p class="text-muted mb-0">Belum ada dokumen yang tersedia.</p>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 @endsection
