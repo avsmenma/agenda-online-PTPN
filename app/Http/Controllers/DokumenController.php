@@ -1141,10 +1141,10 @@ class DokumenController extends Controller
             $createdBy = $dokumen->created_by ?? 'ibuA';
 
             // Check if document is created by IbuA (case-insensitive)
-            $createdByIbuA = in_array(strtolower($createdBy), ['ibua', 'ibu a']);
+            $createdByIbuA = in_array(strtolower($createdBy), ['ibua', 'ibu a', 'ibutarapul']);
 
             // Check if document is currently with IbuA (case-insensitive)
-            $currentHandlerIbuA = in_array(strtolower($currentHandler), ['ibua', 'ibu a']);
+            $currentHandlerIbuA = in_array(strtolower($currentHandler), ['ibua', 'ibu a', 'ibutarapul']);
 
             // Check if document is rejected (can be sent again)
             $isRejected = false;
