@@ -4230,14 +4230,18 @@
               </div>
 
               <!-- Sticky Footer -->
-              <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
+              <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 1px solid #dee2e6; padding: 16px 24px; flex-shrink: 0;">
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteDocument()">
+                  <i class="fa-solid fa-trash me-2"></i>Hapus
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                   <i class="fa-solid fa-times me-2"></i>Tutup
                 </button>
-                <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
+                <a href="#" id="view-edit-btn" class="btn btn-primary" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none;">
                   <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
                 </a>
               </div>
+
             </div>
           </div>
         </div>
@@ -4270,5 +4274,42 @@
           align-items: center;
         }
         </style>
+
+        <!-- Hidden Delete Form -->
+        <form id="deleteDocumentForm" method="POST" style="display: none;">
+          @csrf
+          @method('DELETE')
+        </form>
+
+        <script>
+        // Confirm and delete document
+        function confirmDeleteDocument() {
+          const dokumenId = document.getElementById('view-dokumen-id').value;
+          const nomorAgenda = document.getElementById('view-nomor-agenda').textContent;
+          const nomorSpp = document.getElementById('view-nomor-spp').textContent;
+          
+          if (!dokumenId) {
+            alert('ID Dokumen tidak ditemukan');
+            return;
+          }
+          
+          const message = `Apakah Anda yakin ingin menghapus dokumen ini?\n\nNomor Agenda: ${nomorAgenda}\nNomor SPP: ${nomorSpp}\n\n⚠️ PERHATIAN: Dokumen yang dihapus tidak dapat dikembalikan!`;
+          
+          if (confirm(message)) {
+            // Show loading state
+            const deleteBtn = document.querySelector('.modal-footer .btn-danger');
+            if (deleteBtn) {
+              deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menghapus...';
+              deleteBtn.disabled = true;
+            }
+            
+            // Set form action and submit
+            const form = document.getElementById('deleteDocumentForm');
+            form.action = `/documents/${dokumenId}`;
+            form.submit();
+          }
+        }
+        </script>
 @endsection
+
 
