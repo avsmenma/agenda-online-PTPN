@@ -1,0 +1,616 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Dokumen;
+use App\Models\DokumenPO;
+use App\Models\DokumenPR;
+use App\Models\DibayarKepada;
+use App\Models\KategoriKriteria;
+use App\Models\SubKriteria;
+use App\Models\ItemSubKriteria;
+use App\Models\DokumenRoleData;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Exception;
+
+class BagianDokumenController extends Controller
+{
+    /**
+     * Get the bagian code for the current user
+     */
+    private function getBagianCode()
+    {
+        $user = Auth::user();
+        return $user->bagian_code ?? null;
+    }
+
+    /**
+     * Get the bagian name for display
+     */
+    private function getBagianName()
+    {
+        $bagianCode = $this->getBagianCode();
+        $bagianNames = [
+            'AKN' => 'Akuntansi',
+            'DPM' => 'DPM',
+            'KPL' => 'Kepatuhan',
+            'PMO' => 'PMO',
+            'SDM' => 'SDM',
+            'SKH' => 'Sekretariat',
+            'TAN' => 'Tanaman',
+            'TEP' => 'Teknik & Pengolahan',
+        ];
+        return $bagianNames[$bagianCode] ?? $bagianCode;
+    }
+
+    /**
+     * Dashboard for Bagian
+     */
+    public function dashboard()
+    {
+        $bagianCode = $this->getBagianCode();
+        $bagianName = $this->getBagianName();
+
+        if (!$bagianCode) {
+            abort(403, 'Bagian code not configured for this user');
+        }
+
+        // Count documents for this bagian
+        $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
+        $dokumenBelumDikirim = Dokumen::where('bagian', $bagianCode)
+            ->where('status', 'belum dikirim')
+            ->count();
+        $dokumenTerkirim = Dokumen::where('bagian', $bagianCode)
+            ->whereNotIn('status', ['belum dikirim'])
+            ->count();
+        $dokumenSelesai = Dokumen::where('bagian', $bagianCode)
+            ->where('status', 'sudah dibayar')
+            ->count();
+
+        // Recent documents
+        $recentDokumens = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+            ->where('bagian', $bagianCode)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('bagian.dashboard', compact(
+            'bagianCode',
+            'bagianName',
+            'totalDokumen',
+            'dokumenBelumDikirim',
+            'dokumenTerkirim',
+            'dokumenSelesai',
+            'recentDokumens'
+        ));
+    }
+
+    /**
+     * List documents for current bagian
+     */
+    public function index(Request $request)
+    {
+        $bagianCode = $this->getBagianCode();
+        $bagianName = $this->getBagianName();
+
+        if (!$bagianCode) {
+            abort(403, 'Bagian code not configured for this user');
+        }
+
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+            ->where('bagian', $bagianCode)
+            ->orderByRaw('CASE 
+                WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC')
+            ->orderBy('created_at', 'desc');
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
+
+        return view('bagian.dokumens.daftarDokumen', compact(
+            'dokumens',
+            'bagianCode',
+            'bagianName'
+        ));
+    }
+
+    /**
+     * Show create form
+     */
+    public function create()
+    {
+        $bagianCode = $this->getBagianCode();
+        $bagianName = $this->getBagianName();
+
+        if (!$bagianCode) {
+            abort(403, 'Bagian code not configured for this user');
+        }
+
+        // Get dropdown data from cash_bank database
+        $isDropdownAvailable = false;
+        try {
+            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = SubKriteria::all();
+            $itemSubKriteria = ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+        }
+
+        // Get jenis pembayaran
+        $jenisPembayaranList = collect([]);
+        $isJenisPembayaranAvailable = false;
+        try {
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
+            $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
+        } catch (\Exception $e) {
+            \Log::error('Error fetching jenis pembayaran: ' . $e->getMessage());
+        }
+
+        return view('bagian.dokumens.tambahDokumen', compact(
+            'bagianCode',
+            'bagianName',
+            'kategoriKriteria',
+            'subKriteria',
+            'itemSubKriteria',
+            'isDropdownAvailable',
+            'jenisPembayaranList',
+            'isJenisPembayaranAvailable'
+        ));
+    }
+
+    /**
+     * Store a new document
+     */
+    public function store(Request $request)
+    {
+        $bagianCode = $this->getBagianCode();
+
+        if (!$bagianCode) {
+            abort(403, 'Bagian code not configured for this user');
+        }
+
+        $validated = $request->validate([
+            'nomor_agenda' => 'required|string|max:255',
+            'nomor_spp' => 'required|string|max:255',
+            'tanggal_spp' => 'required|date',
+            'uraian_spp' => 'required|string',
+            'nilai_rupiah' => 'required|numeric|min:0',
+            'nama_pengirim' => 'nullable|string|max:255',
+            'dibayar_kepada' => 'nullable|array',
+            'nomor_po' => 'nullable|array',
+            'nomor_pr' => 'nullable|array',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Parse tanggal_spp to get bulan and tahun
+            $tanggalSpp = Carbon::parse($request->tanggal_spp);
+            $bulanNames = [
+                1 => 'Januari',
+                2 => 'Februari',
+                3 => 'Maret',
+                4 => 'April',
+                5 => 'Mei',
+                6 => 'Juni',
+                7 => 'Juli',
+                8 => 'Agustus',
+                9 => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember'
+            ];
+
+            // Create document with bagian auto-filled
+            $dokumen = Dokumen::create([
+                'nomor_agenda' => $request->nomor_agenda,
+                'nomor_spp' => $request->nomor_spp,
+                'tanggal_spp' => $tanggalSpp,
+                'bulan' => $bulanNames[$tanggalSpp->month],
+                'tahun' => $tanggalSpp->year,
+                'tanggal_masuk' => Carbon::now(),
+                'uraian_spp' => $request->uraian_spp,
+                'nilai_rupiah' => str_replace(['.', ','], ['', '.'], $request->nilai_rupiah),
+                'bagian' => $bagianCode, // Auto-filled from user's bagian
+                'nama_pengirim' => $request->nama_pengirim ?? Auth::user()->name,
+                'kebun' => $request->kebun,
+                'no_spk' => $request->no_spk,
+                'tanggal_spk' => $request->tanggal_spk,
+                'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
+                'no_berita_acara' => $request->no_berita_acara,
+                'tanggal_berita_acara' => $request->tanggal_berita_acara,
+                'kriteria_cf' => $request->kriteria_cf,
+                'sub_kriteria' => $request->sub_kriteria,
+                'item_sub_kriteria' => $request->item_sub_kriteria,
+                'jenis_pembayaran' => $request->jenis_pembayaran,
+                'kategori' => $request->kategori,
+                'jenis_dokumen' => $request->jenis_dokumen,
+                'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
+                'status' => 'belum dikirim',
+                'current_handler' => 'bagian_' . strtolower($bagianCode),
+                'created_by' => 'bagian_' . strtolower($bagianCode),
+            ]);
+
+            // Create DibayarKepada records
+            if ($request->has('dibayar_kepada') && is_array($request->dibayar_kepada)) {
+                foreach ($request->dibayar_kepada as $nama) {
+                    if (!empty($nama)) {
+                        DibayarKepada::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nama_penerima' => $nama,
+                        ]);
+                    }
+                }
+            }
+
+            // Create PO records
+            if ($request->has('nomor_po') && is_array($request->nomor_po)) {
+                foreach ($request->nomor_po as $po) {
+                    if (!empty($po)) {
+                        DokumenPO::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_po' => $po,
+                        ]);
+                    }
+                }
+            }
+
+            // Create PR records
+            if ($request->has('nomor_pr') && is_array($request->nomor_pr)) {
+                foreach ($request->nomor_pr as $pr) {
+                    if (!empty($pr)) {
+                        DokumenPR::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_pr' => $pr,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('bagian.documents.index')
+                ->with('success', 'Dokumen berhasil dibuat.');
+
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error creating bagian document: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show edit form
+     */
+    public function edit(Dokumen $dokumen)
+    {
+        $bagianCode = $this->getBagianCode();
+        $bagianName = $this->getBagianName();
+
+        if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ini');
+        }
+
+        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        // Get dropdown data
+        $isDropdownAvailable = false;
+        try {
+            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = SubKriteria::all();
+            $itemSubKriteria = ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
+        } catch (\Exception $e) {
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+        }
+
+        $jenisPembayaranList = collect([]);
+        $isJenisPembayaranAvailable = false;
+        try {
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
+            $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
+        } catch (\Exception $e) {
+        }
+
+        return view('bagian.dokumens.editDokumen', compact(
+            'dokumen',
+            'bagianCode',
+            'bagianName',
+            'kategoriKriteria',
+            'subKriteria',
+            'itemSubKriteria',
+            'isDropdownAvailable',
+            'jenisPembayaranList',
+            'isJenisPembayaranAvailable'
+        ));
+    }
+
+    /**
+     * Update document
+     */
+    public function update(Request $request, Dokumen $dokumen)
+    {
+        $bagianCode = $this->getBagianCode();
+
+        if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ini');
+        }
+
+        $validated = $request->validate([
+            'nomor_agenda' => 'required|string|max:255',
+            'nomor_spp' => 'required|string|max:255',
+            'tanggal_spp' => 'required|date',
+            'uraian_spp' => 'required|string',
+            'nilai_rupiah' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $tanggalSpp = Carbon::parse($request->tanggal_spp);
+            $bulanNames = [
+                1 => 'Januari',
+                2 => 'Februari',
+                3 => 'Maret',
+                4 => 'April',
+                5 => 'Mei',
+                6 => 'Juni',
+                7 => 'Juli',
+                8 => 'Agustus',
+                9 => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember'
+            ];
+
+            $dokumen->update([
+                'nomor_agenda' => $request->nomor_agenda,
+                'nomor_spp' => $request->nomor_spp,
+                'tanggal_spp' => $tanggalSpp,
+                'bulan' => $bulanNames[$tanggalSpp->month],
+                'tahun' => $tanggalSpp->year,
+                'uraian_spp' => $request->uraian_spp,
+                'nilai_rupiah' => str_replace(['.', ','], ['', '.'], $request->nilai_rupiah),
+                'nama_pengirim' => $request->nama_pengirim,
+                'kebun' => $request->kebun,
+                'no_spk' => $request->no_spk,
+                'tanggal_spk' => $request->tanggal_spk,
+                'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
+                'no_berita_acara' => $request->no_berita_acara,
+                'tanggal_berita_acara' => $request->tanggal_berita_acara,
+                'kriteria_cf' => $request->kriteria_cf,
+                'sub_kriteria' => $request->sub_kriteria,
+                'item_sub_kriteria' => $request->item_sub_kriteria,
+                'jenis_pembayaran' => $request->jenis_pembayaran,
+            ]);
+
+            // Update related records
+            $dokumen->dokumenPos()->delete();
+            $dokumen->dokumenPrs()->delete();
+            $dokumen->dibayarKepadas()->delete();
+
+            if ($request->has('dibayar_kepada') && is_array($request->dibayar_kepada)) {
+                foreach ($request->dibayar_kepada as $nama) {
+                    if (!empty($nama)) {
+                        DibayarKepada::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nama_penerima' => $nama,
+                        ]);
+                    }
+                }
+            }
+
+            if ($request->has('nomor_po') && is_array($request->nomor_po)) {
+                foreach ($request->nomor_po as $po) {
+                    if (!empty($po)) {
+                        DokumenPO::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_po' => $po,
+                        ]);
+                    }
+                }
+            }
+
+            if ($request->has('nomor_pr') && is_array($request->nomor_pr)) {
+                foreach ($request->nomor_pr as $pr) {
+                    if (!empty($pr)) {
+                        DokumenPR::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_pr' => $pr,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('bagian.documents.index')
+                ->with('success', 'Dokumen berhasil diperbarui.');
+
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error updating bagian document: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete document
+     */
+    public function destroy(Dokumen $dokumen)
+    {
+        $bagianCode = $this->getBagianCode();
+
+        if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ini');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $dokumen->dokumenPos()->delete();
+            $dokumen->dokumenPrs()->delete();
+            $dokumen->dibayarKepadas()->delete();
+            $dokumen->delete();
+
+            DB::commit();
+
+            return redirect()->route('bagian.documents.index')
+                ->with('success', 'Dokumen berhasil dihapus.');
+
+        } catch (Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send document to Verifikasi (IbuB)
+     */
+    public function sendToVerifikasi(Dokumen $dokumen)
+    {
+        $bagianCode = $this->getBagianCode();
+
+        if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ini');
+        }
+
+        if ($dokumen->status !== 'belum dikirim') {
+            return redirect()->back()
+                ->with('error', 'Dokumen sudah pernah dikirim sebelumnya.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $now = Carbon::now();
+
+            // Update document status
+            $dokumen->update([
+                'status' => 'sent_to_ibub',
+                'current_handler' => 'ibuB',
+                'sent_at' => $now,
+            ]);
+
+            // Create role data for tracking
+            DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => 'ibuB',
+                'received_at' => $now,
+                'received_from' => 'bagian_' . strtolower($bagianCode),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('bagian.documents.index')
+                ->with('success', 'Dokumen berhasil dikirim ke Team Verifikasi.');
+
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error sending document to verifikasi: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Gagal mengirim dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Document tracking for bagian - only shows their documents
+     */
+    public function tracking(Request $request)
+    {
+        $bagianCode = $this->getBagianCode();
+        $bagianName = $this->getBagianName();
+
+        if (!$bagianCode) {
+            abort(403, 'Bagian code not configured for this user');
+        }
+
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
+            ->where('bagian', $bagianCode)
+            ->orderBy('updated_at', 'desc');
+
+        // Search
+        if ($request->has('search') && $request->search) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
+
+        return view('bagian.tracking', compact(
+            'dokumens',
+            'bagianCode',
+            'bagianName'
+        ));
+    }
+
+    /**
+     * Get document detail for modal
+     */
+    public function getDocumentDetail(Dokumen $dokumen)
+    {
+        $bagianCode = $this->getBagianCode();
+
+        if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+
+        return response()->json([
+            'success' => true,
+            'dokumen' => [
+                'id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp' => $dokumen->nomor_spp,
+                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : null,
+                'bulan' => $dokumen->bulan,
+                'tahun' => $dokumen->tahun,
+                'uraian_spp' => $dokumen->uraian_spp,
+                'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'status' => $dokumen->status,
+                'bagian' => $dokumen->bagian,
+                'nama_pengirim' => $dokumen->nama_pengirim,
+                'kebun' => $dokumen->kebun,
+                'no_spk' => $dokumen->no_spk,
+                'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
+                'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(fn($po) => ['nomor_po' => $po->nomor_po])->values() : [],
+                'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(fn($pr) => ['nomor_pr' => $pr->nomor_pr])->values() : [],
+            ]
+        ]);
+    }
+}

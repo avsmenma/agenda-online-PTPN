@@ -26,7 +26,7 @@ use App\Http\Controllers\OwnerDashboardController;
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.store');
-    
+
     // 2FA Verification Routes (accessible without auth, but requires 2fa_user_id in session)
     Route::get('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'showVerify'])->name('2fa.verify');
     Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify.store');
@@ -36,7 +36,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
-    
+
     // 2FA Management Routes (requires authentication)
     Route::prefix('2fa')->name('2fa.')->group(function () {
         Route::get('/setup', [\App\Http\Controllers\TwoFactorController::class, 'showSetup'])->name('setup');
@@ -192,10 +192,10 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
                 });
         })
             // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($query) {
-                $query->where(function($q) {
+            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
+                        ->orWhereNull('imported_from_csv');
                 });
             })
             ->with([
@@ -813,13 +813,17 @@ if (app()->environment('local', 'development')) {
 } else {
     // SECURITY: In production, return 404 for all test routes
     Route::get('/test-broadcast', function () {
-        abort(404); });
+        abort(404);
+    });
     Route::get('/test-returned-broadcast', function () {
-        abort(404); });
+        abort(404);
+    });
     Route::get('/test-broadcast-auth', function () {
-        abort(404); });
+        abort(404);
+    });
     Route::get('/test-trigger-notification', function () {
-        abort(404); });
+        abort(404);
+    });
 }
 
 // SECURITY: Role switching routes removed - Critical security vulnerability
@@ -847,9 +851,38 @@ if (app()->environment('local', 'development')) {
 } else {
     // In production, return 404
     Route::get('/switch-role/{role}', function () {
-        abort(404); });
+        abort(404);
+    });
     Route::get('/dev-dashboard/{role?}', function () {
-        abort(404); });
+        abort(404);
+    });
     Route::get('/dev-all', function () {
-        abort(404); });
+        abort(404);
+    });
 }
+
+// =============================================================================
+// BAGIAN DOCUMENT ROUTES - For department-specific users (AKN, DPM, KPL, etc.)
+// =============================================================================
+Route::middleware(['auth', 'role:bagian_akn,bagian_dpm,bagian_kpl,bagian_pmo,bagian_sdm,bagian_skh,bagian_tan,bagian_tep'])
+    ->group(function () {
+        // Dashboard
+        Route::get('bagian/dashboard', [\App\Http\Controllers\BagianDokumenController::class, 'dashboard'])
+            ->name('bagian.dashboard');
+
+        // Document CRUD
+        Route::prefix('bagian/documents')->name('bagian.documents.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\BagianDokumenController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\BagianDokumenController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\BagianDokumenController::class, 'store'])->name('store');
+            Route::get('/{dokumen}/edit', [\App\Http\Controllers\BagianDokumenController::class, 'edit'])->name('edit');
+            Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail');
+            Route::put('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'update'])->name('update');
+            Route::delete('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'destroy'])->name('destroy');
+            Route::post('/{dokumen}/send-to-verifikasi', [\App\Http\Controllers\BagianDokumenController::class, 'sendToVerifikasi'])->name('send-to-verifikasi');
+        });
+
+        // Tracking
+        Route::get('bagian/tracking', [\App\Http\Controllers\BagianDokumenController::class, 'tracking'])
+            ->name('bagian.tracking');
+    });

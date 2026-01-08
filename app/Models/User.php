@@ -21,6 +21,15 @@ final class User extends Authenticatable
         'Akutansi' => 'Akutansi',
         'Perpajakan' => 'Perpajakan',
         'Verifikasi' => 'Verifikasi',
+        // Bagian roles
+        'bagian_akn' => 'Bagian AKN',
+        'bagian_dpm' => 'Bagian DPM',
+        'bagian_kpl' => 'Bagian KPL',
+        'bagian_pmo' => 'Bagian PMO',
+        'bagian_sdm' => 'Bagian SDM',
+        'bagian_skh' => 'Bagian SKH',
+        'bagian_tan' => 'Bagian TAN',
+        'bagian_tep' => 'Bagian TEP',
     ];
 
     public const DASHBOARD_ROUTES = [
@@ -33,6 +42,15 @@ final class User extends Authenticatable
         'Akutansi' => '/dashboard/akutansi',
         'Perpajakan' => '/dashboard/perpajakan',
         'Verifikasi' => '/dashboard/verifikasi-role',
+        // Bagian dashboard routes
+        'bagian_akn' => '/bagian/dashboard',
+        'bagian_dpm' => '/bagian/dashboard',
+        'bagian_kpl' => '/bagian/dashboard',
+        'bagian_pmo' => '/bagian/dashboard',
+        'bagian_sdm' => '/bagian/dashboard',
+        'bagian_skh' => '/bagian/dashboard',
+        'bagian_tan' => '/bagian/dashboard',
+        'bagian_tep' => '/bagian/dashboard',
     ];
 
     /**
@@ -46,12 +64,14 @@ final class User extends Authenticatable
         'email',
         'password',
         'role',
+        'bagian_code',
         'table_columns_preferences',
         'two_factor_enabled',
         'two_factor_secret',
         'two_factor_confirmed_at',
         'two_factor_recovery_codes',
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -155,7 +175,7 @@ final class User extends Authenticatable
     public static function getRoleOptions(): array
     {
         return collect(self::ROLES)
-            ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+            ->map(fn(string $label, string $value) => ['value' => $value, 'label' => $label])
             ->values()
             ->all();
     }
