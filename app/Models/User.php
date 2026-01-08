@@ -37,10 +37,15 @@ final class User extends Authenticatable
         'owner' => '/owner/dashboard',
         'Owner' => '/owner/dashboard',
         'IbuA' => '/dashboard',
+        'ibutarapul' => '/dashboard',  // New role name from migration
         'IbuB' => '/dashboard/verifikasi',
+        'verifikasi' => '/dashboard/verifikasi',  // New role name from migration
         'Pembayaran' => '/dashboard/pembayaran',
+        'pembayaran' => '/dashboard/pembayaran',
         'Akutansi' => '/dashboard/akutansi',
+        'akutansi' => '/dashboard/akutansi',
         'Perpajakan' => '/dashboard/perpajakan',
+        'perpajakan' => '/dashboard/perpajakan',
         'Verifikasi' => '/dashboard/verifikasi-role',
         // Bagian dashboard routes
         'bagian_akn' => '/bagian/dashboard',
