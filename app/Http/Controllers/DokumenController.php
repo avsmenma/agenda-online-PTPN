@@ -599,8 +599,8 @@ class DokumenController extends Controller
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
                 'status' => 'draft',
                 'keterangan' => null,
-                'created_by' => 'ibuA',
-                'current_handler' => 'ibuA',
+                'created_by' => 'ibutarapul',
+                'current_handler' => 'ibutarapul',
             ]);
 
             // Save PO numbers

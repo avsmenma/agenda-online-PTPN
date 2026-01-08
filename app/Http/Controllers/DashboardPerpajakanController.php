@@ -1368,7 +1368,7 @@ class DashboardPerpajakanController extends Controller
             // Update all fields in a single call to avoid multiple queries and potential issues
             $updateData = [
                 'status' => 'returned_to_department',
-                'current_handler' => 'ibuB',
+                'current_handler' => 'verifikasi',
                 'target_department' => 'perpajakan',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,
