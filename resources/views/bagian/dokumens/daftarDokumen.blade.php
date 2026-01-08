@@ -135,36 +135,50 @@
 
         .data-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
         .data-table thead {
-            background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
         }
 
         .data-table th {
-            padding: 16px;
+            padding: 16px 12px;
             color: white;
             font-size: 13px;
             font-weight: 600;
-            text-transform: uppercase;
+            text-align: center;
             letter-spacing: 0.5px;
             white-space: nowrap;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th:last-child {
+            border-right: none;
         }
 
         .data-table td {
-            padding: 14px 16px;
+            padding: 14px 12px;
             vertical-align: middle;
-            border-bottom: 1px solid #f1f3f5;
-            font-size: 14px;
+            border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+            border-right: 1px solid #e9ecef;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .data-table td:last-child {
+            border-right: none;
         }
 
         .data-table tbody tr {
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
         }
 
         .data-table tbody tr:hover {
-            background: #f8f9fa;
+            background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
+            border-left: 3px solid #889717;
         }
 
         .badge-status {
@@ -192,69 +206,85 @@
             color: white;
         }
 
+        /* Action Buttons - Match IbuTarapul styling */
         .action-buttons {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .btn-action {
+            min-width: 44px;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 4px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
             text-decoration: none;
         }
 
+        .btn-action i {
+            font-size: 12px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
         .btn-edit {
-            background: #fff3cd;
-            color: #856404;
+            background: #083E40;
+            color: white;
         }
 
         .btn-edit:hover {
-            background: #ffc107;
-            color: #212529;
+            background: #0a4f52;
+            color: white;
         }
 
         .btn-send {
-            background: #d4edda;
-            color: #155724;
+            background: #083E40;
+            color: white;
         }
 
         .btn-send:hover {
-            background: #28a745;
+            background: #0a4f52;
             color: white;
         }
 
         .btn-send:disabled {
-            background: #e9ecef;
-            color: #6c757d;
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
             cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .btn-tracking {
-            background: #d1ecf1;
-            color: #0c5460;
+            background: #083E40;
+            color: white;
         }
 
         .btn-tracking:hover {
-            background: #17a2b8;
+            background: #0a4f52;
             color: white;
         }
 
         .btn-delete {
-            background: #f8d7da;
-            color: #721c24;
+            background: #dc3545;
+            color: white;
         }
 
         .btn-delete:hover {
-            background: #dc3545;
+            background: #c82333;
             color: white;
         }
 
