@@ -510,6 +510,38 @@
       border-color: var(--secondary-color);
     }
 
+    /* Color-coded document cards based on deadline status */
+    .document-card-green {
+      border-left: 5px solid var(--card-green);
+      background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, white 100%);
+    }
+
+    .document-card-green:hover {
+      border-color: var(--card-green);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+    }
+
+    .document-card-yellow {
+      border-left: 5px solid var(--card-yellow);
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, white 100%);
+    }
+
+    .document-card-yellow:hover {
+      border-color: var(--card-yellow);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+    }
+
+    .document-card-red {
+      border-left: 5px solid var(--card-red);
+      background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, white 100%);
+    }
+
+    .document-card-red:hover {
+      border-color: var(--card-red);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+    }
+
+
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -594,6 +626,23 @@
       border-left: 3px solid var(--secondary-color);
       transform: scale(1.002);
     }
+
+    /* Color-coded table rows based on deadline status */
+    .table tbody tr.table-row-green {
+      border-left: 4px solid var(--card-green);
+      background: linear-gradient(90deg, rgba(40, 167, 69, 0.08) 0%, transparent 50%);
+    }
+
+    .table tbody tr.table-row-yellow {
+      border-left: 4px solid var(--card-yellow);
+      background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 50%);
+    }
+
+    .table tbody tr.table-row-red {
+      border-left: 4px solid var(--card-red);
+      background: linear-gradient(90deg, rgba(220, 53, 69, 0.08) 0%, transparent 50%);
+    }
+
 
     .age-badge {
       padding: 6px 12px;
@@ -694,10 +743,10 @@
           $isCard2Active = $currentFilterAge === '2';
           $isCard3Active = $currentFilterAge === '3+';
         @endphp
-        
+
         <!-- Card AMAN (< 1 Hari - Green) -->
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}"
-           class="deadline-card-link">
+          class="deadline-card-link">
           <div class="deadline-card deadline-aman {{ $isCard1Active ? 'active' : '' }}">
             <div class="deadline-card-header">
               <div class="deadline-indicator">
@@ -711,14 +760,13 @@
               </span>
             </div>
             <div class="deadline-info">
-              <i class="fas fa-clock"></i> Diterima < 24 jam yang lalu
+              <i class="fas fa-clock"></i> Diterima < 24 jam yang lalu </div>
             </div>
-          </div>
         </a>
 
         <!-- Card PERINGATAN (1-3 Hari - Yellow) -->
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}"
-           class="deadline-card-link">
+          class="deadline-card-link">
           <div class="deadline-card deadline-peringatan {{ $isCard2Active ? 'active' : '' }}">
             <div class="deadline-card-header">
               <div class="deadline-indicator">
@@ -739,7 +787,7 @@
 
         <!-- Card TERLAMBAT (> 3 Hari - Red) -->
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}"
-           class="deadline-card-link">
+          class="deadline-card-link">
           <div class="deadline-card deadline-terlambat {{ $isCard3Active ? 'active' : '' }}">
             <div class="deadline-card-header">
               <div class="deadline-indicator">
@@ -931,17 +979,18 @@
           @foreach($dokumens as $index => $dokumen)
             @php
               $ageDays = $dokumen->age_days ?? 0;
+              $ageHours = $dokumen->age_hours ?? 0;
               $ageFormatted = $dokumen->age_formatted ?? '-';
 
-              // Determine card color based on age (fixed: 1, 2, 3+ days)
+              // Determine card color based on age in hours (matching dashboard)
               $ageColor = 'green';
               if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-                if ($ageDays > 2) {
-                  $ageColor = 'red';
-                } elseif ($ageDays > 1) {
-                  $ageColor = 'yellow';
+                if ($ageHours >= 72) {
+                  $ageColor = 'red';  // TERLAMBAT
+                } elseif ($ageHours >= 24) {
+                  $ageColor = 'yellow';  // PERINGATAN
                 } else {
-                  $ageColor = 'green';
+                  $ageColor = 'green';  // AMAN
                 }
               }
 
@@ -955,9 +1004,11 @@
                 $receivedAt = \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d M Y H:i');
               }
             @endphp
-            <div class="document-card" onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'"
+            <div class="document-card document-card-{{ $ageColor }}"
+              onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'"
               title="Klik untuk melihat detail workflow dokumen">
               <div class="card-header">
+
                 <div>
                   <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
                   <div class="card-subtitle">SPP: {{ $dokumen->nomor_spp }}</div>
@@ -1041,17 +1092,18 @@
                 @foreach($dokumens as $index => $dokumen)
                   @php
                     $ageDays = $dokumen->age_days ?? 0;
+                    $ageHours = $dokumen->age_hours ?? 0;
                     $ageFormatted = $dokumen->age_formatted ?? '-';
 
-                    // Determine card color based on age (fixed: 1, 2, 3+ days)
+                    // Determine row color based on age in hours (matching dashboard)
                     $ageColor = 'green';
                     if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
-                      if ($ageDays > 2) {
-                        $ageColor = 'red';
-                      } elseif ($ageDays > 1) {
-                        $ageColor = 'yellow';
+                      if ($ageHours >= 72) {
+                        $ageColor = 'red';  // TERLAMBAT
+                      } elseif ($ageHours >= 24) {
+                        $ageColor = 'yellow';  // PERINGATAN
                       } else {
-                        $ageColor = 'green';
+                        $ageColor = 'green';  // AMAN
                       }
                     }
 
@@ -1063,9 +1115,10 @@
                       $receivedAt = \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d M Y H:i');
                     }
                   @endphp
-                  <tr class="clickable-row"
+                  <tr class="clickable-row table-row-{{ $ageColor }}"
                     onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'"
                     title="Klik untuk melihat detail workflow dokumen">
+
                     <td>{{ $dokumens->firstItem() + $index }}</td>
                     <td>{{ $dokumen->nomor_agenda }}</td>
                     <td>{{ $dokumen->nomor_spp }}</td>
@@ -1221,11 +1274,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-          <span>${label}: ${displayValue}</span>
-          <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
+            <span>${label}: ${displayValue}</span>
+            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
           badgesContainer.appendChild(badge);
         }
       }
