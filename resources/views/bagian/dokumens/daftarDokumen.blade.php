@@ -536,88 +536,98 @@
             </thead>
             <tbody>
               @foreach($dokumens as $index => $doc)
-                @php
-                  $statusLower = strtolower($doc->status ?? '');
-                @endphp
-                <tr onclick="showDocumentDetail({{ json_encode([
-                    'id' => $doc->id,
-                    'nomor_agenda' => $doc->nomor_agenda,
-                    'nomor_spp' => $doc->nomor_spp,
-                    'tanggal_spp' => $doc->tanggal_spp ? $doc->tanggal_spp->format('d/m/Y H:i') : '-',
-                    'tanggal_masuk' => $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d/m/Y H:i') : '-',
-                    'bulan' => $doc->bulan ?? '-',
-                    'tahun' => $doc->tahun ?? '-',
-                    'nilai_rupiah' => 'Rp. ' . number_format($doc->nilai_rupiah, 0, ',', '.'),
-                    'uraian_spp' => $doc->uraian_spp ?? '-',
-                    'bagian' => $doc->bagian ?? '-',
-                    'nama_pengirim' => $doc->nama_pengirim ?? '-',
-                    'kebun' => $doc->kebun ?? '-',
-                    'no_spk' => $doc->no_spk ?? '-',
-                    'status' => ucwords(str_replace('_', ' ', $doc->status ?? 'Belum Dikirim'))
+                      @php
+                        $statusLower = strtolower($doc->status ?? '');
+                      @endphp
+                      <tr onclick="showDocumentDetail({{ json_encode([
+                  'id' => $doc->id,
+                  'nomor_agenda' => $doc->nomor_agenda,
+                  'nomor_spp' => $doc->nomor_spp,
+                  'tanggal_spp' => $doc->tanggal_spp ? $doc->tanggal_spp->format('d/m/Y H:i') : '-',
+                  'tanggal_masuk' => $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d/m/Y H:i') : '-',
+                  'bulan' => $doc->bulan ?? '-',
+                  'tahun' => $doc->tahun ?? '-',
+                  'nilai_rupiah' => 'Rp. ' . number_format($doc->nilai_rupiah, 0, ',', '.'),
+                  'ejaan_nilai_rupiah' => \App\Helpers\TerbilangHelper::terbilang($doc->nilai_rupiah),
+                  'uraian_spp' => $doc->uraian_spp ?? '-',
+                  'bagian' => $doc->bagian ?? '-',
+                  'nama_pengirim' => $doc->nama_pengirim ?? '-',
+                  'kebun' => $doc->kebun ?? '-',
+                  'no_spk' => $doc->no_spk ?? '-',
+                  'tanggal_spk' => $doc->tanggal_spk ? $doc->tanggal_spk->format('d/m/Y') : '-',
+                  'tanggal_berakhir_spk' => $doc->tanggal_berakhir_spk ? $doc->tanggal_berakhir_spk->format('d/m/Y') : '-',
+                  'no_berita_acara' => $doc->no_berita_acara ?? '-',
+                  'tanggal_berita_acara' => $doc->tanggal_berita_acara ? $doc->tanggal_berita_acara->format('d/m/Y') : '-',
+                  'kriteria_cf' => $doc->kategori ?? '-',
+                  'sub_kriteria' => $doc->jenis_dokumen ?? '-',
+                  'item_sub_kriteria' => $doc->jenis_sub_pekerjaan ?? '-',
+                  'jenis_pembayaran' => $doc->jenis_pembayaran ?? '-',
+                  'dibayar_kepada' => $doc->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: '-',
+                  'status' => ucwords(str_replace('_', ' ', $doc->status ?? 'Belum Dikirim'))
                 ]) }})">
-                  <td>{{ $dokumens->firstItem() + $index }}</td>
-                  <td>
-                    <strong style="color: #083E40;">{{ $doc->nomor_agenda }}</strong>
-                    <br>
-                    <small class="text-muted">{{ $doc->bulan ?? '' }} {{ $doc->tahun ?? '' }}</small>
-                  </td>
-                  <td>{{ $doc->nomor_spp }}</td>
-                  <td>{{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}</td>
-                  <td>
-                    <strong style="color: #28a745;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
-                  </td>
-                  <td>
-                    @if($statusLower == 'belum dikirim')
-                      <span class="badge-status badge-draft">
-                        <i class="fa-solid fa-file-lines"></i>
-                        <span>Belum Dikirim</span>
-                      </span>
-                    @elseif(in_array($statusLower, ['sent_to_ibub', 'pending_approval_ibub']))
-                      <span class="badge-status badge-terkirim">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Terkirim</span>
-                      </span>
-                    @elseif($statusLower == 'sudah dibayar')
-                      <span class="badge-status badge-selesai">
-                        <i class="fa-solid fa-check-double"></i>
-                        <span>Selesai</span>
-                      </span>
-                    @else
-                      <span class="badge-status badge-terkirim">
-                        <i class="fa-solid fa-spinner"></i>
-                        <span>{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span>
-                      </span>
-                    @endif
-                  </td>
-                  <td onclick="event.stopPropagation()">
-                    <div class="action-buttons">
-                      @if($statusLower == 'belum dikirim')
-                        <a href="{{ route('bagian.documents.edit', $doc) }}" class="btn-action btn-edit" title="Edit">
-                          <i class="fa-solid fa-pen"></i>
-                        </a>
-                        <form action="{{ route('bagian.documents.send-to-verifikasi', $doc) }}" method="POST"
-                          class="d-inline" onsubmit="return confirm('Kirim dokumen ini ke Team Verifikasi?')">
-                          @csrf
-                          <button type="submit" class="btn-action btn-send" title="Kirim">
-                            <i class="fa-solid fa-paper-plane"></i>
-                          </button>
-                        </form>
-                        <form action="{{ route('bagian.documents.destroy', $doc) }}" method="POST" class="d-inline"
-                          onsubmit="return confirm('Hapus dokumen ini?')">
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="btn-action btn-delete" title="Hapus">
-                            <i class="fa-solid fa-trash"></i>
-                          </button>
-                        </form>
-                      @else
-                        <a href="{{ route('owner.workflow', $doc->id) }}" class="btn-action btn-tracking" title="Tracking">
-                          <i class="fa-solid fa-route"></i>
-                        </a>
-                      @endif
-                    </div>
-                  </td>
-                </tr>
+                        <td>{{ $dokumens->firstItem() + $index }}</td>
+                        <td>
+                          <strong style="color: #083E40;">{{ $doc->nomor_agenda }}</strong>
+                          <br>
+                          <small class="text-muted">{{ $doc->bulan ?? '' }} {{ $doc->tahun ?? '' }}</small>
+                        </td>
+                        <td>{{ $doc->nomor_spp }}</td>
+                        <td>{{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}</td>
+                        <td>
+                          <strong style="color: #28a745;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
+                        </td>
+                        <td>
+                          @if($statusLower == 'belum dikirim')
+                            <span class="badge-status badge-draft">
+                              <i class="fa-solid fa-file-lines"></i>
+                              <span>Belum Dikirim</span>
+                            </span>
+                          @elseif(in_array($statusLower, ['sent_to_ibub', 'pending_approval_ibub']))
+                            <span class="badge-status badge-terkirim">
+                              <i class="fa-solid fa-check"></i>
+                              <span>Terkirim</span>
+                            </span>
+                          @elseif($statusLower == 'sudah dibayar')
+                            <span class="badge-status badge-selesai">
+                              <i class="fa-solid fa-check-double"></i>
+                              <span>Selesai</span>
+                            </span>
+                          @else
+                            <span class="badge-status badge-terkirim">
+                              <i class="fa-solid fa-spinner"></i>
+                              <span>{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span>
+                            </span>
+                          @endif
+                        </td>
+                        <td onclick="event.stopPropagation()">
+                          <div class="action-buttons">
+                            @if($statusLower == 'belum dikirim')
+                              <a href="{{ route('bagian.documents.edit', $doc) }}" class="btn-action btn-edit" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                              </a>
+                              <form action="{{ route('bagian.documents.send-to-verifikasi', $doc) }}" method="POST" class="d-inline"
+                                onsubmit="return confirm('Kirim dokumen ini ke Team Verifikasi?')">
+                                @csrf
+                                <button type="submit" class="btn-action btn-send" title="Kirim">
+                                  <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                              </form>
+                              <form action="{{ route('bagian.documents.destroy', $doc) }}" method="POST" class="d-inline"
+                                onsubmit="return confirm('Hapus dokumen ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-action btn-delete" title="Hapus">
+                                  <i class="fa-solid fa-trash"></i>
+                                </button>
+                              </form>
+                            @else
+                              <a href="{{ route('owner.workflow', $doc->id) }}" class="btn-action btn-tracking" title="Tracking">
+                                <i class="fa-solid fa-route"></i>
+                              </a>
+                            @endif
+                          </div>
+                        </td>
+                      </tr>
               @endforeach
             </tbody>
           </table>
@@ -695,6 +705,10 @@
             <div class="detail-value highlight" id="modal-nilai-rupiah">-</div>
           </div>
           <div class="detail-item">
+            <div class="detail-label">Ejaan Nilai Rupiah</div>
+            <div class="detail-value" id="modal-ejaan-nilai-rupiah">-</div>
+          </div>
+          <div class="detail-item">
             <div class="detail-label">Bagian</div>
             <div class="detail-value" id="modal-bagian">-</div>
           </div>
@@ -706,13 +720,49 @@
             <div class="detail-label">Kebun</div>
             <div class="detail-value" id="modal-kebun">-</div>
           </div>
-          <div class="detail-item full-width">
-            <div class="detail-label">Uraian SPP</div>
-            <div class="detail-value" id="modal-uraian-spp">-</div>
+          <div class="detail-item">
+            <div class="detail-label">Dibayar Kepada (Vendor)</div>
+            <div class="detail-value" id="modal-dibayar-kepada">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Kriteria CF</div>
+            <div class="detail-value" id="modal-kriteria-cf">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Sub Kriteria</div>
+            <div class="detail-value" id="modal-sub-kriteria">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Item Sub Kriteria</div>
+            <div class="detail-value" id="modal-item-sub-kriteria">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Jenis Pembayaran</div>
+            <div class="detail-value" id="modal-jenis-pembayaran">-</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">No SPK</div>
             <div class="detail-value" id="modal-no-spk">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Tanggal SPK</div>
+            <div class="detail-value" id="modal-tanggal-spk">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Tanggal Berakhir SPK</div>
+            <div class="detail-value" id="modal-tanggal-berakhir-spk">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">No Berita Acara</div>
+            <div class="detail-value" id="modal-no-berita-acara">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Tanggal Berita Acara</div>
+            <div class="detail-value" id="modal-tanggal-berita-acara">-</div>
+          </div>
+          <div class="detail-item full-width">
+            <div class="detail-label">Uraian SPP</div>
+            <div class="detail-value" id="modal-uraian-spp">-</div>
           </div>
         </div>
       </div>
@@ -740,11 +790,21 @@
       document.getElementById('modal-periode').textContent = (doc.bulan || '-') + ' ' + (doc.tahun || '');
       document.getElementById('modal-tanggal-masuk').textContent = doc.tanggal_masuk || '-';
       document.getElementById('modal-nilai-rupiah').textContent = doc.nilai_rupiah || '-';
+      document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
       document.getElementById('modal-bagian').textContent = doc.bagian || '-';
       document.getElementById('modal-nama-pengirim').textContent = doc.nama_pengirim || '-';
       document.getElementById('modal-kebun').textContent = doc.kebun || '-';
+      document.getElementById('modal-dibayar-kepada').textContent = doc.dibayar_kepada || '-';
       document.getElementById('modal-uraian-spp').textContent = doc.uraian_spp || '-';
+      document.getElementById('modal-kriteria-cf').textContent = doc.kriteria_cf || '-';
+      document.getElementById('modal-sub-kriteria').textContent = doc.sub_kriteria || '-';
+      document.getElementById('modal-item-sub-kriteria').textContent = doc.item_sub_kriteria || '-';
+      document.getElementById('modal-jenis-pembayaran').textContent = doc.jenis_pembayaran || '-';
       document.getElementById('modal-no-spk').textContent = doc.no_spk || '-';
+      document.getElementById('modal-tanggal-spk').textContent = doc.tanggal_spk || '-';
+      document.getElementById('modal-tanggal-berakhir-spk').textContent = doc.tanggal_berakhir_spk || '-';
+      document.getElementById('modal-no-berita-acara').textContent = doc.no_berita_acara || '-';
+      document.getElementById('modal-tanggal-berita-acara').textContent = doc.tanggal_berita_acara || '-';
 
       document.getElementById('documentDetailModal').classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -756,14 +816,14 @@
     }
 
     // Close modal on overlay click
-    document.getElementById('documentDetailModal').addEventListener('click', function(e) {
+    document.getElementById('documentDetailModal').addEventListener('click', function (e) {
       if (e.target === this) {
         closeModal();
       }
     });
 
     // Close modal on Escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         closeModal();
       }

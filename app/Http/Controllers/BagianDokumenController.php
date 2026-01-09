@@ -232,6 +232,36 @@ class BagianDokumenController extends Controller
                 12 => 'Desember'
             ];
 
+            // Get nama from ID untuk field kriteria_cf, sub_kriteria, item_sub_kriteria
+            $kategoriNama = $request->kategori;
+            $jenisDokumenNama = $request->jenis_dokumen;
+            $jenisSubPekerjaanNama = $request->jenis_sub_pekerjaan;
+
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+                    if ($kategoriKriteria) {
+                        $kategoriNama = $kategoriKriteria->nama_kriteria;
+                    }
+                }
+
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteriaObj = SubKriteria::find($request->sub_kriteria);
+                    if ($subKriteriaObj) {
+                        $jenisDokumenNama = $subKriteriaObj->nama_sub_kriteria;
+                    }
+                }
+
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteriaObj = ItemSubKriteria::find($request->item_sub_kriteria);
+                    if ($itemSubKriteriaObj) {
+                        $jenisSubPekerjaanNama = $itemSubKriteriaObj->nama_item_sub_kriteria;
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for bagian store: ' . $e->getMessage());
+            }
+
             // Create document with bagian auto-filled
             $dokumen = Dokumen::create([
                 'nomor_agenda' => $request->nomor_agenda,
@@ -250,13 +280,11 @@ class BagianDokumenController extends Controller
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
                 'no_berita_acara' => $request->no_berita_acara,
                 'tanggal_berita_acara' => $request->tanggal_berita_acara,
-                'kriteria_cf' => $request->kriteria_cf,
-                'sub_kriteria' => $request->sub_kriteria,
-                'item_sub_kriteria' => $request->item_sub_kriteria,
                 'jenis_pembayaran' => $request->jenis_pembayaran,
-                'kategori' => $request->kategori,
-                'jenis_dokumen' => $request->jenis_dokumen,
-                'jenis_sub_pekerjaan' => $request->jenis_sub_pekerjaan,
+                // Store nama (not ID) for backward compatibility
+                'kategori' => $kategoriNama,
+                'jenis_dokumen' => $jenisDokumenNama,
+                'jenis_sub_pekerjaan' => $jenisSubPekerjaanNama,
                 'status' => 'belum dikirim',
                 'current_handler' => 'bagian_' . strtolower($bagianCode),
                 'created_by' => 'bagian_' . strtolower($bagianCode),
@@ -328,15 +356,44 @@ class BagianDokumenController extends Controller
 
         // Get dropdown data
         $isDropdownAvailable = false;
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
         try {
             $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
             $subKriteria = SubKriteria::all();
             $itemSubKriteria = ItemSubKriteria::all();
             $isDropdownAvailable = $kategoriKriteria->count() > 0;
+
+            // Look up IDs from stored names
+            if ($dokumen->kategori) {
+                $found = $kategoriKriteria->firstWhere('nama_kriteria', $dokumen->kategori);
+                if ($found) {
+                    $selectedKriteriaCfId = $found->id_kategori_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_dokumen && $selectedKriteriaCfId) {
+                $found = $subKriteria->where('id_kategori_kriteria', $selectedKriteriaCfId)
+                    ->firstWhere('nama_sub_kriteria', $dokumen->jenis_dokumen);
+                if ($found) {
+                    $selectedSubKriteriaId = $found->id_sub_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_sub_pekerjaan && $selectedSubKriteriaId) {
+                $found = $itemSubKriteria->where('id_sub_kriteria', $selectedSubKriteriaId)
+                    ->firstWhere('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan);
+                if ($found) {
+                    $selectedItemSubKriteriaId = $found->id_item_sub_kriteria;
+                }
+            }
         } catch (\Exception $e) {
             $kategoriKriteria = collect([]);
             $subKriteria = collect([]);
             $itemSubKriteria = collect([]);
+            \Log::error('Error fetching cash_bank data for bagian edit: ' . $e->getMessage());
         }
 
         $jenisPembayaranList = collect([]);
@@ -356,7 +413,10 @@ class BagianDokumenController extends Controller
             'itemSubKriteria',
             'isDropdownAvailable',
             'jenisPembayaranList',
-            'isJenisPembayaranAvailable'
+            'isJenisPembayaranAvailable',
+            'selectedKriteriaCfId',
+            'selectedSubKriteriaId',
+            'selectedItemSubKriteriaId'
         ));
     }
 
@@ -398,6 +458,36 @@ class BagianDokumenController extends Controller
                 12 => 'Desember'
             ];
 
+            // Get nama from ID untuk field kriteria_cf, sub_kriteria, item_sub_kriteria
+            $kategoriNama = $request->kategori ?? $dokumen->kategori;
+            $jenisDokumenNama = $request->jenis_dokumen ?? $dokumen->jenis_dokumen;
+            $jenisSubPekerjaanNama = $request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan;
+
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+                    if ($kategoriKriteria) {
+                        $kategoriNama = $kategoriKriteria->nama_kriteria;
+                    }
+                }
+
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteriaObj = SubKriteria::find($request->sub_kriteria);
+                    if ($subKriteriaObj) {
+                        $jenisDokumenNama = $subKriteriaObj->nama_sub_kriteria;
+                    }
+                }
+
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteriaObj = ItemSubKriteria::find($request->item_sub_kriteria);
+                    if ($itemSubKriteriaObj) {
+                        $jenisSubPekerjaanNama = $itemSubKriteriaObj->nama_item_sub_kriteria;
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for bagian update: ' . $e->getMessage());
+            }
+
             $dokumen->update([
                 'nomor_agenda' => $request->nomor_agenda,
                 'nomor_spp' => $request->nomor_spp,
@@ -413,10 +503,11 @@ class BagianDokumenController extends Controller
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
                 'no_berita_acara' => $request->no_berita_acara,
                 'tanggal_berita_acara' => $request->tanggal_berita_acara,
-                'kriteria_cf' => $request->kriteria_cf,
-                'sub_kriteria' => $request->sub_kriteria,
-                'item_sub_kriteria' => $request->item_sub_kriteria,
                 'jenis_pembayaran' => $request->jenis_pembayaran,
+                // Store nama (not ID) for backward compatibility
+                'kategori' => $kategoriNama,
+                'jenis_dokumen' => $jenisDokumenNama,
+                'jenis_sub_pekerjaan' => $jenisSubPekerjaanNama,
             ]);
 
             // Update related records
