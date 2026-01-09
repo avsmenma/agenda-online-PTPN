@@ -469,7 +469,7 @@ Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getP
 Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index']);
 
 // Professional Document Routes - Verifikasi (IbuB)
-Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibub,IbuB,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [DashboardBController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/edit', [DashboardBController::class, 'editDokumen'])->name('edit');
@@ -482,13 +482,13 @@ Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('documents/verifikas
 });
 
 // Professional Reports Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibub,IbuB,verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
     Route::get('/', [DashboardBController::class, 'rekapan'])->name('index');
     Route::get('/analytics', [DashboardBController::class, 'rekapanAnalytics'])->name('analytics');
 });
 
 // Professional Returns Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,ibub,IbuB,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
     Route::get('/', [DashboardBController::class, 'pengembalian'])->name('index');
     Route::get('/stats', [DashboardBController::class, 'getPengembalianKeBagianStats'])->name('stats');
     Route::get('/bidang', [DashboardBController::class, 'pengembalianKeBidang'])->name('bidang');
@@ -498,16 +498,16 @@ Route::middleware(['auth', 'role:admin,ibub,IbuB'])->prefix('returns/verifikasi'
 // Backward compatibility for old IbuB routes
 Route::get('/dokumensB', function () {
     return redirect()->route('documents.verifikasi.index', [], 301);
-})->name('dokumensB.index.old');
+})->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')->name('dokumensB.index.old');
 Route::get('/rekapan-ibuB', function () {
     return redirect()->route('reports.verifikasi.index', [], 301);
-})->name('dokumensB.rekapan.old');
+})->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')->name('dokumensB.rekapan.old');
 Route::get('/pengembalian-dokumensB', function () {
     return redirect()->route('returns.verifikasi.index', [], 301);
-})->name('pengembalianB.index.old');
+})->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')->name('pengembalianB.index.old');
 
 // Professional Approval Routes - Verifikasi (IbuB)
-Route::middleware(['auth', 'role:ibub,IbuB,admin'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:ibub,IbuB,admin,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::post('/{dokumen}/accept', [DashboardBController::class, 'acceptDocument'])
         ->name('accept');
     Route::post('/{dokumen}/reject', [DashboardBController::class, 'rejectDocument'])

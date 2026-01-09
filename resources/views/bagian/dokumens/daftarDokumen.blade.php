@@ -342,12 +342,12 @@
 
     .modal-content-custom {
       background: white;
-      border-radius: 16px;
-      max-width: 700px;
-      width: 100%;
+      border-radius: 20px;
+      max-width: 90%;
+      width: 90%;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
     }
 
     .modal-header-custom {
@@ -422,7 +422,7 @@
     }
 
     .detail-value.highlight {
-      color: #28a745;
+      color: #212529;
       font-size: 18px;
     }
 
@@ -467,15 +467,33 @@
 
     <!-- Single Alert Message (fix duplicate notification) -->
     @if(session('success'))
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <div class="alert alert-success alert-dismissible fade show" role="alert" id="autoCloseAlert">
         <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
+      <script>
+        setTimeout(function() {
+          var alert = document.getElementById('autoCloseAlert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(function() { alert.remove(); }, 150);
+          }
+        }, 5000);
+      </script>
     @elseif(session('error'))
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert" id="autoCloseAlertError">
         <i class="fa-solid fa-exclamation-circle me-2"></i>{{ session('error') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
+      <script>
+        setTimeout(function() {
+          var alert = document.getElementById('autoCloseAlertError');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(function() { alert.remove(); }, 150);
+          }
+        }, 5000);
+      </script>
     @endif
 
     <!-- Search & Filter -->
