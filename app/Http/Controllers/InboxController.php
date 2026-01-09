@@ -31,12 +31,14 @@ class InboxController extends Controller
             }
 
             // Normalize role code for database query (lowercase)
+            // For Verifikasi, we also need to check 'ibub' for backward compatibility
             $roleCode = strtolower($userRole);
+            $roleCodes = $this->getRoleCodes($userRole);
 
             // Query documents using new dokumen_statuses table
             $documents = Dokumen::with(['activityLogs', 'roleStatuses'])
-                ->whereHas('roleStatuses', function ($query) use ($roleCode) {
-                    $query->where('role_code', $roleCode)
+                ->whereHas('roleStatuses', function ($query) use ($roleCodes) {
+                    $query->whereIn('role_code', $roleCodes)
                         ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
                 })
                 ->latest('created_at')
@@ -44,16 +46,16 @@ class InboxController extends Controller
                 ->appends($request->query());
 
             // Count statistics using new table
-            $pendingCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $pendingCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->count();
 
-            $approvedToday = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $approvedToday = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED)
                 ->whereDate('status_changed_at', today())
                 ->count();
 
-            $totalProcessed = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $totalProcessed = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->whereIn('status', [
                     \App\Models\DokumenStatus::STATUS_APPROVED,
                     \App\Models\DokumenStatus::STATUS_REJECTED
@@ -71,7 +73,7 @@ class InboxController extends Controller
             $normalizedModule = $moduleMap[$userRole] ?? strtolower($userRole);
 
             // Hitung dokumen baru (masuk dalam 24 jam terakhir)
-            $newDocumentsCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $newDocumentsCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->where('status_changed_at', '>=', now()->subHours(24))
                 ->count();
@@ -419,6 +421,22 @@ class InboxController extends Controller
     }
 
     /**
+     * Get role codes for database query
+     * For Verifikasi, also include 'ibub' for backward compatibility
+     */
+    private function getRoleCodes($userRole)
+    {
+        $roleCode = strtolower($userRole);
+
+        // Verifikasi should also match 'ibub' for backward compatibility
+        if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {
+            return ['verifikasi', 'ibub'];
+        }
+
+        return [$roleCode];
+    }
+
+    /**
      * API endpoint untuk check dokumen baru di inbox
      */
     public function checkNewDocuments(Request $request)
@@ -453,6 +471,7 @@ class InboxController extends Controller
             // Cari dokumen baru yang masuk setelah last check
             // Use DokumenStatus to find new pending documents
             // Exclude documents imported from CSV to prevent notification spam
+            $roleCodes = $this->getRoleCodes($userRole);
             $newDocuments = Dokumen::when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
                 // Exclude CSV imported documents (only if column exists)
                 $query->where(function ($q) {
@@ -460,8 +479,8 @@ class InboxController extends Controller
                         ->orWhereNull('imported_from_csv');
                 });
             })
-                ->whereHas('roleStatuses', function ($query) use ($userRole, $checkFrom) {
-                    $query->where('role_code', strtolower($userRole))
+                ->whereHas('roleStatuses', function ($query) use ($roleCodes, $checkFrom) {
+                    $query->whereIn('role_code', $roleCodes)
                         ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                         ->where('status_changed_at', '>', $checkFrom);
                 })
@@ -470,14 +489,14 @@ class InboxController extends Controller
                 ->map(function ($doc) use ($userRole) {
                     // Get the status record for date info
                     $status = $doc->getStatusForRole($userRole);
-                    $doc->inbox_approval_sent_at = $status->status_changed_at;
+                    $doc->inbox_approval_sent_at = $status->status_changed_at ?? now();
                     return $doc;
                 })
                 ->sortByDesc('inbox_approval_sent_at')
                 ->values();
 
             // Hitung total pending
-            $pendingCount = \App\Models\DokumenStatus::where('role_code', strtolower($userRole))
+            $pendingCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->count();
 
