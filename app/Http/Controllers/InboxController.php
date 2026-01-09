@@ -24,10 +24,10 @@ class InboxController extends Controller
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow IbuB, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            // Hanya allow IbuB/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
-                abort(403, 'Unauthorized access - Halaman ini hanya untuk IbuB, Perpajakan, Akutansi, dan Pembayaran');
+                abort(403, 'Unauthorized access - Halaman ini hanya untuk Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
             }
 
             // Normalize role code for database query (lowercase)
@@ -63,6 +63,7 @@ class InboxController extends Controller
             // Normalize module untuk layout
             $moduleMap = [
                 'IbuB' => 'ibub',
+                'Verifikasi' => 'ibub',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran',
@@ -148,6 +149,7 @@ class InboxController extends Controller
             // Normalize module untuk layout (harus lowercase untuk match statement)
             $moduleMap = [
                 'IbuB' => 'ibub',
+                'Verifikasi' => 'ibub',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran',
@@ -348,14 +350,18 @@ class InboxController extends Controller
         // Prioritize role field over name field
         if (isset($user->role)) {
             $role = $user->role;
-            // Map role ke format yang sesuai untuk inbox (must match enum: IbuB, Perpajakan, Akutansi)
+            // Map role ke format yang sesuai untuk inbox (must match enum: IbuB/Verifikasi, Perpajakan, Akutansi)
             $roleMap = [
-                'ibuB' => 'IbuB',
-                'IbuB' => 'IbuB',
-                'Ibu B' => 'IbuB',
-                'ibu B' => 'IbuB',
-                'Ibu Yuni' => 'IbuB',
-                'ibu yuni' => 'IbuB',
+                'ibuB' => 'Verifikasi',
+                'IbuB' => 'Verifikasi',
+                'Ibu B' => 'Verifikasi',
+                'ibu B' => 'Verifikasi',
+                'Ibu Yuni' => 'Verifikasi',
+                'ibu yuni' => 'Verifikasi',
+                'verifikasi' => 'Verifikasi',
+                'Verifikasi' => 'Verifikasi',
+                'Team Verifikasi' => 'Verifikasi',
+                'team verifikasi' => 'Verifikasi',
                 'perpajakan' => 'Perpajakan',
                 'Perpajakan' => 'Perpajakan',
                 'akutansi' => 'Akutansi',
@@ -426,10 +432,10 @@ class InboxController extends Controller
                 'user_id' => $user->id ?? null,
                 'user_role_raw' => $user->role ?? null,
                 'user_role_mapped' => $userRole,
-                'allowed_roles' => ['IbuB', 'Perpajakan', 'Akutansi']
+                'allowed_roles' => ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran']
             ]);
 
-            if (!$userRole || !in_array($userRole, ['IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
+            if (!$userRole || !in_array($userRole, ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
                 Log::warning('Unauthorized access to checkNewDocuments', [
                     'user_role' => $userRole,
                     'user_role_raw' => $user->role ?? null
