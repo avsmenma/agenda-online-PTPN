@@ -629,8 +629,8 @@ class DashboardBController extends Controller
 
     public function updateDokumen(Request $request, Dokumen $dokumen)
     {
-        // Only allow updating if current_handler is ibuB
-        if ($dokumen->current_handler !== 'ibuB') {
+        // Only allow updating if current_handler is ibuB or verifikasi
+        if (!in_array($dokumen->current_handler, ['ibuB', 'verifikasi'])) {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengupdate dokumen ini.');
         }
