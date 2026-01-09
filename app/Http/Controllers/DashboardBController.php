@@ -538,8 +538,8 @@ class DashboardBController extends Controller
         // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
         $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
 
-        // Only allow editing if current_handler is ibuB
-        if ($dokumen->current_handler !== 'ibuB') {
+        // Only allow editing if current_handler is ibuB or verifikasi
+        if (!in_array($dokumen->current_handler, ['ibuB', 'verifikasi'])) {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
