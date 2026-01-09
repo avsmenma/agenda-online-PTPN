@@ -2934,8 +2934,8 @@
   </div>
 
   <script>
-  // Wrapper function untuk handle row click   dengan text selection check
-  function ha    ndleRowClick(event, docId) {
+  // Wrapper function untuk handle row click dengan text selection check
+  function handleRowClick(event, docId) {
     // Cek apakah user sedang menyeleksi teks
     const selection = window.getSelection();
     const selectedText = selection.toString().trim();
