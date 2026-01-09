@@ -271,6 +271,12 @@ class Dokumen extends Model
     public function setStatusForRole(string $roleCode, string $status, ?string $changedBy = null, ?string $notes = null): DokumenStatus
     {
         $roleCode = strtolower($roleCode);
+
+        // Normalize verifikasi to ibub for database consistency
+        if ($roleCode === 'verifikasi') {
+            $roleCode = 'ibub';
+        }
+
         $changedBy = $changedBy ?? auth()->user()?->name ?? 'System';
 
         return DokumenStatus::updateOrCreate(
@@ -357,13 +363,20 @@ class Dokumen extends Model
     public function approveFromRoleInbox(string $roleCode): DokumenStatus
     {
         $roleCode = strtolower($roleCode);
+
+        // Normalize verifikasi to ibub for database consistency
+        $normalizedRoleCode = $roleCode;
+        if ($roleCode === 'verifikasi') {
+            $normalizedRoleCode = 'ibub';
+        }
+
         $approvedBy = auth()->user()?->name ?? 'System';
 
         // Update role status to approved
-        $status = $this->setStatusForRole($roleCode, DokumenStatus::STATUS_APPROVED, $approvedBy);
+        $status = $this->setStatusForRole($normalizedRoleCode, DokumenStatus::STATUS_APPROVED, $approvedBy);
 
         // Update processed time and reset deadline for returned documents
-        $roleData = $this->getDataForRole($roleCode);
+        $roleData = $this->getDataForRole($normalizedRoleCode);
         if ($roleData) {
             $roleData->processed_at = now();
 
@@ -372,7 +385,7 @@ class Dokumen extends Model
             $isReturnedDocument = $this->department_returned_at ||
                 $this->returned_from_perpajakan_fixed_at;
 
-            if ($isReturnedDocument && $roleCode === 'perpajakan') {
+            if ($isReturnedDocument && $normalizedRoleCode === 'perpajakan') {
                 // Reset deadline for returned documents sent back to perpajakan
                 $roleData->deadline_at = null;
                 $roleData->deadline_days = null;
@@ -381,7 +394,7 @@ class Dokumen extends Model
                 \Log::info('Reset deadline for returned document approved from inbox', [
                     'document_id' => $this->id,
                     'nomor_agenda' => $this->nomor_agenda,
-                    'role_code' => $roleCode
+                    'role_code' => $normalizedRoleCode
                 ]);
             }
 
@@ -393,13 +406,14 @@ class Dokumen extends Model
         // Map role code to proper handler format (capital B for ibuB to match query expectations)
         $handlerMap = [
             'ibub' => 'ibuB',
+            'verifikasi' => 'verifikasi',
             'perpajakan' => 'perpajakan',
             'akutansi' => 'akutansi',
             'pembayaran' => 'pembayaran',
         ];
         $this->current_handler = $handlerMap[$roleCode] ?? $roleCode;
 
-        switch ($roleCode) {
+        switch ($normalizedRoleCode) {
             case 'ibub':
                 $this->status = 'sedang diproses'; // Status expected by DashboardB (with space, not underscore)
                 // Note: processed_at column was removed in cleanup migration, timestamp is now in dokumen_role_data

@@ -138,14 +138,14 @@ class DashboardBController extends Controller
 
         if (!$request->has('status') || !$request->status) {
             $query->where(function ($q) use ($hasImportedFromCsvColumn) {
-                $q->where('current_handler', 'ibuB')
+                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
                     ->orWhere(function ($subQ) {
                         // Handle both status formats (with space and underscore) for backward compatibility
                         $subQ->where(function ($statusQ) {
                             $statusQ->where('status', 'sedang diproses')
                                 ->orWhere('status', 'sedang_diproses');
                         })
-                            ->where('current_handler', 'ibuB');
+                            ->whereIn('current_handler', ['ibuB', 'verifikasi']);
                     })
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi
                     ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
@@ -171,7 +171,7 @@ class DashboardBController extends Controller
                         // (Dokumen yang ditolak oleh Akutansi dikembalikan ke Perpajakan, bukan Verifikasi)
                         $rejectQ->where('status', 'returned_to_department')
                             ->where('target_department', 'perpajakan')
-                            ->where('current_handler', 'ibuB');
+                            ->whereIn('current_handler', ['ibuB', 'verifikasi']);
                     });
             })
                 // Exclude CSV imported documents (only if column exists)
