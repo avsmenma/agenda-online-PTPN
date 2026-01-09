@@ -1327,8 +1327,8 @@ class DashboardBController extends Controller
     public function sendToNextHandler(Dokumen $dokumen, Request $request)
     {
         try {
-            // Validate current handler
-            if ($dokumen->current_handler !== 'ibuB') {
+            // Validate current handler - allow both 'ibuB' and 'verifikasi' roles
+            if (!in_array($dokumen->current_handler, ['ibuB', 'verifikasi'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
