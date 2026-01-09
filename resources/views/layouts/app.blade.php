@@ -1590,7 +1590,7 @@
 
           // Normalize role to check (case-insensitive comparison)
           $currentUserRoleLower = strtolower($currentUserRole);
-          $inboxRoles = ['ibub', 'perpajakan', 'akutansi', 'pembayaran'];
+          $inboxRoles = ['ibub', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
           $showInbox = in_array($currentUserRoleLower, $inboxRoles);
 
           // Map role to inbox query format
@@ -1601,6 +1601,8 @@
             $inboxRoleForQuery = 'Akutansi';
           } elseif (in_array($currentUserRoleLower, ['pembayaran'])) {
             $inboxRoleForQuery = 'Pembayaran';
+          } elseif (in_array($currentUserRoleLower, ['verifikasi'])) {
+            $inboxRoleForQuery = 'IbuB'; // Verifikasi uses IbuB inbox
           }
         @endphp
 
@@ -2985,7 +2987,7 @@
     const userRoleLower = userRole.toLowerCase();
     
     // Case-insensitive check for inbox roles
-    const inboxRoles = ['ibub', 'perpajakan', 'akutansi'];
+    const inboxRoles = ['ibub', 'verifikasi', 'perpajakan', 'akutansi'];
     const isIbuA = ['ibua', 'ibu a', 'ibu tarapul'].includes(userRoleLower);
     const hasInboxAccess = inboxRoles.includes(userRoleLower);
 

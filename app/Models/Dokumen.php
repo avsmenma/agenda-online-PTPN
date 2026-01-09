@@ -236,6 +236,16 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
+        // Role alias mapping - verifikasi is the same as ibub
+        $roleAliases = [
+            'verifikasi' => 'ibub',
+        ];
+
+        // Apply alias if exists
+        if (isset($roleAliases[$roleCode])) {
+            $roleCode = $roleAliases[$roleCode];
+        }
+
         // If roleData relationship is already loaded, use it to avoid extra query
         if ($this->relationLoaded('roleData')) {
             return $this->roleData->firstWhere('role_code', $roleCode);
