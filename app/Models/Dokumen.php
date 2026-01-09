@@ -226,7 +226,17 @@ class Dokumen extends Model
      */
     public function getStatusForRole(string $roleCode): ?DokumenStatus
     {
-        return $this->roleStatuses()->where('role_code', strtolower($roleCode))->first();
+        $roleCode = strtolower($roleCode);
+
+        // For verifikasi, also check ibub for backward compatibility
+        if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {
+            $status = $this->roleStatuses()
+                ->whereIn('role_code', ['verifikasi', 'ibub'])
+                ->first();
+            return $status;
+        }
+
+        return $this->roleStatuses()->where('role_code', $roleCode)->first();
     }
 
     /**
@@ -467,6 +477,17 @@ class Dokumen extends Model
      */
     public function isPendingForRole(string $roleCode): bool
     {
+        $roleCode = strtolower($roleCode);
+
+        // For verifikasi, also check ibub for backward compatibility
+        if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {
+            $status = $this->roleStatuses()
+                ->whereIn('role_code', ['verifikasi', 'ibub'])
+                ->where('status', DokumenStatus::STATUS_PENDING)
+                ->first();
+            return $status !== null;
+        }
+
         $status = $this->getStatusForRole($roleCode);
         return $status && $status->status === DokumenStatus::STATUS_PENDING;
     }
