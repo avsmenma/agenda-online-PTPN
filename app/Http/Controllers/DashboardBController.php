@@ -1295,8 +1295,8 @@ class DashboardBController extends Controller
             ]);
 
             // Update role data for perpajakan - Reset deadline so it can be set again
+            // NOTE: received_at is NOT set here - it will be set when document is approved from inbox
             $dokumen->setDataForRole('perpajakan', [
-                'received_at' => now(),
                 'deadline_at' => null, // Reset deadline so document must set deadline again
                 'deadline_days' => null,
                 'deadline_note' => null,
@@ -1398,8 +1398,8 @@ class DashboardBController extends Controller
                     ]);
                 } else {
                     // Create role data if it doesn't exist, ensuring deadline is null
+                    // NOTE: received_at is NOT set here - it will be set when document is approved from inbox
                     $dokumen->setDataForRole('perpajakan', [
-                        'received_at' => now(),
                         'deadline_at' => null,
                         'deadline_days' => null,
                         'deadline_note' => null,
@@ -1482,16 +1482,15 @@ class DashboardBController extends Controller
 
             // Set specific timestamp based on destination
             // Note: Deadline will be set by the destination department (perpajakan/akutansi) themselves
+            // NOTE: received_at is NOT set here - it will be set when document is approved from inbox
             if ($request->next_handler === 'perpajakan') {
                 $dokumen->setDataForRole('perpajakan', [
-                    'received_at' => now(),
                     'deadline_at' => null, // Reset deadline so document will be locked until perpajakan sets deadline
                     'deadline_days' => null,
                     'deadline_note' => null,
                 ]);
             } elseif ($request->next_handler === 'akutansi') {
                 $dokumen->setDataForRole('akutansi', [
-                    'received_at' => now(),
                     'deadline_at' => null, // Reset deadline so document will be locked until akutansi sets deadline
                     'deadline_days' => null,
                     'deadline_note' => null,
