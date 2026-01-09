@@ -315,10 +315,9 @@ class Dokumen extends Model
         $targetStatus = $this->setStatusForRole($targetRoleCode, DokumenStatus::STATUS_PENDING, $senderRoleCode);
 
         // Update data for target role
-        // For returned documents sent to perpajakan, always reset deadline so it must be set again
-        $updateData = [
-            'received_at' => now(),
-        ];
+        // NOTE: received_at is NOT set here anymore - it will be set when document is approved from inbox
+        // This ensures deadline countdown only starts AFTER approval, not when sent to inbox
+        $updateData = [];
 
         // If sending to perpajakan and document was returned, always reset deadline
         // This ensures returned documents must set deadline again
@@ -330,6 +329,7 @@ class Dokumen extends Model
             $updateData['deadline_days'] = null;
             $updateData['deadline_note'] = null;
             $updateData['processed_at'] = null; // Reset processed_at to lock document until deadline is set
+            $updateData['received_at'] = null; // Reset received_at so deadline starts fresh after approval
 
             \Log::info('Reset deadline in sendToRoleInbox for returned document', [
                 'document_id' => $this->id,
@@ -338,7 +338,10 @@ class Dokumen extends Model
             ]);
         }
 
-        $this->setDataForRole($targetRoleCode, $updateData);
+        // Only update data if there's something to update
+        if (!empty($updateData)) {
+            $this->setDataForRole($targetRoleCode, $updateData);
+        }
 
         // Log activity
         DokumenActivityLog::create([
@@ -375,10 +378,16 @@ class Dokumen extends Model
         // Update role status to approved
         $status = $this->setStatusForRole($normalizedRoleCode, DokumenStatus::STATUS_APPROVED, $approvedBy);
 
-        // Update processed time and reset deadline for returned documents
+        // Update processed time and received_at for approved documents
         $roleData = $this->getDataForRole($normalizedRoleCode);
         if ($roleData) {
             $roleData->processed_at = now();
+
+            // Set received_at NOW when document is approved from inbox
+            // This is when the deadline countdown should start
+            if (!$roleData->received_at) {
+                $roleData->received_at = now();
+            }
 
             // Reset deadline for returned documents so they must set deadline again
             // Check if document was returned (has department_returned_at timestamp)
@@ -399,6 +408,11 @@ class Dokumen extends Model
             }
 
             $roleData->save();
+        } else {
+            // If no roleData exists yet, create it with received_at
+            $this->setDataForRole($normalizedRoleCode, [
+                'received_at' => now(),
+            ]);
         }
 
         // === SYNC LEGACY COLUMNS ===
