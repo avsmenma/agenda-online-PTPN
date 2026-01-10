@@ -795,11 +795,12 @@ class DokumenController extends Controller
         $createdBy = strtolower($dokumen->created_by ?? '');
         $status = strtolower($dokumen->status ?? '');
 
-        // Check if document is created by IbuA (case-insensitive)
-        $createdByIbuA = in_array($createdBy, ['ibua', 'ibu a']);
+        // Check if document is created by IbuA (case-insensitive, all valid aliases)
+        $ibuAliases = ['ibua', 'ibu a', 'ibu tarapul', 'tarapul'];
+        $createdByIbuA = in_array($createdBy, $ibuAliases);
 
         // Check if document is currently with IbuA (case-insensitive)
-        $currentHandlerIbuA = in_array($currentHandler, ['ibua', 'ibu a']);
+        $currentHandlerIbuA = in_array($currentHandler, $ibuAliases);
 
         // Check if document is rejected
         $isRejected = false;
@@ -815,13 +816,15 @@ class DokumenController extends Controller
         }
 
         // Check if status allows editing
-        $allowedStatuses = ['draft', 'returned_to_ibua'];
+        $allowedStatuses = ['draft', 'returned_to_ibua', 'belum_dikirim', 'belum dikirim'];
         $isAllowedStatus = in_array($status, $allowedStatuses);
 
         // Allow editing if:
-        // 1. Document is rejected AND with IbuA (can always be edited)
-        // 2. OR document has allowed status AND with IbuA
-        if (!$createdByIbuA || !$currentHandlerIbuA) {
+        // 1. Document is draft/new and current handler is IbuA
+        // 2. Document is rejected AND current handler is IbuA (can always be edited)
+        // 3. Document has allowed status AND current handler is IbuA
+        // Note: Skip createdBy check for draft documents to allow editing new documents
+        if (!$currentHandlerIbuA) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
