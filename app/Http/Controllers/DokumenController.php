@@ -796,7 +796,7 @@ class DokumenController extends Controller
         $status = strtolower($dokumen->status ?? '');
 
         // Check if document is created by IbuA (case-insensitive, all valid aliases)
-        $ibuAliases = ['ibua', 'ibu a', 'ibu tarapul', 'tarapul'];
+        $ibuAliases = ['ibua', 'ibu a', 'ibu tarapul', 'tarapul', 'ibutarapul'];
         $createdByIbuA = in_array($createdBy, $ibuAliases);
 
         // Check if document is currently with IbuA (case-insensitive)
