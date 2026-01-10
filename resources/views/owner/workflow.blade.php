@@ -2111,12 +2111,19 @@
         return String(text).replace(/[&<>"']/g, m => map[m]);
       };
 
+      // Helper function to decode HTML entities (reverse of escapeHtml)
+      window.decodeHtmlEntities = function(text) {
+        const textArea = document.createElement('textarea');
+        textArea.innerHTML = text;
+        return textArea.value;
+      };
+
       // Function to show activity detail
        window.showActivityDetail = function(activityId) {
         const activityItem = document.querySelector(`[data-activity-id="${activityId}"]`);
         if (!activityItem) return;
 
-        const actionDescription = activityItem.getAttribute('data-action-description') || 'Activity';
+        const actionDescription = window.decodeHtmlEntities(activityItem.getAttribute('data-action-description') || 'Activity');
         const performedBy = activityItem.getAttribute('data-performed-by') || 'System';
         const actionAt = activityItem.getAttribute('data-action-at') || '-';
         const actionAtRelative = activityItem.getAttribute('data-action-at-relative') || '-';
@@ -2161,6 +2168,7 @@
           'forwarded': 'Diteruskan',
           'processed': 'Diproses',
           'completed': 'Selesai',
+          'data_edited': 'Data Diubah',
         };
         const actionDisplay = actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
