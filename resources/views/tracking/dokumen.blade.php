@@ -400,6 +400,178 @@
       display: block;
     }
 
+    /* Modern Table Styles */
+    .modern-table-container {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08);
+      border: 1px solid rgba(8, 62, 64, 0.1);
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+
+    .modern-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .modern-table thead {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+    }
+
+    .modern-table thead th {
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: white;
+      border: none;
+    }
+
+    .modern-table thead th:first-child {
+      border-radius: 0;
+    }
+
+    .modern-table thead th:last-child {
+      border-radius: 0;
+    }
+
+    .modern-table tbody tr {
+      transition: all 0.3s ease;
+      border-bottom: 1px solid rgba(8, 62, 64, 0.06);
+    }
+
+    .modern-table tbody tr:hover {
+      background: linear-gradient(90deg, rgba(8, 62, 64, 0.04) 0%, rgba(136, 151, 23, 0.04) 100%);
+      transform: scale(1.002);
+    }
+
+    .modern-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .modern-table tbody td {
+      padding: 1rem 1.25rem;
+      vertical-align: middle;
+      color: #334155;
+    }
+
+    .table-doc-number {
+      font-weight: 700;
+      color: #083E40;
+      font-size: 0.95rem;
+    }
+
+    .table-date {
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    .table-value {
+      font-weight: 700;
+      background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .table-position {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      background: rgba(8, 62, 64, 0.08);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #083E40;
+    }
+
+    .table-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .table-status-badge.status-proses {
+      background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+      color: #000;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .table-status-badge.status-selesai {
+      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .table-progress-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .table-progress-bar {
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .table-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #083E40 0%, #889717 100%);
+      transition: width 0.5s ease;
+    }
+
+    .table-progress-text {
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #083E40;
+      min-width: 35px;
+      text-align: right;
+    }
+
+    .table-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .table-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.35);
+      color: white;
+      text-decoration: none;
+    }
+
+    .table-action-btn i {
+      font-size: 0.75rem;
+    }
+
     /* Modern Filter Panel Styles */
     .modern-filter-container {
       background: white;
@@ -964,8 +1136,8 @@
           </div>
         </div>
       @else
-        <div class="table-responsive" style="margin-top: 1rem;">
-          <table class="table table-striped">
+        <div class="modern-table-container">
+          <table class="modern-table">
             <thead>
               <tr>
                 <th>No. Dokumen</th>
@@ -980,19 +1152,41 @@
             <tbody>
               @foreach($documents as $dokumen)
                 <tr>
-                  <td>{{ $dokumen['nomor_agenda'] ?? 'N/A' }}</td>
-                  <td>{{ $dokumen['tanggal_masuk'] ?? '-' }}</td>
-                  <td>Rp {{ number_format($dokumen['nilai_rupiah'] ?? 0, 0, ',', '.') }}</td>
-                  <td>{{ $dokumen['current_handler_display'] ?? 'Belum ada penangan' }}</td>
                   <td>
-                    <span class="badge {{ $dokumen['progress_percentage'] >= 100 ? 'bg-success' : 'bg-warning' }}">
-                      {{ $dokumen['progress_percentage'] >= 100 ? 'Selesai' : 'Proses' }}
+                    <span class="table-doc-number">{{ $dokumen['nomor_agenda'] ?? 'N/A' }}</span>
+                  </td>
+                  <td>
+                    <span class="table-date">{{ $dokumen['tanggal_masuk'] ?? '-' }}</span>
+                  </td>
+                  <td>
+                    <span class="table-value">Rp {{ number_format($dokumen['nilai_rupiah'] ?? 0, 0, ',', '.') }}</span>
+                  </td>
+                  <td>
+                    <span class="table-position">
+                      <i class="fas fa-user"></i>
+                      {{ $dokumen['current_handler_display'] ?? 'Belum ada' }}
                     </span>
                   </td>
-                  <td>{{ $dokumen['progress_percentage'] ?? 0 }}%</td>
                   <td>
-                    <a href="{{ url('/owner/workflow/' . $dokumen['id']) }}" class="btn btn-sm btn-primary">
-                      Lihat
+                    <span class="table-status-badge {{ $dokumen['progress_percentage'] >= 100 ? 'status-selesai' : 'status-proses' }}">
+                      @if($dokumen['progress_percentage'] >= 100)
+                        <i class="fas fa-check-circle"></i> Selesai
+                      @else
+                        <i class="fas fa-clock"></i> Proses
+                      @endif
+                    </span>
+                  </td>
+                  <td>
+                    <div class="table-progress-container">
+                      <div class="table-progress-bar">
+                        <div class="table-progress-fill" style="width: {{ min(100, $dokumen['progress_percentage'] ?? 0) }}%"></div>
+                      </div>
+                      <span class="table-progress-text">{{ $dokumen['progress_percentage'] ?? 0 }}%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <a href="{{ url('/owner/workflow/' . $dokumen['id']) }}" class="table-action-btn">
+                      <i class="fas fa-eye"></i> Lihat
                     </a>
                   </td>
                 </tr>
