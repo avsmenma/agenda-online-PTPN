@@ -51,7 +51,11 @@ class DashboardPerpajakanController extends Controller
             ->count();
 
         // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
-        $perpajakanDocsWithRoleData = Dokumen::where('current_handler', 'perpajakan')
+        // Include both active documents and sent documents for accurate statistics
+        $perpajakanDocsWithRoleData = Dokumen::where(function ($query) {
+            $query->where('current_handler', 'perpajakan')
+                ->orWhere('status', 'sent_to_akutansi');
+        })
             ->excludeCsvImports()
             ->with([
                 'roleData' => function ($q) {
@@ -68,7 +72,19 @@ class DashboardPerpajakanController extends Controller
             $roleData = $doc->roleData->first();
             if ($roleData && $roleData->received_at) {
                 $receivedAt = Carbon::parse($roleData->received_at);
-                $hoursDiff = $receivedAt->diffInHours($now);
+
+                // Check if document is sent - use processed_at as end time (frozen)
+                // For active documents - use now as end time (counting up)
+                $isSent = $doc->status === 'sent_to_akutansi' || $doc->current_handler !== 'perpajakan';
+
+                if ($isSent && $roleData->processed_at) {
+                    // Sent documents: calculate time taken (frozen)
+                    $endTime = Carbon::parse($roleData->processed_at);
+                    $hoursDiff = $receivedAt->diffInHours($endTime);
+                } else {
+                    // Active documents: calculate time since received (counting)
+                    $hoursDiff = $receivedAt->diffInHours($now);
+                }
 
                 if ($hoursDiff < 24) {
                     $dokumenLessThan24h++;

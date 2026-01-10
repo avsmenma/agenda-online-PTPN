@@ -35,27 +35,49 @@ class DashboardBController extends Controller
     {
         // Get statistics for IbuB (only documents with current_handler = ibuB)
         $now = Carbon::now();
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
         // 1. Total dokumen - semua dokumen yang terlihat oleh ibuB (same as dokumens() query)
         $totalDokumen = Dokumen::where(function ($q) {
-            $q->where('current_handler', 'ibuB')
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+            $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
         })
             ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
             ->count();
 
-        // 2. Total dokumen proses - dokumen yang sedang diproses
-        $totalDokumenProses = Dokumen::where('current_handler', 'ibuB')
-            ->whereIn('status', ['sent_to_ibub', 'sedang diproses'])
+        // 2. Total dokumen proses - dokumen yang sedang diproses (belum dikirim)
+        $totalDokumenProses = Dokumen::whereIn('current_handler', ['ibuB', 'verifikasi'])
+            ->where(function ($q) {
+                $q->whereIn('status', ['sent_to_ibub', 'sedang diproses', 'sedang_diproses'])
+                    ->orWhereNotIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'returned_to_bidang']);
+            })
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
             ->count();
 
         // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
         // Get all documents currently handled by ibuB/verifikasi AND sent documents with their roleData
         $ibubDocuments = Dokumen::where(function ($q) {
             $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']);
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
         })
             ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
             ->with([
                 'roleData' => function ($q) {
                     $q->where('role_code', 'ibub');
@@ -74,7 +96,7 @@ class DashboardBController extends Controller
 
                 // Check if document is sent - use processed_at as end time (frozen)
                 // For active documents - use now as end time (counting up)
-                $isSent = in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']);
+                $isSent = in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
 
                 if ($isSent && $roleData->processed_at) {
                     // Sent documents: calculate time taken (frozen)
