@@ -257,8 +257,25 @@ class DashboardAkutansiController extends Controller
         }
 
         // Filter by year
+        // Filter by year with sub-filter type support
         if ($request->has('year') && $request->year) {
-            $query->where('tahun', $request->year);
+            $year = $request->year;
+            $filterType = $request->get('year_filter_type', 'tanggal_spp');
+
+            switch ($filterType) {
+                case 'tanggal_spp':
+                    $query->whereYear('tanggal_spp', $year);
+                    break;
+                case 'tanggal_masuk':
+                    $query->whereYear('tanggal_masuk', $year);
+                    break;
+                case 'nomor_spp':
+                    // Extract year from format like "192/M/SPP/14/03/2024"
+                    $query->where('nomor_spp', 'REGEXP', '/' . $year . '$');
+                    break;
+                default:
+                    $query->whereYear('tanggal_spp', $year);
+            }
         }
 
         // Filter by status
