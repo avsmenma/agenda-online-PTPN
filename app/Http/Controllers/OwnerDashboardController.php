@@ -326,6 +326,7 @@ class OwnerDashboardController extends Controller
                 'progress_color' => $this->getProgressColor($dokumen->status),
                 'is_overdue' => $this->isDocumentOverdue($dokumen),
                 'deadline_info' => $this->getDeadlineInfo($dokumen),
+                'workflow_timeline' => $this->getWorkflowTimeline($dokumen),
             ];
         });
 
@@ -825,6 +826,126 @@ class OwnerDashboardController extends Controller
         ];
 
         return $roleMap[$role] ?? $role;
+    }
+
+    /**
+     * Get workflow timeline with inbox step for transparency
+     * Returns timeline data showing when document was sent, received in inbox, and processed by each role
+     */
+    private function getWorkflowTimeline($dokumen): array
+    {
+        $roleOrder = [
+            'ibuA' => ['label' => 'Bagian', 'icon' => '📋'],
+            'ibub' => ['label' => 'Verifikasi', 'icon' => '✓'],
+            'perpajakan' => ['label' => 'Perpajakan', 'icon' => '💰'],
+            'akutansi' => ['label' => 'Akutansi', 'icon' => '📊'],
+            'pembayaran' => ['label' => 'Pembayaran', 'icon' => '💳'],
+        ];
+
+        $currentHandler = $dokumen->current_handler ?? 'ibuA';
+        $status = $dokumen->status ?? 'draft';
+        $roleKeys = array_keys($roleOrder);
+        $currentIndex = array_search($currentHandler, $roleKeys);
+
+        // Determine if document is in inbox (sent but not yet processed)
+        $isInInbox = false;
+        if ($currentHandler !== 'ibuA') {
+            $roleData = null;
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $roleData = $dokumen->getDataForRole($currentHandler);
+            } elseif (isset($dokumen->roleData)) {
+                $roleData = $dokumen->roleData->where('role_code', $currentHandler)->first();
+            }
+
+            // In inbox if received_at exists but processed_at is null
+            if ($roleData && $roleData->received_at && !$roleData->processed_at) {
+                $isInInbox = true;
+            }
+        }
+
+        $timeline = [];
+        foreach ($roleKeys as $index => $role) {
+            $roleInfo = $roleOrder[$role];
+            $roleData = null;
+
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $roleData = $dokumen->getDataForRole($role);
+            } elseif (isset($dokumen->roleData)) {
+                $roleData = $dokumen->roleData->where('role_code', $role)->first();
+            }
+
+            // Determine step status
+            $stepStatus = 'pending';
+            $inboxStatus = 'pending';
+
+            if ($index < $currentIndex) {
+                $stepStatus = 'completed';
+                $inboxStatus = 'completed';
+            } elseif ($index === $currentIndex) {
+                if ($isInInbox) {
+                    $stepStatus = 'waiting'; // In inbox, waiting to be processed
+                    $inboxStatus = 'active';
+                } else {
+                    $stepStatus = 'active'; // Being processed
+                    $inboxStatus = 'completed';
+                }
+            }
+
+            // Get timestamps
+            $sentAt = null;
+            $receivedAt = null;
+            $processedAt = null;
+            $elapsedInRole = null;
+
+            if ($roleData) {
+                $receivedAt = $roleData->received_at;
+                $processedAt = $roleData->processed_at;
+
+                if ($receivedAt) {
+                    $now = Carbon::now();
+                    $elapsedInRole = Carbon::parse($receivedAt)->diffForHumans($now, true);
+                }
+            }
+
+            // Get sent_at from previous role or dokumen timestamps
+            if ($role === 'ibub' && $dokumen->sent_to_ibub_at) {
+                $sentAt = $dokumen->sent_to_ibub_at;
+            } elseif ($index > 0) {
+                $prevRole = $roleKeys[$index - 1];
+                $prevRoleData = null;
+                if (method_exists($dokumen, 'getDataForRole')) {
+                    $prevRoleData = $dokumen->getDataForRole($prevRole);
+                } elseif (isset($dokumen->roleData)) {
+                    $prevRoleData = $dokumen->roleData->where('role_code', $prevRole)->first();
+                }
+                if ($prevRoleData && $prevRoleData->processed_at) {
+                    $sentAt = $prevRoleData->processed_at;
+                }
+            }
+
+            $timeline[] = [
+                'role' => $role,
+                'label' => $roleInfo['label'],
+                'icon' => $roleInfo['icon'],
+                'status' => $stepStatus,
+                'inbox_status' => $inboxStatus,
+                'is_current' => $index === $currentIndex,
+                'in_inbox' => $index === $currentIndex && $isInInbox,
+                'sent_at' => $sentAt ? Carbon::parse($sentAt)->format('d M Y, H:i') : null,
+                'received_at' => $receivedAt ? Carbon::parse($receivedAt)->format('d M Y, H:i') : null,
+                'processed_at' => $processedAt ? Carbon::parse($processedAt)->format('d M Y, H:i') : null,
+                'elapsed' => $elapsedInRole,
+            ];
+        }
+
+        return [
+            'steps' => $timeline,
+            'current_handler' => $currentHandler,
+            'current_handler_display' => $this->getRoleDisplayName($currentHandler),
+            'is_in_inbox' => $isInInbox,
+            'total_steps' => count($roleKeys),
+            'current_step' => $currentIndex + 1,
+        ];
     }
 
     /**

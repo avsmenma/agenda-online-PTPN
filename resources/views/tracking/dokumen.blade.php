@@ -176,6 +176,28 @@
       box-shadow: 0 0 0 4px rgba(8, 62, 64, 0.1);
     }
 
+    .stepper-step.waiting {
+      background: #ffc107;
+      border-color: #ffc107;
+      color: #000;
+      box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+      animation: pulse-waiting 1.5s infinite;
+    }
+
+    @keyframes pulse-waiting {
+      0%, 100% {
+        box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(255, 193, 7, 0.1);
+      }
+    }
+
+    .stepper-step.waiting .stepper-step-label {
+      color: #856404;
+      font-weight: 600;
+    }
+
     .stepper-step-label {
       position: absolute;
       top: 28px;
@@ -803,23 +825,55 @@
                 <div class="stepper-label">Progres Alur Kerja</div>
                 <div class="stepper-steps">
                   @php
-                    $progress = $dokumen['progress_percentage'] ?? 0;
-                    $currentStep = min(5, max(1, ceil($progress / 20)));
+                    $timeline = $dokumen['workflow_timeline'] ?? null;
+                    $steps = $timeline['steps'] ?? [];
                   @endphp
-                  @for($i = 1; $i <= 5; $i++)
-                    <div class="stepper-step {{ $i <= $currentStep ? ($i == $currentStep ? 'active' : 'completed') : '' }}">
-                      {{ $i }}
-                      <div class="stepper-step-label">
-                        @if($i == 1) ibutara
-                        @elseif($i == 2) teamverifikasi
-                        @elseif($i == 3) team perpajakan
-                        @elseif($i == 4) team akutansi
-                        @else pembayaran
+                  @if($timeline && count($steps) > 0)
+                    @foreach($steps as $step)
+                      <div class="stepper-step {{ $step['status'] }}"
+                        title="{{ $step['label'] }}{{ $step['in_inbox'] ? ' (Di Inbox)' : '' }}{{ $step['received_at'] ? ' - Diterima: ' . $step['received_at'] : '' }}">
+                        @if($step['status'] === 'completed')
+                          ✓
+                        @elseif($step['in_inbox'])
+                          📥
+                        @elseif($step['status'] === 'active')
+                          {{ $loop->iteration }}
+                        @else
+                          {{ $loop->iteration }}
                         @endif
+                        <div class="stepper-step-label">
+                          {{ $step['label'] }}
+                        </div>
                       </div>
-                    </div>
-                  @endfor
+                    @endforeach
+                  @else
+                    {{-- Fallback to old logic --}}
+                    @php
+                      $progress = $dokumen['progress_percentage'] ?? 0;
+                      $currentStep = min(5, max(1, ceil($progress / 20)));
+                    @endphp
+                    @for($i = 1; $i <= 5; $i++)
+                      <div class="stepper-step {{ $i <= $currentStep ? ($i == $currentStep ? 'active' : 'completed') : '' }}">
+                        {{ $i }}
+                        <div class="stepper-step-label">
+                          @if($i == 1) Bagian
+                          @elseif($i == 2) Verifikasi
+                          @elseif($i == 3) Perpajakan
+                          @elseif($i == 4) Akutansi
+                          @else Pembayaran
+                          @endif
+                        </div>
+                      </div>
+                    @endfor
+                  @endif
                 </div>
+
+                @if($timeline && $timeline['is_in_inbox'])
+                  <div class="inbox-indicator"
+                    style="margin-top: 0.75rem; padding: 0.5rem; background: #fff3cd; border-radius: 8px; font-size: 0.75rem; text-align: center; color: #856404;">
+                    📥 Di Inbox {{ $timeline['current_handler_display'] }} - Menunggu diproses
+                  </div>
+                @endif
               </div>
 
             </div>
@@ -1018,11 +1072,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-          <span>${label}: ${getFilterDisplayValue(key, value)}</span>
-          <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
+            <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
           badgesContainer.appendChild(badge);
         }
       }
