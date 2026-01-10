@@ -5,8 +5,8 @@
 @push('styles')
     <style>
         /* ============================================
-       MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
-       ============================================ */
+           MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
+           ============================================ */
 
         :root {
             --primary-color: #083E40;
@@ -36,8 +36,8 @@
         }
 
         /* ============================================
-       HEADER SECTION - Clean & Professional
-       ============================================ */
+           HEADER SECTION - Clean & Professional
+           ============================================ */
         .inbox-header {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             border-radius: 16px;
@@ -159,8 +159,8 @@
         }
 
         /* ============================================
-       STATS CARDS - Clean & Organized
-       ============================================ */
+           STATS CARDS - Clean & Organized
+           ============================================ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -261,8 +261,8 @@
         }
 
         /* ============================================
-       DOCUMENT SECTION - Clean Card Design
-       ============================================ */
+           DOCUMENT SECTION - Clean Card Design
+           ============================================ */
         .documents-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -312,8 +312,8 @@
         }
 
         /* ============================================
-       SEARCH & FILTER - Clean Input Design
-       ============================================ */
+           SEARCH & FILTER - Clean Input Design
+           ============================================ */
         .search-filter-section {
             padding: 1.5rem 2rem;
             background: var(--bg-light);
@@ -382,8 +382,8 @@
         }
 
         /* ============================================
-       DOCUMENT CARDS - Clean Card Layout
-       ============================================ */
+           DOCUMENT CARDS - Clean Card Layout
+           ============================================ */
         .documents-list {
             padding: 1.5rem 2rem;
         }
@@ -573,8 +573,8 @@
         }
 
         /* ============================================
-       EMPTY STATE - Clean & Encouraging
-       ============================================ */
+           EMPTY STATE - Clean & Encouraging
+           ============================================ */
         .empty-state {
             padding: 3.5rem 2rem;
             text-align: center;
@@ -642,8 +642,8 @@
         }
 
         /* ============================================
-       PAGINATION - Clean Design
-       ============================================ */
+           PAGINATION - Clean Design
+           ============================================ */
         .pagination-wrapper {
             padding: 1.5rem 2rem;
             border-top: 1px solid var(--border-color);
@@ -679,8 +679,8 @@
         }
 
         /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
+           RESPONSIVE DESIGN
+           ============================================ */
         @media (max-width: 768px) {
             .inbox-container {
                 padding: 1rem;
@@ -741,8 +741,8 @@
         }
 
         /* ============================================
-       UTILITY CLASSES
-       ============================================ */
+           UTILITY CLASSES
+           ============================================ */
         .text-truncate-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -751,8 +751,8 @@
         }
 
         /* ============================================
-       NOTIFICATION BADGE
-       ============================================ */
+           NOTIFICATION BADGE
+           ============================================ */
         .new-documents-badge {
             background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
             color: white;
@@ -820,7 +820,7 @@
 
         /* History Card - Clickable Style */
         .stat-card.history {
-            --accent-color: #805ad5;
+            --accent-color: #083E40;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -833,18 +833,18 @@
             right: 0;
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, transparent 50%, rgba(128, 90, 213, 0.1) 50%);
+            background: linear-gradient(135deg, transparent 50%, rgba(8, 62, 64, 0.1) 50%);
             border-radius: 0 12px 0 0;
         }
 
         .stat-card.history .stat-icon-wrapper {
-            background: linear-gradient(135deg, #805ad5 0%, #b794f4 100%);
+            background: linear-gradient(135deg, #083E40 0%, #0a5a5c 100%);
         }
 
         .stat-card.history:hover {
             transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(128, 90, 213, 0.25);
-            border-color: #805ad5;
+            box-shadow: 0 8px 25px rgba(8, 62, 64, 0.25);
+            border-color: #083E40;
         }
 
         .stat-card.history:hover::before {
@@ -857,7 +857,7 @@
 
         .stat-hint {
             font-size: 0.6875rem;
-            color: #805ad5;
+            color: #083E40;
             margin-top: 0.5rem;
             display: flex;
             align-items: center;
@@ -876,8 +876,15 @@
         }
 
         @keyframes pointBounce {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(3px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(3px);
+            }
         }
 
         /* History Modal Styles */
@@ -902,8 +909,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .history-modal {
@@ -922,6 +934,7 @@
                 opacity: 0;
                 transform: translateY(20px) scale(0.98);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -930,7 +943,7 @@
 
         .history-modal-header {
             padding: 1.5rem 1.75rem;
-            background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+            background: linear-gradient(135deg, #083E40 0%, #0a5a5c 100%);
             color: white;
             display: flex;
             align-items: center;
@@ -995,13 +1008,13 @@
         }
 
         .filter-btn:hover {
-            border-color: #805ad5;
-            color: #805ad5;
+            border-color: #083E40;
+            color: #083E40;
         }
 
         .filter-btn.active {
-            background: #805ad5;
-            border-color: #805ad5;
+            background: #083E40;
+            border-color: #083E40;
             color: white;
         }
 
@@ -1028,8 +1041,8 @@
 
         .custom-date-wrapper input[type="date"]:focus {
             outline: none;
-            border-color: #805ad5;
-            box-shadow: 0 0 0 3px rgba(128, 90, 213, 0.1);
+            border-color: #083E40;
+            box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.1);
         }
 
         .history-modal-body {
@@ -1049,7 +1062,7 @@
         }
 
         .history-date-label .count-badge {
-            background: #805ad5;
+            background: #083E40;
             color: white;
             padding: 0.25rem 0.625rem;
             border-radius: 20px;
@@ -1073,8 +1086,8 @@
         }
 
         .history-doc-item:hover {
-            border-color: #805ad5;
-            box-shadow: 0 2px 8px rgba(128, 90, 213, 0.1);
+            border-color: #083E40;
+            box-shadow: 0 2px 8px rgba(8, 62, 64, 0.1);
             transform: translateX(4px);
         }
 
@@ -1088,7 +1101,7 @@
         .history-doc-agenda {
             font-size: 0.9375rem;
             font-weight: 700;
-            color: #805ad5;
+            color: #083E40;
         }
 
         .history-doc-status {
@@ -1144,8 +1157,8 @@
 
         .history-doc-value {
             font-size: 0.8125rem;
-            font-weight: 600;
-            color: var(--accent-green);
+            font-weight: 700;
+            color: #1a202c;
         }
 
         .history-empty-state {
@@ -1178,8 +1191,13 @@
         }
 
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 @endpush
@@ -1521,12 +1539,12 @@
                             noResultsMsg = document.createElement('div');
                             noResultsMsg.className = 'empty-state';
                             noResultsMsg.innerHTML = `
-                            <div class="empty-state-icon">
-                                <i class="fas fa-search" style="color: var(--text-muted);"></i>
-                            </div>
-                            <h3 class="empty-state-title">Tidak Ada Hasil</h3>
-                            <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
-                        `;
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                                </div>
+                                <h3 class="empty-state-title">Tidak Ada Hasil</h3>
+                                <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
+                            `;
                             documentsList.appendChild(noResultsMsg);
                         }
                     } else if (noResultsMsg) {
@@ -1634,11 +1652,11 @@
                     const documentsHeader = document.querySelector('.documents-header .col-md-4');
                     if (documentsHeader) {
                         const badgeHtml = `
-                        <span class="new-documents-badge" id="newDocumentsBadge">
-                            <i class="fas fa-bell"></i>
-                            <span id="newDocumentsCount">${newCount}</span> Baru
-                        </span>
-                    `;
+                            <span class="new-documents-badge" id="newDocumentsBadge">
+                                <i class="fas fa-bell"></i>
+                                <span id="newDocumentsCount">${newCount}</span> Baru
+                            </span>
+                        `;
                         documentsHeader.querySelector('.d-flex').insertAdjacentHTML('afterbegin', badgeHtml);
                     }
                 } else {
@@ -1719,17 +1737,17 @@
             };
 
             toast.innerHTML = `
-            <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-            <div class="notification-content">
-                <div class="notification-icon">
-                    ${icons[type] || icons.success}
+                <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        ${icons[type] || icons.success}
+                    </div>
+                    <div class="notification-body">
+                        <div class="notification-title">${title}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
                 </div>
-                <div class="notification-body">
-                    <div class="notification-title">${title}</div>
-                    <div class="notification-message">${message}</div>
-                </div>
-            </div>
-        `;
+            `;
 
             container.appendChild(toast);
 
@@ -1775,18 +1793,18 @@
             };
 
             toast.innerHTML = `
-            <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-            <div class="notification-content">
-                <div class="notification-icon">
-                    ${icons[type] || icons.info}
+                <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        ${icons[type] || icons.info}
+                    </div>
+                    <div class="notification-body">
+                        <div class="notification-title">${title}</div>
+                        <div class="notification-message">${message}</div>
+                        ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
+                    </div>
                 </div>
-                <div class="notification-body">
-                    <div class="notification-title">${title}</div>
-                    <div class="notification-message">${message}</div>
-                    ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
-                </div>
-            </div>
-        `;
+            `;
 
             container.appendChild(toast);
 
@@ -1986,10 +2004,14 @@
             </div>
             <div class="history-modal-filters">
                 <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="today" onclick="loadHistoryByFilter('today', this)">Hari Ini</button>
-                    <button class="filter-btn" data-filter="yesterday" onclick="loadHistoryByFilter('yesterday', this)">Kemarin</button>
-                    <button class="filter-btn" data-filter="3days" onclick="loadHistoryByFilter('3days', this)">3 Hari Lalu</button>
-                    <button class="filter-btn" data-filter="7days" onclick="loadHistoryByFilter('7days', this)">7 Hari Lalu</button>
+                    <button class="filter-btn active" data-filter="today" onclick="loadHistoryByFilter('today', this)">Hari
+                        Ini</button>
+                    <button class="filter-btn" data-filter="yesterday"
+                        onclick="loadHistoryByFilter('yesterday', this)">Kemarin</button>
+                    <button class="filter-btn" data-filter="3days" onclick="loadHistoryByFilter('3days', this)">3 Hari
+                        Lalu</button>
+                    <button class="filter-btn" data-filter="7days" onclick="loadHistoryByFilter('7days', this)">7 Hari
+                        Lalu</button>
                 </div>
                 <div class="custom-date-wrapper">
                     <label for="historyCustomDate">Atau pilih tanggal:</label>
@@ -2011,12 +2033,12 @@
             const overlay = document.getElementById('historyModalOverlay');
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
-            
+
             // Reset filters
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.filter-btn[data-filter="today"]').classList.add('active');
             document.getElementById('historyCustomDate').value = '';
-            
+
             // Load today's data
             loadHistoryByFilter('today');
         }
@@ -2040,27 +2062,27 @@
                 button.classList.add('active');
             }
             document.getElementById('historyCustomDate').value = '';
-            
+
             loadHistoryData(filter);
         }
 
         function loadHistoryByCustomDate(date) {
             if (!date) return;
-            
+
             // Remove active from filter buttons
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            
+
             loadHistoryData(date);
         }
 
         function loadHistoryData(dateFilter) {
             const body = document.getElementById('historyModalBody');
             body.innerHTML = `
-                <div class="history-loading">
-                    <i class="fas fa-spinner"></i>
-                    <p>Memuat data...</p>
-                </div>
-            `;
+                    <div class="history-loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Memuat data...</p>
+                    </div>
+                `;
 
             fetch(`{{ route('inbox.history') }}?date=${encodeURIComponent(dateFilter)}`, {
                 method: 'GET',
@@ -2070,28 +2092,28 @@
                 },
                 credentials: 'same-origin'
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    renderHistoryDocuments(data);
-                } else {
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderHistoryDocuments(data);
+                    } else {
+                        body.innerHTML = `
+                            <div class="history-empty-state">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>${data.message || 'Gagal memuat data'}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading history:', error);
                     body.innerHTML = `
                         <div class="history-empty-state">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <p>${data.message || 'Gagal memuat data'}</p>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Terjadi kesalahan saat memuat data</p>
                         </div>
                     `;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading history:', error);
-                body.innerHTML = `
-                    <div class="history-empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Terjadi kesalahan saat memuat data</p>
-                    </div>
-                `;
-            });
+                });
         }
 
         function renderHistoryDocuments(data) {
@@ -2099,45 +2121,45 @@
 
             if (data.documents_count === 0) {
                 body.innerHTML = `
-                    <div class="history-date-label">
-                        ${data.date_label}
-                        <span class="count-badge">0 dokumen</span>
-                    </div>
-                    <div class="history-empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>Tidak ada dokumen yang masuk pada periode ini</p>
-                    </div>
-                `;
+                        <div class="history-date-label">
+                            ${data.date_label}
+                            <span class="count-badge">0 dokumen</span>
+                        </div>
+                        <div class="history-empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>Tidak ada dokumen yang masuk pada periode ini</p>
+                        </div>
+                    `;
                 return;
             }
 
             let html = `
-                <div class="history-date-label">
-                    ${data.date_label}
-                    <span class="count-badge">${data.documents_count} dokumen</span>
-                </div>
-                <div class="history-doc-list">
-            `;
+                    <div class="history-date-label">
+                        ${data.date_label}
+                        <span class="count-badge">${data.documents_count} dokumen</span>
+                    </div>
+                    <div class="history-doc-list">
+                `;
 
             data.documents.forEach(doc => {
                 const statusClass = doc.status || 'pending';
                 html += `
-                    <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
-                        <div class="history-doc-header">
-                            <span class="history-doc-agenda">${doc.nomor_agenda}</span>
-                            <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
+                        <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
+                            <div class="history-doc-header">
+                                <span class="history-doc-agenda">${doc.nomor_agenda}</span>
+                                <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
+                            </div>
+                            <div class="history-doc-spp">${doc.nomor_spp}</div>
+                            <div class="history-doc-uraian">${doc.uraian_spp}</div>
+                            <div class="history-doc-footer">
+                                <span class="history-doc-time">
+                                    <i class="fas fa-clock"></i>
+                                    Masuk: ${doc.received_at}
+                                </span>
+                                <span class="history-doc-value">${doc.nilai_rupiah}</span>
+                            </div>
                         </div>
-                        <div class="history-doc-spp">${doc.nomor_spp}</div>
-                        <div class="history-doc-uraian">${doc.uraian_spp}</div>
-                        <div class="history-doc-footer">
-                            <span class="history-doc-time">
-                                <i class="fas fa-clock"></i>
-                                Masuk: ${doc.received_at}
-                            </span>
-                            <span class="history-doc-value">${doc.nilai_rupiah}</span>
-                        </div>
-                    </div>
-                `;
+                    `;
             });
 
             html += '</div>';
@@ -2145,7 +2167,7 @@
         }
 
         // Close modal on Escape key
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeHistoryModal();
             }
