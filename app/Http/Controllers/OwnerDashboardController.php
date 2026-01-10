@@ -836,7 +836,7 @@ class OwnerDashboardController extends Controller
     {
         $roleOrder = [
             'ibuA' => ['label' => 'Bagian', 'icon' => '📋'],
-            'ibub' => ['label' => 'Team Verifikasi', 'icon' => '✓'],
+            'ibub' => ['label' => 'Verif', 'icon' => '✓'],
             'perpajakan' => ['label' => 'Perpajakan', 'icon' => '💰'],
             'akutansi' => ['label' => 'Akutansi', 'icon' => '📊'],
             'pembayaran' => ['label' => 'Pembayaran', 'icon' => '💳'],

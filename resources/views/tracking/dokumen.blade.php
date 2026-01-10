@@ -228,17 +228,15 @@
       background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
       border-color: #083E40;
       color: white;
-      box-shadow: 0 0 0 5px rgba(8, 62, 64, 0.15), 0 4px 12px rgba(8, 62, 64, 0.35);
-      transform: scale(1.1);
+      box-shadow: 0 0 0 4px rgba(8, 62, 64, 0.2), 0 4px 12px rgba(8, 62, 64, 0.35);
     }
 
     .stepper-step.waiting {
       background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
       border-color: #ffc107;
       color: #000;
-      box-shadow: 0 0 0 5px rgba(255, 193, 7, 0.25), 0 4px 12px rgba(255, 193, 7, 0.35);
+      box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.3), 0 4px 12px rgba(255, 193, 7, 0.35);
       animation: pulse-waiting 2s ease-in-out infinite;
-      transform: scale(1.1);
     }
 
     @keyframes pulse-waiting {
