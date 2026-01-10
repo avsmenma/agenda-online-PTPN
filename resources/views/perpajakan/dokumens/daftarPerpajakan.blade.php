@@ -2269,6 +2269,25 @@
               // Document is rejected if it was rejected by perpajakan, or by akutansi and returned to department
               $isRejected = $isRejectedByPerpajakan || $isReturnedFromAkutansi || $isRejectedByAkutansi;
 
+              // FIX: Track if document was already sent from perpajakan
+              // This ensures status remains "Sudah terkirim ke Team X" from perpajakan's perspective
+              // regardless of what happens downstream (akutansi pending approval, etc.)
+              $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+              $sentFromPerpajakan = $perpajakanRoleData && $perpajakanRoleData->processed_at && !$isRejected;
+              $sentToTeamFromPerpajakan = null;
+              
+              if ($sentFromPerpajakan) {
+                // Check which team received the document from perpajakan
+                $akutansiRoleData = $dokumen->getDataForRole('akutansi');
+                $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+                
+                if ($akutansiRoleData && $akutansiRoleData->received_at) {
+                  $sentToTeamFromPerpajakan = 'Team Akutansi';
+                } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+                  $sentToTeamFromPerpajakan = 'Team Pembayaran';
+                }
+              }
+
               $canSend = $dokumen->status != 'sent_to_akutansi'
                 && $dokumen->status != 'sent_to_pembayaran'
                 && $dokumen->status != 'pending_approval_akutansi'
@@ -2516,6 +2535,10 @@
                   <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
                 @elseif($dokumen->status == 'sent_to_pembayaran')
                   <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
+                @elseif($sentToTeamFromPerpajakan)
+                  {{-- FIX: This check ensures status remains "Sudah terkirim ke Team X" from perpajakan's perspective --}}
+                  {{-- regardless of what happens downstream (akutansi pending approval, pembayaran processing, etc.) --}}
+                  <span class="badge-status badge-sent">Sudah terkirim ke {{ $sentToTeamFromPerpajakan }}</span>
                 @elseif($isPendingApprovalAkutansi || $isPendingApprovalPembayaran || $dokumen->status == 'menunggu_di_approve' || $isPending)
                   <span class="badge-status badge-warning">⏳ {{ $dokumen->getDetailedApprovalText() }}</span>
                 @elseif($isLocked)

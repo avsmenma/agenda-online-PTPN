@@ -3382,6 +3382,29 @@
               $isApprovedByPerpajakan = $perpajakanStatus && $perpajakanStatus->status === 'approved';
               $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
               $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
+
+              // FIX: Track if document was already sent from verifikasi
+              // This ensures status remains "Terkirim ke Team X" from verifikasi's perspective
+              // regardless of what happens downstream (perpajakan sends to akutansi, etc.)
+              $sentFromVerifikasi = $roleData && $roleData->processed_at;
+              $sentToTeamLabel = null;
+              
+              if ($sentFromVerifikasi && !$isRejected) {
+                // Determine which team the document was originally sent to by verifikasi
+                // Check which role first received the document (has received_at)
+                $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+                $akutansiRoleData = $dokumen->getDataForRole('akutansi');
+                $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+                
+                // Priority: perpajakan first, then akutansi, then pembayaran
+                if ($perpajakanRoleData && $perpajakanRoleData->received_at) {
+                  $sentToTeamLabel = 'Team Perpajakan';
+                } elseif ($akutansiRoleData && $akutansiRoleData->received_at) {
+                  $sentToTeamLabel = 'Team Akutansi';
+                } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+                  $sentToTeamLabel = 'Team Pembayaran';
+                }
+              }
             @endphp
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})" style="cursor: pointer;">
@@ -3588,6 +3611,10 @@
                     {{ $dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai' }}</span>
                 @elseif($dokumen->status == 'rejected_ibub')
                   <span class="badge-status badge-dikembalikan">Rejected</span>
+                @elseif($sentToTeamLabel)
+                  {{-- FIX: This check ensures status remains "Terkirim ke Team X" from verifikasi's perspective --}}
+                  {{-- regardless of what happens downstream (perpajakan sends to akutansi, approval pending, etc.) --}}
+                  <span class="badge-status badge-sent">📤 Terkirim ke {{ $sentToTeamLabel }}</span>
                 @elseif($dokumen->status == 'sent_to_perpajakan')
                   <span class="badge-status badge-sent">📤 Terkirim ke Team Perpajakan</span>
                 @elseif($dokumen->status == 'sent_to_akutansi')
