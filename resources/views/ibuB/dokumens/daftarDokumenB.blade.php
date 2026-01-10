@@ -3159,14 +3159,26 @@
             <a href="#" class="year-dropdown-item {{ !request('year') ? 'active' : '' }}" data-year="">
               Semua Tahun
             </a>
-            <a href="#" class="year-dropdown-item {{ request('year') == '2025' ? 'active' : '' }}" data-year="2025">
-              2025
-            </a>
             <a href="#" class="year-dropdown-item {{ request('year') == '2024' ? 'active' : '' }}" data-year="2024">
               2024
             </a>
-            <a href="#" class="year-dropdown-item {{ request('year') == '2023' ? 'active' : '' }}" data-year="2023">
-              2023
+            <a href="#" class="year-dropdown-item {{ request('year') == '2025' ? 'active' : '' }}" data-year="2025">
+              2025
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('year') == '2026' ? 'active' : '' }}" data-year="2026">
+              2026
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('year') == '2027' ? 'active' : '' }}" data-year="2027">
+              2027
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('year') == '2028' ? 'active' : '' }}" data-year="2028">
+              2028
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('year') == '2029' ? 'active' : '' }}" data-year="2029">
+              2029
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('year') == '2030' ? 'active' : '' }}" data-year="2030">
+              2030
             </a>
           </div>
           <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">

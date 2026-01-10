@@ -50,8 +50,8 @@ class DashboardBController extends Controller
             ->count();
 
         // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
-        // Get all documents currently handled by ibuB with their roleData
-        $ibubDocuments = Dokumen::where('current_handler', 'ibuB')
+        // Get all documents currently handled by ibuB/verifikasi with their roleData
+        $ibubDocuments = Dokumen::whereIn('current_handler', ['ibuB', 'verifikasi'])
             ->where('status', '!=', 'returned_to_bidang')
             ->with([
                 'roleData' => function ($q) {

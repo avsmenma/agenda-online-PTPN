@@ -2011,9 +2011,13 @@
     <div class="filter-section">
       <select name="year" class="form-select" onchange="this.form.submit()">
         <option value="">Semua Tahun</option>
-        <option value="2025" {{ request('year') == '2025' ? 'selected' : '' }}>2025</option>
         <option value="2024" {{ request('year') == '2024' ? 'selected' : '' }}>2024</option>
-        <option value="2023" {{ request('year') == '2023' ? 'selected' : '' }}>2023</option>
+        <option value="2025" {{ request('year') == '2025' ? 'selected' : '' }}>2025</option>
+        <option value="2026" {{ request('year') == '2026' ? 'selected' : '' }}>2026</option>
+        <option value="2027" {{ request('year') == '2027' ? 'selected' : '' }}>2027</option>
+        <option value="2028" {{ request('year') == '2028' ? 'selected' : '' }}>2028</option>
+        <option value="2029" {{ request('year') == '2029' ? 'selected' : '' }}>2029</option>
+        <option value="2030" {{ request('year') == '2030' ? 'selected' : '' }}>2030</option>
       </select>
     </div>
     <div class="filter-section">
