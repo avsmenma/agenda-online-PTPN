@@ -307,31 +307,28 @@ class DashboardBController extends Controller
                     });
                     break;
                 case 'sedang_proses':
-                    // Dokumen yang sedang diproses oleh Ibu Yuni - hanya status spesifik
-                    $query->where('current_handler', 'ibuB')
-                        ->where(function ($q) {
-                            // Status yang termasuk "sedang diproses"
-                            $q->where('status', 'sedang diproses')
-                                ->orWhere('status', 'sedang_diproses')
-                                ->orWhere('status', 'waiting_reviewer_approval');
-                        })
-                        // Exclude dokumen yang sudah terkirim atau ditolak
-                        ->whereNotIn('status', [
-                            'sent_to_perpajakan',
-                            'sent_to_akutansi',
-                            'sent_to_pembayaran',
-                            'returned_to_department',
-                            'selesai',
-                            'completed',
-                            'approved_ibub'
-                        ])
-                        // Exclude dokumen yang ditolak
-                        ->where(function ($inboxQ) {
-                            $inboxQ->whereDoesntHave('roleStatuses', function ($q) {
-                                // Exclude rejected by ibuB
-                                $q->where('role_code', 'ibub')->where('status', 'rejected');
+                    // Dokumen yang sedang diproses oleh Team Verifikasi (ibuB atau verifikasi)
+                    $query->where(function ($q) {
+                        $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                            // Exclude dokumen yang sudah terkirim ke role lain
+                            ->whereNotIn('status', [
+                                'sent_to_perpajakan',
+                                'sent_to_akutansi',
+                                'sent_to_pembayaran',
+                                'returned_to_department',
+                                'returned_to_bidang',
+                                'selesai',
+                                'completed'
+                            ])
+                            // Exclude dokumen yang pending approval
+                            ->whereDoesntHave('roleStatuses', function ($rq) {
+                                $rq->where('status', DokumenStatus::STATUS_PENDING);
+                            })
+                            // Exclude dokumen yang ditolak
+                            ->whereDoesntHave('roleStatuses', function ($rq) {
+                                $rq->where('role_code', 'ibub')->where('status', 'rejected');
                             });
-                        });
+                    });
                     break;
                 case 'terkirim_perpajakan':
                     // Dokumen yang terkirim ke perpajakan - hanya status ini saja

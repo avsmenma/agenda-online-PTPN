@@ -283,19 +283,23 @@ class DashboardAkutansiController extends Controller
             switch ($request->status) {
                 case 'sedang_proses':
                     // Dokumen yang sedang diproses oleh akutansi
-                    // Sesuai dengan logika di view yang menampilkan "Sedang Diproses" untuk dokumen yang:
-                    // - current_handler = 'akutansi'
-                    // - Bukan sent_to_pembayaran
-                    // - Bukan pending approval (pending_approval_*, menunggu_di_approve)
-                    // - Bukan rejected atau pending di roleStatuses
-                    $query->where(function ($q) {
-                        $q->where('current_handler', 'akutansi')
-                            ->whereNotIn('status', ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve'])
-                            ->whereDoesntHave('roleStatuses', function ($statusQ) {
-                                $statusQ->where('role_code', 'akutansi')
-                                    ->whereIn('status', ['pending', 'rejected']);
-                            });
-                    });
+                    $query->where('current_handler', 'akutansi')
+                        ->whereNotIn('status', [
+                            'sent_to_pembayaran',
+                            'pending_approval_pembayaran',
+                            'completed',
+                            'selesai'
+                        ])
+                        // Exclude dokumen yang pending approval dari akutansi
+                        ->whereDoesntHave('roleStatuses', function ($statusQ) {
+                            $statusQ->where('role_code', 'akutansi')
+                                ->where('status', DokumenStatus::STATUS_PENDING);
+                        })
+                        // Exclude dokumen yang ditolak oleh akutansi
+                        ->whereDoesntHave('roleStatuses', function ($statusQ) {
+                            $statusQ->where('role_code', 'akutansi')
+                                ->where('status', DokumenStatus::STATUS_REJECTED);
+                        });
                     break;
                 case 'terkirim_pembayaran':
                     // Dokumen yang sudah terkirim ke team pembayaran

@@ -227,20 +227,25 @@ class DashboardPerpajakanController extends Controller
             switch ($request->status) {
                 case 'sedang_proses':
                     // Dokumen yang sedang diproses oleh perpajakan
-                    // Sesuai dengan logika di view yang menampilkan "Sedang Diproses" untuk dokumen yang:
-                    // - current_handler = 'perpajakan'
-                    // - Bukan sent_to_akutansi, sent_to_pembayaran
-                    // - Bukan pending approval (pending_approval_*, menunggu_di_approve)
-                    // - Bukan rejected atau pending di roleStatuses
-                    // Note: Dokumen yang locked akan ditampilkan sebagai "Terkunci" di view, bukan "Sedang Diproses"
-                    $query->where(function ($q) {
-                        $q->where('current_handler', 'perpajakan')
-                            ->whereNotIn('status', ['sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve'])
-                            ->whereDoesntHave('roleStatuses', function ($statusQ) {
-                                $statusQ->where('role_code', 'perpajakan')
-                                    ->whereIn('status', ['pending', 'rejected']);
-                            });
-                    });
+                    $query->where('current_handler', 'perpajakan')
+                        ->whereNotIn('status', [
+                            'sent_to_akutansi',
+                            'sent_to_pembayaran',
+                            'pending_approval_akutansi',
+                            'pending_approval_pembayaran',
+                            'completed',
+                            'selesai'
+                        ])
+                        // Exclude dokumen yang pending approval dari perpajakan
+                        ->whereDoesntHave('roleStatuses', function ($statusQ) {
+                            $statusQ->where('role_code', 'perpajakan')
+                                ->where('status', DokumenStatus::STATUS_PENDING);
+                        })
+                        // Exclude dokumen yang ditolak oleh perpajakan
+                        ->whereDoesntHave('roleStatuses', function ($statusQ) {
+                            $statusQ->where('role_code', 'perpajakan')
+                                ->where('status', DokumenStatus::STATUS_REJECTED);
+                        });
                     break;
                 case 'terkirim_akutansi':
                     // Dokumen yang sudah terkirim ke team akutansi
