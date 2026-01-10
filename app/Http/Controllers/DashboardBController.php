@@ -2494,19 +2494,45 @@ class DashboardBController extends Controller
      */
     public function rekapan(Request $request)
     {
-        // Get selected year and bagian from request
+        // Get selected year, bagian, and filter type from request
         $selectedYear = $request->get('year', date('Y'));
         $selectedBagian = $request->get('bagian', '');
         $selectedMonth = $request->get('month', null);
+        $yearFilterType = $request->get('year_filter_type', 'tanggal_spp'); // Default to tanggal_spp
 
         // Validate year
         if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
             $selectedYear = date('Y');
         }
 
-        // Base query for documents created by Ibu Tarapul (Ibu Yuni can see all documents from Ibu Tarapul)
-        $baseQuery = Dokumen::where('created_by', 'ibuA')
-            ->whereYear('tanggal_masuk', $selectedYear);
+        // Validate filter type
+        $validFilterTypes = ['tanggal_spp', 'tanggal_masuk', 'nomor_spp'];
+        if (!in_array($yearFilterType, $validFilterTypes)) {
+            $yearFilterType = 'tanggal_spp';
+        }
+
+        // Base query for documents created by Ibu Tarapul
+        $baseQuery = Dokumen::where('created_by', 'ibuA');
+
+        // Apply year filter based on filter type
+        switch ($yearFilterType) {
+            case 'tanggal_spp':
+                $baseQuery->whereYear('tanggal_spp', $selectedYear);
+                $dateColumn = 'tanggal_spp';
+                break;
+            case 'tanggal_masuk':
+                $baseQuery->whereYear('tanggal_masuk', $selectedYear);
+                $dateColumn = 'tanggal_masuk';
+                break;
+            case 'nomor_spp':
+                // Extract year from nomor_spp format like: 192/M/SPP/14/03/2024
+                $baseQuery->where('nomor_spp', 'LIKE', '%/' . $selectedYear);
+                $dateColumn = 'tanggal_spp'; // Fallback for monthly stats
+                break;
+            default:
+                $baseQuery->whereYear('tanggal_spp', $selectedYear);
+                $dateColumn = 'tanggal_spp';
+        }
 
         // Filter by bagian if selected
         if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
@@ -2537,7 +2563,7 @@ class DashboardBController extends Controller
         ];
 
         for ($month = 1; $month <= 12; $month++) {
-            $monthQuery = (clone $baseQuery)->whereMonth('tanggal_masuk', $month);
+            $monthQuery = (clone $baseQuery)->whereMonth($dateColumn, $month);
             $monthStats = [
                 'name' => $monthNames[$month],
                 'count' => $monthQuery->count(),
@@ -2549,32 +2575,56 @@ class DashboardBController extends Controller
         // Get documents for table (filter by month if selected)
         $tableQuery = (clone $baseQuery);
         if ($selectedMonth && $selectedMonth >= 1 && $selectedMonth <= 12) {
-            $tableQuery->whereMonth('tanggal_masuk', $selectedMonth);
+            $tableQuery->whereMonth($dateColumn, $selectedMonth);
         }
 
         // Pagination
         $perPage = $request->get('per_page', 10);
-        $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
+        $tableDokumens = $tableQuery->latest($dateColumn)->paginate($perPage)->appends($request->query());
 
-        // Get available years
-        $availableYears = Dokumen::where('created_by', 'ibuA')
-            ->whereNotNull('tanggal_masuk')
-            ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
-            ->orderBy('year', 'desc')
-            ->pluck('year')
-            ->filter()
-            ->toArray();
+        // Get available years (based on filter type)
+        if ($yearFilterType === 'nomor_spp') {
+            // Extract years from nomor_spp patterns
+            $availableYears = Dokumen::where('created_by', 'ibuA')
+                ->whereNotNull('nomor_spp')
+                ->pluck('nomor_spp')
+                ->map(function ($spp) {
+                    if (preg_match('/\/(\d{4})$/', $spp, $matches)) {
+                        return (int) $matches[1];
+                    }
+                    return null;
+                })
+                ->filter()
+                ->unique()
+                ->sortDesc()
+                ->values()
+                ->toArray();
+        } else {
+            $availableYears = Dokumen::where('created_by', 'ibuA')
+                ->whereNotNull($dateColumn)
+                ->selectRaw("DISTINCT YEAR($dateColumn) as year")
+                ->orderBy('year', 'desc')
+                ->pluck('year')
+                ->filter()
+                ->toArray();
+        }
 
         if (empty($availableYears)) {
             $availableYears = [(int) date('Y')];
         }
 
-        // Get document count per bagian for the selected year
+        // Get document count per bagian for the selected year (using same filter logic)
         $bagianCounts = [];
         foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
             $countQuery = Dokumen::where('created_by', 'ibuA')
-                ->whereYear('tanggal_masuk', $selectedYear)
                 ->where('bagian', $bagianCode);
+
+            if ($yearFilterType === 'nomor_spp') {
+                $countQuery->where('nomor_spp', 'LIKE', '%/' . $selectedYear);
+            } else {
+                $countQuery->whereYear($dateColumn, $selectedYear);
+            }
+
             $bagianCounts[$bagianCode] = $countQuery->count();
         }
 
@@ -2586,6 +2636,7 @@ class DashboardBController extends Controller
             'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
             'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
+            'yearFilterType' => $yearFilterType,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
