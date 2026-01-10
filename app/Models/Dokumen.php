@@ -165,6 +165,26 @@ class Dokumen extends Model
     }
 
     /**
+     * Get Indonesian display name for role code
+     * Used for activity logs and user-facing messages
+     */
+    public static function getRoleDisplayNameIndo(string $roleCode): string
+    {
+        $roleMap = [
+            'ibua' => 'Bagian',
+            'ibuA' => 'Bagian',
+            'ibub' => 'Team Verifikasi',
+            'ibuB' => 'Team Verifikasi',
+            'verifikasi' => 'Team Verifikasi',
+            'perpajakan' => 'Team Perpajakan',
+            'akutansi' => 'Team Akutansi',
+            'pembayaran' => 'Team Pembayaran',
+        ];
+
+        return $roleMap[strtolower($roleCode)] ?? $roleCode;
+    }
+
+    /**
      * Scope to exclude CSV imported documents
      * CSV imported documents are exclusive to Pembayaran module
      * 
@@ -348,7 +368,7 @@ class Dokumen extends Model
             'dokumen_id' => $this->id,
             'stage' => $targetRoleCode,
             'action' => 'sent_to_inbox',
-            'action_description' => "Dokumen dikirim ke inbox {$targetRoleCode}",
+            'action_description' => "Dokumen dikirim ke inbox " . self::getRoleDisplayNameIndo($targetRoleCode),
             'performed_by' => $senderRoleCode,
             'action_at' => now(),
             'details' => [
@@ -461,7 +481,7 @@ class Dokumen extends Model
             'dokumen_id' => $this->id,
             'stage' => $roleCode,
             'action' => 'approved',
-            'action_description' => "Dokumen disetujui oleh {$approvedBy}",
+            'action_description' => "Dokumen disetujui oleh " . self::getRoleDisplayNameIndo($normalizedRoleCode),
             'performed_by' => $approvedBy,
             'action_at' => now(),
         ]);

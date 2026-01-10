@@ -1294,7 +1294,7 @@
           <div class="info-card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
             <i class="fas fa-history"></i>
           </div>
-          <div class="info-card-title">Activity Logs</div>
+          <div class="info-card-title">Riwayat Aktivitas</div>
         </div>
         <div class="activity-log-container custom-scrollbar">
           @forelse($dokumen->activityLogs->sortByDesc('action_at')->take(15) as $log)
@@ -1317,7 +1317,7 @@
               // Format action_at
               $actionAt = $log->action_at ?? $log->created_at;
               $actionAtFormatted = $actionAt->format('d M Y, H:i');
-              $actionAtRelative = $actionAt->diffForHumans();
+              $actionAtRelative = $actionAt->locale('id')->diffForHumans();
             @endphp
             <div class="activity-log-item" onclick="showActivityDetail({{ $log->id }})" data-activity-id="{{ $log->id }}"
               data-action-description="{{ htmlspecialchars($log->action_description ?? 'Activity', ENT_QUOTES, 'UTF-8') }}"
