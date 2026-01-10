@@ -5,8 +5,8 @@
 @push('styles')
     <style>
         /* ============================================
-           MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
-           ============================================ */
+               MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
+               ============================================ */
 
         :root {
             --primary-color: #083E40;
@@ -36,8 +36,8 @@
         }
 
         /* ============================================
-           HEADER SECTION - Clean & Professional
-           ============================================ */
+               HEADER SECTION - Clean & Professional
+               ============================================ */
         .inbox-header {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             border-radius: 16px;
@@ -159,8 +159,8 @@
         }
 
         /* ============================================
-           STATS CARDS - Clean & Organized
-           ============================================ */
+               STATS CARDS - Clean & Organized
+               ============================================ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -261,8 +261,8 @@
         }
 
         /* ============================================
-           DOCUMENT SECTION - Clean Card Design
-           ============================================ */
+               DOCUMENT SECTION - Clean Card Design
+               ============================================ */
         .documents-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -312,8 +312,8 @@
         }
 
         /* ============================================
-           SEARCH & FILTER - Clean Input Design
-           ============================================ */
+               SEARCH & FILTER - Clean Input Design
+               ============================================ */
         .search-filter-section {
             padding: 1.5rem 2rem;
             background: var(--bg-light);
@@ -382,8 +382,8 @@
         }
 
         /* ============================================
-           DOCUMENT CARDS - Clean Card Layout
-           ============================================ */
+               DOCUMENT CARDS - Clean Card Layout
+               ============================================ */
         .documents-list {
             padding: 1.5rem 2rem;
         }
@@ -573,8 +573,8 @@
         }
 
         /* ============================================
-           EMPTY STATE - Clean & Encouraging
-           ============================================ */
+               EMPTY STATE - Clean & Encouraging
+               ============================================ */
         .empty-state {
             padding: 3.5rem 2rem;
             text-align: center;
@@ -642,8 +642,8 @@
         }
 
         /* ============================================
-           PAGINATION - Clean Design
-           ============================================ */
+               PAGINATION - Clean Design
+               ============================================ */
         .pagination-wrapper {
             padding: 1.5rem 2rem;
             border-top: 1px solid var(--border-color);
@@ -679,8 +679,8 @@
         }
 
         /* ============================================
-           RESPONSIVE DESIGN
-           ============================================ */
+               RESPONSIVE DESIGN
+               ============================================ */
         @media (max-width: 768px) {
             .inbox-container {
                 padding: 1rem;
@@ -741,8 +741,8 @@
         }
 
         /* ============================================
-           UTILITY CLASSES
-           ============================================ */
+               UTILITY CLASSES
+               ============================================ */
         .text-truncate-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -751,8 +751,8 @@
         }
 
         /* ============================================
-           NOTIFICATION BADGE
-           ============================================ */
+               NOTIFICATION BADGE
+               ============================================ */
         .new-documents-badge {
             background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
             color: white;
@@ -1022,184 +1022,210 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-        }
-
-        .custom-date-wrapper label {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .custom-date-wrapper input[type="date"] {
-            padding: 0.5rem 0.75rem;
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.8125rem;
-            color: var(--text-primary);
-            cursor: pointer;
-        }
-
-        .custom-date-wrapper input[type="date"]:focus {
-            outline: none;
-            border-color: #083E40;
-            box-shadow: 0 0 0 3px rgba(8, 62, 64, 0.1);
-        }
-
-        .history-modal-body {
-            padding: 1.25rem 1.75rem;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .history-date-label {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .history-date-label .count-badge {
-            background: #083E40;
-            color: white;
-            padding: 0.25rem 0.625rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .history-doc-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .history-doc-item {
-            background: #f8f9fa;
-            border: 1.5px solid var(--border-color);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .history-doc-item:hover {
-            border-color: #083E40;
-            box-shadow: 0 2px 8px rgba(8, 62, 64, 0.1);
-            transform: translateX(4px);
-        }
-
-        .history-doc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5rem;
-        }
-
-        .history-doc-agenda {
-            font-size: 0.9375rem;
-            font-weight: 700;
-            color: #083E40;
-        }
-
-        .history-doc-status {
-            padding: 0.25rem 0.625rem;
-            border-radius: 20px;
-            font-size: 0.6875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .history-doc-status.pending {
-            background: #fed7aa;
-            color: #c05621;
-        }
-
-        .history-doc-status.approved {
-            background: #c6f6d5;
-            color: #276749;
-        }
-
-        .history-doc-status.rejected {
-            background: #fed7d7;
-            color: #c53030;
-        }
-
-        .history-doc-spp {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.375rem;
-        }
-
-        .history-doc-uraian {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .history-doc-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 0.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .history-doc-time {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .history-doc-value {
-            font-size: 0.8125rem;
-            font-weight: 700;
-            color: #1a202c;
-        }
-
-        .history-empty-state {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: var(--text-muted);
-        }
-
-        .history-empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .history-empty-state p {
-            font-size: 0.9375rem;
-            margin: 0;
-        }
-
-        .history-loading {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: var(--text-muted);
-        }
-
-        .history-loading i {
-            font-size: 2rem;
-            animation: spin 1s linear infinite;
-            margin-bottom: 0.75rem;
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
+        flex-wrap: wrap;
             }
 
-            to {
-                transform: rotate(360deg);
+            .custom-date-wrapper label {
+                font-size: 0.8125rem;
+                color: var(--text-secondary);
+                font-weight: 500;
             }
-        }
-    </style>
+
+            .custom-date-wrapper input[type="date"] {
+                padding: 0.625rem 1rem;
+                padding-left: 2.5rem;
+                border: 2px solid #e2e8f0;
+                border-radius: 10px;
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: var(--text-primary);
+                cursor: pointer;
+                background: white;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23083E40' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: 0.75rem center;
+                background-size: 18px;
+                transition: all 0.2s ease;
+                min-width: 180px;
+            }
+
+            .custom-date-wrapper input[type="date"]:hover {
+                border-color: #083E40;
+                background-color: #f8fafa;
+            }
+
+            .custom-date-wrapper input[type="date"]:focus {
+                outline: none;
+                border-color: #083E40;
+                box-shadow: 0 0 0 4px rgba(8, 62, 64, 0.12);
+                background-color: white;
+            }
+
+            .custom-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+                cursor: pointer;
+                opacity: 0.6;
+                transition: opacity 0.2s ease;
+            }
+
+            .custom-date-wrapper input[type="date"]::-webkit-calendar-picker-indicator:hover {
+                opacity: 1;
+            }
+
+            .history-modal-body {
+                padding: 1.25rem 1.75rem;
+                max-height: 400px;
+                overflow-y: auto;
+            }
+
+            .history-date-label {
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .history-date-label .count-badge {
+                background: #083E40;
+                color: white;
+                padding: 0.25rem 0.625rem;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+            .history-doc-list {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .history-doc-item {
+                background: #f8f9fa;
+                border: 1.5px solid var(--border-color);
+                border-radius: 10px;
+                padding: 1rem 1.25rem;
+                transition: all 0.2s ease;
+                cursor: pointer;
+            }
+
+            .history-doc-item:hover {
+                border-color: #083E40;
+                box-shadow: 0 2px 8px rgba(8, 62, 64, 0.1);
+                transform: translateX(4px);
+            }
+
+            .history-doc-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 0.5rem;
+            }
+
+            .history-doc-agenda {
+                font-size: 0.9375rem;
+                font-weight: 700;
+                color: #083E40;
+            }
+
+            .history-doc-status {
+                padding: 0.25rem 0.625rem;
+                border-radius: 20px;
+                font-size: 0.6875rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .history-doc-status.pending {
+                background: #fed7aa;
+                color: #c05621;
+            }
+
+            .history-doc-status.approved {
+                background: #c6f6d5;
+                color: #276749;
+            }
+
+            .history-doc-status.rejected {
+                background: #fed7d7;
+                color: #c53030;
+            }
+
+            .history-doc-spp {
+                font-size: 0.8125rem;
+                color: var(--text-secondary);
+                margin-bottom: 0.375rem;
+            }
+
+            .history-doc-uraian {
+                font-size: 0.8125rem;
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+            }
+
+            .history-doc-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--border-color);
+            }
+
+            .history-doc-time {
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                gap: 0.375rem;
+            }
+
+            .history-doc-value {
+                font-size: 0.8125rem;
+                font-weight: 700;
+                color: #1a202c;
+            }
+
+            .history-empty-state {
+                text-align: center;
+                padding: 2rem 1rem;
+                color: var(--text-muted);
+            }
+
+            .history-empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                opacity: 0.5;
+            }
+
+            .history-empty-state p {
+                font-size: 0.9375rem;
+                margin: 0;
+            }
+
+            .history-loading {
+                text-align: center;
+                padding: 2rem 1rem;
+                color: var(--text-muted);
+            }
+
+            .history-loading i {
+                font-size: 2rem;
+                animation: spin 1s linear infinite;
+                margin-bottom: 0.75rem;
+            }
+
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
 @endpush
 
 @section('content')
