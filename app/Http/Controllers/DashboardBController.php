@@ -50,8 +50,11 @@ class DashboardBController extends Controller
             ->count();
 
         // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
-        // Get all documents currently handled by ibuB/verifikasi with their roleData
-        $ibubDocuments = Dokumen::whereIn('current_handler', ['ibuB', 'verifikasi'])
+        // Get all documents currently handled by ibuB/verifikasi AND sent documents with their roleData
+        $ibubDocuments = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']);
+        })
             ->where('status', '!=', 'returned_to_bidang')
             ->with([
                 'roleData' => function ($q) {
@@ -68,7 +71,19 @@ class DashboardBController extends Controller
             $roleData = $doc->roleData->first();
             if ($roleData && $roleData->received_at) {
                 $receivedAt = Carbon::parse($roleData->received_at);
-                $hoursDiff = $receivedAt->diffInHours($now);
+
+                // Check if document is sent - use processed_at as end time (frozen)
+                // For active documents - use now as end time (counting up)
+                $isSent = in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']);
+
+                if ($isSent && $roleData->processed_at) {
+                    // Sent documents: calculate time taken (frozen)
+                    $endTime = Carbon::parse($roleData->processed_at);
+                    $hoursDiff = $receivedAt->diffInHours($endTime);
+                } else {
+                    // Active documents: calculate time since received (counting)
+                    $hoursDiff = $receivedAt->diffInHours($now);
+                }
 
                 if ($hoursDiff < 24) {
                     $dokumenLessThan24h++;

@@ -2113,9 +2113,9 @@
     }
 
     .btn-action.locked {
-      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
       cursor: not-allowed;
-      opacity: 0.7;
+      opacity: 0.85;
     }
 
     .btn-action.locked:hover {
@@ -2125,9 +2125,9 @@
 
     .btn-action:disabled,
     .btn-action[disabled] {
-      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
       cursor: not-allowed !important;
-      opacity: 0.6 !important;
+      opacity: 0.85 !important;
       pointer-events: none !important;
     }
 
@@ -3760,8 +3760,20 @@
                   $ageDays = 0;
 
                   if ($receivedAt) {
-                    $now = \Carbon\Carbon::now();
-                    $diff = $receivedAt->diff($now);
+                    // For sent/completed documents, use processed_at as end time
+                    // For active documents, use current time
+                    $processedAt = $roleData?->processed_at;
+                    
+                    if (($isSent || $isCompleted) && $processedAt) {
+                      // Document is sent/completed - calculate time taken (frozen, not counting)
+                      $endTime = \Carbon\Carbon::parse($processedAt);
+                      $diff = $receivedAt->diff($endTime);
+                    } else {
+                      // Document still active - count up from received_at to now
+                      $now = \Carbon\Carbon::now();
+                      $diff = $receivedAt->diff($now);
+                    }
+                    
                     $ageDays = $diff->days;
 
                     // Format elapsed time as "X hari Y jam Z menit"
