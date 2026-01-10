@@ -1318,16 +1318,36 @@
               $actionAt = $log->action_at ?? $log->created_at;
               $actionAtFormatted = $actionAt->format('d M Y, H:i');
               $actionAtRelative = $actionAt->locale('id')->diffForHumans();
+
+              // Transform action_description to replace role codes with display names
+              $actionDesc = $log->action_description ?? 'Aktivitas';
+              $roleReplacements = [
+                'inbox ibub' => 'inbox Team Verifikasi',
+                'inbox ibuB' => 'inbox Team Verifikasi',
+                'inbox IbuB' => 'inbox Team Verifikasi',
+                'inbox ibua' => 'inbox Bagian',
+                'inbox ibuA' => 'inbox Bagian',
+                'inbox IbuA' => 'inbox Bagian',
+                'inbox perpajakan' => 'inbox Team Perpajakan',
+                'inbox akutansi' => 'inbox Team Akutansi',
+                'inbox pembayaran' => 'inbox Team Pembayaran',
+                'oleh ibub' => 'oleh Team Verifikasi',
+                'oleh ibuB' => 'oleh Team Verifikasi',
+                'oleh IbuB' => 'oleh Team Verifikasi',
+                'oleh ibua' => 'oleh Bagian',
+                'oleh ibuA' => 'oleh Bagian',
+              ];
+              $actionDescDisplay = str_replace(array_keys($roleReplacements), array_values($roleReplacements), $actionDesc);
             @endphp
             <div class="activity-log-item" onclick="showActivityDetail({{ $log->id }})" data-activity-id="{{ $log->id }}"
-              data-action-description="{{ htmlspecialchars($log->action_description ?? 'Activity', ENT_QUOTES, 'UTF-8') }}"
+              data-action-description="{{ htmlspecialchars($actionDescDisplay, ENT_QUOTES, 'UTF-8') }}"
               data-performed-by="{{ htmlspecialchars($performedByDisplay, ENT_QUOTES, 'UTF-8') }}"
               data-action-at="{{ htmlspecialchars($actionAtFormatted, ENT_QUOTES, 'UTF-8') }}"
               data-action-at-relative="{{ htmlspecialchars($actionAtRelative, ENT_QUOTES, 'UTF-8') }}"
               data-stage="{{ htmlspecialchars($log->stage ?? '-', ENT_QUOTES, 'UTF-8') }}"
               data-action="{{ htmlspecialchars($log->action ?? '-', ENT_QUOTES, 'UTF-8') }}"
               data-details="{{ htmlspecialchars(json_encode($log->details ?? []), ENT_QUOTES, 'UTF-8') }}">
-              <div class="activity-log-text">{{ $log->action_description ?? 'Activity' }}</div>
+              <div class="activity-log-text">{{ $actionDescDisplay }}</div>
               <div class="activity-log-time">
                 <i class="far fa-clock mr-1"></i>
                 {{ $actionAtRelative }}
@@ -2113,16 +2133,39 @@
 
         // Map stage to display name
         const stageMap = {
-          'sender': 'Ibu Tara',
+          'sender': 'Bagian',
           'reviewer': 'Team Verifikasi',
           'tax': 'Team Perpajakan',
           'accounting': 'Team Akutansi',
-          'payment': 'Pembayaran',
+          'payment': 'Team Pembayaran',
+          'ibua': 'Bagian',
+          'ibuA': 'Bagian',
+          'ibub': 'Team Verifikasi',
+          'ibuB': 'Team Verifikasi',
+          'verifikasi': 'Team Verifikasi',
+          'perpajakan': 'Team Perpajakan',
+          'akutansi': 'Team Akutansi',
+          'pembayaran': 'Team Pembayaran',
         };
         const stageDisplay = stageMap[stage] || stage;
 
+        // Map action to display name
+        const actionMap = {
+          'sent_to_inbox': 'Dikirim ke Inbox',
+          'approved': 'Disetujui',
+          'rejected': 'Ditolak',
+          'created': 'Dibuat',
+          'deleted': 'Dihapus',
+          'updated': 'Diperbarui',
+          'returned': 'Dikembalikan',
+          'forwarded': 'Diteruskan',
+          'processed': 'Diproses',
+          'completed': 'Selesai',
+        };
+        const actionDisplay = actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
         // Build modal content
-        modalTitle.textContent = 'Detail Activity';
+        modalTitle.textContent = 'Detail Aktivitas';
         modalSubtitle.textContent = 'Informasi lengkap aktivitas';
         modalIcon.innerHTML = '<i class="fas fa-history"></i>';
         modalIcon.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
@@ -2144,7 +2187,7 @@
               </div>
 
               <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Stage</div>
+                <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Tahap</div>
                 <div style="font-size: 16px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                   <i class="fas fa-layer-group" style="color: #10b981;"></i>
                   ${window.escapeHtml(stageDisplay)}
@@ -2161,10 +2204,10 @@
               </div>
 
               <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Action Type</div>
+                <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Tipe Aksi</div>
                 <div style="font-size: 16px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                   <i class="fas fa-code" style="color: #8b5cf6;"></i>
-                  ${window.escapeHtml(action)}
+                  ${window.escapeHtml(actionDisplay)}
                 </div>
               </div>
             </div>
