@@ -111,6 +111,149 @@ class InboxController extends Controller
     }
 
     /**
+     * API endpoint for inbox history - Get documents that entered inbox on a specific date
+     */
+    public function history(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $userRole = $this->getUserRole($user);
+
+            // Hanya allow IbuB/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            if (!$userRole || !in_array($userRole, $allowedRoles)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            $roleCodes = $this->getRoleCodes($userRole);
+
+            // Get date filter - default to today
+            $dateFilter = $request->input('date', 'today');
+            $targetDate = null;
+
+            switch ($dateFilter) {
+                case 'today':
+                    $targetDate = today();
+                    break;
+                case 'yesterday':
+                    $targetDate = today()->subDay();
+                    break;
+                case '3days':
+                    $targetDate = today()->subDays(3);
+                    break;
+                case '7days':
+                    $targetDate = today()->subDays(7);
+                    break;
+                default:
+                    // Custom date in format Y-m-d
+                    try {
+                        $targetDate = \Carbon\Carbon::parse($dateFilter)->startOfDay();
+                    } catch (\Exception $e) {
+                        $targetDate = today();
+                    }
+            }
+
+            // Get documents that entered inbox on target date
+            // We look at status_changed_at in dokumen_statuses table
+            $documents = Dokumen::whereHas('roleStatuses', function ($query) use ($roleCodes, $targetDate, $dateFilter) {
+                $query->whereIn('role_code', $roleCodes);
+
+                // For multi-day ranges (3days, 7days), get documents from that date to today
+                if ($dateFilter === '3days' || $dateFilter === '7days') {
+                    $query->whereDate('status_changed_at', '>=', $targetDate)
+                        ->whereDate('status_changed_at', '<=', today());
+                } else {
+                    // Single day filter
+                    $query->whereDate('status_changed_at', $targetDate);
+                }
+            })
+                ->with([
+                    'roleStatuses' => function ($q) use ($roleCodes) {
+                        $q->whereIn('role_code', $roleCodes);
+                    }
+                ])
+                ->latest('created_at')
+                ->take(50) // Limit to 50 documents
+                ->get();
+
+            // Format documents for JSON response
+            $formattedDocs = $documents->map(function ($doc) use ($roleCodes) {
+                $roleStatus = $doc->roleStatuses->first();
+                return [
+                    'id' => $doc->id,
+                    'nomor_agenda' => $doc->nomor_agenda,
+                    'nomor_spp' => $doc->nomor_spp,
+                    'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 80),
+                    'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
+                    'status' => $roleStatus->status ?? 'unknown',
+                    'status_label' => $this->getStatusLabel($roleStatus->status ?? 'unknown'),
+                    'received_at' => $roleStatus && $roleStatus->status_changed_at
+                        ? $roleStatus->status_changed_at->format('d M Y, H:i')
+                        : '-',
+                    'url' => route('inbox.show', $doc->id),
+                ];
+            });
+
+            // Get date label for display
+            $dateLabel = $this->getDateLabel($dateFilter, $targetDate);
+
+            return response()->json([
+                'success' => true,
+                'date_label' => $dateLabel,
+                'documents_count' => $formattedDocs->count(),
+                'documents' => $formattedDocs,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error loading inbox history: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat riwayat inbox'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get human-readable status label
+     */
+    private function getStatusLabel($status)
+    {
+        $labels = [
+            'pending' => 'Menunggu',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+        ];
+        return $labels[$status] ?? ucfirst($status);
+    }
+
+    /**
+     * Get human-readable date label
+     */
+    private function getDateLabel($dateFilter, $targetDate)
+    {
+        switch ($dateFilter) {
+            case 'today':
+                return 'Hari Ini (' . $targetDate->format('d M Y') . ')';
+            case 'yesterday':
+                return 'Kemarin (' . $targetDate->format('d M Y') . ')';
+            case '3days':
+                return '3 Hari Terakhir';
+            case '7days':
+                return '7 Hari Terakhir';
+            default:
+                return $targetDate->format('d M Y');
+        }
+    }
+
+    /**
      * Menampilkan detail dokumen di inbox
      */
     public function show(Dokumen $dokumen)

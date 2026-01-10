@@ -556,6 +556,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:IbuB,ibub,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
+    Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
     Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show');
     Route::post('/inbox/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])->name('inbox.approve');
     Route::post('/inbox/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])->name('inbox.reject');
