@@ -1197,10 +1197,8 @@ class DokumenController extends Controller
             // - status ke 'waiting_reviewer_approval' untuk IbuB
             // - current_stage ke 'reviewer'
             // - last_action_status ke 'sent_to_ibub'
+            // - calls sendToRoleInbox() internally which creates status record and activity log
             $dokumen->sendToInbox('IbuB');
-
-            // Also create record in new dokumen_statuses table
-            $dokumen->sendToRoleInbox('ibub', 'ibuA');
 
             $dokumen->refresh();
             DB::commit();
