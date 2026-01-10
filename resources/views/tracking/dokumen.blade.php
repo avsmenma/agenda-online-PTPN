@@ -919,7 +919,7 @@
                         {{ $i }}
                         <div class="stepper-step-label">
                           @if($i == 1) Bagian
-                          @elseif($i == 2) Verifikasi
+                          @elseif($i == 2) Verif
                           @elseif($i == 3) Perpajakan
                           @elseif($i == 4) Akutansi
                           @else Pembayaran
@@ -1134,11 +1134,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                <span>${label}: ${getFilterDisplayValue(key, value)}</span>
-                <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                  <i class="fas fa-times"></i>
-                </button>
-              `;
+                  <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+                  <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                    <i class="fas fa-times"></i>
+                  </button>
+                `;
           badgesContainer.appendChild(badge);
         }
       }

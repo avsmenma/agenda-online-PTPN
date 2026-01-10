@@ -819,7 +819,7 @@ class OwnerDashboardController extends Controller
     {
         $roleMap = [
             'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Ibu Yuni',
+            'ibuB' => 'Team Verifikasi',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi',
             'pembayaran' => 'Pembayaran',
@@ -836,16 +836,23 @@ class OwnerDashboardController extends Controller
     {
         $roleOrder = [
             'ibuA' => ['label' => 'Bagian', 'icon' => '📋'],
-            'ibub' => ['label' => 'Verifikasi', 'icon' => '✓'],
+            'ibub' => ['label' => 'Team Verifikasi', 'icon' => '✓'],
             'perpajakan' => ['label' => 'Perpajakan', 'icon' => '💰'],
             'akutansi' => ['label' => 'Akutansi', 'icon' => '📊'],
             'pembayaran' => ['label' => 'Pembayaran', 'icon' => '💳'],
         ];
 
         $currentHandler = $dokumen->current_handler ?? 'ibuA';
+
+        // Normalize handler to match roleOrder keys
+        $normalizedHandler = strtolower($currentHandler);
+        if ($normalizedHandler === 'verifikasi' || $normalizedHandler === 'ibub') {
+            $normalizedHandler = 'ibub';
+        }
+
         $status = $dokumen->status ?? 'draft';
         $roleKeys = array_keys($roleOrder);
-        $currentIndex = array_search($currentHandler, $roleKeys);
+        $currentIndex = array_search($normalizedHandler, $roleKeys);
 
         // Determine if document is in inbox (sent but not yet approved/processed by current role)
         $isInInbox = false;
@@ -976,7 +983,7 @@ class OwnerDashboardController extends Controller
         if ($dokumen->department_returned_at)
             return 'Ibu Tarapul (Department)';
         if ($dokumen->bidang_returned_at)
-            return 'Ibu Yuni';
+            return 'Team Verifikasi';
         return 'Tidak Diketahui';
     }
 
@@ -989,9 +996,9 @@ class OwnerDashboardController extends Controller
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
-            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-            'proses_ibub' => 'Diproses Ibu Yuni',
+            'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
+            'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
+            'proses_ibub' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'proses_perpajakan' => 'Diproses Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
@@ -1267,7 +1274,7 @@ class OwnerDashboardController extends Controller
 
         $stages[] = [
             'id' => 'reviewer',
-            'name' => 'Ibu Yuni',
+            'name' => 'Team Verifikasi',
             'label' => 'teamverifikasi',
             'status' => $reviewerStatus,
             'timestamp' => $reviewerTimestamp,
