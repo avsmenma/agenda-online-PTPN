@@ -4022,8 +4022,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentValue = `${parts[2]}/${parts[1]}/${parts[0]}`;
       }
       
-      // Change type to text
+      // Change type to text and add placeholder
       input.type = 'text';
+      input.placeholder = 'Pilih tanggal (dd/mm/yyyy)';
       if (currentValue) {
         input.value = currentValue;
       }
@@ -4059,8 +4060,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentValue = `${parts[2]}/${parts[1]}/${parts[0]} ${time}`;
       }
       
-      // Change type to text
+      // Change type to text and add placeholder
       input.type = 'text';
+      input.placeholder = 'Pilih tanggal & waktu (dd/mm/yyyy hh:mm)';
       if (currentValue) {
         input.value = currentValue;
       }
