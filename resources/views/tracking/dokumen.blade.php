@@ -27,7 +27,7 @@
       color: #f1f5f9;
     }
 
-    /* Card View Styles */
+    /* Card View Styles - Modern Glassmorphism Design */
     .card-view-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -42,21 +42,43 @@
     }
 
     .smart-document-card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e2e8f0;
-      transition: all 0.2s ease;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 1.75rem;
+      box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(8, 62, 64, 0.1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       position: relative;
       overflow: hidden;
       user-select: text;
     }
 
+    .smart-document-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #083E40, #0a5f52, #889717);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
     .smart-document-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(8, 62, 64, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
+      border-color: rgba(8, 62, 64, 0.2);
+    }
+
+    .smart-document-card:hover::before {
+      opacity: 1;
+    }
+
+    .smart-document-card.overdue {
+      border-left: 4px solid #dc3545;
     }
 
     .smart-card-header {
@@ -67,65 +89,94 @@
     }
 
     .smart-card-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #083E40;
-      margin-bottom: 0.25rem;
+      font-size: 1.35rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.5px;
     }
 
     .smart-card-subtitle {
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       color: #64748b;
+      font-weight: 500;
     }
 
     .smart-card-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #083E40;
-      margin-bottom: 1rem;
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.5px;
     }
 
     .smart-card-info-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      font-size: 0.875rem;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+      font-size: 0.9rem;
       color: #475569;
+      padding: 0.5rem 0.75rem;
+      background: rgba(8, 62, 64, 0.03);
+      border-radius: 10px;
+      transition: background 0.2s ease;
+    }
+
+    .smart-card-info-row:hover {
+      background: rgba(8, 62, 64, 0.06);
     }
 
     .smart-card-info-row i {
       color: #083E40;
-      width: 16px;
+      width: 18px;
+      font-size: 0.95rem;
     }
 
     .user-avatar {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: #083E40;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(8, 62, 64, 0.3);
     }
 
-    /* Workflow Stepper */
+    /* Workflow Stepper - Modern Timeline Design */
     .workflow-stepper {
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #e2e8f0;
+      margin-top: 1.75rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(8, 62, 64, 0.03) 0%, rgba(136, 151, 23, 0.03) 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(8, 62, 64, 0.08);
     }
 
     .stepper-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #64748b;
-      margin-bottom: 0.75rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #083E40;
+      margin-bottom: 1rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stepper-label::before {
+      content: '⚡';
+      font-size: 0.9rem;
     }
 
     .stepper-steps {
@@ -133,86 +184,97 @@
       justify-content: space-between;
       align-items: center;
       position: relative;
+      padding: 0 0.25rem;
     }
 
     .stepper-steps::before {
       content: '';
       position: absolute;
-      top: 12px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: #e2e8f0;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      height: 3px;
+      background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%);
+      border-radius: 2px;
       z-index: 0;
     }
 
     .stepper-step {
       position: relative;
       z-index: 1;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: white;
-      border: 2px solid #e2e8f0;
+      border: 3px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.85rem;
+      font-weight: 700;
       color: #94a3b8;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
     .stepper-step.completed {
-      background: #083E40;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
       border-color: #083E40;
       color: white;
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.35);
     }
 
     .stepper-step.active {
-      background: #083E40;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
       border-color: #083E40;
       color: white;
-      box-shadow: 0 0 0 4px rgba(8, 62, 64, 0.1);
+      box-shadow: 0 0 0 5px rgba(8, 62, 64, 0.15), 0 4px 12px rgba(8, 62, 64, 0.35);
+      transform: scale(1.1);
     }
 
     .stepper-step.waiting {
-      background: #ffc107;
+      background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
       border-color: #ffc107;
       color: #000;
-      box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
-      animation: pulse-waiting 1.5s infinite;
+      box-shadow: 0 0 0 5px rgba(255, 193, 7, 0.25), 0 4px 12px rgba(255, 193, 7, 0.35);
+      animation: pulse-waiting 2s ease-in-out infinite;
+      transform: scale(1.1);
     }
 
     @keyframes pulse-waiting {
-      0%, 100% {
-        box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 5px rgba(255, 193, 7, 0.25), 0 4px 12px rgba(255, 193, 7, 0.35);
       }
+
       50% {
-        box-shadow: 0 0 0 8px rgba(255, 193, 7, 0.1);
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0.1), 0 4px 16px rgba(255, 193, 7, 0.4);
       }
     }
 
     .stepper-step.waiting .stepper-step-label {
       color: #856404;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .stepper-step-label {
       position: absolute;
-      top: 28px;
+      top: 38px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 0.625rem;
+      font-size: 0.65rem;
       color: #64748b;
       white-space: nowrap;
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .stepper-step.completed .stepper-step-label,
     .stepper-step.active .stepper-step-label {
       color: #083E40;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     /* Control Bar */
@@ -1072,11 +1134,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-            <span>${label}: ${getFilterDisplayValue(key, value)}</span>
-            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
+                <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+                <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                  <i class="fas fa-times"></i>
+                </button>
+              `;
           badgesContainer.appendChild(badge);
         }
       }

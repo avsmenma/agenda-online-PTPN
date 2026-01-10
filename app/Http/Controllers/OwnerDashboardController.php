@@ -143,7 +143,7 @@ class OwnerDashboardController extends Controller
      */
     private function getDocumentsWithTracking(Request $request = null, $perPage = 10)
     {
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData']);
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses']);
 
         // Apply status filter if provided
         if ($request && $request->has('status') && !empty($request->status)) {
@@ -847,20 +847,38 @@ class OwnerDashboardController extends Controller
         $roleKeys = array_keys($roleOrder);
         $currentIndex = array_search($currentHandler, $roleKeys);
 
-        // Determine if document is in inbox (sent but not yet processed)
+        // Determine if document is in inbox (sent but not yet approved/processed by current role)
         $isInInbox = false;
         if ($currentHandler !== 'ibuA') {
-            $roleData = null;
-            if (method_exists($dokumen, 'getDataForRole')) {
-                $roleData = $dokumen->getDataForRole($currentHandler);
-            } elseif (isset($dokumen->roleData)) {
-                $roleData = $dokumen->roleData->where('role_code', $currentHandler)->first();
+            // Check roleStatuses to see if current role has approved the document
+            $hasApproved = false;
+            if (method_exists($dokumen, 'roleStatuses') && $dokumen->roleStatuses) {
+                $roleStatus = $dokumen->roleStatuses->where('role_code', $currentHandler)->first();
+                if (!$roleStatus) {
+                    // Try with lowercase ibub for verifikasi
+                    $roleStatus = $dokumen->roleStatuses->where('role_code', 'ibub')->first();
+                }
+                if ($roleStatus && $roleStatus->status === \App\Models\DokumenStatus::STATUS_APPROVED) {
+                    $hasApproved = true;
+                }
             }
 
-            // In inbox if received_at exists but processed_at is null
-            if ($roleData && $roleData->received_at && !$roleData->processed_at) {
-                $isInInbox = true;
-            }
+            // Document is in inbox if current role hasn't approved it yet
+            // But we also need to check if document is actually in inbox (sent_to status)
+            $isInboxStatus = in_array($status, [
+                'sent_to_ibub',
+                'menunggu_verifikasi',
+                'pending_approval_ibub',
+                'sent_to_perpajakan',
+                'pending_approval_perpajakan',
+                'sent_to_akutansi',
+                'pending_approval_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_pembayaran',
+            ]);
+
+            // If role has already approved, document is NOT in inbox (it's in daftar dokumen)
+            $isInInbox = !$hasApproved && $isInboxStatus;
         }
 
         $timeline = [];
