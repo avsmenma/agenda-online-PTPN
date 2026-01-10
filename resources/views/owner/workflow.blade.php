@@ -32,6 +32,21 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Order: Header first, then Info Grid, then Timeline */
+    .workflow-header {
+      order: 1;
+    }
+
+    .info-grid {
+      order: 2;
+    }
+
+    .workflow-timeline {
+      order: 3;
     }
 
     /* Header Section */
