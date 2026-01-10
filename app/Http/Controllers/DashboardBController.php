@@ -2511,8 +2511,21 @@ class DashboardBController extends Controller
             $yearFilterType = 'tanggal_spp';
         }
 
-        // Base query for documents created by Ibu Tarapul
-        $baseQuery = Dokumen::where('created_by', 'ibuA');
+        // Check if imported_from_csv column exists
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
+
+        // Base query for documents handled by Team Verifikasi (matching daftar dokumen logic)
+        $baseQuery = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            });
 
         // Apply year filter based on filter type
         switch ($yearFilterType) {
@@ -2584,8 +2597,18 @@ class DashboardBController extends Controller
 
         // Get available years (based on filter type)
         if ($yearFilterType === 'nomor_spp') {
-            // Extract years from nomor_spp patterns
-            $availableYears = Dokumen::where('created_by', 'ibuA')
+            // Extract years from nomor_spp patterns for documents handled by Team Verifikasi
+            $availableYears = Dokumen::where(function ($q) {
+                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
                 ->whereNotNull('nomor_spp')
                 ->pluck('nomor_spp')
                 ->map(function ($spp) {
@@ -2600,7 +2623,17 @@ class DashboardBController extends Controller
                 ->values()
                 ->toArray();
         } else {
-            $availableYears = Dokumen::where('created_by', 'ibuA')
+            $availableYears = Dokumen::where(function ($q) {
+                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
                 ->whereNotNull($dateColumn)
                 ->selectRaw("DISTINCT YEAR($dateColumn) as year")
                 ->orderBy('year', 'desc')
@@ -2616,7 +2649,17 @@ class DashboardBController extends Controller
         // Get document count per bagian for the selected year (using same filter logic)
         $bagianCounts = [];
         foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
-            $countQuery = Dokumen::where('created_by', 'ibuA')
+            $countQuery = Dokumen::where(function ($q) {
+                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
                 ->where('bagian', $bagianCode);
 
             if ($yearFilterType === 'nomor_spp') {
