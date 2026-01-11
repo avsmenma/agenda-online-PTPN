@@ -931,17 +931,21 @@
               </td>
               <td>
                 @php
-                  $statusLabel = $dokumen->status_perpajakan ?? ($dokumen->status ?? '');
-                  if ($statusLabel == 'sedang_diproses') {
+                  // Use status_perpajakan for perpajakan-specific status
+                  $statusPerpajakan = $dokumen->status_perpajakan ?? '';
+
+                  if ($statusPerpajakan == 'sedang_diproses' || !empty($dokumen->deadline_at)) {
+                    // Has deadline or is being processed
                     $statusDisplay = 'Sedang Diproses';
-                  } elseif ($statusLabel == 'selesai') {
+                  } elseif ($statusPerpajakan == 'selesai') {
                     $statusDisplay = 'Selesai';
                   } elseif ($dokumen->status == 'sent_to_akutansi') {
                     $statusDisplay = 'Terkirim ke Akutansi';
-                  } elseif ($dokumen->status == 'sent_to_perpajakan' && is_null($dokumen->deadline_at)) {
+                  } elseif ($dokumen->status == 'sent_to_perpajakan' && is_null($dokumen->deadline_at) && empty($statusPerpajakan)) {
+                    // Only show Terkunci if no deadline AND no status_perpajakan set
                     $statusDisplay = 'Terkunci';
                   } else {
-                    $statusDisplay = ucfirst(str_replace('_', ' ', $statusLabel));
+                    $statusDisplay = !empty($statusPerpajakan) ? ucfirst(str_replace('_', ' ', $statusPerpajakan)) : ucfirst(str_replace('_', ' ', $dokumen->status ?? ''));
                   }
                 @endphp
                 @if($statusDisplay == 'Terkunci')
