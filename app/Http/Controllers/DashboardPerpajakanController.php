@@ -2271,12 +2271,36 @@ class DashboardPerpajakanController extends Controller
         $search = $request->get('search');
 
         // Base query - only documents that reached Perpajakan
+        // Use same logic as exportView to ensure consistency
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
-                ->orWhere('status', 'sent_to_perpajakan')
-                ->orWhere('status', 'sedang diproses')
-                ->orWhere('status', 'selesai')
-                ->orWhere('status', 'sent_to_akutansi');
+                ->orWhere(function ($subQ) {
+                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
+                    $subQ->where('status', 'sent_to_perpajakan')
+                        ->where('current_handler', '!=', 'ibuB')
+                        ->whereHas('roleData', function ($roleQ) {
+                        $roleQ->where('role_code', 'perpajakan')
+                            ->whereNotNull('received_at');
+                    });
+                })
+                ->orWhere(function ($subQ) {
+                    // Documents being processed by perpajakan
+                    $subQ->where('status', 'sedang diproses')
+                        ->where('current_handler', 'perpajakan');
+                })
+                ->orWhere(function ($subQ) {
+                    // Documents that have been processed by perpajakan and moved forward - check dokumen_role_data
+                    $subQ->whereIn('status', ['selesai', 'sent_to_akutansi'])
+                        ->whereHas('roleData', function ($roleQ) {
+                        $roleQ->where('role_code', 'perpajakan')
+                            ->whereNotNull('processed_at');
+                    });
+                })
+                ->orWhere(function ($subQ) {
+                    // Documents returned from perpajakan (for tracking) - check status and target_department
+                    $subQ->where('status', 'returned_to_department')
+                        ->where('target_department', 'perpajakan');
+                });
         });
 
         if ($year) {
