@@ -4490,6 +4490,7 @@ function openViewDocumentModal(docId) {
         
         // Informasi Akutansi
         document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+        document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? new Date(dok.tanggal_miro).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
       }
     })
     .catch(error => {
@@ -4802,12 +4803,7 @@ function formatStatusPerpajakan(status) {
                 <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="detail-item">
-                <label class="detail-label">Nomor Miro</label>
-                <div class="detail-value" id="view-nomor-miro">-</div>
-              </div>
-            </div>
+
             <div class="col-md-6">
               <div class="detail-item">
                 <label class="detail-label">No. Berita Acara</label>
@@ -5080,6 +5076,12 @@ function formatStatusPerpajakan(status) {
               <div class="detail-item">
                 <label class="detail-label">Nomor MIRO</label>
                 <div class="detail-value" id="view-nomor-miro" style="font-weight: 700; color: #083E40;">-</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <label class="detail-label">Tanggal MIRO</label>
+                <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
               </div>
             </div>
           </div>

@@ -37,6 +37,7 @@ class Dokumen extends Model
         'tanggal_berakhir_spk',
         'nomor_mirror',
         'nomor_miro',
+        'tanggal_miro',
         'status',
         'keterangan',
         'alasan_pengembalian',
@@ -127,6 +128,8 @@ class Dokumen extends Model
         'dpp_penggantian' => 'decimal:2',
         'ppn_penggantian' => 'decimal:2',
         'selisih_ppn' => 'decimal:2',
+        // Akutansi casts
+        'tanggal_miro' => 'date',
         // Pembayaran casts
         'tanggal_dibayar' => 'date',
         // CSV Import casts
