@@ -879,7 +879,7 @@
         </thead>
         <tbody id="dokumenTableBody">
           @forelse($dokumens as $index => $dokumen)
-            <tr onclick="handleItemClick(event, '{{ route('documents.verifikasi.detail', $dokumen->id) }}')">
+            <tr onclick="openViewDocumentModal({{ $dokumen->id }})" style="cursor: pointer;">
               <td style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
               <td class="select-text"><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
               <td>
@@ -954,6 +954,9 @@
     <!-- Pagination -->
     @include('partials.pagination-enhanced', ['paginator' => $dokumens])
   </div>
+
+  <!-- Document Detail Modal -->
+  @include('partials.document-detail-modal', ['detailRoute' => 'documents.verifikasi.detail', 'editRoute' => 'documents.verifikasi.edit'])
 
   <!-- Year Filter Modal -->
   <div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">

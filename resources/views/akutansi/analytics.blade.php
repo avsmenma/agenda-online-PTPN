@@ -889,7 +889,7 @@
         </thead>
         <tbody id="dokumenTableBody">
           @forelse($dokumens as $index => $dokumen)
-            <tr>
+            <tr onclick="openViewDocumentModal({{ $dokumen->id }})" style="cursor: pointer;">
               <td style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
               <td class="select-text"><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
               <td>
@@ -975,78 +975,78 @@
     @include('partials.pagination-enhanced', ['paginator' => $dokumens])
   </div>
 
+  <!-- Document Detail Modal -->
+  @include('partials.document-detail-modal', ['detailRoute' => 'documents.akutansi.detail', 'editRoute' => 'documents.akutansi.edit'])
+
   <!-- Year Filter Modal -->
-<div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
-  <div class="year-filter-modal" onclick="event.stopPropagation()">
-    <div class="year-filter-modal-header">
-      <h5>
-        <i class="fa-solid fa-calendar-alt"></i>
-        Filter Tahun
-      </h5>
-      <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
-        <i class="fa-solid fa-times"></i>
-      </button>
-    </div>
-    <div class="year-filter-modal-body">
-      <!-- Filter Type Selection -->
-      <div class="filter-type-section">
-        <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
-        <div class="filter-type-options">
-          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
-               onclick="selectFilterType('tanggal_spp', this)">
-            <input type="radio" name="modal_filter_type" value="tanggal_spp" 
-                   {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
-            <label>
-              <strong>Tanggal SPP</strong>
-              <small class="d-block">Tahun dari kolom Tanggal SPP</small>
-            </label>
+  <div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
+    <div class="year-filter-modal" onclick="event.stopPropagation()">
+      <div class="year-filter-modal-header">
+        <h5>
+          <i class="fa-solid fa-calendar-alt"></i>
+          Filter Tahun
+        </h5>
+        <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      <div class="year-filter-modal-body">
+        <!-- Filter Type Selection -->
+        <div class="filter-type-section">
+          <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
+          <div class="filter-type-options">
+            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}"
+              onclick="selectFilterType('tanggal_spp', this)">
+              <input type="radio" name="modal_filter_type" value="tanggal_spp" {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
+              <label>
+                <strong>Tanggal SPP</strong>
+                <small class="d-block">Tahun dari kolom Tanggal SPP</small>
+              </label>
+            </div>
+            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'selected' : '' }}"
+              onclick="selectFilterType('tanggal_masuk', this)">
+              <input type="radio" name="modal_filter_type" value="tanggal_masuk" {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'checked' : '' }}>
+              <label>
+                <strong>Tanggal Masuk</strong>
+                <small class="d-block">Tahun dari timestamp dokumen masuk</small>
+              </label>
+            </div>
+            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'selected' : '' }}"
+              onclick="selectFilterType('nomor_spp', this)">
+              <input type="radio" name="modal_filter_type" value="nomor_spp" {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'checked' : '' }}>
+              <label>
+                <strong>Tahun di Nomor SPP</strong>
+                <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
+              </label>
+            </div>
           </div>
-          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'selected' : '' }}" 
-               onclick="selectFilterType('tanggal_masuk', this)">
-            <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
-                   {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'checked' : '' }}>
-            <label>
-              <strong>Tanggal Masuk</strong>
-              <small class="d-block">Tahun dari timestamp dokumen masuk</small>
-            </label>
-          </div>
-          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'selected' : '' }}" 
-               onclick="selectFilterType('nomor_spp', this)">
-            <input type="radio" name="modal_filter_type" value="nomor_spp" 
-                   {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'checked' : '' }}>
-            <label>
-              <strong>Tahun di Nomor SPP</strong>
-              <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
-            </label>
+        </div>
+
+        <!-- Year Selection -->
+        <div class="year-selection-section">
+          <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
+          <div class="year-buttons-grid">
+            <button type="button" class="year-btn all-years {{ !$selectedYear ? 'selected' : '' }}"
+              onclick="selectYear('{{ date('Y') }}', this)">
+              Semua Tahun
+            </button>
+            @for($y = 2024; $y <= 2030; $y++)
+              <button type="button" class="year-btn {{ $selectedYear == $y ? 'selected' : '' }}"
+                onclick="selectYear('{{ $y }}', this)">{{ $y }}</button>
+            @endfor
           </div>
         </div>
       </div>
-      
-      <!-- Year Selection -->
-      <div class="year-selection-section">
-        <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
-        <div class="year-buttons-grid">
-          <button type="button" class="year-btn all-years {{ !$selectedYear ? 'selected' : '' }}" 
-                  onclick="selectYear('{{ date('Y') }}', this)">
-            Semua Tahun
-          </button>
-          @for($y = 2024; $y <= 2030; $y++)
-          <button type="button" class="year-btn {{ $selectedYear == $y ? 'selected' : '' }}" 
-                  onclick="selectYear('{{ $y }}', this)">{{ $y }}</button>
-          @endfor
-        </div>
+      <div class="year-filter-modal-footer">
+        <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
+          <i class="fa-solid fa-rotate-left me-2"></i>Reset
+        </button>
+        <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
+          <i class="fa-solid fa-check me-2"></i>Terapkan Filter
+        </button>
       </div>
-    </div>
-    <div class="year-filter-modal-footer">
-      <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
-        <i class="fa-solid fa-rotate-left me-2"></i>Reset
-      </button>
-      <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
-        <i class="fa-solid fa-check me-2"></i>Terapkan Filter
-      </button>
     </div>
   </div>
-</div>
 
   <script>
     let selectedFilterType = '{{ $yearFilterType ?? "tanggal_spp" }}';
@@ -1065,12 +1065,12 @@
 
     function selectFilterType(type, element) {
       selectedFilterType = type;
-      
+
       // Update radio buttons
       document.querySelectorAll('.filter-type-option input[type="radio"]').forEach(radio => {
         radio.checked = radio.value === type;
       });
-      
+
       // Update selected class
       document.querySelectorAll('.filter-type-option').forEach(el => el.classList.remove('selected'));
       if (element) {
@@ -1089,7 +1089,7 @@
     function resetYearFilter() {
       selectedFilterType = 'tanggal_spp';
       selectedYear = '{{ date("Y") }}';
-      
+
       // Reset radio buttons
       document.querySelectorAll('.filter-type-option').forEach(el => el.classList.remove('selected'));
       document.querySelectorAll('.filter-type-option input[type="radio"]').forEach(radio => {
@@ -1097,7 +1097,7 @@
       });
       const firstOption = document.querySelector('.filter-type-option');
       if (firstOption) firstOption.classList.add('selected');
-      
+
       // Reset year buttons
       document.querySelectorAll('.year-btn').forEach(el => el.classList.remove('selected'));
       const allYearsBtn = document.querySelector('.year-btn.all-years');
