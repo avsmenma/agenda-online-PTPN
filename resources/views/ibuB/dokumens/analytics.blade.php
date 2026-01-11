@@ -467,13 +467,16 @@
     }
 
     .month-card.active {
-      background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-      border: 4px solid #dc3545;
-      box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 2px 8px rgba(136, 151, 23, 0.05);
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+      border: 3px solid #083E40;
+      box-shadow: 0 8px 32px rgba(8, 62, 64, 0.25), 0 4px 16px rgba(136, 151, 23, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      transform: translateY(-3px) scale(1.02);
     }
 
     .month-card.active::before {
-      transform: scaleX(0);
+      transform: scaleX(1);
+      background: linear-gradient(90deg, #083E40 0%, #889717 50%, #083E40 100%);
+      height: 5px;
     }
 
     .month-card.active .month-name,
