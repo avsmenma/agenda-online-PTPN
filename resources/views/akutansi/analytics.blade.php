@@ -101,74 +101,81 @@
       font-size: 16px;
     }
 
-    /* Modal Styles */
+    /* Year Filter Modal Styles */
     .year-filter-modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
+      display: none;
       justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
     }
 
     .year-filter-modal-overlay.active {
-      opacity: 1;
-      visibility: visible;
+      display: flex;
     }
 
     .year-filter-modal {
       background: white;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-      transform: scale(0.9) translateY(20px);
-      transition: all 0.3s ease;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: modalSlideIn 0.3s ease;
+      overflow: hidden;
     }
 
-    .year-filter-modal-overlay.active .year-filter-modal {
-      transform: scale(1) translateY(0);
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .year-filter-modal-header {
-      padding: 24px;
-      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      padding: 20px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .year-filter-modal-header h3 {
+    .year-filter-modal-header h5 {
       margin: 0;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
-      color: #1a4d3e;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .year-filter-modal-close {
-      background: none;
+      background: rgba(255, 255, 255, 0.2);
       border: none;
-      font-size: 24px;
-      color: #6b7280;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
       cursor: pointer;
-      padding: 4px;
-      border-radius: 8px;
-      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
     }
 
     .year-filter-modal-close:hover {
-      background: #f3f4f6;
-      color: #1f2937;
+      background: rgba(255, 255, 255, 0.3);
     }
 
     .year-filter-modal-body {
@@ -179,10 +186,10 @@
       margin-bottom: 24px;
     }
 
-    .filter-type-section h4 {
+    .filter-type-section h6 {
       font-size: 14px;
-      font-weight: 600;
-      color: #374151;
+      font-weight: 700;
+      color: #1a4d3e;
       margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -190,109 +197,153 @@
 
     .filter-type-options {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .filter-type-option {
-      flex: 1;
-      min-width: 120px;
-      padding: 14px 16px;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      background: white;
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
+      transition: all 0.2s ease;
     }
 
     .filter-type-option:hover {
-      border-color: #40916c;
-      background: #f0fdf4;
+      background: #e9f5f0;
+      border-color: #1a4d3e;
     }
 
     .filter-type-option.selected {
+      background: linear-gradient(135deg, #e9f5f0 0%, #d4ebe4 100%);
       border-color: #1a4d3e;
-      background: linear-gradient(135deg, #1a4d3e 0%, #40916c 100%);
-      color: white;
     }
 
-    .filter-type-option .type-icon {
-      font-size: 20px;
-      margin-bottom: 6px;
+    .filter-type-option input[type="radio"] {
+      margin-right: 12px;
+      accent-color: #1a4d3e;
+      transform: scale(1.2);
     }
 
-    .filter-type-option .type-label {
-      font-size: 13px;
-      font-weight: 600;
+    .filter-type-option label {
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+    }
+
+    .filter-type-option label strong {
+      display: block;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 2px;
+    }
+
+    .filter-type-option label small,
+    .filter-type-option small {
+      color: #6c757d;
+      font-size: 12px;
+    }
+
+    .year-selection-section h6 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a4d3e;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .year-buttons-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
     }
 
     .year-btn {
-      padding: 12px 16px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      background: white;
-      font-size: 15px;
-      font-weight: 600;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .year-btn:hover {
-      border-color: #40916c;
-      background: #f0fdf4;
-      color: #1a4d3e;
-    }
-
-    .year-btn.selected {
-      border-color: #1a4d3e;
-      background: linear-gradient(135deg, #1a4d3e 0%, #40916c 100%);
-      color: white;
-    }
-
-    .year-filter-modal-footer {
-      padding: 20px 24px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-
-    .modal-btn {
-      padding: 12px 24px;
+      padding: 14px 16px;
+      border: 2px solid #e9ecef;
+      background: #f8f9fa;
       border-radius: 10px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      color: #333;
     }
 
-    .modal-btn-secondary {
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      color: #374151;
+    .year-btn:hover {
+      background: #e9f5f0;
+      border-color: #1a4d3e;
     }
 
-    .modal-btn-secondary:hover {
-      background: #e5e7eb;
-    }
-
-    .modal-btn-primary {
-      background: linear-gradient(135deg, #1a4d3e 0%, #40916c 100%);
-      border: none;
+    .year-btn.selected {
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border-color: #1a4d3e;
       color: white;
     }
 
-    .modal-btn-primary:hover {
+    .year-btn.all-years {
+      grid-column: span 4;
+      background: linear-gradient(135deg, #083E40 0%, #0a5a5c 100%);
+      color: white;
+      border-color: #083E40;
+    }
+
+    .year-btn.all-years:hover {
+      opacity: 0.9;
+    }
+
+    .year-btn.all-years.selected {
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border-color: #1a4d3e;
+    }
+
+    .year-filter-modal-footer {
+      padding: 16px 24px;
+      background: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-reset-filter {
+      padding: 10px 20px;
+      background: #fff;
+      border: 2px solid #dc3545;
+      color: #dc3545;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset-filter:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-apply-filter {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-apply-filter:hover {
+      background: linear-gradient(135deg, #0a3d2e 0%, #083020 100%);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(26, 77, 62, 0.3);
     }
 
     /* Big Summary Card */
@@ -925,88 +976,136 @@
   </div>
 
   <!-- Year Filter Modal -->
-  <div class="year-filter-modal-overlay" id="yearFilterModal">
-    <div class="year-filter-modal">
-      <div class="year-filter-modal-header">
-        <h3><i class="fa-solid fa-calendar-alt me-2"></i>Filter Tahun</h3>
-        <button class="year-filter-modal-close" onclick="closeYearFilterModal()">&times;</button>
-      </div>
-      <div class="year-filter-modal-body">
-        <div class="filter-type-section">
-          <h4>Tipe Filter</h4>
-          <div class="filter-type-options">
-            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}"
-              data-type="tanggal_spp" onclick="selectFilterType('tanggal_spp')">
-              <div class="type-icon">📅</div>
-              <div class="type-label">Tanggal SPP</div>
-            </div>
-            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'selected' : '' }}"
-              data-type="tanggal_masuk" onclick="selectFilterType('tanggal_masuk')">
-              <div class="type-icon">📥</div>
-              <div class="type-label">Tanggal Masuk</div>
-            </div>
-            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'selected' : '' }}"
-              data-type="nomor_spp" onclick="selectFilterType('nomor_spp')">
-              <div class="type-icon">#️⃣</div>
-              <div class="type-label">Tahun di Nomor SPP</div>
-            </div>
+<div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
+  <div class="year-filter-modal" onclick="event.stopPropagation()">
+    <div class="year-filter-modal-header">
+      <h5>
+        <i class="fa-solid fa-calendar-alt"></i>
+        Filter Tahun
+      </h5>
+      <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+    <div class="year-filter-modal-body">
+      <!-- Filter Type Selection -->
+      <div class="filter-type-section">
+        <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
+        <div class="filter-type-options">
+          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
+               onclick="selectFilterType('tanggal_spp', this)">
+            <input type="radio" name="modal_filter_type" value="tanggal_spp" 
+                   {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
+            <label>
+              <strong>Tanggal SPP</strong>
+              <small class="d-block">Tahun dari kolom Tanggal SPP</small>
+            </label>
+          </div>
+          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'selected' : '' }}" 
+               onclick="selectFilterType('tanggal_masuk', this)">
+            <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
+                   {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'checked' : '' }}>
+            <label>
+              <strong>Tanggal Masuk</strong>
+              <small class="d-block">Tahun dari timestamp dokumen masuk</small>
+            </label>
+          </div>
+          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'selected' : '' }}" 
+               onclick="selectFilterType('nomor_spp', this)">
+            <input type="radio" name="modal_filter_type" value="nomor_spp" 
+                   {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'checked' : '' }}>
+            <label>
+              <strong>Tahun di Nomor SPP</strong>
+              <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
+            </label>
           </div>
         </div>
-        <div class="filter-type-section">
-          <h4>Pilih Tahun</h4>
-          <div class="year-buttons-grid">
-            @foreach($availableYears as $year)
-              <button type="button" class="year-btn {{ $selectedYear == $year ? 'selected' : '' }}" data-year="{{ $year }}"
-                onclick="selectYear({{ $year }})">
-                {{ $year }}
-              </button>
-            @endforeach
-          </div>
-        </div>
       </div>
-      <div class="year-filter-modal-footer">
-        <button type="button" class="modal-btn modal-btn-secondary" onclick="resetYearFilter()">Reset</button>
-        <button type="button" class="modal-btn modal-btn-primary" onclick="applyYearFilter()">Terapkan</button>
+      
+      <!-- Year Selection -->
+      <div class="year-selection-section">
+        <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
+        <div class="year-buttons-grid">
+          <button type="button" class="year-btn all-years {{ !$selectedYear ? 'selected' : '' }}" 
+                  onclick="selectYear('{{ date('Y') }}', this)">
+            Semua Tahun
+          </button>
+          @for($y = 2024; $y <= 2030; $y++)
+          <button type="button" class="year-btn {{ $selectedYear == $y ? 'selected' : '' }}" 
+                  onclick="selectYear('{{ $y }}', this)">{{ $y }}</button>
+          @endfor
+        </div>
       </div>
     </div>
+    <div class="year-filter-modal-footer">
+      <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
+        <i class="fa-solid fa-rotate-left me-2"></i>Reset
+      </button>
+      <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
+        <i class="fa-solid fa-check me-2"></i>Terapkan Filter
+      </button>
+    </div>
   </div>
+</div>
 
   <script>
     let selectedFilterType = '{{ $yearFilterType ?? "tanggal_spp" }}';
-    let selectedYear = {{ $selectedYear }};
+    let selectedYear = '{{ $selectedYear }}';
 
     function openYearFilterModal() {
-      document.getElementById('yearFilterModal').classList.add('active');
+      document.getElementById('yearFilterModalOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
 
-    function closeYearFilterModal() {
-      document.getElementById('yearFilterModal').classList.remove('active');
+    function closeYearFilterModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('yearFilterModalOverlay').classList.remove('active');
+      document.body.style.overflow = '';
     }
 
-    function selectFilterType(type) {
+    function selectFilterType(type, element) {
       selectedFilterType = type;
+      
+      // Update radio buttons
+      document.querySelectorAll('.filter-type-option input[type="radio"]').forEach(radio => {
+        radio.checked = radio.value === type;
+      });
+      
+      // Update selected class
       document.querySelectorAll('.filter-type-option').forEach(el => el.classList.remove('selected'));
-      document.querySelector(`.filter-type-option[data-type="${type}"]`).classList.add('selected');
+      if (element) {
+        element.classList.add('selected');
+      }
     }
 
-    function selectYear(year) {
+    function selectYear(year, element) {
       selectedYear = year;
       document.querySelectorAll('.year-btn').forEach(el => el.classList.remove('selected'));
-      document.querySelector(`.year-btn[data-year="${year}"]`).classList.add('selected');
+      if (element) {
+        element.classList.add('selected');
+      }
     }
 
     function resetYearFilter() {
       selectedFilterType = 'tanggal_spp';
-      selectedYear = new Date().getFullYear();
+      selectedYear = '{{ date("Y") }}';
+      
+      // Reset radio buttons
       document.querySelectorAll('.filter-type-option').forEach(el => el.classList.remove('selected'));
-      document.querySelector('.filter-type-option[data-type="tanggal_spp"]').classList.add('selected');
+      document.querySelectorAll('.filter-type-option input[type="radio"]').forEach(radio => {
+        radio.checked = radio.value === 'tanggal_spp';
+      });
+      const firstOption = document.querySelector('.filter-type-option');
+      if (firstOption) firstOption.classList.add('selected');
+      
+      // Reset year buttons
       document.querySelectorAll('.year-btn').forEach(el => el.classList.remove('selected'));
-      const currentYearBtn = document.querySelector(`.year-btn[data-year="${selectedYear}"]`);
-      if (currentYearBtn) currentYearBtn.classList.add('selected');
+      const allYearsBtn = document.querySelector('.year-btn.all-years');
+      if (allYearsBtn) allYearsBtn.classList.add('selected');
     }
 
     function applyYearFilter() {
-      const bagian = document.getElementById('bagianSelect').value;
+      const bagian = document.getElementById('bagianSelect')?.value || '';
       const url = new URL(window.location.href);
       url.searchParams.set('year', selectedYear);
       url.searchParams.set('year_filter_type', selectedFilterType);

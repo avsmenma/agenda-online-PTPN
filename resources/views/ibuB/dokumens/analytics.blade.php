@@ -103,45 +103,44 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      z-index: 9999;
+      background: rgba(0, 0, 0, 0.5);
       display: none;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
     }
 
     .year-filter-modal-overlay.active {
       display: flex;
-      animation: fadeIn 0.2s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
 
     .year-filter-modal {
       background: white;
       border-radius: 16px;
       width: 100%;
-      max-width: 500px;
-      max-height: 90vh;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: modalSlideIn 0.3s ease;
       overflow: hidden;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-      animation: slideUp 0.3s ease;
     }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .year-filter-modal-header {
-      padding: 20px 24px;
-      background: linear-gradient(135deg, #083E40 0%, #0a5a5c 100%);
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
       color: white;
+      padding: 20px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -160,9 +159,9 @@
       background: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -176,8 +175,6 @@
 
     .year-filter-modal-body {
       padding: 24px;
-      max-height: 400px;
-      overflow-y: auto;
     }
 
     .filter-type-section {
@@ -186,8 +183,8 @@
 
     .filter-type-section h6 {
       font-size: 14px;
-      font-weight: 600;
-      color: #083E40;
+      font-weight: 700;
+      color: #1a4d3e;
       margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -196,56 +193,61 @@
     .filter-type-options {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .filter-type-option {
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 14px 16px;
-      border: 2px solid #e2e8f0;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .filter-type-option:hover {
-      border-color: #083E40;
-      background: rgba(8, 62, 64, 0.02);
+      background: #e9f5f0;
+      border-color: #1a4d3e;
     }
 
     .filter-type-option.selected {
-      border-color: #083E40;
-      background: rgba(8, 62, 64, 0.08);
+      background: linear-gradient(135deg, #e9f5f0 0%, #d4ebe4 100%);
+      border-color: #1a4d3e;
     }
 
     .filter-type-option input[type="radio"] {
-      margin-top: 3px;
-      accent-color: #083E40;
+      margin-right: 12px;
+      accent-color: #1a4d3e;
+      transform: scale(1.2);
     }
 
     .filter-type-option label {
       cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
       flex: 1;
     }
 
     .filter-type-option label strong {
       display: block;
       font-size: 14px;
-      color: #1a202c;
+      color: #333;
       margin-bottom: 2px;
     }
 
-    .filter-type-option label small {
-      font-size: 12px;
+    .filter-type-option label small,
+    .filter-type-option small {
       color: #6c757d;
+      font-size: 12px;
     }
 
     .year-selection-section h6 {
       font-size: 14px;
-      font-weight: 600;
-      color: #083E40;
+      font-weight: 700;
+      color: #1a4d3e;
       margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -258,33 +260,33 @@
     }
 
     .year-btn {
-      padding: 12px 16px;
-      border: 2px solid #e2e8f0;
-      background: white;
+      padding: 14px 16px;
+      border: 2px solid #e9ecef;
+      background: #f8f9fa;
       border-radius: 10px;
       font-size: 14px;
       font-weight: 600;
-      color: #4a5568;
       cursor: pointer;
       transition: all 0.2s ease;
+      color: #333;
     }
 
     .year-btn:hover {
-      border-color: #083E40;
-      color: #083E40;
+      background: #e9f5f0;
+      border-color: #1a4d3e;
     }
 
     .year-btn.selected {
-      background: #083E40;
-      border-color: #083E40;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border-color: #1a4d3e;
       color: white;
     }
 
     .year-btn.all-years {
-      grid-column: 1 / -1;
+      grid-column: span 4;
       background: linear-gradient(135deg, #083E40 0%, #0a5a5c 100%);
-      border-color: transparent;
       color: white;
+      border-color: #083E40;
     }
 
     .year-btn.all-years:hover {
@@ -292,26 +294,25 @@
     }
 
     .year-btn.all-years.selected {
-      opacity: 1;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border-color: #1a4d3e;
     }
 
     .year-filter-modal-footer {
-      padding: 20px 24px;
+      padding: 16px 24px;
       background: #f8f9fa;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #e9ecef;
       display: flex;
       justify-content: flex-end;
       gap: 12px;
     }
 
     .btn-reset-filter {
-      display: inline-flex;
-      align-items: center;
       padding: 10px 20px;
-      background: white;
-      color: #dc3545;
+      background: #fff;
       border: 2px solid #dc3545;
-      border-radius: 10px;
+      color: #dc3545;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -324,13 +325,11 @@
     }
 
     .btn-apply-filter {
-      display: inline-flex;
-      align-items: center;
       padding: 10px 24px;
-      background: linear-gradient(135deg, #083E40 0%, #0a5a5c 100%);
-      color: white;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
       border: none;
-      border-radius: 10px;
+      color: white;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -338,8 +337,8 @@
     }
 
     .btn-apply-filter:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(8, 62, 64, 0.3);
+      background: linear-gradient(135deg, #0a3d2e 0%, #083020 100%);
+      transform: translateY(-1px);
     }
 
     /* Big Summary Card */
@@ -956,227 +955,224 @@
     @include('partials.pagination-enhanced', ['paginator' => $dokumens])
   </div>
 
-<!-- Year Filter Modal -->
-<div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
-  <div class="year-filter-modal" onclick="event.stopPropagation()">
-    <div class="year-filter-modal-header">
-      <h5>
-        <i class="fa-solid fa-calendar-alt"></i>
-        Filter Tahun
-      </h5>
-      <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
-        <i class="fa-solid fa-times"></i>
-      </button>
-    </div>
-    <div class="year-filter-modal-body">
-      <!-- Filter Type Selection -->
-      <div class="filter-type-section">
-        <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
-        <div class="filter-type-options">
-          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
-               onclick="selectFilterType('tanggal_spp', this)">
-            <input type="radio" name="modal_filter_type" value="tanggal_spp" 
-                   {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
-            <label>
-              <strong>Tanggal SPP</strong>
-              <small class="d-block">Tahun dari kolom Tanggal SPP</small>
-            </label>
+  <!-- Year Filter Modal -->
+  <div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
+    <div class="year-filter-modal" onclick="event.stopPropagation()">
+      <div class="year-filter-modal-header">
+        <h5>
+          <i class="fa-solid fa-calendar-alt"></i>
+          Filter Tahun
+        </h5>
+        <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      <div class="year-filter-modal-body">
+        <!-- Filter Type Selection -->
+        <div class="filter-type-section">
+          <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
+          <div class="filter-type-options">
+            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}"
+              onclick="selectFilterType('tanggal_spp', this)">
+              <input type="radio" name="modal_filter_type" value="tanggal_spp" {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
+              <label>
+                <strong>Tanggal SPP</strong>
+                <small class="d-block">Tahun dari kolom Tanggal SPP</small>
+              </label>
+            </div>
+            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'selected' : '' }}"
+              onclick="selectFilterType('tanggal_masuk', this)">
+              <input type="radio" name="modal_filter_type" value="tanggal_masuk" {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'checked' : '' }}>
+              <label>
+                <strong>Tanggal Masuk</strong>
+                <small class="d-block">Tahun dari timestamp dokumen masuk</small>
+              </label>
+            </div>
+            <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'selected' : '' }}"
+              onclick="selectFilterType('nomor_spp', this)">
+              <input type="radio" name="modal_filter_type" value="nomor_spp" {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'checked' : '' }}>
+              <label>
+                <strong>Tahun di Nomor SPP</strong>
+                <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
+              </label>
+            </div>
           </div>
-          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'selected' : '' }}" 
-               onclick="selectFilterType('tanggal_masuk', this)">
-            <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
-                   {{ ($yearFilterType ?? 'tanggal_spp') == 'tanggal_masuk' ? 'checked' : '' }}>
-            <label>
-              <strong>Tanggal Masuk</strong>
-              <small class="d-block">Tahun dari timestamp dokumen masuk</small>
-            </label>
-          </div>
-          <div class="filter-type-option {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'selected' : '' }}" 
-               onclick="selectFilterType('nomor_spp', this)">
-            <input type="radio" name="modal_filter_type" value="nomor_spp" 
-                   {{ ($yearFilterType ?? 'tanggal_spp') == 'nomor_spp' ? 'checked' : '' }}>
-            <label>
-              <strong>Tahun di Nomor SPP</strong>
-              <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
-            </label>
+        </div>
+
+        <!-- Year Selection -->
+        <div class="year-selection-section">
+          <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
+          <div class="year-buttons-grid">
+            <button type="button" class="year-btn all-years {{ !$selectedYear ? 'selected' : '' }}"
+              onclick="selectYear('{{ date('Y') }}', this)">
+              Semua Tahun
+            </button>
+            @for($y = 2024; $y <= 2030; $y++)
+              <button type="button" class="year-btn {{ $selectedYear == $y ? 'selected' : '' }}"
+                onclick="selectYear('{{ $y }}', this)">{{ $y }}</button>
+            @endfor
           </div>
         </div>
       </div>
-      
-      <!-- Year Selection -->
-      <div class="year-selection-section">
-        <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
-        <div class="year-buttons-grid">
-          <button type="button" class="year-btn all-years {{ !$selectedYear ? 'selected' : '' }}" 
-                  onclick="selectYear('{{ date('Y') }}', this)">
-            Semua Tahun
-          </button>
-          @for($y = 2024; $y <= 2030; $y++)
-          <button type="button" class="year-btn {{ $selectedYear == $y ? 'selected' : '' }}" 
-                  onclick="selectYear('{{ $y }}', this)">{{ $y }}</button>
-          @endfor
-        </div>
+      <div class="year-filter-modal-footer">
+        <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
+          <i class="fa-solid fa-rotate-left me-2"></i>Reset
+        </button>
+        <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
+          <i class="fa-solid fa-check me-2"></i>Terapkan Filter
+        </button>
       </div>
-    </div>
-    <div class="year-filter-modal-footer">
-      <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
-        <i class="fa-solid fa-rotate-left me-2"></i>Reset
-      </button>
-      <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
-        <i class="fa-solid fa-check me-2"></i>Terapkan Filter
-      </button>
     </div>
   </div>
-</div>
 
-<script>
-// Year Filter Modal Functions
-let selectedYear = '{{ $selectedYear ?? date("Y") }}';
-let selectedFilterType = '{{ $yearFilterType ?? "tanggal_spp" }}';
+  <script>
+    // Year Filter Modal Functions
+    let selectedYear = '{{ $selectedYear ?? date("Y") }}';
+    let selectedFilterType = '{{ $yearFilterType ?? "tanggal_spp" }}';
 
-function openYearFilterModal() {
-  document.getElementById('yearFilterModalOverlay').classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeYearFilterModal(event) {
-  if (event && event.target !== event.currentTarget) return;
-  document.getElementById('yearFilterModalOverlay').classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-function selectFilterType(type, element) {
-  selectedFilterType = type;
-  
-  // Update visual state
-  document.querySelectorAll('.filter-type-option').forEach(opt => {
-    opt.classList.remove('selected');
-    opt.querySelector('input').checked = false;
-  });
-  element.classList.add('selected');
-  element.querySelector('input').checked = true;
-}
-
-function selectYear(year, element) {
-  selectedYear = year;
-  
-  // Update visual state
-  document.querySelectorAll('.year-btn').forEach(btn => {
-    btn.classList.remove('selected');
-  });
-  element.classList.add('selected');
-}
-
-function resetYearFilter() {
-  selectedYear = '{{ date("Y") }}';
-  selectedFilterType = 'tanggal_spp';
-  
-  // Reset visual state
-  document.querySelectorAll('.year-btn').forEach(btn => {
-    btn.classList.remove('selected');
-    if (btn.textContent.trim() === '{{ date("Y") }}') {
-      btn.classList.add('selected');
+    function openYearFilterModal() {
+      document.getElementById('yearFilterModalOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
-  });
-  
-  document.querySelectorAll('.filter-type-option').forEach((opt, index) => {
-    opt.classList.remove('selected');
-    opt.querySelector('input').checked = false;
-    if (index === 0) {
-      opt.classList.add('selected');
-      opt.querySelector('input').checked = true;
+
+    function closeYearFilterModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('yearFilterModalOverlay').classList.remove('active');
+      document.body.style.overflow = '';
     }
-  });
-  
-  // Apply immediately
-  applyYearFilter();
-}
 
-function applyYearFilter() {
-  // Update hidden inputs
-  document.getElementById('yearSelect').value = selectedYear;
-  document.getElementById('yearFilterType').value = selectedFilterType;
-  
-  // Update button text
-  const filterTypeLabels = {
-    'tanggal_spp': 'Tgl SPP',
-    'tanggal_masuk': 'Tgl Masuk',
-    'nomor_spp': 'No SPP'
-  };
-  
-  const btnText = document.getElementById('yearFilterBtnText');
-  btnText.textContent = selectedYear + ' (' + filterTypeLabels[selectedFilterType] + ')';
-  
-  // Close modal
-  closeYearFilterModal();
-  
-  // Apply filter
-  changeFilter();
-}
+    function selectFilterType(type, element) {
+      selectedFilterType = type;
 
-function changeFilter() {
-  const year = document.getElementById('yearSelect').value;
-  const bagian = document.getElementById('bagianSelect').value;
-  const filterType = document.getElementById('yearFilterType').value;
+      // Update visual state
+      document.querySelectorAll('.filter-type-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.querySelector('input').checked = false;
+      });
+      element.classList.add('selected');
+      element.querySelector('input').checked = true;
+    }
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('year', year);
-  url.searchParams.set('year_filter_type', filterType);
-  if (bagian) {
-    url.searchParams.set('bagian', bagian);
-  } else {
-    url.searchParams.delete('bagian');
-  }
-  url.searchParams.delete('month');
-  url.searchParams.delete('page');
+    function selectYear(year, element) {
+      selectedYear = year;
 
-  window.location.href = url.toString();
-}
+      // Update visual state
+      document.querySelectorAll('.year-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      element.classList.add('selected');
+    }
 
-function filterByMonth(month) {
-  const year = document.getElementById('yearSelect').value;
-  const bagian = document.getElementById('bagianSelect').value;
-  const filterType = document.getElementById('yearFilterType').value;
+    function resetYearFilter() {
+      selectedYear = '{{ date("Y") }}';
+      selectedFilterType = 'tanggal_spp';
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('year', year);
-  url.searchParams.set('year_filter_type', filterType);
-  url.searchParams.set('month', month);
-  if (bagian) {
-    url.searchParams.set('bagian', bagian);
-  } else {
-    url.searchParams.delete('bagian');
-  }
-  url.searchParams.delete('page');
+      // Reset visual state
+      document.querySelectorAll('.year-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.textContent.trim() === '{{ date("Y") }}') {
+          btn.classList.add('selected');
+        }
+      });
 
-  window.location.href = url.toString();
-}
+      document.querySelectorAll('.filter-type-option').forEach((opt, index) => {
+        opt.classList.remove('selected');
+        opt.querySelector('input').checked = false;
+        if (index === 0) {
+          opt.classList.add('selected');
+          opt.querySelector('input').checked = true;
+        }
+      });
 
-function showAllMonths() {
-  const year = document.getElementById('yearSelect').value;
-  const bagian = document.getElementById('bagianSelect').value;
-  const filterType = document.getElementById('yearFilterType').value;
+      // Apply immediately
+      applyYearFilter();
+    }
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('year', year);
-  url.searchParams.set('year_filter_type', filterType);
-  url.searchParams.delete('month');
-  if (bagian) {
-    url.searchParams.set('bagian', bagian);
-  } else {
-    url.searchParams.delete('bagian');
-  }
-  url.searchParams.delete('page');
+    function applyYearFilter() {
+      // Update hidden inputs
+      document.getElementById('yearSelect').value = selectedYear;
+      document.getElementById('yearFilterType').value = selectedFilterType;
 
-  window.location.href = url.toString();
-}
+      // Update button text
+      const filterTypeLabels = {
+        'tanggal_spp': 'Tgl SPP',
+        'tanggal_masuk': 'Tgl Masuk',
+        'nomor_spp': 'No SPP'
+      };
 
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeYearFilterModal();
-  }
-});
-</script>
+      const btnText = document.getElementById('yearFilterBtnText');
+      btnText.textContent = selectedYear + ' (' + filterTypeLabels[selectedFilterType] + ')';
+
+      // Close modal
+      closeYearFilterModal();
+
+      // Apply filter
+      changeFilter();
+    }
+
+    function changeFilter() {
+      const year = document.getElementById('yearSelect').value;
+      const bagian = document.getElementById('bagianSelect').value;
+      const filterType = document.getElementById('yearFilterType').value;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('year', year);
+      url.searchParams.set('year_filter_type', filterType);
+      if (bagian) {
+        url.searchParams.set('bagian', bagian);
+      } else {
+        url.searchParams.delete('bagian');
+      }
+      url.searchParams.delete('month');
+      url.searchParams.delete('page');
+
+      window.location.href = url.toString();
+    }
+
+    function filterByMonth(month) {
+      const year = document.getElementById('yearSelect').value;
+      const bagian = document.getElementById('bagianSelect').value;
+      const filterType = document.getElementById('yearFilterType').value;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('year', year);
+      url.searchParams.set('year_filter_type', filterType);
+      url.searchParams.set('month', month);
+      if (bagian) {
+        url.searchParams.set('bagian', bagian);
+      } else {
+        url.searchParams.delete('bagian');
+      }
+      url.searchParams.delete('page');
+
+      window.location.href = url.toString();
+    }
+
+    function showAllMonths() {
+      const year = document.getElementById('yearSelect').value;
+      const bagian = document.getElementById('bagianSelect').value;
+      const filterType = document.getElementById('yearFilterType').value;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('year', year);
+      url.searchParams.set('year_filter_type', filterType);
+      url.searchParams.delete('month');
+      if (bagian) {
+        url.searchParams.set('bagian', bagian);
+      } else {
+        url.searchParams.delete('bagian');
+      }
+      url.searchParams.delete('page');
+
+      window.location.href = url.toString();
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeYearFilterModal();
+      }
+    });
+  </script>
 
 @endsection
