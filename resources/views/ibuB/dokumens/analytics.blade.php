@@ -901,8 +901,21 @@
               <td class="select-text"><strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
               <td>
                 @if($dokumen->bagian)
+                  @php
+                    $bagianColors = [
+                      'AKN' => 'background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);', // Cyan
+                      'DPM' => 'background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);', // Blue
+                      'KPL' => 'background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);', // Purple
+                      'PMO' => 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);', // Amber
+                      'SDM' => 'background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);', // Pink
+                      'SKH' => 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);', // Emerald
+                      'TAN' => 'background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);', // Teal
+                      'TEP' => 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);', // Red
+                    ];
+                    $bagianStyle = $bagianColors[strtoupper($dokumen->bagian)] ?? 'background: linear-gradient(135deg, #64748b 0%, #475569 100%);';
+                  @endphp
                   <span class="badge"
-                    style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                    style="{{ $bagianStyle }} color: white; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
                     {{ $dokumen->bagian }}
                   </span>
                 @else
@@ -912,33 +925,44 @@
               <td>
                 @php
                   $statusLabel = $dokumen->status_for_user ?? ucfirst(str_replace('_', ' ', $dokumen->status));
+                  // Define status colors
+                  $statusColors = [
+                    'Belum Dikirim' => 'background: linear-gradient(135deg, #6c757d 0%, #495057 100%);',
+                    'Terkirim' => 'background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);',
+                    'Terkirim ke Team Perpajakan' => 'background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);',
+                    'Terkirim ke Team Akutansi' => 'background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);',
+                    'Terkirim ke Pembayaran' => 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);',
+                    'Sedang Diproses' => 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);',
+                    'Menunggu Approval' => 'background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);',
+                    'Dikembalikan' => 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);',
+                    'Selesai' => 'background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);',
+                  ];
+
+                  // Find matching status color
+                  $statusStyle = 'background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);';
+                  foreach ($statusColors as $key => $color) {
+                    if (stripos($statusLabel, $key) !== false || $statusLabel == $key) {
+                      $statusStyle = $color;
+                      break;
+                    }
+                  }
+
+                  // Special cases
+                  if (in_array($dokumen->status, ['draft', 'returned_to_ibua'])) {
+                    $statusStyle = $statusColors['Belum Dikirim'];
+                    $statusLabel = 'Belum Dikirim';
+                  } elseif (stripos($statusLabel, 'Dikembalikan') !== false || stripos($statusLabel, 'Revisi') !== false) {
+                    $statusStyle = $statusColors['Dikembalikan'];
+                  }
                 @endphp
-                @if($statusLabel == 'Belum Dikirim' || in_array($dokumen->status, ['draft', 'returned_to_ibua']))
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    Belum Dikirim
-                  </span>
-                @elseif($statusLabel == 'Menunggu Approval Reviewer' || $statusLabel == 'Menunggu Approval')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                <span class="badge"
+                  style="{{ $statusStyle }} color: white; padding: 5px 12px; border-radius: 12px; font-weight: 600; font-size: 11px;">
+                  @if(method_exists($dokumen, 'getDetailedApprovalText') && stripos($statusLabel, 'Menunggu') !== false)
                     {{ $dokumen->getDetailedApprovalText() }}
-                  </span>
-                @elseif($statusLabel == 'Terkirim')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    Terkirim
-                  </span>
-                @elseif($statusLabel == 'Dikembalikan untuk Revisi')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    Dikembalikan
-                  </span>
-                @else
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                  @else
                     {{ $statusLabel }}
-                  </span>
-                @endif
+                  @endif
+                </span>
               </td>
             </tr>
           @empty

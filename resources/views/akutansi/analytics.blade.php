@@ -908,8 +908,21 @@
               <td class="select-text"><strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
               <td>
                 @if($dokumen->bagian)
+                  @php
+                    $bagianColors = [
+                      'AKN' => 'background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);', // Cyan
+                      'DPM' => 'background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);', // Blue
+                      'KPL' => 'background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);', // Purple
+                      'PMO' => 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);', // Amber
+                      'SDM' => 'background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);', // Pink
+                      'SKH' => 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);', // Emerald
+                      'TAN' => 'background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);', // Teal
+                      'TEP' => 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);', // Red
+                    ];
+                    $bagianStyle = $bagianColors[strtoupper($dokumen->bagian)] ?? 'background: linear-gradient(135deg, #64748b 0%, #475569 100%);';
+                  @endphp
                   <span class="badge"
-                    style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
+                    style="{{ $bagianStyle }} color: white; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
                     {{ $dokumen->bagian }}
                   </span>
                 @else
