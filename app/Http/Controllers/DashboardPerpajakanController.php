@@ -1155,6 +1155,9 @@ class DashboardPerpajakanController extends Controller
                     'dpp_pph' => $dokumen->dpp_pph,
                     'ppn_terhutang' => $dokumen->ppn_terhutang,
                     'link_dokumen_pajak' => $dokumen->link_dokumen_pajak,
+                    // Akutansi fields
+                    'nomor_miro' => $dokumen->nomor_miro,
+                    'tanggal_miro' => $dokumen->tanggal_miro,
                 ]
             ]);
         }

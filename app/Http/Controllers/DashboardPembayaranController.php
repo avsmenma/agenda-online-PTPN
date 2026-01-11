@@ -24,7 +24,8 @@ use Illuminate\Pagination\Paginator;
 
 class DashboardPembayaranController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         // Get statistics
         $totalDokumen = Dokumen::count();
         $totalSelesai = Dokumen::where('status', 'selesai')->count();
@@ -50,12 +51,13 @@ class DashboardPembayaranController extends Controller
         return view('pembayaranNEW.dashboardPembayaran', $data);
     }
 
-    public function dokumens(Request $request){
+    public function dokumens(Request $request)
+    {
         // Get status filter and search from request
         $statusFilter = $request->get('status_filter');
         $search = $request->get('search');
         $perPage = $request->get('per_page', session('pembayaran_per_page', 10)); // Default 10, bisa diubah user
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int)$perPage : 10; // Validate per_page value
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10; // Validate per_page value
         session(['pembayaran_per_page' => $perPage]); // Save to session
 
         // Build query for pembayaran documents
@@ -67,13 +69,13 @@ class DashboardPembayaranController extends Controller
         $query = \App\Models\Dokumen::whereNotNull('nomor_agenda')
             ->where(function ($q) {
                 $q->where('current_handler', 'pembayaran')
-                  ->orWhere('status', 'sent_to_pembayaran')
-                  ->orWhere(function ($csvQ) {
-                      // Include CSV imported documents (exclusive to Pembayaran)
-                      $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                          $query->where('imported_from_csv', true);
-                      });
-                  });
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere(function ($csvQ) {
+                        // Include CSV imported documents (exclusive to Pembayaran)
+                        $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                            $query->where('imported_from_csv', true);
+                        });
+                    });
             });
 
         // Note: Status filter will be applied after computing computed_status
@@ -82,51 +84,55 @@ class DashboardPembayaranController extends Controller
         // Apply search filter if provided
         if ($search && trim($search) !== '') {
             $searchTerm = trim($search);
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('nomor_agenda', 'like', "%{$searchTerm}%")
-                  ->orWhere('nomor_spp', 'like', "%{$searchTerm}%")
-                  ->orWhere('uraian_spp', 'like', "%{$searchTerm}%")
-                  ->orWhere('dibayar_kepada', 'like', "%{$searchTerm}%")
-                  ->orWhere('nomor_mirror', 'like', "%{$searchTerm}%")
-                  ->orWhere('no_berita_acara', 'like', "%{$searchTerm}%")
-                  ->orWhere('no_spk', 'like', "%{$searchTerm}%");
-                
+                    ->orWhere('nomor_spp', 'like', "%{$searchTerm}%")
+                    ->orWhere('uraian_spp', 'like', "%{$searchTerm}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$searchTerm}%")
+                    ->orWhere('nomor_mirror', 'like', "%{$searchTerm}%")
+                    ->orWhere('no_berita_acara', 'like', "%{$searchTerm}%")
+                    ->orWhere('no_spk', 'like', "%{$searchTerm}%");
+
                 // Search in nilai_rupiah - handle various formats
                 $numericSearch = preg_replace('/[^0-9]/', '', $searchTerm);
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
-            })->orWhereHas('dibayarKepadas', function($q) use ($searchTerm) {
+            })->orWhereHas('dibayarKepadas', function ($q) use ($searchTerm) {
                 $q->where('nama_penerima', 'like', "%{$searchTerm}%");
             });
         }
 
         // Helper function to calculate computed status for pembayaran role
         // Status khusus role pembayaran: "belum_siap_bayar" atau "siap_bayar" atau "sudah_dibayar"
-        $getComputedStatus = function($doc) {
+        $getComputedStatus = function ($doc) {
             // Cek apakah dokumen sudah dibayar berdasarkan:
             // 1. Ada tanggal_dibayar, ATAU
             // 2. Ada link_bukti_pembayaran, ATAU
             // 3. status_pembayaran = 'sudah_dibayar' (berbagai format)
-            if ($doc->tanggal_dibayar || 
+            if (
+                $doc->tanggal_dibayar ||
                 $doc->link_bukti_pembayaran ||
                 strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
                 strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
-                $doc->status_pembayaran === 'sudah_dibayar') {
+                $doc->status_pembayaran === 'sudah_dibayar'
+            ) {
                 return 'sudah_dibayar';
             }
-            
+
             // Status "Siap Bayar": hanya setelah diproses akutansi atau dikirim ke pembayaran
             // Status dokumen yang dianggap "Siap Bayar":
             // - processed_by_akutansi (akutansi sudah selesai memproses)
             // - sent_to_pembayaran (sudah dikirim ke pembayaran)
             // - processed_by_pembayaran (sedang diproses pembayaran)
             // - current_handler = pembayaran
-            if (in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
-                ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))) {
+            if (
+                in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
+                ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))
+            ) {
                 return 'siap_bayar';
             }
-            
+
             // Default: "Belum Siap Bayar" untuk semua status lainnya
             // Termasuk: draft, menunggu_di_approve, sent_to_ibub, processed_by_ibub,
             // sent_to_perpajakan, processed_by_perpajakan, sent_to_akutansi, dll
@@ -151,16 +157,16 @@ class DashboardPembayaranController extends Controller
             ->get();
 
         // Add computed status to each document
-        $allDokumens->each(function($doc) use ($getComputedStatus) {
+        $allDokumens->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
         // Tampilkan semua dokumen (termasuk yang belum siap bayar) untuk real-time visibility
         // Dokumen muncul sejak awal dibuat, tidak perlu menunggu sent_to_pembayaran
-        
+
         // Apply status filter if provided (for filtering between belum_siap_bayar, siap_bayar, dan sudah_dibayar)
         if ($statusFilter && in_array($statusFilter, ['belum_siap_bayar', 'siap_bayar', 'sudah_dibayar'])) {
-            $allDokumens = $allDokumens->filter(function($doc) use ($statusFilter) {
+            $allDokumens = $allDokumens->filter(function ($doc) use ($statusFilter) {
                 return $doc->computed_status === $statusFilter;
             })->values(); // Re-index the collection
         }
@@ -169,11 +175,11 @@ class DashboardPembayaranController extends Controller
         $currentPage = Paginator::resolveCurrentPage('page');
         $total = $allDokumens->count();
         $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        
+
         // Get all query parameters except 'page' for pagination links
         $queryParams = request()->query();
         unset($queryParams['page']);
-        
+
         $dokumens = new LengthAwarePaginator(
             $currentItems,
             $total,
@@ -213,7 +219,7 @@ class DashboardPembayaranController extends Controller
         $selectedColumns = $request->get('columns', []);
 
         // Filter out 'status' and 'aksi' from selectedColumns if present
-        $selectedColumns = array_filter($selectedColumns, function($col) {
+        $selectedColumns = array_filter($selectedColumns, function ($col) {
             return $col !== 'status' && $col !== 'aksi';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
@@ -231,7 +237,7 @@ class DashboardPembayaranController extends Controller
                 'dibayar_kepada'
             ]);
             // Filter out 'status' and 'aksi' if they exist in session
-            $selectedColumns = array_filter($selectedColumns, function($col) {
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'status' && $col !== 'aksi';
             });
             $selectedColumns = array_values($selectedColumns);
@@ -255,7 +261,8 @@ class DashboardPembayaranController extends Controller
         return view('pembayaranNEW.dokumens.daftarPembayaran', $data);
     }
 
-    public function createDokumen(){
+    public function createDokumen()
+    {
         $data = array(
             "title" => "Tambah Pembayaran",
             "module" => "pembayaran",
@@ -267,12 +274,14 @@ class DashboardPembayaranController extends Controller
         return view('pembayaran.dokumens.tambahPembayaran', $data);
     }
 
-    public function storeDokumen(Request $request){
+    public function storeDokumen(Request $request)
+    {
         // Implementation for storing document
         return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil ditambahkan');
     }
 
-    public function editDokumen(Dokumen $dokumen){
+    public function editDokumen(Dokumen $dokumen)
+    {
         // Validate that user can edit this document
         if (!DokumenHelper::canEditDocument($dokumen, 'pembayaran')) {
             return redirect()->route('documents.pembayaran.index')
@@ -368,7 +377,8 @@ class DashboardPembayaranController extends Controller
         return view('pembayaranNEW.dokumens.editPembayaran', $data);
     }
 
-    public function updateDokumen(Request $request, Dokumen $dokumen){
+    public function updateDokumen(Request $request, Dokumen $dokumen)
+    {
         // Validate that user can edit this document
         if (!DokumenHelper::canEditDocument($dokumen, 'pembayaran')) {
             return redirect()->back()
@@ -449,16 +459,16 @@ class DashboardPembayaranController extends Controller
             $kategoriKriteria = null;
             $subKriteria = null;
             $itemSubKriteria = null;
-            
+
             try {
                 if ($request->has('kriteria_cf') && $request->kriteria_cf) {
                     $kategoriKriteria = \App\Models\KategoriKriteria::find($request->kriteria_cf);
                 }
-                
+
                 if ($request->has('sub_kriteria') && $request->sub_kriteria) {
                     $subKriteria = \App\Models\SubKriteria::find($request->sub_kriteria);
                 }
-                
+
                 if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
                     $itemSubKriteria = \App\Models\ItemSubKriteria::find($request->item_sub_kriteria);
                 }
@@ -674,7 +684,7 @@ class DashboardPembayaranController extends Controller
                 // Jika salah satu sudah diisi (baik yang baru atau yang sudah ada), update status menjadi 'sudah_dibayar'
                 $hasTanggal = !empty($updateData['tanggal_dibayar']) || !empty($dokumen->tanggal_dibayar);
                 $hasLink = !empty($updateData['link_bukti_pembayaran']) || !empty($dokumen->link_bukti_pembayaran);
-                
+
                 if ($hasTanggal || $hasLink) {
                     $updateData['status_pembayaran'] = 'sudah_dibayar';
                     $updateData['status'] = 'completed';
@@ -828,17 +838,20 @@ class DashboardPembayaranController extends Controller
         }
     }
 
-    public function destroyDokumen($id){
+    public function destroyDokumen($id)
+    {
         // Implementation for deleting document
         return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil dihapus');
     }
 
-    public function pengembalian(){
+    public function pengembalian()
+    {
         // Redirect ke daftar pembayaran karena tidak ada view pengembalian khusus
         return redirect()->route('documents.pembayaran.index')->with('info', 'Halaman pengembalian diarahkan ke daftar pembayaran');
     }
 
-    public function rekapanKeterlambatan(){
+    public function rekapanKeterlambatan()
+    {
         $data = array(
             "title" => "Rekap Keterlambatan",
             "module" => "pembayaran",
@@ -883,7 +896,7 @@ class DashboardPembayaranController extends Controller
             if (is_string($rawDate) && trim($rawDate) === '') {
                 return null; // Double check for whitespace
             }
-            
+
             if ($dataSource === 'input_ks') {
                 // For tu_tk_2023: Convert date to Excel serial number (double)
                 $date = Carbon::parse($rawDate);
@@ -891,13 +904,13 @@ class DashboardPembayaranController extends Controller
                 // Calculate days difference correctly (epoch -> date)
                 // If date is after epoch, result is positive
                 $daysDiff = $excelEpoch->diffInDays($date, false);
-                
+
                 // Validate: Excel serial should be positive for dates >= 1900-01-01
                 if ($daysDiff < 0) {
                     Log::warning('Excel serial number negatif: ' . $daysDiff . ' | Tanggal: ' . $date->format('Y-m-d'));
                     return null;
                 }
-                
+
                 return (double) $daysDiff;
             } else {
                 // For other tables: Format as YYYY-MM-DD (text)
@@ -974,18 +987,18 @@ class DashboardPembayaranController extends Controller
             DB::beginTransaction();
 
             $tuTk = $model::where($primaryKey, $request->kontrol)->firstOrFail();
-            
+
             // ============================================
             // Use Helper Methods for DRY Approach
             // ============================================
             $rawTanggal = $request->input('tanggal_bayar');
             $rawJumlah = $request->input('jumlah');
-            
+
             // STRICT NULL CHECK: Check if tanggal is truly empty BEFORE parsing
             // Multiple explicit checks to prevent parsing empty strings
             // DO NOT use empty() alone - be explicit with each check
             $isTanggalEmpty = false;
-            
+
             if ($rawTanggal === null) {
                 $isTanggalEmpty = true;
             } elseif ($rawTanggal === '') {
@@ -997,7 +1010,7 @@ class DashboardPembayaranController extends Controller
             } elseif (empty($rawTanggal) && $rawTanggal !== '0' && $rawTanggal !== 0) {
                 $isTanggalEmpty = true;
             }
-            
+
             // Parse tanggal using helper ONLY if not empty
             $tanggalValue = null;
             if (!$isTanggalEmpty) {
@@ -1009,25 +1022,25 @@ class DashboardPembayaranController extends Controller
                 }
             }
             // If empty, tanggalValue remains null (DO NOT PARSE)
-            
+
             // Sanitize nominal using helper
             $jumlah = $this->sanitizeNominal($rawJumlah);
-            
+
             // Validate jumlah after sanitization
             if ($jumlah <= 0) {
                 throw new \Exception('Nominal pembayaran harus lebih dari 0.');
             }
-            
+
             // ============================================
             // Create Payment Log (ONLY if tanggal is NOT empty)
             // ============================================
             $paymentLog = null;
-            
+
             // STRICT CHECK: Only create log if tanggal is NOT empty
             if (!$isTanggalEmpty && $tanggalValue !== null) {
                 try {
                     $tanggalBayarParsed = Carbon::parse($rawTanggal);
-                    
+
                     $paymentLog = PaymentLog::create([
                         'tu_tk_kontrol' => $request->kontrol,
                         'data_source' => $dataSource,
@@ -1060,14 +1073,14 @@ class DashboardPembayaranController extends Controller
             $tuTk->update($updateData);
 
             // Recalculate total payment
-            $totalDibayar = (float)($tuTk->JUMLAH1 ?? 0) 
-                          + (float)($tuTk->JUMLAH2 ?? 0)
-                          + (float)($tuTk->JUMLAH3 ?? 0)
-                          + (float)($tuTk->JUMLAH4 ?? 0)
-                          + (float)($tuTk->JUMLAH5 ?? 0)
-                          + (float)($tuTk->JUMLAH6 ?? 0);
+            $totalDibayar = (float) ($tuTk->JUMLAH1 ?? 0)
+                + (float) ($tuTk->JUMLAH2 ?? 0)
+                + (float) ($tuTk->JUMLAH3 ?? 0)
+                + (float) ($tuTk->JUMLAH4 ?? 0)
+                + (float) ($tuTk->JUMLAH5 ?? 0)
+                + (float) ($tuTk->JUMLAH6 ?? 0);
 
-            $belumDibayar = (float)($tuTk->NILAI ?? 0) - $totalDibayar;
+            $belumDibayar = (float) ($tuTk->NILAI ?? 0) - $totalDibayar;
 
             // ============================================
             // If fully paid, set completion date (STRICT NULL CHECK)
@@ -1133,7 +1146,7 @@ class DashboardPembayaranController extends Controller
 
         // Log untuk debugging
         Log::info('getPaymentLogsByAgenda called - agenda: ' . $agenda . ' | dataSource: ' . $dataSource);
-        
+
         // CRITICAL: Get raw values from database to avoid Laravel casting DOUBLE to datetime
         // Model TuTk has cast 'TANGGAL_BAYAR_I' => 'datetime' which converts DOUBLE to datetime
         // We need raw DOUBLE value (Excel serial number) to convert back to date
@@ -1141,12 +1154,12 @@ class DashboardPembayaranController extends Controller
         $rawData = DB::table($tableName)
             ->where('AGENDA', $agenda)
             ->first();
-        
+
         if (!$rawData) {
             Log::warning('TuTk raw record not found - agenda: ' . $agenda . ' | dataSource: ' . $dataSource);
             return response()->json([]);
         }
-        
+
         Log::info('TuTk record found - agenda: ' . $agenda . ' | KONTROL: ' . ($rawData->KONTROL ?? 'null') . ' | JUMLAH1: ' . ($rawData->JUMLAH1 ?? 'null') . ' | TANGGAL_BAYAR_I (raw DOUBLE): ' . ($rawData->TANGGAL_BAYAR_I ?? 'null'));
 
         // Get payment logs from PaymentLog table using AGENDA (which is unique)
@@ -1156,102 +1169,102 @@ class DashboardPembayaranController extends Controller
             ->orderBy('payment_sequence')
             ->orderBy('tanggal_bayar')
             ->get();
-        
+
         // If PaymentLog has data, use it (includes keterangan)
         if ($paymentLogs->isNotEmpty()) {
-            $paymentData = $paymentLogs->map(function($log) {
+            $paymentData = $paymentLogs->map(function ($log) {
                 return [
                     'payment_sequence' => $log->payment_sequence,
                     'tanggal_bayar' => $log->tanggal_bayar ? $log->tanggal_bayar->format('Y-m-d') : null,
-                    'jumlah' => (float)$log->jumlah,
+                    'jumlah' => (float) $log->jumlah,
                     'keterangan' => $log->keterangan,
                 ];
             })->toArray();
-            
+
             // Sort by payment_sequence to ensure correct order
-            usort($paymentData, function($a, $b) {
+            usort($paymentData, function ($a, $b) {
                 return $a['payment_sequence'] <=> $b['payment_sequence'];
             });
-            
+
             Log::info('Loaded payment logs from PaymentLog table for agenda: ' . $agenda . ' | Count: ' . count($paymentData));
             return response()->json($paymentData);
         }
-        
+
         // If PaymentLog is empty, get data directly from tu_tk table (no keterangan available)
         $paymentData = [];
-            
-            // Define stage mapping
-            $stages = [
-                1 => ['col_date' => 'TANGGAL_BAYAR_I', 'col_amount' => 'JUMLAH1'],
-                2 => ['col_date' => 'TANGGAL_BAYAR_II', 'col_amount' => 'JUMLAH2'],
-                3 => ['col_date' => 'TANGGAL_BAYAR_III', 'col_amount' => 'JUMLAH3'],
-                4 => ['col_date' => 'TANGGAL_BAYAR_IV', 'col_amount' => 'JUMLAH4'],
-            ];
 
-            foreach ($stages as $stageNum => $stage) {
-                // Use raw data to get actual DOUBLE value (not converted to datetime)
-                $tanggalBayar = $rawData->{$stage['col_date']} ?? null;
-                $jumlah = $rawData->{$stage['col_amount']} ?? 0;
-                
-                // Convert to float for comparison
-                $jumlahFloat = (float)$jumlah;
+        // Define stage mapping
+        $stages = [
+            1 => ['col_date' => 'TANGGAL_BAYAR_I', 'col_amount' => 'JUMLAH1'],
+            2 => ['col_date' => 'TANGGAL_BAYAR_II', 'col_amount' => 'JUMLAH2'],
+            3 => ['col_date' => 'TANGGAL_BAYAR_III', 'col_amount' => 'JUMLAH3'],
+            4 => ['col_date' => 'TANGGAL_BAYAR_IV', 'col_amount' => 'JUMLAH4'],
+        ];
 
-                // Only include if there's data (tanggal exists OR jumlah > 0)
-                // Note: We include even if only jumlah exists (tanggal might be null for partial payments)
-                if ($jumlahFloat > 0) {
-                    // Convert Excel serial number back to date format
-                    $tanggalFormatted = null;
-                    if ($tanggalBayar !== null) {
-                        // CRITICAL: $tanggalBayar from raw query is already DOUBLE (Excel serial number)
-                        // For input_ks, it's stored as DOUBLE (Excel serial)
-                        // For other data sources, it might be TEXT (date string)
-                        if ($dataSource === 'input_ks') {
-                            // Check if it's numeric (Excel serial number)
-                            if (is_numeric($tanggalBayar)) {
-                                try {
-                                    $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
-                                    // Convert Excel serial number (DOUBLE) back to date
-                                    $tanggalFormatted = $excelEpoch->copy()->addDays((int)$tanggalBayar)->format('Y-m-d');
-                                    Log::info('Converted Excel serial ' . $tanggalBayar . ' to date: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
-                                } catch (\Exception $e) {
-                                    Log::warning('Failed to convert Excel serial to date: ' . $tanggalBayar . ' | Error: ' . $e->getMessage() . ' | agenda: ' . $agenda);
-                                }
-                            } else {
-                                // If not numeric, might be already a date string (shouldn't happen for input_ks)
-                                Log::warning('TANGGAL_BAYAR_I is not numeric for input_ks: ' . var_export($tanggalBayar, true) . ' | agenda: ' . $agenda);
+        foreach ($stages as $stageNum => $stage) {
+            // Use raw data to get actual DOUBLE value (not converted to datetime)
+            $tanggalBayar = $rawData->{$stage['col_date']} ?? null;
+            $jumlah = $rawData->{$stage['col_amount']} ?? 0;
+
+            // Convert to float for comparison
+            $jumlahFloat = (float) $jumlah;
+
+            // Only include if there's data (tanggal exists OR jumlah > 0)
+            // Note: We include even if only jumlah exists (tanggal might be null for partial payments)
+            if ($jumlahFloat > 0) {
+                // Convert Excel serial number back to date format
+                $tanggalFormatted = null;
+                if ($tanggalBayar !== null) {
+                    // CRITICAL: $tanggalBayar from raw query is already DOUBLE (Excel serial number)
+                    // For input_ks, it's stored as DOUBLE (Excel serial)
+                    // For other data sources, it might be TEXT (date string)
+                    if ($dataSource === 'input_ks') {
+                        // Check if it's numeric (Excel serial number)
+                        if (is_numeric($tanggalBayar)) {
+                            try {
+                                $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
+                                // Convert Excel serial number (DOUBLE) back to date
+                                $tanggalFormatted = $excelEpoch->copy()->addDays((int) $tanggalBayar)->format('Y-m-d');
+                                Log::info('Converted Excel serial ' . $tanggalBayar . ' to date: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
+                            } catch (\Exception $e) {
+                                Log::warning('Failed to convert Excel serial to date: ' . $tanggalBayar . ' | Error: ' . $e->getMessage() . ' | agenda: ' . $agenda);
                             }
                         } else {
-                            // For other data sources (input_tan, input_vd, input_pupuk), dates are stored as TEXT
-                            if (is_string($tanggalBayar) && !empty(trim($tanggalBayar))) {
-                                // Extract date part if it's a datetime string
-                                $tanggalFormatted = explode(' ', trim($tanggalBayar))[0];
-                                Log::info('Using date string: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
-                            } elseif (is_numeric($tanggalBayar)) {
-                                // Some tables might also use Excel serial numbers
-                                try {
-                                    $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
-                                    $tanggalFormatted = $excelEpoch->copy()->addDays((int)$tanggalBayar)->format('Y-m-d');
-                                    Log::info('Converted Excel serial (non-input_ks): ' . $tanggalBayar . ' to date: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
-                                } catch (\Exception $e) {
-                                    Log::warning('Failed to convert Excel serial (non-input_ks): ' . $tanggalBayar . ' | Error: ' . $e->getMessage() . ' | agenda: ' . $agenda);
-                                }
+                            // If not numeric, might be already a date string (shouldn't happen for input_ks)
+                            Log::warning('TANGGAL_BAYAR_I is not numeric for input_ks: ' . var_export($tanggalBayar, true) . ' | agenda: ' . $agenda);
+                        }
+                    } else {
+                        // For other data sources (input_tan, input_vd, input_pupuk), dates are stored as TEXT
+                        if (is_string($tanggalBayar) && !empty(trim($tanggalBayar))) {
+                            // Extract date part if it's a datetime string
+                            $tanggalFormatted = explode(' ', trim($tanggalBayar))[0];
+                            Log::info('Using date string: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
+                        } elseif (is_numeric($tanggalBayar)) {
+                            // Some tables might also use Excel serial numbers
+                            try {
+                                $excelEpoch = Carbon::create(1899, 12, 30, 0, 0, 0);
+                                $tanggalFormatted = $excelEpoch->copy()->addDays((int) $tanggalBayar)->format('Y-m-d');
+                                Log::info('Converted Excel serial (non-input_ks): ' . $tanggalBayar . ' to date: ' . $tanggalFormatted . ' for stage ' . $stageNum . ' | agenda: ' . $agenda);
+                            } catch (\Exception $e) {
+                                Log::warning('Failed to convert Excel serial (non-input_ks): ' . $tanggalBayar . ' | Error: ' . $e->getMessage() . ' | agenda: ' . $agenda);
                             }
                         }
                     }
-
-                    $paymentData[] = [
-                        'payment_sequence' => $stageNum,
-                        'tanggal_bayar' => $tanggalFormatted,
-                        'jumlah' => $jumlahFloat,
-                        'keterangan' => null, // Keterangan tidak tersedia di tabel tu_tk
-                    ];
                 }
+
+                $paymentData[] = [
+                    'payment_sequence' => $stageNum,
+                    'tanggal_bayar' => $tanggalFormatted,
+                    'jumlah' => $jumlahFloat,
+                    'keterangan' => null, // Keterangan tidak tersedia di tabel tu_tk
+                ];
             }
-            
-            // Sort by payment_sequence to ensure correct order
-            usort($paymentData, function($a, $b) {
-                return $a['payment_sequence'] <=> $b['payment_sequence'];
-            });
+        }
+
+        // Sort by payment_sequence to ensure correct order
+        usort($paymentData, function ($a, $b) {
+            return $a['payment_sequence'] <=> $b['payment_sequence'];
+        });
 
         return response()->json($paymentData);
     }
@@ -1283,7 +1296,7 @@ class DashboardPembayaranController extends Controller
         }
 
         $tuTk = $model::where($primaryKey, $kontrol)->firstOrFail();
-        
+
         // Get position tracking history
         $positionTrackings = DocumentPositionTracking::where('tu_tk_kontrol', $kontrol)
             ->where('data_source', $dataSource)
@@ -1298,13 +1311,13 @@ class DashboardPembayaranController extends Controller
 
         // Combine and sort by date
         $timeline = collect();
-        
+
         foreach ($positionTrackings as $tracking) {
             $timeline->push([
                 'type' => 'position',
                 'date' => $tracking->changed_at,
                 'title' => 'Perubahan Posisi Dokumen',
-                'description' => $tracking->posisi_lama 
+                'description' => $tracking->posisi_lama
                     ? "Dari: {$tracking->posisi_lama} → Ke: {$tracking->posisi_baru}"
                     : "Posisi: {$tracking->posisi_baru}",
                 'changed_by' => $tracking->changed_by,
@@ -1414,7 +1427,7 @@ class DashboardPembayaranController extends Controller
     public function exportRekapanTuTk(Request $request)
     {
         $exportType = $request->get('export', 'excel'); // excel or pdf
-        
+
         // Get data source from request
         $dataSource = $request->get('data_source', 'input_ks');
         if (!in_array($dataSource, ['input_ks', 'input_pupuk', 'input_tan', 'input_vd'])) {
@@ -1431,7 +1444,7 @@ class DashboardPembayaranController extends Controller
         } else {
             $model = TuTk::class;
         }
-        
+
         // Get filters from request (same as rekapanTuTk method)
         $selectedYear = $request->get('tahun', date('Y'));
         $statusFilter = $request->get('status_pembayaran');
@@ -1471,8 +1484,8 @@ class DashboardPembayaranController extends Controller
 
         // Get all results (no pagination for export)
         $dokumens = $query->orderBy('UMUR_HUTANG_HARI', 'desc')
-                         ->orderBy('TANGGAL_MASUK_DOKUMEN', 'desc')
-                         ->get();
+            ->orderBy('TANGGAL_MASUK_DOKUMEN', 'desc')
+            ->get();
 
         if ($exportType === 'excel') {
             return $this->exportTuTkToExcel($dokumens, $dataSource);
@@ -1488,21 +1501,21 @@ class DashboardPembayaranController extends Controller
     {
         $sourceLabel = $dataSource === 'input_pupuk' ? 'Pupuk' : 'KS';
         $filename = 'Rekapan_TU_TK_' . $sourceLabel . '_' . date('Y-m-d_His') . '.csv';
-        
+
         $belumDibayarField = $dataSource === 'input_pupuk' ? 'BELUM_DIBAYAR_1' : 'BELUM_DIBAYAR1';
         $hasKategori = $dataSource === 'input_ks';
-        
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($dokumens, $belumDibayarField, $hasKategori) {
+        $callback = function () use ($dokumens, $belumDibayarField, $hasKategori) {
             $file = fopen('php://output', 'w');
-            
+
             // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
             // Header row
             $headerRow = [
                 'No',
@@ -1511,11 +1524,11 @@ class DashboardPembayaranController extends Controller
                 'Tgl SPP',
                 'Vendor',
             ];
-            
+
             if ($hasKategori) {
                 $headerRow[] = 'Kategori';
             }
-            
+
             $headerRow = array_merge($headerRow, [
                 'Nilai',
                 'Dibayar',
@@ -1525,14 +1538,14 @@ class DashboardPembayaranController extends Controller
                 'Umur Hutang (Hari)',
                 'Posisi Dokumen',
             ]);
-            
+
             fputcsv($file, $headerRow, ';');
 
             // Data rows
             foreach ($dokumens as $index => $dokumen) {
                 $status = $dokumen->status_pembayaran ?? 'belum_lunas';
                 $persentase = $dokumen->persentase_pembayaran ?? 0;
-                
+
                 $row = [
                     $index + 1,
                     $dokumen->AGENDA ?? '-',
@@ -1540,13 +1553,13 @@ class DashboardPembayaranController extends Controller
                     $dokumen->TGL_SPP ?? '-',
                     $dokumen->VENDOR ?? '-',
                 ];
-                
+
                 if ($hasKategori) {
                     $row[] = $dokumen->KATEGORI ?? '-';
                 }
-                
+
                 $belumDibayarValue = $dokumen->{$belumDibayarField} ?? 0;
-                
+
                 $row = array_merge($row, [
                     number_format($dokumen->NILAI ?? 0, 0, ',', '.'),
                     number_format($dokumen->JUMLAH_DIBAYAR ?? 0, 0, ',', '.'),
@@ -1556,7 +1569,7 @@ class DashboardPembayaranController extends Controller
                     $dokumen->UMUR_HUTANG_HARI ?? 0,
                     $dokumen->POSISI_DOKUMEN ?? '-',
                 ]);
-                
+
                 fputcsv($file, $row, ';');
             }
 
@@ -1573,7 +1586,7 @@ class DashboardPembayaranController extends Controller
     {
         $sourceLabel = $dataSource === 'input_pupuk' ? 'Pupuk' : 'KS';
         $belumDibayarField = $dataSource === 'input_pupuk' ? 'BELUM_DIBAYAR_1' : 'BELUM_DIBAYAR1';
-        
+
         $data = [
             'title' => 'Rekapan TU/TK - ' . $sourceLabel,
             'dokumens' => $dokumens,
@@ -1628,7 +1641,7 @@ class DashboardPembayaranController extends Controller
         // CRITICAL FIX: Validate AGENDA exists (not KONTROL)
         // Frontend sends agenda in 'kontrol' field
         $agenda = $request->input('kontrol');
-        
+
         if (!$agenda) {
             return response()->json([
                 'success' => false,
@@ -1638,7 +1651,7 @@ class DashboardPembayaranController extends Controller
 
         // Check if document exists by AGENDA
         $tuTkExists = $model::where('AGENDA', $agenda)->exists();
-        
+
         if (!$tuTkExists) {
             return response()->json([
                 'success' => false,
@@ -1677,7 +1690,7 @@ class DashboardPembayaranController extends Controller
             // CRITICAL FIX: Use AGENDA to find document (not KONTROL)
             $agenda = $request->input('kontrol'); // Frontend sends agenda in 'kontrol' field
             $tuTk = $model::where('AGENDA', $agenda)->firstOrFail();
-            
+
             // Get actual kontrol for payment logs
             $actualKontrol = $dataSource === 'input_ks' ? ($tuTk->KONTROL ?? null) : ($tuTk->EXTRA_COL_0 ?? null);
             Log::info('Found TuTk for batch payment - agenda: ' . $agenda . ' | kontrol: ' . $actualKontrol);
@@ -1729,50 +1742,60 @@ class DashboardPembayaranController extends Controller
                 $rawDate = $request->input($stage['input_date']);
                 $rawAmount = $request->input($stage['input_amount']);
                 $rawKeterangan = $request->input('keterangan_' . $stageNum, null);
-                
+
                 // CRITICAL: Normalize null values from JSON
                 // JSON null becomes PHP null, but empty string might also come through
                 // Convert empty string, 'null', or actual null to null
                 if ($rawDate === null || $rawDate === '' || $rawDate === 'null' || (is_string($rawDate) && trim($rawDate) === '')) {
                     $rawDate = null;
                 }
-                
+
                 // DEBUG: Log raw input values
                 Log::info('Stage ' . $stageNum . ' - Raw date input: ' . var_export($rawDate, true) . ' | Type: ' . gettype($rawDate) . ' | Is null: ' . ($rawDate === null ? 'YES' : 'NO'));
 
                 // B. STRICT NULL CHECK: Validate Tanggal (Anti 1969 Error)
                 // CRITICAL: Multiple explicit checks to prevent parsing empty strings
                 // DO NOT parse if empty - this prevents 1969-12-31 error
-                
+
                 // Helper function to check if date is empty
-                $isTanggalEmpty = function($date) {
+                $isTanggalEmpty = function ($date) {
                     // Check 1: null (actual null)
-                    if ($date === null) return true;
-                    
+                    if ($date === null)
+                        return true;
+
                     // Check 2: empty string
-                    if ($date === '') return true;
-                    
+                    if ($date === '')
+                        return true;
+
                     // Check 3: string "null" (from JSON null)
-                    if ($date === 'null' || strtolower($date) === 'null') return true;
-                    
+                    if ($date === 'null' || strtolower($date) === 'null')
+                        return true;
+
                     // Check 4: if string, check trimmed
                     if (is_string($date)) {
                         $trimmed = trim($date);
-                        if ($trimmed === '') return true;
-                        if (strtolower($trimmed) === 'null') return true;
-                        if (strtolower($trimmed) === 'mm/dd/yyyy') return true;
-                        if (strtolower($trimmed) === 'dd/mm/yyyy') return true;
-                        if (strtolower($trimmed) === 'yyyy-mm-dd') return true;
+                        if ($trimmed === '')
+                            return true;
+                        if (strtolower($trimmed) === 'null')
+                            return true;
+                        if (strtolower($trimmed) === 'mm/dd/yyyy')
+                            return true;
+                        if (strtolower($trimmed) === 'dd/mm/yyyy')
+                            return true;
+                        if (strtolower($trimmed) === 'yyyy-mm-dd')
+                            return true;
                         // Check if string is too short to be a valid date
-                        if (strlen($trimmed) < 8) return true;
+                        if (strlen($trimmed) < 8)
+                            return true;
                     }
-                    
+
                     // Check 5: empty() but allow '0' and 0
-                    if (empty($date) && $date !== '0' && $date !== 0 && $date !== false) return true;
-                    
+                    if (empty($date) && $date !== '0' && $date !== 0 && $date !== false)
+                        return true;
+
                     return false;
                 };
-                
+
                 // CRITICAL: DO NOT parse empty strings - Force NULL if empty
                 if ($isTanggalEmpty($rawDate)) {
                     $updateData[$stage['col_date']] = null; // FORCE NULL IF EMPTY - DO NOT PARSE
@@ -1782,7 +1805,7 @@ class DashboardPembayaranController extends Controller
                     try {
                         // Additional validation: Double check if string is not just whitespace
                         $trimmedDate = is_string($rawDate) ? trim($rawDate) : $rawDate;
-                        
+
                         // Final check before parsing
                         if ($isTanggalEmpty($trimmedDate)) {
                             $updateData[$stage['col_date']] = null;
@@ -1797,11 +1820,11 @@ class DashboardPembayaranController extends Controller
                                 $updateData[$stage['col_date']] = null;
                             } else {
                                 // Validate date format first (more lenient regex)
-                                $isValidFormat = preg_match('/^\d{4}-\d{2}-\d{2}$/', $finalCheck) || 
-                                                preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $finalCheck) ||
-                                                preg_match('/^\d{2}-\d{2}-\d{4}$/', $finalCheck) ||
-                                                preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $finalCheck);
-                                
+                                $isValidFormat = preg_match('/^\d{4}-\d{2}-\d{2}$/', $finalCheck) ||
+                                    preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $finalCheck) ||
+                                    preg_match('/^\d{2}-\d{2}-\d{4}$/', $finalCheck) ||
+                                    preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $finalCheck);
+
                                 if (!$isValidFormat) {
                                     // If doesn't match common date formats, might be invalid
                                     Log::warning('Tanggal format tidak valid untuk stage ' . $stageNum . ': ' . var_export($finalCheck, true));
@@ -1817,12 +1840,14 @@ class DashboardPembayaranController extends Controller
                                             // FINAL CHECK: Ensure $finalCheck is not empty before parsing
                                             // This is the LAST line of defense before Carbon::parse()
                                             $finalTrimmed = is_string($finalCheck) ? trim($finalCheck) : $finalCheck;
-                                            
-                                            if (empty($finalTrimmed) || 
-                                                $finalTrimmed === '' || 
-                                                $finalTrimmed === 'null' || 
+
+                                            if (
+                                                empty($finalTrimmed) ||
+                                                $finalTrimmed === '' ||
+                                                $finalTrimmed === 'null' ||
                                                 strlen($finalTrimmed) < 8 ||
-                                                $isTanggalEmpty($finalTrimmed)) {
+                                                $isTanggalEmpty($finalTrimmed)
+                                            ) {
                                                 // Still empty after all checks - set to null
                                                 $updateData[$stage['col_date']] = null;
                                                 Log::warning('FINAL CHECK: Tanggal masih kosong untuk stage ' . $stageNum . ' setelah semua validasi. Value: ' . var_export($finalCheck, true));
@@ -1844,7 +1869,7 @@ class DashboardPembayaranController extends Controller
                                                             // If date is after epoch, result is positive
                                                             // If date is before epoch, result is negative
                                                             $daysDiff = $excelEpoch->diffInDays($date, false);
-                                                            
+
                                                             // Validate: Excel serial should be positive for dates >= 1900-01-01
                                                             // Dates before 1900 will be negative, which MySQL might interpret as epoch
                                                             if ($daysDiff < 0) {
@@ -1853,7 +1878,7 @@ class DashboardPembayaranController extends Controller
                                                             } else {
                                                                 $updateData[$stage['col_date']] = (double) $daysDiff;
                                                                 Log::info('✓ Parsed tanggal for stage ' . $stageNum . ': ' . $finalTrimmed . ' -> Excel serial: ' . $daysDiff);
-                                                                
+
                                                                 // SKIP PaymentLog creation because:
                                                                 // 1. PaymentLog uses tu_tk_kontrol (KONTROL) which is not unique (all = 1)
                                                                 // 2. All documents have KONTROL = 1, so payment logs would be shared across all documents
@@ -1871,7 +1896,7 @@ class DashboardPembayaranController extends Controller
                                                         } else {
                                                             $updateData[$stage['col_date']] = $date->format('Y-m-d');
                                                             Log::info('✓ Parsed tanggal for stage ' . $stageNum . ': ' . $finalTrimmed . ' -> ' . $updateData[$stage['col_date']]);
-                                                            
+
                                                             // SKIP PaymentLog creation because:
                                                             // 1. PaymentLog uses tu_tk_kontrol (KONTROL) which is not unique (all = 1)
                                                             // 2. All documents have KONTROL = 1, so payment logs would be shared across all documents
@@ -1915,7 +1940,7 @@ class DashboardPembayaranController extends Controller
             // Build SET clause manually to ensure DOUBLE values are not converted
             $setClauses = [];
             $bindings = [];
-            
+
             foreach ($updateData as $column => $value) {
                 if ($value === null) {
                     $setClauses[] = "`{$column}` = NULL";
@@ -1931,14 +1956,14 @@ class DashboardPembayaranController extends Controller
                     }
                 }
             }
-            
+
             if (!empty($setClauses)) {
                 // CRITICAL FIX: Use AGENDA in WHERE clause (not KONTROL)
                 $bindings[] = $agenda; // Use agenda for WHERE clause
                 $sql = "UPDATE `{$tableName}` SET " . implode(', ', $setClauses) . " WHERE `AGENDA` = ?";
                 DB::statement($sql, $bindings);
                 Log::info('Updated tu_tk record via raw SQL. AGENDA: ' . $agenda . ' | Columns updated: ' . implode(', ', array_keys($updateData)));
-                
+
                 // Refresh model to get updated data
                 $tuTk->refresh();
             }
@@ -1952,21 +1977,21 @@ class DashboardPembayaranController extends Controller
             PaymentLog::where('tu_tk_agenda', $agenda)
                 ->where('data_source', $dataSource)
                 ->delete();
-            
+
             // Create payment logs array
             $paymentLogs = [];
-            
+
             // Get actual kontrol for backward compatibility
             $actualKontrol = $dataSource === 'input_ks' ? ($tuTk->KONTROL ?? null) : ($tuTk->EXTRA_COL_0 ?? null);
-            
+
             // Loop through stages to create payment logs
             foreach ($stages as $stageNum => $stage) {
                 $rawAmount = $request->input($stage['input_amount'], 0);
                 $rawTanggal = $request->input('tanggal_bayar_' . $stageNum, null);
                 $rawKeterangan = $request->input('keterangan_' . $stageNum, null);
-                
+
                 $cleanAmount = $this->sanitizeNominal($rawAmount);
-                
+
                 // Only create log if amount > 0
                 if ($cleanAmount > 0) {
                     $tanggalBayar = null;
@@ -1977,7 +2002,7 @@ class DashboardPembayaranController extends Controller
                             Log::warning('Failed to parse tanggal_bayar_' . $stageNum . ': ' . $rawTanggal);
                         }
                     }
-                    
+
                     $paymentLogs[] = [
                         'tu_tk_kontrol' => $actualKontrol, // For backward compatibility
                         'tu_tk_agenda' => $agenda, // CRITICAL: Use AGENDA (unique identifier)
@@ -1992,7 +2017,7 @@ class DashboardPembayaranController extends Controller
                     ];
                 }
             }
-            
+
             // Insert payment logs if any
             if (!empty($paymentLogs)) {
                 PaymentLog::insert($paymentLogs);
@@ -2003,14 +2028,14 @@ class DashboardPembayaranController extends Controller
             // Recalculate Total Payment
             // ============================================
             $tuTk->refresh(); // Reload from database
-            $totalDibayar = (float)($tuTk->JUMLAH1 ?? 0) 
-                          + (float)($tuTk->JUMLAH2 ?? 0)
-                          + (float)($tuTk->JUMLAH3 ?? 0)
-                          + (float)($tuTk->JUMLAH4 ?? 0)
-                          + (float)($tuTk->JUMLAH5 ?? 0)
-                          + (float)($tuTk->JUMLAH6 ?? 0);
+            $totalDibayar = (float) ($tuTk->JUMLAH1 ?? 0)
+                + (float) ($tuTk->JUMLAH2 ?? 0)
+                + (float) ($tuTk->JUMLAH3 ?? 0)
+                + (float) ($tuTk->JUMLAH4 ?? 0)
+                + (float) ($tuTk->JUMLAH5 ?? 0)
+                + (float) ($tuTk->JUMLAH6 ?? 0);
 
-            $belumDibayar = (float)($tuTk->NILAI ?? 0) - $totalDibayar;
+            $belumDibayar = (float) ($tuTk->NILAI ?? 0) - $totalDibayar;
 
             // Update JUMLAH_DIBAYAR and BELUM_DIBAYAR
             $tuTk->update([
@@ -2035,7 +2060,7 @@ class DashboardPembayaranController extends Controller
                         }
                     }
                 }
-                
+
                 if ($latestTanggal !== null) {
                     $tuTk->update([
                         'TANGGAL_BAYAR_RAMPUNG' => $latestTanggal,
@@ -2095,21 +2120,21 @@ class DashboardPembayaranController extends Controller
                 $query->whereIn('current_handler', $belumSiapHandlers);
             } elseif ($statusPembayaran === 'siap_dibayar') {
                 // Siap dibayar = sudah di pembayaran tapi belum dibayar
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('current_handler', 'pembayaran')
-                      ->orWhere('status', 'sent_to_pembayaran');
-                })->where(function($q) {
+                        ->orWhere('status', 'sent_to_pembayaran');
+                })->where(function ($q) {
                     $q->whereNull('status_pembayaran')
-                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                      ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                      ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
                 });
             } elseif ($statusPembayaran === 'sudah_dibayar') {
                 // Sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('status_pembayaran', 'sudah_dibayar')
-                      ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                      ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
                 });
             }
         }
@@ -2123,11 +2148,11 @@ class DashboardPembayaranController extends Controller
         }
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', "%{$search}%")
-                  ->orWhere('nomor_spp', 'like', "%{$search}%")
-                  ->orWhere('uraian_spp', 'like', "%{$search}%")
-                  ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$search}%");
             });
         }
 
@@ -2166,33 +2191,35 @@ class DashboardPembayaranController extends Controller
             // Filter by Kebun (check both kebun and nama_kebuns fields)
             $filterKebun = request('filter_jenis_kebuns_column');
             if ($filterKebun) {
-                $query->where(function($q) use ($filterKebun) {
+                $query->where(function ($q) use ($filterKebun) {
                     $q->where('kebun', $filterKebun)
-                      ->orWhere('nama_kebuns', $filterKebun);
+                        ->orWhere('nama_kebuns', $filterKebun);
                 });
             }
         }
 
         // Helper function to calculate computed status
         // Di halaman pembayaran, hanya ada 2 status: siap_dibayar dan sudah_dibayar
-        $getComputedStatus = function($doc) use ($belumSiapHandlers) {
+        $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
             // Cek apakah dokumen sudah dibayar berdasarkan:
             // 1. Ada tanggal_dibayar, ATAU
             // 2. Ada link_bukti_pembayaran, ATAU
             // 3. status_pembayaran = 'sudah_dibayar' (berbagai format)
-            if ($doc->tanggal_dibayar || 
+            if (
+                $doc->tanggal_dibayar ||
                 $doc->link_bukti_pembayaran ||
                 strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
                 strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
-                $doc->status_pembayaran === 'sudah_dibayar') {
+                $doc->status_pembayaran === 'sudah_dibayar'
+            ) {
                 return 'sudah_dibayar';
             }
-            
+
             // Jika sudah di pembayaran atau sudah dikirim ke pembayaran
             if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
                 return 'siap_dibayar';
             }
-            
+
             // Jika masih di handler lain (akutansi, perpajakan, ibuA, ibuB)
             // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
             return 'belum_siap_dibayar';
@@ -2204,28 +2231,28 @@ class DashboardPembayaranController extends Controller
             $allDocsForRekapan = $query->orderBy('dibayar_kepada')->get();
 
             // Add computed status to each document
-            $allDocsForRekapan->each(function($doc) use ($getComputedStatus) {
+            $allDocsForRekapan->each(function ($doc) use ($getComputedStatus) {
                 $doc->computed_status = $getComputedStatus($doc);
             });
 
             // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
             // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
-            $allDocsForRekapan = $allDocsForRekapan->filter(function($doc) {
+            $allDocsForRekapan = $allDocsForRekapan->filter(function ($doc) {
                 return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
             })->values();
 
             // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
             if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
-                $allDocsForRekapan = $allDocsForRekapan->filter(function($doc) use ($statusPembayaran) {
+                $allDocsForRekapan = $allDocsForRekapan->filter(function ($doc) use ($statusPembayaran) {
                     return $doc->computed_status === $statusPembayaran;
                 })->values();
             }
 
             // Group by vendor - dokumen tanpa vendor akan dikelompokkan sebagai null
-            $rekapanByVendor = $allDocsForRekapan->groupBy(function($doc) {
+            $rekapanByVendor = $allDocsForRekapan->groupBy(function ($doc) {
                 // Jika dibayar_kepada kosong atau null, gunakan null sebagai key
                 return $doc->dibayar_kepada ?: null;
-            })->map(function($docs, $vendor) {
+            })->map(function ($docs, $vendor) {
                 return [
                     'vendor' => $vendor ?: 'Tidak Diketahui',
                     'documents' => $docs,
@@ -2235,7 +2262,7 @@ class DashboardPembayaranController extends Controller
                     'total_sudah_dibayar' => $docs->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
                     'count' => $docs->count(),
                 ];
-            })->filter(function($vendorData) {
+            })->filter(function ($vendorData) {
                 // Filter out "Tidak Diketahui" group jika user tidak ingin melihatnya
                 // Untuk sementara kita biarkan, tapi bisa diubah nanti jika diperlukan
                 return true;
@@ -2246,19 +2273,19 @@ class DashboardPembayaranController extends Controller
         $allDokumens = $query->orderBy('created_at', 'desc')->get();
 
         // Add computed status to each document
-        $allDokumens->each(function($doc) use ($getComputedStatus) {
+        $allDokumens->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
         // Filter: Hanya tampilkan dokumen dengan status 'siap_dibayar' atau 'sudah_dibayar'
         // Status 'belum_siap_dibayar' tidak muncul di halaman pembayaran
-        $allDokumens = $allDokumens->filter(function($doc) {
+        $allDokumens = $allDokumens->filter(function ($doc) {
             return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
         })->values();
 
         // Apply additional status filter if provided (for filtering between siap_dibayar and sudah_dibayar)
         if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
-            $allDokumens = $allDokumens->filter(function($doc) use ($statusPembayaran) {
+            $allDokumens = $allDokumens->filter(function ($doc) use ($statusPembayaran) {
                 return $doc->computed_status === $statusPembayaran;
             })->values();
         }
@@ -2268,7 +2295,7 @@ class DashboardPembayaranController extends Controller
         $perPage = 15;
         $total = $allDokumens->count();
         $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        
+
         $dokumens = new LengthAwarePaginator(
             $currentItems,
             $total,
@@ -2294,7 +2321,7 @@ class DashboardPembayaranController extends Controller
         $allDokumensData = $allDokumensQuery->get();
 
         // Add computed status to all documents for statistics
-        $allDokumensData->each(function($doc) use ($getComputedStatus) {
+        $allDokumensData->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
@@ -2321,7 +2348,7 @@ class DashboardPembayaranController extends Controller
             ->pluck('year');
 
         // Helper function to create a new query with same filters
-        $createFilteredQuery = function() use ($year, $month) {
+        $createFilteredQuery = function () use ($year, $month) {
             $q = Dokumen::whereNotNull('nomor_agenda');
             if ($year) {
                 $q->whereYear('created_at', $year);
@@ -2379,14 +2406,14 @@ class DashboardPembayaranController extends Controller
             ->where('kebun', '!=', '')
             ->distinct()
             ->pluck('kebun', 'kebun');
-        
+
         // Then get from nama_kebuns field
         $kebunFromNamaKebuns = $createFilteredQuery($year, $month)
             ->whereNotNull('nama_kebuns')
             ->where('nama_kebuns', '!=', '')
             ->distinct()
             ->pluck('nama_kebuns', 'nama_kebuns');
-        
+
         // Merge both collections and remove duplicates
         $availableKebuns = $kebunFromKebun->merge($kebunFromNamaKebuns)->unique()->sortKeys();
 
@@ -2470,21 +2497,21 @@ class DashboardPembayaranController extends Controller
             if ($statusPembayaran === 'belum_siap_dibayar') {
                 $query->whereIn('current_handler', $belumSiapHandlers);
             } elseif ($statusPembayaran === 'siap_dibayar') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('current_handler', 'pembayaran')
-                      ->orWhere('status', 'sent_to_pembayaran');
-                })->where(function($q) {
+                        ->orWhere('status', 'sent_to_pembayaran');
+                })->where(function ($q) {
                     $q->whereNull('status_pembayaran')
-                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                      ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                      ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
                 });
             } elseif ($statusPembayaran === 'sudah_dibayar') {
                 // Sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('status_pembayaran', 'sudah_dibayar')
-                      ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                      ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
                 });
             }
         }
@@ -2498,11 +2525,11 @@ class DashboardPembayaranController extends Controller
         }
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', "%{$search}%")
-                  ->orWhere('nomor_spp', 'like', "%{$search}%")
-                  ->orWhere('uraian_spp', 'like', "%{$search}%")
-                  ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$search}%");
             });
         }
 
@@ -2541,20 +2568,22 @@ class DashboardPembayaranController extends Controller
             // Filter by Kebun (check both kebun and nama_kebuns fields)
             $filterKebun = $request->get('filter_jenis_kebuns_column');
             if ($filterKebun) {
-                $query->where(function($q) use ($filterKebun) {
+                $query->where(function ($q) use ($filterKebun) {
                     $q->where('kebun', $filterKebun)
-                      ->orWhere('nama_kebuns', $filterKebun);
+                        ->orWhere('nama_kebuns', $filterKebun);
                 });
             }
         }
 
         // Helper function to calculate computed status
-        $getComputedStatus = function($doc) use ($belumSiapHandlers) {
+        $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
             // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
             $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
-            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
+            if (
+                $statusPembayaran === 'SUDAH_DIBAYAR' ||
                 $statusPembayaran === 'SUDAH DIBAYAR' ||
-                $doc->status_pembayaran === 'sudah_dibayar') {
+                $doc->status_pembayaran === 'sudah_dibayar'
+            ) {
                 return 'sudah_dibayar';
             }
             if (in_array($doc->current_handler, $belumSiapHandlers)) {
@@ -2579,7 +2608,7 @@ class DashboardPembayaranController extends Controller
         }
 
         // Add computed status to each document
-        $dokumens->each(function($doc) use ($getComputedStatus) {
+        $dokumens->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
@@ -2611,7 +2640,7 @@ class DashboardPembayaranController extends Controller
 
         // Default columns for normal mode
         $defaultColumns = ['nomor_agenda', 'nomor_spp', 'sent_to_pembayaran_at', 'dibayar_kepada', 'nilai_rupiah', 'computed_status', 'tanggal_dibayar'];
-        
+
         // For rekapan_table mode, use selected columns or default
         if ($mode === 'rekapan_table' && !empty($selectedColumns)) {
             $columnsToExport = $selectedColumns;
@@ -2632,7 +2661,7 @@ class DashboardPembayaranController extends Controller
     private function exportToExcel($dokumens, $columns, $availableColumns, $mode, $statusFilter, $year, $month, $search)
     {
         $filename = 'Rekapan_Pembayaran_' . date('Y-m-d_His') . '.csv';
-        
+
         // Header row
         $headers = [];
         foreach ($columns as $col) {
@@ -2646,15 +2675,15 @@ class DashboardPembayaranController extends Controller
                 $headers[] = $availableColumns[$col] ?? ucfirst(str_replace('_', ' ', $col));
             }
         }
-        
+
         // Build CSV content
         $csvContent = '';
         // Add BOM for UTF-8 (so Excel opens it correctly)
-        $csvContent .= chr(0xEF).chr(0xBB).chr(0xBF);
-        
+        $csvContent .= chr(0xEF) . chr(0xBB) . chr(0xBF);
+
         // Add header row
         $csvContent .= $this->arrayToCsv($headers) . "\n";
-        
+
         // Add data rows
         foreach ($dokumens as $dokumen) {
             $row = [];
@@ -2664,14 +2693,14 @@ class DashboardPembayaranController extends Controller
             }
             $csvContent .= $this->arrayToCsv($row) . "\n";
         }
-        
+
         return Response::make($csvContent, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Cache-Control' => 'max-age=0',
         ]);
     }
-    
+
     /**
      * Convert array to CSV row
      */
@@ -2693,13 +2722,15 @@ class DashboardPembayaranController extends Controller
         // Handler yang dianggap "belum siap dibayar"
         // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
         $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
-        
+
         // Helper function to calculate computed status
-        $getComputedStatus = function($doc) use ($belumSiapHandlers) {
+        $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
             $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
-            if ($statusPembayaran === 'SUDAH_DIBAYAR' || 
+            if (
+                $statusPembayaran === 'SUDAH_DIBAYAR' ||
                 $statusPembayaran === 'SUDAH DIBAYAR' ||
-                $doc->status_pembayaran === 'sudah_dibayar') {
+                $doc->status_pembayaran === 'sudah_dibayar'
+            ) {
                 return 'sudah_dibayar';
             }
             if (in_array($doc->current_handler, $belumSiapHandlers)) {
@@ -2712,7 +2743,7 @@ class DashboardPembayaranController extends Controller
         };
 
         // Add computed status to all documents first
-        $dokumens->each(function($doc) use ($getComputedStatus) {
+        $dokumens->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
 
@@ -2725,9 +2756,9 @@ class DashboardPembayaranController extends Controller
 
         if ($mode === 'rekapan_table' && !empty($columns)) {
             // Group by vendor - same logic as rekapan() method
-            $rekapanByVendor = $dokumens->groupBy(function($doc) {
+            $rekapanByVendor = $dokumens->groupBy(function ($doc) {
                 return $doc->dibayar_kepada ?: null;
-            })->map(function($docs, $vendor) {
+            })->map(function ($docs, $vendor) {
                 return [
                     'vendor' => $vendor ?: 'Tidak Diketahui',
                     'documents' => $docs,
@@ -2737,7 +2768,7 @@ class DashboardPembayaranController extends Controller
                     'total_sudah_dibayar' => $docs->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
                     'count' => $docs->count(),
                 ];
-            })->sortBy(function($vendorData) {
+            })->sortBy(function ($vendorData) {
                 // Sort vendors: "Tidak Diketahui" should come last, others alphabetically
                 if ($vendorData['vendor'] === 'Tidak Diketahui') {
                     return 'zzz_' . $vendorData['vendor'];
@@ -2763,7 +2794,7 @@ class DashboardPembayaranController extends Controller
         // Find the index of first value column
         $valueColumns = ['nilai_rupiah', 'nilai_belum_siap_bayar', 'nilai_siap_bayar', 'nilai_sudah_dibayar'];
         $firstValueIndex = null;
-        foreach($columns as $idx => $col) {
+        foreach ($columns as $idx => $col) {
             if (in_array($col, $valueColumns)) {
                 $firstValueIndex = $idx;
                 break;
@@ -2815,8 +2846,10 @@ class DashboardPembayaranController extends Controller
                 return 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.');
             case 'computed_status':
                 $status = $dokumen->computed_status ?? 'belum_siap_dibayar';
-                if ($status === 'sudah_dibayar') return 'Sudah Dibayar';
-                if ($status === 'siap_dibayar') return 'Siap Dibayar';
+                if ($status === 'sudah_dibayar')
+                    return 'Sudah Dibayar';
+                if ($status === 'siap_dibayar')
+                    return 'Siap Dibayar';
                 return 'Belum Siap Dibayar';
             case 'tanggal_dibayar':
                 return $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : '-';
@@ -2881,15 +2914,15 @@ class DashboardPembayaranController extends Controller
                 }
                 return '-';
             case 'nilai_belum_siap_bayar':
-                return $dokumen->computed_status === 'belum_siap_dibayar' 
+                return $dokumen->computed_status === 'belum_siap_dibayar'
                     ? 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.')
                     : '-';
             case 'nilai_siap_bayar':
-                return $dokumen->computed_status === 'siap_dibayar' 
+                return $dokumen->computed_status === 'siap_dibayar'
                     ? 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.')
                     : '-';
             case 'nilai_sudah_dibayar':
-                return $dokumen->computed_status === 'sudah_dibayar' 
+                return $dokumen->computed_status === 'sudah_dibayar'
                     ? 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.')
                     : '-';
             default:
@@ -2935,24 +2968,24 @@ class DashboardPembayaranController extends Controller
             // Allow access if document is handled by pembayaran or sent to pembayaran
             $allowedHandlers = ['pembayaran', 'akutansi', 'perpajakan', 'ibuB', 'ibub'];
             $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar', 'menunggu_di_approve', 'pending_approval_pembayaran'];
-            
+
             // Check if document was sent to pembayaran role (using dokumen_role_data)
             $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
             $isSentToPembayaran = $pembayaranRoleData && $pembayaranRoleData->received_at !== null;
-            
+
             // Check if document status is for pembayaran approval
             $pembayaranStatus = $dokumen->getStatusForRole('pembayaran');
             $isPendingInPembayaran = $pembayaranStatus && in_array($pembayaranStatus->status, ['pending', 'approved', 'rejected']);
-            
+
             // Allow access if:
             // 1. Document handler is in allowed list, OR
             // 2. Document status is in allowed list, OR
             // 3. Document was sent to pembayaran (has role_data with received_at), OR
             // 4. Document has pending status in pembayaran inbox
-            $hasAccess = in_array(strtolower($dokumen->current_handler ?? ''), array_map('strtolower', $allowedHandlers)) || 
-                        in_array($dokumen->status, $allowedStatuses) ||
-                        $isSentToPembayaran ||
-                        $isPendingInPembayaran;
+            $hasAccess = in_array(strtolower($dokumen->current_handler ?? ''), array_map('strtolower', $allowedHandlers)) ||
+                in_array($dokumen->status, $allowedStatuses) ||
+                $isSentToPembayaran ||
+                $isPendingInPembayaran;
 
             if (!$hasAccess) {
                 Log::warning('Access denied for document detail', [
@@ -2970,13 +3003,13 @@ class DashboardPembayaranController extends Controller
                         'role_code' => $pembayaranStatus->role_code,
                     ] : null,
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Access denied. Document handler: ' . ($dokumen->current_handler ?? 'null') . ', Status: ' . ($dokumen->status ?? 'null')
                 ], 403);
             }
-            
+
             Log::info('Access granted for document detail', [
                 'dokumen_id' => $dokumen->id,
                 'current_handler' => $dokumen->current_handler,
@@ -2990,19 +3023,19 @@ class DashboardPembayaranController extends Controller
 
             // Check if request wants JSON (for AJAX modal)
             // Check multiple conditions to ensure JSON response for AJAX requests
-            $wantsJson = request()->wantsJson() || 
-                         request()->ajax() || 
-                         request()->expectsJson() ||
-                         (request()->header('Accept') && str_contains(request()->header('Accept'), 'application/json')) ||
-                         (request()->header('X-Requested-With') === 'XMLHttpRequest');
-            
+            $wantsJson = request()->wantsJson() ||
+                request()->ajax() ||
+                request()->expectsJson() ||
+                (request()->header('Accept') && str_contains(request()->header('Accept'), 'application/json')) ||
+                (request()->header('X-Requested-With') === 'XMLHttpRequest');
+
             Log::info('Request type check', [
                 'wantsJson' => $wantsJson,
                 'wantsJson_method' => request()->wantsJson(),
                 'ajax_method' => request()->ajax(),
                 'expectsJson_method' => request()->expectsJson(),
             ]);
-            
+
             if ($wantsJson) {
                 return $this->getDocumentDetailJson($dokumen);
             }
@@ -3016,7 +3049,7 @@ class DashboardPembayaranController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memuat data dokumen: ' . $e->getMessage()
@@ -3078,6 +3111,8 @@ class DashboardPembayaranController extends Controller
                 'no_po' => $dokumen->dokumenPos->count() > 0 ? $dokumen->dokumenPos->pluck('nomor_po')->join(', ') : '-',
                 'no_pr' => $dokumen->dokumenPrs->count() > 0 ? $dokumen->dokumenPrs->pluck('nomor_pr')->join(', ') : '-',
                 'nomor_miro' => $dokumen->nomor_miro ?? '-',
+                'tanggal_miro' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('d/m/Y') : '-',
+                'tanggal_miro_date' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('Y-m-d') : null,
                 'status' => $dokumen->status,
                 'status_display' => $this->getStatusDisplayName($dokumen->status),
                 'payment_status' => $paymentStatus,
@@ -3149,10 +3184,10 @@ class DashboardPembayaranController extends Controller
         $html .= '</div>';
 
         // Check if document has perpajakan data
-        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) || 
-                             !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
-                             !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
-                             !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
+        $hasPerpajakanData = !empty($dokumen->npwp) || !empty($dokumen->no_faktur) ||
+            !empty($dokumen->tanggal_faktur) || !empty($dokumen->jenis_pph) ||
+            !empty($dokumen->dpp_pph) || !empty($dokumen->ppn_terhutang) ||
+            !empty($dokumen->link_dokumen_pajak) || !empty($dokumen->status_perpajakan);
 
         if ($hasPerpajakanData || $dokumen->status == 'sent_to_akutansi' || $dokumen->status == 'sent_to_pembayaran') {
             // Visual Separator for Perpajakan Data
@@ -3250,7 +3285,8 @@ class DashboardPembayaranController extends Controller
         }
 
         if (filter_var($link, FILTER_VALIDATE_URL)) {
-            return sprintf('<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
+            return sprintf(
+                '<a href="%s" target="_blank" class="tax-link">%s <i class="fa-solid fa-external-link-alt"></i></a>',
                 htmlspecialchars($link),
                 htmlspecialchars($link)
             );
@@ -3309,8 +3345,8 @@ class DashboardPembayaranController extends Controller
             ]);
 
             $deadlineDays = (int) $validated['deadline_days'];
-            $deadlineNote = isset($validated['deadline_note']) && trim($validated['deadline_note']) !== '' 
-                ? trim($validated['deadline_note']) 
+            $deadlineNote = isset($validated['deadline_note']) && trim($validated['deadline_note']) !== ''
+                ? trim($validated['deadline_note'])
                 : null;
 
             // Update using transaction
@@ -3366,44 +3402,46 @@ class DashboardPembayaranController extends Controller
             // Cek dokumen baru yang dikirim ke pembayaran menggunakan dokumen_role_data
             // Exclude documents imported from CSV to prevent notification spam
             $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('current_handler', 'pembayaran')
-                      ->orWhere('status', 'sent_to_pembayaran');
+                        ->orWhere('status', 'sent_to_pembayaran');
                 })
-                ->where(function($q) use ($lastCheckedDate) {
-                    // Check if received_at in roleData is newer
-                    $q->whereHas('roleData', function($subQ) use ($lastCheckedDate) {
-                        $subQ->where('role_code', 'pembayaran')
-                             ->where('received_at', '>', $lastCheckedDate);
-                    })
-                    // Or check updated_at as fallback
-                    ->orWhere('updated_at', '>', $lastCheckedDate);
-                });
+                    ->where(function ($q) use ($lastCheckedDate) {
+                        // Check if received_at in roleData is newer
+                        $q->whereHas('roleData', function ($subQ) use ($lastCheckedDate) {
+                            $subQ->where('role_code', 'pembayaran')
+                                ->where('received_at', '>', $lastCheckedDate);
+                        })
+                            // Or check updated_at as fallback
+                            ->orWhere('updated_at', '>', $lastCheckedDate);
+                    });
             })
-            // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($query) {
-                $query->where(function($q) {
-                    $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->with(['roleData' => function($query) {
-                $query->where('role_code', 'pembayaran');
-            }])
-            ->latest('updated_at')
-            ->take(10)
-            ->get();
+                // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
+                ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->with([
+                    'roleData' => function ($query) {
+                        $query->where('role_code', 'pembayaran');
+                    }
+                ])
+                ->latest('updated_at')
+                ->take(10)
+                ->get();
 
-            $totalDocuments = Dokumen::where(function($query) {
-                    $query->where('current_handler', 'pembayaran')
-                          ->orWhere('status', 'sent_to_pembayaran');
-                })->count();
+            $totalDocuments = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran');
+            })->count();
 
             return response()->json([
                 'has_updates' => $newDocuments->count() > 0,
                 'new_count' => $newDocuments->count(),
                 'total_documents' => $totalDocuments,
-                'new_documents' => $newDocuments->map(function($doc) {
+                'new_documents' => $newDocuments->map(function ($doc) {
                     $roleData = $doc->roleData->firstWhere('role_code', 'pembayaran');
                     return [
                         'id' => $doc->id,
@@ -3506,206 +3544,117 @@ class DashboardPembayaranController extends Controller
             }
 
             // Helper function to calculate computed status (same as dokumens method)
-            $getComputedStatus = function($doc) {
-                if ($doc->tanggal_dibayar || 
+            $getComputedStatus = function ($doc) {
+                if (
+                    $doc->tanggal_dibayar ||
                     $doc->link_bukti_pembayaran ||
                     strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
                     strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
-                    $doc->status_pembayaran === 'sudah_dibayar') {
+                    $doc->status_pembayaran === 'sudah_dibayar'
+                ) {
                     return 'sudah_dibayar';
                 }
-                
-                if (in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
-                    ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))) {
+
+                if (
+                    in_array($doc->status, ['processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran']) ||
+                    ($doc->current_handler === 'pembayaran' && in_array($doc->status, ['sedang diproses', 'sent_to_pembayaran']))
+                ) {
                     return 'siap_bayar';
                 }
-                
+
                 return 'belum_siap_bayar';
             };
 
-        // Get all documents with nomor_agenda
-        // For sudah_dibayar status, filter by status_pembayaran or tanggal_dibayar at database level first
-        $query = Dokumen::whereNotNull('nomor_agenda');
-        
-        if ($statusFilter === 'sudah_dibayar') {
-            // Pre-filter untuk sudah_dibayar di database level
-            // Check if tanggal_dibayar column exists before adding it to query
-            $hasTanggalDibayarColumn = false;
-            try {
-                $hasTanggalDibayarColumn = Schema::hasColumn('dokumens', 'tanggal_dibayar');
-            } catch (\Exception $e) {
-                Log::warning('Failed to check if tanggal_dibayar column exists', ['error' => $e->getMessage()]);
-            }
-            
-            $query->where(function($q) use ($hasTanggalDibayarColumn) {
-                $q->where('status_pembayaran', 'sudah_dibayar')
-                  ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
-                  ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                  ->orWhereNotNull('link_bukti_pembayaran');
-                
-                // Only check tanggal_dibayar if column exists
-                if ($hasTanggalDibayarColumn) {
-                    $q->orWhereNotNull('tanggal_dibayar');
+            // Get all documents with nomor_agenda
+            // For sudah_dibayar status, filter by status_pembayaran or tanggal_dibayar at database level first
+            $query = Dokumen::whereNotNull('nomor_agenda');
+
+            if ($statusFilter === 'sudah_dibayar') {
+                // Pre-filter untuk sudah_dibayar di database level
+                // Check if tanggal_dibayar column exists before adding it to query
+                $hasTanggalDibayarColumn = false;
+                try {
+                    $hasTanggalDibayarColumn = Schema::hasColumn('dokumens', 'tanggal_dibayar');
+                } catch (\Exception $e) {
+                    Log::warning('Failed to check if tanggal_dibayar column exists', ['error' => $e->getMessage()]);
                 }
+
+                $query->where(function ($q) use ($hasTanggalDibayarColumn) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                        ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                        ->orWhereNotNull('link_bukti_pembayaran');
+
+                    // Only check tanggal_dibayar if column exists
+                    if ($hasTanggalDibayarColumn) {
+                        $q->orWhereNotNull('tanggal_dibayar');
+                    }
+                });
+            }
+
+            $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
+                ->get();
+
+            // Add computed status to each document
+            $allDokumens->each(function ($doc) use ($getComputedStatus) {
+                $doc->computed_status = $getComputedStatus($doc);
             });
-        }
-        
-        $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
-            ->get();
 
-        // Add computed status to each document
-        $allDokumens->each(function($doc) use ($getComputedStatus) {
-            $doc->computed_status = $getComputedStatus($doc);
-        });
+            // Filter by status (to ensure exact match with computed status)
+            $allDokumens = $allDokumens->filter(function ($doc) use ($statusFilter) {
+                return $doc->computed_status === $statusFilter;
+            })->values();
 
-        // Filter by status (to ensure exact match with computed status)
-        $allDokumens = $allDokumens->filter(function($doc) use ($statusFilter) {
-            return $doc->computed_status === $statusFilter;
-        })->values();
-
-        // Filter by year (based on tanggal_dibayar for sudah_dibayar, or tahun/bulan field for others)
-        $allDokumens = $allDokumens->filter(function($doc) use ($selectedYear, $statusFilter) {
-            try {
-                if ($statusFilter === 'sudah_dibayar') {
-                    // Prioritize tanggal_dibayar if available
-                    if ($doc->tanggal_dibayar) {
-                        $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_dibayar 
-                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                        return $tanggal->format('Y') == $selectedYear;
-                    }
-                    
-                    // Fallback: use tahun field from dokumen if available
-                    if (!empty($doc->tahun)) {
-                        return (int)$doc->tahun == (int)$selectedYear;
-                    }
-                    
-                    // Fallback: use tanggal_spp if available
-                    if ($doc->tanggal_spp) {
-                        $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_spp 
-                            : \Carbon\Carbon::parse($doc->tanggal_spp);
-                        return $tanggalSpp->format('Y') == $selectedYear;
-                    }
-                    
-                    // Last fallback: use tanggal_masuk
-                    if ($doc->tanggal_masuk) {
-                        $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_masuk 
-                            : \Carbon\Carbon::parse($doc->tanggal_masuk);
-                        return $tanggalMasuk->format('Y') == $selectedYear;
-                    }
-                    
-                    return false;
-                } else {
-                    // For other status, use tahun field or created_at
-                    if (!empty($doc->tahun)) {
-                        return (int)$doc->tahun == (int)$selectedYear;
-                    }
-                    
-                    if (!$doc->created_at) {
-                        return false;
-                    }
-                    $created = $doc->created_at instanceof \Carbon\Carbon 
-                        ? $doc->created_at 
-                        : \Carbon\Carbon::parse($doc->created_at);
-                    return $created->format('Y') == $selectedYear;
-                }
-            } catch (\Exception $e) {
-                \Log::warning('Error filtering document by year', [
-                    'doc_id' => $doc->id,
-                    'error' => $e->getMessage()
-                ]);
-                return false;
-            }
-        })->values();
-
-        // Calculate yearly summary (Total Nominal & Total Jumlah Dokumen)
-        $yearlySummary = [
-            'total_nominal' => $allDokumens->sum('nilai_rupiah'),
-            'total_dokumen' => $allDokumens->count(),
-        ];
-
-        // Calculate monthly statistics (12 months)
-        $monthlyStats = [];
-        $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-        ];
-
-        for ($month = 1; $month <= 12; $month++) {
-            $monthDokumens = $allDokumens->filter(function($doc) use ($month, $statusFilter) {
+            // Filter by year (based on tanggal_dibayar for sudah_dibayar, or tahun/bulan field for others)
+            $allDokumens = $allDokumens->filter(function ($doc) use ($selectedYear, $statusFilter) {
                 try {
                     if ($statusFilter === 'sudah_dibayar') {
                         // Prioritize tanggal_dibayar if available
                         if ($doc->tanggal_dibayar) {
-                            $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                                ? $doc->tanggal_dibayar 
+                            $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon
+                                ? $doc->tanggal_dibayar
                                 : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                            return (int)$tanggal->format('m') == $month;
+                            return $tanggal->format('Y') == $selectedYear;
                         }
-                        
-                        // Fallback: use bulan field from dokumen if available
-                        if (!empty($doc->bulan)) {
-                            $bulanMap = [
-                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
-                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
-                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
-                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
-                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
-                                'October' => 10, 'November' => 11, 'December' => 12
-                            ];
-                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
-                            if ($docBulan && $docBulan == $month) {
-                                return true;
-                            }
+
+                        // Fallback: use tahun field from dokumen if available
+                        if (!empty($doc->tahun)) {
+                            return (int) $doc->tahun == (int) $selectedYear;
                         }
-                        
+
                         // Fallback: use tanggal_spp if available
                         if ($doc->tanggal_spp) {
-                            $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon 
-                                ? $doc->tanggal_spp 
+                            $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon
+                                ? $doc->tanggal_spp
                                 : \Carbon\Carbon::parse($doc->tanggal_spp);
-                            return (int)$tanggalSpp->format('m') == $month;
+                            return $tanggalSpp->format('Y') == $selectedYear;
                         }
-                        
+
                         // Last fallback: use tanggal_masuk
                         if ($doc->tanggal_masuk) {
-                            $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon 
-                                ? $doc->tanggal_masuk 
+                            $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon
+                                ? $doc->tanggal_masuk
                                 : \Carbon\Carbon::parse($doc->tanggal_masuk);
-                            return (int)$tanggalMasuk->format('m') == $month;
+                            return $tanggalMasuk->format('Y') == $selectedYear;
                         }
-                        
+
                         return false;
                     } else {
-                        // For other status, use created_at or bulan field
-                        if (!empty($doc->bulan)) {
-                            $bulanMap = [
-                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
-                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
-                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
-                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
-                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
-                                'October' => 10, 'November' => 11, 'December' => 12
-                            ];
-                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
-                            if ($docBulan && $docBulan == $month) {
-                                return true;
-                            }
+                        // For other status, use tahun field or created_at
+                        if (!empty($doc->tahun)) {
+                            return (int) $doc->tahun == (int) $selectedYear;
                         }
-                        
+
                         if (!$doc->created_at) {
                             return false;
                         }
-                        $created = $doc->created_at instanceof \Carbon\Carbon 
-                            ? $doc->created_at 
+                        $created = $doc->created_at instanceof \Carbon\Carbon
+                            ? $doc->created_at
                             : \Carbon\Carbon::parse($doc->created_at);
-                        return (int)$created->format('m') == $month;
+                        return $created->format('Y') == $selectedYear;
                     }
                 } catch (\Exception $e) {
-                    \Log::warning('Error filtering document by month', [
+                    \Log::warning('Error filtering document by year', [
                         'doc_id' => $doc->id,
                         'error' => $e->getMessage()
                     ]);
@@ -3713,220 +3662,390 @@ class DashboardPembayaranController extends Controller
                 }
             })->values();
 
-            $monthlyStats[$month] = [
-                'name' => $monthNames[$month],
-                'count' => $monthDokumens->count(),
-                'total_nominal' => $monthDokumens->sum('nilai_rupiah'),
-                'dokumens' => $monthDokumens,
+            // Calculate yearly summary (Total Nominal & Total Jumlah Dokumen)
+            $yearlySummary = [
+                'total_nominal' => $allDokumens->sum('nilai_rupiah'),
+                'total_dokumen' => $allDokumens->count(),
             ];
-        }
 
-        // Get documents for table (filtered by selected month if provided)
-        $tableDokumens = $allDokumens;
-        if ($selectedMonth && is_numeric($selectedMonth) && $selectedMonth >= 1 && $selectedMonth <= 12) {
-            $tableDokumens = $allDokumens->filter(function($doc) use ($selectedMonth, $statusFilter) {
-                try {
-                    if ($statusFilter === 'sudah_dibayar') {
-                        // Prioritize tanggal_dibayar if available
-                        if ($doc->tanggal_dibayar) {
-                            $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                                ? $doc->tanggal_dibayar 
-                                : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                            return (int)$tanggal->format('m') == $selectedMonth;
-                        }
-                        
-                        // Fallback: use bulan field from dokumen if available
-                        if (!empty($doc->bulan)) {
-                            $bulanMap = [
-                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
-                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
-                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
-                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
-                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
-                                'October' => 10, 'November' => 11, 'December' => 12
-                            ];
-                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
-                            if ($docBulan && $docBulan == $selectedMonth) {
-                                return true;
+            // Calculate monthly statistics (12 months)
+            $monthlyStats = [];
+            $monthNames = [
+                1 => 'Januari',
+                2 => 'Februari',
+                3 => 'Maret',
+                4 => 'April',
+                5 => 'Mei',
+                6 => 'Juni',
+                7 => 'Juli',
+                8 => 'Agustus',
+                9 => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember'
+            ];
+
+            for ($month = 1; $month <= 12; $month++) {
+                $monthDokumens = $allDokumens->filter(function ($doc) use ($month, $statusFilter) {
+                    try {
+                        if ($statusFilter === 'sudah_dibayar') {
+                            // Prioritize tanggal_dibayar if available
+                            if ($doc->tanggal_dibayar) {
+                                $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon
+                                    ? $doc->tanggal_dibayar
+                                    : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                                return (int) $tanggal->format('m') == $month;
                             }
-                        }
-                        
-                        // Fallback: use tanggal_spp if available
-                        if ($doc->tanggal_spp) {
-                            $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon 
-                                ? $doc->tanggal_spp 
-                                : \Carbon\Carbon::parse($doc->tanggal_spp);
-                            return (int)$tanggalSpp->format('m') == $selectedMonth;
-                        }
-                        
-                        // Last fallback: use tanggal_masuk
-                        if ($doc->tanggal_masuk) {
-                            $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon 
-                                ? $doc->tanggal_masuk 
-                                : \Carbon\Carbon::parse($doc->tanggal_masuk);
-                            return (int)$tanggalMasuk->format('m') == $selectedMonth;
-                        }
-                        
-                        return false;
-                    } else {
-                        // For other status, use bulan field or created_at
-                        if (!empty($doc->bulan)) {
-                            $bulanMap = [
-                                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
-                                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
-                                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
-                                'January' => 1, 'February' => 2, 'March' => 3, 'May' => 5,
-                                'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9,
-                                'October' => 10, 'November' => 11, 'December' => 12
-                            ];
-                            $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
-                            if ($docBulan && $docBulan == $selectedMonth) {
-                                return true;
+
+                            // Fallback: use bulan field from dokumen if available
+                            if (!empty($doc->bulan)) {
+                                $bulanMap = [
+                                    'Januari' => 1,
+                                    'Februari' => 2,
+                                    'Maret' => 3,
+                                    'April' => 4,
+                                    'Mei' => 5,
+                                    'Juni' => 6,
+                                    'Juli' => 7,
+                                    'Agustus' => 8,
+                                    'September' => 9,
+                                    'Oktober' => 10,
+                                    'November' => 11,
+                                    'Desember' => 12,
+                                    'January' => 1,
+                                    'February' => 2,
+                                    'March' => 3,
+                                    'May' => 5,
+                                    'June' => 6,
+                                    'July' => 7,
+                                    'August' => 8,
+                                    'September' => 9,
+                                    'October' => 10,
+                                    'November' => 11,
+                                    'December' => 12
+                                ];
+                                $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                                if ($docBulan && $docBulan == $month) {
+                                    return true;
+                                }
                             }
-                        }
-                        
-                        if (!$doc->created_at) {
+
+                            // Fallback: use tanggal_spp if available
+                            if ($doc->tanggal_spp) {
+                                $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon
+                                    ? $doc->tanggal_spp
+                                    : \Carbon\Carbon::parse($doc->tanggal_spp);
+                                return (int) $tanggalSpp->format('m') == $month;
+                            }
+
+                            // Last fallback: use tanggal_masuk
+                            if ($doc->tanggal_masuk) {
+                                $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon
+                                    ? $doc->tanggal_masuk
+                                    : \Carbon\Carbon::parse($doc->tanggal_masuk);
+                                return (int) $tanggalMasuk->format('m') == $month;
+                            }
+
                             return false;
+                        } else {
+                            // For other status, use created_at or bulan field
+                            if (!empty($doc->bulan)) {
+                                $bulanMap = [
+                                    'Januari' => 1,
+                                    'Februari' => 2,
+                                    'Maret' => 3,
+                                    'April' => 4,
+                                    'Mei' => 5,
+                                    'Juni' => 6,
+                                    'Juli' => 7,
+                                    'Agustus' => 8,
+                                    'September' => 9,
+                                    'Oktober' => 10,
+                                    'November' => 11,
+                                    'Desember' => 12,
+                                    'January' => 1,
+                                    'February' => 2,
+                                    'March' => 3,
+                                    'May' => 5,
+                                    'June' => 6,
+                                    'July' => 7,
+                                    'August' => 8,
+                                    'September' => 9,
+                                    'October' => 10,
+                                    'November' => 11,
+                                    'December' => 12
+                                ];
+                                $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                                if ($docBulan && $docBulan == $month) {
+                                    return true;
+                                }
+                            }
+
+                            if (!$doc->created_at) {
+                                return false;
+                            }
+                            $created = $doc->created_at instanceof \Carbon\Carbon
+                                ? $doc->created_at
+                                : \Carbon\Carbon::parse($doc->created_at);
+                            return (int) $created->format('m') == $month;
                         }
-                        $created = $doc->created_at instanceof \Carbon\Carbon 
-                            ? $doc->created_at 
-                            : \Carbon\Carbon::parse($doc->created_at);
-                        return (int)$created->format('m') == $selectedMonth;
+                    } catch (\Exception $e) {
+                        \Log::warning('Error filtering document by month', [
+                            'doc_id' => $doc->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        return false;
                     }
-                } catch (\Exception $e) {
-                    \Log::warning('Error filtering document by month for table', [
-                        'doc_id' => $doc->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    return false;
-                }
-            })->values();
+                })->values();
 
-            // Sort by tanggal_dibayar or created_at descending
-            $tableDokumens = $tableDokumens->sortByDesc(function($doc) use ($statusFilter) {
-                try {
-                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                        return $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_dibayar 
-                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                    }
-                    return $doc->created_at instanceof \Carbon\Carbon 
-                        ? $doc->created_at 
-                        : ($doc->created_at ? \Carbon\Carbon::parse($doc->created_at) : now());
-                } catch (\Exception $e) {
-                    return now();
-                }
-            })->values();
-        } else {
-            // Sort all documents by tanggal_dibayar or created_at descending
-            $tableDokumens = $tableDokumens->sortByDesc(function($doc) use ($statusFilter) {
-                try {
-                    if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
-                        return $doc->tanggal_dibayar instanceof \Carbon\Carbon 
-                            ? $doc->tanggal_dibayar 
-                            : \Carbon\Carbon::parse($doc->tanggal_dibayar);
-                    }
-                    return $doc->created_at instanceof \Carbon\Carbon 
-                        ? $doc->created_at 
-                        : ($doc->created_at ? \Carbon\Carbon::parse($doc->created_at) : now());
-                } catch (\Exception $e) {
-                    return now();
-                }
-            })->values();
-        }
+                $monthlyStats[$month] = [
+                    'name' => $monthNames[$month],
+                    'count' => $monthDokumens->count(),
+                    'total_nominal' => $monthDokumens->sum('nilai_rupiah'),
+                    'dokumens' => $monthDokumens,
+                ];
+            }
 
-        // Get available years for dropdown based on status filter
-        // For "sudah_dibayar": get years from tanggal_dibayar (karena ini yang relevan)
-        // Also include years from created_at as fallback
-        $availableYears = [];
-        
-        if ($statusFilter === 'sudah_dibayar') {
-            // Get years from tanggal_dibayar (primary source for sudah_dibayar)
-            $yearsFromTanggalDibayar = Dokumen::whereNotNull('tanggal_dibayar')
-                ->selectRaw('DISTINCT YEAR(tanggal_dibayar) as year')
-                ->orderBy('year', 'desc')
-                ->pluck('year')
-                ->filter()
-                ->toArray();
-            
-            // Also get years from created_at as backup using more efficient query
-            try {
-                $yearsFromCreatedAtQuery = Dokumen::whereNotNull('nomor_agenda')
-                    ->where(function($q) {
-                        $q->where('status_pembayaran', 'sudah_dibayar')
-                          ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
-                          ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                          ->orWhereNotNull('tanggal_dibayar')
-                          ->orWhereNotNull('link_bukti_pembayaran');
-                    })
-                    ->selectRaw('DISTINCT YEAR(created_at) as year')
-                    ->whereNotNull('created_at')
+            // Get documents for table (filtered by selected month if provided)
+            $tableDokumens = $allDokumens;
+            if ($selectedMonth && is_numeric($selectedMonth) && $selectedMonth >= 1 && $selectedMonth <= 12) {
+                $tableDokumens = $allDokumens->filter(function ($doc) use ($selectedMonth, $statusFilter) {
+                    try {
+                        if ($statusFilter === 'sudah_dibayar') {
+                            // Prioritize tanggal_dibayar if available
+                            if ($doc->tanggal_dibayar) {
+                                $tanggal = $doc->tanggal_dibayar instanceof \Carbon\Carbon
+                                    ? $doc->tanggal_dibayar
+                                    : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                                return (int) $tanggal->format('m') == $selectedMonth;
+                            }
+
+                            // Fallback: use bulan field from dokumen if available
+                            if (!empty($doc->bulan)) {
+                                $bulanMap = [
+                                    'Januari' => 1,
+                                    'Februari' => 2,
+                                    'Maret' => 3,
+                                    'April' => 4,
+                                    'Mei' => 5,
+                                    'Juni' => 6,
+                                    'Juli' => 7,
+                                    'Agustus' => 8,
+                                    'September' => 9,
+                                    'Oktober' => 10,
+                                    'November' => 11,
+                                    'Desember' => 12,
+                                    'January' => 1,
+                                    'February' => 2,
+                                    'March' => 3,
+                                    'May' => 5,
+                                    'June' => 6,
+                                    'July' => 7,
+                                    'August' => 8,
+                                    'September' => 9,
+                                    'October' => 10,
+                                    'November' => 11,
+                                    'December' => 12
+                                ];
+                                $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                                if ($docBulan && $docBulan == $selectedMonth) {
+                                    return true;
+                                }
+                            }
+
+                            // Fallback: use tanggal_spp if available
+                            if ($doc->tanggal_spp) {
+                                $tanggalSpp = $doc->tanggal_spp instanceof \Carbon\Carbon
+                                    ? $doc->tanggal_spp
+                                    : \Carbon\Carbon::parse($doc->tanggal_spp);
+                                return (int) $tanggalSpp->format('m') == $selectedMonth;
+                            }
+
+                            // Last fallback: use tanggal_masuk
+                            if ($doc->tanggal_masuk) {
+                                $tanggalMasuk = $doc->tanggal_masuk instanceof \Carbon\Carbon
+                                    ? $doc->tanggal_masuk
+                                    : \Carbon\Carbon::parse($doc->tanggal_masuk);
+                                return (int) $tanggalMasuk->format('m') == $selectedMonth;
+                            }
+
+                            return false;
+                        } else {
+                            // For other status, use bulan field or created_at
+                            if (!empty($doc->bulan)) {
+                                $bulanMap = [
+                                    'Januari' => 1,
+                                    'Februari' => 2,
+                                    'Maret' => 3,
+                                    'April' => 4,
+                                    'Mei' => 5,
+                                    'Juni' => 6,
+                                    'Juli' => 7,
+                                    'Agustus' => 8,
+                                    'September' => 9,
+                                    'Oktober' => 10,
+                                    'November' => 11,
+                                    'Desember' => 12,
+                                    'January' => 1,
+                                    'February' => 2,
+                                    'March' => 3,
+                                    'May' => 5,
+                                    'June' => 6,
+                                    'July' => 7,
+                                    'August' => 8,
+                                    'September' => 9,
+                                    'October' => 10,
+                                    'November' => 11,
+                                    'December' => 12
+                                ];
+                                $docBulan = isset($bulanMap[$doc->bulan]) ? $bulanMap[$doc->bulan] : null;
+                                if ($docBulan && $docBulan == $selectedMonth) {
+                                    return true;
+                                }
+                            }
+
+                            if (!$doc->created_at) {
+                                return false;
+                            }
+                            $created = $doc->created_at instanceof \Carbon\Carbon
+                                ? $doc->created_at
+                                : \Carbon\Carbon::parse($doc->created_at);
+                            return (int) $created->format('m') == $selectedMonth;
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Error filtering document by month for table', [
+                            'doc_id' => $doc->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        return false;
+                    }
+                })->values();
+
+                // Sort by tanggal_dibayar or created_at descending
+                $tableDokumens = $tableDokumens->sortByDesc(function ($doc) use ($statusFilter) {
+                    try {
+                        if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                            return $doc->tanggal_dibayar instanceof \Carbon\Carbon
+                                ? $doc->tanggal_dibayar
+                                : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                        }
+                        return $doc->created_at instanceof \Carbon\Carbon
+                            ? $doc->created_at
+                            : ($doc->created_at ? \Carbon\Carbon::parse($doc->created_at) : now());
+                    } catch (\Exception $e) {
+                        return now();
+                    }
+                })->values();
+            } else {
+                // Sort all documents by tanggal_dibayar or created_at descending
+                $tableDokumens = $tableDokumens->sortByDesc(function ($doc) use ($statusFilter) {
+                    try {
+                        if ($statusFilter === 'sudah_dibayar' && $doc->tanggal_dibayar) {
+                            return $doc->tanggal_dibayar instanceof \Carbon\Carbon
+                                ? $doc->tanggal_dibayar
+                                : \Carbon\Carbon::parse($doc->tanggal_dibayar);
+                        }
+                        return $doc->created_at instanceof \Carbon\Carbon
+                            ? $doc->created_at
+                            : ($doc->created_at ? \Carbon\Carbon::parse($doc->created_at) : now());
+                    } catch (\Exception $e) {
+                        return now();
+                    }
+                })->values();
+            }
+
+            // Get available years for dropdown based on status filter
+            // For "sudah_dibayar": get years from tanggal_dibayar (karena ini yang relevan)
+            // Also include years from created_at as fallback
+            $availableYears = [];
+
+            if ($statusFilter === 'sudah_dibayar') {
+                // Get years from tanggal_dibayar (primary source for sudah_dibayar)
+                $yearsFromTanggalDibayar = Dokumen::whereNotNull('tanggal_dibayar')
+                    ->selectRaw('DISTINCT YEAR(tanggal_dibayar) as year')
                     ->orderBy('year', 'desc')
                     ->pluck('year')
                     ->filter()
                     ->toArray();
-                
-                $yearsFromCreatedAt = $yearsFromCreatedAtQuery;
-            } catch (\Exception $e) {
-                \Log::warning('Error getting years from created_at: ' . $e->getMessage());
-                $yearsFromCreatedAt = [];
-            }
-            
-            // Merge both sources and remove duplicates
-            $availableYears = array_unique(array_merge($yearsFromTanggalDibayar, $yearsFromCreatedAt));
-        } else {
-            // For other status, get years from created_at using direct query
-            try {
-                $availableYears = Dokumen::whereNotNull('nomor_agenda')
-                    ->selectRaw('DISTINCT YEAR(created_at) as year')
-                    ->whereNotNull('created_at')
-                    ->orderBy('year', 'desc')
-                    ->pluck('year')
-                    ->filter()
-                    ->toArray();
-            } catch (\Exception $e) {
-                \Log::warning('Error getting available years: ' . $e->getMessage());
-                $availableYears = [(int)date('Y')];
-            }
-        }
-        
-        // Sort descending (newest first)
-        rsort($availableYears);
-        
-        // Ensure availableYears is not empty - add current year if empty
-        if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
-        }
-        
-        // Ensure selectedYear is in availableYears, if not, use first available year or current year
-        if (!in_array((int)$selectedYear, $availableYears)) {
-            $selectedYear = !empty($availableYears) ? (int)$availableYears[0] : date('Y');
-        }
 
-        $data = [
-            'title' => 'Analitik Pembayaran',
-            'module' => 'pembayaran',
-            'menuDashboard' => '',
-            'menuDokumen' => 'Active',
-            'menuDaftarDokumen' => '',
-            'selectedYear' => $selectedYear,
-            'selectedMonth' => $selectedMonth,
-            'statusFilter' => $statusFilter,
-            'yearlySummary' => $yearlySummary,
-            'monthlyStats' => $monthlyStats,
-            'dokumens' => $tableDokumens,
-            'availableYears' => $availableYears,
-        ];
+                // Also get years from created_at as backup using more efficient query
+                try {
+                    $yearsFromCreatedAtQuery = Dokumen::whereNotNull('nomor_agenda')
+                        ->where(function ($q) {
+                            $q->where('status_pembayaran', 'sudah_dibayar')
+                                ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                                ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                                ->orWhereNotNull('tanggal_dibayar')
+                                ->orWhereNotNull('link_bukti_pembayaran');
+                        })
+                        ->selectRaw('DISTINCT YEAR(created_at) as year')
+                        ->whereNotNull('created_at')
+                        ->orderBy('year', 'desc')
+                        ->pluck('year')
+                        ->filter()
+                        ->toArray();
 
-        return view('pembayaranNEW.analytics', $data);
-        
+                    $yearsFromCreatedAt = $yearsFromCreatedAtQuery;
+                } catch (\Exception $e) {
+                    \Log::warning('Error getting years from created_at: ' . $e->getMessage());
+                    $yearsFromCreatedAt = [];
+                }
+
+                // Merge both sources and remove duplicates
+                $availableYears = array_unique(array_merge($yearsFromTanggalDibayar, $yearsFromCreatedAt));
+            } else {
+                // For other status, get years from created_at using direct query
+                try {
+                    $availableYears = Dokumen::whereNotNull('nomor_agenda')
+                        ->selectRaw('DISTINCT YEAR(created_at) as year')
+                        ->whereNotNull('created_at')
+                        ->orderBy('year', 'desc')
+                        ->pluck('year')
+                        ->filter()
+                        ->toArray();
+                } catch (\Exception $e) {
+                    \Log::warning('Error getting available years: ' . $e->getMessage());
+                    $availableYears = [(int) date('Y')];
+                }
+            }
+
+            // Sort descending (newest first)
+            rsort($availableYears);
+
+            // Ensure availableYears is not empty - add current year if empty
+            if (empty($availableYears)) {
+                $availableYears = [(int) date('Y')];
+            }
+
+            // Ensure selectedYear is in availableYears, if not, use first available year or current year
+            if (!in_array((int) $selectedYear, $availableYears)) {
+                $selectedYear = !empty($availableYears) ? (int) $availableYears[0] : date('Y');
+            }
+
+            $data = [
+                'title' => 'Analitik Pembayaran',
+                'module' => 'pembayaran',
+                'menuDashboard' => '',
+                'menuDokumen' => 'Active',
+                'menuDaftarDokumen' => '',
+                'selectedYear' => $selectedYear,
+                'selectedMonth' => $selectedMonth,
+                'statusFilter' => $statusFilter,
+                'yearlySummary' => $yearlySummary,
+                'monthlyStats' => $monthlyStats,
+                'dokumens' => $tableDokumens,
+                'availableYears' => $availableYears,
+            ];
+
+            return view('pembayaranNEW.analytics', $data);
+
         } catch (\Exception $e) {
             Log::error('Error in analytics method: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            
+
             // Return error page or redirect with error message
             return redirect()->route('pembayaran.rekapan')
                 ->with('error', 'Terjadi kesalahan saat memuat halaman analitik: ' . $e->getMessage());

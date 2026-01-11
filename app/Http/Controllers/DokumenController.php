@@ -329,6 +329,7 @@ class DokumenController extends Controller
                 'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
                 'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
                 'nomor_miro' => $dokumen->nomor_miro,
+                'tanggal_miro' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('Y-m-d') : null,
                 'no_berita_acara' => $dokumen->no_berita_acara,
                 'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
                 'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {

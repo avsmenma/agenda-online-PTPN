@@ -1407,6 +1407,7 @@ class DashboardAkutansiController extends Controller
                     'link_dokumen_pajak' => $dokumen->link_dokumen_pajak,
                     // Akutansi fields
                     'nomor_miro' => $dokumen->nomor_miro,
+                    'tanggal_miro' => $dokumen->tanggal_miro,
                 ]
             ]);
         }
