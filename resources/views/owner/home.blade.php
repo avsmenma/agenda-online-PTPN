@@ -306,7 +306,7 @@
 
         <div class="bagian-cards">
             @foreach($bagianStats as $bagian)
-                <a href="{{ url('/owner/dokumen?bagian=' . $bagian['code']) }}" class="bagian-card"
+                <a href="{{ url('/owner/dokumen?filter_bagian=' . $bagian['code']) }}" class="bagian-card"
                     style="--card-color: {{ $bagian['color'] }}">
                     <div class="card-icon">
                         <i class="fa-solid {{ $bagian['icon'] }}"></i>

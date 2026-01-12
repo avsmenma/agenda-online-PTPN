@@ -249,12 +249,7 @@ class OwnerDashboardController extends Controller
         }
 
         // Apply advanced filters
-        // Filter by bagian code (from home page cards)
-        if ($request && $request->has('bagian') && !empty($request->bagian)) {
-            $query->where('bagian', $request->bagian);
-        }
-
-        // Filter by bagian (name/text filter)
+        // Filter by bagian
         if ($request && $request->has('filter_bagian') && !empty($request->filter_bagian)) {
             $query->where('bagian', $request->filter_bagian);
         }
