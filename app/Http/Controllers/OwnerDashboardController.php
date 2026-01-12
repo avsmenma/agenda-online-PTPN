@@ -585,16 +585,19 @@ class OwnerDashboardController extends Controller
             return 100;
         }
 
+        // Normalize handler name to canonical form
+        $handler = $this->normalizeHandlerName($handler);
+
         // Calculate progress based on handler position in workflow
         $handlerProgress = [
-            'ibuA' => 0,           // Start
-            'ibuB' => 30,          // After Ibu Tarapul
-            'perpajakan' => 50,    // After Ibu Yuni
-            'akutansi' => 70,      // After Perpajakan
-            'pembayaran' => 90,    // After Akutansi
+            'ibuA' => 20,          // Ibu Tarapul (step 1)
+            'ibuB' => 40,          // Team Verifikasi (step 2)
+            'perpajakan' => 60,    // Team Perpajakan (step 3)
+            'akutansi' => 80,      // Team Akutansi (step 4)
+            'pembayaran' => 100,   // Pembayaran (step 5)
         ];
 
-        $baseProgress = $handlerProgress[$handler] ?? 0;
+        $baseProgress = $handlerProgress[$handler] ?? 20;
 
         // Adjust based on status within handler
         if ($status == 'draft' && $handler == 'ibuA') {
@@ -623,6 +626,61 @@ class OwnerDashboardController extends Controller
 
         // Default: use base progress
         return $baseProgress;
+    }
+
+    /**
+     * Normalize handler name to canonical form
+     * Handles various handler name variants stored in database
+     */
+    private function normalizeHandlerName($handler)
+    {
+        // Convert to lowercase for consistent comparison
+        $handlerLower = strtolower($handler ?? '');
+
+        // Map all possible handler name variants to canonical names
+        $handlerAliases = [
+            // ibuA variants
+            'ibua' => 'ibuA',
+            'ibu_a' => 'ibuA',
+            'ibutarapul' => 'ibuA',
+            'ibu_tarapul' => 'ibuA',
+            'ibu tarapul' => 'ibuA',
+            'tarapul' => 'ibuA',
+
+            // ibuB variants (Team Verifikasi)
+            'ibub' => 'ibuB',
+            'ibu_b' => 'ibuB',
+            'ibuyuni' => 'ibuB',
+            'ibu_yuni' => 'ibuB',
+            'ibu yuni' => 'ibuB',
+            'verifikasi' => 'ibuB',
+            'team_verifikasi' => 'ibuB',
+            'team verifikasi' => 'ibuB',
+            'teamverifikasi' => 'ibuB',
+
+            // Perpajakan variants
+            'perpajakan' => 'perpajakan',
+            'team_perpajakan' => 'perpajakan',
+            'team perpajakan' => 'perpajakan',
+            'teamperpajakan' => 'perpajakan',
+            'pajak' => 'perpajakan',
+
+            // Akutansi variants
+            'akutansi' => 'akutansi',
+            'team_akutansi' => 'akutansi',
+            'team akutansi' => 'akutansi',
+            'teamakutansi' => 'akutansi',
+            'akuntansi' => 'akutansi',
+
+            // Pembayaran variants
+            'pembayaran' => 'pembayaran',
+            'team_pembayaran' => 'pembayaran',
+            'team pembayaran' => 'pembayaran',
+            'teampembayaran' => 'pembayaran',
+            'payment' => 'pembayaran',
+        ];
+
+        return $handlerAliases[$handlerLower] ?? 'ibuA';
     }
 
     /**
@@ -817,6 +875,9 @@ class OwnerDashboardController extends Controller
      */
     private function getRoleDisplayName($role)
     {
+        // Normalize handler name first to handle all variants
+        $normalizedRole = $this->normalizeHandlerName($role);
+
         $roleMap = [
             'ibuA' => 'Ibu Tarapul',
             'ibuB' => 'Team Verifikasi',
@@ -825,7 +886,7 @@ class OwnerDashboardController extends Controller
             'pembayaran' => 'Pembayaran',
         ];
 
-        return $roleMap[$role] ?? $role;
+        return $roleMap[$normalizedRole] ?? $role;
     }
 
     /**
