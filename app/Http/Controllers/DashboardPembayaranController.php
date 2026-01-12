@@ -26,14 +26,55 @@ class DashboardPembayaranController extends Controller
 {
     public function index()
     {
-        // Get statistics
-        $totalDokumen = Dokumen::count();
-        $totalSelesai = Dokumen::where('status', 'selesai')->count();
-        $totalProses = Dokumen::where('status', 'sedang diproses')->count();
-        $totalDikembalikan = Dokumen::where('status', 'dikembalikan')->count();
+        $now = Carbon::now();
+
+        // Get statistics for top row
+        $totalDokumen = Dokumen::where('current_handler', 'pembayaran')->count();
+        $totalSiapBayar = Dokumen::where('current_handler', 'pembayaran')
+            ->where('status_pembayaran', 'siap_dibayar')
+            ->count();
+        $totalSudahDibayar = Dokumen::where('status_pembayaran', 'sudah_dibayar')->count();
+
+        // Get statistics for bottom row (Aman/Peringatan/Terlambat)
+        // Pembayaran uses weekly thresholds: <1 week = green, 1-3 weeks = yellow, >3 weeks = red
+        $totalAman = 0;
+        $totalPeringatan = 0;
+        $totalTerlambat = 0;
+
+        // Get documents at pembayaran that are not yet paid
+        $dokumensPembayaran = Dokumen::with(['roleData'])
+            ->where('current_handler', 'pembayaran')
+            ->where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            })
+            ->get();
+
+        foreach ($dokumensPembayaran as $dok) {
+            // Get received_at from roleData for pembayaran
+            $roleData = $dok->roleData->where('role_code', 'pembayaran')->first();
+            $receivedAt = $roleData ? $roleData->received_at : null;
+
+            if ($receivedAt) {
+                $hoursDiff = Carbon::parse($receivedAt)->diffInHours($now);
+
+                if ($hoursDiff < 168) { // < 1 week
+                    $totalAman++;
+                } elseif ($hoursDiff < 504) { // 1-3 weeks
+                    $totalPeringatan++;
+                } else { // > 3 weeks
+                    $totalTerlambat++;
+                }
+            } else {
+                // If no received_at, count as aman (baru masuk)
+                $totalAman++;
+            }
+        }
 
         // Get latest documents (5 most recent)
-        $dokumenTerbaru = Dokumen::latest('tanggal_masuk')
+        $dokumenTerbaru = Dokumen::where('current_handler', 'pembayaran')
+            ->orWhere('status_pembayaran', 'sudah_dibayar')
+            ->latest('tanggal_masuk')
             ->take(5)
             ->get();
 
@@ -43,9 +84,11 @@ class DashboardPembayaranController extends Controller
             "menuDashboard" => "Active",
             'menuDokumen' => '',
             'totalDokumen' => $totalDokumen,
-            'totalSelesai' => $totalSelesai,
-            'totalProses' => $totalProses,
-            'totalDikembalikan' => $totalDikembalikan,
+            'totalSiapBayar' => $totalSiapBayar,
+            'totalSudahDibayar' => $totalSudahDibayar,
+            'totalAman' => $totalAman,
+            'totalPeringatan' => $totalPeringatan,
+            'totalTerlambat' => $totalTerlambat,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
         return view('pembayaranNEW.dashboardPembayaran', $data);
