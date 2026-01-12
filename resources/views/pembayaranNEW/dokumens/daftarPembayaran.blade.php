@@ -697,6 +697,22 @@
     color: white;
   }
 
+  /* Deadline Badge Colors */
+  .status-badge.deadline-aman {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+  }
+
+  .status-badge.deadline-peringatan {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #333;
+  }
+
+  .status-badge.deadline-terlambat {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+
   @media (max-width: 768px) {
     .search-box {
       padding: 15px;
@@ -887,6 +903,39 @@
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
               @elseif($col == 'jenis_sub_pekerjaan')
                 {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
+              @elseif($col == 'deadline')
+                @if($dokumen->deadline_at)
+                  @php
+                    $deadline = \Carbon\Carbon::parse($dokumen->deadline_at);
+                    $now = \Carbon\Carbon::now();
+                    $diffHours = $now->diffInHours($deadline, false); // Negative if past deadline
+                    
+                    // Determine color based on time passed since deadline
+                    // Positive = deadline in future (aman), negative = deadline passed (terlambat)
+                    if ($diffHours >= 0) {
+                      // Deadline belum lewat
+                      $deadlineClass = 'deadline-aman';
+                      $deadlineLabel = 'Aman';
+                    } elseif ($diffHours >= -168) { // -168 hours = -1 week passed
+                      // Terlambat < 1 minggu
+                      $deadlineClass = 'deadline-aman';
+                      $deadlineLabel = 'Terlambat < 1 minggu';
+                    } elseif ($diffHours >= -504) { // -504 hours = -3 weeks passed  
+                      // Terlambat 1-3 minggu
+                      $deadlineClass = 'deadline-peringatan';
+                      $deadlineLabel = 'Terlambat 1-3 minggu';
+                    } else {
+                      // Terlambat > 3 minggu
+                      $deadlineClass = 'deadline-terlambat';
+                      $deadlineLabel = 'Terlambat > 3 minggu';
+                    }
+                  @endphp
+                  <span class="status-badge {{ $deadlineClass }}" title="{{ $deadlineLabel }}">
+                    {{ $deadline->format('d/m/Y') }}
+                  </span>
+                @else
+                  <span class="text-muted">-</span>
+                @endif
               @elseif($col == 'status_pembayaran')
                 @switch($paymentStatus)
                   @case('siap_bayar')

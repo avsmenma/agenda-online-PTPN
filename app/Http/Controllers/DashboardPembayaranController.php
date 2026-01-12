@@ -282,6 +282,7 @@ class DashboardPembayaranController extends Controller
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'TGL SPK',
             'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
+            'deadline' => 'Deadline',
             'status_pembayaran' => 'Status Pembayaran',
         ];
 
@@ -651,6 +652,11 @@ class DashboardPembayaranController extends Controller
                 $updateData = [
                     'status_pembayaran' => $validated['status_pembayaran'],
                 ];
+
+                // If status is siap_dibayar, set deadline_at to 3 weeks from now
+                if ($validated['status_pembayaran'] === 'siap_dibayar') {
+                    $updateData['deadline_at'] = Carbon::now()->addWeeks(3);
+                }
 
                 // If status is sudah_dibayar, also update general status and current_handler
                 if ($validated['status_pembayaran'] === 'sudah_dibayar') {
