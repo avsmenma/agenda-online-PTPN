@@ -183,7 +183,7 @@ class OwnerDashboardController extends Controller
 
         $stats = [];
         foreach ($bagianList as $code => $info) {
-            $count = Dokumen::where('bagian_code', $code)->count();
+            $count = Dokumen::where('bagian', $code)->count();
             $stats[] = [
                 'code' => $code,
                 'icon' => $info['icon'],
@@ -249,9 +249,9 @@ class OwnerDashboardController extends Controller
         }
 
         // Apply advanced filters
-        // Filter by bagian_code (from home page cards)
+        // Filter by bagian code (from home page cards)
         if ($request && $request->has('bagian') && !empty($request->bagian)) {
-            $query->where('bagian_code', $request->bagian);
+            $query->where('bagian', $request->bagian);
         }
 
         // Filter by bagian (name/text filter)
