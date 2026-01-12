@@ -1516,8 +1516,11 @@
     @if($isOwner)
       <!-- Owner Menu - Clean and Simple -->
       <div style="flex: 1; display: flex; flex-direction: column;">
-        <a href="{{ url('/owner/dashboard') }}" class="{{ $menuDashboard ?? '' }}">
-          <i class="fa-solid fa-satellite-dish"></i> Dashboard Kabag Keuangan
+        <a href="{{ url('/owner/home') }}" class="{{ $menuHome ?? '' }}">
+          <i class="fa-solid fa-house"></i> Home
+        </a>
+        <a href="{{ url('/owner/dokumen') }}" class="{{ $menuDokumen ?? '' }}">
+          <i class="fa-solid fa-file-lines"></i> Dokumen
         </a>
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
@@ -1993,7 +1996,7 @@
 
   <!-- Global UX Helper: Prevent Navigation During Text Selection -->
   <script>
-  /**
+  /        * *
    * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
    * Digunakan pada Card dan Table Row yangbisa diklik
    * 

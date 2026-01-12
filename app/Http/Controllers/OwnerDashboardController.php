@@ -92,23 +92,107 @@ class OwnerDashboardController extends Controller
             'totalNilaiTrend',
             'filterData'
         ))
-            ->with('title', 'Dashboard Kabag Keuangan - Pusat Komando')
+            ->with('title', 'Dashboard Kabag Keuangan - Dokumen')
             ->with('module', 'owner')
-            ->with('menuDashboard', 'active')
+            ->with('menuHome', '')
+            ->with('menuDokumen', 'active')
             ->with('menuRekapan', '')
             ->with('menuRekapanKeterlambatan', '')
-            ->with('menuDokumen', '')
             ->with('menuDaftarDokumen', '')
             ->with('menuEditDokumen', '')
             ->with('menuRekapKeterlambatan', '')
             ->with('menuDaftarDokumenDikembalikan', '')
             ->with('menuPengembalianKeBidang', '')
             ->with('menuTambahDokumen', '')
-            ->with('dashboardUrl', '/owner/dashboard')
-            ->with('dokumenUrl', '#')
+            ->with('dashboardUrl', '/owner/home')
+            ->with('dokumenUrl', '/owner/dokumen')
             ->with('pengembalianUrl', '#')
             ->with('tambahDokumenUrl', '#')
             ->with('search', $request->get('search', ''));
+    }
+
+    /**
+     * Display the owner home page with bagian statistics cards
+     */
+    public function home()
+    {
+        // Get document counts per bagian
+        $bagianStats = $this->getBagianStatistics();
+
+        // Get overall statistics
+        $totalDokumen = Dokumen::count();
+
+        // Dokumen Selesai
+        $dokumenSelesai = Dokumen::where(function ($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->orWhere('status_pembayaran', 'sudah_dibayar');
+        })->count();
+
+        // Dokumen Proses
+        $dokumenProses = Dokumen::where(function ($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                });
+        })->count();
+
+        // Total Nilai (Rp)
+        $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
+
+        // Calculate trend indicators (compare with last week)
+        $oneWeekAgo = Carbon::now()->subWeek();
+
+        $totalDokumenLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->count();
+        $totalDokumenTrend = $totalDokumenLastWeek > 0
+            ? round((($totalDokumen - $totalDokumenLastWeek) / $totalDokumenLastWeek) * 100, 1)
+            : 0;
+
+        return view('owner.home', compact(
+            'bagianStats',
+            'totalDokumen',
+            'dokumenProses',
+            'dokumenSelesai',
+            'totalNilai',
+            'totalDokumenTrend'
+        ))
+            ->with('title', 'Dashboard Kabag Keuangan - Home')
+            ->with('module', 'owner')
+            ->with('menuHome', 'active')
+            ->with('menuDokumen', '')
+            ->with('menuRekapanKeterlambatan', '')
+            ->with('welcomeMessage', '👋 Selamat datang, Kabag Keuangan');
+    }
+
+    /**
+     * Get document statistics per bagian
+     */
+    private function getBagianStatistics(): array
+    {
+        $bagianList = [
+            'AKN' => ['icon' => 'fa-calculator', 'color' => '#6366f1'],
+            'DPM' => ['icon' => 'fa-chart-line', 'color' => '#22c55e'],
+            'KPL' => ['icon' => 'fa-crown', 'color' => '#f59e0b'],
+            'PMO' => ['icon' => 'fa-tasks', 'color' => '#06b6d4'],
+            'SDM' => ['icon' => 'fa-users', 'color' => '#8b5cf6'],
+            'SKH' => ['icon' => 'fa-building', 'color' => '#ec4899'],
+            'TAN' => ['icon' => 'fa-seedling', 'color' => '#10b981'],
+            'TEP' => ['icon' => 'fa-cogs', 'color' => '#64748b'],
+            'PTI' => ['icon' => 'fa-laptop-code', 'color' => '#0ea5e9'],
+        ];
+
+        $stats = [];
+        foreach ($bagianList as $code => $info) {
+            $count = Dokumen::where('bagian_code', $code)->count();
+            $stats[] = [
+                'code' => $code,
+                'icon' => $info['icon'],
+                'color' => $info['color'],
+                'count' => $count,
+            ];
+        }
+
+        return $stats;
     }
 
     /**
@@ -165,7 +249,12 @@ class OwnerDashboardController extends Controller
         }
 
         // Apply advanced filters
-        // Filter by bagian
+        // Filter by bagian_code (from home page cards)
+        if ($request && $request->has('bagian') && !empty($request->bagian)) {
+            $query->where('bagian_code', $request->bagian);
+        }
+
+        // Filter by bagian (name/text filter)
         if ($request && $request->has('filter_bagian') && !empty($request->filter_bagian)) {
             $query->where('bagian', $request->filter_bagian);
         }

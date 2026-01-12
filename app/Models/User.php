@@ -33,9 +33,9 @@ final class User extends Authenticatable
     ];
 
     public const DASHBOARD_ROUTES = [
-        'Admin' => '/owner/dashboard',
-        'owner' => '/owner/dashboard',
-        'Owner' => '/owner/dashboard',
+        'Admin' => '/owner/home',
+        'owner' => '/owner/home',
+        'Owner' => '/owner/home',
         'IbuA' => '/dashboard',
         'ibutarapul' => '/dashboard',  // New role name from migration
         'IbuB' => '/dashboard/verifikasi',

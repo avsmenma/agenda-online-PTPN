@@ -384,7 +384,18 @@ Route::get('/ibub/rejected/{dokumen}', function ($dokumen) {
 })->name('ibub.rejected.show.old');
 
 // Owner Dashboard routes (God View)
-Route::get('owner/dashboard', [OwnerDashboardController::class, 'index'])
+// New Home page (main dashboard)
+Route::get('owner/home', [OwnerDashboardController::class, 'home'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.home');
+
+// Dokumen page (previously dashboard)
+Route::get('owner/dokumen', [OwnerDashboardController::class, 'index'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.dokumen');
+
+// Redirect old dashboard URL to home
+Route::get('owner/dashboard', fn() => redirect()->route('owner.home'))
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dashboard');
 
