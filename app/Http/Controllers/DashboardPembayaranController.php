@@ -228,13 +228,17 @@ class DashboardPembayaranController extends Controller
 
         // Add computed status to each document
         // Also auto-set deadline_at for siap_bayar documents that don't have one yet
-        $allDokumens->each(function ($doc) use ($getComputedStatus) {
+        // Check if deadline_at column exists (in case migration hasn't run on production)
+        $hasDeadlineColumn = \Schema::hasColumn('dokumens', 'deadline_at');
+
+        $allDokumens->each(function ($doc) use ($getComputedStatus, $hasDeadlineColumn) {
             $doc->computed_status = $getComputedStatus($doc);
 
             // Auto-set deadline_at for siap_bayar documents that don't have deadline yet
             // Deadline = 3 weeks from now (same as when manually approved via updateStatus)
             // Use direct DB update to avoid saving computed_status which is not a real column
-            if ($doc->computed_status === 'siap_bayar' && empty($doc->deadline_at)) {
+            // Only update if the deadline_at column exists in database
+            if ($hasDeadlineColumn && $doc->computed_status === 'siap_bayar' && empty($doc->deadline_at)) {
                 $deadline = Carbon::now()->addWeeks(3);
                 \App\Models\Dokumen::where('id', $doc->id)->update(['deadline_at' => $deadline]);
                 $doc->deadline_at = $deadline; // Update local instance for display
