@@ -409,6 +409,7 @@ class OwnerDashboardController extends Controller
                 'status_badge_color' => $this->getStatusBadgeColor($dokumen->status),
                 'progress_color' => $this->getProgressColor($dokumen->status),
                 'is_overdue' => $this->isDocumentOverdue($dokumen),
+                'is_paid' => $dokumen->status_pembayaran === 'sudah_dibayar' || $dokumen->status === 'completed',
                 'deadline_info' => $this->getDeadlineInfo($dokumen),
                 'workflow_timeline' => $this->getWorkflowTimeline($dokumen),
             ];

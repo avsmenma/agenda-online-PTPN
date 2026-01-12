@@ -528,6 +528,31 @@
       }
     }
 
+    /* Completed/Paid Document Stamp */
+    .smart-document-card.completed {
+      border-left: 4px solid #22c55e;
+      position: relative;
+    }
+
+    .paid-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-15deg);
+      background: rgba(34, 197, 94, 0.15);
+      border: 3px solid #22c55e;
+      color: #16a34a;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      z-index: 10;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+
     .smart-card-header {
       display: flex;
       justify-content: space-between;
@@ -1688,9 +1713,13 @@
       @else
         <div class="card-view-container">
           @foreach($documents as $dokumen)
-            <div class="smart-document-card {{ $dokumen['is_overdue'] ? 'overdue' : '' }}"
+            <div class="smart-document-card {{ $dokumen['is_overdue'] ? 'overdue' : '' }} {{ $dokumen['is_paid'] ? 'completed' : '' }}"
               data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
               onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')">
+
+              @if($dokumen['is_paid'])
+                <div class="paid-stamp">✓ Sudah Dibayar</div>
+              @endif
 
               <div class="smart-card-header">
                 <div>
