@@ -609,9 +609,10 @@ class DashboardPembayaranController extends Controller
                     'status_pembayaran' => $validated['status_pembayaran'],
                 ];
 
-                // If status is sudah_dibayar, also update general status
+                // If status is sudah_dibayar, also update general status and current_handler
                 if ($validated['status_pembayaran'] === 'sudah_dibayar') {
                     $updateData['status'] = 'completed';
+                    $updateData['current_handler'] = 'pembayaran'; // Move ownership to pembayaran
                 }
 
                 $dokumen->update($updateData);

@@ -2607,6 +2607,8 @@
                 <span class="badge-status badge-belum">⏳ Belum Diproses</span>
               @elseif(in_array($dokumen->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']))
                 <span class="badge-status badge-dikembalikan">← Dikembalikan</span>
+              @elseif($dokumen->status == 'completed')
+                <span class="badge-status badge-selesai">✓ Selesai - Sudah Dibayar</span>
               @else
                 <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
               @endif
@@ -4387,6 +4389,33 @@ function openViewDocumentModal(docId) {
   // Set edit button URL
   document.getElementById('view-edit-btn').href = `/documents/akutansi/${docId}/edit`;
   
+  // CRITICAL: Reset all fields to loading state BEFORE fetch to prevent caching issues
+  const fieldsToReset = [
+    'view-nomor-agenda', 'view-nomor-spp', 'view-tanggal-spp', 'view-bulan', 'view-tahun',
+    'view-tanggal-masuk', 'view-jenis-dokumen', 'view-jenis-sub-pekerjaan', 'view-kategori',
+    'view-jenis-pembayaran', 'view-uraian-spp', 'view-nilai-rupiah', 'view-ejaan-nilai-rupiah',
+    'view-dibayar-kepada', 'view-kebun', 'view-no-spk', 'view-tanggal-spk', 'view-tanggal-berakhir-spk',
+    'view-nomor-miro', 'view-no-berita-acara', 'view-tanggal-berita-acara', 'view-nomor-po', 'view-nomor-pr',
+    'view-tanggal-miro', 'view-komoditi-perpajakan', 'view-status-perpajakan', 'view-npwp',
+    'view-alamat-pembeli', 'view-no-kontrak', 'view-no-invoice', 'view-tanggal-invoice',
+    'view-dpp-invoice', 'view-ppn-invoice', 'view-dpp-ppn-invoice', 'view-tanggal-pengajuan-pajak',
+    'view-no-faktur', 'view-tanggal-faktur', 'view-dpp-faktur', 'view-ppn-faktur', 'view-selisih-pajak',
+    'view-keterangan-pajak', 'view-penggantian-pajak', 'view-dpp-penggantian', 'view-ppn-penggantian',
+    'view-selisih-ppn', 'view-tanggal-selesai-verifikasi-pajak', 'view-jenis-pph', 'view-dpp-pph',
+    'view-ppn-terhutang', 'view-link-dokumen-pajak'
+  ];
+  
+  fieldsToReset.forEach(fieldId => {
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.textContent = 'Memuat...';
+    }
+  });
+  
+  // Show modal immediately with loading state
+  const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+  modal.show();
+  
   // Load document data via AJAX
   fetch(`/documents/akutansi/${docId}/detail`, {
     headers: {
@@ -4495,11 +4524,16 @@ function openViewDocumentModal(docId) {
     })
     .catch(error => {
       console.error('Error loading document:', error);
+      // Show error state in fields
+      fieldsToReset.forEach(fieldId => {
+        const el = document.getElementById(fieldId);
+        if (el) {
+          el.textContent = 'Gagal memuat data';
+        }
+      });
     });
   
-  // Show modal
-  const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
-  modal.show();
+  // Note: modal.show() is now called earlier with loading state
   
   // Ensure edit button works correctly - prevent any interference
   const editBtn = document.getElementById('view-edit-btn');
