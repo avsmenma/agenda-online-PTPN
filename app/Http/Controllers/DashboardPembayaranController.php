@@ -227,8 +227,16 @@ class DashboardPembayaranController extends Controller
             ->get();
 
         // Add computed status to each document
+        // Also auto-set deadline_at for siap_bayar documents that don't have one yet
         $allDokumens->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
+
+            // Auto-set deadline_at for siap_bayar documents that don't have deadline yet
+            // Deadline = 3 weeks from now (same as when manually approved via updateStatus)
+            if ($doc->computed_status === 'siap_bayar' && empty($doc->deadline_at)) {
+                $doc->deadline_at = Carbon::now()->addWeeks(3);
+                $doc->save(); // Persist to database
+            }
         });
 
         // Tampilkan semua dokumen (termasuk yang belum siap bayar) untuk real-time visibility
