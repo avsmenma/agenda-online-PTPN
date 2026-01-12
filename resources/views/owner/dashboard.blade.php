@@ -1522,7 +1522,7 @@
 
       <!-- Filter Panel (Collapsible) -->
       <div class="filter-panel" id="filterPanel" style="display: none;">
-        <form method="GET" action="{{ url('/owner/dashboard') }}" id="filterForm" class="filter-form">
+        <form method="GET" action="{{ url('/owner/dokumen') }}" id="filterForm" class="filter-form">
           <input type="hidden" name="per_page" value="{{ request('per_page', 10) }}">
 
           <!-- Search Bar -->
@@ -1978,7 +1978,7 @@
     }
 
     function resetFilters() {
-      window.location.href = '{{ url("/owner/dashboard") }}';
+      window.location.href = '{{ url("/owner/dokumen") }}';
     }
 
     function updateActiveFilterCount() {
