@@ -3234,38 +3234,44 @@ class OwnerDashboardController extends Controller
 
     /**
      * Format age in days and hours to readable format
+     * Uses total hours to calculate days for more accurate display
      */
     private function formatAge($days, $hours = 0)
     {
-        // Calculate remaining hours after full days
+        // Calculate days and remaining hours from total hours
+        // This is more reliable than using separate $days parameter
+        $calculatedDays = floor($hours / 24);
         $remainingHours = $hours % 24;
 
-        if ($days == 0 && $remainingHours == 0) {
+        // Use the calculated days from hours for consistency
+        $actualDays = max($days, $calculatedDays);
+
+        if ($actualDays == 0 && $remainingHours == 0) {
             return 'Baru';
-        } elseif ($days == 0) {
+        } elseif ($actualDays == 0) {
             return $remainingHours . ' jam';
-        } elseif ($days == 1 && $remainingHours == 0) {
+        } elseif ($actualDays == 1 && $remainingHours == 0) {
             return '1 hari';
-        } elseif ($days == 1) {
+        } elseif ($actualDays == 1) {
             return '1 hari ' . $remainingHours . ' jam';
-        } elseif ($days < 30) {
+        } elseif ($actualDays < 30) {
             if ($remainingHours > 0) {
-                return $days . ' hari ' . $remainingHours . ' jam';
+                return $actualDays . ' hari ' . $remainingHours . ' jam';
             }
-            return $days . ' hari';
-        } elseif ($days == 30) {
+            return $actualDays . ' hari';
+        } elseif ($actualDays == 30) {
             return '1 bulan';
-        } elseif ($days % 30 == 0) {
-            return ($days / 30) . ' bulan';
+        } elseif ($actualDays % 30 == 0) {
+            return ($actualDays / 30) . ' bulan';
         } else {
-            $months = floor($days / 30);
-            $remainingDays = $days % 30;
+            $months = floor($actualDays / 30);
+            $remainingDays = $actualDays % 30;
             if ($months > 0 && $remainingDays > 0) {
                 return $months . ' bulan ' . $remainingDays . ' hari';
             } elseif ($months > 0) {
                 return $months . ' bulan';
             } else {
-                return $days . ' hari';
+                return $actualDays . ' hari';
             }
         }
     }
