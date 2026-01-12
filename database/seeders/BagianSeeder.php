@@ -21,6 +21,7 @@ class BagianSeeder extends Seeder
             ['kode' => 'AKN', 'nama' => 'AKN', 'deskripsi' => 'AKN', 'is_active' => true],
             ['kode' => 'TAN', 'nama' => 'TAN', 'deskripsi' => 'TAN', 'is_active' => true],
             ['kode' => 'PMO', 'nama' => 'PMO', 'deskripsi' => 'PMO', 'is_active' => true],
+            ['kode' => 'PTI', 'nama' => 'PTI', 'deskripsi' => 'PTI', 'is_active' => true],
         ];
 
         foreach ($bagians as $bagian) {
