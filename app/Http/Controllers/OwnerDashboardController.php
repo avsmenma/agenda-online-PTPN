@@ -2823,7 +2823,7 @@ class OwnerDashboardController extends Controller
 
 
         // Query dokumen berdasarkan role dengan umur dokumen sejak received_at
-        // Untuk pembayaran, gunakan left join karena mungkin tidak selalu ada di dokumen_role_data
+        // Untuk pembayaran, gunakan sama seperti role lainnya dengan dokumen_role_data
         if ($roleCode === 'pembayaran') {
             $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
                 ->leftJoin('dokumen_role_data', function ($join) use ($roleCode) {
@@ -2831,18 +2831,11 @@ class OwnerDashboardController extends Controller
                         ->where('dokumen_role_data.role_code', '=', $roleCode);
                 })
                 ->where(function ($q) {
-                    $q->where(function ($subQ) {
-                        // Dokumen yang ada di dokumen_role_data dengan received_at
-                        $subQ->whereNotNull('dokumen_role_data.received_at')
-                            ->whereNull('dokumen_role_data.processed_at');
-                    })->orWhere(function ($subQ) {
-                        // Dokumen yang dikirim ke pembayaran (menggunakan sent_to_pembayaran_at)
-                        $subQ->whereNotNull('dokumens.sent_to_pembayaran_at')
-                            ->where(function ($statusQ) {
+                    $q->whereNotNull('dokumen_role_data.received_at')
+                        ->where(function ($statusQ) {
                             $statusQ->whereNull('dokumens.status_pembayaran')
                                 ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
                         });
-                    });
                 })
                 ->where(function ($q) {
                     $q->where('dokumens.current_handler', 'pembayaran')
@@ -2969,12 +2962,8 @@ class OwnerDashboardController extends Controller
             $query->where('dokumens.kebun', $request->filter_kebun);
         }
 
-        // Order by received_at or sent_to_pembayaran_at
-        if ($roleCode === 'pembayaran') {
-            $query->orderByRaw('COALESCE(dokumen_role_data.received_at, dokumens.sent_to_pembayaran_at) ASC');
-        } else {
-            $query->orderBy('dokumen_role_data.received_at', 'asc');
-        }
+        // Order by received_at
+        $query->orderBy('dokumen_role_data.received_at', 'asc');
 
         // Debug: Log SQL query and count before get()
         \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, SQL Query: " . $query->toSql());
@@ -3004,11 +2993,7 @@ class OwnerDashboardController extends Controller
             if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
                 $receivedAt = Carbon::parse($dokumen->delay_received_at);
             }
-            // Fallback for pembayaran role
-            elseif ($roleCode === 'pembayaran' && isset($dokumen->sent_to_pembayaran_at) && $dokumen->sent_to_pembayaran_at) {
-                $receivedAt = Carbon::parse($dokumen->sent_to_pembayaran_at);
-            }
-            // Third try: Load roleData relationship
+            // Load roleData relationship as fallback
             else {
                 if (!$dokumen->relationLoaded('roleData')) {
                     $dokumen->load('roleData');
