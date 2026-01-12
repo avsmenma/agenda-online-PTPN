@@ -1713,7 +1713,8 @@
       @else
         <div class="card-view-container">
           @foreach($documents as $dokumen)
-            <div class="smart-document-card {{ $dokumen['is_overdue'] ? 'overdue' : '' }} {{ $dokumen['is_paid'] ? 'completed' : '' }}"
+            <div
+              class="smart-document-card {{ $dokumen['is_overdue'] ? 'overdue' : '' }} {{ $dokumen['is_paid'] ? 'completed' : '' }}"
               data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
               onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')">
 
@@ -1762,448 +1763,456 @@
                   @php
                     $progress = $dokumen['progress_percentage'] ?? 0;
                     $currentStep = min(5, max(1, ceil($progress / 20)));
+                    $isPaid = $dokumen['is_paid'] ?? false;
                   @endphp
                   @for($i = 1; $i <= 5; $i++)
-                    <div class="stepper-step {{ $i <= $currentStep ? ($i == $currentStep ? 'active' : 'completed') : '' }}">
-                      {{ $i }}
-                      <div class="stepper-step-label">
-                        @if($i == 1) ibutara
-                        @elseif($i == 2) teamverifikasi
-                        @elseif($i == 3) team perpajakan
-                        @elseif($i == 4) team akutansi
-                        @else pembayaran
-                        @endif
+                    @if($isPaid)
+                      <div class="stepper-step completed">
+                        <i class="fas fa-check"></i>
+                    @else
+                        <div class="stepper-step {{ $i <= $currentStep ? ($i == $currentStep ? 'active' : 'completed') : '' }}">
+                          {{ $i }}
+                      @endif
+                        <div class="stepper-step-label">
+                          @if($i == 1) ibutara
+                          @elseif($i == 2) teamverifikasi
+                          @elseif($i == 3) team perpajakan
+                          @elseif($i == 4) team akutansi
+                          @else pembayaran
+                          @endif
+                        </div>
                       </div>
-                    </div>
                   @endfor
+                  </div>
                 </div>
+
               </div>
-
-            </div>
           @endforeach
-        </div>
+          </div>
       @endif
 
-      <!-- Pagination Footer for Card View -->
-      @if($documents->count() > 0)
-        @include('owner.partials.pagination-footer', ['paginator' => $documents])
-      @endif
-    </div>
+        <!-- Pagination Footer for Card View -->
+        @if($documents->count() > 0)
+          @include('owner.partials.pagination-footer', ['paginator' => $documents])
+        @endif
+      </div>
 
-    <!-- Table View -->
-    <div id="tableView" class="view-container">
-      @if($documents->count() == 0)
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="fas fa-folder-open"></i>
+      <!-- Table View -->
+      <div id="tableView" class="view-container">
+        @if($documents->count() == 0)
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <i class="fas fa-folder-open"></i>
+            </div>
+            <div class="empty-state-title">Tidak ada dokumen</div>
+            <div class="empty-state-text">
+              @if(isset($search) && !empty($search))
+                Tidak ada dokumen yang sesuai dengan pencarian "{{ $search }}"
+              @else
+                Dokumen akan ditampilkan di sini ketika tersedia
+              @endif
+            </div>
           </div>
-          <div class="empty-state-title">Tidak ada dokumen</div>
-          <div class="empty-state-text">
-            @if(isset($search) && !empty($search))
-              Tidak ada dokumen yang sesuai dengan pencarian "{{ $search }}"
-            @else
-              Dokumen akan ditampilkan di sini ketika tersedia
-            @endif
-          </div>
-        </div>
-      @else
-        <div class="table-view-container">
-          <table class="modern-table">
-            <thead>
-              <tr>
-                <th>No. Dokumen</th>
-                <th>Tgl Masuk</th>
-                <th>Nilai (Rp)</th>
-                <th>Posisi</th>
-                <th>Status</th>
-                <th>Progres</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach($documents as $dokumen)
-                <tr class="clickable-row {{ $dokumen['is_overdue'] ? 'overdue-row' : '' }}"
-                  data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
-                  onclick="handleItemClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')" style="cursor: pointer;">
-                  <td>
-                    <div style="font-weight: 600; color: var(--text-primary);">{{ $dokumen['nomor_agenda'] }}</div>
-                    <div class="select-text" style="font-size: 12px; color: var(--text-muted);">{{ $dokumen['nomor_spp'] }}
-                    </div>
-                  </td>
-                  <td class="select-text" style="color: var(--text-secondary);">
-                    {{ $dokumen['tanggal_masuk'] ?? ($dokumen['created_at'] ?? '-') }}</td>
-                  <td>
-                    <div class="select-text" style="font-weight: 700; color: var(--success-color);">
-                      Rp {{ number_format($dokumen['nilai_rupiah'], 0, ',', '.') }}
-                    </div>
-                  </td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span class="user-avatar" style="margin: 0;">
-                        {{ substr($dokumen['current_handler_display'] ?? 'N/A', 0, 1) }}
-                      </span>
-                      <span>{{ $dokumen['current_handler_display'] ?? 'Belum ada penangan' }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="status-badge {{ $dokumen['progress_percentage'] >= 100 ? 'selesai' : 'proses' }}">
-                      {{ $dokumen['progress_percentage'] >= 100 ? 'Selesai' : 'Proses' }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="mini-progress-bar">
-                      <div class="mini-progress-fill"
-                        style="width: {{ $dokumen['progress_percentage'] }}%; background: {{ $dokumen['progress_color'] }};">
-                      </div>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                      {{ $dokumen['progress_percentage'] }}%
-                    </div>
-                  </td>
-                  <td>
-                    <button class="action-btn"
-                      onclick="event.stopPropagation(); window.location.href='{{ url('/owner/workflow/' . $dokumen['id']) }}'">
-                      Lihat
-                    </button>
-                  </td>
+        @else
+          <div class="table-view-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>No. Dokumen</th>
+                  <th>Tgl Masuk</th>
+                  <th>Nilai (Rp)</th>
+                  <th>Posisi</th>
+                  <th>Status</th>
+                  <th>Progres</th>
+                  <th>Aksi</th>
                 </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      @endif
+              </thead>
+              <tbody>
+                @foreach($documents as $dokumen)
+                  <tr class="clickable-row {{ $dokumen['is_overdue'] ? 'overdue-row' : '' }}"
+                    data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
+                    onclick="handleItemClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')"
+                    style="cursor: pointer;">
+                    <td>
+                      <div style="font-weight: 600; color: var(--text-primary);">{{ $dokumen['nomor_agenda'] }}</div>
+                      <div class="select-text" style="font-size: 12px; color: var(--text-muted);">{{ $dokumen['nomor_spp'] }}
+                      </div>
+                    </td>
+                    <td class="select-text" style="color: var(--text-secondary);">
+                      {{ $dokumen['tanggal_masuk'] ?? ($dokumen['created_at'] ?? '-') }}
+                    </td>
+                    <td>
+                      <div class="select-text" style="font-weight: 700; color: var(--success-color);">
+                        Rp {{ number_format($dokumen['nilai_rupiah'], 0, ',', '.') }}
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="user-avatar" style="margin: 0;">
+                          {{ substr($dokumen['current_handler_display'] ?? 'N/A', 0, 1) }}
+                        </span>
+                        <span>{{ $dokumen['current_handler_display'] ?? 'Belum ada penangan' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="status-badge {{ $dokumen['progress_percentage'] >= 100 ? 'selesai' : 'proses' }}">
+                        {{ $dokumen['progress_percentage'] >= 100 ? 'Selesai' : 'Proses' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="mini-progress-bar">
+                        <div class="mini-progress-fill"
+                          style="width: {{ $dokumen['progress_percentage'] }}%; background: {{ $dokumen['progress_color'] }};">
+                        </div>
+                      </div>
+                      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                        {{ $dokumen['progress_percentage'] }}%
+                      </div>
+                    </td>
+                    <td>
+                      <button class="action-btn"
+                        onclick="event.stopPropagation(); window.location.href='{{ url('/owner/workflow/' . $dokumen['id']) }}'">
+                        Lihat
+                      </button>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        @endif
 
-      <!-- Pagination Footer for Table View -->
-      @if($documents->count() > 0)
-        @include('owner.partials.pagination-footer', ['paginator' => $documents])
-      @endif
+        <!-- Pagination Footer for Table View -->
+        @if($documents->count() > 0)
+          @include('owner.partials.pagination-footer', ['paginator' => $documents])
+        @endif
+      </div>
+
     </div>
 
-  </div>
+    <script>
+      /**
+       * Smart Click Handler untuk Card Dokumen
+       * Mencegah navigasi jika user sedang melakukan text selection
+       */
+      function handleCardClick(event, url) {
+        // Cek apakah ada text yang sedang diseleksi
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
 
-  <script>
-    /**
-     * Smart Click Handler untuk Card Dokumen
-     * Mencegah navigasi jika user sedang melakukan text selection
-     */
-    function handleCardClick(event, url) {
-      // Cek apakah ada text yang sedang diseleksi
-      const selection = window.getSelection();
-      const selectedText = selection.toString().trim();
+        // Jika ada text yang diseleksi, jangan lakukan navigasi
+        if (selectedText.length > 0) {
+          event.preventDefault();
+          event.stopPropagation();
+          return false;
+        }
 
-      // Jika ada text yang diseleksi, jangan lakukan navigasi
-      if (selectedText.length > 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        return false;
+        // Cek apakah ini adalah double-click (biasanya untuk select word)
+        if (event.detail === 2) {
+          // Double-click biasanya untuk select word, tunggu sebentar
+          setTimeout(() => {
+            const newSelection = window.getSelection();
+            if (newSelection.toString().trim().length > 0) {
+              // User berhasil select text, jangan navigasi
+              return false;
+            }
+          }, 50);
+          return false;
+        }
+
+        // Cek juga apakah user sedang drag (mouse drag selection)
+        if (event.detail === 0 || event.which === 0) {
+          // Ini adalah programmatic click atau drag, jangan navigasi
+          return false;
+        }
+
+        // Jika tidak ada selection, lakukan navigasi
+        window.location.href = url;
+        return true;
       }
 
-      // Cek apakah ini adalah double-click (biasanya untuk select word)
-      if (event.detail === 2) {
-        // Double-click biasanya untuk select word, tunggu sebentar
-        setTimeout(() => {
-          const newSelection = window.getSelection();
-          if (newSelection.toString().trim().length > 0) {
-            // User berhasil select text, jangan navigasi
-            return false;
-          }
-        }, 50);
-        return false;
+      function switchView(view) {
+        // Update buttons
+        document.querySelectorAll('.view-switcher-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+        // Update views
+        document.getElementById('cardView').classList.toggle('active', view === 'card');
+        document.getElementById('tableView').classList.toggle('active', view === 'table');
+
+        // Save preference
+        localStorage.setItem('dashboardView', view);
       }
 
-      // Cek juga apakah user sedang drag (mouse drag selection)
-      if (event.detail === 0 || event.which === 0) {
-        // Ini adalah programmatic click atau drag, jangan navigasi
-        return false;
-      }
+      // Load saved view preference
+      document.addEventListener('DOMContentLoaded', function () {
+        const savedView = localStorage.getItem('dashboardView') || 'card';
+        switchView(savedView);
 
-      // Jika tidak ada selection, lakukan navigasi
-      window.location.href = url;
-      return true;
-    }
+        // Tambahkan event listener untuk mencegah navigasi saat text selection
+        // Gunakan mousedown untuk deteksi awal selection
+        document.querySelectorAll('.smart-document-card, .modern-table tbody tr').forEach(card => {
+          let isSelecting = false;
+          let startX = 0;
+          let startY = 0;
 
-    function switchView(view) {
-      // Update buttons
-      document.querySelectorAll('.view-switcher-btn').forEach(btn => {
-        btn.classList.remove('active');
+          card.addEventListener('mousedown', function (e) {
+            isSelecting = false;
+            startX = e.clientX;
+            startY = e.clientY;
+          });
+
+          card.addEventListener('mousemove', function (e) {
+            // Jika mouse bergerak lebih dari 3px, kemungkinan user sedang drag select
+            const deltaX = Math.abs(e.clientX - startX);
+            const deltaY = Math.abs(e.clientY - startY);
+            if (deltaX > 3 || deltaY > 3) {
+              isSelecting = true;
+            }
+          });
+
+          card.addEventListener('mouseup', function (e) {
+            // Jika user melakukan drag, set flag
+            if (isSelecting) {
+              setTimeout(() => {
+                const selection = window.getSelection();
+                if (selection.toString().trim().length > 0) {
+                  // User sedang melakukan text selection, jangan navigasi
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }, 10);
+            }
+          });
+        });
       });
-      document.querySelector(`[data-view="${view}"]`).classList.add('active');
 
-      // Update views
-      document.getElementById('cardView').classList.toggle('active', view === 'card');
-      document.getElementById('tableView').classList.toggle('active', view === 'table');
+      // Filter Panel Functionality
+      let filterPanelExpanded = false;
 
-      // Save preference
-      localStorage.setItem('dashboardView', view);
-    }
+      function toggleFilterPanel() {
+        const panel = document.getElementById('filterPanel');
+        const icon = document.getElementById('filterToggleIcon');
+        filterPanelExpanded = !filterPanelExpanded;
 
-    // Load saved view preference
-    document.addEventListener('DOMContentLoaded', function () {
-      const savedView = localStorage.getItem('dashboardView') || 'card';
-      switchView(savedView);
-
-      // Tambahkan event listener untuk mencegah navigasi saat text selection
-      // Gunakan mousedown untuk deteksi awal selection
-      document.querySelectorAll('.smart-document-card, .modern-table tbody tr').forEach(card => {
-        let isSelecting = false;
-        let startX = 0;
-        let startY = 0;
-
-        card.addEventListener('mousedown', function (e) {
-          isSelecting = false;
-          startX = e.clientX;
-          startY = e.clientY;
-        });
-
-        card.addEventListener('mousemove', function (e) {
-          // Jika mouse bergerak lebih dari 3px, kemungkinan user sedang drag select
-          const deltaX = Math.abs(e.clientX - startX);
-          const deltaY = Math.abs(e.clientY - startY);
-          if (deltaX > 3 || deltaY > 3) {
-            isSelecting = true;
-          }
-        });
-
-        card.addEventListener('mouseup', function (e) {
-          // Jika user melakukan drag, set flag
-          if (isSelecting) {
-            setTimeout(() => {
-              const selection = window.getSelection();
-              if (selection.toString().trim().length > 0) {
-                // User sedang melakukan text selection, jangan navigasi
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }, 10);
-          }
-        });
-      });
-    });
-
-    // Filter Panel Functionality
-    let filterPanelExpanded = false;
-
-    function toggleFilterPanel() {
-      const panel = document.getElementById('filterPanel');
-      const icon = document.getElementById('filterToggleIcon');
-      filterPanelExpanded = !filterPanelExpanded;
-
-      if (filterPanelExpanded) {
-        panel.style.display = 'block';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-      } else {
-        panel.style.display = 'none';
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-      }
-
-      updateActiveFilterCount();
-    }
-
-    function applyFilter() {
-      const form = document.getElementById('filterForm');
-      form.submit();
-    }
-
-    function resetFilters() {
-      window.location.href = '{{ url("/owner/dokumen") }}';
-    }
-
-    function updateActiveFilterCount() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      let count = 0;
-
-      // Count active filters
-      for (let [key, value] of formData.entries()) {
-        if (key.startsWith('filter_') && value && value !== '') {
-          count++;
-        }
-        if (key === 'status' && value && value !== '') {
-          count++;
-        }
-      }
-
-      const badge = document.getElementById('activeFilterCount');
-      badge.textContent = count;
-      badge.style.display = count > 0 ? 'inline-block' : 'none';
-
-      updateActiveFilterBadges();
-    }
-
-    function updateActiveFilterBadges() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      const badgesContainer = document.getElementById('activeFilters');
-      badgesContainer.innerHTML = '';
-
-      const filterLabels = {
-        'filter_bagian': 'Bagian',
-        'filter_vendor': 'Vendor',
-        'filter_kriteria_cf': 'Kriteria CF',
-        'filter_sub_kriteria': 'Sub Kriteria',
-        'filter_item_sub_kriteria': 'Item Sub Kriteria',
-        'filter_kebun': 'Kebun',
-        'filter_status_pembayaran': 'Status Pembayaran',
-        'status': 'Status Dokumen'
-      };
-
-      for (let [key, value] of formData.entries()) {
-        if ((key.startsWith('filter_') || key === 'status') && value && value !== '') {
-          const label = filterLabels[key] || key;
-          const badge = document.createElement('span');
-          badge.className = 'filter-badge-item';
-          badge.innerHTML = `
-          <span>${label}: ${getFilterDisplayValue(key, value)}</span>
-          <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
-          badgesContainer.appendChild(badge);
-        }
-      }
-    }
-
-    function getFilterDisplayValue(key, value) {
-      // Get display value from select options
-      const select = document.querySelector(`[name="${key}"]`);
-      if (select && select.options) {
-        const option = Array.from(select.options).find(opt => opt.value === value);
-        if (option) return option.text;
-      }
-      return value;
-    }
-
-    function removeFilter(key) {
-      const input = document.querySelector(`[name="${key}"]`);
-      if (input) {
-        if (input.type === 'radio') {
-          // Find and check the "Semua" option
-          const semuaOption = document.querySelector(`[name="${key}"][value=""]`);
-          if (semuaOption) semuaOption.checked = true;
+        if (filterPanelExpanded) {
+          panel.style.display = 'block';
+          icon.classList.remove('fa-chevron-down');
+          icon.classList.add('fa-chevron-up');
         } else {
-          input.value = '';
+          panel.style.display = 'none';
+          icon.classList.remove('fa-chevron-up');
+          icon.classList.add('fa-chevron-down');
         }
-        applyFilter();
-      }
-    }
 
-    // Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
-    function updateSubKriteriaFilter() {
-      const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-
-      // Enable/disable Sub Kriteria based on Kriteria CF selection
-      if (kriteriaCfId && kriteriaCfId !== '') {
-        subKriteriaSelect.disabled = false;
-        subKriteriaSelect.style.opacity = '1';
-        subKriteriaSelect.style.cursor = 'pointer';
-
-        // Show/hide options based on selected kriteria CF
-        Array.from(subKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
-          }
-          const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
-          if (kriteriaCfIdForOption === kriteriaCfId) {
-            option.style.display = 'block';
-          } else {
-            option.style.display = 'none';
-          }
-        });
-      } else {
-        // Disable Sub Kriteria and reset value if Kriteria CF is not selected
-        subKriteriaSelect.disabled = true;
-        subKriteriaSelect.style.opacity = '0.6';
-        subKriteriaSelect.style.cursor = 'not-allowed';
-        subKriteriaSelect.value = '';
-
-        // Also disable and reset Item Sub Kriteria
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.style.opacity = '0.6';
-        itemSubKriteriaSelect.style.cursor = 'not-allowed';
-        itemSubKriteriaSelect.value = '';
-
-        // Show all options when disabled
-        Array.from(subKriteriaSelect.options).forEach(option => {
-          option.style.display = 'block';
-        });
+        updateActiveFilterCount();
       }
 
-      // Update Item Sub Kriteria filter
-      updateItemSubKriteriaFilter();
-    }
-
-    function updateItemSubKriteriaFilter() {
-      const subKriteriaId = document.getElementById('filterSubKriteria').value;
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
-
-      // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
-      if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
-        itemSubKriteriaSelect.disabled = false;
-        itemSubKriteriaSelect.style.opacity = '1';
-        itemSubKriteriaSelect.style.cursor = 'pointer';
-
-        // Show/hide options based on selected sub kriteria
-        Array.from(itemSubKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
-          }
-          const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
-          if (subKriteriaIdForOption === subKriteriaId) {
-            option.style.display = 'block';
-          } else {
-            option.style.display = 'none';
-          }
-        });
-      } else {
-        // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.style.opacity = '0.6';
-        itemSubKriteriaSelect.style.cursor = 'not-allowed';
-        itemSubKriteriaSelect.value = '';
-
-        // Show all options when disabled
-        Array.from(itemSubKriteriaSelect.options).forEach(option => {
-          option.style.display = 'block';
-        });
+      function applyFilter() {
+        const form = document.getElementById('filterForm');
+        form.submit();
       }
-    }
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function () {
-      updateActiveFilterCount();
+      function resetFilters() {
+        window.location.href = '{{ url("/owner/dokumen") }}';
+      }
 
-      // Initialize cascading dropdowns
-      updateSubKriteriaFilter();
-      updateItemSubKriteriaFilter();
+      function updateActiveFilterCount() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        let count = 0;
 
-      // Auto-expand filter panel if filters are active
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      let hasActiveFilters = false;
-      for (let [key, value] of formData.entries()) {
-        if ((key.startsWith('filter_') || key === 'status') && value && value !== '') {
-          hasActiveFilters = true;
-          break;
+        // Count active filters
+        for (let [key, value] of formData.entries()) {
+          if (key.startsWith('filter_') && value && value !== '') {
+            count++;
+          }
+          if (key === 'status' && value && value !== '') {
+            count++;
+          }
+        }
+
+        const badge = document.getElementById('activeFilterCount');
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+
+        updateActiveFilterBadges();
+      }
+
+      function updateActiveFilterBadges() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const badgesContainer = document.getElementById('activeFilters');
+        badgesContainer.innerHTML = '';
+
+        const filterLabels = {
+          'filter_bagian': 'Bagian',
+          'filter_vendor': 'Vendor',
+          'filter_kriteria_cf': 'Kriteria CF',
+          'filter_sub_kriteria': 'Sub Kriteria',
+          'filter_item_sub_kriteria': 'Item Sub Kriteria',
+          'filter_kebun': 'Kebun',
+          'filter_status_pembayaran': 'Status Pembayaran',
+          'status': 'Status Dokumen'
+        };
+
+        for (let [key, value] of formData.entries()) {
+          if ((key.startsWith('filter_') || key === 'status') && value && value !== '') {
+            const label = filterLabels[key] || key;
+            const badge = document.createElement('span');
+            badge.className = 'filter-badge-item';
+            badge.innerHTML = `
+            <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+            badgesContainer.appendChild(badge);
+          }
         }
       }
 
-      if (hasActiveFilters) {
-        toggleFilterPanel();
+      function getFilterDisplayValue(key, value) {
+        // Get display value from select options
+        const select = document.querySelector(`[name="${key}"]`);
+        if (select && select.options) {
+          const option = Array.from(select.options).find(opt => opt.value === value);
+          if (option) return option.text;
+        }
+        return value;
       }
 
-      // If Kriteria CF is already selected, enable Sub Kriteria
-      const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
-      if (kriteriaCfSelect && kriteriaCfSelect.value) {
+      function removeFilter(key) {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) {
+          if (input.type === 'radio') {
+            // Find and check the "Semua" option
+            const semuaOption = document.querySelector(`[name="${key}"][value=""]`);
+            if (semuaOption) semuaOption.checked = true;
+          } else {
+            input.value = '';
+          }
+          applyFilter();
+        }
+      }
+
+      // Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
+      function updateSubKriteriaFilter() {
+        const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+
+        // Enable/disable Sub Kriteria based on Kriteria CF selection
+        if (kriteriaCfId && kriteriaCfId !== '') {
+          subKriteriaSelect.disabled = false;
+          subKriteriaSelect.style.opacity = '1';
+          subKriteriaSelect.style.cursor = 'pointer';
+
+          // Show/hide options based on selected kriteria CF
+          Array.from(subKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+            if (kriteriaCfIdForOption === kriteriaCfId) {
+              option.style.display = 'block';
+            } else {
+              option.style.display = 'none';
+            }
+          });
+        } else {
+          // Disable Sub Kriteria and reset value if Kriteria CF is not selected
+          subKriteriaSelect.disabled = true;
+          subKriteriaSelect.style.opacity = '0.6';
+          subKriteriaSelect.style.cursor = 'not-allowed';
+          subKriteriaSelect.value = '';
+
+          // Also disable and reset Item Sub Kriteria
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.style.opacity = '0.6';
+          itemSubKriteriaSelect.style.cursor = 'not-allowed';
+          itemSubKriteriaSelect.value = '';
+
+          // Show all options when disabled
+          Array.from(subKriteriaSelect.options).forEach(option => {
+            option.style.display = 'block';
+          });
+        }
+
+        // Update Item Sub Kriteria filter
+        updateItemSubKriteriaFilter();
+      }
+
+      function updateItemSubKriteriaFilter() {
+        const subKriteriaId = document.getElementById('filterSubKriteria').value;
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
+
+        // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
+        if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+          itemSubKriteriaSelect.disabled = false;
+          itemSubKriteriaSelect.style.opacity = '1';
+          itemSubKriteriaSelect.style.cursor = 'pointer';
+
+          // Show/hide options based on selected sub kriteria
+          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+            if (subKriteriaIdForOption === subKriteriaId) {
+              option.style.display = 'block';
+            } else {
+              option.style.display = 'none';
+            }
+          });
+        } else {
+          // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.style.opacity = '0.6';
+          itemSubKriteriaSelect.style.cursor = 'not-allowed';
+          itemSubKriteriaSelect.value = '';
+
+          // Show all options when disabled
+          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            option.style.display = 'block';
+          });
+        }
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function () {
+        updateActiveFilterCount();
+
+        // Initialize cascading dropdowns
         updateSubKriteriaFilter();
-      }
-    });
-  </script>
+        updateItemSubKriteriaFilter();
+
+        // Auto-expand filter panel if filters are active
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        let hasActiveFilters = false;
+        for (let [key, value] of formData.entries()) {
+          if ((key.startsWith('filter_') || key === 'status') && value && value !== '') {
+            hasActiveFilters = true;
+            break;
+          }
+        }
+
+        if (hasActiveFilters) {
+          toggleFilterPanel();
+        }
+
+        // If Kriteria CF is already selected, enable Sub Kriteria
+        const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
+        if (kriteriaCfSelect && kriteriaCfSelect.value) {
+          updateSubKriteriaFilter();
+        }
+      });
+    </script>
 
 @endsection
