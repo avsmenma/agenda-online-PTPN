@@ -3062,20 +3062,36 @@ class OwnerDashboardController extends Controller
         });
 
 
-
         // Filter by age if filter_age is set (using hours to match dashboard)
+        // Pembayaran uses weekly thresholds, others use daily
         if ($filterAge) {
-            $filteredDokumens = $filteredDokumens->filter(function ($dokumen) use ($filterAge) {
+            $filteredDokumens = $filteredDokumens->filter(function ($dokumen) use ($filterAge, $roleCode) {
                 $ageHours = $dokumen->age_hours ?? 0;
-                if ($filterAge === '1') {
-                    // AMAN: < 24 hours
-                    return $ageHours < 24;
-                } elseif ($filterAge === '2') {
-                    // PERINGATAN: 24-72 hours
-                    return $ageHours >= 24 && $ageHours < 72;
-                } elseif ($filterAge === '3+') {
-                    // TERLAMBAT: > 72 hours
-                    return $ageHours >= 72;
+
+                // Pembayaran: weekly thresholds (1 week = 168 hours, 3 weeks = 504 hours)
+                if ($roleCode === 'pembayaran') {
+                    if ($filterAge === '1') {
+                        // AMAN: < 1 week (168 hours)
+                        return $ageHours < 168;
+                    } elseif ($filterAge === '2') {
+                        // PERINGATAN: 1-3 weeks (168-504 hours)
+                        return $ageHours >= 168 && $ageHours < 504;
+                    } elseif ($filterAge === '3+') {
+                        // TERLAMBAT: > 3 weeks (504+ hours)
+                        return $ageHours >= 504;
+                    }
+                } else {
+                    // Other roles: daily thresholds (24 hours, 72 hours)
+                    if ($filterAge === '1') {
+                        // AMAN: < 24 hours
+                        return $ageHours < 24;
+                    } elseif ($filterAge === '2') {
+                        // PERINGATAN: 24-72 hours
+                        return $ageHours >= 24 && $ageHours < 72;
+                    } elseif ($filterAge === '3+') {
+                        // TERLAMBAT: > 72 hours
+                        return $ageHours >= 72;
+                    }
                 }
                 return true;
             });
@@ -3132,8 +3148,40 @@ class OwnerDashboardController extends Controller
                     $card3Count++;
                 }
             }
+        } elseif ($roleCode === 'pembayaran') {
+            // Pembayaran: weekly thresholds (1 week = 168 hours, 3 weeks = 504 hours)
+            $allRoleDocs = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
+                ->where(function ($q) {
+                    $q->whereNull('dokumens.status_pembayaran')
+                        ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->select('dokumen_role_data.*')
+                ->get();
+
+            // Card 1: < 1 minggu (< 168 jam) - AMAN
+            $card1Count = 0;
+            // Card 2: 1-3 minggu (168-504 jam) - PERINGATAN
+            $card2Count = 0;
+            // Card 3: > 3 minggu (> 504 jam) - TERLAMBAT
+            $card3Count = 0;
+
+            foreach ($allRoleDocs as $doc) {
+                $receivedAt = Carbon::parse($doc->received_at);
+                $endTime = $doc->processed_at ? Carbon::parse($doc->processed_at) : $now;
+                $hoursDiff = $receivedAt->diffInHours($endTime);
+
+                if ($hoursDiff < 168) {
+                    $card1Count++;
+                } elseif ($hoursDiff < 504) {
+                    $card2Count++;
+                } else {
+                    $card3Count++;
+                }
+            }
         } else {
-            // Untuk role lain (ibuA, pembayaran), set default values
+            // Untuk role lain (ibuA), set default values
             $card1Count = 0;
             $card2Count = 0;
             $card3Count = 0;
@@ -3157,6 +3205,24 @@ class OwnerDashboardController extends Controller
                 'card3' => [
                     'count' => $card3Count,
                     'label' => '3+ Hari',
+                    'color' => 'red',
+                ],
+            ];
+        } elseif ($roleCode === 'pembayaran') {
+            $cardStats = [
+                'card1' => [
+                    'count' => $card1Count,
+                    'label' => '< 1 Minggu',
+                    'color' => 'green',
+                ],
+                'card2' => [
+                    'count' => $card2Count,
+                    'label' => '1-3 Minggu',
+                    'color' => 'yellow',
+                ],
+                'card3' => [
+                    'count' => $card3Count,
+                    'label' => '> 3 Minggu',
                     'color' => 'red',
                 ],
             ];

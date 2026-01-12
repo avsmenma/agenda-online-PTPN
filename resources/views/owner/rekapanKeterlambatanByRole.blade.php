@@ -806,6 +806,78 @@
           </div>
         </a>
       </div>
+    @elseif($roleCode === 'pembayaran')
+      <!-- Card Statistics for Pembayaran - Weekly Thresholds -->
+      <div class="card-stats">
+        @php
+          $currentFilterAge = request('filter_age', '');
+          $isCard1Active = $currentFilterAge === '1';
+          $isCard2Active = $currentFilterAge === '2';
+          $isCard3Active = $currentFilterAge === '3+';
+        @endphp
+
+        <!-- Card AMAN (< 1 Minggu - Green) -->
+        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}"
+          class="deadline-card-link">
+          <div class="deadline-card deadline-aman {{ $isCard1Active ? 'active' : '' }}">
+            <div class="deadline-card-header">
+              <div class="deadline-indicator">
+                <span class="deadline-dot aman"></span>
+              </div>
+              <div class="deadline-count">{{ $cardStats['card1']['count'] ?? 0 }} Dokumen</div>
+            </div>
+            <div class="deadline-badge-wrapper">
+              <span class="deadline-badge badge-aman">
+                <i class="fas fa-check-circle"></i> AMAN
+              </span>
+            </div>
+            <div class="deadline-info">
+              <i class="fas fa-clock"></i> Diterima < 1 minggu yang lalu </div>
+            </div>
+        </a>
+
+        <!-- Card PERINGATAN (1-3 Minggu - Yellow) -->
+        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}"
+          class="deadline-card-link">
+          <div class="deadline-card deadline-peringatan {{ $isCard2Active ? 'active' : '' }}">
+            <div class="deadline-card-header">
+              <div class="deadline-indicator">
+                <span class="deadline-dot peringatan"></span>
+              </div>
+              <div class="deadline-count">{{ $cardStats['card2']['count'] ?? 0 }} Dokumen</div>
+            </div>
+            <div class="deadline-badge-wrapper">
+              <span class="deadline-badge badge-peringatan">
+                <i class="fas fa-exclamation-triangle"></i> PERINGATAN
+              </span>
+            </div>
+            <div class="deadline-info">
+              <i class="fas fa-clock"></i> Diterima 1-3 minggu yang lalu
+            </div>
+          </div>
+        </a>
+
+        <!-- Card TERLAMBAT (> 3 Minggu - Red) -->
+        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}"
+          class="deadline-card-link">
+          <div class="deadline-card deadline-terlambat {{ $isCard3Active ? 'active' : '' }}">
+            <div class="deadline-card-header">
+              <div class="deadline-indicator">
+                <span class="deadline-dot terlambat"></span>
+              </div>
+              <div class="deadline-count">{{ $cardStats['card3']['count'] ?? 0 }} Dokumen</div>
+            </div>
+            <div class="deadline-badge-wrapper">
+              <span class="deadline-badge badge-terlambat">
+                <i class="fas fa-exclamation-circle"></i> TERLAMBAT
+              </span>
+            </div>
+            <div class="deadline-info">
+              <i class="fas fa-clock"></i> Diterima > 3 minggu yang lalu
+            </div>
+          </div>
+        </a>
+      </div>
     @endif
 
 
@@ -818,19 +890,19 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                      {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                          {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                      {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                          {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                      {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                          {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
@@ -1042,8 +1114,8 @@
                 </div>
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
-                        style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                    style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
+                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1071,11 +1143,13 @@
                 <i class="fas fa-info-circle"></i>
                 <span>Status:</span>
                 @if(isset($dokumen->is_completed) && $dokumen->is_completed)
-                  <span class="badge" style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                  <span class="badge"
+                    style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
                     <i class="fas fa-paper-plane"></i> Sudah Dikirim
                   </span>
                 @else
-                  <span class="badge" style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                  <span class="badge"
+                    style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
                     <i class="fas fa-spinner"></i> Sedang Diproses
                   </span>
                 @endif
@@ -1182,11 +1256,13 @@
                     </td>
                     <td>
                       @if(isset($dokumen->is_completed) && $dokumen->is_completed)
-                        <span class="badge" style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                        <span class="badge"
+                          style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
                           <i class="fas fa-paper-plane"></i> Selesai
                         </span>
                       @else
-                        <span class="badge" style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                        <span class="badge"
+                          style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
                           <i class="fas fa-spinner"></i> Aktif
                         </span>
                       @endif
@@ -1333,11 +1409,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-              <span>${label}: ${displayValue}</span>
-              <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                <i class="fas fa-times"></i>
-              </button>
-            `;
+                <span>${label}: ${displayValue}</span>
+                <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                  <i class="fas fa-times"></i>
+                </button>
+              `;
           badgesContainer.appendChild(badge);
         }
       }
