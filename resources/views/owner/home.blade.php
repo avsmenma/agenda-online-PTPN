@@ -281,13 +281,14 @@
                 <div class="value">{{ number_format($dokumenProses) }}</div>
             </div>
 
-            <div class="summary-card selesai">
+            <a href="{{ url('/owner/dokumen?status=selesai') }}" class="summary-card selesai"
+                style="text-decoration: none; cursor: pointer;">
                 <div class="icon">
                     <i class="fa-solid fa-check-circle"></i>
                 </div>
-                <div class="label">Dokumen Selesai</div>
+                <div class="label">Dokumen Sudah Dibayar</div>
                 <div class="value">{{ number_format($dokumenSelesai) }}</div>
-            </div>
+            </a>
 
             <div class="summary-card nilai">
                 <div class="icon">
