@@ -3069,7 +3069,7 @@ class OwnerDashboardController extends Controller
             $dokumen->is_completed = $isCompleted;
             $dokumen->age_days = $ageDays;
             $dokumen->age_hours = $ageHours;
-            $dokumen->age_formatted = $this->formatAge($ageDays);
+            $dokumen->age_formatted = $this->formatAge($ageDays, $ageHours);
             $dokumen->effective_received_at = $receivedAt ? $receivedAt->format('Y-m-d H:i:s') : null;
             $dokumen->effective_processed_at = $processedAt ? $processedAt->format('Y-m-d H:i:s') : null;
 
@@ -3233,15 +3233,25 @@ class OwnerDashboardController extends Controller
 
 
     /**
-     * Format age in days to readable format
+     * Format age in days and hours to readable format
      */
-    private function formatAge($days)
+    private function formatAge($days, $hours = 0)
     {
-        if ($days == 0) {
-            return 'Hari ini';
-        } elseif ($days == 1) {
+        // Calculate remaining hours after full days
+        $remainingHours = $hours % 24;
+
+        if ($days == 0 && $remainingHours == 0) {
+            return 'Baru';
+        } elseif ($days == 0) {
+            return $remainingHours . ' jam';
+        } elseif ($days == 1 && $remainingHours == 0) {
             return '1 hari';
+        } elseif ($days == 1) {
+            return '1 hari ' . $remainingHours . ' jam';
         } elseif ($days < 30) {
+            if ($remainingHours > 0) {
+                return $days . ' hari ' . $remainingHours . ' jam';
+            }
             return $days . ' hari';
         } elseif ($days == 30) {
             return '1 bulan';
