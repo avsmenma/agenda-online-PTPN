@@ -103,6 +103,33 @@ class DashboardPembayaranController extends Controller
             });
         }
 
+        // Apply year filter if provided
+        $year = $request->get('year');
+        $yearFilterType = $request->get('year_filter_type', 'tanggal_spp');
+
+        if ($year && is_numeric($year) && strlen($year) === 4) {
+            switch ($yearFilterType) {
+                case 'tanggal_masuk':
+                    // Filter by year of tanggal_masuk
+                    $query->whereYear('tanggal_masuk', $year);
+                    break;
+                case 'nomor_spp':
+                    // Filter by year extracted from nomor_spp format (e.g., 192/M/SPP/14/03/2024)
+                    $query->where(function ($q) use ($year) {
+                        // Match year at the end of nomor_spp
+                        $q->where('nomor_spp', 'like', "%/{$year}")
+                            ->orWhere('nomor_spp', 'like', "%/{$year} %")
+                            ->orWhereRaw("SUBSTRING_INDEX(nomor_spp, '/', -1) = ?", [$year]);
+                    });
+                    break;
+                case 'tanggal_spp':
+                default:
+                    // Filter by year of tanggal_spp (default)
+                    $query->whereYear('tanggal_spp', $year);
+                    break;
+            }
+        }
+
         // Helper function to calculate computed status for pembayaran role
         // Status khusus role pembayaran: "belum_siap_bayar" atau "siap_bayar" atau "sudah_dibayar"
         $getComputedStatus = function ($doc) {
