@@ -92,7 +92,7 @@ class OwnerDashboardController extends Controller
             'totalNilaiTrend',
             'filterData'
         ))
-            ->with('title', 'Dashboard Owner - Pusat Komando')
+            ->with('title', 'Dashboard Kabag Keuangan - Pusat Komando')
             ->with('module', 'owner')
             ->with('menuDashboard', 'active')
             ->with('menuRekapan', '')

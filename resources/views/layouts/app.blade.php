@@ -1517,7 +1517,7 @@
       <!-- Owner Menu - Clean and Simple -->
       <div style="flex: 1; display: flex; flex-direction: column;">
         <a href="{{ url('/owner/dashboard') }}" class="{{ $menuDashboard ?? '' }}">
-          <i class="fa-solid fa-satellite-dish"></i> Dashboard Owner
+          <i class="fa-solid fa-satellite-dish"></i> Dashboard Kabag Keuangan
         </a>
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
