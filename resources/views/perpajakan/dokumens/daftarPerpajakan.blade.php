@@ -2711,10 +2711,23 @@
                   $ageColor = 'gray';
                   $ageIcon = 'fa-clock';
                   $ageDays = 0;
+                  $timeFrozen = false;
 
                   if ($receivedAt) {
-                    $now = \Carbon\Carbon::now();
-                    $diff = $receivedAt->diff($now);
+                    // For sent/completed documents, calculate time from received_at to processed_at (frozen time)
+                    // For active documents, calculate time from received_at to now (live time)
+                    $processedAt = $roleData?->processed_at;
+                    
+                    if (($isSent || $isCompleted) && $processedAt) {
+                      // Document is sent/completed - freeze the time at processed_at
+                      $endTime = \Carbon\Carbon::parse($processedAt);
+                      $timeFrozen = true;
+                    } else {
+                      // Document is still active - use current time
+                      $endTime = \Carbon\Carbon::now();
+                    }
+                    
+                    $diff = $receivedAt->diff($endTime);
                     $ageDays = $diff->days;
                     
                     // Format elapsed time as "X hari Y jam Z menit"
@@ -2729,6 +2742,11 @@
                       $elapsedParts[] = $diff->i . ' menit';
                     }
                     $ageText = implode(' ', $elapsedParts);
+                    
+                    // Add frozen indicator if time is frozen
+                    if ($timeFrozen) {
+                      $ageText .= ' ⏸️';
+                    }
 
                     // Determine label and color based on elapsed time (in hours)
                     // Green: < 24 hours, Yellow: 24-72 hours, Red: > 72 hours
