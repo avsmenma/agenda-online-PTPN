@@ -1878,6 +1878,9 @@
         <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
         </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}" class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
+        </a>
       @elseif($module === 'perpajakan')
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
           <i class="fa-solid fa-list me-2"></i> Daftar Perpajakan
@@ -1893,6 +1896,9 @@
         <a href="{{ route('reports.perpajakan.export') }}"
           class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-export me-2"></i> Export Data
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}" class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($module === 'ibub')
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
@@ -1911,6 +1917,9 @@
         </a>
         <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}" class="{{ request()->is('*rekapan-keterlambatan/ibuB*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($isBagianUser)
         {{-- Bagian submenu (same pattern as IbuA) --}}
@@ -1941,6 +1950,9 @@
         @endif
         <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}" class="{{ request()->is('*rekapan-keterlambatan/ibuA*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @endif
     </div>
