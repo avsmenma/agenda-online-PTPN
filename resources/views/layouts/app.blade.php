@@ -1421,7 +1421,9 @@
   @endphp
   <header>
     <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
-      <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
+      @if(($module ?? '') !== 'owner')
+        <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
+      @endif
       <div class="d-flex align-items-center">
         <!-- Dark Mode Toggle Button -->
         <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
