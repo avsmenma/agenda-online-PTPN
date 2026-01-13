@@ -361,9 +361,37 @@ class Dokumen extends Model
             ]);
         }
 
-        // Only update data if there's something to update
+        // Only update data for target role if there's something to update
         if (!empty($updateData)) {
             $this->setDataForRole($targetRoleCode, $updateData);
+        }
+
+        // IMPORTANT: Set processed_at for the SENDER role when sending to next role
+        // This freezes the deadline time for the sender, preserving their processing duration
+        // Example: When perpajakan sends to akutansi, perpajakan's processed_at is set to now()
+        // This ensures the "time spent in perpajakan" is permanently recorded
+        $normalizedSenderRole = strtolower($senderRoleCode);
+        $validRoles = ['ibub', 'perpajakan', 'akutansi', 'pembayaran', 'verifikasi'];
+
+        if (in_array($normalizedSenderRole, $validRoles)) {
+            // Map verifikasi to ibub for database consistency
+            if ($normalizedSenderRole === 'verifikasi') {
+                $normalizedSenderRole = 'ibub';
+            }
+
+            $senderRoleData = $this->getDataForRole($normalizedSenderRole);
+            if ($senderRoleData && $senderRoleData->received_at && !$senderRoleData->processed_at) {
+                // Set processed_at to freeze the deadline time for this role
+                $senderRoleData->processed_at = now();
+                $senderRoleData->save();
+
+                \Log::info('Set processed_at for sender role in sendToRoleInbox', [
+                    'document_id' => $this->id,
+                    'sender_role' => $normalizedSenderRole,
+                    'target_role' => $targetRoleCode,
+                    'processed_at' => $senderRoleData->processed_at
+                ]);
+            }
         }
 
         // Log activity
