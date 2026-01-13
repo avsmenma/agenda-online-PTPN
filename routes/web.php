@@ -422,7 +422,7 @@ Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rek
 
 // Rekapan keterlambatan per role
 Route::get('owner/rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])
-    ->middleware('auth', 'role:admin,owner')
+    ->middleware('auth')
     ->where('roleCode', 'ibuA|ibuB|perpajakan|akutansi|pembayaran')
     ->name('owner.rekapan-keterlambatan.role');
 

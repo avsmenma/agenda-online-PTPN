@@ -2812,6 +2812,31 @@ class OwnerDashboardController extends Controller
             abort(404, 'Role tidak ditemukan');
         }
 
+        // Access control: Check if user can access this role's recap
+        // Admin/Owner can view any role. Regular users can only view their own role.
+        $user = auth()->user();
+        $userRole = strtolower($user->role ?? '');
+        $isAdminOrOwner = in_array($userRole, ['admin', 'owner']);
+
+        if (!$isAdminOrOwner) {
+            // Map user role to roleCode format
+            $userRoleMapping = [
+                'ibua' => 'ibuA',
+                'ibub' => 'ibuB',
+                'verifikasi' => 'ibuB',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+                'pembayaran' => 'pembayaran',
+            ];
+            $userRoleCode = $userRoleMapping[$userRole] ?? null;
+
+            // Check if user is trying to access their own role's recap
+            if ($userRoleCode !== $roleCode) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+            }
+        }
+
+
         // Role configuration
         $roleConfig = [
             'ibuA' => ['name' => 'Ibu Tara', 'code' => 'ibuA'],
