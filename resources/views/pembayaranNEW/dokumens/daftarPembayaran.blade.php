@@ -687,6 +687,69 @@
     box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
   }
 
+  /* Age-based deadline colors (count up from received_at) */
+  /* Green - Aman (< 24 hours) */
+  .deadline-card.deadline-green {
+    --deadline-color: #10b981;
+    --deadline-color-light: #34d399;
+    --deadline-bg: #ecfdf5;
+    --deadline-text: #065f46;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .deadline-card.deadline-green .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-green {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Yellow - Perlu Perhatian (>= 24 hours < 72 hours) */
+  .deadline-card.deadline-yellow {
+    --deadline-color: #f59e0b;
+    --deadline-color-light: #fbbf24;
+    --deadline-bg: #fffbeb;
+    --deadline-text: #92400e;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+  }
+
+  .deadline-card.deadline-yellow .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-yellow {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  }
+
+  /* Red - Terlambat (>= 72 hours) */
+  .deadline-card.deadline-red {
+    --deadline-color: #ef4444;
+    --deadline-color-light: #f87171;
+    --deadline-bg: #fef2f2;
+    --deadline-text: #991b1b;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+  }
+
+  .deadline-card.deadline-red .deadline-time {
+    color: var(--deadline-text) !important;
+    font-weight: 800;
+  }
+
+  .deadline-indicator.deadline-red {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+    animation: danger-pulse 2s infinite;
+  }
+
   /* No deadline state */
   .no-deadline {
     display: inline-flex;
@@ -1097,78 +1160,105 @@
                 {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
               @elseif($col == 'deadline')
                 @php
-                  // Hitung deadline berdasarkan tanggal_masuk + 3 minggu (21 hari)
-                  // Jika tanggal_masuk tidak ada, gunakan created_at
-                  $baseDate = $dokumen->tanggal_masuk ?? $dokumen->created_at;
-                  if ($baseDate) {
-                    $baseDate = \Carbon\Carbon::parse($baseDate);
-                    $deadline = $baseDate->copy()->addWeeks(3); // Deadline = 3 minggu dari tanggal masuk
-                    $now = \Carbon\Carbon::now();
-                    $diffDays = $now->diffInDays($deadline, false); // Negatif jika sudah lewat deadline
+                  // Get received_at from roleData to calculate document age (count up)
+                  // Similar to IbuB implementation
+                  $roleData = $dokumen->getDataForRole('pembayaran');
+                  $receivedAt = $roleData?->received_at;
+
+                  // Check if document is completed (sudah dibayar)
+                  $isCompleted = $paymentStatus === 'sudah_dibayar';
+
+                  // Calculate document age from received_at (count up)
+                  $ageText = '-';
+                  $ageLabel = '-';
+                  $ageColor = 'gray';
+                  $ageIcon = 'fa-clock';
+                  $ageDays = 0;
+
+                  if ($receivedAt) {
+                    $receivedAt = \Carbon\Carbon::parse($receivedAt);
                     
-                    // Tentukan status deadline
-                    if ($paymentStatus === 'sudah_dibayar') {
-                      // Sudah dibayar - tampilkan sebagai selesai
-                      $deadlineCardClass = 'deadline-completed';
-                      $deadlineIndicatorClass = 'deadline-completed';
-                      $deadlineLabel = 'Selesai';
-                      $deadlineIcon = 'fa-check-circle';
-                    } elseif ($diffDays > 7) {
-                      // Deadline masih > 1 minggu - AMAN (hijau)
-                      $deadlineCardClass = 'deadline-safe';
-                      $deadlineIndicatorClass = 'deadline-safe';
-                      $deadlineLabel = 'Aman';
-                      $deadlineIcon = 'fa-check-circle';
-                    } elseif ($diffDays > 0) {
-                      // Deadline < 1 minggu - PERINGATAN (kuning)
-                      $deadlineCardClass = 'deadline-warning';
-                      $deadlineIndicatorClass = 'deadline-warning';
-                      $deadlineLabel = 'Peringatan';
-                      $deadlineIcon = 'fa-exclamation-triangle';
+                    // For completed documents, use processed_at as end time if available
+                    // For active documents, use current time
+                    $processedAt = $roleData?->processed_at;
+                    
+                    if ($isCompleted && $processedAt) {
+                      // Document is completed - calculate time taken (frozen, not counting)
+                      $endTime = \Carbon\Carbon::parse($processedAt);
+                      $diff = $receivedAt->diff($endTime);
                     } else {
-                      // Sudah lewat deadline - TERLAMBAT (merah)
-                      $deadlineCardClass = 'deadline-danger';
-                      $deadlineIndicatorClass = 'deadline-danger';
-                      $deadlineLabel = 'Terlambat';
-                      $deadlineIcon = 'fa-exclamation-circle';
+                      // Document still active - count up from received_at to now
+                      $now = \Carbon\Carbon::now();
+                      $diff = $receivedAt->diff($now);
                     }
                     
-                    // Hitung waktu tersisa/terlambat
-                    $remainingText = '';
-                    if ($paymentStatus !== 'sudah_dibayar') {
-                      if ($diffDays > 0) {
-                        $remainingText = $diffDays . ' hari lagi';
-                      } elseif ($diffDays == 0) {
-                        $remainingText = 'Hari ini';
-                      } else {
-                        $remainingText = abs($diffDays) . ' hari terlambat';
-                      }
+                    $ageDays = $diff->days;
+
+                    // Format elapsed time as "X hari Y jam Z menit"
+                    $elapsedParts = [];
+                    if ($diff->days > 0) {
+                      $elapsedParts[] = $diff->days . ' hari';
                     }
-                  } else {
-                    $deadline = null;
+                    if ($diff->h > 0) {
+                      $elapsedParts[] = $diff->h . ' jam';
+                    }
+                    if ($diff->i > 0 || empty($elapsedParts)) {
+                      $elapsedParts[] = $diff->i . ' menit';
+                    }
+                    $ageText = implode(' ', $elapsedParts);
+
+                    // Determine label and color based on elapsed time (in hours)
+                    // Green: < 1 week (168h), Yellow: 1-3 weeks (168-504h), Red: >= 3 weeks (504h)
+                    $totalHours = ($diff->days * 24) + $diff->h;
+
+                    if ($isCompleted) {
+                      $ageLabel = 'SELESAI';
+                      $ageColor = 'green';
+                      $ageIcon = 'fa-check-circle';
+                    } elseif ($totalHours >= 504) { // >= 3 minggu
+                      $ageLabel = 'TERLAMBAT';
+                      $ageColor = 'red';
+                      $ageIcon = 'fa-times-circle';
+                    } elseif ($totalHours >= 168) { // >= 1 minggu dan < 3 minggu
+                      $ageLabel = 'PERINGATAN';
+                      $ageColor = 'yellow';
+                      $ageIcon = 'fa-exclamation-triangle';
+                    } else { // < 1 minggu
+                      $ageLabel = 'AMAN';
+                      $ageColor = 'green';
+                      $ageIcon = 'fa-check-circle';
+                    }
                   }
+
+                  // Determine deadline type: 'active' (masih diproses), 'completed' (selesai)
+                  $deadlineType = $isCompleted ? 'completed' : 'active';
                 @endphp
-                @if($deadline)
-                  <div class="deadline-card {{ $deadlineCardClass }}">
+                @if($receivedAt)
+                  <div class="deadline-card deadline-{{ $deadlineType }} deadline-{{ $ageColor }}"
+                    data-received-at="{{ $receivedAt->format('Y-m-d H:i:s') }}" data-age-days="{{ $ageDays }}"
+                    data-completed="{{ $isCompleted ? 'true' : 'false' }}">
                     <div class="deadline-time">
-                      <i class="fa-solid fa-calendar-alt"></i>
-                      {{ $deadline->format('d M Y, H:i') }}
+                      <i class="fa-solid fa-calendar"></i>
+                      <span>{{ $receivedAt->format('d M Y, H:i') }}</span>
                     </div>
-                    <div class="deadline-indicator {{ $deadlineIndicatorClass }}">
-                      <i class="fa-solid {{ $deadlineIcon }}"></i>
-                      {{ $deadlineLabel }}
+                    <div class="deadline-indicator deadline-{{ $ageColor }}">
+                      <i class="fa-solid {{ $ageIcon }}"></i>
+                      <span class="status-text">{{ $ageLabel }}</span>
                     </div>
-                    @if($remainingText)
-                    <div class="deadline-remaining">
+                    <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
                       <i class="fa-solid fa-hourglass-half"></i>
-                      {{ $remainingText }}
+                      <span>{{ $ageText }}</span>
                     </div>
+                    @if($isCompleted)
+                      <div class="deadline-label" style="font-size: 8px; color: #10b981; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-check-circle"></i> Selesai
+                      </div>
                     @endif
                   </div>
                 @else
                   <span class="no-deadline">
                     <i class="fa-solid fa-clock"></i>
-                    Tidak ada
+                    Belum diterima
                   </span>
                 @endif
               @elseif($col == 'status_pembayaran')
