@@ -312,6 +312,10 @@ class DashboardPembayaranController extends Controller
 
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
+            // Ensure deadline is always included when user customizes columns
+            if (!in_array('deadline', $selectedColumns)) {
+                $selectedColumns[] = 'deadline';
+            }
             session(['pembayaran_dokumens_table_columns' => $selectedColumns]);
         } else {
             // Load from session if available, and filter out 'status'
@@ -328,7 +332,13 @@ class DashboardPembayaranController extends Controller
                 return $col !== 'status' && $col !== 'aksi';
             });
             $selectedColumns = array_values($selectedColumns);
-            // Update session to remove 'status' if it was present
+
+            // Force add 'deadline' if not present (for old sessions without deadline)
+            if (!in_array('deadline', $selectedColumns)) {
+                $selectedColumns[] = 'deadline';
+            }
+
+            // Update session to include deadline
             session(['pembayaran_dokumens_table_columns' => $selectedColumns]);
         }
 

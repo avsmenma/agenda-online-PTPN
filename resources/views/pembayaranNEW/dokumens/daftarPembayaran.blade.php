@@ -526,6 +526,198 @@
     text-align: center;
   }
 
+  /* Deadline Card Styles - Matching IbuB Design */
+  .deadline-card {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    margin: 0 auto;
+    max-width: 160px;
+    min-width: 130px;
+  }
+
+  .deadline-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    transition: height 0.3s ease;
+  }
+
+  .deadline-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    border-color: var(--deadline-color);
+  }
+
+  .deadline-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .deadline-time i {
+    font-size: 10px;
+    color: var(--deadline-color);
+  }
+
+  .deadline-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .deadline-remaining {
+    font-size: 9px;
+    color: #6b7280;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .deadline-remaining i {
+    font-size: 9px;
+  }
+
+  /* Safe State - Green */
+  .deadline-card.deadline-safe {
+    --deadline-color: #10b981;
+    --deadline-color-light: #34d399;
+    --deadline-bg: #ecfdf5;
+    --deadline-text: #065f46;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .deadline-card.deadline-safe .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-safe {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Warning State - Orange */
+  .deadline-card.deadline-warning {
+    --deadline-color: #f59e0b;
+    --deadline-color-light: #fbbf24;
+    --deadline-bg: #fffbeb;
+    --deadline-text: #92400e;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+  }
+
+  .deadline-card.deadline-warning .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-warning {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  }
+
+  /* Danger State - Red */
+  .deadline-card.deadline-danger {
+    --deadline-color: #ef4444;
+    --deadline-color-light: #f87171;
+    --deadline-bg: #fef2f2;
+    --deadline-text: #991b1b;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+  }
+
+  .deadline-card.deadline-danger .deadline-time {
+    color: var(--deadline-text) !important;
+    font-weight: 800;
+  }
+
+  .deadline-indicator.deadline-danger {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+    animation: danger-pulse 2s infinite;
+  }
+
+  /* Completed State - Green with check */
+  .deadline-card.deadline-completed {
+    --deadline-color: #10b981;
+    --deadline-color-light: #34d399;
+    --deadline-bg: #ecfdf5;
+    --deadline-text: #065f46;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    opacity: 0.9;
+  }
+
+  .deadline-card.deadline-completed .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-completed {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* No deadline state */
+  .no-deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #9ca3af;
+    font-size: 11px;
+    font-style: italic;
+    padding: 8px 12px;
+    border-radius: 20px;
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    transition: all 0.3s ease;
+  }
+
+  .no-deadline:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  @keyframes danger-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+
   #viewDocumentModal.modal {
     padding-right: 0 !important;
     padding-left: 0 !important;
@@ -904,37 +1096,80 @@
               @elseif($col == 'jenis_sub_pekerjaan')
                 {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
               @elseif($col == 'deadline')
-                @if($dokumen->deadline_at)
-                  @php
-                    $deadline = \Carbon\Carbon::parse($dokumen->deadline_at);
+                @php
+                  // Hitung deadline berdasarkan tanggal_masuk + 3 minggu (21 hari)
+                  // Jika tanggal_masuk tidak ada, gunakan created_at
+                  $baseDate = $dokumen->tanggal_masuk ?? $dokumen->created_at;
+                  if ($baseDate) {
+                    $baseDate = \Carbon\Carbon::parse($baseDate);
+                    $deadline = $baseDate->copy()->addWeeks(3); // Deadline = 3 minggu dari tanggal masuk
                     $now = \Carbon\Carbon::now();
-                    $diffHours = $now->diffInHours($deadline, false); // Negative if past deadline
+                    $diffDays = $now->diffInDays($deadline, false); // Negatif jika sudah lewat deadline
                     
-                    // Determine color based on time passed since deadline
-                    // Positive = deadline in future (aman), negative = deadline passed (terlambat)
-                    if ($diffHours >= 0) {
-                      // Deadline belum lewat
-                      $deadlineClass = 'deadline-aman';
+                    // Tentukan status deadline
+                    if ($paymentStatus === 'sudah_dibayar') {
+                      // Sudah dibayar - tampilkan sebagai selesai
+                      $deadlineCardClass = 'deadline-completed';
+                      $deadlineIndicatorClass = 'deadline-completed';
+                      $deadlineLabel = 'Selesai';
+                      $deadlineIcon = 'fa-check-circle';
+                    } elseif ($diffDays > 7) {
+                      // Deadline masih > 1 minggu - AMAN (hijau)
+                      $deadlineCardClass = 'deadline-safe';
+                      $deadlineIndicatorClass = 'deadline-safe';
                       $deadlineLabel = 'Aman';
-                    } elseif ($diffHours >= -168) { // -168 hours = -1 week passed
-                      // Terlambat < 1 minggu
-                      $deadlineClass = 'deadline-aman';
-                      $deadlineLabel = 'Terlambat < 1 minggu';
-                    } elseif ($diffHours >= -504) { // -504 hours = -3 weeks passed  
-                      // Terlambat 1-3 minggu
-                      $deadlineClass = 'deadline-peringatan';
-                      $deadlineLabel = 'Terlambat 1-3 minggu';
+                      $deadlineIcon = 'fa-check-circle';
+                    } elseif ($diffDays > 0) {
+                      // Deadline < 1 minggu - PERINGATAN (kuning)
+                      $deadlineCardClass = 'deadline-warning';
+                      $deadlineIndicatorClass = 'deadline-warning';
+                      $deadlineLabel = 'Peringatan';
+                      $deadlineIcon = 'fa-exclamation-triangle';
                     } else {
-                      // Terlambat > 3 minggu
-                      $deadlineClass = 'deadline-terlambat';
-                      $deadlineLabel = 'Terlambat > 3 minggu';
+                      // Sudah lewat deadline - TERLAMBAT (merah)
+                      $deadlineCardClass = 'deadline-danger';
+                      $deadlineIndicatorClass = 'deadline-danger';
+                      $deadlineLabel = 'Terlambat';
+                      $deadlineIcon = 'fa-exclamation-circle';
                     }
-                  @endphp
-                  <span class="status-badge {{ $deadlineClass }}" title="{{ $deadlineLabel }}">
-                    {{ $deadline->format('d/m/Y') }}
-                  </span>
+                    
+                    // Hitung waktu tersisa/terlambat
+                    $remainingText = '';
+                    if ($paymentStatus !== 'sudah_dibayar') {
+                      if ($diffDays > 0) {
+                        $remainingText = $diffDays . ' hari lagi';
+                      } elseif ($diffDays == 0) {
+                        $remainingText = 'Hari ini';
+                      } else {
+                        $remainingText = abs($diffDays) . ' hari terlambat';
+                      }
+                    }
+                  } else {
+                    $deadline = null;
+                  }
+                @endphp
+                @if($deadline)
+                  <div class="deadline-card {{ $deadlineCardClass }}">
+                    <div class="deadline-time">
+                      <i class="fa-solid fa-calendar-alt"></i>
+                      {{ $deadline->format('d M Y, H:i') }}
+                    </div>
+                    <div class="deadline-indicator {{ $deadlineIndicatorClass }}">
+                      <i class="fa-solid {{ $deadlineIcon }}"></i>
+                      {{ $deadlineLabel }}
+                    </div>
+                    @if($remainingText)
+                    <div class="deadline-remaining">
+                      <i class="fa-solid fa-hourglass-half"></i>
+                      {{ $remainingText }}
+                    </div>
+                    @endif
+                  </div>
                 @else
-                  <span class="text-muted">-</span>
+                  <span class="no-deadline">
+                    <i class="fa-solid fa-clock"></i>
+                    Tidak ada
+                  </span>
                 @endif
               @elseif($col == 'status_pembayaran')
                 @switch($paymentStatus)
