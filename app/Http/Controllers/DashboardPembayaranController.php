@@ -72,7 +72,8 @@ class DashboardPembayaranController extends Controller
         }
 
         // Get latest documents (5 most recent)
-        $dokumenTerbaru = Dokumen::where('current_handler', 'pembayaran')
+        $dokumenTerbaru = Dokumen::with(['roleData'])
+            ->where('current_handler', 'pembayaran')
             ->orWhere('status_pembayaran', 'sudah_dibayar')
             ->latest('tanggal_masuk')
             ->take(5)

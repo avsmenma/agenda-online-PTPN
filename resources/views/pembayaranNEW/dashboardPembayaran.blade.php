@@ -748,6 +748,7 @@
             <th>Nilai Rupiah</th>
             <th>Tanggal Dibayar</th>
             <th>Status</th>
+            <th>Deadline</th>
             <th>Bukti</th>
             <th>Aksi</th>
           </tr>
@@ -780,6 +781,76 @@
                   <span class="badge-status badge-proses">Siap Dibayar</span>
                 @else
                   <span class="badge-status badge-proses">Belum Dibayar</span>
+                @endif
+              </td>
+              <td>
+                @php
+                  // Get received_at from roleData to calculate document age (count up)
+                  $roleData = $dokumen->getDataForRole('pembayaran');
+                  $receivedAt = $roleData?->received_at;
+                  
+                  $isCompleted = $dokumen->status_pembayaran === 'sudah_dibayar';
+                  $ageText = '-';
+                  $ageLabel = '-';
+                  $ageColor = 'gray';
+                  $ageIcon = 'fa-clock';
+
+                  if ($receivedAt) {
+                    $receivedAt = \Carbon\Carbon::parse($receivedAt);
+                    $processedAt = $roleData?->processed_at;
+                    
+                    if ($isCompleted && $processedAt) {
+                      $endTime = \Carbon\Carbon::parse($processedAt);
+                      $diff = $receivedAt->diff($endTime);
+                    } else {
+                      $now = \Carbon\Carbon::now();
+                      $diff = $receivedAt->diff($now);
+                    }
+
+                    // Format elapsed time as "X hari Y jam Z menit"
+                    $elapsedParts = [];
+                    if ($diff->days > 0) $elapsedParts[] = $diff->days . ' hari';
+                    if ($diff->h > 0) $elapsedParts[] = $diff->h . ' jam';
+                    if ($diff->i > 0 || empty($elapsedParts)) $elapsedParts[] = $diff->i . ' menit';
+                    $ageText = implode(' ', $elapsedParts);
+
+                    // Green: < 1 week (168h), Yellow: 1-3 weeks (168-504h), Red: >= 3 weeks (504h)
+                    $totalHours = ($diff->days * 24) + $diff->h;
+
+                    if ($isCompleted) {
+                      $ageLabel = 'SELESAI';
+                      $ageColor = 'green';
+                      $ageIcon = 'fa-check-circle';
+                    } elseif ($totalHours >= 504) {
+                      $ageLabel = 'TERLAMBAT';
+                      $ageColor = 'red';
+                      $ageIcon = 'fa-times-circle';
+                    } elseif ($totalHours >= 168) {
+                      $ageLabel = 'PERINGATAN';
+                      $ageColor = 'yellow';
+                      $ageIcon = 'fa-exclamation-triangle';
+                    } else {
+                      $ageLabel = 'AMAN';
+                      $ageColor = 'green';
+                      $ageIcon = 'fa-check-circle';
+                    }
+                  }
+                @endphp
+                @if($receivedAt)
+                  <div class="deadline-card deadline-{{ $ageColor }}" style="padding: 8px; border-radius: 8px; min-width: 120px;">
+                    <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">
+                      <i class="fa-solid fa-calendar"></i> {{ $receivedAt->format('d M Y, H:i') }}
+                    </div>
+                    <div style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; 
+                      background: {{ $ageColor === 'green' ? '#10b981' : ($ageColor === 'yellow' ? '#f59e0b' : ($ageColor === 'red' ? '#ef4444' : '#9ca3af')) }}; color: white;">
+                      <i class="fa-solid {{ $ageIcon }}"></i> {{ $ageLabel }}
+                    </div>
+                    <div style="font-size: 9px; color: #6b7280; margin-top: 4px;">
+                      <i class="fa-solid fa-hourglass-half"></i> {{ $ageText }}
+                    </div>
+                  </div>
+                @else
+                  <span style="color: #9ca3af; font-size: 11px;"><i class="fa-solid fa-clock"></i> Belum diterima</span>
                 @endif
               </td>
               <td>
