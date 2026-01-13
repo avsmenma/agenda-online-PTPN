@@ -890,19 +890,19 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                              {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                  {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                              {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                  {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                              {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                  {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
@@ -1105,8 +1105,8 @@
               }
             @endphp
             <div class="document-card document-card-{{ $ageColor }}"
-              onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'ibuB'){{ route('documents.verifikasi.edit', ['dokumen' => $dokumen->id]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.edit', ['dokumen' => $dokumen->id]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.edit', ['dokumen' => $dokumen->id]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.edit', ['dokumen' => $dokumen->id]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
-              title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dan mengedit dokumen' }}">
+              onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'ibuB'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.index', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
+              title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dokumen di daftar dokumen' }}">
               <div class="card-header">
                 <div>
                   <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
@@ -1115,7 +1115,7 @@
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
                     style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1239,8 +1239,8 @@
                     }
                   @endphp
                   <tr class="clickable-row table-row-{{ $ageColor }}"
-                    onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'ibuB'){{ route('documents.verifikasi.edit', ['dokumen' => $dokumen->id]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.edit', ['dokumen' => $dokumen->id]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.edit', ['dokumen' => $dokumen->id]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.edit', ['dokumen' => $dokumen->id]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
-                    title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dan mengedit dokumen' }}">
+                    onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'ibuB'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.index', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
+                    title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dokumen di daftar dokumen' }}">
 
                     <td>{{ $dokumens->firstItem() + $index }}</td>
                     <td>{{ $dokumen->nomor_agenda }}</td>
@@ -1409,11 +1409,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                  <span>${label}: ${displayValue}</span>
-                  <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                    <i class="fas fa-times"></i>
-                  </button>
-                `;
+                    <span>${label}: ${displayValue}</span>
+                    <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  `;
           badgesContainer.appendChild(badge);
         }
       }
