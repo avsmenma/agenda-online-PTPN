@@ -28,9 +28,27 @@ class DashboardPembayaranController extends Controller
     {
         $now = Carbon::now();
 
-        // Get statistics for top row
-        $totalDokumen = Dokumen::where('current_handler', 'pembayaran')->count();
-        $totalSiapBayar = Dokumen::where('current_handler', 'pembayaran')
+        // Get statistics for top row - use same query criteria as dokumens() method
+        $baseQuery = function () {
+            return Dokumen::whereNotNull('nomor_agenda')
+                ->where(function ($q) {
+                    $q->where('current_handler', 'pembayaran')
+                        ->orWhere('status', 'sent_to_pembayaran')
+                        ->orWhere(function ($csvQ) {
+                            $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                                $query->where('imported_from_csv', true);
+                            });
+                        });
+                });
+        };
+
+        $totalDokumen = $baseQuery()
+            ->where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            })
+            ->count();
+        $totalSiapBayar = $baseQuery()
             ->where('status_pembayaran', 'siap_dibayar')
             ->count();
         $totalSudahDibayar = Dokumen::where('status_pembayaran', 'sudah_dibayar')->count();
@@ -41,10 +59,22 @@ class DashboardPembayaranController extends Controller
         $totalPeringatan = 0;
         $totalTerlambat = 0;
 
-        // Get documents at pembayaran that are not yet paid
+        // Get ALL documents shown in pembayaran view that are not yet paid
+        // Use the same criteria as dokumens() method to ensure consistency
         $dokumensPembayaran = Dokumen::with(['roleData'])
-            ->where('current_handler', 'pembayaran')
+            ->whereNotNull('nomor_agenda')
             ->where(function ($q) {
+                $q->where('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere(function ($csvQ) {
+                        // Include CSV imported documents (exclusive to Pembayaran)
+                        $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                            $query->where('imported_from_csv', true);
+                        });
+                    });
+            })
+            ->where(function ($q) {
+                // Only count documents that are NOT yet paid
                 $q->whereNull('status_pembayaran')
                     ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
             })
@@ -66,8 +96,21 @@ class DashboardPembayaranController extends Controller
                     $totalTerlambat++;
                 }
             } else {
-                // If no received_at, count as aman (baru masuk)
-                $totalAman++;
+                // If no received_at, check tanggal_masuk or created_at
+                $baseDate = $dok->tanggal_masuk ?? $dok->created_at;
+                if ($baseDate) {
+                    $hoursDiff = Carbon::parse($baseDate)->diffInHours($now);
+                    if ($hoursDiff < 168) {
+                        $totalAman++;
+                    } elseif ($hoursDiff < 504) {
+                        $totalPeringatan++;
+                    } else {
+                        $totalTerlambat++;
+                    }
+                } else {
+                    // If no date at all, count as aman (baru masuk)
+                    $totalAman++;
+                }
             }
         }
 
