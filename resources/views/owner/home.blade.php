@@ -94,6 +94,38 @@
             background: linear-gradient(135deg, #10b981, #34d399);
         }
 
+        /* Clickable card indicator for selesai card */
+        .summary-card.selesai.clickable {
+            cursor: pointer;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.selesai.clickable:hover {
+            border-color: #10b981;
+            transform: translateY(-6px);
+            box-shadow: 0 15px 30px -10px rgba(16, 185, 129, 0.25);
+        }
+
+        .summary-card.selesai.clickable .click-indicator {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-size: 0.75rem;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.selesai.clickable:hover .click-indicator {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
         .summary-card.nilai .icon {
             background: linear-gradient(135deg, #6366f1, #818cf8);
         }
@@ -281,13 +313,17 @@
                 <div class="value">{{ number_format($dokumenProses) }}</div>
             </div>
 
-            <a href="{{ url('/owner/dokumen?status=selesai') }}" class="summary-card selesai"
-                style="text-decoration: none; cursor: pointer;">
+            <a href="{{ url('/owner/dokumen?status=selesai') }}" class="summary-card selesai clickable"
+                style="text-decoration: none;">
                 <div class="icon">
                     <i class="fa-solid fa-check-circle"></i>
                 </div>
                 <div class="label">Dokumen Sudah Dibayar</div>
                 <div class="value">{{ number_format($dokumenSelesai) }}</div>
+                <div class="click-indicator">
+                    <span>Lihat Detail</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
             </a>
 
             <div class="summary-card nilai">

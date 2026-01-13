@@ -1423,8 +1423,11 @@
     <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
       @if(($module ?? '') !== 'owner')
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
+      @else
+        {{-- Spacer to push icons to the right for owner pages --}}
+        <div class="flex-grow-1"></div>
       @endif
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center ms-auto">
         <!-- Dark Mode Toggle Button -->
         <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
           <i class="fas fa-moon theme-toggle-icon moon"></i>
@@ -1998,8 +2001,7 @@
 
   <!-- Global UX Helper: Prevent Navigation During Text Selection -->
   <script>
-  /        * *
-   * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
+  /        *         * * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
    * Digunakan pada Card dan Table Row yangbisa diklik
    * 
    * @param {Event} event - Click event
