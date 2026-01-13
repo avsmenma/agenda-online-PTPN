@@ -3300,11 +3300,11 @@ class OwnerDashboardController extends Controller
             'filterData'
         ))
             ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
-            ->with('module', 'owner')
+            ->with('module', $isAdminOrOwner ? 'owner' : ($roleCode === 'ibuB' ? 'ibub' : ($roleCode === 'ibuA' ? 'ibua' : $roleCode)))
             ->with('menuDashboard', '')
             ->with('menuRekapan', '')
-            ->with('menuRekapanKeterlambatan', 'active')
-            ->with('dashboardUrl', '/owner/dashboard');
+            ->with('menuRekapKeterlambatan', 'active')
+            ->with('dashboardUrl', $isAdminOrOwner ? '/owner/dashboard' : ($roleCode === 'ibuB' ? '/dashboard/verifikasi' : '/dashboard'));
     }
 
 
