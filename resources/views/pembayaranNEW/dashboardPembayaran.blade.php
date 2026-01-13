@@ -669,59 +669,86 @@
     </div>
   </div>
 
-  <!-- Statistics Cards - Row 2: Delay Status (Weekly Thresholds) -->
+  <!-- Statistics Cards - Row 2: Deadline Cards (Matching Verifikasi Style) -->
   <div class="row mb-4">
-    <!-- Aman (< 1 Minggu) -->
-    <div class="col-xl-4 col-md-6 mb-4">
-      <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}?filter_age=1" style="text-decoration: none;">
-        <div class="stat-card" style="border-left: 4px solid #28a745;">
-          <div class="stat-card-body">
-            <div class="stat-content">
-              <div class="stat-title" style="color: #28a745;">Aman</div>
-              <div class="stat-value">{{ number_format($totalAman ?? 0, 0, ',', '.') }}</div>
-              <div class="stat-description">
-                < 1 minggu di pembayaran</div>
-              </div>
-              <div class="stat-icon" style="background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);">
-                <i class="fas fa-thumbs-up"></i>
-              </div>
+    <!-- Dokumen AMAN (< 1 Minggu - GREEN) -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <a href="{{ url('/dokumensPembayaran?deadline_filter=aman') }}" class="deadline-card-link"
+        style="text-decoration: none;">
+        <div class="deadline-card deadline-aman"
+          style="border-radius: 16px; padding: 20px; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; border-left: 5px solid #28a745; background: linear-gradient(135deg, #d4edda 0%, #c8e6c9 100%); transition: all 0.3s ease;">
+          <div class="deadline-card-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div class="deadline-indicator">
+              <span
+                style="width: 12px; height: 12px; border-radius: 50%; background: #28a745; box-shadow: 0 0 8px rgba(40, 167, 69, 0.5); display: inline-block; animation: pulse 2s infinite;"></span>
             </div>
+            <div class="deadline-count" style="font-size: 18px; font-weight: 700; color: #155724;">
+              {{ number_format($totalAman ?? 0, 0, ',', '.') }} Dokumen</div>
+          </div>
+          <div class="deadline-badge-wrapper" style="margin-bottom: 12px;">
+            <span
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; background: #28a745; color: white; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
+              <i class="fas fa-check-circle"></i> AMAN
+            </span>
+          </div>
+          <div class="deadline-info"
+            style="font-size: 13px; display: flex; align-items: center; gap: 8px; color: #155724;">
+            <i class="fas fa-clock"></i> Diterima < 1 minggu yang lalu </div>
           </div>
       </a>
     </div>
 
-    <!-- Peringatan (1-3 Minggu) -->
-    <div class="col-xl-4 col-md-6 mb-4">
-      <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}?filter_age=2" style="text-decoration: none;">
-        <div class="stat-card" style="border-left: 4px solid #ffc107;">
-          <div class="stat-card-body">
-            <div class="stat-content">
-              <div class="stat-title" style="color: #e0a800;">Peringatan</div>
-              <div class="stat-value">{{ number_format($totalPeringatan ?? 0, 0, ',', '.') }}</div>
-              <div class="stat-description">1-3 minggu di pembayaran</div>
+    <!-- Dokumen PERINGATAN (1-3 Minggu - YELLOW) -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <a href="{{ url('/dokumensPembayaran?deadline_filter=peringatan') }}" class="deadline-card-link"
+        style="text-decoration: none;">
+        <div class="deadline-card deadline-peringatan"
+          style="border-radius: 16px; padding: 20px; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; border-left: 5px solid #ffc107; background: linear-gradient(135deg, #fff3cd 0%, #ffe0b2 100%); transition: all 0.3s ease;">
+          <div class="deadline-card-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div class="deadline-indicator">
+              <span
+                style="width: 12px; height: 12px; border-radius: 50%; background: #ffc107; box-shadow: 0 0 8px rgba(255, 193, 7, 0.5); display: inline-block; animation: pulse 2s infinite;"></span>
             </div>
-            <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%);">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
+            <div class="deadline-count" style="font-size: 18px; font-weight: 700; color: #856404;">
+              {{ number_format($totalPeringatan ?? 0, 0, ',', '.') }} Dokumen</div>
+          </div>
+          <div class="deadline-badge-wrapper" style="margin-bottom: 12px;">
+            <span
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; background: #ffc107; color: #856404; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);">
+              <i class="fas fa-exclamation-triangle"></i> PERINGATAN
+            </span>
+          </div>
+          <div class="deadline-info"
+            style="font-size: 13px; display: flex; align-items: center; gap: 8px; color: #856404;">
+            <i class="fas fa-clock"></i> Diterima 1-3 minggu yang lalu
           </div>
         </div>
       </a>
     </div>
 
-    <!-- Terlambat (> 3 Minggu) -->
-    <div class="col-xl-4 col-md-6 mb-4">
-      <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}?filter_age=3%2B"
+    <!-- Dokumen TERLAMBAT (> 3 Minggu - RED) -->
+    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+      <a href="{{ url('/dokumensPembayaran?deadline_filter=terlambat') }}" class="deadline-card-link"
         style="text-decoration: none;">
-        <div class="stat-card" style="border-left: 4px solid #dc3545;">
-          <div class="stat-card-body">
-            <div class="stat-content">
-              <div class="stat-title" style="color: #dc3545;">Terlambat</div>
-              <div class="stat-value">{{ number_format($totalTerlambat ?? 0, 0, ',', '.') }}</div>
-              <div class="stat-description">> 3 minggu di pembayaran</div>
+        <div class="deadline-card deadline-terlambat"
+          style="border-radius: 16px; padding: 20px; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; border-left: 5px solid #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #ffcdd2 100%); transition: all 0.3s ease;">
+          <div class="deadline-card-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div class="deadline-indicator">
+              <span
+                style="width: 12px; height: 12px; border-radius: 50%; background: #dc3545; box-shadow: 0 0 8px rgba(220, 53, 69, 0.5); display: inline-block; animation: pulse 2s infinite;"></span>
             </div>
-            <div class="stat-icon dikembalikan">
-              <i class="fas fa-clock"></i>
-            </div>
+            <div class="deadline-count" style="font-size: 18px; font-weight: 700; color: #721c24;">
+              {{ number_format($totalTerlambat ?? 0, 0, ',', '.') }} Dokumen</div>
+          </div>
+          <div class="deadline-badge-wrapper" style="margin-bottom: 12px;">
+            <span
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; background: #dc3545; color: white; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);">
+              <i class="fas fa-exclamation-circle"></i> TERLAMBAT
+            </span>
+          </div>
+          <div class="deadline-info"
+            style="font-size: 13px; display: flex; align-items: center; gap: 8px; color: #721c24;">
+            <i class="fas fa-clock"></i> Diterima > 3 minggu yang lalu
           </div>
         </div>
       </a>
@@ -788,7 +815,7 @@
                   // Get received_at from roleData to calculate document age (count up)
                   $roleData = $dokumen->getDataForRole('pembayaran');
                   $receivedAt = $roleData?->received_at;
-                  
+
                   $isCompleted = $dokumen->status_pembayaran === 'sudah_dibayar';
                   $ageText = '-';
                   $ageLabel = '-';
@@ -798,7 +825,7 @@
                   if ($receivedAt) {
                     $receivedAt = \Carbon\Carbon::parse($receivedAt);
                     $processedAt = $roleData?->processed_at;
-                    
+
                     if ($isCompleted && $processedAt) {
                       $endTime = \Carbon\Carbon::parse($processedAt);
                       $diff = $receivedAt->diff($endTime);
@@ -809,9 +836,12 @@
 
                     // Format elapsed time as "X hari Y jam Z menit"
                     $elapsedParts = [];
-                    if ($diff->days > 0) $elapsedParts[] = $diff->days . ' hari';
-                    if ($diff->h > 0) $elapsedParts[] = $diff->h . ' jam';
-                    if ($diff->i > 0 || empty($elapsedParts)) $elapsedParts[] = $diff->i . ' menit';
+                    if ($diff->days > 0)
+                      $elapsedParts[] = $diff->days . ' hari';
+                    if ($diff->h > 0)
+                      $elapsedParts[] = $diff->h . ' jam';
+                    if ($diff->i > 0 || empty($elapsedParts))
+                      $elapsedParts[] = $diff->i . ' menit';
                     $ageText = implode(' ', $elapsedParts);
 
                     // Green: < 1 week (168h), Yellow: 1-3 weeks (168-504h), Red: >= 3 weeks (504h)
@@ -837,12 +867,14 @@
                   }
                 @endphp
                 @if($receivedAt)
-                  <div class="deadline-card deadline-{{ $ageColor }}" style="padding: 8px; border-radius: 8px; min-width: 120px;">
+                  <div class="deadline-card deadline-{{ $ageColor }}"
+                    style="padding: 8px; border-radius: 8px; min-width: 120px;">
                     <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">
                       <i class="fa-solid fa-calendar"></i> {{ $receivedAt->format('d M Y, H:i') }}
                     </div>
-                    <div style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; 
-                      background: {{ $ageColor === 'green' ? '#10b981' : ($ageColor === 'yellow' ? '#f59e0b' : ($ageColor === 'red' ? '#ef4444' : '#9ca3af')) }}; color: white;">
+                    <div
+                      style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; 
+                            background: {{ $ageColor === 'green' ? '#10b981' : ($ageColor === 'yellow' ? '#f59e0b' : ($ageColor === 'red' ? '#ef4444' : '#9ca3af')) }}; color: white;">
                       <i class="fa-solid {{ $ageIcon }}"></i> {{ $ageLabel }}
                     </div>
                     <div style="font-size: 9px; color: #6b7280; margin-top: 4px;">

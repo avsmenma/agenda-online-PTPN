@@ -55,17 +55,19 @@ class DashboardPembayaranController extends Controller
 
         // Get statistics for bottom row (Aman/Peringatan/Terlambat)
         // Pembayaran uses weekly thresholds: <1 week = green, 1-3 weeks = yellow, >3 weeks = red
+        // Count ALL documents (including completed ones) based on processing time
         $totalAman = 0;
         $totalPeringatan = 0;
         $totalTerlambat = 0;
 
-        // Get ALL documents shown in pembayaran view that are not yet paid
+        // Get ALL documents shown in pembayaran view (including completed ones)
         // Use the same criteria as dokumens() method to ensure consistency
-        $dokumensPembayaran = Dokumen::with(['roleData'])
+        $allDokumensPembayaran = Dokumen::with(['roleData'])
             ->whereNotNull('nomor_agenda')
             ->where(function ($q) {
                 $q->where('current_handler', 'pembayaran')
                     ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere('status_pembayaran', 'sudah_dibayar')
                     ->orWhere(function ($csvQ) {
                         // Include CSV imported documents (exclusive to Pembayaran)
                         $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
@@ -73,20 +75,26 @@ class DashboardPembayaranController extends Controller
                         });
                     });
             })
-            ->where(function ($q) {
-                // Only count documents that are NOT yet paid
-                $q->whereNull('status_pembayaran')
-                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-            })
             ->get();
 
-        foreach ($dokumensPembayaran as $dok) {
-            // Get received_at from roleData for pembayaran
+        foreach ($allDokumensPembayaran as $dok) {
+            // Get received_at and processed_at from roleData for pembayaran
             $roleData = $dok->roleData->where('role_code', 'pembayaran')->first();
             $receivedAt = $roleData ? $roleData->received_at : null;
+            $processedAt = $roleData ? $roleData->processed_at : null;
+
+            // Determine the end time for calculation
+            // For completed docs: use processed_at or tanggal_dibayar
+            // For pending docs: use now
+            $isCompleted = $dok->status_pembayaran === 'sudah_dibayar';
+            if ($isCompleted) {
+                $endTime = $processedAt ?? $dok->tanggal_dibayar ?? $now;
+            } else {
+                $endTime = $now;
+            }
 
             if ($receivedAt) {
-                $hoursDiff = Carbon::parse($receivedAt)->diffInHours($now);
+                $hoursDiff = Carbon::parse($receivedAt)->diffInHours(Carbon::parse($endTime));
 
                 if ($hoursDiff < 168) { // < 1 week
                     $totalAman++;
@@ -99,7 +107,7 @@ class DashboardPembayaranController extends Controller
                 // If no received_at, check tanggal_masuk or created_at
                 $baseDate = $dok->tanggal_masuk ?? $dok->created_at;
                 if ($baseDate) {
-                    $hoursDiff = Carbon::parse($baseDate)->diffInHours($now);
+                    $hoursDiff = Carbon::parse($baseDate)->diffInHours(Carbon::parse($endTime));
                     if ($hoursDiff < 168) {
                         $totalAman++;
                     } elseif ($hoursDiff < 504) {
