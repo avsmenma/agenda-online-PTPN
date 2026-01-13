@@ -12,7 +12,8 @@ final readonly class WelcomeMessageComposer
 {
     public function __construct(
         private WelcomeMessageService $welcomeMessageService
-    ) {}
+    ) {
+    }
 
     /**
      * Bind data to the view.
@@ -63,6 +64,10 @@ final readonly class WelcomeMessageComposer
             str_contains($routeName, 'dokumensPembayaran') => 'pembayaran',
 
             str_contains($routeName, 'dashboard') => $this->getModuleFromDashboardRoute($routeName),
+
+            // Detect owner routes (/owner/home, /owner/dokumen, /owner/rekapan-keterlambatan)
+            str_contains($routeName, 'owner.') => 'owner',
+            str_starts_with(request()->path(), 'owner') => 'owner',
 
             default => null,
         };
