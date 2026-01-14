@@ -395,17 +395,27 @@ class Dokumen extends Model
         }
 
         // === UPDATE DISPLAY STATUS FOR SENDER ===
-        // Set sender's display_status to "menunggu_approval_*"
+        // Set sender's display_status to "menunggu_approval_*" based on target role
+        // Map: target_role => sender's display_status
         $displayStatusMap = [
-            'ibub' => 'menunggu_approval_verifikasi',
-            'verifikasi' => 'menunggu_approval_verifikasi',
-            'perpajakan' => 'menunggu_approval_perpajakan',
-            'akutansi' => 'menunggu_approval_akutansi',
-            'pembayaran' => 'menunggu_approval_pembayaran',
+            'ibub' => 'menunggu_approval_verifikasi',      // IbuA -> IbuB: IbuA gets 'menunggu_approval_verifikasi'
+            'verifikasi' => 'menunggu_approval_verifikasi', // Same as ibub
+            'perpajakan' => 'menunggu_approval_perpajakan', // IbuB -> Perpajakan: IbuB gets 'menunggu_approval_perpajakan'
+            'akutansi' => 'menunggu_approval_akutansi',     // Perpajakan -> Akutansi: Perpajakan gets 'menunggu_approval_akutansi'
+            'pembayaran' => 'menunggu_approval_pembayaran', // Akutansi -> Pembayaran: Akutansi gets 'menunggu_approval_pembayaran'
         ];
 
         if (isset($displayStatusMap[$targetRoleCode])) {
-            $this->setDisplayStatusForRole($normalizedSenderRole, $displayStatusMap[$targetRoleCode]);
+            // Set sender's display_status based on where they sent the document
+            $senderDisplayStatus = $displayStatusMap[$targetRoleCode];
+            $this->setDisplayStatusForRole($normalizedSenderRole, $senderDisplayStatus);
+
+            \Log::info('Set display_status for sender', [
+                'document_id' => $this->id,
+                'sender_role' => $normalizedSenderRole,
+                'target_role' => $targetRoleCode,
+                'sender_display_status' => $senderDisplayStatus
+            ]);
         }
         // === END UPDATE DISPLAY STATUS ===
 

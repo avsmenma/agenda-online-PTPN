@@ -2142,20 +2142,40 @@
                         $isWithIbuA = in_array($handlerLower, ['ibua', 'ibu a', 'ibutarapul']);
                         $statusLower = strtolower($dokumen->status ?? 'draft');
                         
-                        // Check if dokumen has been sent to IbuB (pernah dikirim ke Team Verifikasi)
-                        $hasIbuBStatus = $dokumen->roleStatuses()->where('role_code', 'ibub')->exists();
-                        $hasPerpajakanStatus = $dokumen->roleStatuses()->whereIn('role_code', ['perpajakan'])->exists();
+                        // PERBAIKAN: Cek apakah dokumen PENDING di inbox IbuB (Verifikasi)
+                        $isPendingInIbuB = $dokumen->roleStatuses()
+                          ->where('role_code', 'ibub')
+                          ->where('status', 'pending')
+                          ->exists();
                         
-                        if ($hasPerpajakanStatus || $hasIbuBStatus) {
-                          // Dokumen sudah pernah dikirim/diproses oleh role lain
-                          $ibuaDisplayStatus = 'terkirim';
+                        // Cek apakah IbuB sudah APPROVE (bukan pending)
+                        $ibuBHasApproved = $dokumen->roleStatuses()
+                          ->where('role_code', 'ibub')
+                          ->where('status', 'approved')
+                          ->exists();
+                        
+                        // Cek apakah sudah sampai ke Perpajakan (berarti sudah pasti terkirim)
+                        $hasPerpajakanStatus = $dokumen->roleStatuses()
+                          ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
+                          ->exists();
+                        
+                        // PRIORITAS: Pending di inbox IbuB -> Menunggu Approval
+                        if ($isPendingInIbuB) {
+                          $ibuaDisplayStatus = 'menunggu_approval_verifikasi';
                         } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_ibub')) {
                           $ibuaDisplayStatus = 'menunggu_approval_verifikasi';
+                        } elseif ($ibuBHasApproved || $hasPerpajakanStatus) {
+                          // IbuB sudah approve ATAU sudah sampai ke role berikutnya
+                          $ibuaDisplayStatus = 'terkirim';
                         } elseif ($isWithIbuA && in_array($statusLower, ['draft', 'returned_to_ibua'])) {
                           $ibuaDisplayStatus = 'draft';
                         } else {
-                          // Any other status means it was sent
-                          $ibuaDisplayStatus = 'terkirim';
+                          // Default: cek current_handler untuk menentukan status
+                          if (in_array($handlerLower, ['ibub', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
+                            $ibuaDisplayStatus = 'terkirim';
+                          } else {
+                            $ibuaDisplayStatus = 'draft';
+                          }
                         }
                       }
                       
