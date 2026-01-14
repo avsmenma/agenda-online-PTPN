@@ -3647,17 +3647,30 @@
               // FIX: Track if document was already sent from verifikasi
               // This ensures status remains "Terkirim ke Team X" from verifikasi's perspective
               // regardless of what happens downstream (perpajakan sends to akutansi, etc.)
-              $sentFromVerifikasi = $roleData && $roleData->processed_at;
+              // 
+              // We detect "sent from verifikasi" by checking:
+              // 1. roleData->processed_at exists (ibub finished processing), OR
+              // 2. Any downstream role has received_at (document has moved on)
               $sentToTeamLabel = null;
+              
+              // Check which downstream roles have received the document
+              $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+              $akutansiRoleData = $dokumen->getDataForRole('akutansi');
+              $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+              
+              // Document is considered "sent from verifikasi" if:
+              // 1. ibub has processed_at (explicitly finished), OR
+              // 2. Any downstream role has received_at (document moved on)
+              $hasProcessedAt = $roleData && $roleData->processed_at;
+              $hasDownstreamReceived = ($perpajakanRoleData && $perpajakanRoleData->received_at)
+                                    || ($akutansiRoleData && $akutansiRoleData->received_at)
+                                    || ($pembayaranRoleData && $pembayaranRoleData->received_at);
+              
+              $sentFromVerifikasi = $hasProcessedAt || $hasDownstreamReceived;
               
               if ($sentFromVerifikasi && !$isRejected) {
                 // Determine which team the document was originally sent to by verifikasi
-                // Check which role first received the document (has received_at)
-                $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
-                $akutansiRoleData = $dokumen->getDataForRole('akutansi');
-                $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
-                
-                // Priority: perpajakan first, then akutansi, then pembayaran
+                // Priority: perpajakan first (most common), then akutansi, then pembayaran
                 if ($perpajakanRoleData && $perpajakanRoleData->received_at) {
                   $sentToTeamLabel = 'Team Perpajakan';
                 } elseif ($akutansiRoleData && $akutansiRoleData->received_at) {
