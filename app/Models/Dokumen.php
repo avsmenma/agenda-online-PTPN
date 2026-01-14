@@ -1599,5 +1599,51 @@ class Dokumen extends Model
                 $this->setDisplayStatusForRole($senderRole, $finalStatus);
             }
         }
+
+        // === CASCADE FINALIZATION TO ALL UPSTREAM ROLES ===
+        // When a downstream role approves, all upstream roles that haven't been finalized
+        // should also get their final status set (if they already sent the document)
+
+        // Define the workflow chain: IbuA -> IbuB -> Perpajakan -> Akutansi -> Pembayaran
+        $workflowChain = ['ibua', 'ibub', 'perpajakan', 'akutansi', 'pembayaran'];
+        $receiverIndex = array_search($receiverRoleCode, $workflowChain);
+
+        if ($receiverIndex !== false && $receiverIndex > 0) {
+            // Finalize all upstream roles that haven't been finalized
+            for ($i = 0; $i < $receiverIndex; $i++) {
+                $upstreamRole = $workflowChain[$i];
+
+                // Only finalize if not already final
+                if (!$this->isStatusFinalForRole($upstreamRole)) {
+                    // Check if this upstream role actually participated in the workflow
+                    $upstreamRoleData = $this->getDataForRole($upstreamRole);
+                    $hasParticipated = $upstreamRoleData && $upstreamRoleData->received_at;
+
+                    // For ibua, check if they sent the document (document exists and was sent)
+                    if ($upstreamRole === 'ibua') {
+                        $ibuaHasSent = $this->roleStatuses()->where('role_code', 'ibub')->exists();
+                        $hasParticipated = $ibuaHasSent;
+                    }
+
+                    if ($hasParticipated) {
+                        // Determine the final status for this upstream role
+                        // Each role's final status is "terkirim_" + next role in chain
+                        $nextRoleIndex = $i + 1;
+                        if ($nextRoleIndex < count($workflowChain)) {
+                            $nextRole = $workflowChain[$nextRoleIndex];
+                            $upstreamFinalStatus = match ($upstreamRole) {
+                                'ibua' => 'terkirim',
+                                'ibub' => 'terkirim_perpajakan',
+                                'perpajakan' => 'terkirim_akutansi',
+                                'akutansi' => 'terkirim_pembayaran',
+                                default => 'terkirim'
+                            };
+
+                            $this->setDisplayStatusForRole($upstreamRole, $upstreamFinalStatus);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -2541,63 +2541,80 @@
               // Document is rejected if it was rejected by perpajakan, or by akutansi and returned to department
               $isRejected = $isRejectedByPerpajakan || $isReturnedFromAkutansi || $isRejectedByAkutansi;
 
-              // FIX: Perpajakan needs to see ACTUAL workflow state
-              // - If document is in Akutansi inbox (pending) → "Menunggu Approval dari Team Akutansi"
-              // - If document was approved by Akutansi → "Sudah terkirim ke Team Akutansi"
-              //
-              // This is different from Verifikasi which always shows frozen "Terkirim ke Perpajakan"
-              // because Perpajakan needs to know the actual state of approval
+              // === PERBAIKAN: Gunakan display_status dari dokumen_role_data untuk stabilitas ===
+              // Perpajakan memiliki display_status tersendiri yang TIDAK berubah setelah Akutansi approve
+              // Saat Akutansi approve, display_status Perpajakan menjadi 'terkirim_akutansi' (FINAL)
+              $perpajakanDisplayStatus = $dokumen->getDisplayStatusForRole('perpajakan');
+              
+              // Get role data for fallback logic
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
               $akutansiRoleData = $dokumen->getDataForRole('akutansi');
               $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
               
-              // Check if Akutansi has APPROVED the document (not just pending)
+              // Check Akutansi and Pembayaran status for fallback
               $akutansiHasApproved = $dokumen->roleStatuses()
                 ->where('role_code', 'akutansi')
                 ->where('status', 'approved')
                 ->exists();
               
-              // Check if Pembayaran has APPROVED the document
               $pembayaranHasApproved = $dokumen->roleStatuses()
                 ->where('role_code', 'pembayaran')
                 ->where('status', 'approved')
                 ->exists();
               
-              // Check if document is PENDING in Akutansi inbox
               $akutansiIsPending = $dokumen->roleStatuses()
                 ->where('role_code', 'akutansi')
                 ->where('status', 'pending')
                 ->exists();
               
-              // Check if document is PENDING in Pembayaran inbox
               $pembayaranIsPending = $dokumen->roleStatuses()
                 ->where('role_code', 'pembayaran')
                 ->where('status', 'pending')
                 ->exists();
               
-              // Determine status for perpajakan's view:
-              // 1. "Sudah terkirim" = downstream role has APPROVED (accepted from inbox)
-              // 2. "Menunggu Approval" = downstream role has document in inbox (pending)
-              // 3. null = document is still being processed by perpajakan
-              
+              // Determine status using display_status first, then fallback
               $sentToTeamFromPerpajakan = null;
               $isPendingDownstream = false;
               $pendingDownstreamTeam = null;
               
-              // Check actual approval status (document approved from inbox)
-              if ($akutansiHasApproved || ($akutansiRoleData && $akutansiRoleData->received_at && !$akutansiIsPending)) {
-                $sentToTeamFromPerpajakan = 'Team Akutansi';
-              } elseif ($pembayaranHasApproved || ($pembayaranRoleData && $pembayaranRoleData->received_at && !$pembayaranIsPending)) {
-                $sentToTeamFromPerpajakan = 'Team Pembayaran';
+              // PRIORITAS 1: Gunakan display_status jika sudah FINAL (terkirim_*)
+              if ($perpajakanDisplayStatus && str_starts_with($perpajakanDisplayStatus, 'terkirim')) {
+                // Status sudah final, gunakan nilai ini dan ABAIKAN downstream status
+                $sentToTeamFromPerpajakan = match($perpajakanDisplayStatus) {
+                  'terkirim_akutansi' => 'Team Akutansi',
+                  'terkirim_pembayaran' => 'Team Pembayaran',
+                  'terkirim' => 'Team Akutansi',
+                  default => 'Team Akutansi'
+                };
+                // Tidak ada pending downstream karena sudah final
+                $isPendingDownstream = false;
               }
-              
-              // Check if document is pending (in inbox, waiting approval)
-              if ($akutansiIsPending) {
+              // PRIORITAS 2: Jika display_status menunjukkan menunggu approval
+              elseif ($perpajakanDisplayStatus && str_starts_with($perpajakanDisplayStatus, 'menunggu_approval')) {
                 $isPendingDownstream = true;
-                $pendingDownstreamTeam = 'Team Akutansi';
-              } elseif ($pembayaranIsPending) {
-                $isPendingDownstream = true;
-                $pendingDownstreamTeam = 'Team Pembayaran';
+                $pendingDownstreamTeam = match($perpajakanDisplayStatus) {
+                  'menunggu_approval_akutansi' => 'Team Akutansi',
+                  'menunggu_approval_pembayaran' => 'Team Pembayaran',
+                  default => 'Team Akutansi'
+                };
+              }
+              // PRIORITAS 3: Fallback ke logika lama jika display_status belum diset
+              else {
+                // Check if Akutansi approved (final sent state)
+                if ($akutansiHasApproved || ($akutansiRoleData && $akutansiRoleData->received_at && !$akutansiIsPending)) {
+                  $sentToTeamFromPerpajakan = 'Team Akutansi';
+                } elseif ($pembayaranHasApproved || ($pembayaranRoleData && $pembayaranRoleData->received_at && !$pembayaranIsPending)) {
+                  $sentToTeamFromPerpajakan = 'Team Pembayaran';
+                }
+                
+                // Check if pending in downstream inbox
+                if ($akutansiIsPending && !$sentToTeamFromPerpajakan) {
+                  $isPendingDownstream = true;
+                  $pendingDownstreamTeam = 'Team Akutansi';
+                } elseif ($pembayaranIsPending && !$sentToTeamFromPerpajakan) {
+                  $isPendingDownstream = true;
+                  $pendingDownstreamTeam = 'Team Pembayaran';
+                }
               }
 
               $canSend = $dokumen->status != 'sent_to_akutansi'

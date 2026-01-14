@@ -2132,18 +2132,48 @@
                     <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah }}</strong>
                   @elseif($col == 'status')
                     @php
-                      // Logic Sederhana Khusus Ibu Tarapul: Hanya 2 Status (Belum Dikirim & Terkirim)
-                      // Jika dokumen ada di tangan IbuA (Draft, Returned, Rejected) -> Belum Dikirim
-                      // Jika dokumen ada di tangan role lain (IbuB, Perpajakan, Akutansi, dll) -> Terkirim
-                      $handlerLower = strtolower($dokumen->current_handler ?? '');
-                      $isWithIbuA = in_array($handlerLower, ['ibua', 'ibu a', 'ibutarapul']);
+                      // === PERBAIKAN: Gunakan display_status dari dokumen_role_data untuk stabilitas ===
+                      // IbuA ('ibua') memiliki display_status tersendiri yang tidak terpengaruh downstream
+                      $ibuaDisplayStatus = $dokumen->getDisplayStatusForRole('ibua');
+                      
+                      // Fallback logic jika display_status belum diset
+                      if (!$ibuaDisplayStatus) {
+                        $handlerLower = strtolower($dokumen->current_handler ?? '');
+                        $isWithIbuA = in_array($handlerLower, ['ibua', 'ibu a', 'ibutarapul']);
+                        $statusLower = strtolower($dokumen->status ?? 'draft');
+                        
+                        // Check if dokumen has been sent to IbuB (pernah dikirim ke Team Verifikasi)
+                        $hasIbuBStatus = $dokumen->roleStatuses()->where('role_code', 'ibub')->exists();
+                        $hasPerpajakanStatus = $dokumen->roleStatuses()->whereIn('role_code', ['perpajakan'])->exists();
+                        
+                        if ($hasPerpajakanStatus || $hasIbuBStatus) {
+                          // Dokumen sudah pernah dikirim/diproses oleh role lain
+                          $ibuaDisplayStatus = 'terkirim';
+                        } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_ibub')) {
+                          $ibuaDisplayStatus = 'menunggu_approval_verifikasi';
+                        } elseif ($isWithIbuA && in_array($statusLower, ['draft', 'returned_to_ibua'])) {
+                          $ibuaDisplayStatus = 'draft';
+                        } else {
+                          // Any other status means it was sent
+                          $ibuaDisplayStatus = 'terkirim';
+                        }
+                      }
+                      
+                      // Map display status to badge
+                      $statusLabel = match($ibuaDisplayStatus) {
+                        'draft' => 'Belum Dikirim',
+                        'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
+                        'terkirim', 'terkirim_verifikasi', 'terkirim_perpajakan', 'terkirim_akutansi', 'terkirim_pembayaran' => 'Terkirim',
+                        'selesai', 'dibayar' => 'Selesai',
+                        default => 'Terkirim'
+                      };
                     @endphp
-                    @if($isWithIbuA && !in_array($dokumen->status, ['pending_approval_ibub', 'pending_approval_ibu_b', 'waiting_reviewer_approval', 'menunggu_di_approve']))
+                    @if($ibuaDisplayStatus === 'draft')
                       <span class="badge-status badge-draft">
                         <i class="fa-solid fa-file-lines me-1"></i>
                         <span>Belum Dikirim</span>
                       </span>
-                    @elseif(in_array($dokumen->status, ['pending_approval_ibub', 'pending_approval_ibu_b', 'waiting_reviewer_approval', 'menunggu_di_approve']))
+                    @elseif($ibuaDisplayStatus === 'menunggu_approval_verifikasi')
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                         <i class="fa-solid fa-clock me-1"></i>
@@ -2152,7 +2182,7 @@
                     @else
                       <span class="badge-status badge-terkirim">
                         <i class="fa-solid fa-check me-1"></i>
-                        <span>Terkirim</span>
+                        <span>{{ $statusLabel }}</span>
                       </span>
                     @endif
                   @elseif($col == 'tanggal_spp')
