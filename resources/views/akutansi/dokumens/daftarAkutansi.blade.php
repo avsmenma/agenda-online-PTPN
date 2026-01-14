@@ -2593,6 +2593,21 @@
                   ->whereIn('role_code', ['akutansi', 'pembayaran'])
                   ->where('status', 'rejected')
                   ->exists();
+                
+                // FIX: Track if document was already sent from akutansi
+                // This ensures status remains "Terkirim ke Pembayaran" from akutansi's perspective
+                // regardless of what happens downstream (pembayaran pending approval, etc.)
+                //
+                // We detect "sent from akutansi" by checking:
+                // 1. akutansi has processed_at (explicitly finished), OR
+                // 2. pembayaran has received_at (document moved on)
+                $akutansiRoleData = $dokumen->getDataForRole('akutansi');
+                $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+                
+                $hasAkutansiProcessedAt = $akutansiRoleData && $akutansiRoleData->processed_at;
+                $hasPembayaranReceived = $pembayaranRoleData && $pembayaranRoleData->received_at;
+                
+                $sentFromAkutansi = ($hasAkutansiProcessedAt || $hasPembayaranReceived) && !$isRejected;
               @endphp
               @if($isRejected)
                 {{-- Dokumen ditolak oleh akutansi --}}
@@ -2606,6 +2621,10 @@
                     </a>
                   </span>
                 </span>
+              @elseif($sentFromAkutansi)
+                {{-- FIX: Document has been sent from akutansi - show "Terkirim ke Pembayaran" --}}
+                {{-- This is prioritized over pending approval to show status from akutansi's perspective --}}
+                <span class="badge-status badge-sent">📤 Terkirim ke Pembayaran</span>
               @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'pending_approval_pembayaran']))
                 <span class="badge-status badge-warning">
                   <i class="fa-solid fa-clock me-1"></i>

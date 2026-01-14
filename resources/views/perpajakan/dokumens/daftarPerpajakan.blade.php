@@ -2544,15 +2544,23 @@
               // FIX: Track if document was already sent from perpajakan
               // This ensures status remains "Sudah terkirim ke Team X" from perpajakan's perspective
               // regardless of what happens downstream (akutansi pending approval, etc.)
+              //
+              // We detect "sent from perpajakan" by checking:
+              // 1. perpajakan has processed_at (explicitly finished), OR
+              // 2. Any downstream role (akutansi, pembayaran) has received_at (document moved on)
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
-              $sentFromPerpajakan = $perpajakanRoleData && $perpajakanRoleData->processed_at && !$isRejected;
+              $akutansiRoleData = $dokumen->getDataForRole('akutansi');
+              $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
+              
+              $hasProcessedAt = $perpajakanRoleData && $perpajakanRoleData->processed_at;
+              $hasDownstreamReceived = ($akutansiRoleData && $akutansiRoleData->received_at)
+                                    || ($pembayaranRoleData && $pembayaranRoleData->received_at);
+              
+              $sentFromPerpajakan = ($hasProcessedAt || $hasDownstreamReceived) && !$isRejected;
               $sentToTeamFromPerpajakan = null;
               
               if ($sentFromPerpajakan) {
                 // Check which team received the document from perpajakan
-                $akutansiRoleData = $dokumen->getDataForRole('akutansi');
-                $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
-                
                 if ($akutansiRoleData && $akutansiRoleData->received_at) {
                   $sentToTeamFromPerpajakan = 'Team Akutansi';
                 } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
