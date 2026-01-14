@@ -394,6 +394,21 @@ class Dokumen extends Model
             }
         }
 
+        // === UPDATE DISPLAY STATUS FOR SENDER ===
+        // Set sender's display_status to "menunggu_approval_*"
+        $displayStatusMap = [
+            'ibub' => 'menunggu_approval_verifikasi',
+            'verifikasi' => 'menunggu_approval_verifikasi',
+            'perpajakan' => 'menunggu_approval_perpajakan',
+            'akutansi' => 'menunggu_approval_akutansi',
+            'pembayaran' => 'menunggu_approval_pembayaran',
+        ];
+
+        if (isset($displayStatusMap[$targetRoleCode])) {
+            $this->setDisplayStatusForRole($normalizedSenderRole, $displayStatusMap[$targetRoleCode]);
+        }
+        // === END UPDATE DISPLAY STATUS ===
+
         // Log activity
         DokumenActivityLog::create([
             'dokumen_id' => $this->id,
@@ -516,6 +531,14 @@ class Dokumen extends Model
             'performed_by' => $approvedBy,
             'action_at' => now(),
         ]);
+
+        // === UPDATE DISPLAY STATUS ===
+        // 1. Finalize sender's display_status (set to "terkirim_*")
+        $this->finalizeStatusForSender($normalizedRoleCode);
+
+        // 2. Set receiver's display_status to "sedang_diproses"
+        $this->setDisplayStatusForRole($normalizedRoleCode, 'sedang_diproses');
+        // === END UPDATE DISPLAY STATUS ===
 
         // Fire event
         event(new \App\Events\DocumentApprovedInbox($this, $roleCode));
@@ -1419,5 +1442,162 @@ class Dokumen extends Model
     public function getStatusForUser(?string $userRole = null): string
     {
         return $this->getStatusForUserAttribute($userRole);
+    }
+
+    // ============================================================================
+    // DISPLAY STATUS PER ROLE (FINAL/FROZEN STATUS)
+    // ============================================================================
+    // These methods manage the display_status column in dokumen_role_data table.
+    // The display_status is a FINAL status that does NOT change when other roles
+    // perform actions downstream. This ensures each role sees their own perspective.
+    // ============================================================================
+
+    /**
+     * Set display status for a specific role.
+     * This status is FINAL and won't be affected by other roles' actions.
+     * 
+     * @param string $roleCode The role code (ibua, ibub, perpajakan, akutansi, pembayaran)
+     * @param string $displayStatus The display status to set (see constants below)
+     * @return DokumenRoleData|null
+     * 
+     * Available status values:
+     * - menunggu_approval_verifikasi: Waiting for Verifikasi to approve
+     * - menunggu_approval_perpajakan: Waiting for Perpajakan to approve
+     * - menunggu_approval_akutansi: Waiting for Akutansi to approve
+     * - menunggu_approval_pembayaran: Waiting for Pembayaran to approve
+     * - sedang_diproses: Currently being processed
+     * - terkirim: Successfully sent (for Ibu Tarapul)
+     * - terkirim_perpajakan: Successfully sent to Perpajakan (for Verifikasi)
+     * - terkirim_akutansi: Successfully sent to Akutansi (for Perpajakan)
+     * - terkirim_pembayaran: Successfully sent to Pembayaran (for Akutansi)
+     * - selesai: Completed
+     * - ditolak: Rejected
+     */
+    public function setDisplayStatusForRole(string $roleCode, string $displayStatus): ?DokumenRoleData
+    {
+        $roleCode = strtolower($roleCode);
+
+        // Normalize verifikasi to ibub for database consistency
+        if ($roleCode === 'verifikasi') {
+            $roleCode = 'ibub';
+        }
+        if ($roleCode === 'tarapul') {
+            $roleCode = 'ibua';
+        }
+
+        // Update or create role data with display_status
+        return DokumenRoleData::updateOrCreate(
+            ['dokumen_id' => $this->id, 'role_code' => $roleCode],
+            ['display_status' => $displayStatus]
+        );
+    }
+
+    /**
+     * Get display status for a specific role.
+     * Returns the FINAL/frozen status that this role should display.
+     * 
+     * @param string $roleCode The role code
+     * @return string|null The display status, or null if not set
+     */
+    public function getDisplayStatusForRole(string $roleCode): ?string
+    {
+        $roleData = $this->getDataForRole($roleCode);
+        return $roleData?->display_status;
+    }
+
+    /**
+     * Get human-readable label for display status
+     * 
+     * @param string|null $displayStatus The display_status value
+     * @return string Human-readable label in Indonesian
+     */
+    public static function getFinalStatusLabel(?string $displayStatus): string
+    {
+        if (!$displayStatus) {
+            return 'Sedang Diproses';
+        }
+
+        $labels = [
+            // Menunggu Approval states
+            'menunggu_approval_verifikasi' => 'Menunggu Approval dari Team Verifikasi',
+            'menunggu_approval_perpajakan' => 'Menunggu Approval dari Team Perpajakan',
+            'menunggu_approval_akutansi' => 'Menunggu Approval dari Team Akutansi',
+            'menunggu_approval_pembayaran' => 'Menunggu Approval dari Team Pembayaran',
+
+            // Processing states
+            'sedang_diproses' => 'Sedang Diproses',
+            'terkunci' => 'Terkunci',
+
+            // Final/Sent states
+            'terkirim' => 'Terkirim',
+            'terkirim_verifikasi' => 'Terkirim ke Team Verifikasi',
+            'terkirim_perpajakan' => 'Terkirim ke Team Perpajakan',
+            'terkirim_akutansi' => 'Terkirim ke Team Akutansi',
+            'terkirim_pembayaran' => 'Terkirim ke Team Pembayaran',
+
+            // Completed states
+            'selesai' => 'Selesai',
+            'dibayar' => 'Sudah Dibayar',
+
+            // Rejected states
+            'ditolak' => 'Ditolak',
+            'dikembalikan' => 'Dikembalikan',
+        ];
+
+        return $labels[$displayStatus] ?? ucfirst(str_replace('_', ' ', $displayStatus));
+    }
+
+    /**
+     * Check if this role's status is FINAL (cannot be changed by downstream actions)
+     * 
+     * @param string $roleCode The role code
+     * @return bool True if status is final (terkirim_*)
+     */
+    public function isStatusFinalForRole(string $roleCode): bool
+    {
+        $displayStatus = $this->getDisplayStatusForRole($roleCode);
+
+        if (!$displayStatus) {
+            return false;
+        }
+
+        // "terkirim" prefixed statuses are FINAL
+        return str_starts_with($displayStatus, 'terkirim') ||
+            in_array($displayStatus, ['selesai', 'dibayar']);
+    }
+
+    /**
+     * Finalize status for sender role when receiver approves from inbox.
+     * Called when a role approves document from their inbox.
+     * 
+     * @param string $receiverRoleCode The role that approved from inbox
+     * @return void
+     */
+    public function finalizeStatusForSender(string $receiverRoleCode): void
+    {
+        $receiverRoleCode = strtolower($receiverRoleCode);
+
+        // Normalize role codes
+        if ($receiverRoleCode === 'verifikasi') {
+            $receiverRoleCode = 'ibub';
+        }
+
+        // Define sender -> receiver relationships and their final status
+        $senderFinalStatus = [
+            'ibub' => ['sender' => 'ibua', 'status' => 'terkirim'],
+            'perpajakan' => ['sender' => 'ibub', 'status' => 'terkirim_perpajakan'],
+            'akutansi' => ['sender' => 'perpajakan', 'status' => 'terkirim_akutansi'],
+            'pembayaran' => ['sender' => 'akutansi', 'status' => 'terkirim_pembayaran'],
+        ];
+
+        if (isset($senderFinalStatus[$receiverRoleCode])) {
+            $senderRole = $senderFinalStatus[$receiverRoleCode]['sender'];
+            $finalStatus = $senderFinalStatus[$receiverRoleCode]['status'];
+
+            // Only update if not already final
+            if (!$this->isStatusFinalForRole($senderRole)) {
+                $this->setDisplayStatusForRole($senderRole, $finalStatus);
+            }
+        }
     }
 }
