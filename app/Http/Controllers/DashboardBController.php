@@ -40,7 +40,7 @@ class DashboardBController extends Controller
         // 1. Total dokumen - semua dokumen yang terlihat oleh ibuB (same as dokumens() query)
         $totalDokumen = Dokumen::where(function ($q) {
             $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']);
         })
             ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -69,7 +69,7 @@ class DashboardBController extends Controller
         // Get all documents currently handled by ibuB/verifikasi AND sent documents with their roleData
         $ibubDocuments = Dokumen::where(function ($q) {
             $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']);
         })
             ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -79,10 +79,10 @@ class DashboardBController extends Controller
                 });
             })
             ->with([
-                'roleData' => function ($q) {
-                    $q->where('role_code', 'ibub');
-                }
-            ])
+                    'roleData' => function ($q) {
+                        $q->where('role_code', 'ibub');
+                    }
+                ])
             ->get();
 
         $dokumenLessThan24h = 0;  // < 24 jam (green)
@@ -184,7 +184,7 @@ class DashboardBController extends Controller
                         })
                             ->whereIn('current_handler', ['ibuB', 'verifikasi']);
                     })
-                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']) // Include documents sent to perpajakan/akutansi
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']) // Include documents sent to perpajakan/akutansi/pembayaran
                     ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
                         // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
                         $pembayaranQ->where(function ($statusQ) {
@@ -233,44 +233,44 @@ class DashboardBController extends Controller
                 ->where('ibub_data.role_code', '=', 'ibub');
         })
             ->select([
-                'dokumens.id',
-                'dokumens.nomor_agenda',
-                'dokumens.nomor_spp',
-                'dokumens.uraian_spp',
-                'dokumens.nilai_rupiah',
-                'dokumens.status',
-                'dokumens.created_at',
-                'dokumens.tanggal_masuk',
-                'dokumens.tanggal_spp',
-                'dokumens.keterangan',
-                'dokumens.alasan_pengembalian',
-                // Deadline fields are now in dokumen_role_data table - use aliases for easier access
-                'ibub_data.deadline_at as deadline_at',
-                'ibub_data.deadline_days as deadline_days',
-                'ibub_data.deadline_note as deadline_note',
-                'dokumens.current_handler',
-                'dokumens.bulan',
-                'dokumens.tahun',
-                'dokumens.kategori',
-                'dokumens.kebun',
-                'dokumens.jenis_dokumen',
-                'dokumens.jenis_sub_pekerjaan',
-                'dokumens.updated_at',
-                'dokumens.tanggal_spk',
-                'dokumens.tanggal_berakhir_spk',
-                'dokumens.no_spk',
-                'dokumens.nomor_miro',
-                'dokumens.nama_pengirim',
-                'dokumens.jenis_pembayaran',
-                'dokumens.dibayar_kepada',
-                'dokumens.no_berita_acara',
-                'dokumens.tanggal_berita_acara',
-                // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
-                // 'dokumens.inbox_approval_reason', // REMOVED
-                // 'dokumens.inbox_approval_for', // REMOVED
-                // 'dokumens.inbox_approval_status', // REMOVED
-                'dokumens.created_by'
-            ])
+                    'dokumens.id',
+                    'dokumens.nomor_agenda',
+                    'dokumens.nomor_spp',
+                    'dokumens.uraian_spp',
+                    'dokumens.nilai_rupiah',
+                    'dokumens.status',
+                    'dokumens.created_at',
+                    'dokumens.tanggal_masuk',
+                    'dokumens.tanggal_spp',
+                    'dokumens.keterangan',
+                    'dokumens.alasan_pengembalian',
+                    // Deadline fields are now in dokumen_role_data table - use aliases for easier access
+                    'ibub_data.deadline_at as deadline_at',
+                    'ibub_data.deadline_days as deadline_days',
+                    'ibub_data.deadline_note as deadline_note',
+                    'dokumens.current_handler',
+                    'dokumens.bulan',
+                    'dokumens.tahun',
+                    'dokumens.kategori',
+                    'dokumens.kebun',
+                    'dokumens.jenis_dokumen',
+                    'dokumens.jenis_sub_pekerjaan',
+                    'dokumens.updated_at',
+                    'dokumens.tanggal_spk',
+                    'dokumens.tanggal_berakhir_spk',
+                    'dokumens.no_spk',
+                    'dokumens.nomor_miro',
+                    'dokumens.nama_pengirim',
+                    'dokumens.jenis_pembayaran',
+                    'dokumens.dibayar_kepada',
+                    'dokumens.no_berita_acara',
+                    'dokumens.tanggal_berita_acara',
+                    // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
+                    // 'dokumens.inbox_approval_reason', // REMOVED
+                    // 'dokumens.inbox_approval_for', // REMOVED
+                    // 'dokumens.inbox_approval_status', // REMOVED
+                    'dokumens.created_by'
+                ])
             ->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
@@ -431,9 +431,9 @@ class DashboardBController extends Controller
             }
         ])
             ->withCount([
-                'dokumenPos',
-                'dokumenPrs'
-            ]);
+                    'dokumenPos',
+                    'dokumenPrs'
+                ]);
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
@@ -3053,13 +3053,13 @@ class DashboardBController extends Controller
                         ->where('status_changed_at', '>=', $checkFrom);
                 })
                 ->with([
-                    'roleStatuses' => function ($query) {
-                        $query->whereIn('role_code', ['perpajakan', 'akutansi'])
-                            ->where('status', 'rejected')
-                            ->latest('status_changed_at');
-                    },
-                    'activityLogs'
-                ])
+                        'roleStatuses' => function ($query) {
+                            $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                                ->where('status', 'rejected')
+                                ->latest('status_changed_at');
+                        },
+                        'activityLogs'
+                    ])
                 ->get()
                 ->filter(function ($doc) {
                     // Filter to only include documents with rejection status

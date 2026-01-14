@@ -183,7 +183,7 @@ class DashboardPerpajakanController extends Controller
                     ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
                         // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
                         $pembayaranQ->where(function ($statusQ) {
-                            $statusQ->where('status', 'sent_to_pembayaran')
+                            $statusQ->whereIn('status', ['sent_to_pembayaran', 'menunggu_di_approve', 'pending_approval_pembayaran'])
                                 ->orWhere(function ($completedQ) {
                                     // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
                                     $completedQ->whereIn('status', ['completed', 'selesai'])
