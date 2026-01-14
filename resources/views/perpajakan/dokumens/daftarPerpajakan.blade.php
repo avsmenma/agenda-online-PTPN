@@ -2545,26 +2545,59 @@
               // This ensures status remains "Sudah terkirim ke Team X" from perpajakan's perspective
               // regardless of what happens downstream (akutansi pending approval, etc.)
               //
-              // We detect "sent from perpajakan" by checking:
+              // We detect "sent from perpajakan" by checking MULTIPLE conditions:
               // 1. perpajakan has processed_at (explicitly finished), OR
-              // 2. Any downstream role (akutansi, pembayaran) has received_at (document moved on)
+              // 2. Any downstream role (akutansi, pembayaran) has received_at (document moved on), OR
+              // 3. Document status indicates it has moved past perpajakan stage
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
               $akutansiRoleData = $dokumen->getDataForRole('akutansi');
               $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
               
+              // Method 1: Check processed_at for perpajakan
               $hasProcessedAt = $perpajakanRoleData && $perpajakanRoleData->processed_at;
+              
+              // Method 2: Check received_at for downstream roles
               $hasDownstreamReceived = ($akutansiRoleData && $akutansiRoleData->received_at)
                                     || ($pembayaranRoleData && $pembayaranRoleData->received_at);
               
-              $sentFromPerpajakan = ($hasProcessedAt || $hasDownstreamReceived) && !$isRejected;
+              // Method 3: Check document status patterns that indicate sent to downstream
+              $statusIndicatesSentFromPerpajakan = in_array($dokumen->status, [
+                'sent_to_akutansi', 
+                'sent_to_pembayaran',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran',
+                'menunggu_di_approve',
+                'selesai',
+                'completed',
+              ]) || (in_array($dokumen->current_handler, ['akutansi', 'pembayaran']));
+              
+              $sentFromPerpajakan = ($hasProcessedAt || $hasDownstreamReceived || $statusIndicatesSentFromPerpajakan) && !$isRejected;
               $sentToTeamFromPerpajakan = null;
               
               if ($sentFromPerpajakan) {
-                // Check which team received the document from perpajakan
-                if ($akutansiRoleData && $akutansiRoleData->received_at) {
+                // Determine which team the document was sent to by perpajakan
+                // Priority: check status first, then received_at as fallback
+                
+                // Check by document status pattern (most reliable)
+                if (in_array($dokumen->status, ['sent_to_akutansi', 'pending_approval_akutansi'])
+                    || ($akutansiRoleData && $akutansiRoleData->received_at)) {
                   $sentToTeamFromPerpajakan = 'Team Akutansi';
-                } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+                } elseif (in_array($dokumen->status, ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve'])
+                    || ($pembayaranRoleData && $pembayaranRoleData->received_at)) {
                   $sentToTeamFromPerpajakan = 'Team Pembayaran';
+                }
+                
+                // Fallback: check current_handler
+                if (!$sentToTeamFromPerpajakan) {
+                  if ($akutansiRoleData && $akutansiRoleData->received_at) {
+                    $sentToTeamFromPerpajakan = 'Team Akutansi';
+                  } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+                    $sentToTeamFromPerpajakan = 'Team Pembayaran';
+                  } elseif ($dokumen->current_handler == 'akutansi') {
+                    $sentToTeamFromPerpajakan = 'Team Akutansi';
+                  } elseif ($dokumen->current_handler == 'pembayaran') {
+                    $sentToTeamFromPerpajakan = 'Team Pembayaran';
+                  }
                 }
               }
 

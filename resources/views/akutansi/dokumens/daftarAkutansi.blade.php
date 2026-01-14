@@ -2598,16 +2598,29 @@
                 // This ensures status remains "Terkirim ke Pembayaran" from akutansi's perspective
                 // regardless of what happens downstream (pembayaran pending approval, etc.)
                 //
-                // We detect "sent from akutansi" by checking:
+                // We detect "sent from akutansi" by checking MULTIPLE conditions:
                 // 1. akutansi has processed_at (explicitly finished), OR
-                // 2. pembayaran has received_at (document moved on)
+                // 2. pembayaran has received_at (document moved on), OR
+                // 3. Document status indicates it has moved past akutansi stage
                 $akutansiRoleData = $dokumen->getDataForRole('akutansi');
                 $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
                 
+                // Method 1: Check processed_at for akutansi
                 $hasAkutansiProcessedAt = $akutansiRoleData && $akutansiRoleData->processed_at;
+                
+                // Method 2: Check received_at for pembayaran
                 $hasPembayaranReceived = $pembayaranRoleData && $pembayaranRoleData->received_at;
                 
-                $sentFromAkutansi = ($hasAkutansiProcessedAt || $hasPembayaranReceived) && !$isRejected;
+                // Method 3: Check document status patterns that indicate sent to pembayaran
+                $statusIndicatesSentFromAkutansi = in_array($dokumen->status, [
+                  'sent_to_pembayaran',
+                  'pending_approval_pembayaran',
+                  'menunggu_di_approve',
+                  'selesai',
+                  'completed',
+                ]) || ($dokumen->current_handler == 'pembayaran');
+                
+                $sentFromAkutansi = ($hasAkutansiProcessedAt || $hasPembayaranReceived || $statusIndicatesSentFromAkutansi) && !$isRejected;
               @endphp
               @if($isRejected)
                 {{-- Dokumen ditolak oleh akutansi --}}

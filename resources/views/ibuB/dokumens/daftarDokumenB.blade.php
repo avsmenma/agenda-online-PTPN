@@ -3648,9 +3648,10 @@
               // This ensures status remains "Terkirim ke Team X" from verifikasi's perspective
               // regardless of what happens downstream (perpajakan sends to akutansi, etc.)
               // 
-              // We detect "sent from verifikasi" by checking:
+              // We detect "sent from verifikasi" by checking MULTIPLE conditions:
               // 1. roleData->processed_at exists (ibub finished processing), OR
-              // 2. Any downstream role has received_at (document has moved on)
+              // 2. Any downstream role has received_at (document has moved on), OR
+              // 3. Document status indicates it has moved past verifikasi stage
               $sentToTeamLabel = null;
               
               // Check which downstream roles have received the document
@@ -3658,25 +3659,62 @@
               $akutansiRoleData = $dokumen->getDataForRole('akutansi');
               $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
               
-              // Document is considered "sent from verifikasi" if:
-              // 1. ibub has processed_at (explicitly finished), OR
-              // 2. Any downstream role has received_at (document moved on)
+              // Method 1: Check processed_at for ibub
               $hasProcessedAt = $roleData && $roleData->processed_at;
+              
+              // Method 2: Check received_at for downstream roles
               $hasDownstreamReceived = ($perpajakanRoleData && $perpajakanRoleData->received_at)
                                     || ($akutansiRoleData && $akutansiRoleData->received_at)
                                     || ($pembayaranRoleData && $pembayaranRoleData->received_at);
               
-              $sentFromVerifikasi = $hasProcessedAt || $hasDownstreamReceived;
+              // Method 3: Check document status patterns that indicate sent to downstream
+              $statusIndicatesDownstream = in_array($dokumen->status, [
+                'sent_to_perpajakan',
+                'sent_to_akutansi', 
+                'sent_to_pembayaran',
+                'pending_approval_perpajakan',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran',
+                'menunggu_di_approve',
+                'waiting_reviewer_approval',
+                'selesai',
+                'completed',
+              ]) || ($dokumen->current_handler != 'ibuB' && $dokumen->current_handler != 'verifikasi' && $dokumen->current_handler != null);
               
-              if ($sentFromVerifikasi && !$isRejected) {
-                // Determine which team the document was originally sent to by verifikasi
-                // Priority: perpajakan first (most common), then akutansi, then pembayaran
-                if ($perpajakanRoleData && $perpajakanRoleData->received_at) {
+              $sentFromVerifikasi = ($hasProcessedAt || $hasDownstreamReceived || $statusIndicatesDownstream) && !$isRejected;
+              
+              if ($sentFromVerifikasi) {
+                // Determine which team the document was sent to by verifikasi
+                // Priority: check status first, then received_at as fallback
+                
+                // Check by document status pattern (most reliable)
+                if (in_array($dokumen->status, ['sent_to_perpajakan']) 
+                    || ($perpajakanRoleData && $perpajakanRoleData->received_at)) {
                   $sentToTeamLabel = 'Team Perpajakan';
-                } elseif ($akutansiRoleData && $akutansiRoleData->received_at) {
+                } elseif (in_array($dokumen->status, ['sent_to_akutansi', 'pending_approval_akutansi'])
+                    || ($akutansiRoleData && $akutansiRoleData->received_at && !$perpajakanRoleData?->received_at)) {
                   $sentToTeamLabel = 'Team Akutansi';
-                } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+                } elseif (in_array($dokumen->status, ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve'])
+                    || ($pembayaranRoleData && $pembayaranRoleData->received_at && !$akutansiRoleData?->received_at && !$perpajakanRoleData?->received_at)) {
                   $sentToTeamLabel = 'Team Pembayaran';
+                }
+                
+                // Fallback: if downstream has received but status doesn't match specific pattern
+                // Check which downstream role was FIRST to receive (lower in workflow)
+                if (!$sentToTeamLabel) {
+                  if ($perpajakanRoleData && $perpajakanRoleData->received_at) {
+                    $sentToTeamLabel = 'Team Perpajakan';
+                  } elseif ($akutansiRoleData && $akutansiRoleData->received_at) {
+                    $sentToTeamLabel = 'Team Akutansi';
+                  } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
+                    $sentToTeamLabel = 'Team Pembayaran';
+                  } elseif ($dokumen->current_handler == 'perpajakan') {
+                    $sentToTeamLabel = 'Team Perpajakan';
+                  } elseif ($dokumen->current_handler == 'akutansi') {
+                    $sentToTeamLabel = 'Team Akutansi';
+                  } elseif ($dokumen->current_handler == 'pembayaran') {
+                    $sentToTeamLabel = 'Team Pembayaran';
+                  }
                 }
               }
             @endphp
