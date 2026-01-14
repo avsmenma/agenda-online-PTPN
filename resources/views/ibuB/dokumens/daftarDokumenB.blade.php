@@ -173,10 +173,10 @@
 
         // Show loading state
         detailContent.innerHTML = `
-                  <div class="text-center p-4">
-                      <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-                  </div>
-              `;
+                    <div class="text-center p-4">
+                        <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
+                    </div>
+                `;
 
         // Get CSRF token
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -214,15 +214,15 @@
           .catch(error => {
             console.error('Error loading document detail:', error);
             detailContent.innerHTML = `
-                      <div class="text-center p-4 text-danger">
-                          <i class="fa-solid fa-exclamation-triangle me-2"></i>
-                          Gagal memuat detail dokumen.
-                          <br><small class="text-muted">Error: ${error.message}</small>
-                          <br><button class="btn btn-sm btn-primary mt-2" onclick="loadDocumentDetail(${docId})">
-                              <i class="fa-solid fa-refresh me-1"></i> Coba Lagi
-                          </button>
-                      </div>
-                  `;
+                        <div class="text-center p-4 text-danger">
+                            <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                            Gagal memuat detail dokumen.
+                            <br><small class="text-muted">Error: ${error.message}</small>
+                            <br><button class="btn btn-sm btn-primary mt-2" onclick="loadDocumentDetail(${docId})">
+                                <i class="fa-solid fa-refresh me-1"></i> Coba Lagi
+                            </button>
+                        </div>
+                    `;
           });
       }
 
@@ -236,11 +236,11 @@
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.innerHTML = `
-                  <div class="notification-content">
-                      <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
-                      <span>${message}</span>
-                  </div>
-              `;
+                    <div class="notification-content">
+                        <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
 
         // Add to page
         document.body.appendChild(notification);
@@ -3193,6 +3193,7 @@
         opacity: 0;
         transform: translateY(-30px) scale(0.95);
       }
+
       to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -3430,7 +3431,8 @@
             <i class="fa-solid fa-chevron-down ms-2"></i>
           </button>
           <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
-          <input type="hidden" name="year_filter_type" id="yearFilterType" value="{{ request('year_filter_type', 'tanggal_spp') }}">
+          <input type="hidden" name="year_filter_type" id="yearFilterType"
+            value="{{ request('year_filter_type', 'tanggal_spp') }}">
         </div>
         <div class="status-dropdown-wrapper" style="position: relative;">
           <button type="button" class="btn-year-select" id="statusSelectBtn">
@@ -3644,47 +3646,48 @@
               $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
               $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
 
-              // FIX: Verifikasi needs to see ACTUAL workflow state (like Perpajakan)
+              // FIX: Verifikasi needs to see ACTUAL workflow state
+              // - If document is STILL being processed by Verifikasi → normal status (Sedang Diproses, Terkunci, etc.)
               // - If document is in Perpajakan inbox (pending) → "Menunggu Approval dari Team Perpajakan"
               // - If document was approved by Perpajakan → "Terkirim ke Team Perpajakan"
               // 
-              // IMPORTANT: Verifikasi ONLY checks their IMMEDIATE downstream (Perpajakan)
-              // They should NOT see what happens after Perpajakan (akutansi, pembayaran)
+              // CRITICAL: Must verify document was ACTUALLY sent to Perpajakan before showing sent/pending status
+              // A document that is still in Verifikasi inbox should NOT show as sent
               $sentToTeamLabel = null;
               $isPendingPerpajakan = false;
-              
+
               // Get perpajakan role data (verifikasi's immediate downstream)
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
-              
-              // Check if Perpajakan has APPROVED the document (not just pending)
-              $perpajakanHasApproved = $dokumen->roleStatuses()
-                ->whereIn('role_code', ['perpajakan', 'ibub'])
-                ->where('status', 'approved')
-                ->exists();
-              
-              // Check if document is PENDING in Perpajakan inbox
-              $perpajakanIsPending = $dokumen->roleStatuses()
-                ->whereIn('role_code', ['perpajakan', 'ibub'])
-                ->where('status', 'pending')
-                ->exists();
-              
-              // Document has been sent from Verifikasi if:
-              // 1. Perpajakan has approved (received and processed from inbox), OR
-              // 2. Perpajakan has pending status (in inbox waiting approval), OR
-              // 3. Document status indicates it was sent to perpajakan
-              $sentFromVerifikasi = ($perpajakanHasApproved || $perpajakanIsPending || 
+
+              // Check if document has been ACTUALLY SENT to Perpajakan
+              // Conditions that indicate document was sent:
+              // 1. Perpajakan has received_at (document arrived in perpajakan), OR
+              // 2. Document status is sent_to_perpajakan or pending_approval_perpajakan, OR
+              // 3. current_handler is perpajakan
+              $wasSentToPerpajakan = (
                 ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
                 in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan']) ||
                 $dokumen->current_handler == 'perpajakan'
-              ) && !$isRejected;
-              
-              // Determine what to show:
-              // 1. If pending in Perpajakan inbox → "Menunggu Approval"
-              // 2. If approved by Perpajakan → "Terkirim"
-              if ($sentFromVerifikasi) {
-                if ($perpajakanIsPending) {
+              );
+
+              // Only check perpajakan roleStatuses if document was actually sent
+              if ($wasSentToPerpajakan && !$isRejected) {
+                // Check if document is PENDING in Perpajakan inbox (only check 'perpajakan' role, NOT 'ibub')
+                $perpajakanIsPendingInbox = $dokumen->roleStatuses()
+                  ->where('role_code', 'perpajakan')
+                  ->where('status', 'pending')
+                  ->exists();
+
+                // Check if Perpajakan has APPROVED the document
+                $perpajakanHasApproved = $dokumen->roleStatuses()
+                  ->where('role_code', 'perpajakan')
+                  ->where('status', 'approved')
+                  ->exists();
+
+                if ($perpajakanIsPendingInbox) {
                   $isPendingPerpajakan = true;
-                } else {
+                } elseif ($perpajakanHasApproved || $dokumen->current_handler != 'perpajakan') {
+                  // Document has been approved by Perpajakan OR moved to next role
                   $sentToTeamLabel = 'Team Perpajakan';
                 }
               }
@@ -3785,7 +3788,7 @@
                     // For sent/completed documents, use processed_at as end time
                     // For active documents, use current time
                     $processedAt = $roleData?->processed_at;
-                    
+
                     if (($isSent || $isCompleted) && $processedAt) {
                       // Document is sent/completed - calculate time taken (frozen, not counting)
                       $endTime = \Carbon\Carbon::parse($processedAt);
@@ -3795,7 +3798,7 @@
                       $now = \Carbon\Carbon::now();
                       $diff = $receivedAt->diff($now);
                     }
-                    
+
                     $ageDays = $diff->days;
 
                     // Format elapsed time as "X hari Y jam Z menit"
@@ -4063,1922 +4066,125 @@
   <!-- Modal Alasan Pengembalian -->
 
   <script>
-      // Core JavaScript functions - Load first to ensure availabilit    y
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, checking function availability...');
-
-        // Wait for scripts to fully load
-        setTimeout(() => {
-          console.log('Checking function types:');
-          console.log('window.toggleDetail type:', typeof window.toggleDetail);
-          console.log('window.loadDocumentDetail type:', typeof window.loadDocumentDetail);
-
-          if (typeof window.toggleDetail === 'function') {
-            console.log('✓ toggleDetail is properly loaded');
-          } else {
-            console.error('✗ toggleDetail is not a function');
-          }
-
-          if (typeof window.loadDocumentDetail === 'function') {
-            console.log('✓ loadDocumentDetail is properly loaded');
-          } else {
-            console.error('✗ loadDocumentDetail is not a function');
-          }
-
-          // Test with a click on first document row if available
-          const firstRow = document.querySelector('tr.main-row');
-          if (firstRow) {
-            console.log('Found document rows, ready for clicking');
-          }
-        }, 1000);
-      });
-
-      // Confirm paraf function - Define as global
-      window.confirmParaf = function(dokumenId) {
-        if (confirm("Yakin mau menandai bahwa dokumen ini telah diparaf (selesai)?")) {
-          // Implementation for paraf action
-          console.log("Paraf confirmed for document:", dokumenId);
-        }
-      };
-
-      console.log('Additional functions loaded');
-      console.log('Final toggleDetail type:', typeof window.toggleDetail);
-      console.log('Final loadDocumentDetail type:', typeof window.loadDocumentDetail);
-
-      // Simple approve function
-      function quickApprove(docId) {
-        console.log('Quick approve called for docId:', docId);
-
-        if (confirm('Apakah Anda yakin ingin menyetujui (approve) dokumen ini?')) {
-          changeDocumentStatus(docId, 'approved');
-        }
-      }
-
-      // Simple reject function
-      function quickReject(docId) {
-        console.log('Quick reject called for docId:', docId);
-
-        if (confirm('Apakah Anda yakin ingin menolak (reject) dokumen ini?')) {
-          changeDocumentStatus(docId, 'rejected');
-        }
-      }
-
-      // Simplified status change function
-      function changeDocumentStatus(docId, action, event) {
-        if (event) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-
-        console.log('Change status called for docId:', docId, 'action:', action);
-
-        // Try multiple selectors to find the status container
-        let statusContainer = document.querySelector(`#status-dropdown-${docId}`);
-        if (!statusContainer) {
-          statusContainer = document.querySelector(`[onclick*="quickApprove(${docId})"]`).closest('td');
-        }
-        if (!statusContainer) {
-          statusContainer = document.querySelector(`[onclick*="quickReject(${docId})"]`).closest('td');
-        }
-        if (!statusContainer) {
-          statusContainer = document.querySelector(`tr:has([onclick*="${docId}"]) .col-status`);
-        }
-
-        if (!statusContainer) {
-          console.error('Status container not found for docId:', docId);
-          console.log('Available containers with docId:', document.querySelectorAll(`[onclick*="${docId}"]`));
-          return;
-        }
-
-        console.log('Found status container:', statusContainer);
-
-        // Show loading state
-        const originalHTML = statusContainer.innerHTML;
-        statusContainer.innerHTML = `
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: center;
-            color: #1a4d3e;
-            font-weight: 600;
-            font-size: 12px;
-          ">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Processing...</span>
-          </div>
-        `;
-
-        // Send AJAX request
-        fetch(`/documents/verifikasi/${docId}/change-status`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({
-            status: action,
-            document_id: docId  // FIX: Kirim document ID untuk mencegah cross-interference
-          })
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.success) {
-            // Show success notification
-            showNotification(data.message, 'success');
-            console.log('Status changed successfully:', data);
-
-            // Update display
-            const statusText = action === 'approved' ? 'Approved' : 'Rejected';
-            const badgeClass = action === 'approved' ? 'badge-selesai' : 'badge-dikembalikan';
-
-            statusContainer.innerHTML = `
-              <span class="badge-status ${badgeClass}">
-                ${action === 'approved' ? '✓' : '✗'} ${statusText}
-              </span>
-            `;
-
-            // Update action buttons for this row
-            updateActionButtons(docId, action);
-
-            // Refresh page after delay to update dashboard stats
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-
-          } else {
-            // Show error notification
-            showNotification(data.message, 'error');
-            console.error('Status change failed:', data);
-            statusContainer.innerHTML = originalHTML;
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showNotification('Terjadi kesalahan saat mengubah status dokumen.', 'error');
-          statusContainer.innerHTML = originalHTML;
-        });
-      }
-
-      function updateActionButtons(docId, action) {
-        const row = document.querySelector(`tr:has(#status-dropdown-${docId})`);
-        if (!row) return;
-
-        const actionCell = row.querySelector('.col-action');
-        if (!actionCell) return;
-
-        // Disable action buttons based on status
-        const actionButtons = actionCell.querySelectorAll('.btn-action');
-        actionButtons.forEach(btn => {
-          if (action === 'approved') {
-            // Keep some buttons for approved documents
-            if (!btn.classList.contains('btn-edit') && !btn.classList.contains('btn-paraf')) {
-              btn.disabled = true;
-              btn.style.opacity = '0.5';
-              btn.style.cursor = 'not-allowed';
-            }
-          } else if (action === 'rejected') {
-            // Disable most action buttons for rejected documents
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-          }
-        });
-      }
-
-      // Optimized countdown timer with performance improvements
-      let countdownUpdateInterval = null;
-      let countdownTimers = new Map();
-
-      function initializeCountdowns() {
-        // Clear existing timers to prevent memory leaks
-        if (countdownUpdateInterval) {
-          clearInterval(countdownUpdateInterval);
-        }
-        countdownTimers.forEach(timer => clearInterval(timer));
-        countdownTimers.clear();
-      }
-
-      // Enhanced deadline system with color coding and late information
-      function initializeDeadlines() {
-        console.log('Initializing deadlines...');
-        const deadlineElements = document.querySelectorAll('.deadline-card');
-        console.log('Found deadline cards:', deadlineElements.length);
-
-        deadlineElements.forEach(card => {
-          updateDeadlineCard(card);
-        });
-
-        // Update every 30 seconds for better responsiveness
-        setInterval(() => {
-          const cards = document.querySelectorAll('.deadline-card');
-          cards.forEach(card => {
-            updateDeadlineCard(card);
-          });
-        }, 30000); // Update every 30 seconds
-      }
-
-      function updateDeadlineCard(card) {
-        const deadlineStr = card.dataset.deadline;
-        if (!deadlineStr) {
-          console.warn('Deadline card missing data-deadline attribute');
-          return;
-        }
-
-        // Check if document is already sent or completed
-        const isSent = card.dataset.sent === 'true';
-        const isCompleted = card.dataset.completed === 'true';
-
-        const deadline = new Date(deadlineStr);
-        const now = new Date();
-        const diffMs = deadline - now;
-
-        // Remove existing status classes
-        card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue', 'deadline-sent', 'deadline-completed');
-
-        // Find status indicator
-        const statusIndicator = card.querySelector('.deadline-indicator');
-        if (!statusIndicator) {
-          console.error('Deadline indicator not found in card:', card);
-          return;
-        }
-        const statusText = card.querySelector('.status-text');
-        if (!statusText) {
-          console.error('Status text not found in card:', card);
-          return;
-        }
-        const statusIcon = statusIndicator.querySelector('i');
-        if (!statusIcon) {
-          console.error('Status icon not found in card:', card);
-          return;
-        }
-
-        // Remove existing late info and time hints
-        const existingLateInfo = card.querySelector('.late-info');
-        const existingTimeHint = card.querySelector('div[style*="margin-top: 2px"]');
-        const existingProgress = card.querySelector('.deadline-progress');
-
-        if (existingLateInfo) existingLateInfo.remove();
-        if (existingTimeHint) existingTimeHint.remove();
-        if (existingProgress) existingProgress.remove();
-
-        // Handle completed documents - show as completed (green, no countdown)
-        if (isCompleted) {
-          card.classList.add('deadline-completed');
-          statusText.textContent = 'SELESAI';
-          statusIcon.className = 'fa-solid fa-check-circle';
-          statusIndicator.className = 'deadline-indicator deadline-completed';
-          return; // Don't show countdown for completed documents
-        }
-
-        // Handle sent documents - show as sent (gray, no countdown, no overdue)
-        if (isSent) {
-          card.classList.add('deadline-sent');
-          statusText.textContent = 'TERKIRIM';
-          statusIcon.className = 'fa-solid fa-paper-plane';
-          statusIndicator.className = 'deadline-indicator deadline-sent';
-          return; // Don't show countdown or overdue for sent documents
-        }
-
-        // Handle active documents (still being processed) - show countdown
-        if (diffMs < 0) {
-          // Overdue state - only for active documents
-          card.classList.add('deadline-overdue');
-
-          // Calculate how late
-          const diffHours = Math.abs(Math.floor(diffMs / (1000 * 60 * 60)));
-          const diffDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-
-          // Update status text
-          statusText.textContent = 'TERLAMBAT';
-          statusIcon.className = 'fa-solid fa-exclamation-triangle';
-          statusIndicator.className = 'deadline-indicator deadline-overdue';
-
-          // Show late info for active documents
-          let lateText;
-          if (diffDays >= 1) {
-            lateText = `${diffDays} HARI TELAT`;
-          } else if (diffHours >= 1) {
-            lateText = `${diffHours} JAM TELAT`;
-          } else {
-            lateText = 'BARU SAJA TELAT';
-          }
-
-          const lateInfo = document.createElement('div');
-          lateInfo.className = 'late-info';
-          lateInfo.innerHTML = `
-            <i class="fa-solid fa-exclamation-triangle"></i>
-            <span class="late-text">${lateText}</span>
-          `;
-
-          card.appendChild(lateInfo);
-
-          // Add progress bar at bottom
-          const progressBar = document.createElement('div');
-          progressBar.className = 'deadline-progress';
-          card.appendChild(progressBar);
-
-        } else {
-          // Time remaining - only for active documents
-          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-          const diffMinutes = Math.floor(diffMs / (1000 * 60));
-          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-          // Get original deadline_days from data attribute
-          const deadlineDays = parseInt(card.dataset.deadlineDays) || null;
-
-          // Calculate remaining hours for more accurate display
-          const totalHoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
-
-          // Determine display text based on deadline_days and remaining time
-          let displayText = '';
-          let shouldShowDays = false;
-
-          if (deadlineDays && deadlineDays > 0) {
-            // If original deadline was set for X days, show "X hari lagi" 
-            // as long as we're still within that period
-            // Logic: Show days if remaining hours >= 12 hours OR if we're still in the first day
-            if (totalHoursRemaining >= 12) {
-              // Calculate how many full days remaining
-              const fullDaysRemaining = Math.floor(totalHoursRemaining / 24);
-              // If we have at least 12 hours, show at least "1 hari lagi" for deadline 1 hari
-              // For deadline 2+ hari, show actual days remaining (capped at deadline_days)
-              if (deadlineDays === 1) {
-                // For 1 day deadline, show "1 hari lagi" if >= 12 hours remaining
-                displayText = '1 hari lagi';
-                shouldShowDays = true;
-              } else {
-                // For 2+ days deadline, show actual days remaining
-                const daysToShow = Math.min(Math.max(1, fullDaysRemaining + (totalHoursRemaining % 24 >= 12 ? 1 : 0)), deadlineDays);
-                displayText = `${daysToShow} ${daysToShow === 1 ? 'hari' : 'hari'} lagi`;
-                shouldShowDays = daysToShow >= 1;
-              }
-            } else {
-              // Less than 12 hours remaining, show hours
-              displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-              shouldShowDays = false;
-            }
-          } else {
-            // No deadline_days info, use standard calculation
-            if (diffDays >= 1) {
-              displayText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
-              shouldShowDays = true;
-            } else if (diffHours >= 1) {
-              displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-              shouldShowDays = false;
-            } else {
-              displayText = `${diffMinutes} menit lagi`;
-              shouldShowDays = false;
-            }
-          }
-
-          // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning
-          if (shouldShowDays || diffDays >= 1) {
-            // Safe (>= 1 day or still within original deadline period) - Green
-            card.classList.add('deadline-safe');
-            statusText.textContent = 'AMAN';
-            statusIcon.className = 'fa-solid fa-check-circle';
-            statusIndicator.className = 'deadline-indicator deadline-safe';
-
-            // Add time remaining hint
-            const timeHint = document.createElement('div');
-            timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
-            timeHint.textContent = displayText;
-            card.appendChild(timeHint);
-
-          } else if (diffHours >= 1 || diffMinutes >= 1) {
-            // Warning (< 1 day or less than 12 hours remaining) - Yellow
-            card.classList.add('deadline-warning');
-            statusText.textContent = 'DEKAT';
-            statusIcon.className = 'fa-solid fa-exclamation-triangle';
-            statusIndicator.className = 'deadline-indicator deadline-warning';
-
-            // Add time remaining hint
-            const timeHint = document.createElement('div');
-            timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
-            if (diffHours >= 1) {
-              timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-            } else {
-              timeHint.textContent = `${diffMinutes} menit lagi`;
-              timeHint.style.animation = 'warning-shake 1s infinite';
-            }
-            card.appendChild(timeHint);
-          }
-
-          // Add progress bar
-          const progressBar = document.createElement('div');
-          progressBar.className = 'deadline-progress';
-          card.appendChild(progressBar);
-        }
-      }
-
-      // Initialize on page load - Make sure function is available globally
-      window.initializeDeadlines = initializeDeadlines;
-
-      // Initialize deadlines when DOM is ready
-      if (document.readyState === 'loading') {
+        // Core JavaScript functions - Load first to ensure availabilit        y
         document.addEventListener('DOMContentLoaded', function() {
-          console.log('DOM fully loaded, initializing deadlines...');
-          initializeDeadlines();
-        });
-      } else {
-        console.log('DOM already loaded, initializing deadlines immediately...');
-        initializeDeadlines();
-      }
-      </script>
+          console.log('DOM loaded, checking function availability...');
 
-      <style>
-      /* Optimized Deadline Display System */
-      .deadline-info {
-        position: relative;
-        padding: 10px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border: 1px solid rgba(8, 62, 64, 0.1);
-        transition: all 0.3s ease;
-        overflow: hidden;
-      }
+          // Wait for scripts to fully load
+          setTimeout(() => {
+            console.log('Checking function types:');
+            console.log('window.toggleDetail type:', typeof window.toggleDetail);
+            console.log('window.loadDocumentDetail type:', typeof window.loadDocumentDetail);
 
-      .deadline-info::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: linear-gradient(180deg, var(--deadline-color, #28a745) 0%, var(--deadline-color-dark, #1e7e34) 100%);
-        transition: all 0.3s ease;
-      }
-
-      .deadline-info:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(8, 62, 64, 0.15);
-      }
-
-      /* Simplified deadline styling - progress bar removed */
-
-      /* Deadline Status States */
-      .deadline-info.status-safe {
-        --deadline-color: #28a745;
-        --deadline-color-dark: #1e7e34;
-        --deadline-color-light: #34ce57;
-      }
-
-      .deadline-info.status-warning {
-        --deadline-color: #ffc107;
-        --deadline-color-dark: #e0a800;
-        --deadline-color-light: #ffcd39;
-      }
-
-      .deadline-info.status-danger {
-        --deadline-color: #dc3545;
-        --deadline-color-dark: #c82333;
-        --deadline-color-light: #e4606d;
-      }
-
-      .deadline-info.status-overdue {
-        --deadline-color: #6f42c1;
-        --deadline-color-dark: #59359a;
-        --deadline-color-light: #7950b2;
-        animation: overdue-pulse 2s infinite;
-      }
-
-      @keyframes overdue-pulse {
-        0%, 100% {
-          box-shadow: 0 0 0 0 rgba(111, 66, 193, 0.4);
-        }
-        50% {
-          box-shadow: 0 0 0 8px rgba(111, 66, 193, 0);
-        }
-      }
-
-      /* Optimized Countdown Display */
-      .deadline-countdown {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 6px;
-        font-weight: 600;
-        font-size: 13px;
-        color: #083E40;
-      }
-
-      .deadline-countdown-icon {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-      }
-
-      .deadline-countdown-text {
-        font-weight: 700;
-        flex: 1;
-        text-align: right;
-      }
-
-      /* Deadline Date and Note */
-      .deadline-date {
-        font-size: 11px;
-        color: #666;
-        margin-top: 4px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .deadline-date small {
-        font-weight: 500;
-      }
-
-      .deadline-note {
-        font-size: 10px;
-        color: #888;
-        margin-top: 6px;
-        padding-top: 6px;
-        border-top: 1px solid rgba(8, 62, 64, 0.1);
-        font-style: italic;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      /* Responsive Deadline Display */
-      @media (max-width: 768px) {
-        .deadline-info {
-          padding: 8px;
-        }
-
-        .deadline-progress {
-          height: 5px;
-          margin-bottom: 6px;
-        }
-
-        .deadline-countdown {
-          font-size: 12px;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 4px;
-        }
-
-        .deadline-countdown-text {
-          text-align: left;
-        }
-
-        .deadline-date {
-          font-size: 10px;
-        }
-
-        .deadline-note {
-          font-size: 9px;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .deadline-info {
-          padding: 6px;
-        }
-
-        .deadline-progress {
-          height: 4px;
-          margin-bottom: 4px;
-        }
-
-        .deadline-countdown {
-          font-size: 11px;
-        }
-
-        .deadline-date {
-          display: none; /* Hide date on very small screens */
-        }
-
-        .deadline-note {
-          margin-top: 4px;
-          padding-top: 4px;
-        }
-      }
-
-      /* No deadline state */
-      .deadline-empty {
-        color: #999;
-        font-size: 12px;
-        font-style: italic;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px;
-      }
-      </style>
-
-      <!-- Modal for Setting Deadline -->
-      <div class="modal fade" id="setDeadlineModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-              <h5 class="modal-title">
-                <i class="fa-solid fa-clock me-2"></i>Tetapkan Deadline Verifikasi
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <input type="hidden" id="deadlineDocId">
-
-              <div class="alert alert-info border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 140, 0, 0.1) 100%); border-left: 4px solid #ffc107;">
-                <i class="fa-solid fa-info-circle me-2"></i>
-                <strong>Penting:</strong> Setelah deadline ditetapkan, dokumen akan terbuka untuk diproses lebih lanjut.
-              </div>
-
-              <div class="mb-4">
-                <label class="form-label fw-bold">
-                  <i class="fa-solid fa-calendar-days me-2"></i>Periode Deadline*
-                </label>
-                <select class="form-select" id="deadlineDays" required>
-                  <option value="">Pilih periode deadline</option>
-                  <option value="1">1 hari</option>
-                  <option value="2">2 hari</option>
-                  <option value="3">3 hari (maksimal)</option>
-                </select>
-                <div class="form-text">Maksimal deadline adalah 3 hari untuk efisiensi proses</div>
-              </div>
-
-              <div class="mb-4">
-                <label class="form-label fw-bold">
-                  <i class="fa-solid fa-sticky-note me-2"></i>Catatan Deadline <span class="text-muted">(opsional)</span>
-                </label>
-                <textarea class="form-control" id="deadlineNote" rows="3"
-                          placeholder="Contoh: Perlu verifikasi dokumen pendukung tambahan..."
-                          maxlength="500"></textarea>
-                <div class="form-text">
-                  <span id="charCount">0</span>/500 karakter
-                </div>
-              </div>
-
-              <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 140, 0, 0.05) 100%);">
-                <i class="fa-solid fa-exclamation-triangle me-2"></i>
-                <small>
-                  <strong>Catatan:</strong> Deadline yang telah ditetapkan tidak dapat diubah kembali. Pastikan periode yang dipilih sudah sesuai.
-                </small>
-              </div>
-            </div>
-            <div class="modal-footer border-0">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                <i class="fa-solid fa-times me-2"></i>Batal
-              </button>
-              <button type="button" class="btn btn-warning" onclick="confirmSetDeadline()">
-                <i class="fa-solid fa-check me-2"></i>Tetapkan Deadline
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal for Sending to Next Handler -->
-      <div class="modal fade" id="sendToNextModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
-              <h5 class="modal-title">Kirim Dokumen ke Bidang Berikutnya</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <input type="hidden" id="nextDocId">
-
-              <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%); border-left: 4px solid #083E40;">
-                <i class="fa-solid fa-info-circle me-2"></i>
-                <strong>Catatan:</strong> Deadline akan ditetapkan oleh departemen tujuan (Team Perpajakan, Team Akutansi, atau Team Pembayaran) setelah dokumen diterima.
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-bold">
-                  <i class="fa-solid fa-location-arrow me-2"></i>Pilih Tujuan Pengiriman:
-                </label>
-                <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
-                  <input class="form-check-input" type="radio" name="next_handler" id="perpajakan" value="perpajakan" required>
-                  <label class="form-check-label w-100" for="perpajakan" style="cursor: pointer;">
-                    <div class="d-flex align-items-start">
-                      <i class="fa-solid fa-receipt me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
-                      <div>
-                        <strong style="color: #083E40;">Team Perpajakan</strong>
-                        <small class="text-muted d-block">Untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu. Dokumen akan terkunci hingga Team Perpajakan menetapkan deadline.</small>
-                      </div>
-                    </div>
-                  </label>
-                </div>
-                <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
-                  <input class="form-check-input" type="radio" name="next_handler" id="akutansi" value="akutansi">
-                  <label class="form-check-label w-100" for="akutansi" style="cursor: pointer;">
-                    <div class="d-flex align-items-start">
-                      <i class="fa-solid fa-calculator me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
-                      <div>
-                        <strong style="color: #083E40;">Team Akutansi</strong>
-                        <small class="text-muted d-block">Untuk dokumen yang bisa langsung ke Team Akutansi. Dokumen akan terkunci hingga Team Akutansi menetapkan deadline.</small>
-                      </div>
-                    </div>
-                  </label>
-                </div>
-                <div class="form-check" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
-                  <input class="form-check-input" type="radio" name="next_handler" id="pembayaran" value="pembayaran">
-                  <label class="form-check-label w-100" for="pembayaran" style="cursor: pointer;">
-                    <div class="d-flex align-items-start">
-                      <i class="fa-solid fa-money-bill-wave me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
-                      <div>
-                        <strong style="color: #083E40;">Team Pembayaran</strong>
-                        <small class="text-muted d-block">Untuk dokumen yang siap untuk diproses pembayaran. Status akan berubah menjadi "Siap Bayar" di halaman pembayaran.</small>
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-              <button type="button" class="btn btn-primary" onclick="confirmSendToNext()">
-                <i class="fa-solid fa-paper-plane me-2"></i>Kirim
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal for Send Destination Warning -->
-      <div class="modal fade" id="sendDestinationWarningModal" tabindex="-1" aria-labelledby="sendDestinationWarningModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-              <h5 class="modal-title" id="sendDestinationWarningModalLabel">
-                <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-              <div class="mb-3">
-                <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
-              </div>
-              <h5 class="fw-bold mb-3">Pilih Tujuan Pengiriman Terlebih Dahulu!</h5>
-              <p class="text-muted mb-0">
-                Silakan pilih tujuan pengiriman dokumen terlebih dahulu:
-                <br>• <strong>Team Perpajakan</strong> - untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu
-                <br>• <strong>Team Akutansi</strong> - untuk dokumen yang bisa langsung ke Team Akutansi
-                <br>• <strong>Team Pembayaran</strong> - untuk dokumen yang siap diproses pembayaran
-              </p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-              <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
-                <i class="fa-solid fa-check me-2"></i>Mengerti
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal for Send Success -->
-      <div class="modal fade" id="sendSuccessModal" tabindex="-1" aria-labelledby="sendSuccessModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #11823b 0%, #1cb666 100%); color: white;">
-              <h5 class="modal-title" id="sendSuccessModalLabel">
-                <i class="fa-solid fa-circle-check me-2"></i>Pengiriman Berhasil
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-              <div class="mb-3">
-                <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #1cb666;"></i>
-              </div>
-              <h5 class="fw-bold mb-2">Dokumen berhasil dikirim!</h5>
-              <p class="text-muted mb-0" id="sendSuccessMessage">
-                Dokumen telah dikirim dan akan muncul di halaman tujuan.
-              </p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-              <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
-                <i class="fa-solid fa-check me-2"></i>Selesai
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal for Deadline Success -->
-      <div class="modal fade" id="deadlineSuccessModal" tabindex="-1" aria-labelledby="deadlineSuccessModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-              <h5 class="modal-title" id="deadlineSuccessModalLabel">
-                <i class="fa-solid fa-circle-check me-2"></i>Deadline Berhasil Ditentukan
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-              <div class="mb-3">
-                <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #ffc107;"></i>
-              </div>
-              <h5 class="fw-bold mb-2">Deadline berhasil ditetapkan!</h5>
-              <p class="text-muted mb-0" id="deadlineSuccessMessage">
-                Dokumen sekarang terbuka untuk diproses lebih lanjut.
-              </p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-              <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal" id="deadlineSuccessBtn">
-                <i class="fa-solid fa-check me-2"></i>Selesai
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal for Deadline Warning -->
-      <div class="modal fade" id="deadlineWarningModal" tabindex="-1" aria-labelledby="deadlineWarningModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-              <h5 class="modal-title" id="deadlineWarningModalLabel">
-                <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-              <div class="mb-3">
-                <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
-              </div>
-              <h5 class="fw-bold mb-3">Pilih Periode Deadline Terlebih Dahulu!</h5>
-              <p class="text-muted mb-0">
-                Silakan pilih periode deadline (1 hari, 2 hari, atau 3 hari) sebelum menetapkan deadline.
-              </p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-              <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
-                <i class="fa-solid fa-check me-2"></i>Mengerti
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <script>
-      function openSetDeadlineModal(docId) {
-        document.getElementById('deadlineDocId').value = docId;
-        document.getElementById('deadlineDays').value = '';
-        document.getElementById('deadlineNote').value = '';
-        document.getElementById('charCount').textContent = '0';
-        const modal = new bootstrap.Modal(document.getElementById('setDeadlineModal'));
-        modal.show();
-      }
-
-      function confirmSetDeadline() {
-        const docId = document.getElementById('deadlineDocId').value;
-        const deadlineDays = document.getElementById('deadlineDays').value;
-        const deadlineNote = document.getElementById('deadlineNote').value;
-
-        if (!deadlineDays) {
-          // Show warning modal instead of alert
-          const warningModal = new bootstrap.Modal(document.getElementById('deadlineWarningModal'));
-          warningModal.show();
-          return;
-        }
-
-        // Show loading state
-        const submitBtn = document.querySelector('[onclick="confirmSetDeadline()"]');
-        const originalHTML = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menetapkan...';
-
-        // Get CSRF token from meta tag or hidden input
-        let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-        // Fallback to hidden input if meta tag not found
-        if (!csrfToken) {
-          const hiddenInput = document.querySelector('input[name="_token"]');
-          if (hiddenInput) {
-            csrfToken = hiddenInput.value;
-          }
-        }
-
-        // Fallback to Laravel's global csrf_token() if available in window
-        if (!csrfToken && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
-          csrfToken = window.Laravel.csrfToken;
-        }
-
-        if (!csrfToken) {
-          console.error('CSRF token not found in any location!');
-          alert('CSRF token tidak ditemukan. Silakan refresh halaman.');
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalHTML;
-          return;
-        }
-
-        console.log('CSRF Token found:', csrfToken.substring(0, 20) + '...');
-
-        // Type casting untuk memastikan integer
-        const deadlineDaysInt = parseInt(deadlineDays);
-
-        console.log('Sending request to: ', `/documents/verifikasi/${docId}/set-deadline`);
-        console.log('Request payload: ', {
-          deadline_days: deadlineDaysInt,
-          deadline_note: deadlineNote
-        });
-        console.log('Deadline days type: ' + typeof deadlineDaysInt + ' value: ' + deadlineDaysInt);
-
-        fetch(`/documents/verifikasi/${docId}/set-deadline`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            deadline_days: deadlineDaysInt,
-            deadline_note: deadlineNote
-          })
-        })
-        .then(async response => {
-          console.log('Response status:', response.status);
-
-          // Try to parse response as JSON first
-          let responseData;
-          try {
-            responseData = await response.json();
-          } catch (e) {
-            // If response is not JSON, create error object
-            responseData = {
-              success: false,
-              message: `Server error: ${response.status} ${response.statusText}`
-            };
-          }
-
-          if (!response.ok) {
-            // Extract error message from response
-            const errorMessage = responseData.message || responseData.error || `HTTP error! status: ${response.status}`;
-
-            // Log debug info if available
-            if (responseData.debug_info) {
-              console.error('Debug info:', responseData.debug_info);
-            }
-
-            throw new Error(errorMessage);
-          }
-
-          return responseData;
-        })
-        .then(data => {
-          console.log('Response data:', data);
-          if (data.success) {
-            const deadlineModal = bootstrap.Modal.getInstance(document.getElementById('setDeadlineModal'));
-            deadlineModal.hide();
-
-            // Show success modal
-            const successModalEl = document.getElementById('deadlineSuccessModal');
-            const successModal = new bootstrap.Modal(successModalEl);
-            const successMessageEl = document.getElementById('deadlineSuccessMessage');
-
-            if (data.deadline) {
-              successMessageEl.textContent = 
-                `Deadline: ${data.deadline}. Dokumen sekarang terbuka untuk diproses.`;
+            if (typeof window.toggleDetail === 'function') {
+              console.log('✓ toggleDetail is properly loaded');
             } else {
-              successMessageEl.textContent = data.message || 'Deadline berhasil ditetapkan.';
+              console.error('✗ toggleDetail is not a function');
             }
 
-            // Reload page when modal is closed
-            successModalEl.addEventListener('hidden.bs.modal', function() {
-              location.reload();
-            }, { once: true });
-
-            successModal.show();
-          } else {
-            alert('Gagal menetapkan deadline: ' + (data.message || 'Terjadi kesalahan yang tidak diketahui'));
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHTML;
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          console.error('Error details:', error.message);
-          alert('Terjadi kesalahan saat menetapkan deadline: ' + error.message);
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalHTML;
-        });
-      }
-
-      // Character counter for deadline note
-      document.addEventListener('DOMContentLoaded', function() {
-        const deadlineNote = document.getElementById('deadlineNote');
-        const charCount = document.getElementById('charCount');
-
-        if (deadlineNote && charCount) {
-          deadlineNote.addEventListener('input', function() {
-            charCount.textContent = this.value.length;
-          });
-        }
-      });
-
-      function openSendToNextModal(docId) {
-        document.getElementById('nextDocId').value = docId;
-        const modal = new bootstrap.Modal(document.getElementById('sendToNextModal'));
-        modal.show();
-      }
-
-      function confirmSendToNext() {
-        const docId = document.getElementById('nextDocId').value;
-        const nextHandler = document.querySelector('input[name="next_handler"]:checked')?.value;
-
-        if (!nextHandler) {
-          // Ensure sendToNextModal stays open
-          const sendModal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
-          if (!sendModal || !sendModal._isShown) {
-            // If send modal is not open, open it first
-            const sendModalNew = new bootstrap.Modal(document.getElementById('sendToNextModal'));
-            sendModalNew.show();
-          }
-
-          // Show warning modal instead of alert
-          const warningModal = new bootstrap.Modal(document.getElementById('sendDestinationWarningModal'));
-          warningModal.show();
-
-          // Focus back to first radio button when warning modal is closed
-          const warningModalEl = document.getElementById('sendDestinationWarningModal');
-          warningModalEl.addEventListener('hidden.bs.modal', function() {
-            const firstRadio = document.getElementById('perpajakan');
-            if (firstRadio) {
-              setTimeout(() => {
-                firstRadio.focus();
-              }, 100);
+            if (typeof window.loadDocumentDetail === 'function') {
+              console.log('✓ loadDocumentDetail is properly loaded');
+            } else {
+              console.error('✗ loadDocumentDetail is not a function');
             }
-          }, { once: true });
 
-          return;
-        }
-
-        const submitBtn = event.target;
-        const originalHTML = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
-
-        fetch(`/documents/verifikasi/${docId}/send-to-next`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            next_handler: nextHandler
-          })
-        })
-        .then(response => {
-          console.log('Response status:', response.status);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Response data:', data);
-          if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
-            modal.hide();
-
-            showSendSuccessModal(data.message);
-          } else {
-            alert('Gagal mengirim: ' + data.message);
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHTML;
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Terjadi kesalahan saat mengirim dokumen: ' + error.message);
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalHTML;
-        });
-      }
-
-      let shouldReloadAfterSendSuccess = false;
-
-      function showSendSuccessModal(message) {
-        const modalEl = document.getElementById('sendSuccessModal');
-        if (!modalEl) {
-          location.reload();
-          return;
-        }
-
-        const textEl = document.getElementById('sendSuccessMessage');
-        if (textEl) {
-          textEl.textContent = message || 'Dokumen telah dikirim dan akan muncul di halaman tujuan.';
-        }
-
-        shouldReloadAfterSendSuccess = true;
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-        const successModalEl = document.getElementById('sendSuccessModal');
-        if (successModalEl) {
-          successModalEl.addEventListener('hidden.bs.modal', function() {
-            if (shouldReloadAfterSendSuccess) {
-              shouldReloadAfterSendSuccess = false;
-              location.reload();
+            // Test with a click on first document row if available
+            const firstRow = document.querySelector('tr.main-row');
+            if (firstRow) {
+              console.log('Found document rows, ready for clicking');
             }
-          });
-        }
-      });
-      </script>
-
-      <!-- Return to Bidang Modal -->
-      <div class="modal fade" id="returnToBidangModal" tabindex="-1" aria-labelledby="returnToBidangModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content" style="max-height: 90vh; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%); color: white; flex-shrink: 0;">
-              <h5 class="modal-title" id="returnToBidangModalLabel">
-                <i class="fa-solid fa-sitemap me-2"></i>Kembalikan Dokumen ke Bidang
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
-              <div class="row g-4">
-                <!-- Left Column: Document Info -->
-                <div class="col-lg-5">
-                  <div class="sticky-top" style="top: 1rem;">
-                    <h6 class="text-muted mb-3">
-                      <i class="fa-solid fa-file-lines me-2"></i>Informasi Dokumen:
-                    </h6>
-                    <div id="return-bidang-doc-info" class="border rounded p-3 bg-light" style="min-height: 200px;">
-                      <!-- Document info akan dimuat di sini -->
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Right Column: Form -->
-                <div class="col-lg-7">
-                  <div class="sticky-top" style="top: 1rem;">
-                    <h6 class="text-muted mb-3">
-                      <i class="fa-solid fa-edit me-2"></i>Form Pengembalian:
-                    </h6>
-                    <form id="return-bidang-form" class="needs-validation" novalidate>
-                      <input type="hidden" id="return-bidang-doc-id" name="doc_id">
-
-                      <!-- Target Bidang -->
-                      <div class="mb-4">
-                        <label for="target_bidang" class="form-label fw-bold">
-                          <i class="fa-solid fa-sitemap me-2 text-primary"></i>Bidang Tujuan
-                          <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select form-select-lg" id="target_bidang" name="target_bidang" required>
-                          <option value="">-- Pilih Bidang Tujuan --</option>
-                          <option value="DPM">DPM - Divisi Produksi dan Manufaktur</option>
-                          <option value="SKH">SKH - Sub Kontrak Hutan</option>
-                          <option value="SDM">SDM - Sumber Daya Manusia</option>
-                          <option value="TEP">TEP - Teknik dan Perencanaan</option>
-                          <option value="KPL">KPL - Keuangan dan Pelaporan</option>
-                          <option value="AKN">AKN - Akuntansi</option>
-                          <option value="TAN">TAN - Tanaman dan Perkebunan</option>
-                          <option value="PMO">PMO - Project Management Office</option>
-                        </select>
-                        <div class="invalid-feedback">
-                          Silakan pilih bidang tujuan pengembalian.
-                        </div>
-                      </div>
-
-                      <!-- Return Reason -->
-                      <div class="mb-4">
-                        <label for="bidang_return_reason" class="form-label fw-bold">
-                          <i class="fa-solid fa-comment me-2 text-primary"></i>Alasan Pengembalian
-                          <span class="text-danger">*</span>
-                        </label>
-                        <textarea class="form-control" id="bidang_return_reason" name="bidang_return_reason"
-                                  rows="3" placeholder="Jelaskan alasan pengembalian dokumen ke bidang ini..."
-                                  style="resize: vertical; min-height: 80px;" required></textarea>
-                        <div class="d-flex justify-content-between mt-2">
-                          <div class="form-text">Minimal 5 karakter</div>
-                          <div class="form-text">
-                            <span id="bidang-char-count">0</span>/1000 karakter
-                          </div>
-                        </div>
-                        <div class="invalid-feedback">
-                          Alasan pengembalian minimal 5 karakter dan maksimal 1000 karakter.
-                        </div>
-                      </div>
-
-                      <!-- Action Buttons -->
-                      <div class="d-flex gap-2 mt-4">
-                        <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">
-                          <i class="fa-solid fa-times me-2"></i>Batal
-                        </button>
-                        <button type="button" class="btn btn-primary flex-fill" id="submit-return-bidang" onclick="returnToBidang()">
-                          <i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style>
-      /* Sticky positioning fix for modal */
-      .modal .sticky-top {
-        z-index: 1;
-      }
-      </style>
-
-      <script>
-      // Open Return to Bidang Modal
-      function openReturnToBidangModal(docId) {
-        // Fetch document details via AJAX (returns HTML)
-        fetch(`/dokumens/${docId}/detail`, {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'text/html'
-          }
-        })
-          .then(response => response.text())
-          .then(html => {
-            // Set document info in modal
-            document.getElementById('return-bidang-doc-info').innerHTML = html;
-            document.getElementById('return-bidang-doc-id').value = docId;
-
-            // Reset form
-            document.getElementById('target_bidang').value = '';
-            document.getElementById('bidang_return_reason').value = '';
-            document.getElementById('bidang-char-count').textContent = '0';
-
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('returnToBidangModal'));
-            modal.show();
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal memuat detail dokumen.');
-          });
-      }
-
-      // Return to Bidang function
-      function returnToBidang() {
-        const docId = document.getElementById('return-bidang-doc-id').value;
-        const targetBidang = document.getElementById('target_bidang').value;
-        const reason = document.getElementById('bidang_return_reason').value;
-
-        if (!targetBidang) {
-          alert('Pilih bidang tujuan terlebih dahulu.');
-          return;
-        }
-
-        if (!reason || reason.trim().length < 5) {
-          alert('Alasan pengembalian minimal 5 karakter.');
-          return;
-        }
-
-        const submitBtn = document.getElementById('submit-return-bidang');
-
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
-
-        fetch(`/documents/verifikasi/${docId}/return-to-bidang`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          },
-          body: JSON.stringify({
-            target_bidang: targetBidang,
-            bidang_return_reason: reason
-          })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('returnToBidangModal'));
-            modal.hide();
-
-            // Show success notification
-            showNotification(`Dokumen berhasil dikembalikan ke bidang ${data.target_bidang}`, 'success');
-
-            // Reload page after 2 seconds
-            setTimeout(() => {
-              location.reload();
-            }, 2000);
-          } else {
-            alert(data.message || 'Gagal mengembalikan dokumen ke bidang.');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Terjadi kesalahan saat mengembalikan dokumen ke bidang.');
-        })
-        .finally(() => {
-          // Restore button state
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang';
-        });
-      }
-
-      // Character counter for bidang return reason textarea
-      document.addEventListener('DOMContentLoaded', function() {
-        const bidangReasonTextarea = document.getElementById('bidang_return_reason');
-        const bidangCharCount = document.getElementById('bidang-char-count');
-
-        if (bidangReasonTextarea && bidangCharCount) {
-          bidangReasonTextarea.addEventListener('input', function() {
-            const length = this.value.length;
-            bidangCharCount.textContent = length;
-
-            // Update color based on length
-            bidangCharCount.classList.remove('warning', 'danger');
-            if (length > 900) {
-              bidangCharCount.classList.add('danger');
-            } else if (length > 800) {
-              bidangCharCount.classList.add('warning');
-            }
-          });
-        }
-      });
-      </script>
-
-      <!-- Notification Styles -->
-      <style>
-      .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        transform: translateX(100%);
-        transition: all 0.3s ease;
-        max-width: 400px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-      }
-
-      .notification.show {
-        transform: translateX(0);
-      }
-
-      .notification-content {
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: white;
-        font-weight: 500;
-      }
-
-      .notification-success {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      }
-
-      .notification-info {
-        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-      }
-
-      @media (max-width: 768px) {
-        .notification {
-          left: 20px;
-          right: 20px;
-          max-width: none;
-          top: 10px;
-        }
-      }
-
-      /* Send to Next Modal - Radio Button Styles */
-      #sendToNextModal .form-check {
-        transition: all 0.3s ease;
-      }
-
-      #sendToNextModal .form-check:hover {
-        border-color: #083E40 !important;
-        background: linear-gradient(135deg, rgba(8, 62, 64, 0.05) 0%, rgba(136, 151, 23, 0.05) 100%);
-        transform: translateX(4px);
-        box-shadow: 0 2px 12px rgba(8, 62, 64, 0.15);
-      }
-
-      #sendToNextModal .form-check-input:checked ~ .form-check-label {
-        color: #083E40;
-      }
-
-      #sendToNextModal .form-check:has(.form-check-input:checked) {
-        border-color: #083E40 !important;
-        background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%);
-        box-shadow: 0 4px 16px rgba(8, 62, 64, 0.2);
-      }
-
-      #sendToNextModal .form-check-input {
-        width: 20px;
-        height: 20px;
-        margin-top: 2px;
-        cursor: pointer;
-      }
-
-      #sendToNextModal .form-check-input:checked {
-        background-color: #083E40;
-        border-color: #083E40;
-      }
-      </style>
-
-      <script>
-      // Handle suggestion button clicks
-      document.addEventListener('DOMContentLoaded', function() {
-          const suggestionButtons = document.querySelectorAll('.suggestion-btn');
-
-          suggestionButtons.forEach(button => {
-              button.addEventListener('click', function() {
-                  const suggestion = this.getAttribute('data-suggestion');
-                  const searchInput = document.querySelector('input[name="search"]');
-                  const form = searchInput.closest('form');
-
-                  // Set the suggestion value to search input
-                  searchInput.value = suggestion;
-
-                  // Submit the form
-                  form.submit();
-              });
-          });
-      });
-      </script>
-
-      <!-- Modal: Column Customization -->
-      <div class="customization-modal" id="columnCustomizationModal">
-        <div class="modal-content-custom">
-          <div class="modal-header-custom">
-            <h3>
-              <i class="fa-solid fa-table-columns"></i>
-              Kustomisasi Kolom Tabel
-            </h3>
-          </div>
-
-          <div class="modal-body-custom">
-            <div class="customization-grid">
-              <!-- Selection Panel -->
-              <div class="selection-panel">
-                <div class="panel-title">
-                  <i class="fa-solid fa-check-square"></i>
-                  Pilih Kolom
-                </div>
-                <div class="panel-description">
-                  Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
-                </div>
-                <div class="column-selection-list" id="columnSelectionList">
-                  @foreach($availableColumns as $key => $label)
-                    <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
-                         data-column="{{ $key }}"
-                         draggable="{{ in_array($key, $selectedColumns) ? 'true' : 'false' }}"
-                         onclick="toggleColumn(this)">
-                      <div class="drag-handle">
-                        <i class="fa-solid fa-grip-vertical"></i>
-                      </div>
-                      <input type="checkbox"
-                             class="column-item-checkbox"
-                             value="{{ $key }}"
-                             {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
-                             onclick="event.stopPropagation()">
-                      <label class="column-item-label">{{ $label }}</label>
-                      <span class="column-item-order">
-                        {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
-                      </span>
-                    </div>
-                  @endforeach
-                </div>
-              </div>
-
-              <!-- Preview Panel -->
-              <div class="preview-panel">
-                <div class="panel-title">
-                  <i class="fa-solid fa-eye"></i>
-                  Preview Hasil
-                </div>
-                <div class="panel-description">
-                  Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
-                </div>
-                <div class="preview-container">
-                  <div id="tablePreview">
-                    @if(count($selectedColumns) > 0)
-                      <table class="preview-table">
-                        <thead>
-                          <tr>
-                            <th>No</th>
-                            @foreach($selectedColumns as $col)
-                              <th>{{ $availableColumns[$col] ?? $col }}</th>
-                            @endforeach
-                            <th>Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for($i = 1; $i <= 5; $i++)
-                            <tr>
-                              <td>{{ $i }}</td>
-                              @foreach($selectedColumns as $col)
-                                <td>
-                                  @if($col == 'nomor_agenda')
-                                    AGD/{{ 100 + $i }}/XII/2024
-                                  @elseif($col == 'nomor_spp')
-                                    {{ 200 + $i }}/M/SPP/8/04/2024
-                                  @elseif($col == 'tanggal_masuk')
-                                    {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
-                                  @elseif($col == 'nilai_rupiah')
-                                    Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
-                                  @elseif($col == 'nomor_mirror')
-                                    MIR-{{ 1000 + $i }}
-                                  @else
-                                    Contoh Data {{ $i }}
-                                  @endif
-                                </td>
-                              @endforeach
-                              <td>Edit, Kirim</td>
-                            </tr>
-                          @endfor
-                        </tbody>
-                      </table>
-                    @else
-                      <div class="empty-preview">
-                        <i class="fa-solid fa-table"></i>
-                        <p>Belum ada kolom yang dipilih</p>
-                        <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                      </div>
-                    @endif
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer-custom">
-            <div class="selected-count">
-              <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
-              @if(count($selectedColumns) > 0)
-                                              <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
-                  return $availableColumns[$col] ?? $col;
-                }, $selectedColumns)) }}</small>
-              @endif
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="btn-modal btn-cancel" onclick="closeColumnCustomizationModal()">
-                <i class="fa-solid fa-times"></i>
-                Batal
-              </button>
-              <button type="button" class="btn-modal btn-save" id="saveCustomizationBtn" onclick="saveColumnCustomization()">
-                <i class="fa-solid fa-save"></i>
-                Simpan Perubahan
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <script>
-      // Global variables for column customization
-      let selectedColumnsOrder = [];
-      let availableColumnsData = {};
-
-      // Initialize available columns data from PHP
-      @php
-        $columnsJson = json_encode($availableColumns);
-        echo "availableColumnsData = {$columnsJson};";
-      @endphp
-
-      // Initialize selected columns from existing selection
-      @if(count($selectedColumns) > 0)
-        selectedColumnsOrder = @json($selectedColumns);
-      @endif
-
-      // Global Functions
-      function openColumnCustomizationModal() {
-        const modal = document.getElementById('columnCustomizationModal');
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        initializeModalState();
-      }
-
-      function closeColumnCustomizationModal() {
-        const modal = document.getElementById('columnCustomizationModal');
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
-      }
-
-      function toggleColumn(columnElement) {
-        const columnKey = columnElement.dataset.column;
-        const checkbox = columnElement.querySelector('.column-item-checkbox');
-        const isChecked = checkbox.checked;
-
-        if (!isChecked) {
-          if (!selectedColumnsOrder.includes(columnKey)) {
-            selectedColumnsOrder.push(columnKey);
-          }
-          checkbox.checked = true;
-          columnElement.classList.add('selected');
-          columnElement.setAttribute('draggable', 'true');
-        } else {
-          selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
-          checkbox.checked = false;
-          columnElement.classList.remove('selected');
-          columnElement.setAttribute('draggable', 'false');
-        }
-
-        updateColumnOrderBadges();
-        updatePreviewTable();
-        updateSelectedCount();
-        updateDraggableState();
-      }
-
-      function updateColumnOrderBadges() {
-        document.querySelectorAll('.column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          const orderBadge = item.querySelector('.column-item-order');
-          const index = selectedColumnsOrder.indexOf(columnKey);
-
-          if (index !== -1) {
-            orderBadge.textContent = index + 1;
-          } else {
-            orderBadge.textContent = '';
-          }
-        });
-      }
-
-      function updatePreviewTable() {
-        const previewContainer = document.getElementById('tablePreview');
-
-        if (selectedColumnsOrder.length === 0) {
-          previewContainer.innerHTML = `
-            <div class="empty-preview">
-              <i class="fa-solid fa-table fa-2x mb-2"></i>
-              <p>Belum ada kolom yang dipilih</p>
-              <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-            </div>
-          `;
-          return;
-        }
-
-        let previewHTML = `
-          <table class="preview-table">
-            <thead>
-              <tr>
-                <th>No</th>
-        `;
-
-        selectedColumnsOrder.forEach(columnKey => {
-          const columnLabel = availableColumnsData[columnKey] || columnKey;
-          previewHTML += `<th>${columnLabel}</th>`;
+          }, 1000);
         });
 
-        previewHTML += `
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        const sampleData = {
-          'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
-          'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
-          'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
-          'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
-          'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
-          'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
-          'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
+        // Confirm paraf function - Define as global
+        window.confirmParaf = function(dokumenId) {
+          if (confirm("Yakin mau menandai bahwa dokumen ini telah diparaf (selesai)?")) {
+            // Implementation for paraf action
+            console.log("Paraf confirmed for document:", dokumenId);
+          }
         };
 
-        for (let i = 0; i < 5; i++) {
-          previewHTML += `<tr>`;
-          previewHTML += `<td>${i + 1}</td>`;
+        console.log('Additional functions loaded');
+        console.log('Final toggleDetail type:', typeof window.toggleDetail);
+        console.log('Final loadDocumentDetail type:', typeof window.loadDocumentDetail);
 
-          selectedColumnsOrder.forEach(columnKey => {
-            // Skip 'status' column as it's always shown as a special column
-            if (columnKey === 'status') {
-              return;
-            }
+        // Simple approve function
+        function quickApprove(docId) {
+          console.log('Quick approve called for docId:', docId);
 
-            const columnLabel = availableColumnsData[columnKey] || columnKey;
-            let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
-
-            previewHTML += `<td>${cellValue}</td>`;
-          });
-
-          previewHTML += `<td>Edit, Kirim</td>`;
-          previewHTML += `</tr>`;
-        }
-
-        previewHTML += `
-            </tbody>
-          </table>
-        `;
-
-        previewContainer.innerHTML = previewHTML;
-      }
-
-      function updateSelectedCount() {
-        const countElement = document.getElementById('selectedColumnCount');
-        countElement.textContent = selectedColumnsOrder.length;
-
-        const saveButton = document.getElementById('saveCustomizationBtn');
-        saveButton.disabled = selectedColumnsOrder.length === 0;
-      }
-
-      function saveColumnCustomization() {
-        if (selectedColumnsOrder.length === 0) {
-          alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
-          return;
-        }
-
-        // Try multiple selectors to find the form
-        let filterForm = document.getElementById('filterForm');
-        if (!filterForm) {
-          filterForm = document.querySelector('form[action*="verifikasi"]');
-        }
-        if (!filterForm) {
-          filterForm = document.querySelector('form[action*="dokumensB"]');
-        }
-        if (!filterForm) {
-          // Fallback: use first form on page
-          filterForm = document.querySelector('form');
-        }
-
-        if (!filterForm) {
-          alert('Form tidak ditemukan.');
-          return;
-        }
-
-        // Remove existing column inputs
-        document.querySelectorAll('input[name="columns[]"]').forEach(input => {
-          if (input.type === 'hidden') {
-            input.remove();
-          }
-        });
-
-        // Add hidden inputs for selected columns in order
-        selectedColumnsOrder.forEach(columnKey => {
-          const hiddenInput = document.createElement('input');
-          hiddenInput.type = 'hidden';
-          hiddenInput.name = 'columns[]';
-          hiddenInput.value = columnKey;
-          filterForm.appendChild(hiddenInput);
-        });
-
-        // Add enable customization flag
-        const enableInput = document.createElement('input');
-        enableInput.type = 'hidden';
-        enableInput.name = 'enable_customization';
-        enableInput.value = '1';
-        filterForm.appendChild(enableInput);
-
-        closeColumnCustomizationModal();
-        filterForm.submit();
-      }
-
-      function initializeModalState() {
-        document.querySelectorAll('.column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          const checkbox = item.querySelector('.column-item-checkbox');
-
-          if (selectedColumnsOrder.includes(columnKey)) {
-            checkbox.checked = true;
-            item.classList.add('selected');
-            item.setAttribute('draggable', 'true');
-          } else {
-            checkbox.checked = false;
-            item.classList.remove('selected');
-            item.setAttribute('draggable', 'false');
-          }
-        });
-
-        initializeDragAndDrop();
-        updateColumnOrderBadges();
-        updatePreviewTable();
-        updateSelectedCount();
-      }
-
-      function updateDraggableState() {
-        document.querySelectorAll('.column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          if (selectedColumnsOrder.includes(columnKey)) {
-            item.setAttribute('draggable', 'true');
-          } else {
-            item.setAttribute('draggable', 'false');
-          }
-        });
-      }
-
-      let draggedElement = null;
-
-      function initializeDragAndDrop() {
-        const columnList = document.getElementById('columnSelectionList');
-        if (!columnList) return;
-
-        const newList = columnList.cloneNode(true);
-        columnList.parentNode.replaceChild(newList, columnList);
-
-        newList.querySelectorAll('.column-item.selected').forEach(item => {
-          item.addEventListener('dragstart', handleDragStart);
-          item.addEventListener('dragend', handleDragEnd);
-          item.addEventListener('dragover', handleDragOver);
-          item.addEventListener('drop', handleDrop);
-        });
-      }
-
-      function handleDragStart(e) {
-        draggedElement = this;
-        this.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      }
-
-      function handleDragEnd(e) {
-        this.classList.remove('dragging');
-        document.querySelectorAll('.column-item').forEach(el => {
-          el.classList.remove('drag-over');
-        });
-        draggedElement = null;
-      }
-
-      function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-
-        if (this !== draggedElement && this.classList.contains('selected')) {
-          const afterElement = getDragAfterElement(this.parentNode, e.clientY);
-
-          if (afterElement == null) {
-            this.parentNode.appendChild(draggedElement);
-          } else {
-            this.parentNode.insertBefore(draggedElement, afterElement);
+          if (confirm('Apakah Anda yakin ingin menyetujui (approve) dokumen ini?')) {
+            changeDocumentStatus(docId, 'approved');
           }
         }
 
-        return false;
-      }
+        // Simple reject function
+        function quickReject(docId) {
+          console.log('Quick reject called for docId:', docId);
 
-      function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        this.classList.remove('drag-over');
-
-        if (this !== draggedElement && this.classList.contains('selected')) {
-          const columnList = document.getElementById('columnSelectionList');
-          const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
-          const newOrder = selectedItems.map(item => item.dataset.column);
-
-          selectedColumnsOrder = newOrder;
-
-          updateColumnOrderBadges();
-          updatePreviewTable();
-
-          setTimeout(() => {
-            initializeDragAndDrop();
-          }, 50);
+          if (confirm('Apakah Anda yakin ingin menolak (reject) dokumen ini?')) {
+            changeDocumentStatus(docId, 'rejected');
+          }
         }
 
-        return false;
-      }
-
-      function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
-
-        return draggableElements.reduce((closest, child) => {
-          const box = child.getBoundingClientRect();
-          const offset = y - box.top - box.height / 2;
-
-          if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-          } else {
-            return closest;
+        // Simplified status change function
+        function changeDocumentStatus(docId, action, event) {
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
           }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-      }
 
-      // Close modal when clicking outside
-      document.addEventListener('click', function(e) {
-        const modal = document.getElementById('columnCustomizationModal');
-        if (modal && modal.classList.contains('show') && e.target === modal) {
-          closeColumnCustomizationModal();
-        }
-      });
-      </script>
+          console.log('Change status called for docId:', docId, 'action:', action);
 
-      <script>
-      // Open View Document Modal
-      function openViewDocumentModal(docId) {
-        // Set document ID
-        document.getElementById('view-dokumen-id').value = docId;
-
-        // Set edit button URL
-        document.getElementById('view-edit-btn').href = `/documents/verifikasi/${docId}/edit`;
-
-        // Load document data via AJAX
-        fetch(`/documents/verifikasi/${docId}/detail`, {
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+          // Try multiple selectors to find the status container
+          let statusContainer = document.querySelector(`#status-dropdown-${docId}`);
+          if (!statusContainer) {
+            statusContainer = document.querySelector(`[onclick*="quickApprove(${docId})"]`).closest('td');
           }
-        })
+          if (!statusContainer) {
+            statusContainer = document.querySelector(`[onclick*="quickReject(${docId})"]`).closest('td');
+          }
+          if (!statusContainer) {
+            statusContainer = document.querySelector(`tr:has([onclick*="${docId}"]) .col-status`);
+          }
+
+          if (!statusContainer) {
+            console.error('Status container not found for docId:', docId);
+            console.log('Available containers with docId:', document.querySelectorAll(`[onclick*="${docId}"]`));
+            return;
+          }
+
+          console.log('Found status container:', statusContainer);
+
+          // Show loading state
+          const originalHTML = statusContainer.innerHTML;
+          statusContainer.innerHTML = `
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              justify-content: center;
+              color: #1a4d3e;
+              font-weight: 600;
+              font-size: 12px;
+            ">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <span>Processing...</span>
+            </div>
+          `;
+
+          // Send AJAX request
+          fetch(`/documents/verifikasi/${docId}/change-status`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              status: action,
+              document_id: docId  // FIX: Kirim document ID untuk mencegah cross-interference
+            })
+          })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -5986,807 +4192,2604 @@
             return response.json();
           })
           .then(data => {
-            console.log('Document data received:', data);
-            if (data.success && data.dokumen) {
-              const dok = data.dokumen;
+            if (data.success) {
+              // Show success notification
+              showNotification(data.message, 'success');
+              console.log('Status changed successfully:', data);
 
-              // Identitas Dokumen
-              document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
-              document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
-              document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
-              document.getElementById('view-bulan').textContent = dok.bulan || '-';
-              document.getElementById('view-tahun').textContent = dok.tahun || '-';
-              document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
-              document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
-              document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
-              document.getElementById('view-kategori').textContent = dok.kategori || '-';
-              document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+              // Update display
+              const statusText = action === 'approved' ? 'Approved' : 'Rejected';
+              const badgeClass = action === 'approved' ? 'badge-selesai' : 'badge-dikembalikan';
 
-              // Detail Keuangan & Vendor
-              document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
-              document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
-              // Ejaan nilai rupiah
-              if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
-                document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
-              } else {
-                document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
-              }
-              document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
-              document.getElementById('view-kebun').textContent = dok.kebun || '-';
+              statusContainer.innerHTML = `
+                <span class="badge-status ${badgeClass}">
+                  ${action === 'approved' ? '✓' : '✗'} ${statusText}
+                </span>
+              `;
 
-              // Referensi Pendukung
-              document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
-              document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
-              document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-              document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
-              document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
-              document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+              // Update action buttons for this row
+              updateActionButtons(docId, action);
 
-              // Informasi Akutansi
-              document.getElementById('view-nomor-miro-akutansi').textContent = dok.nomor_miro || '-';
-              document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? formatDate(dok.tanggal_miro) : '-';
+              // Refresh page after delay to update dashboard stats
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
 
-              // Nomor PO & PR
-              const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
-                ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
-                : '-';
-              const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
-                ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
-                : '-';
-              document.getElementById('view-nomor-po').textContent = poList;
-              document.getElementById('view-nomor-pr').textContent = prList;
-
-              // Show modal after data is loaded
-              const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
-              modal.show();
-
-              // Ensure edit button works correctly - prevent any interference
-              const editBtn = document.getElementById('view-edit-btn');
-              if (editBtn) {
-                // Remove any existing event listeners by cloning and replacing
-                const newEditBtn = editBtn.cloneNode(true);
-                editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-
-                // Add click handler to ensure navigation works
-                newEditBtn.addEventListener('click', function(e) {
-                  const href = this.getAttribute('href');
-                  if (href && href !== '#' && !href.startsWith('#')) {
-                    // Valid URL, allow navigation
-                    window.location.href = href;
-                  }
-                });
-              }
             } else {
-              console.error('Invalid response format:', data);
-              alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
+              // Show error notification
+              showNotification(data.message, 'error');
+              console.error('Status change failed:', data);
+              statusContainer.innerHTML = originalHTML;
             }
           })
           .catch(error => {
-            console.error('Error loading document:', error);
-            alert('Gagal memuat data dokumen: ' + error.message);
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat mengubah status dokumen.', 'error');
+            statusContainer.innerHTML = originalHTML;
           });
-      }
-
-      // Helper functions for formatting
-      function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      }
-
-      function formatDateTime(dateStr) {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      }
-
-      function formatNumber(num) {
-        if (!num) return '-';
-        return new Intl.NumberFormat('id-ID').format(num);
-      }
-
-      // Function to convert number to Indonesian terbilang
-      function terbilangRupiah(number) {
-        number = parseFloat(number) || 0;
-
-        if (number == 0) {
-          return 'nol rupiah';
         }
 
-        const angka = [
-          '', 'satu', 'dua', 'tiga', 'empat', 'lima',
-          'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
-          'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
-          'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
-        ];
+        function updateActionButtons(docId, action) {
+          const row = document.querySelector(`tr:has(#status-dropdown-${docId})`);
+          if (!row) return;
 
-        let hasil = '';
+          const actionCell = row.querySelector('.col-action');
+          if (!actionCell) return;
 
-        // Handle triliun
-        if (number >= 1000000000000) {
-          const triliun = Math.floor(number / 1000000000000);
-          hasil += terbilangSatuan(triliun, angka) + ' triliun ';
-          number = number % 1000000000000;
+          // Disable action buttons based on status
+          const actionButtons = actionCell.querySelectorAll('.btn-action');
+          actionButtons.forEach(btn => {
+            if (action === 'approved') {
+              // Keep some buttons for approved documents
+              if (!btn.classList.contains('btn-edit') && !btn.classList.contains('btn-paraf')) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+              }
+            } else if (action === 'rejected') {
+              // Disable most action buttons for rejected documents
+              btn.disabled = true;
+              btn.style.opacity = '0.5';
+              btn.style.cursor = 'not-allowed';
+            }
+          });
         }
 
-        // Handle milyar
-        if (number >= 1000000000) {
-          const milyar = Math.floor(number / 1000000000);
-          hasil += terbilangSatuan(milyar, angka) + ' milyar ';
-          number = number % 1000000000;
-        }
+        // Optimized countdown timer with performance improvements
+        let countdownUpdateInterval = null;
+        let countdownTimers = new Map();
 
-        // Handle juta
-        if (number >= 1000000) {
-          const juta = Math.floor(number / 1000000);
-          hasil += terbilangSatuan(juta, angka) + ' juta ';
-          number = number % 1000000;
-        }
-
-        // Handle ribu
-        if (number >= 1000) {
-          const ribu = Math.floor(number / 1000);
-          if (ribu == 1) {
-            hasil += 'seribu ';
-          } else {
-            hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+        function initializeCountdowns() {
+          // Clear existing timers to prevent memory leaks
+          if (countdownUpdateInterval) {
+            clearInterval(countdownUpdateInterval);
           }
-          number = number % 1000;
+          countdownTimers.forEach(timer => clearInterval(timer));
+          countdownTimers.clear();
         }
 
-        // Handle ratusan, puluhan, dan satuan
-        if (number > 0) {
-          hasil += terbilangSatuan(number, angka);
+        // Enhanced deadline system with color coding and late information
+        function initializeDeadlines() {
+          console.log('Initializing deadlines...');
+          const deadlineElements = document.querySelectorAll('.deadline-card');
+          console.log('Found deadline cards:', deadlineElements.length);
+
+          deadlineElements.forEach(card => {
+            updateDeadlineCard(card);
+          });
+
+          // Update every 30 seconds for better responsiveness
+          setInterval(() => {
+            const cards = document.querySelectorAll('.deadline-card');
+            cards.forEach(card => {
+              updateDeadlineCard(card);
+            });
+          }, 30000); // Update every 30 seconds
         }
 
-        return hasil.trim() + ' rupiah';
-      }
-
-      function terbilangSatuan(number, angka) {
-        let hasil = '';
-        number = parseInt(number);
-
-        if (number == 0) {
-          return '';
-        }
-
-        // Handle ratusan
-        if (number >= 100) {
-          const ratus = Math.floor(number / 100);
-          if (ratus == 1) {
-            hasil += 'seratus ';
-          } else {
-            hasil += angka[ratus] + ' ratus ';
+        function updateDeadlineCard(card) {
+          const deadlineStr = card.dataset.deadline;
+          if (!deadlineStr) {
+            console.warn('Deadline card missing data-deadline attribute');
+            return;
           }
-          number = number % 100;
-        }
 
-        // Handle puluhan dan satuan (0-99)
-        if (number > 0) {
-          if (number < 20) {
-            hasil += angka[number] + ' ';
-          } else {
-            const puluhan = Math.floor(number / 10);
-            const satuan = number % 10;
+          // Check if document is already sent or completed
+          const isSent = card.dataset.sent === 'true';
+          const isCompleted = card.dataset.completed === 'true';
 
-            if (puluhan == 1) {
-              hasil += angka[10 + satuan] + ' ';
+          const deadline = new Date(deadlineStr);
+          const now = new Date();
+          const diffMs = deadline - now;
+
+          // Remove existing status classes
+          card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue', 'deadline-sent', 'deadline-completed');
+
+          // Find status indicator
+          const statusIndicator = card.querySelector('.deadline-indicator');
+          if (!statusIndicator) {
+            console.error('Deadline indicator not found in card:', card);
+            return;
+          }
+          const statusText = card.querySelector('.status-text');
+          if (!statusText) {
+            console.error('Status text not found in card:', card);
+            return;
+          }
+          const statusIcon = statusIndicator.querySelector('i');
+          if (!statusIcon) {
+            console.error('Status icon not found in card:', card);
+            return;
+          }
+
+          // Remove existing late info and time hints
+          const existingLateInfo = card.querySelector('.late-info');
+          const existingTimeHint = card.querySelector('div[style*="margin-top: 2px"]');
+          const existingProgress = card.querySelector('.deadline-progress');
+
+          if (existingLateInfo) existingLateInfo.remove();
+          if (existingTimeHint) existingTimeHint.remove();
+          if (existingProgress) existingProgress.remove();
+
+          // Handle completed documents - show as completed (green, no countdown)
+          if (isCompleted) {
+            card.classList.add('deadline-completed');
+            statusText.textContent = 'SELESAI';
+            statusIcon.className = 'fa-solid fa-check-circle';
+            statusIndicator.className = 'deadline-indicator deadline-completed';
+            return; // Don't show countdown for completed documents
+          }
+
+          // Handle sent documents - show as sent (gray, no countdown, no overdue)
+          if (isSent) {
+            card.classList.add('deadline-sent');
+            statusText.textContent = 'TERKIRIM';
+            statusIcon.className = 'fa-solid fa-paper-plane';
+            statusIndicator.className = 'deadline-indicator deadline-sent';
+            return; // Don't show countdown or overdue for sent documents
+          }
+
+          // Handle active documents (still being processed) - show countdown
+          if (diffMs < 0) {
+            // Overdue state - only for active documents
+            card.classList.add('deadline-overdue');
+
+            // Calculate how late
+            const diffHours = Math.abs(Math.floor(diffMs / (1000 * 60 * 60)));
+            const diffDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+            // Update status text
+            statusText.textContent = 'TERLAMBAT';
+            statusIcon.className = 'fa-solid fa-exclamation-triangle';
+            statusIndicator.className = 'deadline-indicator deadline-overdue';
+
+            // Show late info for active documents
+            let lateText;
+            if (diffDays >= 1) {
+              lateText = `${diffDays} HARI TELAT`;
+            } else if (diffHours >= 1) {
+              lateText = `${diffHours} JAM TELAT`;
             } else {
-              hasil += angka[puluhan] + ' puluh ';
-              if (satuan > 0) {
-                hasil += angka[satuan] + ' ';
+              lateText = 'BARU SAJA TELAT';
+            }
+
+            const lateInfo = document.createElement('div');
+            lateInfo.className = 'late-info';
+            lateInfo.innerHTML = `
+              <i class="fa-solid fa-exclamation-triangle"></i>
+              <span class="late-text">${lateText}</span>
+            `;
+
+            card.appendChild(lateInfo);
+
+            // Add progress bar at bottom
+            const progressBar = document.createElement('div');
+            progressBar.className = 'deadline-progress';
+            card.appendChild(progressBar);
+
+          } else {
+            // Time remaining - only for active documents
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            // Get original deadline_days from data attribute
+            const deadlineDays = parseInt(card.dataset.deadlineDays) || null;
+
+            // Calculate remaining hours for more accurate display
+            const totalHoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
+
+            // Determine display text based on deadline_days and remaining time
+            let displayText = '';
+            let shouldShowDays = false;
+
+            if (deadlineDays && deadlineDays > 0) {
+              // If original deadline was set for X days, show "X hari lagi" 
+              // as long as we're still within that period
+              // Logic: Show days if remaining hours >= 12 hours OR if we're still in the first day
+              if (totalHoursRemaining >= 12) {
+                // Calculate how many full days remaining
+                const fullDaysRemaining = Math.floor(totalHoursRemaining / 24);
+                // If we have at least 12 hours, show at least "1 hari lagi" for deadline 1 hari
+                // For deadline 2+ hari, show actual days remaining (capped at deadline_days)
+                if (deadlineDays === 1) {
+                  // For 1 day deadline, show "1 hari lagi" if >= 12 hours remaining
+                  displayText = '1 hari lagi';
+                  shouldShowDays = true;
+                } else {
+                  // For 2+ days deadline, show actual days remaining
+                  const daysToShow = Math.min(Math.max(1, fullDaysRemaining + (totalHoursRemaining % 24 >= 12 ? 1 : 0)), deadlineDays);
+                  displayText = `${daysToShow} ${daysToShow === 1 ? 'hari' : 'hari'} lagi`;
+                  shouldShowDays = daysToShow >= 1;
+                }
+              } else {
+                // Less than 12 hours remaining, show hours
+                displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+                shouldShowDays = false;
+              }
+            } else {
+              // No deadline_days info, use standard calculation
+              if (diffDays >= 1) {
+                displayText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
+                shouldShowDays = true;
+              } else if (diffHours >= 1) {
+                displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+                shouldShowDays = false;
+              } else {
+                displayText = `${diffMinutes} menit lagi`;
+                shouldShowDays = false;
+              }
+            }
+
+            // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning
+            if (shouldShowDays || diffDays >= 1) {
+              // Safe (>= 1 day or still within original deadline period) - Green
+              card.classList.add('deadline-safe');
+              statusText.textContent = 'AMAN';
+              statusIcon.className = 'fa-solid fa-check-circle';
+              statusIndicator.className = 'deadline-indicator deadline-safe';
+
+              // Add time remaining hint
+              const timeHint = document.createElement('div');
+              timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
+              timeHint.textContent = displayText;
+              card.appendChild(timeHint);
+
+            } else if (diffHours >= 1 || diffMinutes >= 1) {
+              // Warning (< 1 day or less than 12 hours remaining) - Yellow
+              card.classList.add('deadline-warning');
+              statusText.textContent = 'DEKAT';
+              statusIcon.className = 'fa-solid fa-exclamation-triangle';
+              statusIndicator.className = 'deadline-indicator deadline-warning';
+
+              // Add time remaining hint
+              const timeHint = document.createElement('div');
+              timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
+              if (diffHours >= 1) {
+                timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+              } else {
+                timeHint.textContent = `${diffMinutes} menit lagi`;
+                timeHint.style.animation = 'warning-shake 1s infinite';
+              }
+              card.appendChild(timeHint);
+            }
+
+            // Add progress bar
+            const progressBar = document.createElement('div');
+            progressBar.className = 'deadline-progress';
+            card.appendChild(progressBar);
+          }
+        }
+
+        // Initialize on page load - Make sure function is available globally
+        window.initializeDeadlines = initializeDeadlines;
+
+        // Initialize deadlines when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, initializing deadlines...');
+            initializeDeadlines();
+          });
+        } else {
+          console.log('DOM already loaded, initializing deadlines immediately...');
+          initializeDeadlines();
+        }
+        </script>
+
+        <style>
+        /* Optimized Deadline Display System */
+        .deadline-info {
+          position: relative;
+          padding: 10px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          border: 1px solid rgba(8, 62, 64, 0.1);
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
+
+        .deadline-info::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(180deg, var(--deadline-color, #28a745) 0%, var(--deadline-color-dark, #1e7e34) 100%);
+          transition: all 0.3s ease;
+        }
+
+        .deadline-info:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(8, 62, 64, 0.15);
+        }
+
+        /* Simplified deadline styling - progress bar removed */
+
+        /* Deadline Status States */
+        .deadline-info.status-safe {
+          --deadline-color: #28a745;
+          --deadline-color-dark: #1e7e34;
+          --deadline-color-light: #34ce57;
+        }
+
+        .deadline-info.status-warning {
+          --deadline-color: #ffc107;
+          --deadline-color-dark: #e0a800;
+          --deadline-color-light: #ffcd39;
+        }
+
+        .deadline-info.status-danger {
+          --deadline-color: #dc3545;
+          --deadline-color-dark: #c82333;
+          --deadline-color-light: #e4606d;
+        }
+
+        .deadline-info.status-overdue {
+          --deadline-color: #6f42c1;
+          --deadline-color-dark: #59359a;
+          --deadline-color-light: #7950b2;
+          animation: overdue-pulse 2s infinite;
+        }
+
+        @keyframes overdue-pulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(111, 66, 193, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 0 8px rgba(111, 66, 193, 0);
+          }
+        }
+
+        /* Optimized Countdown Display */
+        .deadline-countdown {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 6px;
+          font-weight: 600;
+          font-size: 13px;
+          color: #083E40;
+        }
+
+        .deadline-countdown-icon {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+        }
+
+        .deadline-countdown-text {
+          font-weight: 700;
+          flex: 1;
+          text-align: right;
+        }
+
+        /* Deadline Date and Note */
+        .deadline-date {
+          font-size: 11px;
+          color: #666;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .deadline-date small {
+          font-weight: 500;
+        }
+
+        .deadline-note {
+          font-size: 10px;
+          color: #888;
+          margin-top: 6px;
+          padding-top: 6px;
+          border-top: 1px solid rgba(8, 62, 64, 0.1);
+          font-style: italic;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        /* Responsive Deadline Display */
+        @media (max-width: 768px) {
+          .deadline-info {
+            padding: 8px;
+          }
+
+          .deadline-progress {
+            height: 5px;
+            margin-bottom: 6px;
+          }
+
+          .deadline-countdown {
+            font-size: 12px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+
+          .deadline-countdown-text {
+            text-align: left;
+          }
+
+          .deadline-date {
+            font-size: 10px;
+          }
+
+          .deadline-note {
+            font-size: 9px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .deadline-info {
+            padding: 6px;
+          }
+
+          .deadline-progress {
+            height: 4px;
+            margin-bottom: 4px;
+          }
+
+          .deadline-countdown {
+            font-size: 11px;
+          }
+
+          .deadline-date {
+            display: none; /* Hide date on very small screens */
+          }
+
+          .deadline-note {
+            margin-top: 4px;
+            padding-top: 4px;
+          }
+        }
+
+        /* No deadline state */
+        .deadline-empty {
+          color: #999;
+          font-size: 12px;
+          font-style: italic;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px;
+        }
+        </style>
+
+        <!-- Modal for Setting Deadline -->
+        <div class="modal fade" id="setDeadlineModal" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                <h5 class="modal-title">
+                  <i class="fa-solid fa-clock me-2"></i>Tetapkan Deadline Verifikasi
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="deadlineDocId">
+
+                <div class="alert alert-info border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 140, 0, 0.1) 100%); border-left: 4px solid #ffc107;">
+                  <i class="fa-solid fa-info-circle me-2"></i>
+                  <strong>Penting:</strong> Setelah deadline ditetapkan, dokumen akan terbuka untuk diproses lebih lanjut.
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    <i class="fa-solid fa-calendar-days me-2"></i>Periode Deadline*
+                  </label>
+                  <select class="form-select" id="deadlineDays" required>
+                    <option value="">Pilih periode deadline</option>
+                    <option value="1">1 hari</option>
+                    <option value="2">2 hari</option>
+                    <option value="3">3 hari (maksimal)</option>
+                  </select>
+                  <div class="form-text">Maksimal deadline adalah 3 hari untuk efisiensi proses</div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    <i class="fa-solid fa-sticky-note me-2"></i>Catatan Deadline <span class="text-muted">(opsional)</span>
+                  </label>
+                  <textarea class="form-control" id="deadlineNote" rows="3"
+                            placeholder="Contoh: Perlu verifikasi dokumen pendukung tambahan..."
+                            maxlength="500"></textarea>
+                  <div class="form-text">
+                    <span id="charCount">0</span>/500 karakter
+                  </div>
+                </div>
+
+                <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 140, 0, 0.05) 100%);">
+                  <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                  <small>
+                    <strong>Catatan:</strong> Deadline yang telah ditetapkan tidak dapat diubah kembali. Pastikan periode yang dipilih sudah sesuai.
+                  </small>
+                </div>
+              </div>
+              <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  <i class="fa-solid fa-times me-2"></i>Batal
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmSetDeadline()">
+                  <i class="fa-solid fa-check me-2"></i>Tetapkan Deadline
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for Sending to Next Handler -->
+        <div class="modal fade" id="sendToNextModal" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
+                <h5 class="modal-title">Kirim Dokumen ke Bidang Berikutnya</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="nextDocId">
+
+                <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%); border-left: 4px solid #083E40;">
+                  <i class="fa-solid fa-info-circle me-2"></i>
+                  <strong>Catatan:</strong> Deadline akan ditetapkan oleh departemen tujuan (Team Perpajakan, Team Akutansi, atau Team Pembayaran) setelah dokumen diterima.
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">
+                    <i class="fa-solid fa-location-arrow me-2"></i>Pilih Tujuan Pengiriman:
+                  </label>
+                  <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+                    <input class="form-check-input" type="radio" name="next_handler" id="perpajakan" value="perpajakan" required>
+                    <label class="form-check-label w-100" for="perpajakan" style="cursor: pointer;">
+                      <div class="d-flex align-items-start">
+                        <i class="fa-solid fa-receipt me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
+                        <div>
+                          <strong style="color: #083E40;">Team Perpajakan</strong>
+                          <small class="text-muted d-block">Untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu. Dokumen akan terkunci hingga Team Perpajakan menetapkan deadline.</small>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+                    <input class="form-check-input" type="radio" name="next_handler" id="akutansi" value="akutansi">
+                    <label class="form-check-label w-100" for="akutansi" style="cursor: pointer;">
+                      <div class="d-flex align-items-start">
+                        <i class="fa-solid fa-calculator me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
+                        <div>
+                          <strong style="color: #083E40;">Team Akutansi</strong>
+                          <small class="text-muted d-block">Untuk dokumen yang bisa langsung ke Team Akutansi. Dokumen akan terkunci hingga Team Akutansi menetapkan deadline.</small>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="form-check" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+                    <input class="form-check-input" type="radio" name="next_handler" id="pembayaran" value="pembayaran">
+                    <label class="form-check-label w-100" for="pembayaran" style="cursor: pointer;">
+                      <div class="d-flex align-items-start">
+                        <i class="fa-solid fa-money-bill-wave me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
+                        <div>
+                          <strong style="color: #083E40;">Team Pembayaran</strong>
+                          <small class="text-muted d-block">Untuk dokumen yang siap untuk diproses pembayaran. Status akan berubah menjadi "Siap Bayar" di halaman pembayaran.</small>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSendToNext()">
+                  <i class="fa-solid fa-paper-plane me-2"></i>Kirim
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for Send Destination Warning -->
+        <div class="modal fade" id="sendDestinationWarningModal" tabindex="-1" aria-labelledby="sendDestinationWarningModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                <h5 class="modal-title" id="sendDestinationWarningModalLabel">
+                  <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body text-center">
+                <div class="mb-3">
+                  <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Pilih Tujuan Pengiriman Terlebih Dahulu!</h5>
+                <p class="text-muted mb-0">
+                  Silakan pilih tujuan pengiriman dokumen terlebih dahulu:
+                  <br>• <strong>Team Perpajakan</strong> - untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu
+                  <br>• <strong>Team Akutansi</strong> - untuk dokumen yang bisa langsung ke Team Akutansi
+                  <br>• <strong>Team Pembayaran</strong> - untuk dokumen yang siap diproses pembayaran
+                </p>
+              </div>
+              <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
+                  <i class="fa-solid fa-check me-2"></i>Mengerti
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for Send Success -->
+        <div class="modal fade" id="sendSuccessModal" tabindex="-1" aria-labelledby="sendSuccessModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="background: linear-gradient(135deg, #11823b 0%, #1cb666 100%); color: white;">
+                <h5 class="modal-title" id="sendSuccessModalLabel">
+                  <i class="fa-solid fa-circle-check me-2"></i>Pengiriman Berhasil
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body text-center">
+                <div class="mb-3">
+                  <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #1cb666;"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Dokumen berhasil dikirim!</h5>
+                <p class="text-muted mb-0" id="sendSuccessMessage">
+                  Dokumen telah dikirim dan akan muncul di halaman tujuan.
+                </p>
+              </div>
+              <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
+                  <i class="fa-solid fa-check me-2"></i>Selesai
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for Deadline Success -->
+        <div class="modal fade" id="deadlineSuccessModal" tabindex="-1" aria-labelledby="deadlineSuccessModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                <h5 class="modal-title" id="deadlineSuccessModalLabel">
+                  <i class="fa-solid fa-circle-check me-2"></i>Deadline Berhasil Ditentukan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body text-center">
+                <div class="mb-3">
+                  <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #ffc107;"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Deadline berhasil ditetapkan!</h5>
+                <p class="text-muted mb-0" id="deadlineSuccessMessage">
+                  Dokumen sekarang terbuka untuk diproses lebih lanjut.
+                </p>
+              </div>
+              <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal" id="deadlineSuccessBtn">
+                  <i class="fa-solid fa-check me-2"></i>Selesai
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for Deadline Warning -->
+        <div class="modal fade" id="deadlineWarningModal" tabindex="-1" aria-labelledby="deadlineWarningModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                <h5 class="modal-title" id="deadlineWarningModalLabel">
+                  <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body text-center">
+                <div class="mb-3">
+                  <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Pilih Periode Deadline Terlebih Dahulu!</h5>
+                <p class="text-muted mb-0">
+                  Silakan pilih periode deadline (1 hari, 2 hari, atau 3 hari) sebelum menetapkan deadline.
+                </p>
+              </div>
+              <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
+                  <i class="fa-solid fa-check me-2"></i>Mengerti
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+        function openSetDeadlineModal(docId) {
+          document.getElementById('deadlineDocId').value = docId;
+          document.getElementById('deadlineDays').value = '';
+          document.getElementById('deadlineNote').value = '';
+          document.getElementById('charCount').textContent = '0';
+          const modal = new bootstrap.Modal(document.getElementById('setDeadlineModal'));
+          modal.show();
+        }
+
+        function confirmSetDeadline() {
+          const docId = document.getElementById('deadlineDocId').value;
+          const deadlineDays = document.getElementById('deadlineDays').value;
+          const deadlineNote = document.getElementById('deadlineNote').value;
+
+          if (!deadlineDays) {
+            // Show warning modal instead of alert
+            const warningModal = new bootstrap.Modal(document.getElementById('deadlineWarningModal'));
+            warningModal.show();
+            return;
+          }
+
+          // Show loading state
+          const submitBtn = document.querySelector('[onclick="confirmSetDeadline()"]');
+          const originalHTML = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menetapkan...';
+
+          // Get CSRF token from meta tag or hidden input
+          let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+          // Fallback to hidden input if meta tag not found
+          if (!csrfToken) {
+            const hiddenInput = document.querySelector('input[name="_token"]');
+            if (hiddenInput) {
+              csrfToken = hiddenInput.value;
+            }
+          }
+
+          // Fallback to Laravel's global csrf_token() if available in window
+          if (!csrfToken && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
+            csrfToken = window.Laravel.csrfToken;
+          }
+
+          if (!csrfToken) {
+            console.error('CSRF token not found in any location!');
+            alert('CSRF token tidak ditemukan. Silakan refresh halaman.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+            return;
+          }
+
+          console.log('CSRF Token found:', csrfToken.substring(0, 20) + '...');
+
+          // Type casting untuk memastikan integer
+          const deadlineDaysInt = parseInt(deadlineDays);
+
+          console.log('Sending request to: ', `/documents/verifikasi/${docId}/set-deadline`);
+          console.log('Request payload: ', {
+            deadline_days: deadlineDaysInt,
+            deadline_note: deadlineNote
+          });
+          console.log('Deadline days type: ' + typeof deadlineDaysInt + ' value: ' + deadlineDaysInt);
+
+          fetch(`/documents/verifikasi/${docId}/set-deadline`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrfToken,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              deadline_days: deadlineDaysInt,
+              deadline_note: deadlineNote
+            })
+          })
+          .then(async response => {
+            console.log('Response status:', response.status);
+
+            // Try to parse response as JSON first
+            let responseData;
+            try {
+              responseData = await response.json();
+            } catch (e) {
+              // If response is not JSON, create error object
+              responseData = {
+                success: false,
+                message: `Server error: ${response.status} ${response.statusText}`
+              };
+            }
+
+            if (!response.ok) {
+              // Extract error message from response
+              const errorMessage = responseData.message || responseData.error || `HTTP error! status: ${response.status}`;
+
+              // Log debug info if available
+              if (responseData.debug_info) {
+                console.error('Debug info:', responseData.debug_info);
+              }
+
+              throw new Error(errorMessage);
+            }
+
+            return responseData;
+          })
+          .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+              const deadlineModal = bootstrap.Modal.getInstance(document.getElementById('setDeadlineModal'));
+              deadlineModal.hide();
+
+              // Show success modal
+              const successModalEl = document.getElementById('deadlineSuccessModal');
+              const successModal = new bootstrap.Modal(successModalEl);
+              const successMessageEl = document.getElementById('deadlineSuccessMessage');
+
+              if (data.deadline) {
+                successMessageEl.textContent = 
+                  `Deadline: ${data.deadline}. Dokumen sekarang terbuka untuk diproses.`;
+              } else {
+                successMessageEl.textContent = data.message || 'Deadline berhasil ditetapkan.';
+              }
+
+              // Reload page when modal is closed
+              successModalEl.addEventListener('hidden.bs.modal', function() {
+                location.reload();
+              }, { once: true });
+
+              successModal.show();
+            } else {
+              alert('Gagal menetapkan deadline: ' + (data.message || 'Terjadi kesalahan yang tidak diketahui'));
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalHTML;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            console.error('Error details:', error.message);
+            alert('Terjadi kesalahan saat menetapkan deadline: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+          });
+        }
+
+        // Character counter for deadline note
+        document.addEventListener('DOMContentLoaded', function() {
+          const deadlineNote = document.getElementById('deadlineNote');
+          const charCount = document.getElementById('charCount');
+
+          if (deadlineNote && charCount) {
+            deadlineNote.addEventListener('input', function() {
+              charCount.textContent = this.value.length;
+            });
+          }
+        });
+
+        function openSendToNextModal(docId) {
+          document.getElementById('nextDocId').value = docId;
+          const modal = new bootstrap.Modal(document.getElementById('sendToNextModal'));
+          modal.show();
+        }
+
+        function confirmSendToNext() {
+          const docId = document.getElementById('nextDocId').value;
+          const nextHandler = document.querySelector('input[name="next_handler"]:checked')?.value;
+
+          if (!nextHandler) {
+            // Ensure sendToNextModal stays open
+            const sendModal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
+            if (!sendModal || !sendModal._isShown) {
+              // If send modal is not open, open it first
+              const sendModalNew = new bootstrap.Modal(document.getElementById('sendToNextModal'));
+              sendModalNew.show();
+            }
+
+            // Show warning modal instead of alert
+            const warningModal = new bootstrap.Modal(document.getElementById('sendDestinationWarningModal'));
+            warningModal.show();
+
+            // Focus back to first radio button when warning modal is closed
+            const warningModalEl = document.getElementById('sendDestinationWarningModal');
+            warningModalEl.addEventListener('hidden.bs.modal', function() {
+              const firstRadio = document.getElementById('perpajakan');
+              if (firstRadio) {
+                setTimeout(() => {
+                  firstRadio.focus();
+                }, 100);
+              }
+            }, { once: true });
+
+            return;
+          }
+
+          const submitBtn = event.target;
+          const originalHTML = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
+
+          fetch(`/documents/verifikasi/${docId}/send-to-next`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              next_handler: nextHandler
+            })
+          })
+          .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+              const modal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
+              modal.hide();
+
+              showSendSuccessModal(data.message);
+            } else {
+              alert('Gagal mengirim: ' + data.message);
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalHTML;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mengirim dokumen: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+          });
+        }
+
+        let shouldReloadAfterSendSuccess = false;
+
+        function showSendSuccessModal(message) {
+          const modalEl = document.getElementById('sendSuccessModal');
+          if (!modalEl) {
+            location.reload();
+            return;
+          }
+
+          const textEl = document.getElementById('sendSuccessMessage');
+          if (textEl) {
+            textEl.textContent = message || 'Dokumen telah dikirim dan akan muncul di halaman tujuan.';
+          }
+
+          shouldReloadAfterSendSuccess = true;
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+          const successModalEl = document.getElementById('sendSuccessModal');
+          if (successModalEl) {
+            successModalEl.addEventListener('hidden.bs.modal', function() {
+              if (shouldReloadAfterSendSuccess) {
+                shouldReloadAfterSendSuccess = false;
+                location.reload();
+              }
+            });
+          }
+        });
+        </script>
+
+        <!-- Return to Bidang Modal -->
+        <div class="modal fade" id="returnToBidangModal" tabindex="-1" aria-labelledby="returnToBidangModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="max-height: 90vh; overflow: hidden;">
+              <div class="modal-header" style="background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%); color: white; flex-shrink: 0;">
+                <h5 class="modal-title" id="returnToBidangModalLabel">
+                  <i class="fa-solid fa-sitemap me-2"></i>Kembalikan Dokumen ke Bidang
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
+                <div class="row g-4">
+                  <!-- Left Column: Document Info -->
+                  <div class="col-lg-5">
+                    <div class="sticky-top" style="top: 1rem;">
+                      <h6 class="text-muted mb-3">
+                        <i class="fa-solid fa-file-lines me-2"></i>Informasi Dokumen:
+                      </h6>
+                      <div id="return-bidang-doc-info" class="border rounded p-3 bg-light" style="min-height: 200px;">
+                        <!-- Document info akan dimuat di sini -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right Column: Form -->
+                  <div class="col-lg-7">
+                    <div class="sticky-top" style="top: 1rem;">
+                      <h6 class="text-muted mb-3">
+                        <i class="fa-solid fa-edit me-2"></i>Form Pengembalian:
+                      </h6>
+                      <form id="return-bidang-form" class="needs-validation" novalidate>
+                        <input type="hidden" id="return-bidang-doc-id" name="doc_id">
+
+                        <!-- Target Bidang -->
+                        <div class="mb-4">
+                          <label for="target_bidang" class="form-label fw-bold">
+                            <i class="fa-solid fa-sitemap me-2 text-primary"></i>Bidang Tujuan
+                            <span class="text-danger">*</span>
+                          </label>
+                          <select class="form-select form-select-lg" id="target_bidang" name="target_bidang" required>
+                            <option value="">-- Pilih Bidang Tujuan --</option>
+                            <option value="DPM">DPM - Divisi Produksi dan Manufaktur</option>
+                            <option value="SKH">SKH - Sub Kontrak Hutan</option>
+                            <option value="SDM">SDM - Sumber Daya Manusia</option>
+                            <option value="TEP">TEP - Teknik dan Perencanaan</option>
+                            <option value="KPL">KPL - Keuangan dan Pelaporan</option>
+                            <option value="AKN">AKN - Akuntansi</option>
+                            <option value="TAN">TAN - Tanaman dan Perkebunan</option>
+                            <option value="PMO">PMO - Project Management Office</option>
+                          </select>
+                          <div class="invalid-feedback">
+                            Silakan pilih bidang tujuan pengembalian.
+                          </div>
+                        </div>
+
+                        <!-- Return Reason -->
+                        <div class="mb-4">
+                          <label for="bidang_return_reason" class="form-label fw-bold">
+                            <i class="fa-solid fa-comment me-2 text-primary"></i>Alasan Pengembalian
+                            <span class="text-danger">*</span>
+                          </label>
+                          <textarea class="form-control" id="bidang_return_reason" name="bidang_return_reason"
+                                    rows="3" placeholder="Jelaskan alasan pengembalian dokumen ke bidang ini..."
+                                    style="resize: vertical; min-height: 80px;" required></textarea>
+                          <div class="d-flex justify-content-between mt-2">
+                            <div class="form-text">Minimal 5 karakter</div>
+                            <div class="form-text">
+                              <span id="bidang-char-count">0</span>/1000 karakter
+                            </div>
+                          </div>
+                          <div class="invalid-feedback">
+                            Alasan pengembalian minimal 5 karakter dan maksimal 1000 karakter.
+                          </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2 mt-4">
+                          <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-times me-2"></i>Batal
+                          </button>
+                          <button type="button" class="btn btn-primary flex-fill" id="submit-return-bidang" onclick="returnToBidang()">
+                            <i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style>
+        /* Sticky positioning fix for modal */
+        .modal .sticky-top {
+          z-index: 1;
+        }
+        </style>
+
+        <script>
+        // Open Return to Bidang Modal
+        function openReturnToBidangModal(docId) {
+          // Fetch document details via AJAX (returns HTML)
+          fetch(`/dokumens/${docId}/detail`, {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'text/html'
+            }
+          })
+            .then(response => response.text())
+            .then(html => {
+              // Set document info in modal
+              document.getElementById('return-bidang-doc-info').innerHTML = html;
+              document.getElementById('return-bidang-doc-id').value = docId;
+
+              // Reset form
+              document.getElementById('target_bidang').value = '';
+              document.getElementById('bidang_return_reason').value = '';
+              document.getElementById('bidang-char-count').textContent = '0';
+
+              // Show modal
+              const modal = new bootstrap.Modal(document.getElementById('returnToBidangModal'));
+              modal.show();
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Gagal memuat detail dokumen.');
+            });
+        }
+
+        // Return to Bidang function
+        function returnToBidang() {
+          const docId = document.getElementById('return-bidang-doc-id').value;
+          const targetBidang = document.getElementById('target_bidang').value;
+          const reason = document.getElementById('bidang_return_reason').value;
+
+          if (!targetBidang) {
+            alert('Pilih bidang tujuan terlebih dahulu.');
+            return;
+          }
+
+          if (!reason || reason.trim().length < 5) {
+            alert('Alasan pengembalian minimal 5 karakter.');
+            return;
+          }
+
+          const submitBtn = document.getElementById('submit-return-bidang');
+
+          // Show loading state
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
+
+          fetch(`/documents/verifikasi/${docId}/return-to-bidang`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+              target_bidang: targetBidang,
+              bidang_return_reason: reason
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Close modal
+              const modal = bootstrap.Modal.getInstance(document.getElementById('returnToBidangModal'));
+              modal.hide();
+
+              // Show success notification
+              showNotification(`Dokumen berhasil dikembalikan ke bidang ${data.target_bidang}`, 'success');
+
+              // Reload page after 2 seconds
+              setTimeout(() => {
+                location.reload();
+              }, 2000);
+            } else {
+              alert(data.message || 'Gagal mengembalikan dokumen ke bidang.');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mengembalikan dokumen ke bidang.');
+          })
+          .finally(() => {
+            // Restore button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang';
+          });
+        }
+
+        // Character counter for bidang return reason textarea
+        document.addEventListener('DOMContentLoaded', function() {
+          const bidangReasonTextarea = document.getElementById('bidang_return_reason');
+          const bidangCharCount = document.getElementById('bidang-char-count');
+
+          if (bidangReasonTextarea && bidangCharCount) {
+            bidangReasonTextarea.addEventListener('input', function() {
+              const length = this.value.length;
+              bidangCharCount.textContent = length;
+
+              // Update color based on length
+              bidangCharCount.classList.remove('warning', 'danger');
+              if (length > 900) {
+                bidangCharCount.classList.add('danger');
+              } else if (length > 800) {
+                bidangCharCount.classList.add('warning');
+              }
+            });
+          }
+        });
+        </script>
+
+        <!-- Notification Styles -->
+        <style>
+        .notification {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+          transform: translateX(100%);
+          transition: all 0.3s ease;
+          max-width: 400px;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification.show {
+          transform: translateX(0);
+        }
+
+        .notification-content {
+          padding: 16px 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: white;
+          font-weight: 500;
+        }
+
+        .notification-success {
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .notification-info {
+          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+        }
+
+        @media (max-width: 768px) {
+          .notification {
+            left: 20px;
+            right: 20px;
+            max-width: none;
+            top: 10px;
+          }
+        }
+
+        /* Send to Next Modal - Radio Button Styles */
+        #sendToNextModal .form-check {
+          transition: all 0.3s ease;
+        }
+
+        #sendToNextModal .form-check:hover {
+          border-color: #083E40 !important;
+          background: linear-gradient(135deg, rgba(8, 62, 64, 0.05) 0%, rgba(136, 151, 23, 0.05) 100%);
+          transform: translateX(4px);
+          box-shadow: 0 2px 12px rgba(8, 62, 64, 0.15);
+        }
+
+        #sendToNextModal .form-check-input:checked ~ .form-check-label {
+          color: #083E40;
+        }
+
+        #sendToNextModal .form-check:has(.form-check-input:checked) {
+          border-color: #083E40 !important;
+          background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%);
+          box-shadow: 0 4px 16px rgba(8, 62, 64, 0.2);
+        }
+
+        #sendToNextModal .form-check-input {
+          width: 20px;
+          height: 20px;
+          margin-top: 2px;
+          cursor: pointer;
+        }
+
+        #sendToNextModal .form-check-input:checked {
+          background-color: #083E40;
+          border-color: #083E40;
+        }
+        </style>
+
+        <script>
+        // Handle suggestion button clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            const suggestionButtons = document.querySelectorAll('.suggestion-btn');
+
+            suggestionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const suggestion = this.getAttribute('data-suggestion');
+                    const searchInput = document.querySelector('input[name="search"]');
+                    const form = searchInput.closest('form');
+
+                    // Set the suggestion value to search input
+                    searchInput.value = suggestion;
+
+                    // Submit the form
+                    form.submit();
+                });
+            });
+        });
+        </script>
+
+        <!-- Modal: Column Customization -->
+        <div class="customization-modal" id="columnCustomizationModal">
+          <div class="modal-content-custom">
+            <div class="modal-header-custom">
+              <h3>
+                <i class="fa-solid fa-table-columns"></i>
+                Kustomisasi Kolom Tabel
+              </h3>
+            </div>
+
+            <div class="modal-body-custom">
+              <div class="customization-grid">
+                <!-- Selection Panel -->
+                <div class="selection-panel">
+                  <div class="panel-title">
+                    <i class="fa-solid fa-check-square"></i>
+                    Pilih Kolom
+                  </div>
+                  <div class="panel-description">
+                    Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+                  </div>
+                  <div class="column-selection-list" id="columnSelectionList">
+                    @foreach($availableColumns as $key => $label)
+                      <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
+                           data-column="{{ $key }}"
+                           draggable="{{ in_array($key, $selectedColumns) ? 'true' : 'false' }}"
+                           onclick="toggleColumn(this)">
+                        <div class="drag-handle">
+                          <i class="fa-solid fa-grip-vertical"></i>
+                        </div>
+                        <input type="checkbox"
+                               class="column-item-checkbox"
+                               value="{{ $key }}"
+                               {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
+                               onclick="event.stopPropagation()">
+                        <label class="column-item-label">{{ $label }}</label>
+                        <span class="column-item-order">
+                          {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
+                        </span>
+                      </div>
+                    @endforeach
+                  </div>
+                </div>
+
+                <!-- Preview Panel -->
+                <div class="preview-panel">
+                  <div class="panel-title">
+                    <i class="fa-solid fa-eye"></i>
+                    Preview Hasil
+                  </div>
+                  <div class="panel-description">
+                    Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
+                  </div>
+                  <div class="preview-container">
+                    <div id="tablePreview">
+                      @if(count($selectedColumns) > 0)
+                        <table class="preview-table">
+                          <thead>
+                            <tr>
+                              <th>No</th>
+                              @foreach($selectedColumns as $col)
+                                <th>{{ $availableColumns[$col] ?? $col }}</th>
+                              @endforeach
+                              <th>Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for($i = 1; $i <= 5; $i++)
+                              <tr>
+                                <td>{{ $i }}</td>
+                                @foreach($selectedColumns as $col)
+                                  <td>
+                                    @if($col == 'nomor_agenda')
+                                      AGD/{{ 100 + $i }}/XII/2024
+                                    @elseif($col == 'nomor_spp')
+                                      {{ 200 + $i }}/M/SPP/8/04/2024
+                                    @elseif($col == 'tanggal_masuk')
+                                      {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
+                                    @elseif($col == 'nilai_rupiah')
+                                      Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
+                                    @elseif($col == 'nomor_mirror')
+                                      MIR-{{ 1000 + $i }}
+                                    @else
+                                      Contoh Data {{ $i }}
+                                    @endif
+                                  </td>
+                                @endforeach
+                                <td>Edit, Kirim</td>
+                              </tr>
+                            @endfor
+                          </tbody>
+                        </table>
+                      @else
+                        <div class="empty-preview">
+                          <i class="fa-solid fa-table"></i>
+                          <p>Belum ada kolom yang dipilih</p>
+                          <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                        </div>
+                      @endif
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer-custom">
+              <div class="selected-count">
+                <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
+                @if(count($selectedColumns) > 0)
+                                                              <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
+                    return $availableColumns[$col] ?? $col;
+                  }, $selectedColumns)) }}</small>
+                @endif
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn-modal btn-cancel" onclick="closeColumnCustomizationModal()">
+                  <i class="fa-solid fa-times"></i>
+                  Batal
+                </button>
+                <button type="button" class="btn-modal btn-save" id="saveCustomizationBtn" onclick="saveColumnCustomization()">
+                  <i class="fa-solid fa-save"></i>
+                  Simpan Perubahan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+        // Global variables for column customization
+        let selectedColumnsOrder = [];
+        let availableColumnsData = {};
+
+        // Initialize available columns data from PHP
+        @php
+          $columnsJson = json_encode($availableColumns);
+          echo "availableColumnsData = {$columnsJson};";
+        @endphp
+
+        // Initialize selected columns from existing selection
+        @if(count($selectedColumns) > 0)
+          selectedColumnsOrder = @json($selectedColumns);
+        @endif
+
+        // Global Functions
+        function openColumnCustomizationModal() {
+          const modal = document.getElementById('columnCustomizationModal');
+          modal.classList.add('show');
+          document.body.style.overflow = 'hidden';
+          initializeModalState();
+        }
+
+        function closeColumnCustomizationModal() {
+          const modal = document.getElementById('columnCustomizationModal');
+          modal.classList.remove('show');
+          document.body.style.overflow = '';
+        }
+
+        function toggleColumn(columnElement) {
+          const columnKey = columnElement.dataset.column;
+          const checkbox = columnElement.querySelector('.column-item-checkbox');
+          const isChecked = checkbox.checked;
+
+          if (!isChecked) {
+            if (!selectedColumnsOrder.includes(columnKey)) {
+              selectedColumnsOrder.push(columnKey);
+            }
+            checkbox.checked = true;
+            columnElement.classList.add('selected');
+            columnElement.setAttribute('draggable', 'true');
+          } else {
+            selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
+            checkbox.checked = false;
+            columnElement.classList.remove('selected');
+            columnElement.setAttribute('draggable', 'false');
+          }
+
+          updateColumnOrderBadges();
+          updatePreviewTable();
+          updateSelectedCount();
+          updateDraggableState();
+        }
+
+        function updateColumnOrderBadges() {
+          document.querySelectorAll('.column-item').forEach(item => {
+            const columnKey = item.dataset.column;
+            const orderBadge = item.querySelector('.column-item-order');
+            const index = selectedColumnsOrder.indexOf(columnKey);
+
+            if (index !== -1) {
+              orderBadge.textContent = index + 1;
+            } else {
+              orderBadge.textContent = '';
+            }
+          });
+        }
+
+        function updatePreviewTable() {
+          const previewContainer = document.getElementById('tablePreview');
+
+          if (selectedColumnsOrder.length === 0) {
+            previewContainer.innerHTML = `
+              <div class="empty-preview">
+                <i class="fa-solid fa-table fa-2x mb-2"></i>
+                <p>Belum ada kolom yang dipilih</p>
+                <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+              </div>
+            `;
+            return;
+          }
+
+          let previewHTML = `
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+          `;
+
+          selectedColumnsOrder.forEach(columnKey => {
+            const columnLabel = availableColumnsData[columnKey] || columnKey;
+            previewHTML += `<th>${columnLabel}</th>`;
+          });
+
+          previewHTML += `
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          const sampleData = {
+            'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
+            'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
+            'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
+            'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
+            'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
+            'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
+            'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
+          };
+
+          for (let i = 0; i < 5; i++) {
+            previewHTML += `<tr>`;
+            previewHTML += `<td>${i + 1}</td>`;
+
+            selectedColumnsOrder.forEach(columnKey => {
+              // Skip 'status' column as it's always shown as a special column
+              if (columnKey === 'status') {
+                return;
+              }
+
+              const columnLabel = availableColumnsData[columnKey] || columnKey;
+              let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
+
+              previewHTML += `<td>${cellValue}</td>`;
+            });
+
+            previewHTML += `<td>Edit, Kirim</td>`;
+            previewHTML += `</tr>`;
+          }
+
+          previewHTML += `
+              </tbody>
+            </table>
+          `;
+
+          previewContainer.innerHTML = previewHTML;
+        }
+
+        function updateSelectedCount() {
+          const countElement = document.getElementById('selectedColumnCount');
+          countElement.textContent = selectedColumnsOrder.length;
+
+          const saveButton = document.getElementById('saveCustomizationBtn');
+          saveButton.disabled = selectedColumnsOrder.length === 0;
+        }
+
+        function saveColumnCustomization() {
+          if (selectedColumnsOrder.length === 0) {
+            alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
+            return;
+          }
+
+          // Try multiple selectors to find the form
+          let filterForm = document.getElementById('filterForm');
+          if (!filterForm) {
+            filterForm = document.querySelector('form[action*="verifikasi"]');
+          }
+          if (!filterForm) {
+            filterForm = document.querySelector('form[action*="dokumensB"]');
+          }
+          if (!filterForm) {
+            // Fallback: use first form on page
+            filterForm = document.querySelector('form');
+          }
+
+          if (!filterForm) {
+            alert('Form tidak ditemukan.');
+            return;
+          }
+
+          // Remove existing column inputs
+          document.querySelectorAll('input[name="columns[]"]').forEach(input => {
+            if (input.type === 'hidden') {
+              input.remove();
+            }
+          });
+
+          // Add hidden inputs for selected columns in order
+          selectedColumnsOrder.forEach(columnKey => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'columns[]';
+            hiddenInput.value = columnKey;
+            filterForm.appendChild(hiddenInput);
+          });
+
+          // Add enable customization flag
+          const enableInput = document.createElement('input');
+          enableInput.type = 'hidden';
+          enableInput.name = 'enable_customization';
+          enableInput.value = '1';
+          filterForm.appendChild(enableInput);
+
+          closeColumnCustomizationModal();
+          filterForm.submit();
+        }
+
+        function initializeModalState() {
+          document.querySelectorAll('.column-item').forEach(item => {
+            const columnKey = item.dataset.column;
+            const checkbox = item.querySelector('.column-item-checkbox');
+
+            if (selectedColumnsOrder.includes(columnKey)) {
+              checkbox.checked = true;
+              item.classList.add('selected');
+              item.setAttribute('draggable', 'true');
+            } else {
+              checkbox.checked = false;
+              item.classList.remove('selected');
+              item.setAttribute('draggable', 'false');
+            }
+          });
+
+          initializeDragAndDrop();
+          updateColumnOrderBadges();
+          updatePreviewTable();
+          updateSelectedCount();
+        }
+
+        function updateDraggableState() {
+          document.querySelectorAll('.column-item').forEach(item => {
+            const columnKey = item.dataset.column;
+            if (selectedColumnsOrder.includes(columnKey)) {
+              item.setAttribute('draggable', 'true');
+            } else {
+              item.setAttribute('draggable', 'false');
+            }
+          });
+        }
+
+        let draggedElement = null;
+
+        function initializeDragAndDrop() {
+          const columnList = document.getElementById('columnSelectionList');
+          if (!columnList) return;
+
+          const newList = columnList.cloneNode(true);
+          columnList.parentNode.replaceChild(newList, columnList);
+
+          newList.querySelectorAll('.column-item.selected').forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+            item.addEventListener('dragover', handleDragOver);
+            item.addEventListener('drop', handleDrop);
+          });
+        }
+
+        function handleDragStart(e) {
+          draggedElement = this;
+          this.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+          this.classList.remove('dragging');
+          document.querySelectorAll('.column-item').forEach(el => {
+            el.classList.remove('drag-over');
+          });
+          draggedElement = null;
+        }
+
+        function handleDragOver(e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+
+          if (this !== draggedElement && this.classList.contains('selected')) {
+            const afterElement = getDragAfterElement(this.parentNode, e.clientY);
+
+            if (afterElement == null) {
+              this.parentNode.appendChild(draggedElement);
+            } else {
+              this.parentNode.insertBefore(draggedElement, afterElement);
+            }
+          }
+
+          return false;
+        }
+
+        function handleDrop(e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          this.classList.remove('drag-over');
+
+          if (this !== draggedElement && this.classList.contains('selected')) {
+            const columnList = document.getElementById('columnSelectionList');
+            const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
+            const newOrder = selectedItems.map(item => item.dataset.column);
+
+            selectedColumnsOrder = newOrder;
+
+            updateColumnOrderBadges();
+            updatePreviewTable();
+
+            setTimeout(() => {
+              initializeDragAndDrop();
+            }, 50);
+          }
+
+          return false;
+        }
+
+        function getDragAfterElement(container, y) {
+          const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
+
+          return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+              return { offset: offset, element: child };
+            } else {
+              return closest;
+            }
+          }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+          const modal = document.getElementById('columnCustomizationModal');
+          if (modal && modal.classList.contains('show') && e.target === modal) {
+            closeColumnCustomizationModal();
+          }
+        });
+        </script>
+
+        <script>
+        // Open View Document Modal
+        function openViewDocumentModal(docId) {
+          // Set document ID
+          document.getElementById('view-dokumen-id').value = docId;
+
+          // Set edit button URL
+          document.getElementById('view-edit-btn').href = `/documents/verifikasi/${docId}/edit`;
+
+          // Load document data via AJAX
+          fetch(`/documents/verifikasi/${docId}/detail`, {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log('Document data received:', data);
+              if (data.success && data.dokumen) {
+                const dok = data.dokumen;
+
+                // Identitas Dokumen
+                document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
+                document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
+                document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
+                document.getElementById('view-bulan').textContent = dok.bulan || '-';
+                document.getElementById('view-tahun').textContent = dok.tahun || '-';
+                document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
+                document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
+                document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
+                document.getElementById('view-kategori').textContent = dok.kategori || '-';
+                document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+
+                // Detail Keuangan & Vendor
+                document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
+                document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+                // Ejaan nilai rupiah
+                if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
+                  document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
+                } else {
+                  document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+                }
+                document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
+                document.getElementById('view-kebun').textContent = dok.kebun || '-';
+
+                // Referensi Pendukung
+                document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
+                document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
+                document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
+                document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+                document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
+                document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+
+                // Informasi Akutansi
+                document.getElementById('view-nomor-miro-akutansi').textContent = dok.nomor_miro || '-';
+                document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? formatDate(dok.tanggal_miro) : '-';
+
+                // Nomor PO & PR
+                const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
+                  ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
+                  : '-';
+                const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
+                  ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
+                  : '-';
+                document.getElementById('view-nomor-po').textContent = poList;
+                document.getElementById('view-nomor-pr').textContent = prList;
+
+                // Show modal after data is loaded
+                const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+                modal.show();
+
+                // Ensure edit button works correctly - prevent any interference
+                const editBtn = document.getElementById('view-edit-btn');
+                if (editBtn) {
+                  // Remove any existing event listeners by cloning and replacing
+                  const newEditBtn = editBtn.cloneNode(true);
+                  editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+
+                  // Add click handler to ensure navigation works
+                  newEditBtn.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href && href !== '#' && !href.startsWith('#')) {
+                      // Valid URL, allow navigation
+                      window.location.href = href;
+                    }
+                  });
+                }
+              } else {
+                console.error('Invalid response format:', data);
+                alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
+              }
+            })
+            .catch(error => {
+              console.error('Error loading document:', error);
+              alert('Gagal memuat data dokumen: ' + error.message);
+            });
+        }
+
+        // Helper functions for formatting
+        function formatDate(dateStr) {
+          if (!dateStr) return '-';
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+          if (!dateStr) return '-';
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatNumber(num) {
+          if (!num) return '-';
+          return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        // Function to convert number to Indonesian terbilang
+        function terbilangRupiah(number) {
+          number = parseFloat(number) || 0;
+
+          if (number == 0) {
+            return 'nol rupiah';
+          }
+
+          const angka = [
+            '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+            'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+            'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+            'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+          ];
+
+          let hasil = '';
+
+          // Handle triliun
+          if (number >= 1000000000000) {
+            const triliun = Math.floor(number / 1000000000000);
+            hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+            number = number % 1000000000000;
+          }
+
+          // Handle milyar
+          if (number >= 1000000000) {
+            const milyar = Math.floor(number / 1000000000);
+            hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+            number = number % 1000000000;
+          }
+
+          // Handle juta
+          if (number >= 1000000) {
+            const juta = Math.floor(number / 1000000);
+            hasil += terbilangSatuan(juta, angka) + ' juta ';
+            number = number % 1000000;
+          }
+
+          // Handle ribu
+          if (number >= 1000) {
+            const ribu = Math.floor(number / 1000);
+            if (ribu == 1) {
+              hasil += 'seribu ';
+            } else {
+              hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+            }
+            number = number % 1000;
+          }
+
+          // Handle ratusan, puluhan, dan satuan
+          if (number > 0) {
+            hasil += terbilangSatuan(number, angka);
+          }
+
+          return hasil.trim() + ' rupiah';
+        }
+
+        function terbilangSatuan(number, angka) {
+          let hasil = '';
+          number = parseInt(number);
+
+          if (number == 0) {
+            return '';
+          }
+
+          // Handle ratusan
+          if (number >= 100) {
+            const ratus = Math.floor(number / 100);
+            if (ratus == 1) {
+              hasil += 'seratus ';
+            } else {
+              hasil += angka[ratus] + ' ratus ';
+            }
+            number = number % 100;
+          }
+
+          // Handle puluhan dan satuan (0-99)
+          if (number > 0) {
+            if (number < 20) {
+              hasil += angka[number] + ' ';
+            } else {
+              const puluhan = Math.floor(number / 10);
+              const satuan = number % 10;
+
+              if (puluhan == 1) {
+                hasil += angka[10 + satuan] + ' ';
+              } else {
+                hasil += angka[puluhan] + ' puluh ';
+                if (satuan > 0) {
+                  hasil += angka[satuan] + ' ';
+                }
               }
             }
           }
+
+          return hasil.trim();
+        }
+        </script>
+
+        <!-- Modal View Document Detail -->
+        <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
+            <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+              <!-- Sticky Header -->
+              <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+                <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+                  <i class="fa-solid fa-file-lines me-2"></i>
+                  Detail Dokumen Lengkap
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
+              <!-- Scrollable Body -->
+              <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+                <input type="hidden" id="view-dokumen-id">
+
+                <!-- Section 1: Identitas Dokumen -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-id-card"></i>
+                      IDENTITAS DOKUMEN
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor Agenda</label>
+                        <div class="detail-value" id="view-nomor-agenda">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor SPP</label>
+                        <div class="detail-value" id="view-nomor-spp">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal SPP</label>
+                        <div class="detail-value" id="view-tanggal-spp">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Bulan</label>
+                        <div class="detail-value" id="view-bulan">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Tahun</label>
+                        <div class="detail-value" id="view-tahun">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal Masuk</label>
+                        <div class="detail-value" id="view-tanggal-masuk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Kriteria CF</label>
+                        <div class="detail-value" id="view-kategori">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Sub Kriteria</label>
+                        <div class="detail-value" id="view-jenis-dokumen">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Item Sub Kriteria</label>
+                        <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="detail-item">
+                        <label class="detail-label">Jenis Pembayaran</label>
+                        <div class="detail-value" id="view-jenis-pembayaran">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 2: Detail Keuangan & Vendor -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-money-bill-wave"></i>
+                      DETAIL KEUANGAN & VENDOR
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="detail-item">
+                        <label class="detail-label">Uraian SPP</label>
+                        <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nilai Rupiah</label>
+                        <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Ejaan Nilai Rupiah</label>
+                        <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Dibayar Kepada (Vendor)</label>
+                        <div class="detail-value" id="view-dibayar-kepada">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Kebun / Unit Kerja</label>
+                        <div class="detail-value" id="view-kebun">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 3: Referensi Pendukung -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-file-contract"></i>
+                      REFERENSI PENDUKUNG
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">No. SPK</label>
+                        <div class="detail-value" id="view-no-spk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal SPK</label>
+                        <div class="detail-value" id="view-tanggal-spk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal Berakhir SPK</label>
+                        <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor Miro</label>
+                        <div class="detail-value" id="view-nomor-miro">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">No. Berita Acara</label>
+                        <div class="detail-value" id="view-no-berita-acara">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal Berita Acara</label>
+                        <div class="detail-value" id="view-tanggal-berita-acara">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 4: Nomor PO & PR -->
+                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-hashtag"></i>
+                      NOMOR PO & PR
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor PO</label>
+                        <div class="detail-value" id="view-nomor-po">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor PR</label>
+                        <div class="detail-value" id="view-nomor-pr">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 5: Informasi Akutansi -->
+                <div class="form-section mb-4" style="background: linear-gradient(135deg, #f0f4f0 0%, #e8ede8 100%); border-radius: 12px; padding: 20px; border: 2px solid #889717;">
+                  <div class="section-header mb-3">
+                    <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-calculator"></i>
+                      INFORMASI AKUTANSI
+                      <span style="background: #889717; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DATA AKUTANSI</span>
+                    </h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Nomor MIRO</label>
+                        <div class="detail-value" id="view-nomor-miro-akutansi" style="font-weight: 700; color: #083E40;">-</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="detail-item">
+                        <label class="detail-label">Tanggal MIRO</label>
+                        <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sticky Footer -->
+              <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
+                  <i class="fa-solid fa-times me-2"></i>Tutup
+                </button>
+                <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
+                  <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style>
+        /* Detail Item Styles for View Modal */
+        .detail-item {
+          margin-bottom: 8px;
         }
 
-        return hasil.trim();
-      }
-      </script>
+        .detail-label {
+          display: block;
+          font-size: 10px;
+          font-weight: 700;
+          color: #6b7280;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 4px;
+        }
 
-      <!-- Modal View Document Detail -->
-      <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
-          <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
-            <!-- Sticky Header -->
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
-              <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
-                <i class="fa-solid fa-file-lines me-2"></i>
-                Detail Dokumen Lengkap
-              </h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        .detail-value {
+          font-size: 14px;
+          color: #1f2937;
+          padding: 8px 12px;
+          background: white;
+          border-radius: 6px;
+          border: 1px solid #e5e7eb;
+          min-height: 38px;
+          display: flex;
+          align-items: center;
+        }
+        </style>
+
+        <!-- Dropdown Filter Script -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Year Dropdown Handler
+            const yearSelectBtn = document.getElementById('yearSelectBtn');
+            const yearDropdownMenu = document.getElementById('yearDropdownMenu');
+            const yearSelect = document.getElementById('yearSelect');
+            const yearSelectText = document.getElementById('yearSelectText');
+            const yearDropdownItems = document.querySelectorAll('#yearDropdownMenu .year-dropdown-item');
+
+            if (yearSelectBtn && yearDropdownMenu && yearSelect) {
+                // Toggle dropdown menu
+                yearSelectBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Close status dropdown if open
+                    const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+                    const statusSelectBtn = document.getElementById('statusSelectBtn');
+                    if (statusDropdownMenu) statusDropdownMenu.style.display = 'none';
+                    if (statusSelectBtn) statusSelectBtn.classList.remove('active');
+
+                    // Toggle year dropdown visibility
+                    if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
+                        yearDropdownMenu.style.display = 'block';
+                        yearSelectBtn.classList.add('active');
+                    } else {
+                        yearDropdownMenu.style.display = 'none';
+                        yearSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Handle year selection
+                yearDropdownItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const selectedYear = this.getAttribute('data-year');
+
+                        // Update hidden input
+                        yearSelect.value = selectedYear;
+
+                        // Update button text
+                        yearSelectText.textContent = selectedYear || 'Semua Tahun';
+
+                        // Update active state
+                        yearDropdownItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Close dropdown
+                        yearDropdownMenu.style.display = 'none';
+                        yearSelectBtn.classList.remove('active');
+
+                        // Submit form
+                        const form = document.getElementById('filterForm');
+                        if (form) form.submit();
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
+                        yearDropdownMenu.style.display = 'none';
+                        yearSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Prevent dropdown from closing when clicking inside
+                yearDropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // Status Dropdown Handler
+            const statusSelectBtn = document.getElementById('statusSelectBtn');
+            const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+            const statusSelect = document.getElementById('statusSelect');
+            const statusSelectText = document.getElementById('statusSelectText');
+            const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
+
+            if (statusSelectBtn && statusDropdownMenu && statusSelect) {
+                // Toggle dropdown menu
+                statusSelectBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Close year dropdown if open
+                    if (yearDropdownMenu) yearDropdownMenu.style.display = 'none';
+                    if (yearSelectBtn) yearSelectBtn.classList.remove('active');
+
+                    // Toggle status dropdown visibility
+                    if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
+                        statusDropdownMenu.style.display = 'block';
+                        statusSelectBtn.classList.add('active');
+                    } else {
+                        statusDropdownMenu.style.display = 'none';
+                        statusSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Handle status selection
+                statusDropdownItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const selectedStatus = this.getAttribute('data-status');
+
+                        // Update hidden input
+                        statusSelect.value = selectedStatus;
+
+                        // Update button text
+                        const statusLabels = {
+                            '': 'Semua Status',
+                            'menunggu_approve': 'Menunggu Approve',
+                            'sedang_proses': 'Sedang Proses',
+                            'terkirim_perpajakan': 'Terkirim ke Perpajakan',
+                            'terkirim_akutansi': 'Terkirim ke Akutansi',
+                            'terkirim_pembayaran': 'Terkirim ke Pembayaran',
+                            'ditolak': 'Dokumen Ditolak'
+                        };
+                        statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
+
+                        // Update active state
+                        statusDropdownItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Close dropdown
+                        statusDropdownMenu.style.display = 'none';
+                        statusSelectBtn.classList.remove('active');
+
+                        // Submit form
+                        const form = document.getElementById('filterForm');
+                        if (form) form.submit();
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
+                        statusDropdownMenu.style.display = 'none';
+                        statusSelectBtn.classList.remove('active');
+                    }
+                });
+
+                // Prevent dropdown from closing when clicking inside
+                statusDropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+        </script>
+
+  <!-- Year Filter Modal -->
+  <div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
+    <div class="year-filter-modal" onclick="event.stopPropagation()">
+      <div class="year-filter-modal-header">
+        <h5>
+          <i class="fa-solid fa-calendar-alt"></i>
+          Filter Tahun
+        </h5>
+        <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      <div class="year-filter-modal-body">
+        <!-- Filter Type Selection -->
+        <div class="filter-type-section">
+          <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
+          <div class="filter-type-options">
+            <div class="filter-type-option {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
+                 onclick="selectFilterType('tanggal_spp', this)">
+              <input type="radio" name="modal_filter_type" value="tanggal_spp" 
+                     {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
+              <label>
+                <strong>Tanggal SPP</strong>
+                <small class="d-block">Tahun dari kolom Tanggal SPP</small>
+              </label>
             </div>
-
-            <!-- Scrollable Body -->
-            <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
-              <input type="hidden" id="view-dokumen-id">
-
-              <!-- Section 1: Identitas Dokumen -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-id-card"></i>
-                    IDENTITAS DOKUMEN
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor Agenda</label>
-                      <div class="detail-value" id="view-nomor-agenda">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor SPP</label>
-                      <div class="detail-value" id="view-nomor-spp">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal SPP</label>
-                      <div class="detail-value" id="view-tanggal-spp">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Bulan</label>
-                      <div class="detail-value" id="view-bulan">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Tahun</label>
-                      <div class="detail-value" id="view-tahun">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal Masuk</label>
-                      <div class="detail-value" id="view-tanggal-masuk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Kriteria CF</label>
-                      <div class="detail-value" id="view-kategori">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Sub Kriteria</label>
-                      <div class="detail-value" id="view-jenis-dokumen">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Item Sub Kriteria</label>
-                      <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="detail-item">
-                      <label class="detail-label">Jenis Pembayaran</label>
-                      <div class="detail-value" id="view-jenis-pembayaran">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 2: Detail Keuangan & Vendor -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-money-bill-wave"></i>
-                    DETAIL KEUANGAN & VENDOR
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-12">
-                    <div class="detail-item">
-                      <label class="detail-label">Uraian SPP</label>
-                      <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nilai Rupiah</label>
-                      <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Ejaan Nilai Rupiah</label>
-                      <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Dibayar Kepada (Vendor)</label>
-                      <div class="detail-value" id="view-dibayar-kepada">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Kebun / Unit Kerja</label>
-                      <div class="detail-value" id="view-kebun">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 3: Referensi Pendukung -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-file-contract"></i>
-                    REFERENSI PENDUKUNG
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">No. SPK</label>
-                      <div class="detail-value" id="view-no-spk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal SPK</label>
-                      <div class="detail-value" id="view-tanggal-spk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal Berakhir SPK</label>
-                      <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor Miro</label>
-                      <div class="detail-value" id="view-nomor-miro">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">No. Berita Acara</label>
-                      <div class="detail-value" id="view-no-berita-acara">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal Berita Acara</label>
-                      <div class="detail-value" id="view-tanggal-berita-acara">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 4: Nomor PO & PR -->
-              <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-hashtag"></i>
-                    NOMOR PO & PR
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor PO</label>
-                      <div class="detail-value" id="view-nomor-po">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor PR</label>
-                      <div class="detail-value" id="view-nomor-pr">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section 5: Informasi Akutansi -->
-              <div class="form-section mb-4" style="background: linear-gradient(135deg, #f0f4f0 0%, #e8ede8 100%); border-radius: 12px; padding: 20px; border: 2px solid #889717;">
-                <div class="section-header mb-3">
-                  <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-calculator"></i>
-                    INFORMASI AKUTANSI
-                    <span style="background: #889717; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DATA AKUTANSI</span>
-                  </h6>
-                </div>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Nomor MIRO</label>
-                      <div class="detail-value" id="view-nomor-miro-akutansi" style="font-weight: 700; color: #083E40;">-</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="detail-item">
-                      <label class="detail-label">Tanggal MIRO</label>
-                      <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="filter-type-option {{ request('year_filter_type') == 'tanggal_masuk' ? 'selected' : '' }}" 
+                 onclick="selectFilterType('tanggal_masuk', this)">
+              <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
+                     {{ request('year_filter_type') == 'tanggal_masuk' ? 'checked' : '' }}>
+              <label>
+                <strong>Tanggal Masuk</strong>
+                <small class="d-block">Tahun dari timestamp dokumen masuk</small>
+              </label>
             </div>
-
-            <!-- Sticky Footer -->
-            <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
-                <i class="fa-solid fa-times me-2"></i>Tutup
-              </button>
-              <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
-                <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
-              </a>
+            <div class="filter-type-option {{ request('year_filter_type') == 'nomor_spp' ? 'selected' : '' }}" 
+                 onclick="selectFilterType('nomor_spp', this)">
+              <input type="radio" name="modal_filter_type" value="nomor_spp" 
+                     {{ request('year_filter_type') == 'nomor_spp' ? 'checked' : '' }}>
+              <label>
+                <strong>Tahun di Nomor SPP</strong>
+                <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
+              </label>
             </div>
           </div>
         </div>
-      </div>
 
-      <style>
-      /* Detail Item Styles for View Modal */
-      .detail-item {
-        margin-bottom: 8px;
-      }
-
-      .detail-label {
-        display: block;
-        font-size: 10px;
-        font-weight: 700;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
-      }
-
-      .detail-value {
-        font-size: 14px;
-        color: #1f2937;
-        padding: 8px 12px;
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-      }
-      </style>
-
-      <!-- Dropdown Filter Script -->
-      <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          // Year Dropdown Handler
-          const yearSelectBtn = document.getElementById('yearSelectBtn');
-          const yearDropdownMenu = document.getElementById('yearDropdownMenu');
-          const yearSelect = document.getElementById('yearSelect');
-          const yearSelectText = document.getElementById('yearSelectText');
-          const yearDropdownItems = document.querySelectorAll('#yearDropdownMenu .year-dropdown-item');
-
-          if (yearSelectBtn && yearDropdownMenu && yearSelect) {
-              // Toggle dropdown menu
-              yearSelectBtn.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  // Close status dropdown if open
-                  const statusDropdownMenu = document.getElementById('statusDropdownMenu');
-                  const statusSelectBtn = document.getElementById('statusSelectBtn');
-                  if (statusDropdownMenu) statusDropdownMenu.style.display = 'none';
-                  if (statusSelectBtn) statusSelectBtn.classList.remove('active');
-
-                  // Toggle year dropdown visibility
-                  if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
-                      yearDropdownMenu.style.display = 'block';
-                      yearSelectBtn.classList.add('active');
-                  } else {
-                      yearDropdownMenu.style.display = 'none';
-                      yearSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Handle year selection
-              yearDropdownItems.forEach(item => {
-                  item.addEventListener('click', function(e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-
-                      const selectedYear = this.getAttribute('data-year');
-
-                      // Update hidden input
-                      yearSelect.value = selectedYear;
-
-                      // Update button text
-                      yearSelectText.textContent = selectedYear || 'Semua Tahun';
-
-                      // Update active state
-                      yearDropdownItems.forEach(i => i.classList.remove('active'));
-                      this.classList.add('active');
-
-                      // Close dropdown
-                      yearDropdownMenu.style.display = 'none';
-                      yearSelectBtn.classList.remove('active');
-
-                      // Submit form
-                      const form = document.getElementById('filterForm');
-                      if (form) form.submit();
-                  });
-              });
-
-              // Close dropdown when clicking outside
-              document.addEventListener('click', function(e) {
-                  if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
-                      yearDropdownMenu.style.display = 'none';
-                      yearSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Prevent dropdown from closing when clicking inside
-              yearDropdownMenu.addEventListener('click', function(e) {
-                  e.stopPropagation();
-              });
-          }
-
-          // Status Dropdown Handler
-          const statusSelectBtn = document.getElementById('statusSelectBtn');
-          const statusDropdownMenu = document.getElementById('statusDropdownMenu');
-          const statusSelect = document.getElementById('statusSelect');
-          const statusSelectText = document.getElementById('statusSelectText');
-          const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
-
-          if (statusSelectBtn && statusDropdownMenu && statusSelect) {
-              // Toggle dropdown menu
-              statusSelectBtn.addEventListener('click', function(e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  // Close year dropdown if open
-                  if (yearDropdownMenu) yearDropdownMenu.style.display = 'none';
-                  if (yearSelectBtn) yearSelectBtn.classList.remove('active');
-
-                  // Toggle status dropdown visibility
-                  if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
-                      statusDropdownMenu.style.display = 'block';
-                      statusSelectBtn.classList.add('active');
-                  } else {
-                      statusDropdownMenu.style.display = 'none';
-                      statusSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Handle status selection
-              statusDropdownItems.forEach(item => {
-                  item.addEventListener('click', function(e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-
-                      const selectedStatus = this.getAttribute('data-status');
-
-                      // Update hidden input
-                      statusSelect.value = selectedStatus;
-
-                      // Update button text
-                      const statusLabels = {
-                          '': 'Semua Status',
-                          'menunggu_approve': 'Menunggu Approve',
-                          'sedang_proses': 'Sedang Proses',
-                          'terkirim_perpajakan': 'Terkirim ke Perpajakan',
-                          'terkirim_akutansi': 'Terkirim ke Akutansi',
-                          'terkirim_pembayaran': 'Terkirim ke Pembayaran',
-                          'ditolak': 'Dokumen Ditolak'
-                      };
-                      statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
-
-                      // Update active state
-                      statusDropdownItems.forEach(i => i.classList.remove('active'));
-                      this.classList.add('active');
-
-                      // Close dropdown
-                      statusDropdownMenu.style.display = 'none';
-                      statusSelectBtn.classList.remove('active');
-
-                      // Submit form
-                      const form = document.getElementById('filterForm');
-                      if (form) form.submit();
-                  });
-              });
-
-              // Close dropdown when clicking outside
-              document.addEventListener('click', function(e) {
-                  if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
-                      statusDropdownMenu.style.display = 'none';
-                      statusSelectBtn.classList.remove('active');
-                  }
-              });
-
-              // Prevent dropdown from closing when clicking inside
-              statusDropdownMenu.addEventListener('click', function(e) {
-                  e.stopPropagation();
-              });
-          }
-      });
-      </script>
-
-<!-- Year Filter Modal -->
-<div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
-  <div class="year-filter-modal" onclick="event.stopPropagation()">
-    <div class="year-filter-modal-header">
-      <h5>
-        <i class="fa-solid fa-calendar-alt"></i>
-        Filter Tahun
-      </h5>
-      <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
-        <i class="fa-solid fa-times"></i>
-      </button>
-    </div>
-    <div class="year-filter-modal-body">
-      <!-- Filter Type Selection -->
-      <div class="filter-type-section">
-        <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
-        <div class="filter-type-options">
-          <div class="filter-type-option {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
-               onclick="selectFilterType('tanggal_spp', this)">
-            <input type="radio" name="modal_filter_type" value="tanggal_spp" 
-                   {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
-            <label>
-              <strong>Tanggal SPP</strong>
-              <small class="d-block">Tahun dari kolom Tanggal SPP</small>
-            </label>
-          </div>
-          <div class="filter-type-option {{ request('year_filter_type') == 'tanggal_masuk' ? 'selected' : '' }}" 
-               onclick="selectFilterType('tanggal_masuk', this)">
-            <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
-                   {{ request('year_filter_type') == 'tanggal_masuk' ? 'checked' : '' }}>
-            <label>
-              <strong>Tanggal Masuk</strong>
-              <small class="d-block">Tahun dari timestamp dokumen masuk</small>
-            </label>
-          </div>
-          <div class="filter-type-option {{ request('year_filter_type') == 'nomor_spp' ? 'selected' : '' }}" 
-               onclick="selectFilterType('nomor_spp', this)">
-            <input type="radio" name="modal_filter_type" value="nomor_spp" 
-                   {{ request('year_filter_type') == 'nomor_spp' ? 'checked' : '' }}>
-            <label>
-              <strong>Tahun di Nomor SPP</strong>
-              <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
-            </label>
+        <!-- Year Selection -->
+        <div class="year-selection-section">
+          <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
+          <div class="year-buttons-grid">
+            <button type="button" class="year-btn all-years {{ !request('year') ? 'selected' : '' }}" 
+                    onclick="selectYear('', this)">
+              Semua Tahun
+            </button>
+            <button type="button" class="year-btn {{ request('year') == '2024' ? 'selected' : '' }}" 
+                    onclick="selectYear('2024', this)">2024</button>
+            <button type="button" class="year-btn {{ request('year') == '2025' ? 'selected' : '' }}" 
+                    onclick="selectYear('2025', this)">2025</button>
+            <button type="button" class="year-btn {{ request('year') == '2026' ? 'selected' : '' }}" 
+                    onclick="selectYear('2026', this)">2026</button>
+            <button type="button" class="year-btn {{ request('year') == '2027' ? 'selected' : '' }}" 
+                    onclick="selectYear('2027', this)">2027</button>
+            <button type="button" class="year-btn {{ request('year') == '2028' ? 'selected' : '' }}" 
+                    onclick="selectYear('2028', this)">2028</button>
+            <button type="button" class="year-btn {{ request('year') == '2029' ? 'selected' : '' }}" 
+                    onclick="selectYear('2029', this)">2029</button>
+            <button type="button" class="year-btn {{ request('year') == '2030' ? 'selected' : '' }}" 
+                    onclick="selectYear('2030', this)">2030</button>
           </div>
         </div>
       </div>
-      
-      <!-- Year Selection -->
-      <div class="year-selection-section">
-        <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
-        <div class="year-buttons-grid">
-          <button type="button" class="year-btn all-years {{ !request('year') ? 'selected' : '' }}" 
-                  onclick="selectYear('', this)">
-            Semua Tahun
-          </button>
-          <button type="button" class="year-btn {{ request('year') == '2024' ? 'selected' : '' }}" 
-                  onclick="selectYear('2024', this)">2024</button>
-          <button type="button" class="year-btn {{ request('year') == '2025' ? 'selected' : '' }}" 
-                  onclick="selectYear('2025', this)">2025</button>
-          <button type="button" class="year-btn {{ request('year') == '2026' ? 'selected' : '' }}" 
-                  onclick="selectYear('2026', this)">2026</button>
-          <button type="button" class="year-btn {{ request('year') == '2027' ? 'selected' : '' }}" 
-                  onclick="selectYear('2027', this)">2027</button>
-          <button type="button" class="year-btn {{ request('year') == '2028' ? 'selected' : '' }}" 
-                  onclick="selectYear('2028', this)">2028</button>
-          <button type="button" class="year-btn {{ request('year') == '2029' ? 'selected' : '' }}" 
-                  onclick="selectYear('2029', this)">2029</button>
-          <button type="button" class="year-btn {{ request('year') == '2030' ? 'selected' : '' }}" 
-                  onclick="selectYear('2030', this)">2030</button>
-        </div>
+      <div class="year-filter-modal-footer">
+        <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
+          <i class="fa-solid fa-rotate-left me-2"></i>Reset
+        </button>
+        <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
+          <i class="fa-solid fa-check me-2"></i>Terapkan Filter
+        </button>
       </div>
-    </div>
-    <div class="year-filter-modal-footer">
-      <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
-        <i class="fa-solid fa-rotate-left me-2"></i>Reset
-      </button>
-      <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
-        <i class="fa-solid fa-check me-2"></i>Terapkan Filter
-      </button>
     </div>
   </div>
-</div>
 
-<script>
-// Year Filter Modal Functions
-let selectedYear = '{{ request('year') }}';
-let selectedFilterType = '{{ request('year_filter_type', 'tanggal_spp') }}';
+  <script>
+  // Year Filter Modal Functions
+  let selectedYear = '{{ request('year') }}';
+  let selectedFilterType = '{{ request('year_filter_type', 'tanggal_spp') }}';
 
-function openYearFilterModal() {
-  document.getElementById('yearFilterModalOverlay').classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeYearFilterModal(event) {
-  if (event && event.target !== event.currentTarget) return;
-  document.getElementById('yearFilterModalOverlay').classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-function selectFilterType(type, element) {
-  selectedFilterType = type;
-  
-  // Update visual state
-  document.querySelectorAll('.filter-type-option').forEach(opt => {
-    opt.classList.remove('selected');
-    opt.querySelector('input').checked = false;
-  });
-  element.classList.add('selected');
-  element.querySelector('input').checked = true;
-}
-
-function selectYear(year, element) {
-  selectedYear = year;
-  
-  // Update visual state
-  document.querySelectorAll('.year-btn').forEach(btn => {
-    btn.classList.remove('selected');
-  });
-  element.classList.add('selected');
-}
-
-function resetYearFilter() {
-  selectedYear = '';
-  selectedFilterType = 'tanggal_spp';
-  
-  // Reset visual state
-  document.querySelectorAll('.year-btn').forEach(btn => {
-    btn.classList.remove('selected');
-    if (btn.classList.contains('all-years')) {
-      btn.classList.add('selected');
-    }
-  });
-  
-  document.querySelectorAll('.filter-type-option').forEach((opt, index) => {
-    opt.classList.remove('selected');
-    opt.querySelector('input').checked = false;
-    if (index === 0) {
-      opt.classList.add('selected');
-      opt.querySelector('input').checked = true;
-    }
-  });
-  
-  // Apply immediately
-  applyYearFilter();
-}
-
-function applyYearFilter() {
-  // Update hidden inputs
-  document.getElementById('yearSelect').value = selectedYear;
-  document.getElementById('yearFilterType').value = selectedFilterType;
-  
-  // Update button text
-  const filterTypeLabels = {
-    'tanggal_spp': 'Tgl SPP',
-    'tanggal_masuk': 'Tgl Masuk',
-    'nomor_spp': 'No SPP'
-  };
-  
-  const btnText = document.getElementById('yearFilterBtnText');
-  if (selectedYear) {
-    btnText.textContent = selectedYear + ' (' + filterTypeLabels[selectedFilterType] + ')';
-  } else {
-    btnText.textContent = 'Filter Tahun';
+  function openYearFilterModal() {
+    document.getElementById('yearFilterModalOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
   }
-  
-  // Close modal
-  closeYearFilterModal();
-  
-  // Submit form
-  document.getElementById('filterForm').submit();
-}
 
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
+  function closeYearFilterModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('yearFilterModalOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function selectFilterType(type, element) {
+    selectedFilterType = type;
+
+    // Update visual state
+    document.querySelectorAll('.filter-type-option').forEach(opt => {
+      opt.classList.remove('selected');
+      opt.querySelector('input').checked = false;
+    });
+    element.classList.add('selected');
+    element.querySelector('input').checked = true;
+  }
+
+  function selectYear(year, element) {
+    selectedYear = year;
+
+    // Update visual state
+    document.querySelectorAll('.year-btn').forEach(btn => {
+      btn.classList.remove('selected');
+    });
+    element.classList.add('selected');
+  }
+
+  function resetYearFilter() {
+    selectedYear = '';
+    selectedFilterType = 'tanggal_spp';
+
+    // Reset visual state
+    document.querySelectorAll('.year-btn').forEach(btn => {
+      btn.classList.remove('selected');
+      if (btn.classList.contains('all-years')) {
+        btn.classList.add('selected');
+      }
+    });
+
+    document.querySelectorAll('.filter-type-option').forEach((opt, index) => {
+      opt.classList.remove('selected');
+      opt.querySelector('input').checked = false;
+      if (index === 0) {
+        opt.classList.add('selected');
+        opt.querySelector('input').checked = true;
+      }
+    });
+
+    // Apply immediately
+    applyYearFilter();
+  }
+
+  function applyYearFilter() {
+    // Update hidden inputs
+    document.getElementById('yearSelect').value = selectedYear;
+    document.getElementById('yearFilterType').value = selectedFilterType;
+
+    // Update button text
+    const filterTypeLabels = {
+      'tanggal_spp': 'Tgl SPP',
+      'tanggal_masuk': 'Tgl Masuk',
+      'nomor_spp': 'No SPP'
+    };
+
+    const btnText = document.getElementById('yearFilterBtnText');
+    if (selectedYear) {
+      btnText.textContent = selectedYear + ' (' + filterTypeLabels[selectedFilterType] + ')';
+    } else {
+      btnText.textContent = 'Filter Tahun';
+    }
+
+    // Close modal
     closeYearFilterModal();
+
+    // Submit form
+    document.getElementById('filterForm').submit();
   }
-});
-</script>
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeYearFilterModal();
+    }
+  });
+  </script>
 
 @endsection
