@@ -3645,77 +3645,37 @@
               $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
 
               // FIX: Track if document was already sent from verifikasi
-              // This ensures status remains "Terkirim ke Team X" from verifikasi's perspective
+              // This ensures status remains "Terkirim ke Team Perpajakan" from verifikasi's perspective
               // regardless of what happens downstream (perpajakan sends to akutansi, etc.)
               // 
-              // We detect "sent from verifikasi" by checking MULTIPLE conditions:
-              // 1. roleData->processed_at exists (ibub finished processing), OR
-              // 2. Any downstream role has received_at (document has moved on), OR
-              // 3. Document status indicates it has moved past verifikasi stage
+              // IMPORTANT: Verifikasi ONLY checks their IMMEDIATE downstream (Perpajakan)
+              // They should NOT see what happens after Perpajakan (akutansi, pembayaran)
+              // This is like how IbuA status doesn't change after sending to Verifikasi
               $sentToTeamLabel = null;
               
-              // Check which downstream roles have received the document
+              // Get perpajakan role data (verifikasi's immediate downstream)
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
-              $akutansiRoleData = $dokumen->getDataForRole('akutansi');
-              $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
               
-              // Method 1: Check processed_at for ibub
-              $hasProcessedAt = $roleData && $roleData->processed_at;
+              // Check if document has been sent to Perpajakan
+              // ONLY check perpajakan received_at - ignore akutansi/pembayaran
+              $perpajakanHasReceived = $perpajakanRoleData && $perpajakanRoleData->received_at;
               
-              // Method 2: Check received_at for downstream roles
-              $hasDownstreamReceived = ($perpajakanRoleData && $perpajakanRoleData->received_at)
-                                    || ($akutansiRoleData && $akutansiRoleData->received_at)
-                                    || ($pembayaranRoleData && $pembayaranRoleData->received_at);
+              // Also check if ibub has processed_at (explicitly finished processing)
+              $ibubHasProcessed = $roleData && $roleData->processed_at;
               
-              // Method 3: Check document status patterns that indicate sent to downstream
-              $statusIndicatesDownstream = in_array($dokumen->status, [
-                'sent_to_perpajakan',
-                'sent_to_akutansi', 
-                'sent_to_pembayaran',
-                'pending_approval_perpajakan',
-                'pending_approval_akutansi',
-                'pending_approval_pembayaran',
-                'menunggu_di_approve',
-                'waiting_reviewer_approval',
-                'selesai',
-                'completed',
-              ]) || ($dokumen->current_handler != 'ibuB' && $dokumen->current_handler != 'verifikasi' && $dokumen->current_handler != null);
+              // Verifikasi sent the document if:
+              // 1. Perpajakan has received it (received_at is set), OR
+              // 2. Verifikasi has finished processing (processed_at is set), OR
+              // 3. Document status indicates it was sent to perpajakan
+              $sentFromVerifikasi = ($perpajakanHasReceived || $ibubHasProcessed || 
+                in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan']) ||
+                $dokumen->current_handler == 'perpajakan'
+              ) && !$isRejected;
               
-              $sentFromVerifikasi = ($hasProcessedAt || $hasDownstreamReceived || $statusIndicatesDownstream) && !$isRejected;
-              
+              // For Verifikasi: ALWAYS set label to "Team Perpajakan" if sent
+              // They don't care about akutansi or pembayaran - that's not their downstream
               if ($sentFromVerifikasi) {
-                // Determine which team the document was sent to by verifikasi
-                // Priority: check status first, then received_at as fallback
-                
-                // Check by document status pattern (most reliable)
-                if (in_array($dokumen->status, ['sent_to_perpajakan']) 
-                    || ($perpajakanRoleData && $perpajakanRoleData->received_at)) {
-                  $sentToTeamLabel = 'Team Perpajakan';
-                } elseif (in_array($dokumen->status, ['sent_to_akutansi', 'pending_approval_akutansi'])
-                    || ($akutansiRoleData && $akutansiRoleData->received_at && !$perpajakanRoleData?->received_at)) {
-                  $sentToTeamLabel = 'Team Akutansi';
-                } elseif (in_array($dokumen->status, ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve'])
-                    || ($pembayaranRoleData && $pembayaranRoleData->received_at && !$akutansiRoleData?->received_at && !$perpajakanRoleData?->received_at)) {
-                  $sentToTeamLabel = 'Team Pembayaran';
-                }
-                
-                // Fallback: if downstream has received but status doesn't match specific pattern
-                // Check which downstream role was FIRST to receive (lower in workflow)
-                if (!$sentToTeamLabel) {
-                  if ($perpajakanRoleData && $perpajakanRoleData->received_at) {
-                    $sentToTeamLabel = 'Team Perpajakan';
-                  } elseif ($akutansiRoleData && $akutansiRoleData->received_at) {
-                    $sentToTeamLabel = 'Team Akutansi';
-                  } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
-                    $sentToTeamLabel = 'Team Pembayaran';
-                  } elseif ($dokumen->current_handler == 'perpajakan') {
-                    $sentToTeamLabel = 'Team Perpajakan';
-                  } elseif ($dokumen->current_handler == 'akutansi') {
-                    $sentToTeamLabel = 'Team Akutansi';
-                  } elseif ($dokumen->current_handler == 'pembayaran') {
-                    $sentToTeamLabel = 'Team Pembayaran';
-                  }
-                }
+                $sentToTeamLabel = 'Team Perpajakan';
               }
             @endphp
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"

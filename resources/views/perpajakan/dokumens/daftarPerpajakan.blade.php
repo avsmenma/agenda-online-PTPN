@@ -2541,64 +2541,63 @@
               // Document is rejected if it was rejected by perpajakan, or by akutansi and returned to department
               $isRejected = $isRejectedByPerpajakan || $isReturnedFromAkutansi || $isRejectedByAkutansi;
 
-              // FIX: Track if document was already sent from perpajakan
-              // This ensures status remains "Sudah terkirim ke Team X" from perpajakan's perspective
-              // regardless of what happens downstream (akutansi pending approval, etc.)
+              // FIX: Perpajakan needs to see ACTUAL workflow state
+              // - If document is in Akutansi inbox (pending) → "Menunggu Approval dari Team Akutansi"
+              // - If document was approved by Akutansi → "Sudah terkirim ke Team Akutansi"
               //
-              // We detect "sent from perpajakan" by checking MULTIPLE conditions:
-              // 1. perpajakan has processed_at (explicitly finished), OR
-              // 2. Any downstream role (akutansi, pembayaran) has received_at (document moved on), OR
-              // 3. Document status indicates it has moved past perpajakan stage
+              // This is different from Verifikasi which always shows frozen "Terkirim ke Perpajakan"
+              // because Perpajakan needs to know the actual state of approval
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
               $akutansiRoleData = $dokumen->getDataForRole('akutansi');
               $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
               
-              // Method 1: Check processed_at for perpajakan
-              $hasProcessedAt = $perpajakanRoleData && $perpajakanRoleData->processed_at;
+              // Check if Akutansi has APPROVED the document (not just pending)
+              $akutansiHasApproved = $dokumen->roleStatuses()
+                ->where('role_code', 'akutansi')
+                ->where('status', 'approved')
+                ->exists();
               
-              // Method 2: Check received_at for downstream roles
-              $hasDownstreamReceived = ($akutansiRoleData && $akutansiRoleData->received_at)
-                                    || ($pembayaranRoleData && $pembayaranRoleData->received_at);
+              // Check if Pembayaran has APPROVED the document
+              $pembayaranHasApproved = $dokumen->roleStatuses()
+                ->where('role_code', 'pembayaran')
+                ->where('status', 'approved')
+                ->exists();
               
-              // Method 3: Check document status patterns that indicate sent to downstream
-              $statusIndicatesSentFromPerpajakan = in_array($dokumen->status, [
-                'sent_to_akutansi', 
-                'sent_to_pembayaran',
-                'pending_approval_akutansi',
-                'pending_approval_pembayaran',
-                'menunggu_di_approve',
-                'selesai',
-                'completed',
-              ]) || (in_array($dokumen->current_handler, ['akutansi', 'pembayaran']));
+              // Check if document is PENDING in Akutansi inbox
+              $akutansiIsPending = $dokumen->roleStatuses()
+                ->where('role_code', 'akutansi')
+                ->where('status', 'pending')
+                ->exists();
               
-              $sentFromPerpajakan = ($hasProcessedAt || $hasDownstreamReceived || $statusIndicatesSentFromPerpajakan) && !$isRejected;
+              // Check if document is PENDING in Pembayaran inbox
+              $pembayaranIsPending = $dokumen->roleStatuses()
+                ->where('role_code', 'pembayaran')
+                ->where('status', 'pending')
+                ->exists();
+              
+              // Determine status for perpajakan's view:
+              // 1. "Sudah terkirim" = downstream role has APPROVED (accepted from inbox)
+              // 2. "Menunggu Approval" = downstream role has document in inbox (pending)
+              // 3. null = document is still being processed by perpajakan
+              
               $sentToTeamFromPerpajakan = null;
+              $isPendingDownstream = false;
+              $pendingDownstreamTeam = null;
               
-              if ($sentFromPerpajakan) {
-                // Determine which team the document was sent to by perpajakan
-                // Priority: check status first, then received_at as fallback
-                
-                // Check by document status pattern (most reliable)
-                if (in_array($dokumen->status, ['sent_to_akutansi', 'pending_approval_akutansi'])
-                    || ($akutansiRoleData && $akutansiRoleData->received_at)) {
-                  $sentToTeamFromPerpajakan = 'Team Akutansi';
-                } elseif (in_array($dokumen->status, ['sent_to_pembayaran', 'pending_approval_pembayaran', 'menunggu_di_approve'])
-                    || ($pembayaranRoleData && $pembayaranRoleData->received_at)) {
-                  $sentToTeamFromPerpajakan = 'Team Pembayaran';
-                }
-                
-                // Fallback: check current_handler
-                if (!$sentToTeamFromPerpajakan) {
-                  if ($akutansiRoleData && $akutansiRoleData->received_at) {
-                    $sentToTeamFromPerpajakan = 'Team Akutansi';
-                  } elseif ($pembayaranRoleData && $pembayaranRoleData->received_at) {
-                    $sentToTeamFromPerpajakan = 'Team Pembayaran';
-                  } elseif ($dokumen->current_handler == 'akutansi') {
-                    $sentToTeamFromPerpajakan = 'Team Akutansi';
-                  } elseif ($dokumen->current_handler == 'pembayaran') {
-                    $sentToTeamFromPerpajakan = 'Team Pembayaran';
-                  }
-                }
+              // Check actual approval status (document approved from inbox)
+              if ($akutansiHasApproved || ($akutansiRoleData && $akutansiRoleData->received_at && !$akutansiIsPending)) {
+                $sentToTeamFromPerpajakan = 'Team Akutansi';
+              } elseif ($pembayaranHasApproved || ($pembayaranRoleData && $pembayaranRoleData->received_at && !$pembayaranIsPending)) {
+                $sentToTeamFromPerpajakan = 'Team Pembayaran';
+              }
+              
+              // Check if document is pending (in inbox, waiting approval)
+              if ($akutansiIsPending) {
+                $isPendingDownstream = true;
+                $pendingDownstreamTeam = 'Team Akutansi';
+              } elseif ($pembayaranIsPending) {
+                $isPendingDownstream = true;
+                $pendingDownstreamTeam = 'Team Pembayaran';
               }
 
               $canSend = $dokumen->status != 'sent_to_akutansi'
@@ -2862,16 +2861,17 @@
                       </a>
                     </span>
                   </span>
-                @elseif($dokumen->status == 'sent_to_akutansi')
-                  <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
-                @elseif($dokumen->status == 'sent_to_pembayaran')
-                  <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
+                @elseif($isPendingDownstream)
+                  {{-- FIX: Document is in downstream inbox (Akutansi/Pembayaran) waiting approval --}}
+                  {{-- This should show "Menunggu Approval" NOT "Sudah Terkirim" --}}
+                  <span class="badge-status badge-warning">⏳ Menunggu Approval dari {{ $pendingDownstreamTeam }}</span>
                 @elseif($sentToTeamFromPerpajakan)
-                  {{-- FIX: This check ensures status remains "Sudah terkirim ke Team X" from perpajakan's perspective --}}
-                  {{-- regardless of what happens downstream (akutansi pending approval, pembayaran processing, etc.) --}}
+                  {{-- Document has been APPROVED by downstream (not just pending) --}}
                   <span class="badge-status badge-sent">Sudah terkirim ke {{ $sentToTeamFromPerpajakan }}</span>
-                @elseif($isPendingApprovalAkutansi || $isPendingApprovalPembayaran || $dokumen->status == 'menunggu_di_approve' || $isPending)
-                  <span class="badge-status badge-warning">⏳ {{ $dokumen->getDetailedApprovalText() }}</span>
+                @elseif($dokumen->status == 'sent_to_akutansi' && !$akutansiIsPending)
+                  <span class="badge-status badge-sent">Sudah terkirim ke Team Akutansi</span>
+                @elseif($dokumen->status == 'sent_to_pembayaran' && !$pembayaranIsPending)
+                  <span class="badge-status badge-sent">Sudah terkirim ke Team Pembayaran</span>
                 @elseif($isLocked)
                   <span class="badge-status badge-locked">🔒 Terkunci</span>
                 @elseif($dokumen->status == 'sedang diproses')

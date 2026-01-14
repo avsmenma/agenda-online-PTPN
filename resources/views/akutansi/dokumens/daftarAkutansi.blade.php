@@ -2594,33 +2594,28 @@
                   ->where('status', 'rejected')
                   ->exists();
                 
-                // FIX: Track if document was already sent from akutansi
-                // This ensures status remains "Terkirim ke Pembayaran" from akutansi's perspective
-                // regardless of what happens downstream (pembayaran pending approval, etc.)
-                //
-                // We detect "sent from akutansi" by checking MULTIPLE conditions:
-                // 1. akutansi has processed_at (explicitly finished), OR
-                // 2. pembayaran has received_at (document moved on), OR
-                // 3. Document status indicates it has moved past akutansi stage
+                // FIX: Akutansi needs to see ACTUAL workflow state (like Perpajakan)
+                // - If document is in Pembayaran inbox (pending) → "Menunggu Approval dari Pembayaran"
+                // - If document was approved by Pembayaran → "Terkirim ke Pembayaran"
                 $akutansiRoleData = $dokumen->getDataForRole('akutansi');
                 $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
                 
-                // Method 1: Check processed_at for akutansi
-                $hasAkutansiProcessedAt = $akutansiRoleData && $akutansiRoleData->processed_at;
+                // Check if Pembayaran has APPROVED the document (not just pending)
+                $pembayaranHasApproved = $dokumen->roleStatuses()
+                  ->where('role_code', 'pembayaran')
+                  ->where('status', 'approved')
+                  ->exists();
                 
-                // Method 2: Check received_at for pembayaran
-                $hasPembayaranReceived = $pembayaranRoleData && $pembayaranRoleData->received_at;
+                // Check if document is PENDING in Pembayaran inbox
+                $pembayaranIsPending = $dokumen->roleStatuses()
+                  ->where('role_code', 'pembayaran')
+                  ->where('status', 'pending')
+                  ->exists();
                 
-                // Method 3: Check document status patterns that indicate sent to pembayaran
-                $statusIndicatesSentFromAkutansi = in_array($dokumen->status, [
-                  'sent_to_pembayaran',
-                  'pending_approval_pembayaran',
-                  'menunggu_di_approve',
-                  'selesai',
-                  'completed',
-                ]) || ($dokumen->current_handler == 'pembayaran');
-                
-                $sentFromAkutansi = ($hasAkutansiProcessedAt || $hasPembayaranReceived || $statusIndicatesSentFromAkutansi) && !$isRejected;
+                // Document is truly sent from akutansi if pembayaran has APPROVED (not just pending)
+                $sentFromAkutansi = ($pembayaranHasApproved || 
+                  ($pembayaranRoleData && $pembayaranRoleData->received_at && !$pembayaranIsPending)
+                ) && !$isRejected;
               @endphp
               @if($isRejected)
                 {{-- Dokumen ditolak oleh akutansi --}}
@@ -2634,16 +2629,16 @@
                     </a>
                   </span>
                 </span>
-              @elseif($sentFromAkutansi)
-                {{-- FIX: Document has been sent from akutansi - show "Terkirim ke Pembayaran" --}}
-                {{-- This is prioritized over pending approval to show status from akutansi's perspective --}}
-                <span class="badge-status badge-sent">📤 Terkirim ke Pembayaran</span>
-              @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'pending_approval_pembayaran']))
+              @elseif($pembayaranIsPending)
+                {{-- FIX: Document is in Pembayaran inbox waiting approval --}}
                 <span class="badge-status badge-warning">
                   <i class="fa-solid fa-clock me-1"></i>
-                  Menunggu Approve
+                  Menunggu Approval dari Pembayaran
                 </span>
-              @elseif($dokumen->status == 'sent_to_pembayaran')
+              @elseif($sentFromAkutansi)
+                {{-- Document has been APPROVED by Pembayaran (not just pending) --}}
+                <span class="badge-status badge-sent">📤 Terkirim ke Pembayaran</span>
+              @elseif($dokumen->status == 'sent_to_pembayaran' && !$pembayaranIsPending)
                 <span class="badge-status badge-sent">📤 Terkirim ke Pembayaran</span>
               @elseif($dokumen->is_locked)
                 <span class="badge-status badge-locked">🔒 Terkunci</span>
