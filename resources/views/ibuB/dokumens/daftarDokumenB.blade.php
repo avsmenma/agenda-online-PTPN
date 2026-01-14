@@ -3644,38 +3644,49 @@
               $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
               $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
 
-              // FIX: Track if document was already sent from verifikasi
-              // This ensures status remains "Terkirim ke Team Perpajakan" from verifikasi's perspective
-              // regardless of what happens downstream (perpajakan sends to akutansi, etc.)
+              // FIX: Verifikasi needs to see ACTUAL workflow state (like Perpajakan)
+              // - If document is in Perpajakan inbox (pending) → "Menunggu Approval dari Team Perpajakan"
+              // - If document was approved by Perpajakan → "Terkirim ke Team Perpajakan"
               // 
               // IMPORTANT: Verifikasi ONLY checks their IMMEDIATE downstream (Perpajakan)
               // They should NOT see what happens after Perpajakan (akutansi, pembayaran)
-              // This is like how IbuA status doesn't change after sending to Verifikasi
               $sentToTeamLabel = null;
+              $isPendingPerpajakan = false;
               
               // Get perpajakan role data (verifikasi's immediate downstream)
               $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
               
-              // Check if document has been sent to Perpajakan
-              // ONLY check perpajakan received_at - ignore akutansi/pembayaran
-              $perpajakanHasReceived = $perpajakanRoleData && $perpajakanRoleData->received_at;
+              // Check if Perpajakan has APPROVED the document (not just pending)
+              $perpajakanHasApproved = $dokumen->roleStatuses()
+                ->whereIn('role_code', ['perpajakan', 'ibub'])
+                ->where('status', 'approved')
+                ->exists();
               
-              // Also check if ibub has processed_at (explicitly finished processing)
-              $ibubHasProcessed = $roleData && $roleData->processed_at;
+              // Check if document is PENDING in Perpajakan inbox
+              $perpajakanIsPending = $dokumen->roleStatuses()
+                ->whereIn('role_code', ['perpajakan', 'ibub'])
+                ->where('status', 'pending')
+                ->exists();
               
-              // Verifikasi sent the document if:
-              // 1. Perpajakan has received it (received_at is set), OR
-              // 2. Verifikasi has finished processing (processed_at is set), OR
+              // Document has been sent from Verifikasi if:
+              // 1. Perpajakan has approved (received and processed from inbox), OR
+              // 2. Perpajakan has pending status (in inbox waiting approval), OR
               // 3. Document status indicates it was sent to perpajakan
-              $sentFromVerifikasi = ($perpajakanHasReceived || $ibubHasProcessed || 
+              $sentFromVerifikasi = ($perpajakanHasApproved || $perpajakanIsPending || 
+                ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
                 in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan']) ||
                 $dokumen->current_handler == 'perpajakan'
               ) && !$isRejected;
               
-              // For Verifikasi: ALWAYS set label to "Team Perpajakan" if sent
-              // They don't care about akutansi or pembayaran - that's not their downstream
+              // Determine what to show:
+              // 1. If pending in Perpajakan inbox → "Menunggu Approval"
+              // 2. If approved by Perpajakan → "Terkirim"
               if ($sentFromVerifikasi) {
-                $sentToTeamLabel = 'Team Perpajakan';
+                if ($perpajakanIsPending) {
+                  $isPendingPerpajakan = true;
+                } else {
+                  $sentToTeamLabel = 'Team Perpajakan';
+                }
               }
             @endphp
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
@@ -3895,9 +3906,14 @@
                     {{ $dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai' }}</span>
                 @elseif($dokumen->status == 'rejected_ibub')
                   <span class="badge-status badge-dikembalikan">Rejected</span>
+                @elseif($isPendingPerpajakan)
+                  {{-- FIX: Document is in Perpajakan inbox waiting approval --}}
+                  <span class="badge-status badge-warning">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Menunggu Approval dari Team Perpajakan
+                  </span>
                 @elseif($sentToTeamLabel)
-                  {{-- FIX: This check ensures status remains "Terkirim ke Team X" from verifikasi's perspective --}}
-                  {{-- regardless of what happens downstream (perpajakan sends to akutansi, approval pending, etc.) --}}
+                  {{-- Document has been APPROVED by Perpajakan (not just pending) --}}
                   <span class="badge-status badge-sent">📤 Terkirim ke {{ $sentToTeamLabel }}</span>
                 @elseif($dokumen->status == 'sent_to_perpajakan')
                   <span class="badge-status badge-sent">📤 Terkirim ke Team Perpajakan</span>
