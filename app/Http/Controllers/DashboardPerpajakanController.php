@@ -27,7 +27,12 @@ class DashboardPerpajakanController extends Controller
         $perpajakanDocs = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi')
+                    ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran'])
+                    ->orWhere(function ($completedQ) {
+                        // Include completed documents that went through workflow
+                        $completedQ->whereIn('status', ['completed', 'selesai'])
+                            ->whereNotNull('status_perpajakan');
+                    })
                     ->orWhere(function ($rejectedQ) {
                         $rejectedQ->where('status', 'returned_to_department')
                             ->where('target_department', 'akutansi')
@@ -54,14 +59,18 @@ class DashboardPerpajakanController extends Controller
         // Include both active documents and sent documents for accurate statistics
         $perpajakanDocsWithRoleData = Dokumen::where(function ($query) {
             $query->where('current_handler', 'perpajakan')
-                ->orWhere('status', 'sent_to_akutansi');
+                ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran'])
+                ->orWhere(function ($completedQ) {
+                    $completedQ->whereIn('status', ['completed', 'selesai'])
+                        ->whereNotNull('status_perpajakan');
+                });
         })
             ->excludeCsvImports()
             ->with([
-                'roleData' => function ($q) {
-                    $q->where('role_code', 'perpajakan');
-                }
-            ])
+                    'roleData' => function ($q) {
+                        $q->where('role_code', 'perpajakan');
+                    }
+                ])
             ->get();
 
         $dokumenLessThan24h = 0;  // < 24 jam (green)
@@ -108,7 +117,11 @@ class DashboardPerpajakanController extends Controller
         $dokumenTerbaru = Dokumen::query()
             ->where(function ($query) {
                 $query->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi');
+                    ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran'])
+                    ->orWhere(function ($completedQ) {
+                        $completedQ->whereIn('status', ['completed', 'selesai'])
+                            ->whereNotNull('status_perpajakan');
+                    });
             })
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs'])
@@ -118,9 +131,10 @@ class DashboardPerpajakanController extends Controller
             })
             ->select('dokumens.*')
             ->orderByRaw("CASE
-                WHEN current_handler = 'perpajakan' AND status != 'sent_to_akutansi' THEN 1
+                WHEN current_handler = 'perpajakan' AND status NOT IN ('sent_to_akutansi', 'sent_to_pembayaran') THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
-                ELSE 3
+                WHEN status = 'sent_to_pembayaran' THEN 3
+                ELSE 4
             END")
             ->orderByDesc('perpajakan_data.received_at')
             ->orderByDesc('dokumens.updated_at')
@@ -245,13 +259,13 @@ class DashboardPerpajakanController extends Controller
                     // Dokumen yang sedang diproses oleh perpajakan
                     $query->where('current_handler', 'perpajakan')
                         ->whereNotIn('status', [
-                            'sent_to_akutansi',
-                            'sent_to_pembayaran',
-                            'pending_approval_akutansi',
-                            'pending_approval_pembayaran',
-                            'completed',
-                            'selesai'
-                        ])
+                                'sent_to_akutansi',
+                                'sent_to_pembayaran',
+                                'pending_approval_akutansi',
+                                'pending_approval_pembayaran',
+                                'completed',
+                                'selesai'
+                            ])
                         // Exclude dokumen yang pending approval dari perpajakan
                         ->whereDoesntHave('roleStatuses', function ($statusQ) {
                             $statusQ->where('role_code', 'perpajakan')
@@ -293,13 +307,13 @@ class DashboardPerpajakanController extends Controller
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
                             ->orWhereIn('status', [
-                                'pending_approval_ibub',
-                                'pending_approval_perpajakan',
-                                'pending_approval_akutansi',
-                                'pending_approval_pembayaran',
-                                'waiting_reviewer_approval',
-                                'menunggu_di_approve'
-                            ]);
+                                    'pending_approval_ibub',
+                                    'pending_approval_perpajakan',
+                                    'pending_approval_akutansi',
+                                    'pending_approval_pembayaran',
+                                    'waiting_reviewer_approval',
+                                    'menunggu_di_approve'
+                                ]);
                     });
                     break;
                 case 'ditolak':
@@ -1575,10 +1589,10 @@ class DashboardPerpajakanController extends Controller
                     });
                 })
                 ->with([
-                    'roleData' => function ($query) {
-                        $query->where('role_code', 'perpajakan');
-                    }
-                ])
+                        'roleData' => function ($query) {
+                            $query->where('role_code', 'perpajakan');
+                        }
+                    ])
                 ->latest('updated_at')
                 ->take(10)
                 ->get();
