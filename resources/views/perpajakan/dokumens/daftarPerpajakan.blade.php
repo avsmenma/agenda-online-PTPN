@@ -3164,17 +3164,43 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="sendConfirmationDocId">
-          <div class="mb-3">
-            <label for="nextHandlerSelect" class="form-label fw-bold">
-              <i class="fa-solid fa-route me-2"></i>Pilih Tujuan Pengiriman*
+          <div class="mb-4">
+            <label class="form-label fw-bold mb-3">
+              <i class="fa-solid fa-route me-2"></i>Pilih Tujuan Pengiriman
             </label>
-            <select class="form-select" id="nextHandlerSelect" required>
-              <option value="">Pilih tujuan pengiriman</option>
-              <option value="akutansi">Team Akutansi</option>
-              <option value="pembayaran">Team Pembayaran</option>
-            </select>
-            <div class="form-text">Pilih ke mana dokumen akan dikirim</div>
+            
+            <!-- Visual Card Selection -->
+            <div class="destination-cards-container">
+              <div class="destination-card" data-value="akutansi" onclick="selectDestination('akutansi')">
+                <div class="destination-icon">
+                  <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div class="destination-info">
+                  <div class="destination-name">Team Akutansi</div>
+                  <div class="destination-desc">Kirim untuk proses akutansi</div>
+                </div>
+                <div class="destination-check">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+              </div>
+              
+              <div class="destination-card" data-value="pembayaran" onclick="selectDestination('pembayaran')">
+                <div class="destination-icon pembayaran">
+                  <i class="fa-solid fa-money-bill-wave"></i>
+                </div>
+                <div class="destination-info">
+                  <div class="destination-name">Team Pembayaran</div>
+                  <div class="destination-desc">Kirim langsung ke pembayaran</div>
+                </div>
+                <div class="destination-check">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+              </div>
+            </div>
+            
+            <input type="hidden" id="nextHandlerSelect" value="">
           </div>
+          
           <div class="alert alert-info border-0" id="sendConfirmationInfo">
             <i class="fa-solid fa-circle-info me-2"></i>
             Pastikan seluruh data Team Perpajakan sudah lengkap sebelum mengirim dokumen.
@@ -3193,13 +3219,104 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             <i class="fa-solid fa-times me-2"></i>Batal
           </button>
-          <button type="button" class="btn btn-success" id="confirmSendBtn" onclick="confirmSendToNext()">
+          <button type="button" class="btn btn-success" id="confirmSendBtn" onclick="confirmSendToNext()" disabled>
             <i class="fa-solid fa-paper-plane me-2"></i>Kirim Sekarang
           </button>
         </div>
       </div>
     </div>
   </div>
+  
+  <style>
+  .destination-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .destination-card {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+    position: relative;
+  }
+  
+  .destination-card:hover {
+    border-color: #1a4d3e;
+    background: #f0fdf4;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 77, 62, 0.15);
+  }
+  
+  .destination-card.selected {
+    border-color: #1a4d3e;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    box-shadow: 0 4px 12px rgba(26, 77, 62, 0.2);
+  }
+  
+  .destination-card.selected .destination-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .destination-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+  
+  .destination-icon i {
+    font-size: 22px;
+    color: white;
+  }
+  
+  .destination-icon.pembayaran {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+  
+  .destination-info {
+    flex: 1;
+  }
+  
+  .destination-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1f2937;
+    margin-bottom: 2px;
+  }
+  
+  .destination-desc {
+    font-size: 13px;
+    color: #6b7280;
+  }
+  
+  .destination-check {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+  }
+  
+  .destination-check i {
+    font-size: 24px;
+    color: #1a4d3e;
+  }
+  </style>
 
   <!-- Modal for Send Success -->
   <div class="modal fade" id="sendSuccessModal" tabindex="-1" aria-labelledby="sendSuccessModalLabel" aria-hidden="true">
@@ -3915,11 +4032,38 @@
     }
 
     document.getElementById('sendConfirmationDocId').value = docId;
-    confirmBtn.disabled = false;
+    // Reset card selection and button state
+    confirmBtn.disabled = true; // Start disabled, enable when user selects a destination
     confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Kirim Sekarang';
+    
+    // Reset all card selections
+    document.querySelectorAll('.destination-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    document.getElementById('nextHandlerSelect').value = '';
 
     const modal = new bootstrap.Modal(document.getElementById('sendConfirmationModal'));
     modal.show();
+  }
+
+  // Function to handle visual card selection for destination
+  function selectDestination(value) {
+    // Remove selected class from all cards
+    document.querySelectorAll('.destination-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    const selectedCard = document.querySelector(`.destination-card[data-value="${value}"]`);
+    if (selectedCard) {
+      selectedCard.classList.add('selected');
+    }
+    
+    // Set hidden input value
+    document.getElementById('nextHandlerSelect').value = value;
+    
+    // Enable send button
+    document.getElementById('confirmSendBtn').disabled = false;
   }
 
   function confirmSendToNext() {

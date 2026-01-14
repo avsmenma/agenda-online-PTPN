@@ -3662,27 +3662,28 @@
 
                 if (!$displayStatus) {
                   // Legacy detection for backward compatibility
+                  // FIX: For Verifikasi, ALWAYS show "Terkirim ke Team Perpajakan" once sent
+                  // We don't care about downstream status (akutansi, pembayaran)
                   $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+                  
+                  // Check if document was ever sent to perpajakan
                   $wasSentToPerpajakan = (
                     ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
-                    in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan']) ||
-                    $dokumen->current_handler == 'perpajakan'
+                    in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']) ||
+                    in_array($dokumen->current_handler, ['perpajakan', 'akutansi', 'pembayaran'])
                   );
 
                   if ($wasSentToPerpajakan && !$isRejected) {
+                    // Check if perpajakan is still pending (document in perpajakan inbox)
                     $perpajakanIsPendingInbox = $dokumen->roleStatuses()
                       ->where('role_code', 'perpajakan')
                       ->where('status', 'pending')
                       ->exists();
 
-                    $perpajakanHasApproved = $dokumen->roleStatuses()
-                      ->where('role_code', 'perpajakan')
-                      ->where('status', 'approved')
-                      ->exists();
-
                     if ($perpajakanIsPendingInbox) {
                       $isPendingPerpajakan = true;
-                    } elseif ($perpajakanHasApproved || $dokumen->current_handler != 'perpajakan') {
+                    } else {
+                      // Document has passed perpajakan - show FINAL status
                       $sentToTeamLabel = 'Team Perpajakan';
                     }
                   }
