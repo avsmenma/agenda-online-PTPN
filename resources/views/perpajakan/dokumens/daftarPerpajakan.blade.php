@@ -813,9 +813,9 @@
     }
 
     .table-enhanced .col-status {
-      width: 250px;
-      min-width: 250px;
-      max-width: 280px;
+      width: 320px;
+      min-width: 320px;
+      max-width: 350px;
       text-align: center;
       overflow: visible;
       padding: 8px 4px;
