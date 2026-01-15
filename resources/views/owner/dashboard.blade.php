@@ -1441,10 +1441,6 @@
           <div class="smart-stat-content">
             <div class="smart-stat-label">Total Dokumen</div>
             <div class="smart-stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
-            <div class="smart-stat-trend {{ ($totalDokumenTrend ?? 0) >= 0 ? 'positive' : 'negative' }}">
-              <i class="fas fa-arrow-{{ ($totalDokumenTrend ?? 0) >= 0 ? 'up' : 'down' }}"></i>
-              {{ abs($totalDokumenTrend ?? 0) }}% minggu ini
-            </div>
           </div>
           <div class="smart-stat-icon total">
             <i class="fas fa-file-alt"></i>
@@ -1463,10 +1459,6 @@
           <div class="smart-stat-content">
             <div class="smart-stat-label">Dokumen Proses</div>
             <div class="smart-stat-value">{{ number_format($dokumenProses ?? 0, 0, ',', '.') }}</div>
-            <div class="smart-stat-trend {{ ($dokumenProsesTrend ?? 0) >= 0 ? 'positive' : 'negative' }}">
-              <i class="fas fa-arrow-{{ ($dokumenProsesTrend ?? 0) >= 0 ? 'up' : 'down' }}"></i>
-              {{ abs($dokumenProsesTrend ?? 0) }}% minggu ini
-            </div>
           </div>
           <div class="smart-stat-icon proses">
             <i class="fas fa-clock"></i>
@@ -1485,10 +1477,6 @@
           <div class="smart-stat-content">
             <div class="smart-stat-label">Dokumen Selesai</div>
             <div class="smart-stat-value">{{ number_format($dokumenSelesai ?? 0, 0, ',', '.') }}</div>
-            <div class="smart-stat-trend {{ ($dokumenSelesaiTrend ?? 0) >= 0 ? 'positive' : 'negative' }}">
-              <i class="fas fa-arrow-{{ ($dokumenSelesaiTrend ?? 0) >= 0 ? 'up' : 'down' }}"></i>
-              {{ abs($dokumenSelesaiTrend ?? 0) }}% minggu ini
-            </div>
           </div>
           <div class="smart-stat-icon selesai">
             <i class="fas fa-check-circle"></i>
@@ -1507,10 +1495,6 @@
           <div class="smart-stat-content">
             <div class="smart-stat-label">Total Nilai (Rp)</div>
             <div class="smart-stat-value" style="font-size: 22px;">Rp{{ number_format($totalNilai ?? 0, 0, ',', '.') }}
-            </div>
-            <div class="smart-stat-trend {{ ($totalNilaiTrend ?? 0) >= 0 ? 'positive' : 'negative' }}">
-              <i class="fas fa-arrow-{{ ($totalNilaiTrend ?? 0) >= 0 ? 'up' : 'down' }}"></i>
-              {{ abs($totalNilaiTrend ?? 0) }}% minggu ini
             </div>
           </div>
           <div class="smart-stat-icon nilai">
@@ -2064,11 +2048,11 @@
             const badge = document.createElement('span');
             badge.className = 'filter-badge-item';
             badge.innerHTML = `
-            <span>${label}: ${getFilterDisplayValue(key, value)}</span>
-            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
+              <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+              <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                <i class="fas fa-times"></i>
+              </button>
+            `;
             badgesContainer.appendChild(badge);
           }
         }
