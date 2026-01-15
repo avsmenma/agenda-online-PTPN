@@ -3997,12 +3997,12 @@
                           <span>Balik</span>
                         </button>
                       </div>
-                    @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub']) || $isPending)
-                      <!-- Document already sent or waiting approval - show status -->
-                      @if($isApprovedByOtherRole)
-                        <!-- Document has been approved by Perpajakan/Akutansi - show approved status -->
+                    @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
+                      <!-- Document already sent, waiting approval, or completed - show status -->
+                      @if($isApprovedByOtherRole || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar')
+                        <!-- Document has been approved/completed - show approved status -->
                         <button class="btn-action btn-edit locked btn-full-width" disabled
-                          title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
+                          title="Dokumen sudah selesai diproses">
                           <i class="fa-solid fa-check-circle"></i>
                           <span>Terkirim</span>
                         </button>

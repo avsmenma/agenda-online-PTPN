@@ -2514,8 +2514,8 @@
             @php
               // Use is_locked from controller (based on DokumenHelper logic)
               $isLocked = $dokumen->is_locked ?? false;
-              $isSentToAkutansi = $dokumen->status == 'sent_to_akutansi';
-              $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran';
+              $isSentToAkutansi = $dokumen->status == 'sent_to_akutansi' || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar';
+              $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran' || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar';
               $isPendingApprovalAkutansi = $dokumen->status == 'pending_approval_akutansi';
               $isPendingApprovalPembayaran = $dokumen->status == 'pending_approval_pembayaran' || $dokumen->status == 'menunggu_di_approve';
               $isPending = $dokumen->roleStatuses()
