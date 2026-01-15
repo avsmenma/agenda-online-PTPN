@@ -259,9 +259,11 @@
     }
 
     .table-enhanced .col-status {
-      width: 160px;
-      min-width: 160px;
+      width: 250px;
+      min-width: 250px;
+      max-width: 280px;
       text-align: center;
+      overflow: visible;
     }
 
     .table-enhanced .col-action {
@@ -896,6 +898,7 @@
       gap: 6px;
       transition: all 0.3s ease;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      white-space: nowrap;
     }
 
     /* State 1: 🔒 Terkunci (Locked - Waiting for Deadline) */
