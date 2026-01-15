@@ -879,9 +879,11 @@
     }
 
     .table-enhanced .col-status {
-      width: 120px;
-      min-width: 100px;
+      width: 250px;
+      min-width: 250px;
+      max-width: 280px;
       text-align: center;
+      overflow: visible;
     }
 
     .table-enhanced th.col-status {
@@ -895,6 +897,7 @@
     .table-enhanced .col-status .badge-status {
       margin: 0 auto;
       display: inline-flex;
+      white-space: nowrap;
     }
 
     .table-enhanced .col-keterangan {
