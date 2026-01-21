@@ -538,10 +538,11 @@ class InboxController extends Controller
         if (isset($user->name)) {
             $name = $user->name;
             $nameToRole = [
-                'Ibu A' => 'ibuA',
-                'IbuA' => 'ibuA',
-                'ibuA' => 'ibuA',
-                'Ibu Tarapul' => 'ibuA',
+                'Ibu A' => 'IbuA',
+                'IbuA' => 'IbuA',
+                'ibuA' => 'IbuA',
+                'Ibu Tarapul' => 'IbuA',
+                'ibu tarapul' => 'IbuA',
                 'IbuB' => 'IbuB',
                 'Ibu B' => 'IbuB',
                 'ibuB' => 'IbuB',
