@@ -563,8 +563,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('universal.approval.notifications');
 });
 
-// Inbox Routes - Untuk IbuB, Perpajakan, Akutansi, Pembayaran, Verifikasi
-Route::middleware(['auth', 'role:IbuB,ibub,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
+// Inbox Routes - Untuk IbuA, IbuB, Perpajakan, Akutansi, Pembayaran, Verifikasi
+Route::middleware(['auth', 'role:IbuA,ibua,Ibu A,Ibu Tarapul,IbuB,ibub,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
