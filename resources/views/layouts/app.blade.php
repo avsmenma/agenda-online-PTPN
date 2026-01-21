@@ -1598,12 +1598,14 @@
 
           // Normalize role to check (case-insensitive comparison)
           $currentUserRoleLower = strtolower($currentUserRole);
-          $inboxRoles = ['ibub', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+          $inboxRoles = ['ibua', 'ibu tarapul', 'ibub', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
           $showInbox = in_array($currentUserRoleLower, $inboxRoles);
 
           // Map role to inbox query format
           $inboxRoleForQuery = 'IbuB';
-          if (in_array($currentUserRoleLower, ['perpajakan'])) {
+          if (in_array($currentUserRoleLower, ['ibua', 'ibu tarapul'])) {
+            $inboxRoleForQuery = 'IbuA';
+          } elseif (in_array($currentUserRoleLower, ['perpajakan'])) {
             $inboxRoleForQuery = 'Perpajakan';
           } elseif (in_array($currentUserRoleLower, ['akutansi'])) {
             $inboxRoleForQuery = 'Akutansi';
