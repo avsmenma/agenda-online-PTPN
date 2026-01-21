@@ -505,6 +505,8 @@ class InboxController extends Controller
                 'ibu A' => 'IbuA',
                 'Ibu Tarapul' => 'IbuA',
                 'ibu tarapul' => 'IbuA',
+                'ibutarapul' => 'IbuA',
+                'IbuTarapul' => 'IbuA',
                 // IbuB / Verifikasi mappings
                 'ibuB' => 'Verifikasi',
                 'IbuB' => 'Verifikasi',
