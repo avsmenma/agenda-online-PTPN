@@ -1598,20 +1598,22 @@
 
           // Normalize role to check (case-insensitive comparison)
           $currentUserRoleLower = strtolower($currentUserRole);
-          $inboxRoles = ['ibua', 'ibu tarapul', 'ibub', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+          // Include all possible variations of role names after lowercase
+          $ibuARoles = ['ibua', 'ibu a', 'ibu tarapul', 'ibutarapul'];
+          $inboxRoles = array_merge($ibuARoles, ['ibub', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
           $showInbox = in_array($currentUserRoleLower, $inboxRoles);
 
           // Map role to inbox query format
           $inboxRoleForQuery = 'IbuB';
-          if (in_array($currentUserRoleLower, ['ibua', 'ibu tarapul'])) {
+          if (in_array($currentUserRoleLower, $ibuARoles)) {
             $inboxRoleForQuery = 'IbuA';
-          } elseif (in_array($currentUserRoleLower, ['perpajakan'])) {
+          } elseif (in_array($currentUserRoleLower, ['perpajakan', 'team perpajakan'])) {
             $inboxRoleForQuery = 'Perpajakan';
-          } elseif (in_array($currentUserRoleLower, ['akutansi'])) {
+          } elseif (in_array($currentUserRoleLower, ['akutansi', 'team akutansi'])) {
             $inboxRoleForQuery = 'Akutansi';
-          } elseif (in_array($currentUserRoleLower, ['pembayaran'])) {
+          } elseif (in_array($currentUserRoleLower, ['pembayaran', 'team pembayaran'])) {
             $inboxRoleForQuery = 'Pembayaran';
-          } elseif (in_array($currentUserRoleLower, ['verifikasi'])) {
+          } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'ibub', 'ibu b'])) {
             $inboxRoleForQuery = 'IbuB'; // Verifikasi uses IbuB inbox
           }
         @endphp
@@ -1880,7 +1882,8 @@
         <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}" class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($module === 'perpajakan')
@@ -1899,7 +1902,8 @@
           class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-export me-2"></i> Export Data
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}" class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($module === 'ibub')
@@ -1920,7 +1924,8 @@
         <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}" class="{{ request()->is('*rekapan-keterlambatan/ibuB*') ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/ibuB*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($isBagianUser)
@@ -1953,7 +1958,8 @@
         <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}" class="{{ request()->is('*rekapan-keterlambatan/ibuA*') ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/ibuA*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @endif
@@ -2015,7 +2021,7 @@
 
   <!-- Global UX Helper: Prevent Navigation During Text Selection -->
   <script>
-  /        *         * * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
+  /        *         * * Global Handler untuk mencegah navigasi saat user sedang menyeleksi te         ks
    * Digunakan pada Card dan Table Row yangbisa diklik
    * 
    * @param {Event} event - Click event
