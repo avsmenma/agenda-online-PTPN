@@ -594,9 +594,9 @@ class BagianDokumenController extends Controller
     }
 
     /**
-     * Send document to Verifikasi (IbuB)
+     * Send document to Ibu Tarapul (Bidang Keuangan dan Akutansi)
      */
-    public function sendToVerifikasi(Dokumen $dokumen)
+    public function sendToIbuA(Dokumen $dokumen)
     {
         $bagianCode = $this->getBagianCode();
 
@@ -614,29 +614,32 @@ class BagianDokumenController extends Controller
 
             $now = Carbon::now();
 
-            // Update document status
+            // Update document status - Send to Ibu Tarapul
             $dokumen->update([
-                'status' => 'sent_to_ibub',
-                'current_handler' => 'ibuB',
+                'status' => 'menunggu_approval_keuangan',
+                'current_handler' => 'ibuA',
                 'sent_at' => $now,
             ]);
 
             // Create role data for tracking
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuB',
+                'role_code' => 'ibuA',
                 'received_at' => $now,
                 'received_from' => 'bagian_' . strtolower($bagianCode),
             ]);
 
+            // Set pending status for IbuA inbox
+            $dokumen->setStatusForRole('ibua', 'pending', Auth::user()->name ?? 'Bagian ' . $bagianCode);
+
             DB::commit();
 
             return redirect()->route('bagian.documents.index')
-                ->with('success', 'Dokumen berhasil dikirim ke Team Verifikasi.');
+                ->with('success', 'Dokumen berhasil dikirim ke Bidang Keuangan dan Akutansi.');
 
         } catch (Exception $e) {
             DB::rollback();
-            \Log::error('Error sending document to verifikasi: ' . $e->getMessage());
+            \Log::error('Error sending document to Ibu Tarapul: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Gagal mengirim dokumen: ' . $e->getMessage());
         }

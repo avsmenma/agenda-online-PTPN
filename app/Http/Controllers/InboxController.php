@@ -24,10 +24,10 @@ class InboxController extends Controller
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow IbuB/Verifikasi, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            // Hanya allow IbuA, IbuB/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['IbuA', 'IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
-                abort(403, 'Unauthorized access - Halaman ini hanya untuk Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
+                abort(403, 'Unauthorized access - Halaman ini hanya untuk Ibu Tarapul, Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
             }
 
             // Normalize role code for database query (lowercase)
@@ -64,6 +64,7 @@ class InboxController extends Controller
 
             // Normalize module untuk layout
             $moduleMap = [
+                'IbuA' => 'ibua',
                 'IbuB' => 'ibub',
                 'Verifikasi' => 'ibub',
                 'Perpajakan' => 'perpajakan',
@@ -495,8 +496,16 @@ class InboxController extends Controller
         // Prioritize role field over name field
         if (isset($user->role)) {
             $role = $user->role;
-            // Map role ke format yang sesuai untuk inbox (must match enum: IbuB/Verifikasi, Perpajakan, Akutansi)
+            // Map role ke format yang sesuai untuk inbox (must match enum: IbuA, IbuB/Verifikasi, Perpajakan, Akutansi)
             $roleMap = [
+                // IbuA / Ibu Tarapul mappings
+                'ibuA' => 'IbuA',
+                'IbuA' => 'IbuA',
+                'Ibu A' => 'IbuA',
+                'ibu A' => 'IbuA',
+                'Ibu Tarapul' => 'IbuA',
+                'ibu tarapul' => 'IbuA',
+                // IbuB / Verifikasi mappings
                 'ibuB' => 'Verifikasi',
                 'IbuB' => 'Verifikasi',
                 'Ibu B' => 'Verifikasi',
@@ -570,6 +579,11 @@ class InboxController extends Controller
     private function getRoleCodes($userRole)
     {
         $roleCode = strtolower($userRole);
+
+        // IbuA should also match 'ibutarapul' for backward compatibility
+        if ($roleCode === 'ibua' || $roleCode === 'ibutarapul') {
+            return ['ibua', 'ibutarapul'];
+        }
 
         // Verifikasi should also match 'ibub' for backward compatibility
         if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {

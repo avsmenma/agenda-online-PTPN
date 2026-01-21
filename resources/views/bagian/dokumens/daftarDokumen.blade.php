@@ -472,11 +472,11 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
       <script>
-        setTimeout(function() {
+        setTimeout(function () {
           var alert = document.getElementById('autoCloseAlert');
           if (alert) {
             alert.classList.remove('show');
-            setTimeout(function() { alert.remove(); }, 150);
+            setTimeout(function () { alert.remove(); }, 150);
           }
         }, 5000);
       </script>
@@ -486,11 +486,11 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
       <script>
-        setTimeout(function() {
+        setTimeout(function () {
           var alert = document.getElementById('autoCloseAlertError');
           if (alert) {
             alert.classList.remove('show');
-            setTimeout(function() { alert.remove(); }, 150);
+            setTimeout(function () { alert.remove(); }, 150);
           }
         }, 5000);
       </script>
@@ -600,7 +600,13 @@
                               <i class="fa-solid fa-file-lines"></i>
                               <span>Belum Dikirim</span>
                             </span>
-                          @elseif(in_array($statusLower, ['sent_to_ibub', 'pending_approval_ibub']))
+                          @elseif($statusLower == 'menunggu_approval_keuangan')
+                            <span class="badge-status badge-warning"
+                              style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
+                              <i class="fa-solid fa-clock"></i>
+                              <span>Menunggu Approval Keuangan</span>
+                            </span>
+                          @elseif(in_array($statusLower, ['sent_to_ibub', 'pending_approval_ibub', 'terkirim']))
                             <span class="badge-status badge-terkirim">
                               <i class="fa-solid fa-check"></i>
                               <span>Terkirim</span>
@@ -623,8 +629,8 @@
                               <a href="{{ route('bagian.documents.edit', $doc) }}" class="btn-action btn-edit" title="Edit">
                                 <i class="fa-solid fa-pen"></i>
                               </a>
-                              <form action="{{ route('bagian.documents.send-to-verifikasi', $doc) }}" method="POST" class="d-inline"
-                                onsubmit="return confirm('Kirim dokumen ini ke Team Verifikasi?')">
+                              <form action="{{ route('bagian.documents.send-to-ibua', $doc) }}" method="POST" class="d-inline"
+                                onsubmit="return confirm('Apakah anda yakin dokumen ini dikirim ke Bidang Keuangan dan Akutansi?')">
                                 @csrf
                                 <button type="submit" class="btn-action btn-send" title="Kirim">
                                   <i class="fa-solid fa-paper-plane"></i>

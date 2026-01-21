@@ -891,7 +891,7 @@ Route::middleware(['auth', 'bagian'])
             Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail');
             Route::put('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'update'])->name('update');
             Route::delete('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'destroy'])->name('destroy');
-            Route::post('/{dokumen}/send-to-verifikasi', [\App\Http\Controllers\BagianDokumenController::class, 'sendToVerifikasi'])->name('send-to-verifikasi');
+            Route::post('/{dokumen}/send-to-ibua', [\App\Http\Controllers\BagianDokumenController::class, 'sendToIbuA'])->name('send-to-ibua');
         });
 
         // Tracking
