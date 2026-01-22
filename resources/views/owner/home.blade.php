@@ -297,12 +297,6 @@
                 </div>
                 <div class="label">Total Dokumen</div>
                 <div class="value">{{ number_format($totalDokumen) }}</div>
-                @if($totalDokumenTrend > 0)
-                    <div class="trend up"><i class="fa-solid fa-arrow-up"></i> {{ $totalDokumenTrend }}% minggu ini</div>
-                @elseif($totalDokumenTrend < 0)
-                    <div class="trend down"><i class="fa-solid fa-arrow-down"></i> {{ abs($totalDokumenTrend) }}% minggu ini
-                    </div>
-                @endif
             </div>
 
             <div class="summary-card proses">
