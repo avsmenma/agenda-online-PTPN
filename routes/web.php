@@ -436,6 +436,14 @@ Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('document
     Route::get('/', [DokumenController::class, 'index'])->name('index');
     Route::get('/create', [DokumenController::class, 'create'])->name('create');
     Route::post('/', [DokumenController::class, 'store'])->name('store');
+
+    // CSV Import Routes - MUST be before {dokumen} routes to avoid conflict
+    Route::get('/import', [\App\Http\Controllers\IbuACsvImportController::class, 'index'])->name('import.index');
+    Route::post('/import/upload', [\App\Http\Controllers\IbuACsvImportController::class, 'upload'])->name('import.upload');
+    Route::post('/import/preview', [\App\Http\Controllers\IbuACsvImportController::class, 'preview'])->name('import.preview');
+    Route::post('/import', [\App\Http\Controllers\IbuACsvImportController::class, 'import'])->name('import.execute');
+
+    // Routes with {dokumen} parameter - MUST be after static routes
     Route::get('/{dokumen}/edit', [DokumenController::class, 'edit'])->name('edit');
     Route::get('/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForIbuA'])->name('progress');
@@ -443,14 +451,6 @@ Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('document
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
     Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToIbuB'])->name('send-to-verifikasi');
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
-});
-
-// CSV Import Routes - IbuA (Ibu Tarapul)
-Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('documents/import')->name('documents.import.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\IbuACsvImportController::class, 'index'])->name('index');
-    Route::post('/upload', [\App\Http\Controllers\IbuACsvImportController::class, 'upload'])->name('upload');
-    Route::post('/preview', [\App\Http\Controllers\IbuACsvImportController::class, 'preview'])->name('preview');
-    Route::post('/', [\App\Http\Controllers\IbuACsvImportController::class, 'import'])->name('execute');
 });
 
 // Professional Reports Routes
