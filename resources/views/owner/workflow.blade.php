@@ -471,6 +471,61 @@
       margin: 4px 0;
     }
 
+    /* Deadline Level Indicators - Color coded borders */
+    .timeline-content.deadline-aman {
+      border-color: #10b981 !important;
+      box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .timeline-content.deadline-peringatan {
+      border-color: #f59e0b !important;
+      box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 0 0 3px rgba(245, 158, 11, 0.2);
+      animation: pulse-warning 2s ease-in-out infinite;
+    }
+
+    .timeline-content.deadline-terlambat {
+      border-color: #ef4444 !important;
+      box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 0 0 3px rgba(239, 68, 68, 0.25);
+    }
+
+    @keyframes pulse-warning {
+      0%, 100% {
+        box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 0 0 3px rgba(245, 158, 11, 0.2);
+      }
+      50% {
+        box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 0 0 5px rgba(245, 158, 11, 0.3);
+      }
+    }
+
+    /* Deadline level small indicator badge */
+    .deadline-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+    }
+
+    .deadline-indicator.aman {
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+    }
+
+    .deadline-indicator.peringatan {
+      background: rgba(245, 158, 11, 0.15);
+      color: #d97706;
+    }
+
+    .deadline-indicator.terlambat {
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
+    }
+
     /* Information Grid */
     .info-grid {
       display: grid;
@@ -1073,6 +1128,13 @@
             $rawIcon = $stage['icon'] ?? 'fa-circle';
             $iconClass = strpos($rawIcon, 'fa-') === 0 ? 'fas ' . $rawIcon : 'fas fa-' . $rawIcon;
           }
+
+          // Determine deadline class for color-coded border
+          $deadlineClass = '';
+          $deadlineLevel = $stage['deadlineLevel'] ?? null;
+          if ($deadlineLevel && !$isCompleted && !$isReturned) {
+            $deadlineClass = 'deadline-' . $deadlineLevel;
+          }
         @endphp
 
         <div class="{{ $stageClass }}">
@@ -1082,10 +1144,32 @@
           </div>
 
           {{-- Stage Content --}}
-          <div class="timeline-content">
+          <div class="timeline-content {{ $deadlineClass }}">
             <div class="stage-header">
               <div>
-                <div class="stage-label">{{ $stage['label'] ?? 'STAGE' }}</div>
+                <div class="stage-label">
+                  {{ $stage['label'] ?? 'STAGE' }}
+                  @if($deadlineLevel && !$isCompleted && !$isReturned)
+                    @php
+                      $deadlineIcon = '';
+                      $deadlineText = '';
+                      if ($deadlineLevel === 'aman') {
+                        $deadlineIcon = 'fa-check-circle';
+                        $deadlineText = 'Aman';
+                      } elseif ($deadlineLevel === 'peringatan') {
+                        $deadlineIcon = 'fa-exclamation-triangle';
+                        $deadlineText = 'Mendekati Deadline';
+                      } elseif ($deadlineLevel === 'terlambat') {
+                        $deadlineIcon = 'fa-times-circle';
+                        $deadlineText = 'Terlambat';
+                      }
+                    @endphp
+                    <span class="deadline-indicator {{ $deadlineLevel }}">
+                      <i class="fas {{ $deadlineIcon }}"></i>
+                      {{ $deadlineText }}
+                    </span>
+                  @endif
+                </div>
                 <div class="stage-name">{{ $stage['name'] ?? 'Unknown' }}</div>
               </div>
               <span class="{{ $badgeClass }}">

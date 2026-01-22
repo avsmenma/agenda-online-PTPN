@@ -1402,17 +1402,33 @@ class OwnerDashboardController extends Controller
             }
         }
 
-        // Check if reviewer stage is overdue
+        // Check if reviewer stage is overdue and calculate deadline level
         $reviewerRoleData = $dokumen->getDataForRole('ibub');
         $reviewerIsOverdue = false;
         $reviewerDeadlineInfo = null;
+        $reviewerDeadlineLevel = null;
         if ($reviewerRoleData && $reviewerRoleData->deadline_at && !$reviewerRoleData->processed_at) {
-            if (now()->greaterThan($reviewerRoleData->deadline_at)) {
+            $daysUntil = now()->diffInDays($reviewerRoleData->deadline_at, false);
+            if ($daysUntil < 0) {
                 $reviewerIsOverdue = true;
-                $daysOverdue = now()->diffInDays($reviewerRoleData->deadline_at);
+                $reviewerDeadlineLevel = 'terlambat';
                 $reviewerDeadlineInfo = [
                     'deadline_at' => $reviewerRoleData->deadline_at,
-                    'days_overdue' => $daysOverdue,
+                    'days_overdue' => abs($daysUntil),
+                    'deadline_note' => $reviewerRoleData->deadline_note,
+                ];
+            } elseif ($daysUntil < 3) {
+                $reviewerDeadlineLevel = 'peringatan';
+                $reviewerDeadlineInfo = [
+                    'deadline_at' => $reviewerRoleData->deadline_at,
+                    'days_remaining' => $daysUntil,
+                    'deadline_note' => $reviewerRoleData->deadline_note,
+                ];
+            } else {
+                $reviewerDeadlineLevel = 'aman';
+                $reviewerDeadlineInfo = [
+                    'deadline_at' => $reviewerRoleData->deadline_at,
+                    'days_remaining' => $daysUntil,
                     'deadline_note' => $reviewerRoleData->deadline_note,
                 ];
             }
@@ -1436,7 +1452,8 @@ class OwnerDashboardController extends Controller
             'hasCycle' => $reviewerCycleInfo['hasCycle'],
             'cycleInfo' => $reviewerCycleInfo,
             'isOverdue' => $reviewerIsOverdue,
-            'deadlineInfo' => $reviewerDeadlineInfo
+            'deadlineInfo' => $reviewerDeadlineInfo,
+            'deadlineLevel' => $reviewerDeadlineLevel
         ];
 
         // Stage 3: TAX (Team Perpajakan)
@@ -1484,17 +1501,33 @@ class OwnerDashboardController extends Controller
             }
         }
 
-        // Check if tax stage is overdue
+        // Check if tax stage is overdue and calculate deadline level
         $taxRoleData = $dokumen->getDataForRole('perpajakan');
         $taxIsOverdue = false;
         $taxDeadlineInfo = null;
+        $taxDeadlineLevel = null;
         if ($taxRoleData && $taxRoleData->deadline_at && !$taxRoleData->processed_at) {
-            if (now()->greaterThan($taxRoleData->deadline_at)) {
+            $daysUntil = now()->diffInDays($taxRoleData->deadline_at, false);
+            if ($daysUntil < 0) {
                 $taxIsOverdue = true;
-                $daysOverdue = now()->diffInDays($taxRoleData->deadline_at);
+                $taxDeadlineLevel = 'terlambat';
                 $taxDeadlineInfo = [
                     'deadline_at' => $taxRoleData->deadline_at,
-                    'days_overdue' => $daysOverdue,
+                    'days_overdue' => abs($daysUntil),
+                    'deadline_note' => $taxRoleData->deadline_note,
+                ];
+            } elseif ($daysUntil < 3) {
+                $taxDeadlineLevel = 'peringatan';
+                $taxDeadlineInfo = [
+                    'deadline_at' => $taxRoleData->deadline_at,
+                    'days_remaining' => $daysUntil,
+                    'deadline_note' => $taxRoleData->deadline_note,
+                ];
+            } else {
+                $taxDeadlineLevel = 'aman';
+                $taxDeadlineInfo = [
+                    'deadline_at' => $taxRoleData->deadline_at,
+                    'days_remaining' => $daysUntil,
                     'deadline_note' => $taxRoleData->deadline_note,
                 ];
             }
@@ -1519,7 +1552,8 @@ class OwnerDashboardController extends Controller
             'hasCycle' => $taxCycleInfo['hasCycle'],
             'cycleInfo' => $taxCycleInfo,
             'isOverdue' => $taxIsOverdue,
-            'deadlineInfo' => $taxDeadlineInfo
+            'deadlineInfo' => $taxDeadlineInfo,
+            'deadlineLevel' => $taxDeadlineLevel
         ];
 
         // Stage 4: ACCOUNTING (Team Akutansi)
@@ -1564,17 +1598,33 @@ class OwnerDashboardController extends Controller
             }
         }
 
-        // Check if accounting stage is overdue
+        // Check if accounting stage is overdue and calculate deadline level
         $accountingRoleData = $dokumen->getDataForRole('akutansi');
         $accountingIsOverdue = false;
         $accountingDeadlineInfo = null;
+        $accountingDeadlineLevel = null;
         if ($accountingRoleData && $accountingRoleData->deadline_at && !$accountingRoleData->processed_at) {
-            if (now()->greaterThan($accountingRoleData->deadline_at)) {
+            $daysUntil = now()->diffInDays($accountingRoleData->deadline_at, false);
+            if ($daysUntil < 0) {
                 $accountingIsOverdue = true;
-                $daysOverdue = now()->diffInDays($accountingRoleData->deadline_at);
+                $accountingDeadlineLevel = 'terlambat';
                 $accountingDeadlineInfo = [
                     'deadline_at' => $accountingRoleData->deadline_at,
-                    'days_overdue' => $daysOverdue,
+                    'days_overdue' => abs($daysUntil),
+                    'deadline_note' => $accountingRoleData->deadline_note,
+                ];
+            } elseif ($daysUntil < 3) {
+                $accountingDeadlineLevel = 'peringatan';
+                $accountingDeadlineInfo = [
+                    'deadline_at' => $accountingRoleData->deadline_at,
+                    'days_remaining' => $daysUntil,
+                    'deadline_note' => $accountingRoleData->deadline_note,
+                ];
+            } else {
+                $accountingDeadlineLevel = 'aman';
+                $accountingDeadlineInfo = [
+                    'deadline_at' => $accountingRoleData->deadline_at,
+                    'days_remaining' => $daysUntil,
                     'deadline_note' => $accountingRoleData->deadline_note,
                 ];
             }
@@ -1596,7 +1646,8 @@ class OwnerDashboardController extends Controller
             'hasReturn' => $accountingReturnInfo !== null,
             'returnInfo' => $accountingReturnInfo,
             'isOverdue' => $accountingIsOverdue,
-            'deadlineInfo' => $accountingDeadlineInfo
+            'deadlineInfo' => $accountingDeadlineInfo,
+            'deadlineLevel' => $accountingDeadlineLevel
         ];
 
         // Stage 5: PAYMENT (Pembayaran)
