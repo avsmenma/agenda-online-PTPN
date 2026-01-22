@@ -1955,8 +1955,7 @@
             <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
           </a>
         @endif
-        <a href="{{ route('documents.import.index') }}" 
-          class="{{ request()->routeIs('documents.import.*') || request()->is('*documents/import*') ? 'active' : '' }}">
+        <a href="{{ url('/documents/import') }}" class="{{ request()->is('*documents/import*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-import me-2"></i> Import CSV
         </a>
         <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
@@ -2026,7 +2025,7 @@
   <!-- Global UX Helper: Prevent Navigation During Text Selection -->
   <script>
   /        *         * * Global Handler untuk mencegah navigasi saat user sedang menyeleksi te         ks
-   * Digunakan pada Card dan Table Row yangbisa diklik
+        * Digunakan pada Card dan Table Row yangbisa diklik
    * 
    * @param {Event} event - Click event
    * @param {string} url - URL tujua    nnavigasi
