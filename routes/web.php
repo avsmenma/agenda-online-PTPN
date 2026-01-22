@@ -445,6 +445,14 @@ Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('document
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
 });
 
+// CSV Import Routes - IbuA (Ibu Tarapul)
+Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('documents/import')->name('documents.import.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\IbuACsvImportController::class, 'index'])->name('index');
+    Route::post('/upload', [\App\Http\Controllers\IbuACsvImportController::class, 'upload'])->name('upload');
+    Route::post('/preview', [\App\Http\Controllers\IbuACsvImportController::class, 'preview'])->name('preview');
+    Route::post('/', [\App\Http\Controllers\IbuACsvImportController::class, 'import'])->name('execute');
+});
+
 // Professional Reports Routes
 Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [DokumenRekapanController::class, 'index'])->name('index');

@@ -1955,6 +1955,10 @@
             <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
           </a>
         @endif
+        <a href="{{ route('documents.import.index') }}" 
+          class="{{ request()->routeIs('documents.import.*') || request()->is('*documents/import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-import me-2"></i> Import CSV
+        </a>
         <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
         </a>
