@@ -1167,18 +1167,12 @@ class DokumenController extends Controller
             // 1. Document is rejected (can always be resent) AND with IbuA
             // 2. OR document has allowed status AND with IbuA
             if (!$isRejected && !$isAllowedStatus) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Dokumen tidak dapat dikirim. Status dokumen harus draft, returned, atau sedang diproses.'
-                ], 400);
+                return back()->with('error', 'Dokumen tidak dapat dikirim. Status dokumen harus draft, returned, atau sedang diproses.');
             }
 
             // Only allow if created by ibuA and current_handler is ibuA (case-insensitive)
             if (!$createdByIbuA || !$currentHandlerIbuA) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
-                ], 403);
+                return back()->with('error', 'Anda tidak memiliki izin untuk mengirim dokumen ini.');
             }
 
             DB::beginTransaction();
@@ -1206,10 +1200,7 @@ class DokumenController extends Controller
                 \Log::error('Failed to log document sent to inbox: ' . $logException->getMessage());
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Dokumen berhasil dikirim ke inbox Ibu Yuni dan menunggu persetujuan.'
-            ]);
+            return redirect()->route('documents.index')->with('success', 'Dokumen berhasil dikirim ke inbox Team Verifikasi dan menunggu persetujuan.');
 
         } catch (Exception $e) {
             DB::rollback();
@@ -1219,10 +1210,7 @@ class DokumenController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat mengirim dokumen: ' . $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Terjadi kesalahan saat mengirim dokumen: ' . $e->getMessage());
         }
     }
 
