@@ -183,7 +183,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             $query->where(function ($q) use ($lastCheckedDate) {
                 $q->where('current_handler', 'team_verifikasi')
                     ->where('updated_at', '>', $lastCheckedDate)
-                    ->whereIn('status', ['sent_to_Team Verifikasi', 'sedang diproses', 'menunggu_di_approve']);
+                    ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'menunggu_di_approve']);
             })
                 // Atau dokumen yang baru di-approve oleh perpajakan/akutansi/pembayaran setelah lastChecked
                 ->orWhere(function ($q) use ($lastCheckedDate) {
@@ -226,7 +226,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
 
                 // Tentukan apakah ini dokumen baru dari Operator atau dokumen yang sudah di-approve
                 $isNewFromOperator = $doc->current_handler === 'team_verifikasi' &&
-                    in_array($doc->status, ['sent_to_Team Verifikasi', 'sedang diproses', 'menunggu_di_approve']);
+                    in_array($doc->status, ['sent_to_team_verifikasi', 'sedang diproses', 'menunggu_di_approve']);
 
                 // Cek apakah dokumen sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
                 $approvedBy = null;
@@ -363,10 +363,10 @@ Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'sh
     ->middleware('auth', 'role:admin,Operator,Operator')
     ->name('api.documents.rejected.show');
 Route::get('/api/documents/verifikasi/rejected/check', [TeamVerifikasiController::class, 'checkRejectedDocuments'])
-    ->middleware('auth', 'role:admin,Team Verifikasi,Team Verifikasi')
+    ->middleware('auth', 'role:admin,team_verifikasi')
     ->name('api.documents.verifikasi.rejected.check');
 Route::get('/api/documents/verifikasi/rejected/{dokumen}', [TeamVerifikasiController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,Team Verifikasi,Team Verifikasi')
+    ->middleware('auth', 'role:admin,team_verifikasi')
     ->name('api.documents.verifikasi.rejected.show');
 
 // Backward compatibility for old rejected document routes
@@ -376,10 +376,10 @@ Route::get('/Operator/check-rejected', function () {
 Route::get('/Operator/rejected/{dokumen}', function ($dokumen) {
     return redirect()->route('api.documents.rejected.show', ['dokumen' => $dokumen], 301);
 })->name('operator.rejected.show.old');
-Route::get('/Team Verifikasi/check-rejected', function () {
+Route::get('/team-verifikasi/check-rejected', function () {
     return redirect()->route('api.documents.verifikasi.rejected.check', [], 301);
 })->name('team_verifikasi.checkRejected.old');
-Route::get('/Team Verifikasi/rejected/{dokumen}', function ($dokumen) {
+Route::get('/team-verifikasi/rejected/{dokumen}', function ($dokumen) {
     return redirect()->route('api.documents.verifikasi.rejected.show', ['dokumen' => $dokumen], 301);
 })->name('team_verifikasi.rejected.show.old');
 
@@ -536,13 +536,13 @@ Route::middleware(['auth', 'role:team_verifikasi,admin'])->prefix('documents/ver
 });
 
 // Backward compatibility for old Team Verifikasi approval routes
-Route::post('/Team Verifikasi/dokumen/{dokumen}/accept', function ($dokumen) {
+Route::post('/team-verifikasi/dokumen/{dokumen}/accept', function ($dokumen) {
     return redirect()->route('documents.verifikasi.accept', ['dokumen' => $dokumen], 301);
 })->name('team_verifikasi.dokumen.accept.old');
-Route::post('/Team Verifikasi/dokumen/{dokumen}/reject', function ($dokumen) {
+Route::post('/team-verifikasi/dokumen/{dokumen}/reject', function ($dokumen) {
     return redirect()->route('documents.verifikasi.reject', ['dokumen' => $dokumen], 301);
 })->name('team_verifikasi.dokumen.reject.old');
-Route::get('/Team Verifikasi/pending-approval', function () {
+Route::get('/team-verifikasi/pending-approval', function () {
     return redirect()->route('documents.verifikasi.pending-approval', [], 301);
 })->name('team_verifikasi.pending.approval.old');
 
@@ -572,7 +572,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Inbox Routes - Untuk Operator, Team Verifikasi, Perpajakan, Akutansi, Pembayaran, Verifikasi
-Route::middleware(['auth', 'role:Operator,Operator,ibutarapul,IbuTarapul,Ibu A,Ibu Tarapul,Team Verifikasi,Team Verifikasi,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
+Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
@@ -736,7 +736,7 @@ if (app()->environment('local', 'development')) {
     Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/test-broadcast', function () {
             $dokumen = \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
-                ->orWhere('status', 'sent_to_Team Verifikasi')
+                ->orWhere('status', 'sent_to_team_verifikasi')
                 ->latest()
                 ->first();
 
@@ -906,6 +906,7 @@ Route::middleware(['auth', 'bagian'])
         Route::get('bagian/tracking', [\App\Http\Controllers\BagianDokumenController::class, 'tracking'])
             ->name('bagian.tracking');
     });
+
 
 
 
