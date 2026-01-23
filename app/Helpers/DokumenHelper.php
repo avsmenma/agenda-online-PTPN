@@ -23,7 +23,7 @@ class DokumenHelper
         if (
             in_array($dokumen->status, [
                 'waiting_reviewer_approval',
-                'pending_approval_Team Verifikasi',
+                'pending_approval_team_verifikasi',
                 'pending_approval_perpajakan',
             ])
         ) {
@@ -191,7 +191,7 @@ class DokumenHelper
             in_array($dokumen->status, [
                 'menunggu_di_approve',
                 'waiting_reviewer_approval',
-                'pending_approval_Team Verifikasi',
+                'pending_approval_team_verifikasi',
                 'pending_approval_perpajakan',
                 'pending_approval_akutansi'
             ])
@@ -330,6 +330,7 @@ class DokumenHelper
         ];
     }
 }
+
 
 
 

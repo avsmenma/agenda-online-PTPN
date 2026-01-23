@@ -642,7 +642,7 @@ class Dokumen extends Model
     public function isPendingApproval(): bool
     {
         return in_array($this->status, [
-            'pending_approval_Team Verifikasi',
+            'pending_approval_team_verifikasi',
             'pending_approval_perpajakan',
             'pending_approval_akutansi'
         ]);
@@ -674,7 +674,7 @@ class Dokumen extends Model
     public function getPendingApprovalStatusDisplay(): string
     {
         $statusMap = [
-            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Ibu B',
+            'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Ibu B',
             'pending_approval_perpajakan' => 'Menunggu Persetujuan Perpajakan',
             'pending_approval_akutansi' => 'Menunggu Persetujuan Akutansi',
         ];
@@ -707,7 +707,7 @@ class Dokumen extends Model
 
         // Fallback to status-based detection
         $statusMap = [
-            'pending_approval_Team Verifikasi' => 'Menunggu Approval dari Team Verifikasi',
+            'pending_approval_team_verifikasi' => 'Menunggu Approval dari Team Verifikasi',
             'pending_approval_perpajakan' => 'Menunggu Approval dari Team Perpajakan',
             'pending_approval_akutansi' => 'Menunggu Approval dari Team Akutansi',
             'pending_approval_pembayaran' => 'Menunggu Approval dari Team Pembayaran',
@@ -845,7 +845,7 @@ class Dokumen extends Model
             return 'Team Akutansi';
         }
 
-        if ($status === 'sent_to_team_verifikasi' || $status === 'pending_approval_Team Verifikasi' || $status === 'menunggu_di_approve') {
+        if ($status === 'sent_to_team_verifikasi' || $status === 'pending_approval_team_verifikasi' || $status === 'menunggu_di_approve') {
             return 'Operator';
         }
 
@@ -1133,7 +1133,7 @@ class Dokumen extends Model
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+            'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
             'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
             'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
@@ -1398,7 +1398,7 @@ class Dokumen extends Model
                 'sedang diproses' => 'Terkirim/Approved',
                 'sent_to_perpajakan' => 'Terkirim ke Tax',
                 'sent_to_akutansi' => 'Terkirim ke Accounting',
-                'returned_to_Team Verifikasi' => 'Dikembalikan',
+                'returned_to_team_verifikasi' => 'Dikembalikan',
             ];
 
             return $reviewerStatusMap[$this->status] ?? $this->getStatusDisplay();
@@ -1677,6 +1677,7 @@ class Dokumen extends Model
         }
     }
 }
+
 
 
 

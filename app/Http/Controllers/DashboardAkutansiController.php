@@ -343,7 +343,7 @@ class DashboardAkutansiController extends Controller
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
                             ->orWhereIn('status', [
-                                'pending_approval_Team Verifikasi',
+                                'pending_approval_team_verifikasi',
                                 'pending_approval_perpajakan',
                                 'pending_approval_akutansi',
                                 'pending_approval_pembayaran',
@@ -1863,6 +1863,7 @@ class DashboardAkutansiController extends Controller
         }
     }
 }
+
 
 
 

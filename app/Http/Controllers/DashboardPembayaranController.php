@@ -4216,7 +4216,7 @@ class DashboardPembayaranController extends Controller
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Ibu Yuni',
+            'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Ibu Yuni',
             'sent_to_team_verifikasi' => 'Terkirim ke Ibu Yuni',
             'proses_Team Verifikasi' => 'Diproses Ibu Yuni',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
@@ -4237,6 +4237,7 @@ class DashboardPembayaranController extends Controller
         return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
     }
 }
+
 
 
 

@@ -759,10 +759,10 @@ class TeamVerifikasiController extends Controller
 
             // If document was rejected from inbox or returned, reset to "sedang diproses"
             $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-            $isRejectedByTeam Verifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
+            $isRejectedByTeamVerifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
 
             if (
-                $isRejectedByTeam Verifikasi ||
+                $isRejectedByTeamVerifikasi ||
                 $dokumen->status === 'returned_to_department'
             ) {
                 $newStatus = 'sedang diproses';
@@ -2332,7 +2332,7 @@ class TeamVerifikasiController extends Controller
     {
         try {
             // Validasi: harus pending approval untuk role ini
-            if ($dokumen->status !== 'pending_approval_Team Verifikasi') {
+            if ($dokumen->status !== 'pending_approval_team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak dalam status pending approval.'
@@ -2398,7 +2398,7 @@ class TeamVerifikasiController extends Controller
             ]);
 
             // Validasi: harus pending approval untuk role ini
-            if ($dokumen->status !== 'pending_approval_Team Verifikasi') {
+            if ($dokumen->status !== 'pending_approval_team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak dalam status pending approval.'
@@ -2460,7 +2460,7 @@ class TeamVerifikasiController extends Controller
     public function pendingApproval(Request $request)
     {
         // Get dokumen yang pending approval untuk Team Verifikasi
-        $dokumensPending = Dokumen::where('status', 'pending_approval_Team Verifikasi')
+        $dokumensPending = Dokumen::where('status', 'pending_approval_team_verifikasi')
             ->where('pending_approval_for', 'team_verifikasi')
             ->latest('pending_approval_at')
             ->get();
@@ -3227,6 +3227,8 @@ class TeamVerifikasiController extends Controller
         }
     }
 }
+
+
 
 
 

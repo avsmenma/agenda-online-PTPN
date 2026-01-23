@@ -777,7 +777,7 @@ class OwnerDashboardController extends Controller
             'draft' => '#6c757d', // Gray
             'sedang diproses' => '#083E40', // Green (theme)
             'menunggu_verifikasi' => '#083E40', // Green (theme)
-            'pending_approval_Team Verifikasi' => '#ffc107', // Yellow
+            'pending_approval_team_verifikasi' => '#ffc107', // Yellow
             'sent_to_team_verifikasi' => '#0a4f52', // Dark green
             'proses_Team Verifikasi' => '#ffc107', // Yellow
             'sent_to_perpajakan' => '#0a4f52', // Dark green
@@ -1021,7 +1021,7 @@ class OwnerDashboardController extends Controller
             $isInboxStatus = in_array($status, [
                 'sent_to_team_verifikasi',
                 'menunggu_verifikasi',
-                'pending_approval_Team Verifikasi',
+                'pending_approval_team_verifikasi',
                 'sent_to_perpajakan',
                 'pending_approval_perpajakan',
                 'sent_to_akutansi',
@@ -1142,7 +1142,7 @@ class OwnerDashboardController extends Controller
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+            'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
             'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
             'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
@@ -2044,7 +2044,7 @@ class OwnerDashboardController extends Controller
             $query->where(function ($q) {
                 $q->where('current_handler', 'team_verifikasi')
                     ->orWhere('status', 'sent_to_team_verifikasi')
-                    ->orWhere('status', 'pending_approval_Team Verifikasi')
+                    ->orWhere('status', 'pending_approval_team_verifikasi')
                     ->orWhere('status', 'proses_Team Verifikasi');
             });
         } elseif ($handler === 'perpajakan') {
@@ -2169,7 +2169,7 @@ class OwnerDashboardController extends Controller
                 $countQuery->where(function ($q) {
                     $q->where('current_handler', 'team_verifikasi')
                         ->orWhere('status', 'sent_to_team_verifikasi')
-                        ->orWhere('status', 'pending_approval_Team Verifikasi')
+                        ->orWhere('status', 'pending_approval_team_verifikasi')
                         ->orWhere('status', 'proses_Team Verifikasi');
                 });
             } elseif ($handler === 'perpajakan') {
@@ -2277,7 +2277,7 @@ class OwnerDashboardController extends Controller
             $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'team_verifikasi')
                     ->orWhere('status', 'sent_to_team_verifikasi')
-                    ->orWhere('status', 'pending_approval_Team Verifikasi')
+                    ->orWhere('status', 'pending_approval_team_verifikasi')
                     ->orWhere('status', 'proses_Team Verifikasi');
             });
         } elseif ($type === 'perpajakan') {
@@ -2314,7 +2314,7 @@ class OwnerDashboardController extends Controller
                 ->orWhere('status', 'proses_Team Verifikasi')
                 ->orWhere('status', 'sent_to_perpajakan')
                 ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'pending_approval_Team Verifikasi');
+                ->orWhere('status', 'pending_approval_team_verifikasi');
         })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
             ->where(function ($subQ) {
                 $subQ->whereNull('status_pembayaran')
@@ -2392,7 +2392,7 @@ class OwnerDashboardController extends Controller
                     ->orWhere('status', 'proses_Team Verifikasi')
                     ->orWhere('status', 'sent_to_perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'pending_approval_Team Verifikasi');
+                    ->orWhere('status', 'pending_approval_team_verifikasi');
             })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
@@ -2518,7 +2518,7 @@ class OwnerDashboardController extends Controller
         $ibuYuniCount = $ibuYuniQuery->where(function ($q) {
             $q->where('current_handler', 'team_verifikasi')
                 ->orWhere('status', 'sent_to_team_verifikasi')
-                ->orWhere('status', 'pending_approval_Team Verifikasi')
+                ->orWhere('status', 'pending_approval_team_verifikasi')
                 ->orWhere('status', 'proses_Team Verifikasi');
         })->count();
 
@@ -3403,6 +3403,7 @@ class OwnerDashboardController extends Controller
         }
     }
 }
+
 
 
 
