@@ -477,7 +477,7 @@
               @case('draft')
                 <span class="badge badge-draft">Draft</span>
                 @break
-              @case('sent_to_Team Verifikasi')
+              @case('sent_to_team_verifikasi')
                 <span class="badge badge-sent">Terkirim ke Team Verifikasi</span>
                 @break
               @case('sent_to_perpajakan')
@@ -525,5 +525,6 @@
 @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 @endsection
+
 
 

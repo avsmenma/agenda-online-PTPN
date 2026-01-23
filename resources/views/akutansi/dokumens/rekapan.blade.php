@@ -555,7 +555,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-title">Dokumen Aktif</div>
-          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_Team Verifikasi'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
+          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_team_verifikasi'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
           <div class="stat-description">Sedang diproses</div>
         </div>
       </div>
@@ -594,7 +594,7 @@
       <div class="col-md-3 col-6 mb-3">
         <div class="bagian-card">
           <div class="bagian-name">Terkirim</div>
-          <div class="bagian-count">{{ $statistics['by_status']['sent_to_Team Verifikasi'] }}</div>
+          <div class="bagian-count">{{ $statistics['by_status']['sent_to_team_verifikasi'] }}</div>
         </div>
       </div>
       <div class="col-md-3 col-6 mb-3">
@@ -709,7 +709,7 @@
                     <i class="fas fa-clock"></i> Draft
                   </span>
                   @break
-                @case('sent_to_Team Verifikasi')
+                @case('sent_to_team_verifikasi')
                   <span class="badge badge-sent">
                     <i class="fas fa-paper-plane"></i> Terkirim ke Team Verifikasi
                   </span>
@@ -778,5 +778,6 @@
 </div>
 
 @endsection
+
 
 

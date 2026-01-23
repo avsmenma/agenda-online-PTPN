@@ -2252,12 +2252,12 @@
                 <div class="action-buttons">
                   @php
                     // Check if document has been sent to Team Verifikasi
-                    $isSentToTeam Verifikasi = ($dokumen->status ?? '') == 'sent_to_Team Verifikasi'
+                    $isSentToTeamVerifikasi = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
                       || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
 
                     // Check if document has been approved by Team Verifikasi and sent to other roles
                     $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-                    $isApprovedByTeam Verifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
+                    $isApprovedByTeamVerifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
 
                     // Check if document is rejected - check from roleStatuses
                     // More comprehensive check to ensure we catch all rejected documents
@@ -2301,7 +2301,7 @@
 
                     // Document is considered "sent" if sent to Team Verifikasi OR approved by Team Verifikasi and sent to other roles
                     // BUT: rejected documents are NOT considered "sent" - they can be sent again
-                    $isSent = ($isSentToTeam Verifikasi || ($isApprovedByTeam Verifikasi && $isSentToOtherRoles)) && !$isRejected;
+                    $isSent = ($isSentToTeamVerifikasi || ($isApprovedByTeamVerifikasi && $isSentToOtherRoles)) && !$isRejected;
 
                     // Can send only if document is draft/returned and still with Operator
                     // Include rejected documents (returned_to_Operator) so they can be sent again
@@ -2821,11 +2821,11 @@
   <script>   /* Enhanced interactions and animations */   function toggleDetail(rowId) 
        {     const detailRow = document.getElementById('detail-' + rowId);     const chevron = document.getElementById('chevron-' + rowId     );
            if (detailRow.style.display === 'none' || !detailRow.style.display) {       /* Show detail with animation */       detailRow.style.display = 'table-row';       setTimeout(() => {         detailRow.classList.add('show');         chevron.classList.add('rotate');       }, 10);     } else {       /* Hide detail */       detailRow.classList.remove('show');       chevron.classList.remove('rotate');       setTimeout(() => {         detailRow.style.display = 'none';       }, 300);     }   }
-         /* Simple Send to Team Verifikasi Function */   function sendToTeam Verifikasi(docId) {     /* Store document ID for confirmation */     document.getElementById('confirmSendToTeam VerifikasiBtn').setAttribute('data-doc-id', docId);
+         /* Simple Send to Team Verifikasi Function */   function sendToTeamVerifikasi(docId) {     /* Store document ID for confirmation */     document.getElementById('confirmsendToTeamVerifikasiBtn').setAttribute('data-doc-id', docId);
            /* Show confirmation modal */     const confirmationModal = new bootstrap.Modal(document.getElementById('sendConfirmationModal'));     confirmationModal.show();   }
-         /* Confirm and send to Team Verifikasi */   function confirmSendToTeam Verifikasi() {     const docId = document.getElementById('confirmSendToTeam VerifikasiBtn').getAttribute('data-doc-id');     if (!docId) {       console.error('Document ID not found');       return;     }
+         /* Confirm and send to Team Verifikasi */   function confirmsendToTeamVerifikasi() {     const docId = document.getElementById('confirmsendToTeamVerifikasiBtn').getAttribute('data-doc-id');     if (!docId) {       console.error('Document ID not found');       return;     }
            /* Close confirmation modal */     const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('sendConfirmationModal'));     confirmationModal.hide();
-           const btn = document.querySelector(`button[onclick="sendToTeam Verifikasi(${docId})"]`);     if (!btn) return;
+           const btn = document.querySelector(`button[onclick="sendToTeamVerifikasi(${docId})"]`);     if (!btn) return;
            /* Show loading state */     const originalHTML = btn.innerHTML;     btn.disabled = true;     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
            fetch(`/documents/${docId}/send-to-verifikasi`, {       method: 'POST',       headers: {         'Content-Type': 'application/json',         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')       },       body: JSON.stringify({         deadline_days: null,  /* No deadline from Operator */         deadline_note: null       })     })
             .then(response => response.json())
@@ -3094,9 +3094,9 @@
             }
 
             // Initialize confirmation button click handler
-            const confirmBtn = document.getElementById('confirmSendToTeam VerifikasiBtn');
+            const confirmBtn = document.getElementById('confirmsendToTeamVerifikasiBtn');
             if (confirmBtn) {
-              confirmBtn.addEventListener('click', confirmSendToTeam Verifikasi);
+              confirmBtn.addEventListener('click', confirmsendToTeamVerifikasi);
             }
 
             // Add smooth scroll behavior - only for hash links (exclude modal links)
@@ -4552,6 +4552,7 @@
           </script>
 
 @endsection
+
 
 
 

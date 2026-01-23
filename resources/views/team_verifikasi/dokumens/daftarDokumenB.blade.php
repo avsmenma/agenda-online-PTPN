@@ -3556,7 +3556,7 @@
       ->where('status', 'rejected')
       ->exists();
     return !$hasDeadline
-      && in_array($dokumen->status, ['sent_to_Team Verifikasi', 'sedang diproses'])
+      && in_array($dokumen->status, ['sent_to_team_verifikasi', 'sedang diproses'])
       && is_null($dokumen->returned_to_department_at)
       && is_null($dokumen->returned_to_bidang_at)
       && !$isRejected;
@@ -3949,10 +3949,10 @@
                   @elseif($dokumen->status == 'sedang diproses')
                     {{-- Dokumen yang baru di-approve dari inbox dan sudah di-set deadline --}}
                     <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
-                  @elseif(in_array($dokumen->status, ['sent_to_Team Verifikasi']) && !$isLocked)
+                  @elseif(in_array($dokumen->status, ['sent_to_team_verifikasi']) && !$isLocked)
                     {{-- Dokumen yang sedang diproses (status lama) --}}
                     <span class="badge-status badge-proses">⏳ Diproses</span>
-                  @elseif($dokumen->status == 'sent_to_Team Verifikasi' && $isLocked)
+                  @elseif($dokumen->status == 'sent_to_team_verifikasi' && $isLocked)
                     <span class="badge-status badge-locked">🔒 Terkunci</span>
                   @elseif($dokumen->status == 'returned_to_Operator')
                     <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
@@ -4016,7 +4016,7 @@
                       @endif
                     @else
                       <!-- Unlocked state - buttons enabled -->
-                      @if(in_array($dokumen->status, ['sent_to_Team Verifikasi', 'approved_Team Verifikasi', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
+                      @if(in_array($dokumen->status, ['sent_to_team_verifikasi', 'approved_Team Verifikasi', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
                         <!-- Only show "Kirim Data" button if document hasn't been approved by other roles yet -->
                         <button type="button" class="btn-action btn-kirim btn-full-width"
                           onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
@@ -6877,6 +6877,7 @@
     </script>
 
 @endsection
+
 
 
 

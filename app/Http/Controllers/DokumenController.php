@@ -381,7 +381,7 @@ class DokumenController extends Controller
                 'percentage' => 0
             ];
             $totalPercentage = 20;
-        } elseif ($dokumen->status === 'sent_to_Team Verifikasi') {
+        } elseif ($dokumen->status === 'sent_to_team_verifikasi') {
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
@@ -1131,7 +1131,7 @@ class DokumenController extends Controller
      * Send document to Team Verifikasi (Reviewer)
      * Sets status to WAITING_REVIEWER_APPROVAL - Approval Gate Implementation
      */
-    public function sendToTeam Verifikasi(Dokumen $dokumen)
+    public function sendToTeamVerifikasi(Dokumen $dokumen)
     {
         try {
             // Handle old data that might not have workflow fields
@@ -1181,7 +1181,7 @@ class DokumenController extends Controller
             // Method sendToInbox() akan set:
             // - status ke 'waiting_reviewer_approval' untuk Team Verifikasi
             // - current_stage ke 'reviewer'
-            // - last_action_status ke 'sent_to_Team Verifikasi'
+            // - last_action_status ke 'sent_to_team_verifikasi'
             // - calls sendToRoleInbox() internally which creates status record and activity log
             $dokumen->sendToInbox('team_verifikasi');
 
@@ -1380,6 +1380,7 @@ class DokumenController extends Controller
         return $suggestions;
     }
 }
+
 
 
 

@@ -1906,7 +1906,7 @@ class DashboardPerpajakanController extends Controller
             'by_bagian' => $bagianStats,
             'by_status' => [
                 'draft' => Dokumen::where('created_by', 'operator')->where('status', 'draft')->count(),
-                'sent_to_Team Verifikasi' => Dokumen::where('created_by', 'operator')->where('status', 'sent_to_Team Verifikasi')->count(),
+                'sent_to_team_verifikasi' => Dokumen::where('created_by', 'operator')->where('status', 'sent_to_team_verifikasi')->count(),
                 'sedang diproses' => Dokumen::where('created_by', 'operator')->where('status', 'sedang diproses')->count(),
                 'selesai' => Dokumen::where('created_by', 'operator')->where('status', 'selesai')->count(),
                 'returned_to_Operator' => Dokumen::where('created_by', 'operator')->where('status', 'returned_to_Operator')->count(),
@@ -2556,6 +2556,7 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.export.pdf', $data);
     }
 }
+
 
 
 

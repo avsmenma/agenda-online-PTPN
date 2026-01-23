@@ -450,7 +450,7 @@ class OwnerDashboardController extends Controller
             $receivedAt = $teamVerifikasiData->received_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
-                'type' => 'sent_to_Team Verifikasi',
+                'type' => 'sent_to_team_verifikasi',
                 'icon' => '🚀',
                 'title' => 'Dikirim ke Ibu Yuni',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
@@ -778,7 +778,7 @@ class OwnerDashboardController extends Controller
             'sedang diproses' => '#083E40', // Green (theme)
             'menunggu_verifikasi' => '#083E40', // Green (theme)
             'pending_approval_Team Verifikasi' => '#ffc107', // Yellow
-            'sent_to_Team Verifikasi' => '#0a4f52', // Dark green
+            'sent_to_team_verifikasi' => '#0a4f52', // Dark green
             'proses_Team Verifikasi' => '#ffc107', // Yellow
             'sent_to_perpajakan' => '#0a4f52', // Dark green
             'proses_perpajakan' => '#0a4f52', // Dark green
@@ -1019,7 +1019,7 @@ class OwnerDashboardController extends Controller
             // Document is in inbox if current role hasn't approved it yet
             // But we also need to check if document is actually in inbox (sent_to status)
             $isInboxStatus = in_array($status, [
-                'sent_to_Team Verifikasi',
+                'sent_to_team_verifikasi',
                 'menunggu_verifikasi',
                 'pending_approval_Team Verifikasi',
                 'sent_to_perpajakan',
@@ -1143,7 +1143,7 @@ class OwnerDashboardController extends Controller
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
             'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
-            'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+            'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
             'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'proses_perpajakan' => 'Diproses Team Perpajakan',
@@ -2040,10 +2040,10 @@ class OwnerDashboardController extends Controller
                     });
             });
         } elseif ($handler === 'team_verifikasi') {
-            // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_Team Verifikasi
+            // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_team_verifikasi
             $query->where(function ($q) {
                 $q->where('current_handler', 'team_verifikasi')
-                    ->orWhere('status', 'sent_to_Team Verifikasi')
+                    ->orWhere('status', 'sent_to_team_verifikasi')
                     ->orWhere('status', 'pending_approval_Team Verifikasi')
                     ->orWhere('status', 'proses_Team Verifikasi');
             });
@@ -2168,7 +2168,7 @@ class OwnerDashboardController extends Controller
             } elseif ($handler === 'team_verifikasi') {
                 $countQuery->where(function ($q) {
                     $q->where('current_handler', 'team_verifikasi')
-                        ->orWhere('status', 'sent_to_Team Verifikasi')
+                        ->orWhere('status', 'sent_to_team_verifikasi')
                         ->orWhere('status', 'pending_approval_Team Verifikasi')
                         ->orWhere('status', 'proses_Team Verifikasi');
                 });
@@ -2276,7 +2276,7 @@ class OwnerDashboardController extends Controller
             // Ibu Yuni documents
             $baseQuery->where(function ($q) {
                 $q->where('current_handler', 'team_verifikasi')
-                    ->orWhere('status', 'sent_to_Team Verifikasi')
+                    ->orWhere('status', 'sent_to_team_verifikasi')
                     ->orWhere('status', 'pending_approval_Team Verifikasi')
                     ->orWhere('status', 'proses_Team Verifikasi');
             });
@@ -2307,7 +2307,7 @@ class OwnerDashboardController extends Controller
         // 3. Total Dokumen Proses (sedang diproses)
         $totalProses = (clone $baseQuery)->where(function ($q) {
             $q->where('status', 'sedang diproses')
-                ->orWhere('status', 'sent_to_Team Verifikasi')
+                ->orWhere('status', 'sent_to_team_verifikasi')
                 ->orWhere('status', 'sent_to_perpajakan')
                 ->orWhere('status', 'sent_to_akutansi')
                 ->orWhere('status', 'sent_to_pembayaran')
@@ -2385,7 +2385,7 @@ class OwnerDashboardController extends Controller
         } elseif ($statFilter === 'proses') {
             $documentsQuery->where(function ($q) {
                 $q->where('status', 'sedang diproses')
-                    ->orWhere('status', 'sent_to_Team Verifikasi')
+                    ->orWhere('status', 'sent_to_team_verifikasi')
                     ->orWhere('status', 'sent_to_perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
                     ->orWhere('status', 'sent_to_pembayaran')
@@ -2514,10 +2514,10 @@ class OwnerDashboardController extends Controller
                 });
         })->count();
 
-        // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_Team Verifikasi
+        // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_team_verifikasi
         $ibuYuniCount = $ibuYuniQuery->where(function ($q) {
             $q->where('current_handler', 'team_verifikasi')
-                ->orWhere('status', 'sent_to_Team Verifikasi')
+                ->orWhere('status', 'sent_to_team_verifikasi')
                 ->orWhere('status', 'pending_approval_Team Verifikasi')
                 ->orWhere('status', 'proses_Team Verifikasi');
         })->count();
@@ -3403,6 +3403,7 @@ class OwnerDashboardController extends Controller
         }
     }
 }
+
 
 
 

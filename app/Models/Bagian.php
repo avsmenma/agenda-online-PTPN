@@ -40,3 +40,4 @@ class Bagian extends Model
 
 
 
+

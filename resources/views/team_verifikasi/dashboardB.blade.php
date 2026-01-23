@@ -839,7 +839,7 @@
                   <span class="badge-status badge-sent">📤 Terkirim ke Perpajakan</span>
                 @elseif($dokumen->status == 'sent_to_akutansi')
                   <span class="badge-status badge-sent">📤 Terkirim ke Akutansi</span>
-                @elseif($dokumen->status == 'sent_to_Team Verifikasi')
+                @elseif($dokumen->status == 'sent_to_team_verifikasi')
                   <span class="badge-status badge-proses">⏳ Menunggu Review</span>
                 @elseif($dokumen->status == 'sedang diproses')
                   <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
@@ -890,5 +890,6 @@
   </script>
 
 @endsection
+
 
 

@@ -1495,7 +1495,7 @@
         'sedang diproses' => 'Sedang Diproses',
         'menunggu_verifikasi' => 'Menunggu Verifikasi',
         'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
-        'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+        'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
         'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
         'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
         'proses_perpajakan' => 'Diproses Team Perpajakan',
@@ -2360,6 +2360,7 @@
   </script>
 
 @endsection
+
 
 
 

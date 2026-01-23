@@ -74,3 +74,4 @@ class DocumentSentToInbox implements ShouldBroadcast
 
 
 
+

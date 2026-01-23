@@ -524,7 +524,7 @@
           <option value="">Semua Status</option>
           <option value="belum dikirim" {{ request('status') == 'belum dikirim' ? 'selected' : '' }}>Belum Dikirim
           </option>
-          <option value="sent_to_Team Verifikasi" {{ request('status') == 'sent_to_Team Verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi
+          <option value="sent_to_team_verifikasi" {{ request('status') == 'sent_to_team_verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi
           </option>
           <option value="sudah dibayar" {{ request('status') == 'sudah dibayar' ? 'selected' : '' }}>Sudah Dibayar
           </option>
@@ -606,7 +606,7 @@
                               <i class="fa-solid fa-clock"></i>
                               <span>Menunggu Approval Keuangan</span>
                             </span>
-                          @elseif(in_array($statusLower, ['sent_to_Team Verifikasi', 'pending_approval_Team Verifikasi', 'terkirim']))
+                          @elseif(in_array($statusLower, ['sent_to_team_verifikasi', 'pending_approval_Team Verifikasi', 'terkirim']))
                             <span class="badge-status badge-terkirim">
                               <i class="fa-solid fa-check"></i>
                               <span>Terkirim</span>
@@ -855,5 +855,6 @@
   </script>
 
 @endsection
+
 
 

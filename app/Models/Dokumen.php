@@ -845,7 +845,7 @@ class Dokumen extends Model
             return 'Team Akutansi';
         }
 
-        if ($status === 'sent_to_Team Verifikasi' || $status === 'pending_approval_Team Verifikasi' || $status === 'menunggu_di_approve') {
+        if ($status === 'sent_to_team_verifikasi' || $status === 'pending_approval_Team Verifikasi' || $status === 'menunggu_di_approve') {
             return 'Operator';
         }
 
@@ -1134,7 +1134,7 @@ class Dokumen extends Model
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
             'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
-            'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+            'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
             'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
@@ -1318,7 +1318,7 @@ class Dokumen extends Model
                 'draft' => 'Draft',
                 'waiting_reviewer_approval' => 'Menunggu Approval Reviewer',
                 'menunggu_di_approve' => 'Menunggu Approval',
-                'sent_to_Team Verifikasi' => 'Terkirim',
+                'sent_to_team_verifikasi' => 'Terkirim',
                 'returned_to_Operator' => 'Dikembalikan untuk Revisi',
                 'selesai' => 'Selesai',
                 'completed' => 'Selesai',
@@ -1677,6 +1677,7 @@ class Dokumen extends Model
         }
     }
 }
+
 
 
 

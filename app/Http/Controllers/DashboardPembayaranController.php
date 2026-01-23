@@ -256,7 +256,7 @@ class DashboardPembayaranController extends Controller
             }
 
             // Default: "Belum Siap Bayar" untuk semua status lainnya
-            // Termasuk: draft, menunggu_di_approve, sent_to_Team Verifikasi, processed_by_Team Verifikasi,
+            // Termasuk: draft, menunggu_di_approve, sent_to_team_verifikasi, processed_by_Team Verifikasi,
             // sent_to_perpajakan, processed_by_perpajakan, sent_to_akutansi, dll
             return 'belum_siap_bayar';
         };
@@ -4217,7 +4217,7 @@ class DashboardPembayaranController extends Controller
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
             'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Ibu Yuni',
-            'sent_to_Team Verifikasi' => 'Terkirim ke Ibu Yuni',
+            'sent_to_team_verifikasi' => 'Terkirim ke Ibu Yuni',
             'proses_Team Verifikasi' => 'Diproses Ibu Yuni',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'proses_perpajakan' => 'Diproses Team Perpajakan',
@@ -4237,6 +4237,7 @@ class DashboardPembayaranController extends Controller
         return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
     }
 }
+
 
 
 

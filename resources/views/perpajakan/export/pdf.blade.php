@@ -214,7 +214,7 @@
                                         'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
                                         'proses_perpajakan' => 'Diproses Team Perpajakan',
                                         'proses_akutansi' => 'Diproses Team Akutansi',
-                                        'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+                                        'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
                                         'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
                                         'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
                                         'menunggu_verifikasi' => 'Menunggu Verifikasi',
@@ -280,5 +280,6 @@
 </body>
 
 </html>
+
 
 

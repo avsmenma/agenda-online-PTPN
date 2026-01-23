@@ -54,7 +54,7 @@ class TeamVerifikasiController extends Controller
         // 2. Total dokumen proses - dokumen yang sedang diproses (belum dikirim)
         $totalDokumenProses = Dokumen::whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
             ->where(function ($q) {
-                $q->whereIn('status', ['sent_to_Team Verifikasi', 'sedang diproses', 'sedang_diproses'])
+                $q->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses'])
                     ->orWhereNotIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'returned_to_bidang']);
             })
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -131,7 +131,7 @@ class TeamVerifikasiController extends Controller
         })
             ->where('status', '!=', 'returned_to_bidang')
             ->orderByRaw("CASE
-                WHEN current_handler = 'team_verifikasi' AND status IN ('sent_to_Team Verifikasi', 'sedang diproses') THEN 1
+                WHEN current_handler = 'team_verifikasi' AND status IN ('sent_to_team_verifikasi', 'sedang diproses') THEN 1
                 WHEN current_handler = 'team_verifikasi' THEN 2
                 ELSE 3
             END ASC")
@@ -910,7 +910,7 @@ class TeamVerifikasiController extends Controller
             ]);
 
             $allowedHandlers = ['team_verifikasi', 'team_verifikasi', 'perpajakan', 'akutansi', 'operator', 'pembayaran'];
-            $allowedStatuses = ['sent_to_Team Verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_bidang', 'returned_to_Operator'];
+            $allowedStatuses = ['sent_to_team_verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_bidang', 'returned_to_Operator'];
 
             // Allow if rejected by Team Verifikasi
             $isInboxRejected = false;
@@ -1084,7 +1084,7 @@ class TeamVerifikasiController extends Controller
             $statusBadge = '<span class="badge badge-status badge-selesai">' . ($dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai') . '</span>';
         } elseif ($dokumen->status == 'rejected_Team Verifikasi') {
             $statusBadge = '<span class="badge badge-status badge-dikembalikan">Rejected</span>';
-        } elseif ($dokumen->status == 'sent_to_Team Verifikasi') {
+        } elseif ($dokumen->status == 'sent_to_team_verifikasi') {
             $statusBadge = '<span class="badge badge-status badge-proses">Menunggu Review</span>';
         } else {
             $statusBadge = '<span class="badge badge-status badge-proses">' . ucfirst($dokumen->status) . '</span>';
@@ -1657,7 +1657,7 @@ class TeamVerifikasiController extends Controller
             }
 
             // Valid statuses untuk set deadline: dokumen yang baru di-approve dari inbox atau sedang diproses
-            $validStatuses = ['sent_to_Team Verifikasi', 'sedang diproses', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
+            $validStatuses = ['sent_to_team_verifikasi', 'sedang diproses', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
             if (!in_array($dokumen->status, $validStatuses)) {
                 Log::warning('Deadline set failed - Invalid document status', [
                     'document_id' => $dokumen->id,
@@ -2120,7 +2120,7 @@ class TeamVerifikasiController extends Controller
 
             // Update document to return to main list
             $dokumen->update([
-                'status' => 'sent_to_Team Verifikasi',
+                'status' => 'sent_to_team_verifikasi',
                 'target_bidang' => null,
                 'bidang_returned_at' => null,
                 'bidang_return_reason' => null,
@@ -2350,7 +2350,7 @@ class TeamVerifikasiController extends Controller
 
             // Update dokumen: pindah ke status accepted
             $dokumen->update([
-                'status' => 'sent_to_Team Verifikasi',
+                'status' => 'sent_to_team_verifikasi',
                 'current_handler' => 'team_verifikasi',           // BARU PINDAH ke penerima
                 'pending_approval_for' => null,
                 'approval_responded_at' => now(),
@@ -2719,7 +2719,7 @@ class TeamVerifikasiController extends Controller
             'by_bagian' => $bagianStats,
             'by_status' => [
                 'draft' => $query->where('status', 'draft')->count(),
-                'sent_to_Team Verifikasi' => $query->where('status', 'sent_to_Team Verifikasi')->count(),
+                'sent_to_team_verifikasi' => $query->where('status', 'sent_to_team_verifikasi')->count(),
                 'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
                 'selesai' => $query->where('status', 'selesai')->count(),
                 'returned_to_Operator' => $query->where('status', 'returned_to_Operator')->count(),
@@ -3227,6 +3227,7 @@ class TeamVerifikasiController extends Controller
         }
     }
 }
+
 
 
 

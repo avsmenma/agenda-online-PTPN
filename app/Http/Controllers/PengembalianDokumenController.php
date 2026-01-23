@@ -22,7 +22,7 @@ class PengembalianDokumenController extends Controller
             ->where('status', 'returned_to_Operator')
             ->count();
         $totalDikirim = \App\Models\Dokumen::where('created_by', 'operator')
-            ->where('status', 'sent_to_Team Verifikasi')
+            ->where('status', 'sent_to_team_verifikasi')
             ->count();
 
         $data = array(
@@ -40,6 +40,7 @@ class PengembalianDokumenController extends Controller
         return view('operator.dokumens.pengembalianDokumen', $data);
     }
 }
+
 
 
 

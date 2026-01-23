@@ -100,7 +100,7 @@ class DokumenHelper
         // Base condition: must be sent to department without deadline
         $isLocked = !$hasDeadline &&
             in_array($dokumen->status, [
-                'sent_to_Team Verifikasi',
+                'sent_to_team_verifikasi',
                 'sedang diproses', // Dokumen yang baru di-approve dari inbox Team Verifikasi
                 'sent_to_perpajakan'
             ]);
@@ -308,7 +308,7 @@ class DokumenHelper
 
         // Check document status based on handler
         $validStatuses = match ($dokumen->current_handler) {
-            'Team Verifikasi' => ['sent_to_Team Verifikasi', 'sedang diproses'], // Include 'sedang diproses' for newly approved from inbox
+            'Team Verifikasi' => ['sent_to_team_verifikasi', 'sedang diproses'], // Include 'sedang diproses' for newly approved from inbox
             'akutansi' => ['sent_to_akutansi', 'approved_data_sudah_terkirim'],
             'perpajakan' => ['sent_to_perpajakan'], // Dokumen yang baru di-approve dari inbox Perpajakan
             'pembayaran' => ['sent_to_pembayaran'],
@@ -330,5 +330,6 @@ class DokumenHelper
         ];
     }
 }
+
 
 

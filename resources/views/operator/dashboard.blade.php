@@ -582,7 +582,7 @@
                       <i class="fas fa-check-circle"></i>
                       Terkirim, sedang menunggu approve
                     </span>
-                  @elseif($dokumen->status == 'sent_to_Team Verifikasi' && $isApproved)
+                  @elseif($dokumen->status == 'sent_to_team_verifikasi' && $isApproved)
                     <span class="badge badge-sent">
                       <i class="fas fa-check-circle"></i>
                       Terkirim
@@ -598,12 +598,12 @@
                   <div class="action-buttons">
                     @php
                       // Check if document has been sent to Team Verifikasi
-                      $isSentToTeam Verifikasi = ($dokumen->status ?? '') == 'sent_to_Team Verifikasi'
+                      $isSentToTeamVerifikasi = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
                         || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
 
                       // Check if document has been approved by Team Verifikasi and sent to other roles
                       $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-                      $isApprovedByTeam Verifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
+                      $isApprovedByTeamVerifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
 
                       // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
                       $isSentToOtherRoles = in_array($dokumen->status ?? '', [
@@ -616,7 +616,7 @@
                       ]);
 
                       // Document is considered "sent" if sent to Team Verifikasi OR approved by Team Verifikasi and sent to other roles
-                      $isSent = $isSentToTeam Verifikasi || ($isApprovedByTeam Verifikasi && $isSentToOtherRoles);
+                      $isSent = $isSentToTeamVerifikasi || ($isApprovedByTeamVerifikasi && $isSentToOtherRoles);
 
                       // Can send only if document is draft/returned and still with Operator
                       $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_Operator', 'sedang diproses'])
@@ -635,7 +635,7 @@
                       </a>
                     @endif
                     @if($canSend)
-                      <button type="button" class="btn-action btn-send" onclick="sendToTeam Verifikasi({{ $dokumen->id }})"
+                      <button type="button" class="btn-action btn-send" onclick="sendToTeamVerifikasi({{ $dokumen->id }})"
                         title="Kirim ke Team Verifikasi">
                         <i class="fa-solid fa-paper-plane"></i>
                         Kirim
@@ -665,7 +665,7 @@
   </div>
 
   <script>
-    function sendToTeam Verifikasi(dokumenId) {
+    function sendToTeamVerifikasi(dokumenId) {
       if (!confirm('Apakah Anda yakin ingin mengirim dokumen ini ke Team Verifikasi?')) {
         return;
       }
@@ -706,5 +706,7 @@
   </script>
 
 @endsection
+
+
 
 

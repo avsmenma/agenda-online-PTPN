@@ -643,7 +643,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-title">Dokumen Aktif</div>
-          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_Team Verifikasi'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
+          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_team_verifikasi'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
           <div class="stat-description">Sedang diproses</div>
         </div>
       </div>
@@ -808,5 +808,6 @@
 </div>
 
 @endsection
+
 
 

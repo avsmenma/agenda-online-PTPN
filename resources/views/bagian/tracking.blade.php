@@ -72,7 +72,7 @@
                                             @php
                                                 $statusConfig = [
                                                     'belum dikirim' => ['color' => '#ffc107', 'icon' => 'fa-clock', 'text' => 'Belum Dikirim'],
-                                                    'sent_to_Team Verifikasi' => ['color' => '#17a2b8', 'icon' => 'fa-paper-plane', 'text' => 'Verifikasi'],
+                                                    'sent_to_team_verifikasi' => ['color' => '#17a2b8', 'icon' => 'fa-paper-plane', 'text' => 'Verifikasi'],
                                                     'sent_to_perpajakan' => ['color' => '#6f42c1', 'icon' => 'fa-calculator', 'text' => 'Perpajakan'],
                                                     'sent_to_akutansi' => ['color' => '#fd7e14', 'icon' => 'fa-book', 'text' => 'Akutansi'],
                                                     'sent_to_pembayaran' => ['color' => '#20c997', 'icon' => 'fa-money-bill', 'text' => 'Pembayaran'],
@@ -159,5 +159,6 @@
         </div>
     </div>
 @endsection
+
 
 

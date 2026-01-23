@@ -38,7 +38,7 @@ class DocumentTracking extends Model
     {
         return [
             'created' => 'Dokumen DOperatort',
-            'sent_to_Team Verifikasi' => 'Dikirim ke Ibu B',
+            'sent_to_team_verifikasi' => 'Dikirim ke Ibu B',
             'deadline_set' => 'Deadline Ditentukan',
             'processed_by_Team Verifikasi' => 'Diproses Ibu B',
             'returned_to_Operator' => 'Dikembalikan ke Ibu A',
@@ -113,7 +113,7 @@ class DocumentTracking extends Model
     {
         $colorMap = [
             'created' => 'text-green-600 bg-green-50 border-green-200',
-            'sent_to_Team Verifikasi' => 'text-blue-600 bg-blue-50 border-blue-200',
+            'sent_to_team_verifikasi' => 'text-blue-600 bg-blue-50 border-blue-200',
             'deadline_set' => 'text-yellow-600 bg-yellow-50 border-yellow-200',
             'processed_by_Team Verifikasi' => 'text-purple-600 bg-purple-50 border-purple-200',
             'returned_to_Operator' => 'text-red-600 bg-red-50 border-red-200',
@@ -141,7 +141,7 @@ class DocumentTracking extends Model
     {
         $iconMap = [
             'created' => 'fa-plus-circle',
-            'sent_to_Team Verifikasi' => 'fa-paper-plane',
+            'sent_to_team_verifikasi' => 'fa-paper-plane',
             'deadline_set' => 'fa-clock',
             'processed_by_Team Verifikasi' => 'fa-user-check',
             'returned_to_Operator' => 'fa-undo',
@@ -200,6 +200,7 @@ class DocumentTracking extends Model
         ]);
     }
 }
+
 
 
 
