@@ -429,9 +429,10 @@ class IbuACsvImportController extends Controller
 
                 $dokumenData = $this->transformRow($row);
 
-                // Set created_by to IbuA
+                // Set created_by to IbuA and correct status
                 $dokumenData['created_by'] = 'ibuA';
-                $dokumenData['status'] = 'belum_dikirim';
+                $dokumenData['status'] = 'draft';  // IMPORTANT: Use 'draft' not 'belum_dikirim'
+                $dokumenData['current_handler'] = 'ibuA';  // IMPORTANT: Set current handler
 
                 // CSV import tracking
                 if (\Schema::hasColumn('dokumens', 'imported_from_csv')) {
