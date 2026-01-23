@@ -133,9 +133,9 @@ return new class extends Migration {
         }
 
         // ========================================
-        // 6. Update document_trackings table - changed_by
+        // 6. Update document_trackings table - changed_by (if column exists)
         // ========================================
-        if (Schema::hasTable('document_trackings')) {
+        if (Schema::hasTable('document_trackings') && Schema::hasColumn('document_trackings', 'changed_by')) {
             foreach ($this->oldOperatorNames as $oldName) {
                 DB::table('document_trackings')
                     ->where('changed_by', $oldName)
