@@ -56,9 +56,7 @@ class DokumenController extends Controller
                     ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
                     ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
                     ->orWhere('no_spk', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
                     ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                    ->orWhere('keterangan', 'like', '%' . $search . '%')
                     ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
 
                 // Search in nilai_rupiah - handle various formats
