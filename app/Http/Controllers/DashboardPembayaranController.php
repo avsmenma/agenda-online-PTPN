@@ -256,7 +256,7 @@ class DashboardPembayaranController extends Controller
             }
 
             // Default: "Belum Siap Bayar" untuk semua status lainnya
-            // Termasuk: draft, menunggu_di_approve, sent_to_ibub, processed_by_ibub,
+            // Termasuk: draft, menunggu_di_approve, sent_to_Team Verifikasi, processed_by_Team Verifikasi,
             // sent_to_perpajakan, processed_by_perpajakan, sent_to_akutansi, dll
             return 'belum_siap_bayar';
         };
@@ -299,7 +299,7 @@ class DashboardPembayaranController extends Controller
         });
 
         // Tampilkan semua dokumen (termasuk yang belum siap bayar) untuk real-time visibility
-        // Dokumen muncul sejak awal dibuat, tidak perlu menunggu sent_to_pembayaran
+        // Dokumen muncul sejak awal dOperatort, tidak perlu menunggu sent_to_pembayaran
 
         // Apply status filter if provided (for filtering between belum_siap_bayar, siap_bayar, dan sudah_dibayar)
         if ($statusFilter && in_array($statusFilter, ['belum_siap_bayar', 'siap_bayar', 'sudah_dibayar'])) {
@@ -2262,8 +2262,8 @@ class DashboardPembayaranController extends Controller
         $selectedColumns = request('columns', []); // Array of selected columns in order
 
         // Handler yang dianggap "belum siap dibayar"
-        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (Operator, Team Verifikasi), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];
 
         // Base query - semua dokumen yang sudah melewati proses awal
         $query = Dokumen::whereNotNull('nomor_agenda');
@@ -2375,7 +2375,7 @@ class DashboardPembayaranController extends Controller
                 return 'siap_dibayar';
             }
 
-            // Jika masih di handler lain (akutansi, perpajakan, ibuA, ibuB)
+            // Jika masih di handler lain (akutansi, perpajakan, Operator, Team Verifikasi)
             // Status ini tidak muncul di halaman pembayaran, tapi tetap dihitung untuk total
             return 'belum_siap_dibayar';
         };
@@ -2641,8 +2641,8 @@ class DashboardPembayaranController extends Controller
         $selectedColumns = $request->get('columns', []);
 
         // Handler yang dianggap "belum siap dibayar"
-        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (Operator, Team Verifikasi), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];
 
         // Base query - semua dokumen yang sudah melewati proses awal
         $query = Dokumen::whereNotNull('nomor_agenda');
@@ -2875,8 +2875,8 @@ class DashboardPembayaranController extends Controller
     private function exportToPDF($dokumens, $columns, $availableColumns, $mode, $statusFilter, $year, $month, $search)
     {
         // Handler yang dianggap "belum siap dibayar"
-        // Perhatikan: di database menggunakan camelCase (ibuA, ibuB), bukan snake_case (ibu_a, ibu_b)
-        $belumSiapHandlers = ['akutansi', 'perpajakan', 'ibuA', 'ibuB', 'ibu_a', 'ibu_b'];
+        // Perhatikan: di database menggunakan camelCase (Operator, Team Verifikasi), bukan snake_case (ibu_a, ibu_b)
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];
 
         // Helper function to calculate computed status
         $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
@@ -3121,7 +3121,7 @@ class DashboardPembayaranController extends Controller
             ]);
 
             // Allow access if document is handled by pembayaran or sent to pembayaran
-            $allowedHandlers = ['pembayaran', 'akutansi', 'perpajakan', 'ibuB', 'ibub'];
+            $allowedHandlers = ['pembayaran', 'akutansi', 'perpajakan', 'team_verifikasi', 'team_verifikasi'];
             $allowedStatuses = ['sent_to_pembayaran', 'sedang diproses', 'selesai', 'sudah_dibayar', 'menunggu_di_approve', 'pending_approval_pembayaran'];
 
             // Check if document was sent to pembayaran role (using dokumen_role_data)
@@ -4216,9 +4216,9 @@ class DashboardPembayaranController extends Controller
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
-            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-            'proses_ibub' => 'Diproses Ibu Yuni',
+            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Ibu Yuni',
+            'sent_to_Team Verifikasi' => 'Terkirim ke Ibu Yuni',
+            'proses_Team Verifikasi' => 'Diproses Ibu Yuni',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'proses_perpajakan' => 'Diproses Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
@@ -4229,7 +4229,7 @@ class DashboardPembayaranController extends Controller
             'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
             'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
             'selesai' => 'Selesai',
-            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
         ];
@@ -4237,4 +4237,7 @@ class DashboardPembayaranController extends Controller
         return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
     }
 }
+
+
+
 

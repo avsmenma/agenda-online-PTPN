@@ -19,8 +19,9 @@ class DashboardController extends Controller
                 return redirect('/owner/dashboard');
             }
 
-            if ($role === 'ibub' || $role === 'ibu b') {
-                return redirect()->route('dashboard.ibub');
+            // Support both old and new role names for backward compatibility
+            if (in_array($role, ['team_verifikasi', 'ibu b', 'team_verifikasi', 'team_verifikasi'])) {
+                return redirect()->route('dashboard.team_verifikasi');
             }
 
             if ($role === 'perpajakan') {
@@ -36,38 +37,39 @@ class DashboardController extends Controller
             }
         }
 
-        // Get statistics for IbuA (only documents created by ibuA)
-        $totalDokumen = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])->count();
+        // Get statistics for Operator (documents created by operator - support old names for backward compatibility)
+        $operatorRoles = ['operator', 'operator', 'Operator', 'operator'];
+        $totalDokumen = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)->count();
 
-        // Total dokumen belum dikirim = dokumen yang masih draft atau belum dikirim ke ibuB
-        $totalBelumDikirim = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
+        // Total dokumen belum dikirim = dokumen yang masih draft atau belum dikirim ke team_verifikasi
+        $totalBelumDikirim = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
             ->whereDoesntHave('roleData', function ($query) {
-                // If roleData for 'ibub' does NOT exist (or received_at is null) it hasn't been sent
-                $query->where('role_code', 'ibub');
+                // Support both old and new role codes
+                $query->whereIn('role_code', ['team_verifikasi', 'team_verifikasi']);
             })
-            ->where('status', '!=', 'returned_to_ibua')
+            ->whereNotIn('status', ['returned_to_operator', 'returned_to_Operator'])
             ->count();
 
-        // Total dokumen sudah dikirim = dokumen yang sudah dikirim ke ibuB
-        $totalSudahDikirim = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
+        // Total dokumen sudah dikirim = dokumen yang sudah dikirim ke team_verifikasi
+        $totalSudahDikirim = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
             ->whereHas('roleData', function ($query) {
-                // If roleData for 'ibub' exists, it has been sent
-                $query->where('role_code', 'ibub');
+                // Support both old and new role codes
+                $query->whereIn('role_code', ['team_verifikasi', 'team_verifikasi']);
             })
-            ->where('status', '!=', 'returned_to_ibua')
+            ->whereNotIn('status', ['returned_to_operator', 'returned_to_Operator'])
             ->count();
 
-        // Total dokumen yang di-reject dari inbox dan dikembalikan ke IbuA
-        $totalDitolakInbox = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
-            ->whereRaw('LOWER(current_handler) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
-            ->where('status', 'returned_to_ibua')
+        // Total dokumen yang di-reject dari inbox dan dikembalikan ke Operator
+        $totalDitolakInbox = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
+            ->whereIn(\DB::raw('LOWER(current_handler)'), $operatorRoles)
+            ->whereIn('status', ['returned_to_operator', 'returned_to_Operator'])
             ->whereHas('roleStatuses', function ($query) {
                 $query->where('status', 'rejected');
             })
             ->count();
 
-        // Get latest documents (5 most recent) created by ibuA
-        $dokumenTerbaru = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
+        // Get latest documents (5 most recent) created by Operator
+        $dokumenTerbaru = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
             ->with(['dibayarKepadas'])
             ->latest('tanggal_masuk')
             ->take(5)
@@ -75,7 +77,7 @@ class DashboardController extends Controller
 
         $data = array(
             "title" => "Dashboard",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDashboard" => "Active",
             'menuDokumen' => '',
             'menuRekapan' => '',
@@ -85,19 +87,21 @@ class DashboardController extends Controller
             'totalDitolakInbox' => $totalDitolakInbox,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
-        return view('IbuA.dashboard', $data);
+        return view('operator.dashboard', $data);
     }
 
+
     /**
-     * API endpoint untuk check dokumen yang di-reject dari inbox untuk IbuA
+     * API endpoint untuk check dokumen yang di-reject dari inbox untuk Operator
      */
     public function checkRejectedDocuments(Request $request)
     {
         try {
             $user = auth()->user();
 
-            // Hanya allow IbuA
-            if (!$user || strtolower($user->role) !== 'ibua') {
+            // Allow Operator role (support both old and new role names)
+            $operatorRoles = ['operator', 'operator', 'Operator', 'operator'];
+            if (!$user || !in_array(strtolower($user->role), $operatorRoles)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access'
@@ -129,7 +133,7 @@ class DashboardController extends Controller
                 // $checkFrom already set to $checkFrom24Hours as default
             }
 
-            \Log::info('IbuA checkRejectedDocuments called', [
+            \Log::info('Operator checkRejectedDocuments called', [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
                 'last_check_time' => $lastCheckTime,
@@ -138,16 +142,15 @@ class DashboardController extends Controller
             ]);
 
             // Cari dokumen yang di-reject dari inbox dalam 24 jam terakhir
-            // FIX: Gunakan AND condition yang ketat untuk mencegah cross-interference
-            // Hanya dokumen yang BENAR-BENAR dibuat oleh IbuA yang akan ditampilkan
-            // FIX: inbox_approval_responded_at sudah dihapus, gunakan status_changed_at dari dokumen_statuses
-            $rejectedDocuments = Dokumen::where(function ($query) {
-                // Hanya dokumen yang dibuat oleh IbuA
-                $query->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul']);
+            // Support both old and new role names for backward compatibility
+            $operatorRoles = ['operator', 'operator', 'Operator', 'operator'];
+            $rejectedDocuments = Dokumen::where(function ($query) use ($operatorRoles) {
+                // Hanya dokumen yang dOperatort oleh Operator
+                $query->whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles);
             })
                 ->where(function ($query) {
-                    // DAN status returned ke IbuA
-                    $query->where('status', 'returned_to_ibua')
+                    // DAN status returned ke Operator
+                    $query->whereIn('status', ['returned_to_operator', 'returned_to_Operator'])
                         ->whereHas('roleStatuses', function ($q) use ($checkFrom) {
                         // Filter by rejected status and check time from status_changed_at
                         $q->where('status', 'rejected')
@@ -238,16 +241,15 @@ class DashboardController extends Controller
                     }
                 });
 
-            \Log::info('IbuA rejected documents found', [
+            \Log::info('Operator rejected documents found', [
                 'count' => $rejectedDocuments->count(),
                 'document_ids' => $rejectedDocuments->pluck('id')->toArray(),
             ]);
 
-            // Hitung total rejected (case-insensitive)
-            // FIX: inbox_approval_status sudah dihapus, gunakan dokumen_statuses
-            $totalRejected = Dokumen::whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
-                ->whereRaw('LOWER(current_handler) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
-                ->where('status', 'returned_to_ibua')
+            // Hitung total rejected - support both old and new role names
+            $totalRejected = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
+                ->whereIn(\DB::raw('LOWER(current_handler)'), $operatorRoles)
+                ->whereIn('status', ['returned_to_operator', 'returned_to_Operator'])
                 ->whereHas('roleStatuses', function ($q) {
                     $q->where('status', 'rejected');
                 })
@@ -281,11 +283,13 @@ class DashboardController extends Controller
                             $rejectedBy = $rejectLog->performed_by ?? (is_array($rejectLog->details) && isset($rejectLog->details['rejected_by']) ? $rejectLog->details['rejected_by'] : 'Unknown');
                         }
 
-                        // Map role to display name
+                        // Map role to display name (support both old and new role names)
                         $nameMap = [
-                            'IbuB' => 'Team Verifikasi',
-                            'ibuB' => 'Team Verifikasi',
-                            'ibub' => 'Team Verifikasi',
+                            'team_verifikasi' => 'Team Verifikasi',
+                            'team_verifikasi' => 'Team Verifikasi',
+                            'team_verifikasi' => 'Team Verifikasi',
+                            'team_verifikasi' => 'Team Verifikasi',
+                            'team_verifikasi' => 'Team Verifikasi',
                             'Perpajakan' => 'Team Perpajakan',
                             'perpajakan' => 'Team Perpajakan',
                             'Akutansi' => 'Team Akutansi',
@@ -385,52 +389,53 @@ class DashboardController extends Controller
     }
 
     /**
-     * Menampilkan detail dokumen yang di-reject dari inbox untuk IbuA
+     * Menampilkan detail dokumen yang di-reject dari inbox untuk Operator
      */
     public function showRejectedDocument(Dokumen $dokumen)
     {
         try {
             $user = auth()->user();
 
-            // Hanya allow IbuA - return JSON instead of abort
-            if (!$user || strtolower($user->role) !== 'ibua') {
+            // Allow Operator role - support both old and new role names
+            $operatorRoles = ['operator', 'operator', 'Operator', 'operator'];
+            if (!$user || !in_array(strtolower($user->role), $operatorRoles)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access'
                 ], 403);
             }
 
-            // Validasi: dokumen harus di-reject dan dikembalikan ke IbuA
+            // Validasi: dokumen harus di-reject dan dikembalikan ke Operator
             // Check if rejected using new status system by checking if ANY role rejected it
             $hasRejection = \App\Models\DokumenStatus::where('dokumen_id', $dokumen->id)
                 ->where('status', 'rejected')
                 ->exists();
 
-            // More flexible validation - allow if document is rejected OR returned to IbuA
+            // More flexible validation - allow if document is rejected OR returned to Operator
             $isValid = false;
             $validationErrors = [];
 
-            // Check if document is created by IbuA (case-insensitive)
-            $createdByIbuA = in_array(strtolower($dokumen->created_by ?? ''), ['ibua', 'ibu a', 'ibutarapul']);
+            // Check if document is created by Operator (case-insensitive)
+            $createdByOperator = in_array(strtolower($dokumen->created_by ?? ''), $operatorRoles);
 
-            // Check if document is currently with IbuA (case-insensitive)
-            $currentHandlerIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a', 'ibutarapul']);
+            // Check if document is currently with Operator (case-insensitive)
+            $currentHandlerOperator = in_array(strtolower($dokumen->current_handler ?? ''), $operatorRoles);
 
             // Check if document is returned or has rejection status
-            $isReturned = $dokumen->status === 'returned_to_ibua';
+            $isReturned = in_array($dokumen->status, ['returned_to_operator', 'returned_to_Operator']);
 
-            if (!$createdByIbuA) {
-                $validationErrors[] = 'Dokumen tidak dibuat oleh IbuA';
+            if (!$createdByOperator) {
+                $validationErrors[] = 'Dokumen tidak dOperatort oleh Operator';
             }
-            if (!$currentHandlerIbuA) {
-                $validationErrors[] = 'Dokumen tidak sedang ditangani oleh IbuA';
+            if (!$currentHandlerOperator) {
+                $validationErrors[] = 'Dokumen tidak sedang ditangani oleh Operator';
             }
             if (!$isReturned && !$hasRejection) {
                 $validationErrors[] = 'Dokumen tidak dalam status ditolak atau dikembalikan';
             }
 
-            // Allow if document is created by IbuA and has rejection status
-            if ($createdByIbuA && ($hasRejection || $isReturned)) {
+            // Allow if document is created by Operator and has rejection status
+            if ($createdByOperator && ($hasRejection || $isReturned)) {
                 $isValid = true;
             }
 
@@ -478,15 +483,17 @@ class DashboardController extends Controller
                 $rejectedAt = $rejectLog->action_at;
             }
 
-            // Map role to display name
+            // Map role to display name (support both old and new role names)
             $nameMap = [
-                'IbuB' => 'Team Verifikasi',
-                'ibuB' => 'Team Verifikasi',
-                'ibub' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
                 'Perpajakan' => 'Team Perpajakan',
                 'perpajakan' => 'Team Perpajakan',
-                'Akutansi' => 'Team Akutansi',
-                'akutansi' => 'Team Akutansi',
+                'Akutansi' => 'Team Akuntansi',
+                'akutansi' => 'Team Akuntansi',
             ];
             $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
 
@@ -521,3 +528,6 @@ class DashboardController extends Controller
         }
     }
 }
+
+
+

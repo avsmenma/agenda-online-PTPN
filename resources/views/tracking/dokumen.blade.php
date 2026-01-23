@@ -1477,3 +1477,4 @@
     });
   </script>
 @endsection
+

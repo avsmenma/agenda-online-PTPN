@@ -24,17 +24,17 @@ class DokumenController extends Controller
 {
     public function index(Request $request)
     {
-        // IbuA only sees documents created by ibuA
+        // Operator only sees documents created by Operator
         // Order by nomor_agenda descending (numerically) - so new documents with lower numbers appear in correct position
         // Example: 2010, 2009, 2006 (new), 2005, 2004, 2003
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
             ->where(function ($q) {
-                $q->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['ibua', 'ibu a', 'ibutarapul'])
-                    ->orWhere('created_by', 'ibuA')
-                    ->orWhere('created_by', 'IbuA')
-                    ->orWhere('created_by', 'ibutarapul')
-                    ->orWhere('created_by', 'Ibutarapul')
-                    ->orWhere('created_by', 'IbuTarapul');
+                $q->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['operator', 'Operator', 'operator'])
+                    ->orWhere('created_by', 'operator')
+                    ->orWhere('created_by', 'operator')
+                    ->orWhere('created_by', 'operator')
+                    ->orWhere('created_by', 'operator')
+                    ->orWhere('created_by', 'operator');
             })
             ->orderByRaw('CASE 
                 WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
@@ -81,16 +81,16 @@ class DokumenController extends Controller
 
             switch ($statusFilter) {
                 case 'belum_dikirim':
-                    // Dokumen yang belum dikirim - no status record for ibuB exists
+                    // Dokumen yang belum dikirim - no status record for Team Verifikasi exists
                     $query->whereDoesntHave('roleStatuses', function ($q) {
-                        $q->where('role_code', 'ibub');
+                        $q->where('role_code', 'team_verifikasi');
                     })->where('status', 'draft');
                     break;
 
                 case 'menunggu_approval':
-                    // Dokumen yang menunggu approval dari Reviewer (IbuB)
+                    // Dokumen yang menunggu approval dari Reviewer (Team Verifikasi)
                     $query->whereHas('roleStatuses', function ($q) {
-                        $q->where('role_code', 'ibub')
+                        $q->where('role_code', 'team_verifikasi')
                             ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
                     });
                     break;
@@ -98,9 +98,9 @@ class DokumenController extends Controller
                 case 'terkirim':
                     // Dokumen yang sudah di-approve oleh Reviewer atau diteruskan ke department lain
                     $query->where(function ($q) {
-                        // Approved by IbuB
+                        // Approved by Team Verifikasi
                         $q->whereHas('roleStatuses', function ($q2) {
-                            $q2->where('role_code', 'ibub')
+                            $q2->where('role_code', 'team_verifikasi')
                                 ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED);
                         })
                             // OR has status record for other departments (sent to them)
@@ -179,7 +179,7 @@ class DokumenController extends Controller
 
         $data = array(
             "title" => "Daftar Dokumen",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDokumen" => "active",
             "menuDaftarDokumen" => "active",
             "menuTambahDokumen" => "",
@@ -191,7 +191,7 @@ class DokumenController extends Controller
             "selectedColumns" => $selectedColumns,
         );
 
-        return view('IbuA.dokumens.daftarDokumen', $data);
+        return view('operator.dokumens.daftarDokumen', $data);
     }
 
     public function create()
@@ -239,7 +239,7 @@ class DokumenController extends Controller
 
         $data = array(
             "title" => "Tambah Dokumen",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDokumen" => "active",
             "menuDaftarDokumen" => "",
             "menuTambahDokumen" => "active",
@@ -253,16 +253,16 @@ class DokumenController extends Controller
             "isJenisPembayaranAvailable" => $isJenisPembayaranAvailable,
             "bagianList" => $bagianList,
         );
-        return view('IbuA.dokumens.tambahDokumen', $data);
+        return view('operator.dokumens.tambahDokumen', $data);
     }
 
     /**
-     * Get document detail for AJAX request for IbuA
+     * Get document detail for AJAX request for Operator
      */
-    public function getDocumentDetailForIbuA(Dokumen $dokumen)
+    public function getDocumentDetailForOperator(Dokumen $dokumen)
     {
-        // Only allow if created by ibuA
-        if ($dokumen->created_by !== 'ibuA') {
+        // Only allow if created by Operator
+        if ($dokumen->created_by !== 'operator') {
             return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
         }
 
@@ -270,7 +270,7 @@ class DokumenController extends Controller
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Return HTML partial for detail view
-        $html = view('IbuA.dokumens.partials.document_detail', compact('dokumen'))->render();
+        $html = view('operator.dokumens.partials.document_detail', compact('dokumen'))->render();
 
         return response($html);
     }
@@ -280,8 +280,8 @@ class DokumenController extends Controller
      */
     public function getDocumentDetail(Dokumen $dokumen)
     {
-        // Only allow if created by ibuA variants - case-insensitive check
-        $allowedCreators = ['ibua', 'ibu a', 'ibutarapul', 'ibu tarapul'];
+        // Only allow if created by Operator variants - case-insensitive check
+        $allowedCreators = ['operator', 'Operator', 'operator', 'Operator'];
         $createdByLower = strtolower($dokumen->created_by ?? '');
 
         if (!in_array($createdByLower, $allowedCreators)) {
@@ -333,12 +333,12 @@ class DokumenController extends Controller
     }
 
     /**
-     * Get document progress for IbuA
+     * Get document progress for Operator
      */
-    public function getDocumentProgressForIbuA(Dokumen $dokumen)
+    public function getDocumentProgressForOperator(Dokumen $dokumen)
     {
-        // Only allow if created by ibuA
-        if ($dokumen->created_by !== 'ibuA') {
+        // Only allow if created by Operator
+        if ($dokumen->created_by !== 'operator') {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
@@ -364,14 +364,14 @@ class DokumenController extends Controller
 
         // Step 1: Document Creation
         $timeline[] = [
-            'step' => 'Dokumen Dibuat',
+            'step' => 'Dokumen DOperatort',
             'status' => 'completed',
             'time' => $dokumen->created_at ? $dokumen->created_at->format('d M Y H:i') : '',
-            'description' => 'Dokumen berhasil dibuat oleh Ibu Tarapul',
+            'description' => 'Dokumen berhasil dOperatort oleh Ibu Tarapul',
             'percentage' => 20
         ];
 
-        // Step 2: Document Sent to IbuB
+        // Step 2: Document Sent to Team Verifikasi
         if ($dokumen->status === 'draft') {
             $timeline[] = [
                 'step' => 'Menunggu Pengiriman',
@@ -381,11 +381,11 @@ class DokumenController extends Controller
                 'percentage' => 0
             ];
             $totalPercentage = 20;
-        } elseif ($dokumen->status === 'sent_to_ibub') {
+        } elseif ($dokumen->status === 'sent_to_Team Verifikasi') {
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -399,11 +399,11 @@ class DokumenController extends Controller
                 'percentage' => 0
             ];
             $totalPercentage = 50;
-        } elseif ($dokumen->status === 'returned_to_ibua') {
+        } elseif ($dokumen->status === 'returned_to_Operator') {
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -411,7 +411,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Dikembalikan ke Ibu Tarapul',
                 'status' => 'completed',
-                'time' => $dokumen->returned_to_ibua_at ? $dokumen->returned_to_ibua_at->format('d M Y H:i') : '',
+                'time' => $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d M Y H:i') : '',
                 'description' => $dokumen->alasan_pengembalian ? 'Dikembalikan: ' . $dokumen->alasan_pengembalian : 'Dokumen dikembalikan untuk perbaikan',
                 'percentage' => 40
             ];
@@ -429,7 +429,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -456,16 +456,16 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_ibub_at ? $dokumen->sent_to_ibub_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
 
             $timeline[] = [
-                'step' => 'Sedang Diproses IbuB',
+                'step' => 'Sedang Diproses Team Verifikasi',
                 'status' => 'completed',
                 'time' => $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '',
-                'description' => 'Dokumen telah selesai diproses oleh IbuB',
+                'description' => 'Dokumen telah selesai diproses oleh Team Verifikasi',
                 'percentage' => 40
             ];
 
@@ -594,8 +594,8 @@ class DokumenController extends Controller
                 'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
                 'status' => 'draft',
                 'keterangan' => null,
-                'created_by' => 'ibutarapul',
-                'current_handler' => 'ibutarapul',
+                'created_by' => 'operator',
+                'current_handler' => 'operator',
             ]);
 
             // Save PO numbers
@@ -636,7 +636,7 @@ class DokumenController extends Controller
 
             DB::commit();
 
-            // Log activity: dokumen dibuat
+            // Log activity: dokumen dOperatort
             try {
                 ActivityLogHelper::logCreated($dokumen);
             } catch (\Exception $logException) {
@@ -752,7 +752,7 @@ class DokumenController extends Controller
 
         $data = array(
             "title" => "Edit Dokumen",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDokumen" => "active",
             "menuDaftarDokumen" => "active",
             "menuTambahDokumen" => "",
@@ -771,14 +771,14 @@ class DokumenController extends Controller
             'bagianList' => $bagianList,
         );
 
-        return view('IbuA.dokumens.editDokumen', $data);
+        return view('operator.dokumens.editDokumen', $data);
     }
 
     public function update(UpdateDokumenRequest $request, Dokumen $dokumen)
     {
         // Validate that user can edit this document
         // Allow editing if:
-        // 1. Document is created by IbuA and currently with IbuA
+        // 1. Document is created by Operator and currently with Operator
         // 2. Document is rejected (can be edited to fix issues)
         // 3. Document is in draft or returned status
 
@@ -786,36 +786,36 @@ class DokumenController extends Controller
         $createdBy = strtolower($dokumen->created_by ?? '');
         $status = strtolower($dokumen->status ?? '');
 
-        // Check if document is created by IbuA (case-insensitive, all valid aliases)
-        $ibuAliases = ['ibua', 'ibu a', 'ibu tarapul', 'tarapul', 'ibutarapul'];
-        $createdByIbuA = in_array($createdBy, $ibuAliases);
+        // Check if document is created by Operator (case-insensitive, all valid aliases)
+        $Operatorliases = ['operator', 'Operator', 'Operator', 'tarapul', 'operator'];
+        $createdByOperator = in_array($createdBy, $Operatorliases);
 
-        // Check if document is currently with IbuA (case-insensitive)
-        $currentHandlerIbuA = in_array($currentHandler, $ibuAliases);
+        // Check if document is currently with Operator (case-insensitive)
+        $currentHandlerOperator = in_array($currentHandler, $Operatorliases);
 
         // Check if document is rejected
         $isRejected = false;
-        $ibuBStatus = $dokumen->getStatusForRole('ibub');
-        if ($ibuBStatus && strtolower($ibuBStatus->status ?? '') === 'rejected') {
+        $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+        if ($Team VerifikasiStatus && strtolower($Team VerifikasiStatus->status ?? '') === 'rejected') {
             $isRejected = true;
         } else {
             $rejectedStatus = $dokumen->roleStatuses()
                 ->where('status', 'rejected')
-                ->whereIn('role_code', ['ibub', 'ibuB'])
+                ->whereIn('role_code', ['team_verifikasi', 'team_verifikasi'])
                 ->first();
             $isRejected = $rejectedStatus !== null;
         }
 
         // Check if status allows editing
-        $allowedStatuses = ['draft', 'returned_to_ibua', 'belum_dikirim', 'belum dikirim'];
+        $allowedStatuses = ['draft', 'returned_to_Operator', 'belum_dikirim', 'belum dikirim'];
         $isAllowedStatus = in_array($status, $allowedStatuses);
 
         // Allow editing if:
-        // 1. Document is draft/new and current handler is IbuA
-        // 2. Document is rejected AND current handler is IbuA (can always be edited)
-        // 3. Document has allowed status AND current handler is IbuA
+        // 1. Document is draft/new and current handler is Operator
+        // 2. Document is rejected AND current handler is Operator (can always be edited)
+        // 3. Document has allowed status AND current handler is Operator
         // Note: Skip createdBy check for draft documents to allow editing new documents
-        if (!$currentHandlerIbuA) {
+        if (!$currentHandlerOperator) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
@@ -911,7 +911,7 @@ class DokumenController extends Controller
 
             // Update dokumen
             // IMPORTANT: Status is NOT updated here - it only changes via workflow (send, return, etc)
-            // BUT: For rejected documents, we need to ensure status remains 'returned_to_ibua' so they can be resent
+            // BUT: For rejected documents, we need to ensure status remains 'returned_to_Operator' so they can be resent
             // Only update fields that are filled in the request, otherwise keep existing values
             // Use filled() to check if field is present and not empty (handles empty string vs null)
             $updateData = [
@@ -941,9 +941,9 @@ class DokumenController extends Controller
                 // 'keterangan' => REMOVED - not used anymore
             ];
 
-            // For rejected documents, ensure status remains 'returned_to_ibua' so they can be resent
-            // Don't change status if it's already 'returned_to_ibua' (for rejected documents)
-            if ($isRejected && $dokumen->status !== 'returned_to_ibua') {
+            // For rejected documents, ensure status remains 'returned_to_Operator' so they can be resent
+            // Don't change status if it's already 'returned_to_Operator' (for rejected documents)
+            if ($isRejected && $dokumen->status !== 'returned_to_Operator') {
                 // Keep current status, don't change it
                 // Status will remain as is, but document can still be edited
             }
@@ -1000,7 +1000,7 @@ class DokumenController extends Controller
                                 $field,
                                 $oldValue,
                                 $newValue,
-                                'ibuA'
+                                'operator'
                             );
                         } catch (\Exception $logException) {
                             \Log::error('Failed to log data edit for ' . $field . ': ' . $logException->getMessage());
@@ -1023,7 +1023,7 @@ class DokumenController extends Controller
                             $field,
                             $oldValue,
                             $newValue,
-                            'ibuA'
+                            'operator'
                         );
                     } catch (\Exception $logException) {
                         \Log::error('Failed to log data edit for ' . $field . ': ' . $logException->getMessage());
@@ -1128,50 +1128,50 @@ class DokumenController extends Controller
     }
 
     /**
-     * Send document to IbuB (Reviewer)
+     * Send document to Team Verifikasi (Reviewer)
      * Sets status to WAITING_REVIEWER_APPROVAL - Approval Gate Implementation
      */
-    public function sendToIbuB(Dokumen $dokumen)
+    public function sendToTeam Verifikasi(Dokumen $dokumen)
     {
         try {
             // Handle old data that might not have workflow fields
-            $currentHandler = $dokumen->current_handler ?? 'ibuA';
-            $createdBy = $dokumen->created_by ?? 'ibuA';
+            $currentHandler = $dokumen->current_handler ?? 'operator';
+            $createdBy = $dokumen->created_by ?? 'operator';
 
-            // Check if document is created by IbuA (case-insensitive)
-            $createdByIbuA = in_array(strtolower($createdBy), ['ibua', 'ibu a', 'ibutarapul']);
+            // Check if document is created by Operator (case-insensitive)
+            $createdByOperator = in_array(strtolower($createdBy), ['operator', 'Operator', 'operator']);
 
-            // Check if document is currently with IbuA (case-insensitive)
-            $currentHandlerIbuA = in_array(strtolower($currentHandler), ['ibua', 'ibu a', 'ibutarapul']);
+            // Check if document is currently with Operator (case-insensitive)
+            $currentHandlerOperator = in_array(strtolower($currentHandler), ['operator', 'Operator', 'operator']);
 
             // Check if document is rejected (can be sent again)
             $isRejected = false;
-            $ibuBStatus = $dokumen->getStatusForRole('ibub');
-            if ($ibuBStatus && strtolower($ibuBStatus->status ?? '') === 'rejected') {
+            $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+            if ($Team VerifikasiStatus && strtolower($Team VerifikasiStatus->status ?? '') === 'rejected') {
                 $isRejected = true;
             } else {
                 // Fallback: check from roleStatuses directly
                 $rejectedStatus = $dokumen->roleStatuses()
                     ->where('status', 'rejected')
-                    ->whereIn('role_code', ['ibub', 'ibuB'])
+                    ->whereIn('role_code', ['team_verifikasi', 'team_verifikasi'])
                     ->first();
                 $isRejected = $rejectedStatus !== null;
             }
 
             // Check if document status is allowed (case-insensitive)
             $statusLower = strtolower($dokumen->status ?? '');
-            $allowedStatuses = ['draft', 'returned_to_ibua', 'sedang diproses'];
+            $allowedStatuses = ['draft', 'returned_to_Operator', 'sedang diproses'];
             $isAllowedStatus = in_array($statusLower, $allowedStatuses);
 
             // Allow sending if:
-            // 1. Document is rejected (can always be resent) AND with IbuA
-            // 2. OR document has allowed status AND with IbuA
+            // 1. Document is rejected (can always be resent) AND with Operator
+            // 2. OR document has allowed status AND with Operator
             if (!$isRejected && !$isAllowedStatus) {
                 return back()->with('error', 'Dokumen tidak dapat dikirim. Status dokumen harus draft, returned, atau sedang diproses.');
             }
 
-            // Only allow if created by ibuA and current_handler is ibuA (case-insensitive)
-            if (!$createdByIbuA || !$currentHandlerIbuA) {
+            // Only allow if created by Operator and current_handler is Operator (case-insensitive)
+            if (!$createdByOperator || !$currentHandlerOperator) {
                 return back()->with('error', 'Anda tidak memiliki izin untuk mengirim dokumen ini.');
             }
 
@@ -1179,22 +1179,22 @@ class DokumenController extends Controller
 
             // Kirim ke inbox Ibu Yuni untuk approval dengan status WAITING_REVIEWER_APPROVAL
             // Method sendToInbox() akan set:
-            // - status ke 'waiting_reviewer_approval' untuk IbuB
+            // - status ke 'waiting_reviewer_approval' untuk Team Verifikasi
             // - current_stage ke 'reviewer'
-            // - last_action_status ke 'sent_to_ibub'
+            // - last_action_status ke 'sent_to_Team Verifikasi'
             // - calls sendToRoleInbox() internally which creates status record and activity log
-            $dokumen->sendToInbox('IbuB');
+            $dokumen->sendToInbox('team_verifikasi');
 
             $dokumen->refresh();
             DB::commit();
 
             // Broadcast event untuk inbox (DocumentSentToInbox sudah di-broadcast di method sendToInbox)
             try {
-                \Log::info('Document sent to inbox IbuB with WAITING_REVIEWER_APPROVAL status', [
+                \Log::info('Document sent to inbox Team Verifikasi with WAITING_REVIEWER_APPROVAL status', [
                     'document_id' => $dokumen->id,
                     'status' => $dokumen->status,
                     'current_stage' => $dokumen->current_stage,
-                    'inbox_approval_status' => $dokumen->getStatusForRole('ibub')->status ?? 'unknown',
+                    'inbox_approval_status' => $dokumen->getStatusForRole('team_verifikasi')->status ?? 'unknown',
                 ]);
             } catch (\Exception $logException) {
                 \Log::error('Failed to log document sent to inbox: ' . $logException->getMessage());
@@ -1224,8 +1224,8 @@ class DokumenController extends Controller
             $currentUser = auth()->user();
             $userRole = $this->getUserRole($currentUser);
 
-            // Only IbuB (Reviewer) can approve documents waiting for reviewer approval
-            if ($userRole !== 'ibuB' && $userRole !== 'IbuB') {
+            // Only Team Verifikasi (Reviewer) can approve documents waiting for reviewer approval
+            if ($userRole !== 'team_verifikasi' && $userRole !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk menyetujui dokumen ini.'
@@ -1235,7 +1235,7 @@ class DokumenController extends Controller
             // Check if document is waiting for reviewer approval
             if (
                 $dokumen->status !== 'waiting_reviewer_approval' &&
-                !($dokumen->isWaitingApprovalFor('IbuB'))
+                !($dokumen->isWaitingApprovalFor('team_verifikasi'))
             ) {
                 return response()->json([
                     'success' => false,
@@ -1296,10 +1296,10 @@ class DokumenController extends Controller
         // Coba dengan field name
         if (isset($user->name)) {
             $nameToRole = [
-                'Ibu A' => 'ibuA',
-                'IbuB' => 'ibuB',
-                'Ibu B' => 'ibuB',
-                'Ibu Yuni' => 'ibuB',
+                'Operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
+                'Ibu Yuni' => 'team_verifikasi',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran'
@@ -1319,7 +1319,7 @@ class DokumenController extends Controller
         $suggestions = [];
 
         // Get all unique values from relevant fields
-        $baseQuery = Dokumen::where('created_by', 'ibuA');
+        $baseQuery = Dokumen::where('created_by', 'operator');
 
         if ($year) {
             $baseQuery->where('tahun', $year);
@@ -1356,7 +1356,7 @@ class DokumenController extends Controller
 
         // Get from dibayarKepadas relation
         $dibayarKepadaValues = DibayarKepada::whereHas('dokumen', function ($q) use ($year) {
-            $q->where('created_by', 'ibuA');
+            $q->where('created_by', 'operator');
             if ($year) {
                 $q->where('tahun', $year);
             }
@@ -1380,3 +1380,6 @@ class DokumenController extends Controller
         return $suggestions;
     }
 }
+
+
+

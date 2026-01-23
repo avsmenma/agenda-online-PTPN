@@ -14,6 +14,9 @@ class tambahDokumenController extends Controller
             "menuDaftarDokumen" => "",
             "menuDashboard" => "",
         );
-        return view('IbuA.dashboard',$data);
+        return view('operator.dashboard',$data);
     }
 }
+
+
+

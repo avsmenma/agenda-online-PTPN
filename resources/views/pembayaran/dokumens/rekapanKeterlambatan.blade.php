@@ -527,8 +527,8 @@
     <div class="filter-section">
       <select name="bagian" id="bagianFilter" class="chart-filter" onchange="document.getElementById('filterForm').submit()" style="padding: 10px 14px; border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 10px; font-size: 13px; font-weight: 500; background: white; color: #083E40; cursor: pointer; min-width: 150px;">
         <option value="">Semua Bagian</option>
-        <option value="IbuA" {{ $selectedBagian == 'IbuA' ? 'selected' : '' }}>Ibu Tarapul</option>
-        <option value="IbuB" {{ $selectedBagian == 'IbuB' ? 'selected' : '' }}>Ibu Yuni</option>
+        <option value="Operator" {{ $selectedBagian == 'operator' ? 'selected' : '' }}>Ibu Tarapul</option>
+        <option value="team_verifikasi" {{ $selectedBagian == 'team_verifikasi' ? 'selected' : '' }}>Ibu Yuni</option>
         <option value="Perpajakan" {{ $selectedBagian == 'Perpajakan' ? 'selected' : '' }}>Team Perpajakan</option>
         <option value="Akutansi" {{ $selectedBagian == 'Akutansi' ? 'selected' : '' }}>Team Akutansi</option>
       </select>
@@ -923,3 +923,4 @@
 </script>
 
 @endsection
+

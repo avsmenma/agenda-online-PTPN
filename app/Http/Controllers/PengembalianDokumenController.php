@@ -7,27 +7,27 @@ use Illuminate\Http\Request;
 class PengembalianDokumenController extends Controller
 {
      public function index(){
-        // IbuA only sees returned documents (status = returned_to_ibua)
-        $dokumens = \App\Models\Dokumen::where('created_by', 'ibuA')
-            ->where('status', 'returned_to_ibua')
-            ->latest('returned_to_ibua_at')
+        // Operator only sees returned documents (status = returned_to_Operator)
+        $dokumens = \App\Models\Dokumen::where('created_by', 'operator')
+            ->where('status', 'returned_to_Operator')
+            ->latest('returned_to_Operator_at')
             ->select(['*', 'alasan_pengembalian']) // Ensure alasan_pengembalian is loaded
             ->paginate(10);
 
         // Get statistics
-        $totalDibaca = \App\Models\Dokumen::where('created_by', 'ibuA')
-            ->where('status', 'returned_to_ibua')
+        $totalDibaca = \App\Models\Dokumen::where('created_by', 'operator')
+            ->where('status', 'returned_to_Operator')
             ->count();
-        $totalDikembalikan = \App\Models\Dokumen::where('created_by', 'ibuA')
-            ->where('status', 'returned_to_ibua')
+        $totalDikembalikan = \App\Models\Dokumen::where('created_by', 'operator')
+            ->where('status', 'returned_to_Operator')
             ->count();
-        $totalDikirim = \App\Models\Dokumen::where('created_by', 'ibuA')
-            ->where('status', 'sent_to_ibub')
+        $totalDikirim = \App\Models\Dokumen::where('created_by', 'operator')
+            ->where('status', 'sent_to_Team Verifikasi')
             ->count();
 
         $data = array(
             "title" => "Daftar Dokumen Dikembalikan",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDokumen" => "active",
             "menuDaftarDokumenDikembalikan" => "Active",
             "menuDaftarDokumen" => "",
@@ -37,6 +37,9 @@ class PengembalianDokumenController extends Controller
             "totalDikembalikan" => $totalDikembalikan,
             "totalDikirim" => $totalDikirim,
         );
-        return view('IbuA.dokumens.pengembalianDokumen', $data);
+        return view('operator.dokumens.pengembalianDokumen', $data);
     }
 }
+
+
+

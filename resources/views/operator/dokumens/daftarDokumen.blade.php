@@ -799,7 +799,7 @@
       scrollbar-color: rgba(8, 62, 64, 0.6) rgba(8, 62, 64, 0.1);
     }
 
-    /* Enhanced table for better UX - Adopted from IbuB */
+    /* Enhanced table for better UX - Adopted from Team Verifikasi */
     .table-enhanced {
       border-collapse: separate;
       border-spacing: 0;
@@ -840,7 +840,7 @@
       transform: translateY(-1px);
     }
 
-    /* Column width optimization for IbuA */
+    /* Column width optimization for Operator */
     .table-enhanced td {
       padding: 12px;
       vertical-align: middle;
@@ -1141,7 +1141,7 @@
       border-bottom: 1px solid rgba(8, 62, 64, 0.05);
     }
 
-    /* Enhanced Detail Row Styles - Adopted from IbuB */
+    /* Enhanced Detail Row Styles - Adopted from Team Verifikasi */
     .detail-row {
       display: none;
       background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
@@ -1300,7 +1300,7 @@
       animation: shimmer 2s infinite;
     }
 
-    /* State 2: Sudah Dikirim ke IbuB */
+    /* State 2: Sudah Dikirim ke Team Verifikasi */
     .badge-status.badge-terkirim {
       background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
       color: white;
@@ -2136,24 +2136,24 @@
                   @elseif($col == 'status')
                     @php
                       // === PERBAIKAN: Gunakan display_status dari dokumen_role_data untuk stabilitas ===
-                      // IbuA ('ibua') memiliki display_status tersendiri yang tidak terpengaruh downstream
-                      $ibuaDisplayStatus = $dokumen->getDisplayStatusForRole('ibua');
+                      // Operator ('operator') memiliki display_status tersendiri yang tidak terpengaruh downstream
+                      $OperatorDisplayStatus = $dokumen->getDisplayStatusForRole('operator');
 
                       // Fallback logic jika display_status belum diset
-                      if (!$ibuaDisplayStatus) {
+                      if (!$OperatorDisplayStatus) {
                         $handlerLower = strtolower($dokumen->current_handler ?? '');
-                        $isWithIbuA = in_array($handlerLower, ['ibua', 'ibu a', 'ibutarapul']);
+                        $isWithOperator = in_array($handlerLower, ['operator', 'Operator', 'operator']);
                         $statusLower = strtolower($dokumen->status ?? 'draft');
 
-                        // PERBAIKAN: Cek apakah dokumen PENDING di inbox IbuB (Verifikasi)
-                        $isPendingInIbuB = $dokumen->roleStatuses()
-                          ->where('role_code', 'ibub')
+                        // PERBAIKAN: Cek apakah dokumen PENDING di inbox Team Verifikasi (Verifikasi)
+                        $isPendingInTeam Verifikasi = $dokumen->roleStatuses()
+                          ->where('role_code', 'team_verifikasi')
                           ->where('status', 'pending')
                           ->exists();
 
-                        // Cek apakah IbuB sudah APPROVE (bukan pending)
-                        $ibuBHasApproved = $dokumen->roleStatuses()
-                          ->where('role_code', 'ibub')
+                        // Cek apakah Team Verifikasi sudah APPROVE (bukan pending)
+                        $Team VerifikasiHasApproved = $dokumen->roleStatuses()
+                          ->where('role_code', 'team_verifikasi')
                           ->where('status', 'approved')
                           ->exists();
 
@@ -2162,28 +2162,28 @@
                           ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
                           ->exists();
 
-                        // PRIORITAS: Pending di inbox IbuB -> Menunggu Approval
-                        if ($isPendingInIbuB) {
-                          $ibuaDisplayStatus = 'menunggu_approval_verifikasi';
-                        } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_ibub')) {
-                          $ibuaDisplayStatus = 'menunggu_approval_verifikasi';
-                        } elseif ($ibuBHasApproved || $hasPerpajakanStatus) {
-                          // IbuB sudah approve ATAU sudah sampai ke role berikutnya
-                          $ibuaDisplayStatus = 'terkirim';
-                        } elseif ($isWithIbuA && in_array($statusLower, ['draft', 'returned_to_ibua'])) {
-                          $ibuaDisplayStatus = 'draft';
+                        // PRIORITAS: Pending di inbox Team Verifikasi -> Menunggu Approval
+                        if ($isPendingInTeam Verifikasi) {
+                          $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
+                        } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_Team Verifikasi')) {
+                          $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
+                        } elseif ($Team VerifikasiHasApproved || $hasPerpajakanStatus) {
+                          // Team Verifikasi sudah approve ATAU sudah sampai ke role berikutnya
+                          $OperatorDisplayStatus = 'terkirim';
+                        } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_Operator'])) {
+                          $OperatorDisplayStatus = 'draft';
                         } else {
                           // Default: cek current_handler untuk menentukan status
-                          if (in_array($handlerLower, ['ibub', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
-                            $ibuaDisplayStatus = 'terkirim';
+                          if (in_array($handlerLower, ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
+                            $OperatorDisplayStatus = 'terkirim';
                           } else {
-                            $ibuaDisplayStatus = 'draft';
+                            $OperatorDisplayStatus = 'draft';
                           }
                         }
                       }
 
                       // Map display status to badge
-                      $statusLabel = match ($ibuaDisplayStatus) {
+                      $statusLabel = match ($OperatorDisplayStatus) {
                         'draft' => 'Belum Dikirim',
                         'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
                         'terkirim', 'terkirim_verifikasi', 'terkirim_perpajakan', 'terkirim_akutansi', 'terkirim_pembayaran' => 'Terkirim',
@@ -2191,12 +2191,12 @@
                         default => 'Terkirim'
                       };
                     @endphp
-                    @if($ibuaDisplayStatus === 'draft')
+                    @if($OperatorDisplayStatus === 'draft')
                       <span class="badge-status badge-draft">
                         <i class="fa-solid fa-file-lines me-1"></i>
                         <span>Belum Dikirim</span>
                       </span>
-                    @elseif($ibuaDisplayStatus === 'menunggu_approval_verifikasi')
+                    @elseif($OperatorDisplayStatus === 'menunggu_approval_verifikasi')
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                         <i class="fa-solid fa-clock me-1"></i>
@@ -2251,20 +2251,20 @@
               <td class="col-action sticky-column" onclick="event.stopPropagation()">
                 <div class="action-buttons">
                   @php
-                    // Check if document has been sent to IbuB
-                    $isSentToIbuB = ($dokumen->status ?? '') == 'sent_to_ibub'
-                      || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua');
+                    // Check if document has been sent to Team Verifikasi
+                    $isSentToTeam Verifikasi = ($dokumen->status ?? '') == 'sent_to_Team Verifikasi'
+                      || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
 
                     // Check if document has been approved by Team Verifikasi and sent to other roles
-                    $ibuBStatus = $dokumen->getStatusForRole('ibub');
-                    $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
+                    $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                    $isApprovedByTeam Verifikasi = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
 
                     // Check if document is rejected - check from roleStatuses
                     // More comprehensive check to ensure we catch all rejected documents
                     $isRejected = false;
 
                     // Method 1: Check from getStatusForRole
-                    if ($ibuBStatus && strtolower($ibuBStatus->status ?? '') === 'rejected') {
+                    if ($Team VerifikasiStatus && strtolower($Team VerifikasiStatus->status ?? '') === 'rejected') {
                       $isRejected = true;
                     }
 
@@ -2272,14 +2272,14 @@
                     if (!$isRejected) {
                       $rejectedStatus = $dokumen->roleStatuses()
                         ->where('status', 'rejected')
-                        ->whereIn('role_code', ['ibub', 'ibuB', 'ibub', 'IbuB'])
+                        ->whereIn('role_code', ['team_verifikasi', 'team_verifikasi', 'team_verifikasi', 'team_verifikasi'])
                         ->first();
                       $isRejected = $rejectedStatus !== null;
                     }
 
-                    // Method 3: Check if status is returned_to_ibua AND has rejection in roleStatuses
+                    // Method 3: Check if status is returned_to_Operator AND has rejection in roleStatuses
                     // This catches documents that were rejected but status might not be set correctly
-                    if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_ibua') {
+                    if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_Operator') {
                       // Check if there's any rejection status in roleStatuses relationship
                       $hasAnyRejection = $dokumen->roleStatuses()
                         ->where('status', 'rejected')
@@ -2299,41 +2299,41 @@
                       'pending_approval_pembayaran'
                     ]);
 
-                    // Document is considered "sent" if sent to IbuB OR approved by IbuB and sent to other roles
+                    // Document is considered "sent" if sent to Team Verifikasi OR approved by Team Verifikasi and sent to other roles
                     // BUT: rejected documents are NOT considered "sent" - they can be sent again
-                    $isSent = ($isSentToIbuB || ($isApprovedByIbuB && $isSentToOtherRoles)) && !$isRejected;
+                    $isSent = ($isSentToTeam Verifikasi || ($isApprovedByTeam Verifikasi && $isSentToOtherRoles)) && !$isRejected;
 
-                    // Can send only if document is draft/returned and still with IbuA
-                    // Include rejected documents (returned_to_ibua) so they can be sent again
+                    // Can send only if document is draft/returned and still with Operator
+                    // Include rejected documents (returned_to_Operator) so they can be sent again
                     // IMPORTANT: Rejected documents should always be able to be sent again
 
-                    // Check if document is created by IbuA (case-insensitive)
-                    $createdByIbuA = in_array(strtolower($dokumen->created_by ?? ''), ['ibua', 'ibu a', 'ibutarapul']);
+                    // Check if document is created by Operator (case-insensitive)
+                    $createdByOperator = in_array(strtolower($dokumen->created_by ?? ''), ['operator', 'Operator', 'operator']);
 
-                    // Check if document is currently with IbuA (case-insensitive)
-                    $currentHandlerIbuA = in_array(strtolower($dokumen->current_handler ?? ''), ['ibua', 'ibu a', 'ibutarapul']);
+                    // Check if document is currently with Operator (case-insensitive)
+                    $currentHandlerOperator = in_array(strtolower($dokumen->current_handler ?? ''), ['operator', 'Operator', 'operator']);
 
                     // Check if document is returned (case-insensitive)
-                    $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_ibua';
+                    $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_Operator';
 
                     // Initialize canSend
                     $canSend = false;
 
-                    // PRIORITY 1: Rejected documents can ALWAYS be sent again if they're with IbuA
+                    // PRIORITY 1: Rejected documents can ALWAYS be sent again if they're with Operator
                     // This is the most important case - rejected documents must be able to be resent
-                    if ($isRejected && $currentHandlerIbuA && $createdByIbuA) {
+                    if ($isRejected && $currentHandlerOperator && $createdByOperator) {
                       $canSend = true;
                     }
-                    // PRIORITY 2: Returned documents (returned_to_ibua) can be sent
-                    // This includes rejected documents that have status returned_to_ibua
-                    elseif ($isReturned && $currentHandlerIbuA && $createdByIbuA && !$isSent) {
+                    // PRIORITY 2: Returned documents (returned_to_Operator) can be sent
+                    // This includes rejected documents that have status returned_to_Operator
+                    elseif ($isReturned && $currentHandlerOperator && $createdByOperator && !$isSent) {
                       $canSend = true;
                     }
                     // PRIORITY 3: Normal documents (draft, sedang diproses)
                     elseif (
                       in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses'])
-                      && $currentHandlerIbuA
-                      && $createdByIbuA
+                      && $currentHandlerOperator
+                      && $createdByOperator
                       && !$isSent
                     ) {
                       $canSend = true;
@@ -2347,8 +2347,8 @@
                     //   'current_handler' => $dokumen->current_handler,
                     //   'created_by' => $dokumen->created_by,
                     //   'status' => $dokumen->status,
-                    //   'currentHandlerIbuA' => $currentHandlerIbuA,
-                    //   'createdByIbuA' => $createdByIbuA,
+                    //   'currentHandlerOperator' => $currentHandleroperator,
+                    //   'createdByOperator' => $createdByoperator,
                     //   'isSent' => $isSent,
                     //   'canSend' => $canSend,
                     // ]);
@@ -2357,19 +2357,19 @@
                     // IMPORTANT: Rejected documents should always be able to be edited
                     $canEdit = false;
 
-                    // PRIORITY 1: Rejected documents can ALWAYS be edited if they're with IbuA
-                    if ($isRejected && $currentHandlerIbuA && $createdByIbuA) {
+                    // PRIORITY 1: Rejected documents can ALWAYS be edited if they're with Operator
+                    if ($isRejected && $currentHandlerOperator && $createdByOperator) {
                       $canEdit = true;
                     }
-                    // PRIORITY 2: Returned documents (returned_to_ibua) can be edited
-                    elseif ($isReturned && $currentHandlerIbuA && $createdByIbuA && !$isSent) {
+                    // PRIORITY 2: Returned documents (returned_to_Operator) can be edited
+                    elseif ($isReturned && $currentHandlerOperator && $createdByOperator && !$isSent) {
                       $canEdit = true;
                     }
                     // PRIORITY 3: Draft documents can be edited
                     elseif (
                       strtolower($dokumen->status ?? '') === 'draft'
-                      && $currentHandlerIbuA
-                      && $createdByIbuA
+                      && $currentHandlerOperator
+                      && $createdByOperator
                       && !$isSent
                     ) {
                       $canEdit = true;
@@ -2442,9 +2442,9 @@
   @if(isset($dokumens))
     @foreach($dokumens as $dokumen)
       @php
-        $ibuBStatus = $dokumen->getStatusForRole('ibub');
-        $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
-        $rejectReason = $ibuBStatus?->notes ?? null;
+        $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+        $isRejected = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'rejected';
+        $rejectReason = $Team VerifikasiStatus?->notes ?? null;
       @endphp
       @if($isRejected && $rejectReason)
         <div class="modal fade" id="rejectReasonModal{{ $dokumen->id }}" tabindex="-1"
@@ -2482,15 +2482,15 @@
                       }
 
                       // Fallback ke role dari dokumen_statuses
-                      if (!$rejectedBy && $ibuBStatus) {
-                        $rejectedBy = $ibuBStatus->changed_by ?? 'Ibu Yuni';
+                      if (!$rejectedBy && $Team VerifikasiStatus) {
+                        $rejectedBy = $Team VerifikasiStatus->changed_by ?? 'Ibu Yuni';
                       }
 
                       // Format nama yang lebih ramah
                       if ($rejectedBy) {
                         $nameMap = [
-                          'IbuB' => 'Ibu Yuni',
-                          'ibuB' => 'Ibu Yuni',
+                          'team_verifikasi' => 'Ibu Yuni',
+                          'team_verifikasi' => 'Ibu Yuni',
                           'Perpajakan' => 'Team Perpajakan',
                           'perpajakan' => 'Team Perpajakan',
                           'Akutansi' => 'Team Akutansi',
@@ -2821,13 +2821,13 @@
   <script>   /* Enhanced interactions and animations */   function toggleDetail(rowId) 
        {     const detailRow = document.getElementById('detail-' + rowId);     const chevron = document.getElementById('chevron-' + rowId     );
            if (detailRow.style.display === 'none' || !detailRow.style.display) {       /* Show detail with animation */       detailRow.style.display = 'table-row';       setTimeout(() => {         detailRow.classList.add('show');         chevron.classList.add('rotate');       }, 10);     } else {       /* Hide detail */       detailRow.classList.remove('show');       chevron.classList.remove('rotate');       setTimeout(() => {         detailRow.style.display = 'none';       }, 300);     }   }
-         /* Simple Send to IbuB Function */   function sendToIbuB(docId) {     /* Store document ID for confirmation */     document.getElementById('confirmSendToIbuBBtn').setAttribute('data-doc-id', docId);
+         /* Simple Send to Team Verifikasi Function */   function sendToTeam Verifikasi(docId) {     /* Store document ID for confirmation */     document.getElementById('confirmSendToTeam VerifikasiBtn').setAttribute('data-doc-id', docId);
            /* Show confirmation modal */     const confirmationModal = new bootstrap.Modal(document.getElementById('sendConfirmationModal'));     confirmationModal.show();   }
-         /* Confirm and send to IbuB */   function confirmSendToIbuB() {     const docId = document.getElementById('confirmSendToIbuBBtn').getAttribute('data-doc-id');     if (!docId) {       console.error('Document ID not found');       return;     }
+         /* Confirm and send to Team Verifikasi */   function confirmSendToTeam Verifikasi() {     const docId = document.getElementById('confirmSendToTeam VerifikasiBtn').getAttribute('data-doc-id');     if (!docId) {       console.error('Document ID not found');       return;     }
            /* Close confirmation modal */     const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('sendConfirmationModal'));     confirmationModal.hide();
-           const btn = document.querySelector(`button[onclick="sendToIbuB(${docId})"]`);     if (!btn) return;
+           const btn = document.querySelector(`button[onclick="sendToTeam Verifikasi(${docId})"]`);     if (!btn) return;
            /* Show loading state */     const originalHTML = btn.innerHTML;     btn.disabled = true;     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
-           fetch(`/documents/${docId}/send-to-verifikasi`, {       method: 'POST',       headers: {         'Content-Type': 'application/json',         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')       },       body: JSON.stringify({         deadline_days: null,  /* No deadline from IbuA */         deadline_note: null       })     })
+           fetch(`/documents/${docId}/send-to-verifikasi`, {       method: 'POST',       headers: {         'Content-Type': 'application/json',         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')       },       body: JSON.stringify({         deadline_days: null,  /* No deadline from Operator */         deadline_note: null       })     })
             .then(response => response.json())
             .then(data => {
               if (data.success) {
@@ -2902,7 +2902,7 @@
               mainRow.classList.add('selected');
 
               /* Fetch detail data */
-              fetch(`/documents/${documentId}/detail-ibua`)
+              fetch(`/documents/${documentId}/detail-Operator`)
                 .then(response => response.text())
                 .then(html => {
                   detailContent.innerHTML = html;
@@ -3094,9 +3094,9 @@
             }
 
             // Initialize confirmation button click handler
-            const confirmBtn = document.getElementById('confirmSendToIbuBBtn');
+            const confirmBtn = document.getElementById('confirmSendToTeam VerifikasiBtn');
             if (confirmBtn) {
-              confirmBtn.addEventListener('click', confirmSendToIbuB);
+              confirmBtn.addEventListener('click', confirmSendToTeam Verifikasi);
             }
 
             // Add smooth scroll behavior - only for hash links (exclude modal links)
@@ -3260,7 +3260,7 @@
               'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
               'jenis_dokumen': ['SPP', 'SPP', 'SPP', 'SPP', 'SPP'],
               'jenis_pembayaran': ['Tunai', 'Transfer', 'Tunai', 'Transfer', 'Tunai'],
-              'nama_pengirim': ['Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul', 'Ibu Tarapul'],
+              'nama_pengirim': ['Operator', 'Operator', 'Operator', 'Operator', 'Operator'],
               'dibayar_kepada': ['PT ABC', 'PT XYZ', 'CV DEF', 'PT GHI', 'PT JKL'],
               'no_berita_acara': ['BA-001/2024', 'BA-002/2024', 'BA-003/2024', 'BA-004/2024', 'BA-005/2024'],
               'tanggal_berita_acara': ['10/11/2024', '08/11/2024', '15/11/2024', '12/11/2024', '18/11/2024'],
@@ -4552,5 +4552,7 @@
           </script>
 
 @endsection
+
+
 
 

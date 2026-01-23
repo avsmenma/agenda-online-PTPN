@@ -102,7 +102,7 @@ $(document).ready(function() {
 
         if (confirm(`Anda yakin ingin menerima dokumen ${nomorAgenda}?`)) {
             $.ajax({
-                url: `/ibub/dokumen/${dokumenId}/accept`,
+                url: `/Team Verifikasi/dokumen/${dokumenId}/accept`,
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}'
@@ -148,7 +148,7 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: `/ibub/dokumen/${currentDokumenId}/reject`,
+            url: `/Team Verifikasi/dokumen/${currentDokumenId}/reject`,
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -195,3 +195,4 @@ $(document).ready(function() {
 </script>
 @endpush
 @endsection
+

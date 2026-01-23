@@ -29,17 +29,17 @@ use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 use Exception;
 
-class DashboardBController extends Controller
+class TeamVerifikasiController extends Controller
 {
     public function index()
     {
-        // Get statistics for IbuB (only documents with current_handler = ibuB)
+        // Get statistics for Team Verifikasi (only documents with current_handler = Team Verifikasi)
         $now = Carbon::now();
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
-        // 1. Total dokumen - semua dokumen yang terlihat oleh ibuB (same as dokumens() query)
+        // 1. Total dokumen - semua dokumen yang terlihat oleh Team Verifikasi (same as dokumens() query)
         $totalDokumen = Dokumen::where(function ($q) {
-            $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+            $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                 ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']);
         })
             ->where('status', '!=', 'returned_to_bidang')
@@ -52,9 +52,9 @@ class DashboardBController extends Controller
             ->count();
 
         // 2. Total dokumen proses - dokumen yang sedang diproses (belum dikirim)
-        $totalDokumenProses = Dokumen::whereIn('current_handler', ['ibuB', 'verifikasi'])
+        $totalDokumenProses = Dokumen::whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
             ->where(function ($q) {
-                $q->whereIn('status', ['sent_to_ibub', 'sedang diproses', 'sedang_diproses'])
+                $q->whereIn('status', ['sent_to_Team Verifikasi', 'sedang diproses', 'sedang_diproses'])
                     ->orWhereNotIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'returned_to_bidang']);
             })
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -66,9 +66,9 @@ class DashboardBController extends Controller
             ->count();
 
         // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
-        // Get all documents currently handled by ibuB/verifikasi AND sent documents with their roleData
-        $ibubDocuments = Dokumen::where(function ($q) {
-            $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+        // Get all documents currently handled by Team Verifikasi/verifikasi AND sent documents with their roleData
+        $teamVerifikasiDocuments = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                 ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']);
         })
             ->where('status', '!=', 'returned_to_bidang')
@@ -80,7 +80,7 @@ class DashboardBController extends Controller
             })
             ->with([
                     'roleData' => function ($q) {
-                        $q->where('role_code', 'ibub');
+                        $q->where('role_code', 'team_verifikasi');
                     }
                 ])
             ->get();
@@ -89,7 +89,7 @@ class DashboardBController extends Controller
         $dokumen24to72h = 0;      // 24-72 jam (yellow)
         $dokumenMoreThan72h = 0;  // > 72 jam (red)
 
-        foreach ($ibubDocuments as $doc) {
+        foreach ($teamVerifikasiDocuments as $doc) {
             $roleData = $doc->roleData->first();
             if ($roleData && $roleData->received_at) {
                 $receivedAt = Carbon::parse($roleData->received_at);
@@ -124,15 +124,15 @@ class DashboardBController extends Controller
         $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi'])
             ->count();
 
-        // Get latest documents (5 most recent) for ibuB - same logic as dokumens() method
+        // Get latest documents (5 most recent) for Team Verifikasi - same logic as dokumens() method
         $dokumenTerbaru = Dokumen::where(function ($q) {
-            $q->where('current_handler', 'ibuB')
+            $q->where('current_handler', 'team_verifikasi')
                 ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
         })
             ->where('status', '!=', 'returned_to_bidang')
             ->orderByRaw("CASE
-                WHEN current_handler = 'ibuB' AND status IN ('sent_to_ibub', 'sedang diproses') THEN 1
-                WHEN current_handler = 'ibuB' THEN 2
+                WHEN current_handler = 'team_verifikasi' AND status IN ('sent_to_Team Verifikasi', 'sedang diproses') THEN 1
+                WHEN current_handler = 'team_verifikasi' THEN 2
                 ELSE 3
             END ASC")
             ->orderBy('updated_at', 'desc')
@@ -140,8 +140,8 @@ class DashboardBController extends Controller
             ->get();
 
         $data = array(
-            "title" => "Team Verifikasi",
-            "module" => "ibuB",
+            "title" => "team_verifikasi",
+            "module" => "team_verifikasi",
             "menuDashboard" => "Active",
             'menuDokumen' => '',
             'totalDokumen' => $totalDokumen,
@@ -152,14 +152,14 @@ class DashboardBController extends Controller
             'totalTerkirim' => $totalTerkirim,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
-        return view('ibuB.dashboardB', $data);
+        return view('team_verifikasi.dashboardB', $data);
     }
 
     public function dokumens(Request $request)
     {
-        // IbuB sees:
-        // 1. Documents with current_handler = ibuB (active documents) - including approved via universal approval
-        // 2. Documents with status sedang_diproses and current_handler = ibuB (from universal approval)
+        // Team Verifikasi sees:
+        // 1. Documents with current_handler = Team Verifikasi (active documents) - including approved via universal approval
+        // 2. Documents with status sedang_diproses and current_handler = Team Verifikasi (from universal approval)
         // 3. Documents that were sent to perpajakan/akutansi (for tracking)
         // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
         // Exclude pending approval documents (they should use inbox)
@@ -175,14 +175,14 @@ class DashboardBController extends Controller
 
         if (!$request->has('status') || !$request->status) {
             $query->where(function ($q) use ($hasImportedFromCsvColumn) {
-                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                     ->orWhere(function ($subQ) {
                         // Handle both status formats (with space and underscore) for backward compatibility
                         $subQ->where(function ($statusQ) {
                             $statusQ->where('status', 'sedang diproses')
                                 ->orWhere('status', 'sedang_diproses');
                         })
-                            ->whereIn('current_handler', ['ibuB', 'verifikasi']);
+                            ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
                     })
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']) // Include documents sent to perpajakan/akutansi/pembayaran
                     ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
@@ -208,7 +208,7 @@ class DashboardBController extends Controller
                         // (Dokumen yang ditolak oleh Akutansi dikembalikan ke Perpajakan, bukan Verifikasi)
                         $rejectQ->where('status', 'returned_to_department')
                             ->where('target_department', 'perpajakan')
-                            ->whereIn('current_handler', ['ibuB', 'verifikasi']);
+                            ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
                     });
             })
                 // Exclude CSV imported documents (only if column exists)
@@ -228,9 +228,9 @@ class DashboardBController extends Controller
             });
         }
 
-        $query->leftJoin('dokumen_role_data as ibub_data', function ($join) {
-            $join->on('dokumens.id', '=', 'ibub_data.dokumen_id')
-                ->where('ibub_data.role_code', '=', 'ibub');
+        $query->leftJoin('dokumen_role_data as team_verifikasi_data', function ($join) {
+            $join->on('dokumens.id', '=', 'team_verifikasi_data.dokumen_id')
+                ->where('team_verifikasi_data.role_code', '=', 'team_verifikasi');
         })
             ->select([
                     'dokumens.id',
@@ -245,9 +245,9 @@ class DashboardBController extends Controller
                     'dokumens.keterangan',
                     'dokumens.alasan_pengembalian',
                     // Deadline fields are now in dokumen_role_data table - use aliases for easier access
-                    'ibub_data.deadline_at as deadline_at',
-                    'ibub_data.deadline_days as deadline_days',
-                    'ibub_data.deadline_note as deadline_note',
+                    'team_verifikasi_data.deadline_at as deadline_at',
+                    'team_verifikasi_data.deadline_days as deadline_days',
+                    'team_verifikasi_data.deadline_note as deadline_note',
                     'dokumens.current_handler',
                     'dokumens.bulan',
                     'dokumens.tahun',
@@ -277,7 +277,7 @@ class DashboardBController extends Controller
             END DESC")
             ->orderBy('dokumens.nomor_agenda', 'DESC') // Secondary sort for non-numeric or same numeric values
             ->orderByRaw("
-                COALESCE(ibub_data.received_at, dokumens.created_at) DESC,
+                COALESCE(team_verifikasi_data.received_at, dokumens.created_at) DESC,
                 dokumens.id DESC
             ");
 
@@ -344,9 +344,9 @@ class DashboardBController extends Controller
                     });
                     break;
                 case 'sedang_proses':
-                    // Dokumen yang sedang diproses oleh Team Verifikasi (ibuB atau verifikasi)
+                    // Dokumen yang sedang diproses oleh Team Verifikasi (Team Verifikasi atau verifikasi)
                     $query->where(function ($q) {
-                        $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                        $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                             // Exclude dokumen yang sudah terkirim ke role lain
                             ->whereNotIn('status', [
                                 'sent_to_perpajakan',
@@ -363,7 +363,7 @@ class DashboardBController extends Controller
                             })
                             // Exclude dokumen yang ditolak
                             ->whereDoesntHave('roleStatuses', function ($rq) {
-                                $rq->where('role_code', 'ibub')->where('status', 'rejected');
+                                $rq->where('role_code', 'team_verifikasi')->where('status', 'rejected');
                             });
                     });
                     break;
@@ -396,13 +396,13 @@ class DashboardBController extends Controller
                 case 'ditolak':
                     // Dokumen yang ditolak - termasuk yang ditolak oleh perpajakan/akutansi
                     $query->where(function ($q) {
-                        // Dokumen yang ditolak oleh ibub sendiri
+                        // Dokumen yang ditolak oleh Team Verifikasi sendiri
                         $q->whereHas('roleStatuses', function ($rq) {
-                            $rq->where('role_code', 'ibub')->where('status', 'rejected');
+                            $rq->where('role_code', 'team_verifikasi')->where('status', 'rejected');
                         })
                             // ATAU dokumen yang ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi
                             ->orWhere(function ($rejectQ) {
-                                $rejectQ->where('current_handler', 'ibuB')
+                                $rejectQ->where('current_handler', 'team_verifikasi')
                                     ->whereHas('roleStatuses', function ($rq) {
                                         $rq->whereIn('role_code', ['perpajakan', 'akutansi'])
                                             ->where('status', 'rejected');
@@ -411,7 +411,7 @@ class DashboardBController extends Controller
                             // ATAU dokumen dengan status returned_to_department dari perpajakan/akutansi
                             ->orWhere(function ($returnQ) {
                                 $returnQ->where('status', 'returned_to_department')
-                                    ->where('current_handler', 'ibuB')
+                                    ->where('current_handler', 'team_verifikasi')
                                     ->whereIn('target_department', ['perpajakan', 'akutansi']);
                             });
                     });
@@ -423,11 +423,11 @@ class DashboardBController extends Controller
         $dokumens = $query->with([
             'dibayarKepadas',
             'roleData' => function ($query) {
-                $query->where('role_code', 'ibub');
+                $query->where('role_code', 'team_verifikasi');
             },
             'roleStatuses' => function ($query) {
                 // Load all role statuses to check for pending approvals
-                $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
+                $query->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
             }
         ])
             ->withCount([
@@ -450,13 +450,13 @@ class DashboardBController extends Controller
         });
 
         // Cache statistics for better performance
-        $cacheKey = 'ibub_stats_' . md5($request->fullUrl());
+        $cacheKey = 'team_verifikasi_stats_' . md5($request->fullUrl());
         $statistics = \Cache::remember($cacheKey, 300, function () {
-            return Dokumen::where('current_handler', 'ibuB')
+            return Dokumen::where('current_handler', 'team_verifikasi')
                 ->selectRaw('
                     COUNT(*) as total_dibaca,
-                    SUM(CASE WHEN status = "returned_to_ibua" THEN 1 ELSE 0 END) as total_dikembalikan,
-                    SUM(CASE WHEN status IN ("approved_ibub", "selesai") THEN 1 ELSE 0 END) as total_dikirim
+                    SUM(CASE WHEN status = "returned_to_Operator" THEN 1 ELSE 0 END) as total_dikembalikan,
+                    SUM(CASE WHEN status IN ("approved_Team Verifikasi", "selesai") THEN 1 ELSE 0 END) as total_dikirim
                 ')
                 ->first();
         });
@@ -469,7 +469,7 @@ class DashboardBController extends Controller
         $suggestions = [];
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
             $searchTerm = trim((string) $request->search);
-            $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'ibuB');
+            $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'team_verifikasi');
         }
 
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
@@ -510,12 +510,12 @@ class DashboardBController extends Controller
             $user = Auth::user();
             if ($user) {
                 $preferences = $user->table_columns_preferences ?? [];
-                $preferences['ibub'] = $selectedColumns;
+                $preferences['team_verifikasi'] = $selectedColumns;
                 $user->table_columns_preferences = $preferences;
                 $user->save();
             }
             // Also save to session for backward compatibility
-            session(['ibub_dokumens_table_columns' => $selectedColumns]);
+            session(['team_verifikasi_dokumens_table_columns' => $selectedColumns]);
         } else {
             // Load from database first (permanent), then fallback to session, then default
             $user = Auth::user();
@@ -527,11 +527,11 @@ class DashboardBController extends Controller
                 'nomor_miro'
             ];
 
-            if ($user && isset($user->table_columns_preferences['ibub'])) {
-                $selectedColumns = $user->table_columns_preferences['ibub'];
+            if ($user && isset($user->table_columns_preferences['team_verifikasi'])) {
+                $selectedColumns = $user->table_columns_preferences['team_verifikasi'];
             } else {
                 // Fallback to session if available
-                $selectedColumns = session('ibub_dokumens_table_columns', $defaultColumns);
+                $selectedColumns = session('team_verifikasi_dokumens_table_columns', $defaultColumns);
             }
 
             // Filter out 'status' and 'keterangan' if they exist
@@ -546,12 +546,12 @@ class DashboardBController extends Controller
             }
 
             // Update session to keep it in sync
-            session(['ibub_dokumens_table_columns' => $selectedColumns]);
+            session(['team_verifikasi_dokumens_table_columns' => $selectedColumns]);
         }
 
         $data = array(
             "title" => "Daftar Dokumen Team Verifikasi",
-            "module" => "ibuB",
+            "module" => "team_verifikasi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
@@ -563,19 +563,19 @@ class DashboardBController extends Controller
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
         );
-        return view('ibuB.dokumens.daftarDokumenB', $data);
+        return view('team_verifikasi.dokumens.daftarDokumenB', $data);
     }
 
     public function createDokumen()
     {
         $data = array(
             "title" => "Tambah Dokumen Team Verifikasi",
-            "module" => "ibuB",
+            "module" => "team_verifikasi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuTambahDokumen' => 'Active',
         );
-        return view('ibuB.dokumens.tambahDokumenB', $data);
+        return view('team_verifikasi.dokumens.tambahDokumenB', $data);
     }
 
     public function storeDokumen(Request $request)
@@ -589,8 +589,8 @@ class DashboardBController extends Controller
         // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
         $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
 
-        // Only allow editing if current_handler is ibuB or verifikasi
-        if (!in_array($dokumen->current_handler, ['ibuB', 'verifikasi'])) {
+        // Only allow editing if current_handler is Team Verifikasi or verifikasi
+        if (!in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])) {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
@@ -618,9 +618,9 @@ class DashboardBController extends Controller
         try {
             $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
             $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
-            \Log::info('Jenis Pembayaran fetched (ibuB): ' . $jenisPembayaranList->count() . ' records');
+            \Log::info('Jenis Pembayaran fetched (Team Verifikasi): ' . $jenisPembayaranList->count() . ' records');
         } catch (\Exception $e) {
-            \Log::error('Error fetching jenis pembayaran data (ibuB): ' . $e->getMessage());
+            \Log::error('Error fetching jenis pembayaran data (Team Verifikasi): ' . $e->getMessage());
             \Log::error('Error trace: ' . $e->getTraceAsString());
             // Fallback: gunakan collection kosong jika error
             $jenisPembayaranList = collect([]);
@@ -660,7 +660,7 @@ class DashboardBController extends Controller
 
         $data = array(
             "title" => "Edit Dokumen",
-            "module" => "ibuB",
+            "module" => "team_verifikasi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
@@ -675,13 +675,13 @@ class DashboardBController extends Controller
             'jenisPembayaranList' => $jenisPembayaranList,
             'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
         );
-        return view('ibuB.dokumens.editDokumenB', $data);
+        return view('team_verifikasi.dokumens.editDokumenB', $data);
     }
 
     public function updateDokumen(Request $request, Dokumen $dokumen)
     {
-        // Only allow updating if current_handler is ibuB or verifikasi
-        if (!in_array($dokumen->current_handler, ['ibuB', 'verifikasi'])) {
+        // Only allow updating if current_handler is Team Verifikasi or verifikasi
+        if (!in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])) {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengupdate dokumen ini.');
         }
@@ -758,11 +758,11 @@ class DashboardBController extends Controller
             $resetInboxRejection = false;
 
             // If document was rejected from inbox or returned, reset to "sedang diproses"
-            $ibuBStatus = $dokumen->getStatusForRole('ibub');
-            $isRejectedByIbuB = $ibuBStatus && $ibuBStatus->status === 'rejected';
+            $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+            $isRejectedByTeam Verifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
 
             if (
-                $isRejectedByIbuB ||
+                $isRejectedByTeam Verifikasi ||
                 $dokumen->status === 'returned_to_department'
             ) {
                 $newStatus = 'sedang diproses';
@@ -822,9 +822,9 @@ class DashboardBController extends Controller
 
             // Reset inbox rejection status if needed
             if ($resetInboxRejection) {
-                // Clear DokumenStatus rejection for IbuB if resetting
+                // Clear DokumenStatus rejection for Team Verifikasi if resetting
                 $dokumenStatus = \App\Models\DokumenStatus::updateOrCreate(
-                    ['dokumen_id' => $dokumen->id, 'role_code' => 'ibub'],
+                    ['dokumen_id' => $dokumen->id, 'role_code' => 'team_verifikasi'],
                     ['status' => 'pending'] // Atau status awal lain, e.g. 'pending' atau NULL jika perlu dihapus
                 );
 
@@ -882,7 +882,7 @@ class DashboardBController extends Controller
 
         } catch (\Exception $e) {
             \DB::rollback();
-            \Log::error('Error updating document in IbuB: ' . $e->getMessage());
+            \Log::error('Error updating document in Team Verifikasi: ' . $e->getMessage());
             \Log::error('Error stack trace: ' . $e->getTraceAsString());
 
             // Clear any existing flash messages before setting error
@@ -909,13 +909,13 @@ class DashboardBController extends Controller
                 'is_ajax' => request()->ajax(),
             ]);
 
-            $allowedHandlers = ['ibuB', 'verifikasi', 'perpajakan', 'akutansi', 'ibuA', 'pembayaran'];
-            $allowedStatuses = ['sent_to_ibub', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_ibub', 'returned_to_department', 'returned_to_bidang', 'returned_to_ibua'];
+            $allowedHandlers = ['team_verifikasi', 'team_verifikasi', 'perpajakan', 'akutansi', 'operator', 'pembayaran'];
+            $allowedStatuses = ['sent_to_Team Verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_bidang', 'returned_to_Operator'];
 
-            // Allow if rejected by IbuB
+            // Allow if rejected by Team Verifikasi
             $isInboxRejected = false;
-            $ibuBStatus = $dokumen->getStatusForRole('ibub');
-            if ($ibuBStatus && $ibuBStatus->status === 'rejected') {
+            $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+            if ($teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected') {
                 $isInboxRejected = true;
             }
 
@@ -1080,11 +1080,11 @@ class DashboardBController extends Controller
 
         // Status badge
         $statusBadge = '';
-        if ($dokumen->status == 'selesai' || $dokumen->status == 'approved_ibub') {
-            $statusBadge = '<span class="badge badge-status badge-selesai">' . ($dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai') . '</span>';
-        } elseif ($dokumen->status == 'rejected_ibub') {
+        if ($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi') {
+            $statusBadge = '<span class="badge badge-status badge-selesai">' . ($dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai') . '</span>';
+        } elseif ($dokumen->status == 'rejected_Team Verifikasi') {
             $statusBadge = '<span class="badge badge-status badge-dikembalikan">Rejected</span>';
-        } elseif ($dokumen->status == 'sent_to_ibub') {
+        } elseif ($dokumen->status == 'sent_to_Team Verifikasi') {
             $statusBadge = '<span class="badge badge-status badge-proses">Menunggu Review</span>';
         } else {
             $statusBadge = '<span class="badge badge-status badge-proses">' . ucfirst($dokumen->status) . '</span>';
@@ -1125,9 +1125,9 @@ class DashboardBController extends Controller
 
         // Dates
         $dates = [
-            'Tanggal Dikirim ke Team Verifikasi' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d-m-Y H:i') : null,
-            'Tanggal Diproses' => $dokumen->getDataForRole('ibub')?->processed_at ? $dokumen->getDataForRole('ibub')->processed_at->format('d-m-Y H:i') : null,
-            'Tanggal Dikembalikan' => $dokumen->returned_to_ibua_at ? $dokumen->returned_to_ibua_at->format('d-m-Y H:i') : null,
+            'Tanggal Dikirim ke Team Verifikasi' => $dokumen->getDataForRole('team_verifikasi')?->received_at ? $dokumen->getDataForRole('team_verifikasi')->received_at->format('d-m-Y H:i') : null,
+            'Tanggal Diproses' => $dokumen->getDataForRole('team_verifikasi')?->processed_at ? $dokumen->getDataForRole('team_verifikasi')->processed_at->format('d-m-Y H:i') : null,
+            'Tanggal Dikembalikan' => $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d-m-Y H:i') : null,
         ];
 
         foreach ($dates as $label => $value) {
@@ -1181,19 +1181,19 @@ class DashboardBController extends Controller
 
     public function pengembalian(Request $request)
     {
-        // IbuB sees documents that were returned to department (unified return page)
+        // Team Verifikasi sees documents that were returned to department (unified return page)
         // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
         $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas', 'roleStatuses'])
             ->where(function ($q) {
                 // Dokumen yang dikembalikan dari department/bagian
                 $q->where(function ($subQ) {
-                    $subQ->where('current_handler', 'ibuB')
+                    $subQ->where('current_handler', 'team_verifikasi')
                         ->where('status', 'returned_to_department');
                 })
-                    // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke IbuB
+                    // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke Team Verifikasi
                     // Check dokumen_statuses table for rejected status
                     ->orWhere(function ($inboxRejectQ) {
-                    $inboxRejectQ->where('current_handler', 'ibuB')
+                    $inboxRejectQ->where('current_handler', 'team_verifikasi')
                         ->whereHas('roleStatuses', function ($statusQuery) {
                             $statusQuery->whereIn('role_code', ['perpajakan', 'akutansi'])
                                 ->where('status', 'rejected');
@@ -1231,12 +1231,12 @@ class DashboardBController extends Controller
         $totalReturnedToDept = \App\Models\Dokumen::where(function ($q) {
             // Dokumen yang dikembalikan dari department/bagian
             $q->where(function ($subQ) {
-                $subQ->where('current_handler', 'ibuB')
+                $subQ->where('current_handler', 'team_verifikasi')
                     ->where('status', 'returned_to_department');
             })
-                // Dokumen yang di-reject dari inbox dan dikembalikan ke IbuB
+                // Dokumen yang di-reject dari inbox dan dikembalikan ke Team Verifikasi
                 ->orWhere(function ($inboxRejectQ) {
-                    $inboxRejectQ->where('current_handler', 'ibuB')
+                    $inboxRejectQ->where('current_handler', 'team_verifikasi')
                         ->whereHas('roleStatuses', function ($statusQuery) {
                             $statusQuery->whereIn('role_code', ['perpajakan', 'akutansi'])
                                 ->where('status', 'rejected');
@@ -1246,7 +1246,7 @@ class DashboardBController extends Controller
             ->count();
 
         $totalByDept = [
-            'perpajakan' => \App\Models\Dokumen::where('current_handler', 'ibuB')
+            'perpajakan' => \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
                 ->where(function ($q) {
                     $q->where('status', 'returned_to_department')
                         ->where('target_department', 'perpajakan')
@@ -1256,7 +1256,7 @@ class DashboardBController extends Controller
                         });
                 })
                 ->count(),
-            'akutansi' => \App\Models\Dokumen::where('current_handler', 'ibuB')
+            'akutansi' => \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
                 ->where(function ($q) {
                     $q->where(function ($subQ) {
                         $subQ->where('status', 'returned_to_department')
@@ -1268,7 +1268,7 @@ class DashboardBController extends Controller
                         });
                 })
                 ->count(),
-            'pembayaran' => \App\Models\Dokumen::where('current_handler', 'ibuB')
+            'pembayaran' => \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
                 ->where('status', 'returned_to_department')
                 ->where('target_department', 'pembayaran')
                 ->count(),
@@ -1279,7 +1279,7 @@ class DashboardBController extends Controller
 
         $data = array(
             "title" => "Daftar Pengembalian Dokumen",
-            "module" => "ibuB",
+            "module" => "team_verifikasi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuDaftarDokumenDikembalikan' => 'Active',
@@ -1289,7 +1289,7 @@ class DashboardBController extends Controller
             'departments' => $departments,
             'selectedDepartment' => $selectedDepartment,
         );
-        return view('ibuB.dokumens.pengembalianKeBagianB', $data);
+        return view('team_verifikasi.dokumens.pengembalianKeBagianB', $data);
     }
 
 
@@ -1300,7 +1300,7 @@ class DashboardBController extends Controller
     {
         try {
             // Validate current handler
-            if ($dokumen->current_handler !== 'ibuB') {
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
@@ -1321,7 +1321,7 @@ class DashboardBController extends Controller
 
             \DB::beginTransaction();
 
-            // Update document data with current values from ibuB
+            // Update document data with current values from Team Verifikasi
             $dokumen->update([
                 'current_handler' => 'perpajakan',
                 'status' => 'sent_to_perpajakan', // Langsung kirim ke perpajakan
@@ -1379,8 +1379,8 @@ class DashboardBController extends Controller
     public function sendToNextHandler(Dokumen $dokumen, Request $request)
     {
         try {
-            // Validate current handler - allow both 'ibuB' and 'verifikasi' roles
-            if (!in_array($dokumen->current_handler, ['ibuB', 'verifikasi'])) {
+            // Validate current handler - allow both 'team_verifikasi' and 'team_verifikasi' roles
+            if (!in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
@@ -1463,16 +1463,16 @@ class DashboardBController extends Controller
             // Refresh dokumen untuk mendapatkan status terbaru
             $dokumen->refresh();
 
-            // Set processed_at untuk tracking di dokumen_role_data (ibuB)
-            $roleData = $dokumen->getDataForRole('ibub');
+            // Set processed_at untuk tracking di dokumen_role_data (Team Verifikasi)
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
             if ($roleData) {
                 $roleData->processed_at = now();
                 $roleData->save();
             } else {
                 // Create role data if it doesn't exist
-                $dokumen->setDataForRole('ibub', [
+                $dokumen->setDataForRole('team_verifikasi', [
                     'processed_at' => now(),
-                    'received_at' => $dokumen->getDataForRole('ibub')?->received_at ?? now(),
+                    'received_at' => $dokumen->getDataForRole('team_verifikasi')?->received_at ?? now(),
                 ]);
             }
 
@@ -1486,7 +1486,7 @@ class DashboardBController extends Controller
             ];
             $nextHandlerName = $nextHandlerNameMap[$request->next_handler] ?? $request->next_handler;
 
-            \Log::info("Document #{$dokumen->id} sent to inbox {$inboxRole} by ibuB");
+            \Log::info("Document #{$dokumen->id} sent to inbox {$inboxRole} by Team Verifikasi");
 
             return response()->json([
                 'success' => true,
@@ -1513,7 +1513,7 @@ class DashboardBController extends Controller
     {
         try {
             // Validate current handler
-            if ($dokumen->current_handler !== 'ibuB') {
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
@@ -1558,7 +1558,7 @@ class DashboardBController extends Controller
                 \App\Helpers\ActivityLogHelper::logSent(
                     $dokumen->fresh(),
                     $request->next_handler,
-                    'ibuB'
+                    'team_verifikasi'
                 );
 
                 // Log activity: dokumen masuk/diterima di stage penerima
@@ -1572,7 +1572,7 @@ class DashboardBController extends Controller
 
             $nextHandlerName = $request->next_handler === 'perpajakan' ? 'Team Perpajakan' : 'Team Akutansi';
 
-            \Log::info("Document #{$dokumen->id} sent to {$nextHandlerName} by ibuB");
+            \Log::info("Document #{$dokumen->id} sent to {$nextHandlerName} by Team Verifikasi");
 
             return response()->json([
                 'success' => true,
@@ -1608,7 +1608,7 @@ class DashboardBController extends Controller
         try {
             // Enhanced logging with user context
             // Check deadline from dokumen_role_data
-            $roleData = $dokumen->getDataForRole('ibub');
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
             Log::info('=== SET DEADLINE REQUEST START ===', [
                 'document_id' => $dokumen->id,
                 'current_handler' => $dokumen->current_handler,
@@ -1620,26 +1620,26 @@ class DashboardBController extends Controller
             ]);
 
             // Validasi status dokumen
-            if ($dokumen->current_handler !== 'ibuB') {
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 Log::warning('Deadline set failed - Invalid current handler', [
                     'document_id' => $dokumen->id,
-                    'expected_handler' => 'ibuB',
+                    'expected_handler' => 'team_verifikasi',
                     'actual_handler' => $dokumen->current_handler,
                     'user_role' => Auth::user()?->role
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Dokumen tidak valid untuk menetapkan deadline. Dokumen harus berada di IbuB.',
+                    'message' => 'Dokumen tidak valid untuk menetapkan deadline. Dokumen harus berada di team_verifikasi.',
                     'debug_info' => [
                         'current_handler' => $dokumen->current_handler,
-                        'expected_handler' => 'ibuB'
+                        'expected_handler' => 'team_verifikasi'
                     ]
                 ], 403);
             }
 
             // Check deadline from dokumen_role_data instead of direct column
-            $roleData = $dokumen->getDataForRole('ibub');
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
             if ($roleData && $roleData->deadline_at) {
                 Log::warning('Deadline set failed - Deadline already exists', [
                     'document_id' => $dokumen->id,
@@ -1657,7 +1657,7 @@ class DashboardBController extends Controller
             }
 
             // Valid statuses untuk set deadline: dokumen yang baru di-approve dari inbox atau sedang diproses
-            $validStatuses = ['sent_to_ibub', 'sedang diproses', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
+            $validStatuses = ['sent_to_Team Verifikasi', 'sedang diproses', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
             if (!in_array($dokumen->status, $validStatuses)) {
                 Log::warning('Deadline set failed - Invalid document status', [
                     'document_id' => $dokumen->id,
@@ -1684,11 +1684,11 @@ class DashboardBController extends Controller
             // Update using transaction
             DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
                 // Update dokumen_role_data with deadline
-                $dokumen->setDataForRole('ibub', [
+                $dokumen->setDataForRole('team_verifikasi', [
                     'deadline_at' => $deadlineAt,
                     'deadline_days' => $deadlineDays,
                     'deadline_note' => $deadlineNote,
-                    'received_at' => $dokumen->getDataForRole('ibub')?->received_at ?? now(),
+                    'received_at' => $dokumen->getDataForRole('team_verifikasi')?->received_at ?? now(),
                 ]);
 
                 // Update dokumen status
@@ -1699,13 +1699,13 @@ class DashboardBController extends Controller
 
             // Refresh dokumen to get updated data
             $dokumen->refresh();
-            $updatedRoleData = $dokumen->getDataForRole('ibub');
+            $updatedRoleData = $dokumen->getDataForRole('team_verifikasi');
 
             // Log activity: deadline diatur oleh Ibu Yuni
             try {
                 \App\Helpers\ActivityLogHelper::logDeadlineSet(
                     $dokumen->fresh(),
-                    'ibuB',
+                    'team_verifikasi',
                     [
                         'deadline_days' => $deadlineDays,
                         'deadline_at' => $updatedRoleData?->deadline_at?->format('Y-m-d H:i:s'),
@@ -1761,8 +1761,8 @@ class DashboardBController extends Controller
     public function returnToDepartment(Dokumen $dokumen, Request $request)
     {
         try {
-            // Only allow if current_handler is ibuB
-            if ($dokumen->current_handler !== 'ibuB') {
+            // Only allow if current_handler is Team Verifikasi
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengembalikan dokumen ini ke bagian.'
@@ -1786,7 +1786,7 @@ class DashboardBController extends Controller
             // Update document with department return information
             $dokumen->update([
                 'status' => 'returned_to_department',
-                'current_handler' => 'verifikasi', // Tetap di verifikasi untuk tracking
+                'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
                 'target_department' => $request->target_department,
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->department_return_reason,
@@ -1831,7 +1831,7 @@ class DashboardBController extends Controller
     {
         try {
             // Only allow if document is in returned_to_department status
-            if ($dokumen->status !== 'returned_to_department' || $dokumen->current_handler !== 'ibuB') {
+            if ($dokumen->status !== 'returned_to_department' || $dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak valid untuk dikirim ke bagian.'
@@ -1852,13 +1852,13 @@ class DashboardBController extends Controller
                 'status' => 'sent_to_' . $targetDepartment,
             ];
 
-            // Set processed_at in dokumen_role_data for ibuB
-            $roleData = $dokumen->getDataForRole('ibub');
+            // Set processed_at in dokumen_role_data for Team Verifikasi
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
             if ($roleData) {
                 $roleData->processed_at = now();
                 $roleData->save();
             } else {
-                $dokumen->setDataForRole('ibub', [
+                $dokumen->setDataForRole('team_verifikasi', [
                     'processed_at' => now(),
                     'received_at' => now(),
                 ]);
@@ -1913,7 +1913,7 @@ class DashboardBController extends Controller
     public function getPengembalianKeBagianStats()
     {
         try {
-            $totalReturnedToDept = \App\Models\Dokumen::where('current_handler', 'ibuB')
+            $totalReturnedToDept = \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
                 ->where('status', 'returned_to_department')
                 ->count();
 
@@ -1935,8 +1935,8 @@ class DashboardBController extends Controller
      */
     public function pengembalianKeBidang(Request $request)
     {
-        // Get documents with status = 'returned_to_bidang' and current_handler = 'ibuB'
-        $query = Dokumen::where('current_handler', 'ibuB')
+        // Get documents with status = 'returned_to_bidang' and current_handler = 'team_verifikasi'
+        $query = Dokumen::where('current_handler', 'team_verifikasi')
             ->where('status', 'returned_to_bidang')
             ->latest('bidang_returned_at');
 
@@ -1974,7 +1974,7 @@ class DashboardBController extends Controller
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
-        $totalReturned = Dokumen::where('current_handler', 'ibuB')
+        $totalReturned = Dokumen::where('current_handler', 'team_verifikasi')
             ->where('status', 'returned_to_bidang')
             ->count();
 
@@ -1992,7 +1992,7 @@ class DashboardBController extends Controller
 
         $bidangStats = [];
         foreach ($bidangList as $kode => $nama) {
-            $count = Dokumen::where('current_handler', 'ibuB')
+            $count = Dokumen::where('current_handler', 'team_verifikasi')
                 ->where('status', 'returned_to_bidang')
                 ->where('target_bidang', $kode)
                 ->count();
@@ -2006,7 +2006,7 @@ class DashboardBController extends Controller
 
         $data = array(
             "title" => "Daftar Pengembalian Dokumen ke Bidang",
-            "module" => "ibuB",
+            "module" => "team_verifikasi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
             'menuPengembalianKeBidang' => "Active",
@@ -2016,7 +2016,7 @@ class DashboardBController extends Controller
             'selectedBidang' => $request->bidang
         );
 
-        return view('ibuB.dokumens.pengembalianKeBidangB', $data);
+        return view('team_verifikasi.dokumens.pengembalianKeBidangB', $data);
     }
 
     /**
@@ -2025,8 +2025,8 @@ class DashboardBController extends Controller
     public function returnToBidang(Dokumen $dokumen, Request $request)
     {
         try {
-            // Only allow if current_handler is ibuB and status is appropriate
-            if ($dokumen->current_handler !== 'ibuB') {
+            // Only allow if current_handler is Team Verifikasi and status is appropriate
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengembalikan dokumen ini ke bidang.'
@@ -2050,7 +2050,7 @@ class DashboardBController extends Controller
             // Update document with bidang return information
             $dokumen->update([
                 'status' => 'returned_to_bidang',
-                'current_handler' => 'verifikasi', // Tetap di verifikasi untuk tracking
+                'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
                 'target_bidang' => $request->target_bidang,
                 'bidang_returned_at' => now(),
                 'bidang_return_reason' => $request->bidang_return_reason,
@@ -2120,7 +2120,7 @@ class DashboardBController extends Controller
 
             // Update document to return to main list
             $dokumen->update([
-                'status' => 'sent_to_ibub',
+                'status' => 'sent_to_Team Verifikasi',
                 'target_bidang' => null,
                 'bidang_returned_at' => null,
                 'bidang_return_reason' => null,
@@ -2150,13 +2150,13 @@ class DashboardBController extends Controller
     }
 
     /**
-     * Return document to IbuA
+     * Return document to Operator
      */
-    public function returnToIbuA(Dokumen $dokumen, Request $request)
+    public function returnToOperator(Dokumen $dokumen, Request $request)
     {
         try {
-            // Only allow if current_handler is ibuB
-            if ($dokumen->current_handler !== 'ibuB') {
+            // Only allow if current_handler is Team Verifikasi
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengembalikan dokumen ini ke Ibu Tarapul.'
@@ -2174,12 +2174,12 @@ class DashboardBController extends Controller
 
             \DB::beginTransaction();
 
-            // Update document with return to IbuA information
+            // Update document with return to Operator information
             $dokumen->update([
-                'status' => 'returned_to_ibua',
-                'current_handler' => 'ibutarapul',
+                'status' => 'returned_to_Operator',
+                'current_handler' => 'operator',
                 'alasan_pengembalian' => $request->alasan_pengembalian,
-                'returned_to_ibua_at' => now(),
+                'returned_to_Operator_at' => now(),
                 // Clear bidang return fields if they exist
                 'target_bidang' => null,
                 'bidang_returned_at' => null,
@@ -2188,7 +2188,7 @@ class DashboardBController extends Controller
 
             \DB::commit();
 
-            \Log::info('Document returned to IbuA', [
+            \Log::info('Document returned to Operator', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
                 'reason' => $request->alasan_pengembalian
@@ -2206,7 +2206,7 @@ class DashboardBController extends Controller
             ], 422);
         } catch (\Exception $e) {
             \DB::rollback();
-            \Log::error('Error returning document to IbuA: ' . $e->getMessage());
+            \Log::error('Error returning document to Operator: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -2229,8 +2229,8 @@ class DashboardBController extends Controller
                 ], 403);
             }
 
-            // Only allow if current_handler is ibuB
-            if ($dokumen->current_handler !== 'ibuB') {
+            // Only allow if current_handler is Team Verifikasi
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengubah status dokumen ini.'
@@ -2247,7 +2247,7 @@ class DashboardBController extends Controller
                 'document_id.exists' => 'Document ID tidak valid.'
             ]);
 
-            $newStatus = $request->status === 'approved' ? 'approved_ibub' : 'rejected_ibub';
+            $newStatus = $request->status === 'approved' ? 'approved_Team Verifikasi' : 'rejected_Team Verifikasi';
 
             \DB::beginTransaction();
 
@@ -2257,28 +2257,28 @@ class DashboardBController extends Controller
                 'updated_at' => now()
             ];
 
-            // Set processed_at in dokumen_role_data for ibuB
-            $roleData = $dokumen->getDataForRole('ibub');
+            // Set processed_at in dokumen_role_data for Team Verifikasi
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
             if ($roleData) {
                 $roleData->processed_at = now();
                 $roleData->save();
             } else {
-                $dokumen->setDataForRole('ibub', [
+                $dokumen->setDataForRole('team_verifikasi', [
                     'processed_at' => now(),
                     'received_at' => now(),
                 ]);
             }
 
             // Set milestone if approved
-            if ($newStatus === 'approved_ibub') {
-                $updateData['approved_by_ibub_at'] = now();
-                $updateData['approved_by_ibub_by'] = 'ibuB';
+            if ($newStatus === 'approved_Team Verifikasi') {
+                $updateData['approved_by_team_verifikasi_at'] = now();
+                $updateData['approved_by_team_verifikasi_by'] = 'team_verifikasi';
             }
 
             // FIX: Atomic update spesifik per document ID untuk mencegah cross-interference
             $affectedRows = \DB::table('dokumens')
                 ->where('id', $dokumen->id)
-                ->where('current_handler', 'ibuB') // Double check
+                ->where('current_handler', 'team_verifikasi') // Double check
                 ->update($updateData);
 
             // Jika tidak ada row yang terupdate, ada kemungkinan race condition
@@ -2297,16 +2297,16 @@ class DashboardBController extends Controller
                 'nomor_agenda' => $dokumen->nomor_agenda,
                 'old_status' => $dokumen->getOriginal('status'),
                 'new_status' => $newStatus,
-                'changed_by' => 'ibuB'
+                'changed_by' => 'team_verifikasi'
             ]);
 
-            $statusText = $newStatus === 'approved_ibub' ? 'disetujui (approved)' : 'ditolak (rejected)';
+            $statusText = $newStatus === 'approved_Team Verifikasi' ? 'disetujui (approved)' : 'ditolak (rejected)';
 
             return response()->json([
                 'success' => true,
                 'message' => "Dokumen berhasil {$statusText}.",
                 'new_status' => $newStatus,
-                'status_text' => $newStatus === 'approved_ibub' ? 'Approved' : 'Rejected'
+                'status_text' => $newStatus === 'approved_Team Verifikasi' ? 'Approved' : 'Rejected'
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -2332,17 +2332,17 @@ class DashboardBController extends Controller
     {
         try {
             // Validasi: harus pending approval untuk role ini
-            if ($dokumen->status !== 'pending_approval_ibub') {
+            if ($dokumen->status !== 'pending_approval_Team Verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak dalam status pending approval.'
                 ], 400);
             }
 
-            if ($dokumen->pending_approval_for !== 'ibuB') {
+            if ($dokumen->pending_approval_for !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Dokumen ini bukan untuk IbuB.'
+                    'message' => 'Dokumen ini bukan untuk team_verifikasi.'
                 ], 403);
             }
 
@@ -2350,11 +2350,11 @@ class DashboardBController extends Controller
 
             // Update dokumen: pindah ke status accepted
             $dokumen->update([
-                'status' => 'sent_to_ibub',
-                'current_handler' => 'verifikasi',           // BARU PINDAH ke penerima
+                'status' => 'sent_to_Team Verifikasi',
+                'current_handler' => 'team_verifikasi',           // BARU PINDAH ke penerima
                 'pending_approval_for' => null,
                 'approval_responded_at' => now(),
-                'approval_responded_by' => auth()->user()->username ?? 'ibuB',
+                'approval_responded_by' => auth()->user()->username ?? 'team_verifikasi',
                 'approval_rejection_reason' => null,
             ]);
 
@@ -2363,14 +2363,14 @@ class DashboardBController extends Controller
 
             // Broadcast event (opsional)
             try {
-                broadcast(new \App\Events\DocumentApprovedInbox($dokumen, 'ibub'));
+                broadcast(new \App\Events\DocumentApprovedInbox($dokumen, 'team_verifikasi'));
             } catch (\Exception $e) {
                 \Log::error('Failed to broadcast acceptance: ' . $e->getMessage());
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil diterima dan masuk ke sistem Team Verifikasi.'
+                'message' => 'Dokumen berhasil diterima dan masuk ke sistem team_verifikasi.'
             ]);
 
         } catch (Exception $e) {
@@ -2398,17 +2398,17 @@ class DashboardBController extends Controller
             ]);
 
             // Validasi: harus pending approval untuk role ini
-            if ($dokumen->status !== 'pending_approval_ibub') {
+            if ($dokumen->status !== 'pending_approval_Team Verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dokumen tidak dalam status pending approval.'
                 ], 400);
             }
 
-            if ($dokumen->pending_approval_for !== 'ibuB') {
+            if ($dokumen->pending_approval_for !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Dokumen ini bukan untuk IbuB.'
+                    'message' => 'Dokumen ini bukan untuk team_verifikasi.'
                 ], 403);
             }
 
@@ -2417,10 +2417,10 @@ class DashboardBController extends Controller
             // Update dokumen: kembalikan ke pengirim
             $dokumen->update([
                 'status' => 'draft',                   // Kembali ke draft
-                'current_handler' => 'ibutarapul',           // Kembali ke pengirim
+                'current_handler' => 'operator',           // Kembali ke pengirim
                 'pending_approval_for' => null,
                 'approval_responded_at' => now(),
-                'approval_responded_by' => auth()->user()->username ?? 'ibuB',
+                'approval_responded_by' => auth()->user()->username ?? 'team_verifikasi',
                 'approval_rejection_reason' => $request->rejection_reason,
             ]);
 
@@ -2429,7 +2429,7 @@ class DashboardBController extends Controller
 
             // Broadcast event (opsional)
             try {
-                broadcast(new \App\Events\DocumentRejectedInbox($dokumen, $request->rejection_reason, 'ibub'));
+                broadcast(new \App\Events\DocumentRejectedInbox($dokumen, $request->rejection_reason, 'team_verifikasi'));
             } catch (\Exception $e) {
                 \Log::error('Failed to broadcast rejection: ' . $e->getMessage());
             }
@@ -2459,21 +2459,21 @@ class DashboardBController extends Controller
      */
     public function pendingApproval(Request $request)
     {
-        // Get dokumen yang pending approval untuk IbuB
-        $dokumensPending = Dokumen::where('status', 'pending_approval_ibub')
-            ->where('pending_approval_for', 'ibuB')
+        // Get dokumen yang pending approval untuk Team Verifikasi
+        $dokumensPending = Dokumen::where('status', 'pending_approval_Team Verifikasi')
+            ->where('pending_approval_for', 'team_verifikasi')
             ->latest('pending_approval_at')
             ->get();
 
         $data = [
             'title' => 'Dokumen Menunggu Persetujuan',
-            'module' => 'ibuB',
+            'module' => 'team_verifikasi',
             'menuDokumen' => 'active',
             'menuPendingApproval' => 'active',
             'dokumensPending' => $dokumensPending,
         ];
 
-        return view('ibuB.dokumens.pendingApproval', $data);
+        return view('team_verifikasi.dokumens.pendingApproval', $data);
     }
 
     /**
@@ -2491,7 +2491,7 @@ class DashboardBController extends Controller
     ];
 
     /**
-     * Display the rekapan page for IbuB (same as IbuA but for viewing only)
+     * Display the rekapan page for Team Verifikasi (same as Operator but for viewing only)
      */
     public function rekapan(Request $request)
     {
@@ -2517,7 +2517,7 @@ class DashboardBController extends Controller
 
         // Base query for documents handled by Team Verifikasi (matching daftar dokumen logic)
         $baseQuery = Dokumen::where(function ($q) {
-            $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+            $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                 ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
         })
             ->where('status', '!=', 'returned_to_bidang')
@@ -2600,7 +2600,7 @@ class DashboardBController extends Controller
         if ($yearFilterType === 'nomor_spp') {
             // Extract years from nomor_spp patterns for documents handled by Team Verifikasi
             $availableYears = Dokumen::where(function ($q) {
-                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
             })
                 ->where('status', '!=', 'returned_to_bidang')
@@ -2625,7 +2625,7 @@ class DashboardBController extends Controller
                 ->toArray();
         } else {
             $availableYears = Dokumen::where(function ($q) {
-                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
             })
                 ->where('status', '!=', 'returned_to_bidang')
@@ -2651,7 +2651,7 @@ class DashboardBController extends Controller
         $bagianCounts = [];
         foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
             $countQuery = Dokumen::where(function ($q) {
-                $q->whereIn('current_handler', ['ibuB', 'verifikasi'])
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
             })
                 ->where('status', '!=', 'returned_to_bidang')
@@ -2674,7 +2674,7 @@ class DashboardBController extends Controller
 
         $data = [
             'title' => 'Analitik Dokumen',
-            'module' => 'ibuB',
+            'module' => 'team_verifikasi',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
             'selectedYear' => (int) $selectedYear,
@@ -2689,15 +2689,15 @@ class DashboardBController extends Controller
             'bagianCounts' => $bagianCounts,
         ];
 
-        return view('ibuB.dokumens.analytics', $data);
+        return view('team_verifikasi.dokumens.analytics', $data);
     }
 
     /**
-     * Get statistics for rekapan documents (same as IbuA)
+     * Get statistics for rekapan documents (same as Operator)
      */
     private function getRekapanStatistics(string $filterBagian = ''): array
     {
-        $query = Dokumen::where('created_by', 'ibuA');
+        $query = Dokumen::where('created_by', 'operator');
 
         if ($filterBagian && in_array($filterBagian, array_keys(self::BAGIAN_LIST))) {
             $query->where('bagian', $filterBagian);
@@ -2707,7 +2707,7 @@ class DashboardBController extends Controller
 
         $bagianStats = [];
         foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
-            $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagianCode);
+            $bagianQuery = Dokumen::where('created_by', 'operator')->where('bagian', $bagianCode);
             $bagianStats[$bagianCode] = [
                 'name' => $bagianName,
                 'total' => $bagianQuery->count()
@@ -2719,10 +2719,10 @@ class DashboardBController extends Controller
             'by_bagian' => $bagianStats,
             'by_status' => [
                 'draft' => $query->where('status', 'draft')->count(),
-                'sent_to_ibub' => $query->where('status', 'sent_to_ibub')->count(),
+                'sent_to_Team Verifikasi' => $query->where('status', 'sent_to_Team Verifikasi')->count(),
                 'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
                 'selesai' => $query->where('status', 'selesai')->count(),
-                'returned_to_ibua' => $query->where('status', 'returned_to_ibua')->count(),
+                'returned_to_Operator' => $query->where('status', 'returned_to_Operator')->count(),
             ]
         ];
     }
@@ -2743,7 +2743,7 @@ class DashboardBController extends Controller
         }
 
         // Base query for documents created by Ibu Tarapul (Ibu Yuni can see all documents from Ibu Tarapul)
-        $baseQuery = Dokumen::where('created_by', 'ibuA')
+        $baseQuery = Dokumen::where('created_by', 'operator')
             ->whereYear('tanggal_masuk', $selectedYear);
 
         // Filter by bagian if selected
@@ -2795,7 +2795,7 @@ class DashboardBController extends Controller
         $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get available years
-        $availableYears = Dokumen::where('created_by', 'ibuA')
+        $availableYears = Dokumen::where('created_by', 'operator')
             ->whereNotNull('tanggal_masuk')
             ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
             ->orderBy('year', 'desc')
@@ -2809,7 +2809,7 @@ class DashboardBController extends Controller
 
         $data = [
             'title' => 'Analitik Dokumen',
-            'module' => 'ibuB',
+            'module' => 'team_verifikasi',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
             'selectedYear' => (int) $selectedYear,
@@ -2822,7 +2822,7 @@ class DashboardBController extends Controller
             'bagianList' => self::BAGIAN_LIST,
         ];
 
-        return view('ibuB.dokumens.analytics', $data);
+        return view('team_verifikasi.dokumens.analytics', $data);
     }
 
     /**
@@ -2851,8 +2851,8 @@ class DashboardBController extends Controller
 
                 if ($rejectedBy) {
                     $nameMap = [
-                        'IbuB' => 'Team Verifikasi',
-                        'ibuB' => 'Team Verifikasi',
+                        'team_verifikasi' => 'team_verifikasi',
+                        'team_verifikasi' => 'team_verifikasi',
                         'Perpajakan' => 'Team Perpajakan',
                         'perpajakan' => 'Team Perpajakan',
                         'Akutansi' => 'Team Akutansi',
@@ -2914,7 +2914,7 @@ class DashboardBController extends Controller
     /**
      * Get search suggestions when no results found
      */
-    private function getSearchSuggestions($searchTerm, $year = null, $handler = 'ibuB'): array
+    private function getSearchSuggestions($searchTerm, $year = null, $handler = 'team_verifikasi'): array
     {
         $suggestions = [];
 
@@ -2923,7 +2923,7 @@ class DashboardBController extends Controller
             $q->where('current_handler', $handler)
                 ->orWhere(function ($subQ) {
                     $subQ->where('status', 'sedang_diproses')
-                        ->where('current_handler', 'ibuB');
+                        ->where('current_handler', 'team_verifikasi');
                 })
                 ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
         })
@@ -2967,7 +2967,7 @@ class DashboardBController extends Controller
                 $subQ->where('current_handler', $handler)
                     ->orWhere(function ($subSubQ) {
                         $subSubQ->where('status', 'sedang_diproses')
-                            ->where('current_handler', 'ibuB');
+                            ->where('current_handler', 'team_verifikasi');
                     })
                     ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
             })
@@ -2998,15 +2998,15 @@ class DashboardBController extends Controller
     }
 
     /**
-     * API endpoint untuk check dokumen yang di-reject dari inbox untuk IbuB
+     * API endpoint untuk check dokumen yang di-reject dari inbox untuk Team Verifikasi
      */
     public function checkRejectedDocuments(Request $request)
     {
         try {
             $user = auth()->user();
 
-            // Hanya allow IbuB
-            if (!$user || !in_array(strtolower($user->role), ['ibub', 'ibu b', 'ibu yuni'])) {
+            // Hanya allow Team Verifikasi
+            if (!$user || !in_array(strtolower($user->role), ['team_verifikasi', 'ibu b', 'ibu yuni'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access'
@@ -3030,14 +3030,14 @@ class DashboardBController extends Controller
                     $checkFrom = $parsedTime->gt($checkFrom24Hours) ? $checkFrom24Hours : $parsedTime;
                 }
             } catch (\Exception $e) {
-                \Log::warning('Invalid last_check_time format for IbuB, using 24 hours ago', [
+                \Log::warning('Invalid last_check_time format for Team Verifikasi, using 24 hours ago', [
                     'last_check_time' => $lastCheckTime,
                     'error' => $e->getMessage()
                 ]);
                 // $checkFrom already set to $checkFrom24Hours as default
             }
 
-            \Log::info('IbuB checkRejectedDocuments called', [
+            \Log::info('Team Verifikasi checkRejectedDocuments called', [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
                 'last_check_time' => $lastCheckTime,
@@ -3046,7 +3046,7 @@ class DashboardBController extends Controller
 
             // Cari dokumen yang di-reject dari inbox Perpajakan atau Akutansi dalam 24 jam terakhir
             // Menggunakan dokumen_statuses table yang baru
-            $rejectedDocuments = Dokumen::where('current_handler', 'ibuB')
+            $rejectedDocuments = Dokumen::where('current_handler', 'team_verifikasi')
                 ->whereHas('roleStatuses', function ($query) use ($checkFrom) {
                     $query->whereIn('role_code', ['perpajakan', 'akutansi'])
                         ->where('status', 'rejected')
@@ -3073,7 +3073,7 @@ class DashboardBController extends Controller
                 ->values();
 
             // Hitung total rejected
-            $totalRejected = Dokumen::where('current_handler', 'ibuB')
+            $totalRejected = Dokumen::where('current_handler', 'team_verifikasi')
                 ->whereHas('roleStatuses', function ($query) {
                     $query->whereIn('role_code', ['perpajakan', 'akutansi'])
                         ->where('status', 'rejected');
@@ -3135,14 +3135,14 @@ class DashboardBController extends Controller
                         'rejected_at' => $rejectedStatus?->status_changed_at?->format('d/m/Y H:i') ?? '-',
                         'rejected_by' => $rejectedBy,
                         'rejection_reason' => \Illuminate\Support\Str::limit($rejectionReason, 100),
-                        'url' => route('ibub.rejected.show', $doc->id),
+                        'url' => route('team_verifikasi.rejected.show', $doc->id),
                     ];
                 }),
                 'current_time' => now()->toIso8601String(),
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error checking rejected documents for IbuB: ' . $e->getMessage(), [
+            \Log::error('Error checking rejected documents for Team Verifikasi: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -3157,19 +3157,19 @@ class DashboardBController extends Controller
     }
 
     /**
-     * Menampilkan detail dokumen yang di-reject dari inbox Perpajakan/Akutansi untuk IbuB
+     * Menampilkan detail dokumen yang di-reject dari inbox Perpajakan/Akutansi untuk Team Verifikasi
      */
     public function showRejectedDocument(Dokumen $dokumen)
     {
         try {
             $user = auth()->user();
 
-            // Hanya allow IbuB
-            if (!$user || !in_array(strtolower($user->role), ['ibub', 'ibu b', 'ibu yuni'])) {
+            // Hanya allow Team Verifikasi
+            if (!$user || !in_array(strtolower($user->role), ['team_verifikasi', 'ibu b', 'ibu yuni'])) {
                 abort(403, 'Unauthorized access');
             }
 
-            // Validasi: dokumen harus di-reject dari inbox Perpajakan/Akutansi dan dikembalikan ke IbuB
+            // Validasi: dokumen harus di-reject dari inbox Perpajakan/Akutansi dan dikembalikan ke Team Verifikasi
             $rejectedStatus = $dokumen->roleStatuses()
                 ->where('status', 'rejected')
                 ->whereIn('role_code', ['perpajakan', 'akutansi'])
@@ -3177,7 +3177,7 @@ class DashboardBController extends Controller
 
             if (
                 !$rejectedStatus ||
-                strtolower($dokumen->current_handler) !== 'ibub'
+                strtolower($dokumen->current_handler) !== 'team_verifikasi'
             ) {
                 abort(404, 'Dokumen tidak ditemukan atau tidak valid');
             }
@@ -3209,7 +3209,7 @@ class DashboardBController extends Controller
 
             $data = [
                 "title" => "Detail Dokumen Ditolak",
-                "module" => "IbuB",
+                "module" => "team_verifikasi",
                 "menuDokumen" => "",
                 "menuDaftarDokumen" => "",
                 "menuDashboard" => "",
@@ -3219,12 +3219,16 @@ class DashboardBController extends Controller
                 "rejectedAt" => $rejectedStatus->status_changed_at ?? null,
             ];
 
-            return view('ibuB.rejected-detail', $data);
+            return view('team_verifikasi.rejected-detail', $data);
 
         } catch (\Exception $e) {
-            \Log::error('Error showing rejected document for IbuB: ' . $e->getMessage());
+            \Log::error('Error showing rejected document for Team Verifikasi: ' . $e->getMessage());
             return back()->with('error', 'Gagal memuat detail dokumen yang ditolak');
         }
     }
 }
+
+
+
+
 

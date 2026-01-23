@@ -1252,7 +1252,7 @@
                                     @php
                                         $hour = date('H');
                                         $greeting = $hour < 12 ? 'Selamat Pagi' : ($hour < 15 ? 'Selamat Siang' : ($hour < 18 ? 'Selamat Sore' : 'Selamat Malam'));
-                                        $userName = $userRole === 'IbuB' ? 'Team Verifikasi' : ucfirst($userRole);
+                                        $userName = $userRole === 'team_verifikasi' ? 'Team Verifikasi' : ucfirst($userRole);
                                     @endphp
                                     {{ $greeting }}
                                 </div>
@@ -1269,7 +1269,7 @@
                             <div class="breadcrumb-custom">
                                 @php
                                     $dashboardUrl = match ($userRole) {
-                                        'IbuB' => '/dashboardB',
+                                        'team_verifikasi' => '/dashboardB',
                                         'Perpajakan' => '/dashboardPerpajakan',
                                         'Akutansi' => '/dashboardAkutansi',
                                         default => '/dashboard'
@@ -1391,7 +1391,7 @@
                                     <div class="d-flex align-items-center gap-2">
                                         @php
                                             // Get sent_at from dokumen_statuses or dokumen_role_data
-                                            $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                            $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                             $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
                                             $roleData = $dokumen->getDataForRole($currentRoleCode);
                                             $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
@@ -1435,7 +1435,7 @@
                                         <div class="document-info-value">
                                             <i class="fas fa-calendar-alt"></i>
                                             @php
-                                                $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                                $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                                 $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
                                                 $roleData = $dokumen->getDataForRole($currentRoleCode);
                                                 $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
@@ -1458,7 +1458,7 @@
                                     <div class="document-time">
                                         <i class="far fa-clock"></i>
                                         @php
-                                            $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                            $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                             $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
                                             $roleData = $dokumen->getDataForRole($currentRoleCode);
                                             $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
@@ -2211,3 +2211,4 @@
         });
     </script>
 @endsection
+

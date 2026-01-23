@@ -50,3 +50,4 @@ class BagianUserSeeder extends Seeder
         }
     }
 }
+

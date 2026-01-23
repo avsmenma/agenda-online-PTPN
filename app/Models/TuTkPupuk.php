@@ -247,3 +247,6 @@ class TuTkPupuk extends Model
                     ->orderBy('tanggal_bayar');
     }
 }
+
+
+

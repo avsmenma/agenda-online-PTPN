@@ -307,7 +307,7 @@ class DashboardPerpajakanController extends Controller
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
                             ->orWhereIn('status', [
-                                    'pending_approval_ibub',
+                                    'pending_approval_Team Verifikasi',
                                     'pending_approval_perpajakan',
                                     'pending_approval_akutansi',
                                     'pending_approval_pembayaran',
@@ -1099,7 +1099,7 @@ class DashboardPerpajakanController extends Controller
     public function getDocumentDetail(Dokumen $dokumen)
     {
         // Allow access if document was handled by perpajakan or returned from perpajakan
-        $allowedHandlers = ['perpajakan', 'ibuB', 'akutansi'];
+        $allowedHandlers = ['perpajakan', 'team_verifikasi', 'akutansi'];
         $allowedStatuses = ['sent_to_perpajakan', 'returned_to_department', 'sent_to_akutansi'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
@@ -1354,10 +1354,10 @@ class DashboardPerpajakanController extends Controller
         $totalReturned = (clone $baseQuery)->count();
 
         // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika: masih di ibuB (belum dikirim kembali) ATAU ditolak oleh akutansi dan masih di perpajakan
+        // Logika: masih di Team Verifikasi (belum dikirim kembali) ATAU ditolak oleh akutansi dan masih di perpajakan
         $totalMenungguPerbaikan = (clone $baseQuery)
             ->where(function ($q) {
-                $q->where('current_handler', 'ibuB')
+                $q->where('current_handler', 'team_verifikasi')
                     ->orWhere(function ($akutansiQ) {
                         $akutansiQ->where('current_handler', 'perpajakan')
                             ->whereHas('roleStatuses', function ($statusQuery) {
@@ -1369,9 +1369,9 @@ class DashboardPerpajakanController extends Controller
             ->count();
 
         // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali
-        // Logika: sudah tidak di ibuB lagi DAN tidak ada rejected status dari akutansi
+        // Logika: sudah tidak di Team Verifikasi lagi DAN tidak ada rejected status dari akutansi
         $totalSudahDiperbaiki = (clone $baseQuery)
-            ->where('current_handler', '!=', 'ibuB')
+            ->where('current_handler', '!=', 'team_verifikasi')
             ->where('current_handler', '!=', 'perpajakan')
             ->count();
 
@@ -1390,7 +1390,7 @@ class DashboardPerpajakanController extends Controller
     }
 
     /**
-     * Return document to IbuB
+     * Return document to Team Verifikasi
      */
     public function returnDocument(Request $request, Dokumen $dokumen)
     {
@@ -1433,7 +1433,7 @@ class DashboardPerpajakanController extends Controller
             // Update all fields in a single call to avoid multiple queries and potential issues
             $updateData = [
                 'status' => 'returned_to_department',
-                'current_handler' => 'verifikasi',
+                'current_handler' => 'team_verifikasi',
                 'target_department' => 'perpajakan',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,
@@ -1443,10 +1443,10 @@ class DashboardPerpajakanController extends Controller
                 'tanggal_selesai_verifikasi_pajak' => null,
             ];
 
-            // Only set sent_to_ibub_at if it's null (first time entering IbuB)
+            // Only set sent_to_Team Verifikasi_at if it's null (first time entering Team Verifikasi)
             // This preserves the original entry time for consistent ordering
-            if (is_null($dokumen->sent_to_ibub_at)) {
-                $updateData['sent_to_ibub_at'] = now();
+            if (is_null($dokumen->sent_to_Team Verifikasi_at)) {
+                $updateData['sent_to_Team Verifikasi_at'] = now();
             }
 
             $dokumen->update($updateData);
@@ -1649,7 +1649,7 @@ class DashboardPerpajakanController extends Controller
     ];
 
     /**
-     * Display the rekapan page for Perpajakan (same as IbuB)
+     * Display the rekapan page for Perpajakan (same as Team Verifikasi)
      */
     public function rekapan(Request $request)
     {
@@ -1830,9 +1830,9 @@ class DashboardPerpajakanController extends Controller
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
+                    // Documents sent to perpajakan (not still at Team Verifikasi) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
-                        ->where('current_handler', '!=', 'ibuB')
+                        ->where('current_handler', '!=', 'team_verifikasi')
                         ->whereHas('roleData', function ($roleQ) {
                         $roleQ->where('role_code', 'perpajakan')
                             ->whereNotNull('received_at');
@@ -1891,7 +1891,7 @@ class DashboardPerpajakanController extends Controller
         // Get bagian stats for backward compatibility
         $bagianStats = [];
         foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
-            $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagianCode);
+            $bagianQuery = Dokumen::where('created_by', 'operator')->where('bagian', $bagianCode);
             $bagianStats[$bagianCode] = [
                 'name' => $bagianName,
                 'total' => $bagianQuery->count()
@@ -1905,11 +1905,11 @@ class DashboardPerpajakanController extends Controller
             'selesai' => $countSelesai,
             'by_bagian' => $bagianStats,
             'by_status' => [
-                'draft' => Dokumen::where('created_by', 'ibuA')->where('status', 'draft')->count(),
-                'sent_to_ibub' => Dokumen::where('created_by', 'ibuA')->where('status', 'sent_to_ibub')->count(),
-                'sedang diproses' => Dokumen::where('created_by', 'ibuA')->where('status', 'sedang diproses')->count(),
-                'selesai' => Dokumen::where('created_by', 'ibuA')->where('status', 'selesai')->count(),
-                'returned_to_ibua' => Dokumen::where('created_by', 'ibuA')->where('status', 'returned_to_ibua')->count(),
+                'draft' => Dokumen::where('created_by', 'operator')->where('status', 'draft')->count(),
+                'sent_to_Team Verifikasi' => Dokumen::where('created_by', 'operator')->where('status', 'sent_to_Team Verifikasi')->count(),
+                'sedang diproses' => Dokumen::where('created_by', 'operator')->where('status', 'sedang diproses')->count(),
+                'selesai' => Dokumen::where('created_by', 'operator')->where('status', 'selesai')->count(),
+                'returned_to_Operator' => Dokumen::where('created_by', 'operator')->where('status', 'returned_to_Operator')->count(),
             ]
         ];
     }
@@ -2002,14 +2002,14 @@ class DashboardPerpajakanController extends Controller
 
         // Base query - only documents that reached Perpajakan
         // Only show documents where current_handler is 'perpajakan' OR 
-        // documents that have been sent to perpajakan (status = 'sent_to_perpajakan' AND current_handler is not 'ibuB')
+        // documents that have been sent to perpajakan (status = 'sent_to_perpajakan' AND current_handler is not 'team_verifikasi')
         // OR documents that have been processed by perpajakan and moved forward
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
+                    // Documents sent to perpajakan (not still at Team Verifikasi) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
-                        ->where('current_handler', '!=', 'ibuB')
+                        ->where('current_handler', '!=', 'team_verifikasi')
                         ->whereHas('roleData', function ($roleQ) {
                         $roleQ->where('role_code', 'perpajakan')
                             ->whereNotNull('received_at');
@@ -2083,9 +2083,9 @@ class DashboardPerpajakanController extends Controller
         $statsQuery = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
+                    // Documents sent to perpajakan (not still at Team Verifikasi) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
-                        ->where('current_handler', '!=', 'ibuB')
+                        ->where('current_handler', '!=', 'team_verifikasi')
                         ->whereHas('roleData', function ($roleQ) {
                         $roleQ->where('role_code', 'perpajakan')
                             ->whereNotNull('received_at');
@@ -2292,9 +2292,9 @@ class DashboardPerpajakanController extends Controller
         $query = Dokumen::where(function ($q) {
             $q->where('current_handler', 'perpajakan')
                 ->orWhere(function ($subQ) {
-                    // Documents sent to perpajakan (not still at ibuB) - check dokumen_role_data
+                    // Documents sent to perpajakan (not still at Team Verifikasi) - check dokumen_role_data
                     $subQ->where('status', 'sent_to_perpajakan')
-                        ->where('current_handler', '!=', 'ibuB')
+                        ->where('current_handler', '!=', 'team_verifikasi')
                         ->whereHas('roleData', function ($roleQ) {
                         $roleQ->where('role_code', 'perpajakan')
                             ->whereNotNull('received_at');
@@ -2556,4 +2556,7 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.export.pdf', $data);
     }
 }
+
+
+
 

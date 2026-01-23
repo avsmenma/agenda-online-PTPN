@@ -526,7 +526,7 @@
     text-align: center;
   }
 
-  /* Deadline Card Styles - Matching IbuB Design */
+  /* Deadline Card Styles - Matching Team Verifikasi Design */
   .deadline-card {
     position: relative;
     background: white;
@@ -1161,7 +1161,7 @@
               @elseif($col == 'deadline')
                 @php
                   // Get received_at from roleData to calculate document age (count up)
-                  // Similar to IbuB implementation
+                  // Similar to Team Verifikasi implementation
                   $roleData = $dokumen->getDataForRole('pembayaran');
                   $receivedAt = $roleData?->received_at;
 
@@ -3428,3 +3428,4 @@ function closeSuccessModal() {
 </script>
 
 @endsection
+

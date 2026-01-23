@@ -24,14 +24,14 @@ class InboxController extends Controller
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow IbuA, IbuB/Verifikasi, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['IbuA', 'IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            // Hanya allow Operator, Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['operator', 'team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
                 abort(403, 'Unauthorized access - Halaman ini hanya untuk Ibu Tarapul, Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
             }
 
             // Normalize role code for database query (lowercase)
-            // For Verifikasi, we also need to check 'ibub' for backward compatibility
+            // For Verifikasi, we also need to check 'team_verifikasi' for backward compatibility
             $roleCode = strtolower($userRole);
             $roleCodes = $this->getRoleCodes($userRole);
 
@@ -64,9 +64,9 @@ class InboxController extends Controller
 
             // Normalize module untuk layout
             $moduleMap = [
-                'IbuA' => 'ibua',
-                'IbuB' => 'ibub',
-                'Verifikasi' => 'ibub',
+                'operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran',
@@ -120,8 +120,8 @@ class InboxController extends Controller
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow IbuB/Verifikasi, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            // Hanya allow Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
                 return response()->json([
                     'success' => false,
@@ -294,8 +294,8 @@ class InboxController extends Controller
 
             // Normalize module untuk layout (harus lowercase untuk match statement)
             $moduleMap = [
-                'IbuB' => 'ibub',
-                'Verifikasi' => 'ibub',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran',
@@ -436,7 +436,7 @@ class InboxController extends Controller
 
             if ($roleCode === 'perpajakan') {
                 // Perpajakan menolak -> kembali ke Verifikasi
-                $dokumen->current_handler = 'ibuB';
+                $dokumen->current_handler = 'team_verifikasi';
                 $dokumen->status = 'returned_to_department';
                 $dokumen->target_department = 'perpajakan';
                 $dokumen->department_returned_at = now();
@@ -496,28 +496,28 @@ class InboxController extends Controller
         // Prioritize role field over name field
         if (isset($user->role)) {
             $role = $user->role;
-            // Map role ke format yang sesuai untuk inbox (must match enum: IbuA, IbuB/Verifikasi, Perpajakan, Akutansi)
+            // Map role ke format yang sesuai untuk inbox (must match enum: Operator, Team Verifikasi/Verifikasi, Perpajakan, Akutansi)
             $roleMap = [
-                // IbuA / Ibu Tarapul mappings
-                'ibuA' => 'IbuA',
-                'IbuA' => 'IbuA',
-                'Ibu A' => 'IbuA',
-                'ibu A' => 'IbuA',
-                'Ibu Tarapul' => 'IbuA',
-                'ibu tarapul' => 'IbuA',
-                'ibutarapul' => 'IbuA',
-                'IbuTarapul' => 'IbuA',
-                // IbuB / Verifikasi mappings
-                'ibuB' => 'Verifikasi',
-                'IbuB' => 'Verifikasi',
-                'Ibu B' => 'Verifikasi',
-                'ibu B' => 'Verifikasi',
-                'Ibu Yuni' => 'Verifikasi',
-                'ibu yuni' => 'Verifikasi',
-                'verifikasi' => 'Verifikasi',
-                'Verifikasi' => 'Verifikasi',
-                'Team Verifikasi' => 'Verifikasi',
-                'team verifikasi' => 'Verifikasi',
+                // Operator / Ibu Tarapul mappings
+                'operator' => 'operator',
+                'operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'operator' => 'operator',
+                'operator' => 'operator',
+                // Team Verifikasi / Verifikasi mappings
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
+                'ibu B' => 'team_verifikasi',
+                'Ibu Yuni' => 'team_verifikasi',
+                'ibu yuni' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'Team Verifikasi' => 'team_verifikasi',
+                'team verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'Perpajakan',
                 'Perpajakan' => 'Perpajakan',
                 'akutansi' => 'Akutansi',
@@ -540,17 +540,17 @@ class InboxController extends Controller
         if (isset($user->name)) {
             $name = $user->name;
             $nameToRole = [
-                'Ibu A' => 'IbuA',
-                'IbuA' => 'IbuA',
-                'ibuA' => 'IbuA',
-                'Ibu Tarapul' => 'IbuA',
-                'ibu tarapul' => 'IbuA',
-                'IbuB' => 'IbuB',
-                'Ibu B' => 'IbuB',
-                'ibuB' => 'IbuB',
-                'ibu B' => 'IbuB',
-                'Ibu Yuni' => 'IbuB',
-                'ibu yuni' => 'IbuB',
+                'Operator' => 'operator',
+                'operator' => 'operator',
+                'operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'ibu B' => 'team_verifikasi',
+                'Ibu Yuni' => 'team_verifikasi',
+                'ibu yuni' => 'team_verifikasi',
                 'Perpajakan' => 'Perpajakan',
                 'perpajakan' => 'Perpajakan',
                 'Akutansi' => 'Akutansi',
@@ -577,20 +577,20 @@ class InboxController extends Controller
 
     /**
      * Get role codes for database query
-     * For Verifikasi, also include 'ibub' for backward compatibility
+     * For Verifikasi, also include 'team_verifikasi' for backward compatibility
      */
     private function getRoleCodes($userRole)
     {
         $roleCode = strtolower($userRole);
 
-        // IbuA should also match 'ibutarapul' for backward compatibility
-        if ($roleCode === 'ibua' || $roleCode === 'ibutarapul') {
-            return ['ibua', 'ibutarapul'];
+        // Operator should also match 'operator' for backward compatibility
+        if ($roleCode === 'operator' || $roleCode === 'operator') {
+            return ['operator', 'operator'];
         }
 
-        // Verifikasi should also match 'ibub' for backward compatibility
-        if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {
-            return ['verifikasi', 'ibub'];
+        // Verifikasi should also match 'team_verifikasi' for backward compatibility
+        if ($roleCode === 'team_verifikasi' || $roleCode === 'team_verifikasi') {
+            return ['team_verifikasi', 'team_verifikasi'];
         }
 
         return [$roleCode];
@@ -610,10 +610,10 @@ class InboxController extends Controller
                 'user_id' => $user->id ?? null,
                 'user_role_raw' => $user->role ?? null,
                 'user_role_mapped' => $userRole,
-                'allowed_roles' => ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran']
+                'allowed_roles' => ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran']
             ]);
 
-            if (!$userRole || !in_array($userRole, ['IbuB', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
+            if (!$userRole || !in_array($userRole, ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
                 Log::warning('Unauthorized access to checkNewDocuments', [
                     'user_role' => $userRole,
                     'user_role_raw' => $user->role ?? null
@@ -911,3 +911,6 @@ class InboxController extends Controller
         }
     }
 }
+
+
+

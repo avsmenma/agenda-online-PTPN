@@ -329,7 +329,7 @@ class BagianDokumenController extends Controller
             DB::commit();
 
             return redirect()->route('bagian.documents.index')
-                ->with('success', 'Dokumen berhasil dibuat.');
+                ->with('success', 'Dokumen berhasil dOperatort.');
 
         } catch (Exception $e) {
             DB::rollback();
@@ -596,7 +596,7 @@ class BagianDokumenController extends Controller
     /**
      * Send document to Ibu Tarapul (Bidang Keuangan dan Akutansi)
      */
-    public function sendToIbuA(Dokumen $dokumen)
+    public function sendToOperator(Dokumen $dokumen)
     {
         $bagianCode = $this->getBagianCode();
 
@@ -617,20 +617,20 @@ class BagianDokumenController extends Controller
             // Update document status - Send to Ibu Tarapul
             $dokumen->update([
                 'status' => 'menunggu_approval_keuangan',
-                'current_handler' => 'ibuA',
+                'current_handler' => 'operator',
                 'sent_at' => $now,
             ]);
 
             // Create role data for tracking
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuA',
+                'role_code' => 'operator',
                 'received_at' => $now,
                 'received_from' => 'bagian_' . strtolower($bagianCode),
             ]);
 
-            // Set pending status for IbuA inbox
-            $dokumen->setStatusForRole('ibua', 'pending', Auth::user()->name ?? 'Bagian ' . $bagianCode);
+            // Set pending status for Operator inbox
+            $dokumen->setStatusForRole('operator', 'pending', Auth::user()->name ?? 'Bagian ' . $bagianCode);
 
             DB::commit();
 
@@ -718,3 +718,6 @@ class BagianDokumenController extends Controller
         ]);
     }
 }
+
+
+

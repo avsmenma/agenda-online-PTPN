@@ -22,3 +22,5 @@ class DokumenPO extends Model
         return $this->belongsTo(Dokumen::class);
     }
 }
+
+

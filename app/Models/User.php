@@ -15,12 +15,20 @@ final class User extends Authenticatable
 
     public const ROLES = [
         'Admin' => 'Admin',
-        'IbuA' => 'Ibu A',
-        'IbuB' => 'Ibu B',
+        'owner' => 'Owner',
+        'operator' => 'Operator',  // Standardized from Operator/Ibu Tarapul
+        'team_verifikasi' => 'Team Verifikasi',  // Standardized from Team Verifikasi/Verifikasi
         'Pembayaran' => 'Pembayaran',
-        'Akutansi' => 'Akutansi',
+        'pembayaran' => 'Pembayaran',
+        'Akutansi' => 'Akuntansi',
+        'akutansi' => 'Akuntansi',
         'Perpajakan' => 'Perpajakan',
-        'Verifikasi' => 'Verifikasi',
+        'perpajakan' => 'Perpajakan',
+        // Legacy role names for backward compatibility
+        'operator' => 'Operator',
+        'operator' => 'Operator',
+        'team_verifikasi' => 'Team Verifikasi',
+        'verifikasi' => 'Team Verifikasi',
         // Bagian roles
         'bagian_akn' => 'Bagian AKN',
         'bagian_dpm' => 'Bagian DPM',
@@ -36,17 +44,21 @@ final class User extends Authenticatable
         'Admin' => '/owner/home',
         'owner' => '/owner/home',
         'Owner' => '/owner/home',
-        'IbuA' => '/dashboard',
-        'ibutarapul' => '/dashboard',  // New role name from migration
-        'IbuB' => '/dashboard/verifikasi',
-        'verifikasi' => '/dashboard/verifikasi',  // New role name from migration
+        // New standardized role names
+        'operator' => '/dashboard',
+        'team_verifikasi' => '/dashboard/verifikasi',
+        // Legacy role names for backward compatibility
+        'operator' => '/dashboard',
+        'operator' => '/dashboard',
+        'team_verifikasi' => '/dashboard/verifikasi',
+        'verifikasi' => '/dashboard/verifikasi',
+        // Other roles
         'Pembayaran' => '/dashboard/pembayaran',
         'pembayaran' => '/dashboard/pembayaran',
         'Akutansi' => '/dashboard/akutansi',
         'akutansi' => '/dashboard/akutansi',
         'Perpajakan' => '/dashboard/perpajakan',
         'perpajakan' => '/dashboard/perpajakan',
-        'Verifikasi' => '/dashboard/verifikasi-role',
         // Bagian dashboard routes
         'bagian_akn' => '/bagian/dashboard',
         'bagian_dpm' => '/bagian/dashboard',
@@ -57,6 +69,7 @@ final class User extends Authenticatable
         'bagian_tan' => '/bagian/dashboard',
         'bagian_tep' => '/bagian/dashboard',
     ];
+
 
     /**
      * The attributes that are mass assignable.
@@ -139,7 +152,7 @@ final class User extends Authenticatable
      */
     public function getDashboardRoute(): string
     {
-        return self::DASHBOARD_ROUTES[$this->role] ?? self::DASHBOARD_ROUTES['IbuA'];
+        return self::DASHBOARD_ROUTES[$this->role] ?? self::DASHBOARD_ROUTES['operator'];
     }
 
     /**
@@ -185,3 +198,6 @@ final class User extends Authenticatable
             ->all();
     }
 }
+
+
+

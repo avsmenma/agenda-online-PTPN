@@ -830,16 +830,16 @@
                 <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
               </td>
               <td>
-                @if($dokumen->status == 'selesai' || $dokumen->status == 'approved_ibub')
+                @if($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi')
                   <span class="badge-status badge-selesai">✓
-                    {{ $dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai' }}</span>
-                @elseif($dokumen->status == 'rejected_ibub')
+                    {{ $dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai' }}</span>
+                @elseif($dokumen->status == 'rejected_Team Verifikasi')
                   <span class="badge-status badge-dikembalikan">Rejected</span>
                 @elseif($dokumen->status == 'sent_to_perpajakan')
                   <span class="badge-status badge-sent">📤 Terkirim ke Perpajakan</span>
                 @elseif($dokumen->status == 'sent_to_akutansi')
                   <span class="badge-status badge-sent">📤 Terkirim ke Akutansi</span>
-                @elseif($dokumen->status == 'sent_to_ibub')
+                @elseif($dokumen->status == 'sent_to_Team Verifikasi')
                   <span class="badge-status badge-proses">⏳ Menunggu Review</span>
                 @elseif($dokumen->status == 'sedang diproses')
                   <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
@@ -890,3 +890,4 @@
   </script>
 
 @endsection
+

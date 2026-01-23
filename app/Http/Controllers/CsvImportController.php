@@ -378,7 +378,7 @@ class CsvImportController extends Controller
                     $dokumenData['jenis_dokumen'] = 'Lainnya';
                 }
 
-                // Set created_by to 'pembayaran' or 'csv_import' to prevent appearing in IbuA module
+                // Set created_by to 'pembayaran' or 'csv_import' to prevent appearing in Operator module
                 // CSV imported documents should only appear in Pembayaran module
                 $dokumenData['created_by'] = 'csv_import';
 
@@ -619,3 +619,6 @@ class CsvImportController extends Controller
         return $result;
     }
 }
+
+
+

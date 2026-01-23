@@ -2222,3 +2222,4 @@ if (searchInput) {
 </script>
 
 @endsection
+

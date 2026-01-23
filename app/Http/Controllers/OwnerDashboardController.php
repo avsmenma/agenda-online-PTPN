@@ -426,15 +426,15 @@ class OwnerDashboardController extends Controller
         $events = [];
         $previousTime = null;
 
-        // Event 1: Dokumen Dibuat
+        // Event 1: Dokumen DOperatort
         if ($dokumen->created_at) {
             $events[] = [
                 'type' => 'created',
                 'icon' => '✅',
-                'title' => 'Dokumen Dibuat',
+                'title' => 'Dokumen DOperatort',
                 'timestamp' => $dokumen->created_at->format('d M Y H:i'),
                 'info' => [
-                    'Dibuat oleh' => $this->getRoleDisplayName($dokumen->created_by),
+                    'DOperatort oleh' => $this->getRoleDisplayName($dokumen->created_by),
                     'Nomor Agenda' => $dokumen->nomor_agenda,
                     'Nomor SPP' => $dokumen->nomor_spp,
                     'Nilai' => 'Rp. ' . number_format($dokumen->nilai_rupiah, 0, ',', '.'),
@@ -445,20 +445,20 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 2: Dikirim ke Ibu Yuni
-        $ibubData = $dokumen->getDataForRole('ibub');
-        if ($ibubData && $ibubData->received_at) {
-            $receivedAt = $ibubData->received_at;
+        $Team VerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+        if ($Team VerifikasiData && $Team VerifikasiData->received_at) {
+            $receivedAt = $Team VerifikasiData->received_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
-                'type' => 'sent_to_ibub',
+                'type' => 'sent_to_Team Verifikasi',
                 'icon' => '🚀',
                 'title' => 'Dikirim ke Ibu Yuni',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
                 'info' => [
-                    'Pengirim' => 'Ibu Tarapul',
+                    'Pengirim' => 'Operator',
                     'Penerima' => 'Ibu Yuni',
-                    'Durasi dari dibuat' => $duration,
+                    'Durasi dari dOperatort' => $duration,
                 ]
             ];
             $previousTime = $receivedAt;
@@ -484,7 +484,7 @@ class OwnerDashboardController extends Controller
         if ($dokumen->processed_at) {
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_at) : null;
             $events[] = [
-                'type' => 'processed_ibub',
+                'type' => 'processed_Team Verifikasi',
                 'icon' => '⚡',
                 'title' => 'Diproses Ibu Yuni',
                 'timestamp' => $dokumen->processed_at->format('d M Y H:i'),
@@ -556,8 +556,8 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 8: Dikembalikan
-        if ($dokumen->returned_to_ibua_at || $dokumen->department_returned_at || $dokumen->bidang_returned_at) {
-            $returnTime = $dokumen->returned_to_ibua_at ?? $dokumen->department_returned_at ?? $dokumen->bidang_returned_at;
+        if ($dokumen->returned_to_Operator_at || $dokumen->department_returned_at || $dokumen->bidang_returned_at) {
+            $returnTime = $dokumen->returned_to_Operator_at ?? $dokumen->department_returned_at ?? $dokumen->bidang_returned_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $returnTime) : null;
 
             $events[] = [
@@ -653,7 +653,7 @@ class OwnerDashboardController extends Controller
     private function calculateProgress($dokumen)
     {
         // Calculate progress based on current_handler and status
-        $handler = $dokumen->current_handler ?? 'ibuA';
+        $handler = $dokumen->current_handler ?? 'operator';
         $status = $dokumen->status ?? 'draft';
 
         // Get status_pembayaran from model or database
@@ -675,8 +675,8 @@ class OwnerDashboardController extends Controller
 
         // Calculate progress based on handler position in workflow
         $handlerProgress = [
-            'ibuA' => 20,          // Ibu Tarapul (step 1)
-            'ibuB' => 40,          // Team Verifikasi (step 2)
+            'operator' => 20,          // Ibu Tarapul (step 1)
+            'team_verifikasi' => 40,          // Team Verifikasi (step 2)
             'perpajakan' => 60,    // Team Perpajakan (step 3)
             'akutansi' => 80,      // Team Akutansi (step 4)
             'pembayaran' => 100,   // Pembayaran (step 5)
@@ -685,7 +685,7 @@ class OwnerDashboardController extends Controller
         $baseProgress = $handlerProgress[$handler] ?? 20;
 
         // Adjust based on status within handler
-        if ($status == 'draft' && $handler == 'ibuA') {
+        if ($status == 'draft' && $handler == 'operator') {
             return 0;
         }
 
@@ -724,24 +724,24 @@ class OwnerDashboardController extends Controller
 
         // Map all possible handler name variants to canonical names
         $handlerAliases = [
-            // ibuA variants
-            'ibua' => 'ibuA',
-            'ibu_a' => 'ibuA',
-            'ibutarapul' => 'ibuA',
-            'ibu_tarapul' => 'ibuA',
-            'ibu tarapul' => 'ibuA',
-            'tarapul' => 'ibuA',
+            // Operator variants
+            'operator' => 'operator',
+            'ibu_a' => 'operator',
+            'operator' => 'operator',
+            'ibu_tarapul' => 'operator',
+            'Operator' => 'operator',
+            'tarapul' => 'operator',
 
-            // ibuB variants (Team Verifikasi)
-            'ibub' => 'ibuB',
-            'ibu_b' => 'ibuB',
-            'ibuyuni' => 'ibuB',
-            'ibu_yuni' => 'ibuB',
-            'ibu yuni' => 'ibuB',
-            'verifikasi' => 'ibuB',
-            'team_verifikasi' => 'ibuB',
-            'team verifikasi' => 'ibuB',
-            'teamverifikasi' => 'ibuB',
+            // Team Verifikasi variants (Team Verifikasi)
+            'team_verifikasi' => 'team_verifikasi',
+            'ibu_b' => 'team_verifikasi',
+            'ibuyuni' => 'team_verifikasi',
+            'ibu_yuni' => 'team_verifikasi',
+            'ibu yuni' => 'team_verifikasi',
+            'team_verifikasi' => 'team_verifikasi',
+            'team_verifikasi' => 'team_verifikasi',
+            'team verifikasi' => 'team_verifikasi',
+            'teamverifikasi' => 'team_verifikasi',
 
             // Perpajakan variants
             'perpajakan' => 'perpajakan',
@@ -765,7 +765,7 @@ class OwnerDashboardController extends Controller
             'payment' => 'pembayaran',
         ];
 
-        return $handlerAliases[$handlerLower] ?? 'ibuA';
+        return $handlerAliases[$handlerLower] ?? 'operator';
     }
 
     /**
@@ -777,9 +777,9 @@ class OwnerDashboardController extends Controller
             'draft' => '#6c757d', // Gray
             'sedang diproses' => '#083E40', // Green (theme)
             'menunggu_verifikasi' => '#083E40', // Green (theme)
-            'pending_approval_ibub' => '#ffc107', // Yellow
-            'sent_to_ibub' => '#0a4f52', // Dark green
-            'proses_ibub' => '#ffc107', // Yellow
+            'pending_approval_Team Verifikasi' => '#ffc107', // Yellow
+            'sent_to_Team Verifikasi' => '#0a4f52', // Dark green
+            'proses_Team Verifikasi' => '#ffc107', // Yellow
             'sent_to_perpajakan' => '#0a4f52', // Dark green
             'proses_perpajakan' => '#0a4f52', // Dark green
             'sent_to_akutansi' => '#6f42c1', // Purple
@@ -850,22 +850,22 @@ class OwnerDashboardController extends Controller
         // This is when the "timer" begins
         $startTime = null;
 
-        // Priority: processed_at (when IbuB approved) -> received_at from roleData -> deadline_at
+        // Priority: processed_at (when Team Verifikasi approved) -> received_at from roleData -> deadline_at
         if ($dokumen->processed_at) {
             $startTime = Carbon::parse($dokumen->processed_at);
         } else {
-            // Try to get from roleData - when received by IbuB (approval from inbox)
-            $ibubData = null;
+            // Try to get from roleData - when received by Team Verifikasi (approval from inbox)
+            $Team VerifikasiData = null;
             if (method_exists($dokumen, 'getDataForRole')) {
-                $ibubData = $dokumen->getDataForRole('ibub');
+                $Team VerifikasiData = $dokumen->getDataForRole('team_verifikasi');
             } elseif (isset($dokumen->roleData)) {
-                $ibubData = $dokumen->roleData->where('role_code', 'ibub')->first();
+                $Team VerifikasiData = $dokumen->roleData->where('role_code', 'team_verifikasi')->first();
             }
 
-            if ($ibubData && isset($ibubData->processed_at) && $ibubData->processed_at) {
-                $startTime = Carbon::parse($ibubData->processed_at);
-            } elseif ($ibubData && isset($ibubData->received_at) && $ibubData->received_at) {
-                $startTime = Carbon::parse($ibubData->received_at);
+            if ($Team VerifikasiData && isset($Team VerifikasiData->processed_at) && $Team VerifikasiData->processed_at) {
+                $startTime = Carbon::parse($Team VerifikasiData->processed_at);
+            } elseif ($Team VerifikasiData && isset($Team VerifikasiData->received_at) && $Team VerifikasiData->received_at) {
+                $startTime = Carbon::parse($Team VerifikasiData->received_at);
             }
         }
 
@@ -964,8 +964,8 @@ class OwnerDashboardController extends Controller
         $normalizedRole = $this->normalizeHandlerName($role);
 
         $roleMap = [
-            'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Team Verifikasi',
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Team Verifikasi',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi',
             'pembayaran' => 'Pembayaran',
@@ -981,19 +981,19 @@ class OwnerDashboardController extends Controller
     private function getWorkflowTimeline($dokumen): array
     {
         $roleOrder = [
-            'ibuA' => ['label' => 'Bagian', 'icon' => '📋'],
-            'ibub' => ['label' => 'Verif', 'icon' => '✓'],
+            'operator' => ['label' => 'Bagian', 'icon' => '📋'],
+            'team_verifikasi' => ['label' => 'Verif', 'icon' => '✓'],
             'perpajakan' => ['label' => 'Perpajakan', 'icon' => '💰'],
             'akutansi' => ['label' => 'Akutansi', 'icon' => '📊'],
             'pembayaran' => ['label' => 'Pembayaran', 'icon' => '💳'],
         ];
 
-        $currentHandler = $dokumen->current_handler ?? 'ibuA';
+        $currentHandler = $dokumen->current_handler ?? 'operator';
 
         // Normalize handler to match roleOrder keys
         $normalizedHandler = strtolower($currentHandler);
-        if ($normalizedHandler === 'verifikasi' || $normalizedHandler === 'ibub') {
-            $normalizedHandler = 'ibub';
+        if ($normalizedHandler === 'team_verifikasi' || $normalizedHandler === 'team_verifikasi') {
+            $normalizedHandler = 'team_verifikasi';
         }
 
         $status = $dokumen->status ?? 'draft';
@@ -1002,14 +1002,14 @@ class OwnerDashboardController extends Controller
 
         // Determine if document is in inbox (sent but not yet approved/processed by current role)
         $isInInbox = false;
-        if ($currentHandler !== 'ibuA') {
+        if ($currentHandler !== 'operator') {
             // Check roleStatuses to see if current role has approved the document
             $hasApproved = false;
             if (method_exists($dokumen, 'roleStatuses') && $dokumen->roleStatuses) {
                 $roleStatus = $dokumen->roleStatuses->where('role_code', $currentHandler)->first();
                 if (!$roleStatus) {
-                    // Try with lowercase ibub for verifikasi
-                    $roleStatus = $dokumen->roleStatuses->where('role_code', 'ibub')->first();
+                    // Try with lowercase Team Verifikasi for verifikasi
+                    $roleStatus = $dokumen->roleStatuses->where('role_code', 'team_verifikasi')->first();
                 }
                 if ($roleStatus && $roleStatus->status === \App\Models\DokumenStatus::STATUS_APPROVED) {
                     $hasApproved = true;
@@ -1019,9 +1019,9 @@ class OwnerDashboardController extends Controller
             // Document is in inbox if current role hasn't approved it yet
             // But we also need to check if document is actually in inbox (sent_to status)
             $isInboxStatus = in_array($status, [
-                'sent_to_ibub',
+                'sent_to_Team Verifikasi',
                 'menunggu_verifikasi',
-                'pending_approval_ibub',
+                'pending_approval_Team Verifikasi',
                 'sent_to_perpajakan',
                 'pending_approval_perpajakan',
                 'sent_to_akutansi',
@@ -1079,8 +1079,8 @@ class OwnerDashboardController extends Controller
             }
 
             // Get sent_at from previous role or dokumen timestamps
-            if ($role === 'ibub' && $dokumen->sent_to_ibub_at) {
-                $sentAt = $dokumen->sent_to_ibub_at;
+            if ($role === 'team_verifikasi' && $dokumen->sent_to_Team Verifikasi_at) {
+                $sentAt = $dokumen->sent_to_Team Verifikasi_at;
             } elseif ($index > 0) {
                 $prevRole = $roleKeys[$index - 1];
                 $prevRoleData = null;
@@ -1124,8 +1124,8 @@ class OwnerDashboardController extends Controller
      */
     private function getReturnDestination($dokumen)
     {
-        if ($dokumen->returned_to_ibua_at)
-            return 'Ibu Tarapul';
+        if ($dokumen->returned_to_Operator_at)
+            return 'Operator';
         if ($dokumen->department_returned_at)
             return 'Ibu Tarapul (Department)';
         if ($dokumen->bidang_returned_at)
@@ -1142,9 +1142,9 @@ class OwnerDashboardController extends Controller
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
-            'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
-            'proses_ibub' => 'Diproses Team Verifikasi',
+            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+            'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+            'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'proses_perpajakan' => 'Diproses Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
@@ -1155,7 +1155,7 @@ class OwnerDashboardController extends Controller
             'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
             'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
             'selesai' => 'Selesai',
-            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
         ];
@@ -1195,7 +1195,7 @@ class OwnerDashboardController extends Controller
      */
     private function getFastestDepartment()
     {
-        $departments = ['ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $departments = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
         $avgTimes = [];
 
         foreach ($departments as $dept) {
@@ -1210,7 +1210,7 @@ class OwnerDashboardController extends Controller
      */
     private function getSlowestDepartment()
     {
-        $departments = ['ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $departments = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
         $avgTimes = [];
 
         foreach ($departments as $dept) {
@@ -1258,10 +1258,10 @@ class OwnerDashboardController extends Controller
 
         // Determine module based on user role
         $user = auth()->user();
-        $module = 'ibua'; // default
+        $module = 'operator'; // default
         if ($user) {
             $role = strtolower($user->role ?? '');
-            if (in_array($role, ['ibub', 'pembayaran', 'akutansi', 'perpajakan'])) {
+            if (in_array($role, ['team_verifikasi', 'pembayaran', 'akutansi', 'perpajakan'])) {
                 $module = $role;
             }
         }
@@ -1305,11 +1305,11 @@ class OwnerDashboardController extends Controller
         $dashboardUrl = '/tracking-dokumen'; // Default to tracking dokumen for all roles
 
         // Set module and dashboard URL based on user role
-        if (in_array($userRole, ['ibua', 'ibutara', 'ibu a'])) {
-            $module = 'ibua';
+        if (in_array($userRole, ['operator', 'ibutara', 'Operator'])) {
+            $module = 'operator';
             $dashboardUrl = '/dashboard';
-        } elseif (in_array($userRole, ['ibub', 'ibuyuni', 'ibu b', 'team verifikasi'])) {
-            $module = 'ibub';
+        } elseif (in_array($userRole, ['team_verifikasi', 'ibuyuni', 'ibu b', 'team verifikasi'])) {
+            $module = 'team_verifikasi';
             $dashboardUrl = '/dashboardB';
         } elseif (in_array($userRole, ['pembayaran', 'team pembayaran'])) {
             $module = 'pembayaran';
@@ -1348,15 +1348,15 @@ class OwnerDashboardController extends Controller
         // Stage 1: ibutara (Ibu Tarapul) - Always completed
         $stages[] = [
             'id' => 'sender',
-            'name' => 'Ibu Tarapul',
+            'name' => 'Operator',
             'label' => 'ibutara',
             'status' => 'completed',
             'timestamp' => $dokumen->created_at,
             'icon' => 'fa-user',
             'color' => '#10b981',
-            'description' => 'Dokumen Dibuat',
+            'description' => 'Dokumen DOperatort',
             'details' => [
-                'Dibuat oleh' => 'Ibu Tarapul',
+                'DOperatort oleh' => 'Operator',
                 'Nomor Agenda' => $dokumen->nomor_agenda,
                 'Nomor SPP' => $dokumen->nomor_spp,
                 'Nilai' => 'Rp. ' . number_format($dokumen->nilai_rupiah, 0, ',', '.'),
@@ -1372,9 +1372,9 @@ class OwnerDashboardController extends Controller
         $reviewerReturnInfo = $this->getReturnInfoForStage($dokumen, 'reviewer', $returnEvents);
         $reviewerCycleInfo = $this->getCycleInfo($dokumen, 'reviewer');
 
-        if ($dokumen->getDataForRole('ibub')?->received_at) {
+        if ($dokumen->getDataForRole('team_verifikasi')?->received_at) {
             $reviewerStatus = 'completed';
-            $reviewerTimestamp = $dokumen->getDataForRole('ibub')->received_at;
+            $reviewerTimestamp = $dokumen->getDataForRole('team_verifikasi')->received_at;
             $reviewerDescription = 'Dikirim ke Ibu Yuni';
 
             // Check if this is a re-send after return
@@ -1398,12 +1398,12 @@ class OwnerDashboardController extends Controller
         if ($reviewerReturnInfo && !$reviewerCycleInfo['isResend']) {
             $reviewerStatus = 'returned';
             if (!$reviewerTimestamp) {
-                $reviewerTimestamp = $dokumen->getDataForRole('ibub')?->received_at ?? $dokumen->created_at;
+                $reviewerTimestamp = $dokumen->getDataForRole('team_verifikasi')?->received_at ?? $dokumen->created_at;
             }
         }
 
         // Check if reviewer stage is overdue and calculate deadline level
-        $reviewerRoleData = $dokumen->getDataForRole('ibub');
+        $reviewerRoleData = $dokumen->getDataForRole('team_verifikasi');
         $reviewerIsOverdue = false;
         $reviewerDeadlineInfo = null;
         $reviewerDeadlineLevel = null;
@@ -1444,7 +1444,7 @@ class OwnerDashboardController extends Controller
             'color' => $reviewerStatus === 'completed' ? '#10b981' : ($reviewerStatus === 'processing' ? '#3b82f6' : ($reviewerStatus === 'returned' ? '#ef4444' : '#9ca3af')),
             'description' => $reviewerDescription,
             'details' => $reviewerTimestamp ? [
-                'Dikirim pada' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d M Y H:i') : '-',
+                'Dikirim pada' => $dokumen->getDataForRole('team_verifikasi')?->received_at ? $dokumen->getDataForRole('team_verifikasi')->received_at->format('d M Y H:i') : '-',
                 'Diproses pada' => $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-',
             ] : [],
             'hasReturn' => $reviewerReturnInfo !== null,
@@ -1769,14 +1769,14 @@ class OwnerDashboardController extends Controller
         }
 
         // Return to Ibu A
-        if ($dokumen->returned_to_ibua_at) {
+        if ($dokumen->returned_to_Operator_at) {
             $returns[] = [
                 'from' => 'reviewer',
                 'to' => 'sender',
-                'timestamp' => $dokumen->returned_to_ibua_at,
+                'timestamp' => $dokumen->returned_to_Operator_at,
                 'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
-                'returned_to' => 'Ibu Tarapul'
+                'returned_to' => 'Operator'
             ];
         }
 
@@ -1849,21 +1849,21 @@ class OwnerDashboardController extends Controller
             }
 
             // Check if returned to Ibu A and sent back
-            if ($dokumen->returned_to_ibua_at) {
+            if ($dokumen->returned_to_Operator_at) {
                 $hasCycle = true;
-                if (!$returnTimestamp || $dokumen->returned_to_ibua_at->gt($returnTimestamp)) {
-                    $returnTimestamp = $dokumen->returned_to_ibua_at;
+                if (!$returnTimestamp || $dokumen->returned_to_Operator_at->gt($returnTimestamp)) {
+                    $returnTimestamp = $dokumen->returned_to_Operator_at;
                 }
 
                 // Check if sent to Ibu B again after return
-                $ibubReceivedAt = $dokumen->getDataForRole('ibub')?->received_at;
+                $Team VerifikasiReceivedAt = $dokumen->getDataForRole('team_verifikasi')?->received_at;
                 if (
-                    $ibubReceivedAt &&
-                    $ibubReceivedAt->gt($dokumen->returned_to_ibua_at)
+                    $Team VerifikasiReceivedAt &&
+                    $Team VerifikasiReceivedAt->gt($dokumen->returned_to_Operator_at)
                 ) {
                     $isResend = true;
-                    if (!$resendTimestamp || $ibubReceivedAt->gt($resendTimestamp)) {
-                        $resendTimestamp = $ibubReceivedAt;
+                    if (!$resendTimestamp || $Team VerifikasiReceivedAt->gt($resendTimestamp)) {
+                        $resendTimestamp = $Team VerifikasiReceivedAt;
                     }
                     $attemptCount = max($attemptCount, 2);
                 }
@@ -2012,14 +2012,14 @@ class OwnerDashboardController extends Controller
     public function rekapanByHandler(Request $request, $handler)
     {
         // Validate handler
-        $validHandlers = ['ibuA', 'ibuB', 'perpajakan', 'akutansi'];
+        $validHandlers = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
         if (!in_array($handler, $validHandlers)) {
             abort(404, 'Handler tidak valid');
         }
 
         $handlerNames = [
-            'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Ibu Yuni',
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Ibu Yuni',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi'
         ];
@@ -2027,25 +2027,25 @@ class OwnerDashboardController extends Controller
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Filter by handler
-        if ($handler === 'ibuA') {
-            // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
+        if ($handler === 'operator') {
+            // Ibu Tarapul: dokumen dengan current_handler = 'operator' atau status draft
             $query->where(function ($q) {
-                $q->where('current_handler', 'ibuA')
+                $q->where('current_handler', 'operator')
                     ->orWhere(function ($subQ) {
                         $subQ->where('status', 'draft')
                             ->where(function ($subSubQ) {
                                 $subSubQ->whereNull('current_handler')
-                                    ->orWhere('current_handler', 'ibuA');
+                                    ->orWhere('current_handler', 'operator');
                             });
                     });
             });
-        } elseif ($handler === 'ibuB') {
-            // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
+        } elseif ($handler === 'team_verifikasi') {
+            // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_Team Verifikasi
             $query->where(function ($q) {
-                $q->where('current_handler', 'ibuB')
-                    ->orWhere('status', 'sent_to_ibub')
-                    ->orWhere('status', 'pending_approval_ibub')
-                    ->orWhere('status', 'proses_ibub');
+                $q->where('current_handler', 'team_verifikasi')
+                    ->orWhere('status', 'sent_to_Team Verifikasi')
+                    ->orWhere('status', 'pending_approval_Team Verifikasi')
+                    ->orWhere('status', 'proses_Team Verifikasi');
             });
         } elseif ($handler === 'perpajakan') {
             // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
@@ -2154,23 +2154,23 @@ class OwnerDashboardController extends Controller
             $countQuery = Dokumen::where('bagian', $code);
 
             // Apply handler filter
-            if ($handler === 'ibuA') {
+            if ($handler === 'operator') {
                 $countQuery->where(function ($q) {
-                    $q->where('current_handler', 'ibuA')
+                    $q->where('current_handler', 'operator')
                         ->orWhere(function ($subQ) {
                             $subQ->where('status', 'draft')
                                 ->where(function ($subSubQ) {
                                     $subSubQ->whereNull('current_handler')
-                                        ->orWhere('current_handler', 'ibuA');
+                                        ->orWhere('current_handler', 'operator');
                                 });
                         });
                 });
-            } elseif ($handler === 'ibuB') {
+            } elseif ($handler === 'team_verifikasi') {
                 $countQuery->where(function ($q) {
-                    $q->where('current_handler', 'ibuB')
-                        ->orWhere('status', 'sent_to_ibub')
-                        ->orWhere('status', 'pending_approval_ibub')
-                        ->orWhere('status', 'proses_ibub');
+                    $q->where('current_handler', 'team_verifikasi')
+                        ->orWhere('status', 'sent_to_Team Verifikasi')
+                        ->orWhere('status', 'pending_approval_Team Verifikasi')
+                        ->orWhere('status', 'proses_Team Verifikasi');
                 });
             } elseif ($handler === 'perpajakan') {
                 $countQuery->where(function ($q) {
@@ -2234,7 +2234,7 @@ class OwnerDashboardController extends Controller
     public function rekapanDetail(Request $request, $type)
     {
         // Validate type
-        $validTypes = ['total', 'selesai', 'ibuA', 'ibuB', 'perpajakan', 'akutansi'];
+        $validTypes = ['total', 'selesai', 'operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
         if (!in_array($type, $validTypes)) {
             abort(404, 'Type tidak valid');
         }
@@ -2242,8 +2242,8 @@ class OwnerDashboardController extends Controller
         $typeNames = [
             'total' => 'Total Dokumen',
             'selesai' => 'Dokumen Selesai',
-            'ibuA' => 'Dokumen Ibu Tarapul',
-            'ibuB' => 'Dokumen Ibu Yuni',
+            'operator' => 'Dokumen Ibu Tarapul',
+            'team_verifikasi' => 'Dokumen Ibu Yuni',
             'perpajakan' => 'Dokumen Team Perpajakan',
             'akutansi' => 'Dokumen Team Akutansi'
         ];
@@ -2260,25 +2260,25 @@ class OwnerDashboardController extends Controller
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                     ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
-        } elseif ($type === 'ibuA') {
+        } elseif ($type === 'operator') {
             // Ibu Tarapul documents
             $baseQuery->where(function ($q) {
-                $q->where('current_handler', 'ibuA')
+                $q->where('current_handler', 'operator')
                     ->orWhere(function ($subQ) {
                         $subQ->where('status', 'draft')
                             ->where(function ($subSubQ) {
                                 $subSubQ->whereNull('current_handler')
-                                    ->orWhere('current_handler', 'ibuA');
+                                    ->orWhere('current_handler', 'operator');
                             });
                     });
             });
-        } elseif ($type === 'ibuB') {
+        } elseif ($type === 'team_verifikasi') {
             // Ibu Yuni documents
             $baseQuery->where(function ($q) {
-                $q->where('current_handler', 'ibuB')
-                    ->orWhere('status', 'sent_to_ibub')
-                    ->orWhere('status', 'pending_approval_ibub')
-                    ->orWhere('status', 'proses_ibub');
+                $q->where('current_handler', 'team_verifikasi')
+                    ->orWhere('status', 'sent_to_Team Verifikasi')
+                    ->orWhere('status', 'pending_approval_Team Verifikasi')
+                    ->orWhere('status', 'proses_Team Verifikasi');
             });
         } elseif ($type === 'perpajakan') {
             // Team Perpajakan documents
@@ -2307,14 +2307,14 @@ class OwnerDashboardController extends Controller
         // 3. Total Dokumen Proses (sedang diproses)
         $totalProses = (clone $baseQuery)->where(function ($q) {
             $q->where('status', 'sedang diproses')
-                ->orWhere('status', 'sent_to_ibub')
+                ->orWhere('status', 'sent_to_Team Verifikasi')
                 ->orWhere('status', 'sent_to_perpajakan')
                 ->orWhere('status', 'sent_to_akutansi')
                 ->orWhere('status', 'sent_to_pembayaran')
-                ->orWhere('status', 'proses_ibub')
+                ->orWhere('status', 'proses_Team Verifikasi')
                 ->orWhere('status', 'sent_to_perpajakan')
                 ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'pending_approval_ibub');
+                ->orWhere('status', 'pending_approval_Team Verifikasi');
         })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
             ->where(function ($subQ) {
                 $subQ->whereNull('status_pembayaran')
@@ -2385,14 +2385,14 @@ class OwnerDashboardController extends Controller
         } elseif ($statFilter === 'proses') {
             $documentsQuery->where(function ($q) {
                 $q->where('status', 'sedang diproses')
-                    ->orWhere('status', 'sent_to_ibub')
+                    ->orWhere('status', 'sent_to_Team Verifikasi')
                     ->orWhere('status', 'sent_to_perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
                     ->orWhere('status', 'sent_to_pembayaran')
-                    ->orWhere('status', 'proses_ibub')
+                    ->orWhere('status', 'proses_Team Verifikasi')
                     ->orWhere('status', 'sent_to_perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'pending_approval_ibub');
+                    ->orWhere('status', 'pending_approval_Team Verifikasi');
             })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
@@ -2461,7 +2461,7 @@ class OwnerDashboardController extends Controller
         // Redirect langsung ke submenu Ibu Tara dengan mempertahankan query parameters
         $queryParams = $request->query();
         return redirect()->route('owner.rekapan-keterlambatan.role', [
-            'roleCode' => 'ibuA'
+            'roleCode' => 'operator'
         ] + $queryParams);
     }
 
@@ -2490,36 +2490,36 @@ class OwnerDashboardController extends Controller
         })->count();
 
         // Count documents by handler
-        $ibuTarapulQuery = Dokumen::query();
+        $operatorQuery = Dokumen::query();
         $ibuYuniQuery = Dokumen::query();
         $perpajakanQuery = Dokumen::query();
         $akutansiQuery = Dokumen::query();
 
         if ($filterBagian) {
-            $ibuTarapulQuery->where('bagian', $filterBagian);
+            $operatorQuery->where('bagian', $filterBagian);
             $ibuYuniQuery->where('bagian', $filterBagian);
             $perpajakanQuery->where('bagian', $filterBagian);
             $akutansiQuery->where('bagian', $filterBagian);
         }
 
-        // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
-        $ibuTarapulCount = $ibuTarapulQuery->where(function ($q) {
-            $q->where('current_handler', 'ibuA')
+        // Ibu Tarapul: dokumen dengan current_handler = 'operator' atau status draft
+        $operatorCount = $operatorQuery->where(function ($q) {
+            $q->where('current_handler', 'operator')
                 ->orWhere(function ($subQ) {
                     $subQ->where('status', 'draft')
                         ->where(function ($subSubQ) {
                             $subSubQ->whereNull('current_handler')
-                                ->orWhere('current_handler', 'ibuA');
+                                ->orWhere('current_handler', 'operator');
                         });
                 });
         })->count();
 
-        // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
+        // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_Team Verifikasi
         $ibuYuniCount = $ibuYuniQuery->where(function ($q) {
-            $q->where('current_handler', 'ibuB')
-                ->orWhere('status', 'sent_to_ibub')
-                ->orWhere('status', 'pending_approval_ibub')
-                ->orWhere('status', 'proses_ibub');
+            $q->where('current_handler', 'team_verifikasi')
+                ->orWhere('status', 'sent_to_Team Verifikasi')
+                ->orWhere('status', 'pending_approval_Team Verifikasi')
+                ->orWhere('status', 'proses_Team Verifikasi');
         })->count();
 
         // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
@@ -2539,7 +2539,7 @@ class OwnerDashboardController extends Controller
         return [
             'total_documents' => $total,
             'completed_documents' => $completedCount,
-            'ibu_tarapul' => $ibuTarapulCount,
+            'ibu_tarapul' => $operatorCount,
             'ibu_yuni' => $ibuYuniCount,
             'perpajakan' => $perpajakanCount,
             'akutansi' => $akutansiCount
@@ -2858,7 +2858,7 @@ class OwnerDashboardController extends Controller
         $now = Carbon::now();
 
         // Validasi role
-        $validRoles = ['ibuA', 'ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $validRoles = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
         if (!in_array($roleCode, $validRoles)) {
             abort(404, 'Role tidak ditemukan');
         }
@@ -2872,9 +2872,9 @@ class OwnerDashboardController extends Controller
         if (!$isAdminOrOwner) {
             // Map user role to roleCode format
             $userRoleMapping = [
-                'ibua' => 'ibuA',
-                'ibub' => 'ibuB',
-                'verifikasi' => 'ibuB',
+                'operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'perpajakan',
                 'akutansi' => 'akutansi',
                 'pembayaran' => 'pembayaran',
@@ -2890,8 +2890,8 @@ class OwnerDashboardController extends Controller
 
         // Role configuration
         $roleConfig = [
-            'ibuA' => ['name' => 'Ibu Tara', 'code' => 'ibuA'],
-            'ibuB' => ['name' => 'Team Verifikasi', 'code' => 'ibuB'],
+            'operator' => ['name' => 'Ibu Tara', 'code' => 'operator'],
+            'team_verifikasi' => ['name' => 'Team Verifikasi', 'code' => 'team_verifikasi'],
             'perpajakan' => ['name' => 'Team Perpajakan', 'code' => 'perpajakan'],
             'akutansi' => ['name' => 'Team Akutansi', 'code' => 'akutansi'],
             'pembayaran' => ['name' => 'Pembayaran', 'code' => 'pembayaran'],
@@ -2936,7 +2936,7 @@ class OwnerDashboardController extends Controller
 
             // Map role code to expected handler
             $roleHandlerMapping = [
-                'ibuB' => 'ibuB',
+                'team_verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'perpajakan',
                 'akutansi' => 'akutansi',
             ];
@@ -3108,7 +3108,7 @@ class OwnerDashboardController extends Controller
             // 2. AND current_handler has moved to a different role (document is no longer here)
             // If current_handler is still this role, document is ACTIVE even if processed_at is set
             $roleHandlerMapping = [
-                'ibuB' => 'ibuB',
+                'team_verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'perpajakan',
                 'akutansi' => 'akutansi',
             ];
@@ -3191,7 +3191,7 @@ class OwnerDashboardController extends Controller
         $cardStats = [];
 
         // Calculate card statistics hanya untuk role yang memerlukan card
-        if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+        if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
             $roleCodeLower = strtolower($roleCode);
 
             // Get ALL documents that have ever been in this role
@@ -3257,7 +3257,7 @@ class OwnerDashboardController extends Controller
                 }
             }
         } else {
-            // Untuk role lain (ibuA), set default values
+            // Untuk role lain (Operator), set default values
             $card1Count = 0;
             $card2Count = 0;
             $card3Count = 0;
@@ -3266,7 +3266,7 @@ class OwnerDashboardController extends Controller
 
 
         // Only set cardStats for roles that need cards
-        if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+        if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
             $cardStats = [
                 'card1' => [
                     'count' => $card1Count,
@@ -3351,11 +3351,11 @@ class OwnerDashboardController extends Controller
             'filterData'
         ))
             ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
-            ->with('module', $isAdminOrOwner ? 'owner' : ($roleCode === 'ibuB' ? 'ibub' : ($roleCode === 'ibuA' ? 'ibua' : $roleCode)))
+            ->with('module', $isAdminOrOwner ? 'owner' : ($roleCode === 'team_verifikasi' ? 'team_verifikasi' : ($roleCode === 'operator' ? 'operator' : $roleCode)))
             ->with('menuDashboard', '')
             ->with('menuRekapan', '')
             ->with('menuRekapKeterlambatan', 'active')
-            ->with('dashboardUrl', $isAdminOrOwner ? '/owner/dashboard' : ($roleCode === 'ibuB' ? '/dashboard/verifikasi' : '/dashboard'));
+            ->with('dashboardUrl', $isAdminOrOwner ? '/owner/dashboard' : ($roleCode === 'team_verifikasi' ? '/dashboard/verifikasi' : '/dashboard'));
     }
 
 
@@ -3403,3 +3403,5 @@ class OwnerDashboardController extends Controller
         }
     }
 }
+
+

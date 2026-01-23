@@ -79,3 +79,5 @@ class DocumentRejectedInbox implements ShouldBroadcast
         ];
     }
 }
+
+

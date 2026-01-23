@@ -55,3 +55,6 @@ final class WelcomeMessage extends Model
         return $query->where('type', $type);
     }
 }
+
+
+

@@ -735,7 +735,7 @@
 
 
     <!-- Card Statistics - New Deadline Design -->
-    @if(in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi']))
+    @if(in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi']))
       <div class="card-stats">
         @php
           $currentFilterAge = request('filter_age', '');
@@ -882,7 +882,7 @@
 
 
     <!-- Status Filter Tabs -->
-    @if(in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi']))
+    @if(in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi']))
       @php
         $currentStatusFilter = request('status_filter', 'all');
       @endphp
@@ -1084,7 +1084,7 @@
 
               // Determine card color based on age in hours (matching dashboard)
               $ageColor = 'green';
-              if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+              if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
                 if ($ageHours >= 72) {
                   $ageColor = 'red';  // TERLAMBAT
                 } elseif ($ageHours >= 24) {
@@ -1105,7 +1105,7 @@
               }
             @endphp
             <div class="document-card document-card-{{ $ageColor }}"
-              onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'ibuB'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.index', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
+              onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'team_verifikasi'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.index', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
               title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dokumen di daftar dokumen' }}">
               <div class="card-header">
                 <div>
@@ -1220,7 +1220,7 @@
 
                     // Determine row color based on age in hours (matching dashboard)
                     $ageColor = 'green';
-                    if (in_array($roleCode, ['ibuB', 'perpajakan', 'akutansi'])) {
+                    if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
                       if ($ageHours >= 72) {
                         $ageColor = 'red';  // TERLAMBAT
                       } elseif ($ageHours >= 24) {
@@ -1239,7 +1239,7 @@
                     }
                   @endphp
                   <tr class="clickable-row table-row-{{ $ageColor }}"
-                    onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'ibuB'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.index', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
+                    onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'team_verifikasi'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('documents.pembayaran.index', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
                     title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dokumen di daftar dokumen' }}">
 
                     <td>{{ $dokumens->firstItem() + $index }}</td>
@@ -1570,3 +1570,4 @@
   </script>
 
 @endsection
+

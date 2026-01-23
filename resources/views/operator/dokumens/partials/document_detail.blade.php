@@ -110,7 +110,7 @@
   <div class="detail-item">
     <span class="detail-label">Status</span>
     <span class="detail-value">
-      @if(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+      @if(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
         <span class="badge badge-status badge-yellow">⏳ Belum Dikirim</span>
       @else
         <span class="badge badge-status badge-green">✓ Sudah Dikirim ke Ibu Yuni</span>
@@ -119,14 +119,14 @@
   </div>
   @if($dokumen->created_at)
   <div class="detail-item">
-    <span class="detail-label">Dibuat</span>
+    <span class="detail-label">DOperatort</span>
     <span class="detail-value">{{ $dokumen->created_at->format('d M Y H:i') }}</span>
   </div>
   @endif
-  @if($dokumen->sent_to_ibub_at)
+  @if($dokumen->sent_to_Team Verifikasi_at)
   <div class="detail-item">
     <span class="detail-label">Dikirim ke Ibu Yuni</span>
-    <span class="detail-value">{{ $dokumen->sent_to_ibub_at->format('d M Y H:i') }}</span>
+    <span class="detail-value">{{ $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') }}</span>
   </div>
   @endif
   @if($dokumen->processed_at)
@@ -135,10 +135,10 @@
     <span class="detail-value">{{ $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-' }}</span>
   </div>
   @endif
-  @if($dokumen->returned_to_ibua_at)
+  @if($dokumen->returned_to_Operator_at)
   <div class="detail-item">
     <span class="detail-label">Dikembalikan</span>
-    <span class="detail-value">{{ $dokumen->returned_to_ibua_at ? $dokumen->returned_to_ibua_at->format('d M Y H:i') : '-' }}</span>
+    <span class="detail-value">{{ $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d M Y H:i') : '-' }}</span>
   </div>
   @endif
   @if($dokumen->keterangan)
@@ -148,3 +148,4 @@
   </div>
   @endif
 </div>
+

@@ -400,7 +400,7 @@
       </div>
       <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
         <div class="stat-card" style="cursor: pointer;"
-          onclick="window.location.href='{{ route('owner.rekapan.detailStats', ['type' => 'ibuA']) }}'">
+          onclick="window.location.href='{{ route('owner.rekapan.detailStats', ['type' => 'operator']) }}'">
           <div class="d-flex align-items-center justify-content-between">
             <div style="flex: 1;">
               <div class="stat-title">Dokumen Ibu Tarapul</div>
@@ -418,7 +418,7 @@
     <div class="row mb-4">
       <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
         <div class="stat-card" style="cursor: pointer;"
-          onclick="window.location.href='{{ route('owner.rekapan.detailStats', ['type' => 'ibuB']) }}'">
+          onclick="window.location.href='{{ route('owner.rekapan.detailStats', ['type' => 'team_verifikasi']) }}'">
           <div class="d-flex align-items-center justify-content-between">
             <div style="flex: 1;">
               <div class="stat-title">Dokumen Team Verifikasi</div>
@@ -663,3 +663,4 @@
   </script>
 
 @endsection
+

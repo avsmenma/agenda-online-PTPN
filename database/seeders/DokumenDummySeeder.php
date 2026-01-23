@@ -40,7 +40,7 @@ class DokumenDummySeeder extends Seeder
                 'bagian' => 'DPM',
                 'nama_pengirim' => 'Pengirim Ibu Tara ' . $i,
                 'status' => 'sedang diproses',
-                'current_handler' => 'ibuA',
+                'current_handler' => 'operator',
                 'kategori' => 'Kategori ' . $i,
                 'jenis_dokumen' => 'Jenis Dokumen ' . $i,
                 'created_at' => $now->copy()->subDays(10 + $i),
@@ -50,7 +50,7 @@ class DokumenDummySeeder extends Seeder
             // Create role data for ibuA
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuA',
+                'role_code' => 'operator',
                 'received_at' => $now->copy()->subDays(10 + $i)->format('Y-m-d H:i:s'),
                 'processed_at' => null,
                 'deadline_at' => null,
@@ -79,7 +79,7 @@ class DokumenDummySeeder extends Seeder
             'bagian' => 'SKH',
             'nama_pengirim' => 'Pengirim Team Verifikasi 1',
             'status' => 'sent_to_ibub',
-            'current_handler' => 'ibuB',
+            'current_handler' => 'team_verifikasi',
             'kategori' => 'Kategori Verifikasi',
             'jenis_dokumen' => 'Jenis Dokumen Verifikasi',
             'created_at' => $now->copy()->subDays(5),
@@ -88,7 +88,7 @@ class DokumenDummySeeder extends Seeder
 
         DokumenRoleData::create([
             'dokumen_id' => $dokumen1->id,
-            'role_code' => 'ibuA',
+            'role_code' => 'operator',
             'received_at' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),
             'processed_at' => $now->copy()->subDay()->format('Y-m-d H:i:s'),
             'deadline_at' => null,
@@ -98,7 +98,7 @@ class DokumenDummySeeder extends Seeder
 
         DokumenRoleData::create([
             'dokumen_id' => $dokumen1->id,
-            'role_code' => 'ibuB',
+            'role_code' => 'team_verifikasi',
             'received_at' => $now->copy()->subDay()->format('Y-m-d H:i:s'),
             'processed_at' => null,
             'deadline_at' => null,
@@ -120,7 +120,7 @@ class DokumenDummySeeder extends Seeder
                 'bagian' => 'SDM',
                 'nama_pengirim' => 'Pengirim Team Verifikasi ' . $i,
                 'status' => 'sent_to_ibub',
-                'current_handler' => 'ibuB',
+                'current_handler' => 'team_verifikasi',
                 'kategori' => 'Kategori Verifikasi ' . $i,
                 'jenis_dokumen' => 'Jenis Dokumen Verifikasi ' . $i,
                 'created_at' => $now->copy()->subDays(5),
@@ -129,7 +129,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuA',
+                'role_code' => 'operator',
                 'received_at' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),
                 'processed_at' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),
                 'deadline_at' => null,
@@ -139,7 +139,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuB',
+                'role_code' => 'team_verifikasi',
                 'received_at' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),
                 'processed_at' => null,
                 'deadline_at' => null,
@@ -163,7 +163,7 @@ class DokumenDummySeeder extends Seeder
                 'bagian' => 'TEP',
                 'nama_pengirim' => 'Pengirim Team Verifikasi ' . $i,
                 'status' => 'sent_to_ibub',
-                'current_handler' => 'ibuB',
+                'current_handler' => 'team_verifikasi',
                 'kategori' => 'Kategori Verifikasi ' . $i,
                 'jenis_dokumen' => 'Jenis Dokumen Verifikasi ' . $i,
                 'created_at' => $now->copy()->subDays(10),
@@ -172,7 +172,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuA',
+                'role_code' => 'operator',
                 'received_at' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
                 'processed_at' => $now->copy()->subDays($daysAgo)->format('Y-m-d H:i:s'),
                 'deadline_at' => null,
@@ -182,7 +182,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuB',
+                'role_code' => 'team_verifikasi',
                 'received_at' => $now->copy()->subDays($daysAgo)->format('Y-m-d H:i:s'),
                 'processed_at' => null,
                 'deadline_at' => null,
@@ -225,7 +225,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuA',
+                'role_code' => 'operator',
                 'received_at' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
                 'processed_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
                 'deadline_at' => null,
@@ -235,7 +235,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuB',
+                'role_code' => 'team_verifikasi',
                 'received_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
                 'processed_at' => $now->copy()->subDays($doc['days'])->format('Y-m-d H:i:s'),
                 'deadline_at' => null,
@@ -287,7 +287,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuA',
+                'role_code' => 'operator',
                 'received_at' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'),
                 'processed_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
                 'deadline_at' => null,
@@ -297,7 +297,7 @@ class DokumenDummySeeder extends Seeder
 
             DokumenRoleData::create([
                 'dokumen_id' => $dokumen->id,
-                'role_code' => 'ibuB',
+                'role_code' => 'team_verifikasi',
                 'received_at' => $now->copy()->subDays(8)->format('Y-m-d H:i:s'),
                 'processed_at' => $now->copy()->subDays(6)->format('Y-m-d H:i:s'),
                 'deadline_at' => null,
@@ -365,3 +365,4 @@ class DokumenDummySeeder extends Seeder
         $this->command->info('Total role data: ' . DokumenRoleData::count());
     }
 }
+

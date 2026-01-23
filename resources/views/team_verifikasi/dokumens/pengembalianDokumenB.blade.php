@@ -746,3 +746,5 @@ function toggleDetail(rowId) {
 </script>
 
 @endsection
+
+

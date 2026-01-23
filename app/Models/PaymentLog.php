@@ -31,3 +31,6 @@ class PaymentLog extends Model
         return $this->belongsTo(TuTk::class, 'tu_tk_kontrol', 'KONTROL');
     }
 }
+
+
+

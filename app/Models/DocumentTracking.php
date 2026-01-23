@@ -37,11 +37,11 @@ class DocumentTracking extends Model
     public static function getAvailableActions(): array
     {
         return [
-            'created' => 'Dokumen Dibuat',
-            'sent_to_ibub' => 'Dikirim ke Ibu B',
+            'created' => 'Dokumen DOperatort',
+            'sent_to_Team Verifikasi' => 'Dikirim ke Ibu B',
             'deadline_set' => 'Deadline Ditentukan',
-            'processed_by_ibub' => 'Diproses Ibu B',
-            'returned_to_ibua' => 'Dikembalikan ke Ibu A',
+            'processed_by_Team Verifikasi' => 'Diproses Ibu B',
+            'returned_to_Operator' => 'Dikembalikan ke Ibu A',
             'sent_to_perpajakan' => 'Dikirim ke Perpajakan',
             'processed_perpajakan' => 'Diproses Perpajakan',
             'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
@@ -63,8 +63,8 @@ class DocumentTracking extends Model
     public static function getAvailableActors(): array
     {
         return [
-            'ibuA' => 'Ibu A',
-            'ibuB' => 'Ibu B',
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Ibu B',
             'perpajakan' => 'Perpajakan',
             'akutansi' => 'Akutansi',
             'pembayaran' => 'Pembayaran',
@@ -113,10 +113,10 @@ class DocumentTracking extends Model
     {
         $colorMap = [
             'created' => 'text-green-600 bg-green-50 border-green-200',
-            'sent_to_ibub' => 'text-blue-600 bg-blue-50 border-blue-200',
+            'sent_to_Team Verifikasi' => 'text-blue-600 bg-blue-50 border-blue-200',
             'deadline_set' => 'text-yellow-600 bg-yellow-50 border-yellow-200',
-            'processed_by_ibub' => 'text-purple-600 bg-purple-50 border-purple-200',
-            'returned_to_ibua' => 'text-red-600 bg-red-50 border-red-200',
+            'processed_by_Team Verifikasi' => 'text-purple-600 bg-purple-50 border-purple-200',
+            'returned_to_Operator' => 'text-red-600 bg-red-50 border-red-200',
             'sent_to_perpajakan' => 'text-indigo-600 bg-indigo-50 border-indigo-200',
             'processed_perpajakan' => 'text-indigo-600 bg-indigo-50 border-indigo-200',
             'returned_from_perpajakan' => 'text-red-600 bg-red-50 border-red-200',
@@ -141,10 +141,10 @@ class DocumentTracking extends Model
     {
         $iconMap = [
             'created' => 'fa-plus-circle',
-            'sent_to_ibub' => 'fa-paper-plane',
+            'sent_to_Team Verifikasi' => 'fa-paper-plane',
             'deadline_set' => 'fa-clock',
-            'processed_by_ibub' => 'fa-user-check',
-            'returned_to_ibua' => 'fa-undo',
+            'processed_by_Team Verifikasi' => 'fa-user-check',
+            'returned_to_Operator' => 'fa-undo',
             'sent_to_perpajakan' => 'fa-file-invoice',
             'processed_perpajakan' => 'fa-stamp',
             'returned_from_perpajakan' => 'fa-exclamation-triangle',
@@ -200,3 +200,6 @@ class DocumentTracking extends Model
         ]);
     }
 }
+
+
+

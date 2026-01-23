@@ -144,7 +144,7 @@
     background-color: #fffef8;
   }
 
-  /* Bagian Statistics - Style konsisten dengan rekapan-ibuB dan rekapan-perpajakan */
+  /* Bagian Statistics - Style konsisten dengan rekapan-Team Verifikasi dan rekapan-perpajakan */
   .bagian-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -555,7 +555,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-title">Dokumen Aktif</div>
-          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_ibub'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
+          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_Team Verifikasi'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
           <div class="stat-description">Sedang diproses</div>
         </div>
       </div>
@@ -563,7 +563,7 @@
   </div>
 </div>
 
-<!-- Statistik per Bagian (Sesuai style rekapan-ibuB & rekapan-perpajakan) -->
+<!-- Statistik per Bagian (Sesuai style rekapan-Team Verifikasi & rekapan-perpajakan) -->
 @if(!$selectedBagian)
 <div class="row mb-4">
   <div class="col-12">
@@ -594,7 +594,7 @@
       <div class="col-md-3 col-6 mb-3">
         <div class="bagian-card">
           <div class="bagian-name">Terkirim</div>
-          <div class="bagian-count">{{ $statistics['by_status']['sent_to_ibub'] }}</div>
+          <div class="bagian-count">{{ $statistics['by_status']['sent_to_Team Verifikasi'] }}</div>
         </div>
       </div>
       <div class="col-md-3 col-6 mb-3">
@@ -709,7 +709,7 @@
                     <i class="fas fa-clock"></i> Draft
                   </span>
                   @break
-                @case('sent_to_ibub')
+                @case('sent_to_Team Verifikasi')
                   <span class="badge badge-sent">
                     <i class="fas fa-paper-plane"></i> Terkirim ke Team Verifikasi
                   </span>
@@ -739,7 +739,7 @@
                     <i class="fas fa-check"></i> Selesai
                   </span>
                   @break
-                @case('returned_to_ibua')
+                @case('returned_to_Operator')
                   <span class="badge badge-returned">
                     <i class="fas fa-undo"></i> Dikembalikan ke Ibu Tarapul
                   </span>
@@ -778,3 +778,4 @@
 </div>
 
 @endsection
+

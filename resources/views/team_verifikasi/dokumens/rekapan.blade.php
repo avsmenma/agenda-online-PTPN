@@ -357,7 +357,7 @@
         <div class="stat-content">
           <div class="stat-title">Total Dokumen</div>
           <div class="stat-value">{{ $statistics['total_documents'] }}</div>
-          <div class="stat-description">Semua dokumen yang dibuat oleh Ibu Tarapul</div>
+          <div class="stat-description">Semua dokumen yang dOperatort oleh Ibu Tarapul</div>
         </div>
         <div class="stat-icon total">
           <i class="fa-solid fa-file-lines"></i>
@@ -457,7 +457,7 @@
         <div class="col-md-3 col-6 mb-3">
           <div class="bagian-card">
             <div class="bagian-name">Terkirim</div>
-            <div class="bagian-count">{{ $statistics['by_status']['sent_to_ibub'] }}</div>
+            <div class="bagian-count">{{ $statistics['by_status']['sent_to_Team Verifikasi'] }}</div>
           </div>
         </div>
         <div class="col-md-3 col-6 mb-3">
@@ -510,7 +510,7 @@
               @case('draft')
                 <span class="badge badge-draft">Draft</span>
                 @break
-              @case('sent_to_ibub')
+              @case('sent_to_Team Verifikasi')
                 <span class="badge badge-sent">Terkirim ke Team Verifikasi</span>
                 @break
               @case('sent_to_perpajakan')
@@ -528,7 +528,7 @@
               @case('selesai')
                 <span class="badge badge-completed">Selesai</span>
                 @break
-              @case('returned_to_ibua')
+              @case('returned_to_Operator')
                 <span class="badge badge-returned">Dikembalikan ke Ibu Tarapul</span>
                 @break
               @case('returned_to_department')
@@ -558,3 +558,4 @@
 @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 @endsection
+

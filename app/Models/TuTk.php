@@ -260,3 +260,6 @@ class TuTk extends Model
                     ->orderBy('tanggal_bayar');
     }
 }
+
+
+

@@ -380,3 +380,4 @@ document.addEventListener('visibilitychange', function() {
 });
 </script>
 @endsection
+

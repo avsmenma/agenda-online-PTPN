@@ -59,7 +59,7 @@ class CleanDokumenBeforeImport extends Command
         switch ($type) {
             case 'csv_import':
                 $query = Dokumen::where('created_by', 'csv_import');
-                $description = 'dokumen yang dibuat oleh CSV import';
+                $description = 'dokumen yang dOperatort oleh CSV import';
                 break;
 
             case 'pembayaran':
@@ -133,4 +133,6 @@ class CleanDokumenBeforeImport extends Command
         }
     }
 }
+
+
 

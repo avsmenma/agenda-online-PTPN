@@ -229,7 +229,7 @@
       text-align: center;
     }
 
-    /* Modern deadline card design for perpajakan - same as ibuB */
+    /* Modern deadline card design for perpajakan - same as Team Verifikasi */
     .deadline-card {
       position: relative;
       background: white;
@@ -3026,7 +3026,7 @@
     </div>
   </div>
 
-  <!-- Modal for Return to IbuB -->
+  <!-- Modal for Return to Team Verifikasi -->
   <div class="modal fade" id="returnModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -5550,3 +5550,5 @@
       </script>
 
 @endsection
+
+

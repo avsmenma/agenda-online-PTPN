@@ -571,15 +571,15 @@
   const teams = @json($teams);
   // Chart colors - Always use Perpajakan Green Theme
   const teamColors = {
-    'ibuA': 'rgba(8, 62, 64, 1)',
-    'ibuB': 'rgba(136, 151, 23, 1)',
+    'operator': 'rgba(8, 62, 64, 1)',
+    'team_verifikasi': 'rgba(136, 151, 23, 1)',
     'perpajakan': 'rgba(26, 77, 62, 1)',
     'akutansi': 'rgba(23, 162, 184, 1)',
   };
 
   const teamColorsTransparent = {
-    'ibuA': 'rgba(8, 62, 64, 0.1)',
-    'ibuB': 'rgba(136, 151, 23, 0.1)',
+    'operator': 'rgba(8, 62, 64, 0.1)',
+    'team_verifikasi': 'rgba(136, 151, 23, 0.1)',
     'perpajakan': 'rgba(26, 77, 62, 0.1)',
     'akutansi': 'rgba(23, 162, 184, 0.1)',
   };
@@ -687,3 +687,5 @@
 </script>
 
 @endsection
+
+

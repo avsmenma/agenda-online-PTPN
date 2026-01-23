@@ -163,7 +163,7 @@
                                             @php
                                                 $statusColor = match ($doc->status) {
                                                     'belum dikirim' => '#ffc107',
-                                                    'sent_to_ibub' => '#17a2b8',
+                                                    'sent_to_Team Verifikasi' => '#17a2b8',
                                                     'sudah dibayar' => '#28a745',
                                                     default => '#6c757d'
                                                 };
@@ -188,3 +188,4 @@
         </div>
     </div>
 @endsection
+

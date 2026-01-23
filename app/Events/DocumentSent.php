@@ -33,7 +33,7 @@ class DocumentSent implements ShouldBroadcast
             'nilai_rupiah' => $document->nilai_rupiah,
             'status' => $document->status,
             'tanggal_masuk' => $document->tanggal_masuk?->format('d/m/Y H:i'),
-            'sent_to_ibub_at' => $document->sent_to_ibub_at?->format('d/m/Y H:i'),
+            'sent_to_Team Verifikasi_at' => $document->sent_to_Team Verifikasi_at?->format('d/m/Y H:i'),
         ];
         $this->sentBy = $sentBy;
         $this->sentTo = $sentTo;
@@ -75,3 +75,5 @@ class DocumentSent implements ShouldBroadcast
         ];
     }
 }
+
+

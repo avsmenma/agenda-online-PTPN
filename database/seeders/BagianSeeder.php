@@ -32,3 +32,4 @@ class BagianSeeder extends Seeder
         }
     }
 }
+

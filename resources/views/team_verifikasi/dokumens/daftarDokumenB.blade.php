@@ -3544,19 +3544,19 @@
           </div>
           <div class="stat-item">
             <span
-              class="stat-value">{{ $dokumens->whereIn('status', ['selesai', 'approved_ibub', 'sent_to_perpajakan', 'sent_to_akutansi'])->count() }}</span>
+              class="stat-value">{{ $dokumens->whereIn('status', ['selesai', 'approved_Team Verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi'])->count() }}</span>
             <span class="stat-label">Selesai</span>
           </div>
           <div class="stat-item">
             <span class="stat-value">{{ $dokumens->filter(function ($dokumen) {
-    $roleData = $dokumen->getDataForRole('ibub');
+    $roleData = $dokumen->getDataForRole('team_verifikasi');
     $hasDeadline = ($roleData && $roleData->deadline_at) || $dokumen->deadline_at;
     $isRejected = $dokumen->roleStatuses()
-      ->where('role_code', 'ibub')
+      ->where('role_code', 'team_verifikasi')
       ->where('status', 'rejected')
       ->exists();
     return !$hasDeadline
-      && in_array($dokumen->status, ['sent_to_ibub', 'sedang diproses'])
+      && in_array($dokumen->status, ['sent_to_Team Verifikasi', 'sedang diproses'])
       && is_null($dokumen->returned_to_department_at)
       && is_null($dokumen->returned_to_bidang_at)
       && !$isRejected;
@@ -3584,7 +3584,7 @@
             @forelse($dokumens ?? [] as $dokumen)
               @php
                 // Get deadline from roleData relationship
-                $roleData = $dokumen->getDataForRole('ibub');
+                $roleData = $dokumen->getDataForRole('team_verifikasi');
                 $hasDeadline = false;
 
                 if ($roleData && $roleData->deadline_at) {
@@ -3596,16 +3596,16 @@
 
                 // Check rejection status from roleStatuses
                 // Dokumen ditolak jika:
-                // 1. Ditolak oleh ibub sendiri, ATAU
-                // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = ibuB)
-                $isRejectedByIbuB = $dokumen->roleStatuses()
-                  ->where('role_code', 'ibub')
+                // 1. Ditolak oleh Team Verifikasi sendiri, ATAU
+                // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = Team Verifikasi)
+                $isRejectedByTeam Verifikasi = $dokumen->roleStatuses()
+                  ->where('role_code', 'team_verifikasi')
                   ->where('status', 'rejected')
                   ->exists();
 
                 $isRejectedByOtherRole = false;
                 $rejectedByRole = null;
-                if ($dokumen->current_handler === 'ibuB') {
+                if ($dokumen->current_handler === 'team_verifikasi') {
                   // Cek apakah ada rejection dari perpajakan atau akutansi
                   $rejectedStatus = $dokumen->roleStatuses()
                     ->whereIn('role_code', ['perpajakan', 'akutansi'])
@@ -3619,11 +3619,11 @@
                   }
                 }
 
-                $isRejected = $isRejectedByIbuB || $isRejectedByOtherRole;
+                $isRejected = $isRejectedByTeam Verifikasi || $isRejectedByOtherRole;
 
                 // Check pending status from roleStatuses
                 $isPending = $dokumen->roleStatuses()
-                  ->where('role_code', 'ibub')
+                  ->where('role_code', 'team_verifikasi')
                   ->where('status', 'pending')
                   ->exists();
 
@@ -3649,8 +3649,8 @@
                 // NEW SIMPLIFIED APPROACH: Use display_status from dokumen_role_data
                 // The display_status is set by backend (sendToRoleInbox/approveFromRoleInbox)
                 // and is FINAL/frozen - it won't change when downstream roles act
-                $ibubRoleData = $roleData; // roleData is already set for 'ibub' above
-                $displayStatus = $ibubRoleData?->display_status;
+                $Team VerifikasiRoleData = $roleData; // roleData is already set for 'team_verifikasi' above
+                $displayStatus = $Team VerifikasiRoleData?->display_status;
 
                 // Get human-readable label from display_status
                 $displayStatusLabel = $displayStatus ? \App\Models\Dokumen::getFinalStatusLabel($displayStatus) : null;
@@ -3754,7 +3754,7 @@
                 <td class="col-deadline">
                   @php
                     // Get received_at from roleData to calculate document age (count up)
-                    $roleData = $dokumen->getDataForRole('ibub');
+                    $roleData = $dokumen->getDataForRole('team_verifikasi');
                     $receivedAt = $roleData?->received_at;
 
                     // Check if document is already sent to other roles
@@ -3888,7 +3888,7 @@
                         </span>
                       </span>
                     @else
-                      {{-- Dokumen ditolak dari inbox (oleh ibub sendiri) --}}
+                      {{-- Dokumen ditolak dari inbox (oleh Team Verifikasi sendiri) --}}
                       <span class="badge-status badge-dikembalikan" style="position: relative;">
                         <i class="fa-solid fa-times-circle me-1"></i>
                         <span>Dokumen Ditolak,
@@ -3900,11 +3900,11 @@
                         </span>
                       </span>
                     @endif
-                  @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_ibub')
+                  @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi')
                     {{-- Dokumen yang benar-benar sudah selesai diproses --}}
                     <span class="badge-status badge-selesai">✓
-                      {{ $dokumen->status == 'approved_ibub' ? 'Approved' : 'Selesai' }}</span>
-                  @elseif($dokumen->status == 'rejected_ibub')
+                      {{ $dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai' }}</span>
+                  @elseif($dokumen->status == 'rejected_Team Verifikasi')
                     <span class="badge-status badge-dikembalikan">Rejected</span>
                   @elseif($displayStatusLabel)
                     {{-- NEW: Use display_status from dokumen_role_data (FINAL/frozen status) --}}
@@ -3937,7 +3937,7 @@
                     <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
                   @elseif($dokumen->status == 'sent_to_pembayaran')
                     <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
-                  @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub']) || $isPending)
+                  @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_Team Verifikasi']) || $isPending)
                     <span class="badge-status"
                       style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                       <i class="fa-solid fa-clock me-1"></i>
@@ -3949,12 +3949,12 @@
                   @elseif($dokumen->status == 'sedang diproses')
                     {{-- Dokumen yang baru di-approve dari inbox dan sudah di-set deadline --}}
                     <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
-                  @elseif(in_array($dokumen->status, ['sent_to_ibub']) && !$isLocked)
+                  @elseif(in_array($dokumen->status, ['sent_to_Team Verifikasi']) && !$isLocked)
                     {{-- Dokumen yang sedang diproses (status lama) --}}
                     <span class="badge-status badge-proses">⏳ Diproses</span>
-                  @elseif($dokumen->status == 'sent_to_ibub' && $isLocked)
+                  @elseif($dokumen->status == 'sent_to_Team Verifikasi' && $isLocked)
                     <span class="badge-status badge-locked">🔒 Terkunci</span>
-                  @elseif($dokumen->status == 'returned_to_ibua')
+                  @elseif($dokumen->status == 'returned_to_Operator')
                     <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
                   @elseif($dokumen->status == 'returned_to_department')
                     <span class="badge-status badge-dikembalikan">
@@ -3992,12 +3992,12 @@
                           </button>
                         </a>
                         <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                          onclick="alert('Fitur kembalikan untuk IbuB akan segera tersedia')" title="Kembalikan Dokumen">
+                          onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')" title="Kembalikan Dokumen">
                           <i class="fa-solid fa-undo"></i>
                           <span>Balik</span>
                         </button>
                       </div>
-                    @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_ibub', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
+                    @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_Team Verifikasi', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
                       <!-- Document already sent, waiting approval, or completed - show status -->
                       @if($isApprovedByOtherRole || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar')
                         <!-- Document has been approved/completed - show approved status -->
@@ -4016,7 +4016,7 @@
                       @endif
                     @else
                       <!-- Unlocked state - buttons enabled -->
-                      @if(in_array($dokumen->status, ['sent_to_ibub', 'approved_ibub', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
+                      @if(in_array($dokumen->status, ['sent_to_Team Verifikasi', 'approved_Team Verifikasi', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
                         <!-- Only show "Kirim Data" button if document hasn't been approved by other roles yet -->
                         <button type="button" class="btn-action btn-kirim btn-full-width"
                           onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
@@ -4040,7 +4040,7 @@
                           </button>
                         </a>
                         <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                          onclick="alert('Fitur kembalikan untuk IbuB akan segera tersedia')" title="Kembalikan Dokumen">
+                          onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')" title="Kembalikan Dokumen">
                           <i class="fa-solid fa-undo"></i>
                           <span>Balik</span>
                         </button>
@@ -6877,3 +6877,5 @@
     </script>
 
 @endsection
+
+

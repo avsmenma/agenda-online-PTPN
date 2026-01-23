@@ -35,10 +35,10 @@ final class SetDeadlineRequest extends FormRequest
         if (method_exists($user, 'getRoleNames')) {
             // Using Spatie Laravel-permission
             $roles = $user->getRoleNames();
-            $hasRole = $roles->contains('ibuB') || $roles->contains('IbuB') || $roles->contains('ibub');
+            $hasRole = $roles->contains('Team Verifikasi') || $roles->contains('Team Verifikasi') || $roles->contains('Team Verifikasi');
             \Log::info('SetDeadlineRequest: Using getRoleNames', [
                 'roles' => $roles->toArray(),
-                'has_ibuB_role' => $hasRole
+                'has_Team Verifikasi_role' => $hasRole
             ]);
             return $hasRole;
         }
@@ -46,11 +46,11 @@ final class SetDeadlineRequest extends FormRequest
         // Fallback to role field - check multiple possible values
         if (isset($user->role)) {
             $role = strtolower(trim($user->role));
-            $hasRole = in_array($role, ['ibub', 'ibu b', 'ibub', 'ibuB', 'IbuB']);
+            $hasRole = in_array($role, ['Team Verifikasi', 'ibu b', 'Team Verifikasi', 'Team Verifikasi', 'Team Verifikasi']);
             \Log::info('SetDeadlineRequest: Using role field', [
                 'role_value' => $user->role,
                 'normalized_role' => $role,
-                'has_ibuB_role' => $hasRole
+                'has_Team Verifikasi_role' => $hasRole
             ]);
             return $hasRole;
         }
@@ -58,16 +58,16 @@ final class SetDeadlineRequest extends FormRequest
         // Fallback to name field mapping
         if (isset($user->name)) {
             $name = strtolower(trim($user->name));
-            $hasRole = in_array($name, ['ibub', 'ibu b', 'ibub']);
+            $hasRole = in_array($name, ['Team Verifikasi', 'ibu b', 'Team Verifikasi']);
             \Log::info('SetDeadlineRequest: Using name field', [
                 'name_value' => $user->name,
                 'normalized_name' => $name,
-                'has_ibuB_role' => $hasRole
+                'has_Team Verifikasi_role' => $hasRole
             ]);
             return $hasRole;
         }
 
-        // Check if user has any role that might indicate ibuB access
+        // Check if user has any role that might indicate Team Verifikasi access
         // This is a more permissive check - allow if user is authenticated
         // The actual authorization will be checked in the controller
         \Log::warning('SetDeadlineRequest: No role detection method found, allowing authenticated user', [
@@ -125,3 +125,5 @@ final class SetDeadlineRequest extends FormRequest
         ], 422));
     }
 }
+
+

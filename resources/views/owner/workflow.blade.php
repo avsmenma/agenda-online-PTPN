@@ -1400,10 +1400,10 @@
             @php
               // Map performed_by to display name
               $performedByMap = [
-                'ibuA' => 'Ibu Tara',
-                'IbuA' => 'Ibu Tara',
-                'ibuB' => 'Team Verifikasi',
-                'IbuB' => 'Team Verifikasi',
+                'operator' => 'Ibu Tara',
+                'operator' => 'Ibu Tara',
+                'team_verifikasi' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
                 'perpajakan' => 'Team Perpajakan',
                 'Perpajakan' => 'Team Perpajakan',
                 'akutansi' => 'Team Akutansi',
@@ -1421,20 +1421,20 @@
               // Transform action_description to replace role codes with display names
               $actionDesc = $log->action_description ?? 'Aktivitas';
               $roleReplacements = [
-                'inbox ibub' => 'inbox Team Verifikasi',
-                'inbox ibuB' => 'inbox Team Verifikasi',
-                'inbox IbuB' => 'inbox Team Verifikasi',
-                'inbox ibua' => 'inbox Bagian',
-                'inbox ibuA' => 'inbox Bagian',
-                'inbox IbuA' => 'inbox Bagian',
+                'inbox Team Verifikasi' => 'inbox Team Verifikasi',
+                'inbox Team Verifikasi' => 'inbox Team Verifikasi',
+                'inbox Team Verifikasi' => 'inbox Team Verifikasi',
+                'inbox Operator' => 'inbox Bagian',
+                'inbox Operator' => 'inbox Bagian',
+                'inbox Operator' => 'inbox Bagian',
                 'inbox perpajakan' => 'inbox Team Perpajakan',
                 'inbox akutansi' => 'inbox Team Akutansi',
                 'inbox pembayaran' => 'inbox Team Pembayaran',
-                'oleh ibub' => 'oleh Team Verifikasi',
-                'oleh ibuB' => 'oleh Team Verifikasi',
-                'oleh IbuB' => 'oleh Team Verifikasi',
-                'oleh ibua' => 'oleh Bagian',
-                'oleh ibuA' => 'oleh Bagian',
+                'oleh Team Verifikasi' => 'oleh Team Verifikasi',
+                'oleh Team Verifikasi' => 'oleh Team Verifikasi',
+                'oleh Team Verifikasi' => 'oleh Team Verifikasi',
+                'oleh Operator' => 'oleh Bagian',
+                'oleh Operator' => 'oleh Bagian',
               ];
               $actionDescDisplay = str_replace(array_keys($roleReplacements), array_values($roleReplacements), $actionDesc);
             @endphp
@@ -1494,9 +1494,9 @@
         'draft' => 'Draft',
         'sedang diproses' => 'Sedang Diproses',
         'menunggu_verifikasi' => 'Menunggu Verifikasi',
-        'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
-        'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
-        'proses_ibub' => 'Diproses Team Verifikasi',
+        'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+        'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+        'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
         'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
         'proses_perpajakan' => 'Diproses Team Perpajakan',
         'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
@@ -1507,7 +1507,7 @@
         'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
         'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
         'selesai' => 'Selesai',
-        'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+        'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
         'returned_to_department' => 'Dikembalikan ke Department',
         'returned_to_bidang' => 'Dikembalikan ke Bidang',
       ];
@@ -2244,10 +2244,10 @@
           'tax': 'Team Perpajakan',
           'accounting': 'Team Akutansi',
           'payment': 'Team Pembayaran',
-          'ibua': 'Bagian',
-          'ibuA': 'Bagian',
-          'ibub': 'Team Verifikasi',
-          'ibuB': 'Team Verifikasi',
+          'operator': 'Bagian',
+          'operator': 'Bagian',
+          'team_verifikasi': 'Team Verifikasi',
+          'team_verifikasi': 'Team Verifikasi',
           'verifikasi': 'Team Verifikasi',
           'perpajakan': 'Team Perpajakan',
           'akutansi': 'Team Akutansi',
@@ -2260,7 +2260,7 @@
           'sent_to_inbox': 'Dikirim ke Inbox',
           'approved': 'Disetujui',
           'rejected': 'Ditolak',
-          'created': 'Dibuat',
+          'created': 'DOperatort',
           'deleted': 'Dihapus',
           'updated': 'Diperbarui',
           'returned': 'Dikembalikan',
@@ -2360,3 +2360,5 @@
   </script>
 
 @endsection
+
+

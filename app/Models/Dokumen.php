@@ -174,10 +174,10 @@ class Dokumen extends Model
     public static function getRoleDisplayNameIndo(string $roleCode): string
     {
         $roleMap = [
-            'ibua' => 'Bagian',
-            'ibuA' => 'Bagian',
-            'ibub' => 'Team Verifikasi',
-            'ibuB' => 'Team Verifikasi',
+            'operator' => 'Bagian',
+            'operator' => 'Bagian',
+            'team_verifikasi' => 'Team Verifikasi',
+            'team_verifikasi' => 'Team Verifikasi',
             'verifikasi' => 'Team Verifikasi',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi',
@@ -271,10 +271,10 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
-        // For verifikasi, also check ibub for backward compatibility
-        if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {
+        // For verifikasi, also check Team Verifikasi for backward compatibility
+        if ($roleCode === 'verifikasi' || $roleCode === 'team_verifikasi') {
             $status = $this->roleStatuses()
-                ->whereIn('role_code', ['verifikasi', 'ibub'])
+                ->whereIn('role_code', ['verifikasi', 'team_verifikasi'])
                 ->first();
             return $status;
         }
@@ -289,9 +289,9 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
-        // Role alias mapping - verifikasi is the same as ibub
+        // Role alias mapping - verifikasi is the same as Team Verifikasi
         $roleAliases = [
-            'verifikasi' => 'ibub',
+            'verifikasi' => 'team_verifikasi',
         ];
 
         // Apply alias if exists
@@ -315,9 +315,9 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
-        // Normalize verifikasi to ibub for database consistency
+        // Normalize verifikasi to Team Verifikasi for database consistency
         if ($roleCode === 'verifikasi') {
-            $roleCode = 'ibub';
+            $roleCode = 'team_verifikasi';
         }
 
         $changedBy = $changedBy ?? auth()->user()?->name ?? 'System';
@@ -391,12 +391,12 @@ class Dokumen extends Model
         // Example: When perpajakan sends to akutansi, perpajakan's processed_at is set to now()
         // This ensures the "time spent in perpajakan" is permanently recorded
         $normalizedSenderRole = strtolower($senderRoleCode);
-        $validRoles = ['ibub', 'perpajakan', 'akutansi', 'pembayaran', 'verifikasi'];
+        $validRoles = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran', 'verifikasi'];
 
         if (in_array($normalizedSenderRole, $validRoles)) {
-            // Map verifikasi to ibub for database consistency
+            // Map verifikasi to Team Verifikasi for database consistency
             if ($normalizedSenderRole === 'verifikasi') {
-                $normalizedSenderRole = 'ibub';
+                $normalizedSenderRole = 'team_verifikasi';
             }
 
             $senderRoleData = $this->getDataForRole($normalizedSenderRole);
@@ -418,9 +418,9 @@ class Dokumen extends Model
         // Set sender's display_status to "menunggu_approval_*" based on target role
         // Map: target_role => sender's display_status
         $displayStatusMap = [
-            'ibub' => 'menunggu_approval_verifikasi',      // IbuA -> IbuB: IbuA gets 'menunggu_approval_verifikasi'
-            'verifikasi' => 'menunggu_approval_verifikasi', // Same as ibub
-            'perpajakan' => 'menunggu_approval_perpajakan', // IbuB -> Perpajakan: IbuB gets 'menunggu_approval_perpajakan'
+            'team_verifikasi' => 'menunggu_approval_verifikasi',      // Operator -> Team Verifikasi: Operator gets 'menunggu_approval_verifikasi'
+            'verifikasi' => 'menunggu_approval_verifikasi', // Same as Team Verifikasi
+            'perpajakan' => 'menunggu_approval_perpajakan', // Team Verifikasi -> Perpajakan: Team Verifikasi gets 'menunggu_approval_perpajakan'
             'akutansi' => 'menunggu_approval_akutansi',     // Perpajakan -> Akutansi: Perpajakan gets 'menunggu_approval_akutansi'
             'pembayaran' => 'menunggu_approval_pembayaran', // Akutansi -> Pembayaran: Akutansi gets 'menunggu_approval_pembayaran'
         ];
@@ -463,10 +463,10 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
-        // Normalize verifikasi to ibub for database consistency
+        // Normalize verifikasi to Team Verifikasi for database consistency
         $normalizedRoleCode = $roleCode;
         if ($roleCode === 'verifikasi') {
-            $normalizedRoleCode = 'ibub';
+            $normalizedRoleCode = 'team_verifikasi';
         }
 
         $approvedBy = auth()->user()?->name ?? 'System';
@@ -513,9 +513,9 @@ class Dokumen extends Model
 
         // === SYNC LEGACY COLUMNS ===
         // Update legacy columns for backward compatibility with existing dashboards
-        // Map role code to proper handler format (capital B for ibuB to match query expectations)
+        // Map role code to proper handler format (capital B for Team Verifikasi to match query expectations)
         $handlerMap = [
-            'ibub' => 'ibuB',
+            'team_verifikasi' => 'team_verifikasi',
             'verifikasi' => 'verifikasi',
             'perpajakan' => 'perpajakan',
             'akutansi' => 'akutansi',
@@ -524,7 +524,7 @@ class Dokumen extends Model
         $this->current_handler = $handlerMap[$roleCode] ?? $roleCode;
 
         switch ($normalizedRoleCode) {
-            case 'ibub':
+            case 'team_verifikasi':
                 $this->status = 'sedang diproses'; // Status expected by DashboardB (with space, not underscore)
                 // Note: processed_at column was removed in cleanup migration, timestamp is now in dokumen_role_data
                 break;
@@ -611,10 +611,10 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
-        // For verifikasi, also check ibub for backward compatibility
-        if ($roleCode === 'verifikasi' || $roleCode === 'ibub') {
+        // For verifikasi, also check Team Verifikasi for backward compatibility
+        if ($roleCode === 'verifikasi' || $roleCode === 'team_verifikasi') {
             $status = $this->roleStatuses()
-                ->whereIn('role_code', ['verifikasi', 'ibub'])
+                ->whereIn('role_code', ['verifikasi', 'team_verifikasi'])
                 ->where('status', DokumenStatus::STATUS_PENDING)
                 ->first();
             return $status !== null;
@@ -642,7 +642,7 @@ class Dokumen extends Model
     public function isPendingApproval(): bool
     {
         return in_array($this->status, [
-            'pending_approval_ibub',
+            'pending_approval_Team Verifikasi',
             'pending_approval_perpajakan',
             'pending_approval_akutansi'
         ]);
@@ -662,7 +662,7 @@ class Dokumen extends Model
     public static function getApprovalRoles(): array
     {
         return [
-            'ibuB' => 'Ibu B',
+            'team_verifikasi' => 'Ibu B',
             'perpajakan' => 'Perpajakan',
             'akutansi' => 'Akutansi',
         ];
@@ -674,7 +674,7 @@ class Dokumen extends Model
     public function getPendingApprovalStatusDisplay(): string
     {
         $statusMap = [
-            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu B',
+            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Ibu B',
             'pending_approval_perpajakan' => 'Menunggu Persetujuan Perpajakan',
             'pending_approval_akutansi' => 'Menunggu Persetujuan Akutansi',
         ];
@@ -695,7 +695,7 @@ class Dokumen extends Model
 
         if ($pendingStatus) {
             $roleNameMap = [
-                'ibub' => 'Team Verifikasi',
+                'team_verifikasi' => 'Team Verifikasi',
                 'perpajakan' => 'Team Perpajakan',
                 'akutansi' => 'Team Akutansi',
                 'pembayaran' => 'Team Pembayaran',
@@ -707,7 +707,7 @@ class Dokumen extends Model
 
         // Fallback to status-based detection
         $statusMap = [
-            'pending_approval_ibub' => 'Menunggu Approval dari Team Verifikasi',
+            'pending_approval_Team Verifikasi' => 'Menunggu Approval dari Team Verifikasi',
             'pending_approval_perpajakan' => 'Menunggu Approval dari Team Perpajakan',
             'pending_approval_akutansi' => 'Menunggu Approval dari Team Akutansi',
             'pending_approval_pembayaran' => 'Menunggu Approval dari Team Pembayaran',
@@ -722,7 +722,7 @@ class Dokumen extends Model
         // Check current_handler as last resort
         if ($this->current_handler) {
             $handlerMap = [
-                'ibuB' => 'Menunggu Approval dari Team Verifikasi',
+                'team_verifikasi' => 'Menunggu Approval dari Team Verifikasi',
                 'perpajakan' => 'Menunggu Approval dari Team Perpajakan',
                 'akutansi' => 'Menunggu Approval dari Team Akutansi',
                 'pembayaran' => 'Menunggu Approval dari Team Pembayaran',
@@ -756,8 +756,8 @@ class Dokumen extends Model
     {
         // Default: gunakan created_by
         $senderMap = [
-            'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Team Verifikasi',
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Team Verifikasi',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi',
             'pembayaran' => 'Team Pembayaran',
@@ -776,9 +776,9 @@ class Dokumen extends Model
 
         // Map role code ke display name
         $roleDisplayMap = [
-            'ibua' => 'Ibu Tarapul',
-            'ibu a' => 'Ibu Tarapul',
-            'ibub' => 'Team Verifikasi',
+            'operator' => 'Operator',
+            'Operator' => 'Operator',
+            'team_verifikasi' => 'Team Verifikasi',
             'ibu b' => 'Team Verifikasi',
             'ibu yuni' => 'Team Verifikasi',
             'verifikasi' => 'Team Verifikasi',
@@ -808,9 +808,9 @@ class Dokumen extends Model
         }
 
         // Tentukan pengirim berdasarkan alur dokumen dan currentRoleCode
-        // Urutan alur dokumen: IbuA -> IbuB (Verifikasi) -> Perpajakan -> Akutansi -> Pembayaran
+        // Urutan alur dokumen: Operator -> Team Verifikasi (Verifikasi) -> Perpajakan -> Akutansi -> Pembayaran
 
-        // Jika dokumen di inbox perpajakan, pengirimnya adalah team verifikasi (ibuB)
+        // Jika dokumen di inbox perpajakan, pengirimnya adalah team verifikasi (Team Verifikasi)
         if ($currentRoleCode === 'perpajakan') {
             return 'Team Verifikasi';
         }
@@ -825,9 +825,9 @@ class Dokumen extends Model
             return 'Team Akutansi';
         }
 
-        // Jika dokumen di inbox ibuB, pengirimnya adalah Ibu Tarapul
-        if ($currentRoleCode === 'ibub') {
-            return 'Ibu Tarapul';
+        // Jika dokumen di inbox Team Verifikasi, pengirimnya adalah Ibu Tarapul
+        if ($currentRoleCode === 'team_verifikasi') {
+            return 'Operator';
         }
 
         // Fallback: berdasarkan status dokumen
@@ -845,8 +845,8 @@ class Dokumen extends Model
             return 'Team Akutansi';
         }
 
-        if ($status === 'sent_to_ibub' || $status === 'pending_approval_ibub' || $status === 'menunggu_di_approve') {
-            return 'Ibu Tarapul';
+        if ($status === 'sent_to_Team Verifikasi' || $status === 'pending_approval_Team Verifikasi' || $status === 'menunggu_di_approve') {
+            return 'Operator';
         }
 
         // Final fallback: gunakan getSenderDisplayName() untuk creator
@@ -868,10 +868,10 @@ class Dokumen extends Model
     {
         // Normalize recipient role to match enum values
         $roleMap = [
-            'IbuB' => 'ibuB', // Lowercase for internal code
-            'ibuB' => 'ibuB',
-            'Ibu B' => 'ibuB',
-            'Ibu Yuni' => 'ibuB',
+            'team_verifikasi' => 'team_verifikasi', // Lowercase for internal code
+            'team_verifikasi' => 'team_verifikasi',
+            'Ibu B' => 'team_verifikasi',
+            'Ibu Yuni' => 'team_verifikasi',
             'Perpajakan' => 'perpajakan',
             'perpajakan' => 'perpajakan',
             'Akutansi' => 'akutansi',
@@ -888,7 +888,7 @@ class Dokumen extends Model
         // Update legacy tracking columns if they still exist (for backward compat in views/logic)
         // current_stage and last_action_status were KEPT in the cleanup
         $stageMap = [
-            'ibuB' => 'reviewer',
+            'team_verifikasi' => 'reviewer',
             'perpajakan' => 'tax',
             'akutansi' => 'accounting',
             'pembayaran' => 'payment',
@@ -900,7 +900,7 @@ class Dokumen extends Model
         }
 
         $actionStatusMap = [
-            'ibuB' => 'sent_to_reviewer',
+            'team_verifikasi' => 'sent_to_reviewer',
             'perpajakan' => 'sent_to_tax',
             'akutansi' => 'sent_to_accounting',
             'pembayaran' => 'sent_to_payment',
@@ -915,7 +915,7 @@ class Dokumen extends Model
         // Update current_handler and status based on recipient role
         // Map role code to proper handler format
         $handlerMap = [
-            'ibub' => 'ibuB',
+            'team_verifikasi' => 'team_verifikasi',
             'perpajakan' => 'perpajakan',
             'akutansi' => 'akutansi',
             'pembayaran' => 'pembayaran',
@@ -929,7 +929,7 @@ class Dokumen extends Model
         // Set status based on recipient role
         // Use status that exists in enum or pending_approval_* statuses
         $statusMap = [
-            'ibub' => 'waiting_reviewer_approval',
+            'team_verifikasi' => 'waiting_reviewer_approval',
             'perpajakan' => 'pending_approval_perpajakan', // Use existing enum value
             'akutansi' => 'pending_approval_akutansi', // Use existing enum value
             'pembayaran' => 'menunggu_di_approve', // Use generic waiting approval for pembayaran
@@ -984,7 +984,7 @@ class Dokumen extends Model
         // Update legacy tracking columns for backward compatibility if needed
         // (This logic matches what was previously in sendToInbox/approveInbox)
         $handlerMap = [
-            'ibub' => 'ibuB',
+            'team_verifikasi' => 'team_verifikasi',
             'perpajakan' => 'perpajakan',
             'akutansi' => 'akutansi',
             'pembayaran' => 'pembayaran',
@@ -996,7 +996,7 @@ class Dokumen extends Model
             // Map role code to status string expected by legacy views
             // Use status that exists in enum
             $statusMap = [
-                'ibub' => 'sedang diproses',
+                'team_verifikasi' => 'sedang diproses',
                 'perpajakan' => 'sent_to_perpajakan',
                 'akutansi' => 'sent_to_akutansi',
                 'pembayaran' => 'sent_to_pembayaran',
@@ -1042,7 +1042,7 @@ class Dokumen extends Model
 
         // Update legacy columns for backward compatibility / visibility
         $rejectionStatusMap = [
-            'ibub' => 'rejected_by_reviewer',
+            'team_verifikasi' => 'rejected_by_reviewer',
             'perpajakan' => 'rejected_by_tax',
             'akutansi' => 'rejected_by_accounting',
             'pembayaran' => 'rejected',
@@ -1052,7 +1052,7 @@ class Dokumen extends Model
 
         // Update current_stage
         $stageMap = [
-            'ibub' => 'reviewer',
+            'team_verifikasi' => 'reviewer',
             'perpajakan' => 'tax',
             'akutansi' => 'accounting',
             'pembayaran' => 'payment',
@@ -1062,14 +1062,14 @@ class Dokumen extends Model
         }
 
         // Return logic (Legacy)
-        // IbuB -> IbuA
-        // Perpajakan -> IbuB
-        // Akutansi -> IbuB
-        $originalSender = 'ibuA';
-        $returnStatus = 'returned_to_ibua';
+        // Team Verifikasi -> Operator
+        // Perpajakan -> Team Verifikasi
+        // Akutansi -> Team Verifikasi
+        $originalSender = 'operator';
+        $returnStatus = 'returned_to_Operator';
 
         if ($roleCode === 'perpajakan' || $roleCode === 'akutansi') {
-            $originalSender = 'ibuB';
+            $originalSender = 'team_verifikasi';
             $returnStatus = 'returned_to_department';
             $this->department_returned_at = now();
             $this->target_department = $roleCode;
@@ -1090,10 +1090,10 @@ class Dokumen extends Model
      * Helper untuk menampilkan status yang benar ke Ibu Tarapul
      * Memeriksa milestone historical sebelum menampilkan current status
      */
-    public function getIbuTarapulStatusDisplay()
+    public function getoperatorStatusDisplay()
     {
         // Prioritaskan milestone historical PERMANENT
-        if ($this->approved_by_ibub_at) {
+        if ($this->approved_by_Team Verifikasi_at) {
             return 'Document Approved'; // ✅ PERMANENT MILESTONE - TIDAK AKAN TERGANGGU REJECT
         }
 
@@ -1106,11 +1106,11 @@ class Dokumen extends Model
         }
 
         // Jika ada milestone, gunakan itu - jangan overwrite dengan current status!
-        if ($this->approved_by_ibub_at || $this->approved_by_perpajakan_at || $this->approved_by_akutansi_at) {
+        if ($this->approved_by_Team Verifikasi_at || $this->approved_by_perpajakan_at || $this->approved_by_akutansi_at) {
             // Cari status milestone yang sesuai
             $milestoneStatuses = [
                 'approved_data_sudah_terkirim' => 'Document Approved',
-                'approved_ibub' => 'Approved by Team Verifikasi',
+                'approved_Team Verifikasi' => 'Approved by Team Verifikasi',
                 'approved_perpajakan' => 'Approved by Perpajakan',
                 'approved_akutansi' => 'Approved by Akutansi',
                 'selesai' => 'Document Selesai'
@@ -1133,9 +1133,9 @@ class Dokumen extends Model
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_ibub' => 'Menunggu Persetujuan Team Verifikasi',
-            'sent_to_ibub' => 'Terkirim ke Team Verifikasi',
-            'proses_ibub' => 'Diproses Team Verifikasi',
+            'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+            'sent_to_Team Verifikasi' => 'Terkirim ke Team Verifikasi',
+            'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
             'menunggu_approved_pengiriman' => 'Menunggu Persetujuan Pengiriman',
@@ -1143,10 +1143,10 @@ class Dokumen extends Model
             'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
             'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
             'selesai' => 'Selesai',
-            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
-            'returned_from_ibub' => 'Dikembalikan dari Team Verifikasi',
+            'returned_from_Team Verifikasi' => 'Dikembalikan dari Team Verifikasi',
             'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
             'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
         ];
@@ -1161,7 +1161,7 @@ class Dokumen extends Model
     public function getCorrectStatusDisplay()
     {
         // Jika ada milestone historical, gunakan itu
-        if ($this->approved_by_ibub_at) {
+        if ($this->approved_by_Team Verifikasi_at) {
             return 'Document Approved'; // ✅ MILESTONE SELALU BENAR
         }
 
@@ -1181,9 +1181,9 @@ class Dokumen extends Model
             'approved_perpajakan' => 'Approved by Perpajakan',
             'approved_akutansi' => 'Approved by Akutansi',
             'selesai' => 'Selesai',
-            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Bagian',
-            'rejected_ibub' => 'Ditolak oleh Ibu Yuni',
+            'rejected_Team Verifikasi' => 'Ditolak oleh Ibu Yuni',
             'rejected_data_tidik_lengkap' => 'Ditolak (Data Tidak Lengkap)',
             'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
             'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
@@ -1202,7 +1202,7 @@ class Dokumen extends Model
     /**
      * Get status display based on user role (Role-Based Status Visibility)
      * 
-     * @param string|null $userRole User role (ibuA, ibuB, perpajakan, akutansi, pembayaran)
+     * @param string|null $userRole User role (Operator, Team Verifikasi, perpajakan, akutansi, pembayaran)
      * @return string Status label dalam bahasa Indonesia
      */
     public function getStatusForUserAttribute(?string $userRole = null): string
@@ -1215,13 +1215,13 @@ class Dokumen extends Model
             // Normalize role
             if ($userRole) {
                 $roleMap = [
-                    'IbuA' => 'ibuA',
-                    'Ibu A' => 'ibuA',
-                    'ibuA' => 'ibuA',
-                    'IbuB' => 'ibuB',
-                    'Ibu B' => 'ibuB',
-                    'ibuB' => 'ibuB',
-                    'Ibu Yuni' => 'ibuB',
+                    'operator' => 'operator',
+                    'Operator' => 'operator',
+                    'operator' => 'operator',
+                    'team_verifikasi' => 'team_verifikasi',
+                    'Ibu B' => 'team_verifikasi',
+                    'team_verifikasi' => 'team_verifikasi',
+                    'Ibu Yuni' => 'team_verifikasi',
                     'Perpajakan' => 'perpajakan',
                     'perpajakan' => 'perpajakan',
                     'Akutansi' => 'akutansi',
@@ -1235,25 +1235,25 @@ class Dokumen extends Model
 
         // Default to sender view if no role
         if (!$userRole) {
-            $userRole = 'ibuA';
+            $userRole = 'operator';
         }
 
-        // SENDER VIEW (Ibu Tarapul / ibuA)
-        if ($userRole === 'ibuA') {
+        // SENDER VIEW (Ibu Tarapul / Operator)
+        if ($userRole === 'operator') {
             // PRIORITY CHECK: If approved by reviewer (Ibu Yuni) - status becomes "Terkirim" for sender
             // This check must be done FIRST before any other status checks
             // to ensure documents approved by Ibu Yuni always show as "Terkirim" for Ibu Tarapul
             // Use new dokumen_statuses table instead of removed inbox_approval columns
-            $ibuBStatus = $this->getStatusForRole('ibub');
-            if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+            $Team VerifikasiStatus = $this->getStatusForRole('team_verifikasi');
+            if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                 // Document was approved by Ibu Yuni - ALWAYS show as "Terkirim" for Ibu Tarapul
                 // regardless of current status (even if sent to perpajakan/akutansi)
                 return 'Terkirim';
             }
 
-            // Check if document has been sent to IbuB (using roleData instead of removed sent_to_ibub_at)
-            $ibuBRoleData = $this->getDataForRole('ibub');
-            if ($ibuBRoleData && $ibuBRoleData->received_at) {
+            // Check if document has been sent to Team Verifikasi (using roleData instead of removed sent_to_Team Verifikasi_at)
+            $Team VerifikasiRoleData = $this->getDataForRole('team_verifikasi');
+            if ($Team VerifikasiRoleData && $Team VerifikasiRoleData->received_at) {
                 // Document has been sent to reviewer
                 // Check if there's a rejection from later stages
                 if ($this->last_action_status && strpos($this->last_action_status, 'rejected') !== false) {
@@ -1269,7 +1269,7 @@ class Dokumen extends Model
                 // If document is at reviewer stage waiting approval
                 if (
                     $this->status === 'waiting_reviewer_approval' ||
-                    ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)
+                    ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_PENDING)
                 ) {
                     return 'Menunggu Approval Reviewer';
                 }
@@ -1286,7 +1286,7 @@ class Dokumen extends Model
                     $this->status === 'pending_approval_pembayaran'
                 ) {
                     // Check again if approved (double check for safety)
-                    if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+                    if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                         return 'Terkirim';
                     }
                     return 'Sedang Proses';
@@ -1295,7 +1295,7 @@ class Dokumen extends Model
                 // If status is 'sedang diproses', check approval status
                 if ($this->status === 'sedang diproses') {
                     // Double check: if approved by Ibu Yuni, show as "Terkirim"
-                    if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+                    if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                         return 'Terkirim';
                     }
                     // Only show 'Menunggu Approval Reviewer' if NOT yet approved
@@ -1303,7 +1303,7 @@ class Dokumen extends Model
                 }
 
                 // If returned to sender
-                if ($this->status === 'returned_to_ibua') {
+                if ($this->status === 'returned_to_Operator') {
                     return 'Dikembalikan untuk Revisi';
                 }
 
@@ -1318,8 +1318,8 @@ class Dokumen extends Model
                 'draft' => 'Draft',
                 'waiting_reviewer_approval' => 'Menunggu Approval Reviewer',
                 'menunggu_di_approve' => 'Menunggu Approval',
-                'sent_to_ibub' => 'Terkirim',
-                'returned_to_ibua' => 'Dikembalikan untuk Revisi',
+                'sent_to_Team Verifikasi' => 'Terkirim',
+                'returned_to_Operator' => 'Dikembalikan untuk Revisi',
                 'selesai' => 'Selesai',
                 'completed' => 'Selesai',
             ];
@@ -1332,7 +1332,7 @@ class Dokumen extends Model
             // For 'sedang diproses', check if it's after reviewer approval
             if ($this->status === 'sedang diproses') {
                 // If approved by Ibu Yuni, show as "Terkirim"
-                if ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+                if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                     return 'Terkirim';
                 }
                 // Otherwise, it's still waiting for approval
@@ -1340,10 +1340,10 @@ class Dokumen extends Model
             }
 
             // Final fallback: check approval status one more time
-            if ($ibuBStatus) {
-                if ($ibuBStatus->status === DokumenStatus::STATUS_APPROVED) {
+            if ($Team VerifikasiStatus) {
+                if ($Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                     return 'Terkirim';
-                } elseif ($ibuBStatus->status === DokumenStatus::STATUS_PENDING) {
+                } elseif ($Team VerifikasiStatus->status === DokumenStatus::STATUS_PENDING) {
                     return 'Menunggu Approval Reviewer';
                 }
             }
@@ -1351,20 +1351,20 @@ class Dokumen extends Model
             return 'Sedang Proses';
         }
 
-        // REVIEWER VIEW (Ibu Yuni / ibuB)
-        if ($userRole === 'ibuB') {
+        // REVIEWER VIEW (Ibu Yuni / Team Verifikasi)
+        if ($userRole === 'team_verifikasi') {
             // Check if document is waiting for reviewer approval using new dokumen_statuses table
-            $ibuBStatus = $this->getStatusForRole('ibub');
+            $Team VerifikasiStatus = $this->getStatusForRole('team_verifikasi');
             if (
                 $this->status === 'waiting_reviewer_approval' ||
-                ($ibuBStatus && $ibuBStatus->status === DokumenStatus::STATUS_PENDING)
+                ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_PENDING)
             ) {
                 return 'Menunggu Approval';
             }
 
             // Check if there's rejection from perpajakan or akutansi (using new dokumen_statuses table)
             // Dokumen yang ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi
-            if ($this->current_handler === 'ibuB') {
+            if ($this->current_handler === 'team_verifikasi') {
                 $rejectedStatus = $this->roleStatuses()
                     ->whereIn('role_code', ['perpajakan', 'akutansi'])
                     ->where('status', DokumenStatus::STATUS_REJECTED)
@@ -1398,7 +1398,7 @@ class Dokumen extends Model
                 'sedang diproses' => 'Terkirim/Approved',
                 'sent_to_perpajakan' => 'Terkirim ke Tax',
                 'sent_to_akutansi' => 'Terkirim ke Accounting',
-                'returned_to_ibub' => 'Dikembalikan',
+                'returned_to_Team Verifikasi' => 'Dikembalikan',
             ];
 
             return $reviewerStatusMap[$this->status] ?? $this->getStatusDisplay();
@@ -1486,7 +1486,7 @@ class Dokumen extends Model
      * Set display status for a specific role.
      * This status is FINAL and won't be affected by other roles' actions.
      * 
-     * @param string $roleCode The role code (ibua, ibub, perpajakan, akutansi, pembayaran)
+     * @param string $roleCode The role code (Operator, Team Verifikasi, perpajakan, akutansi, pembayaran)
      * @param string $displayStatus The display status to set (see constants below)
      * @return DokumenRoleData|null
      * 
@@ -1507,12 +1507,12 @@ class Dokumen extends Model
     {
         $roleCode = strtolower($roleCode);
 
-        // Normalize verifikasi to ibub for database consistency
+        // Normalize verifikasi to Team Verifikasi for database consistency
         if ($roleCode === 'verifikasi') {
-            $roleCode = 'ibub';
+            $roleCode = 'team_verifikasi';
         }
         if ($roleCode === 'tarapul') {
-            $roleCode = 'ibua';
+            $roleCode = 'operator';
         }
 
         // Update or create role data with display_status
@@ -1609,13 +1609,13 @@ class Dokumen extends Model
 
         // Normalize role codes
         if ($receiverRoleCode === 'verifikasi') {
-            $receiverRoleCode = 'ibub';
+            $receiverRoleCode = 'team_verifikasi';
         }
 
         // Define sender -> receiver relationships and their final status
         $senderFinalStatus = [
-            'ibub' => ['sender' => 'ibua', 'status' => 'terkirim'],
-            'perpajakan' => ['sender' => 'ibub', 'status' => 'terkirim_perpajakan'],
+            'team_verifikasi' => ['sender' => 'operator', 'status' => 'terkirim'],
+            'perpajakan' => ['sender' => 'team_verifikasi', 'status' => 'terkirim_perpajakan'],
             'akutansi' => ['sender' => 'perpajakan', 'status' => 'terkirim_akutansi'],
             'pembayaran' => ['sender' => 'akutansi', 'status' => 'terkirim_pembayaran'],
         ];
@@ -1634,8 +1634,8 @@ class Dokumen extends Model
         // When a downstream role approves, all upstream roles that haven't been finalized
         // should also get their final status set (if they already sent the document)
 
-        // Define the workflow chain: IbuA -> IbuB -> Perpajakan -> Akutansi -> Pembayaran
-        $workflowChain = ['ibua', 'ibub', 'perpajakan', 'akutansi', 'pembayaran'];
+        // Define the workflow chain: Operator -> Team Verifikasi -> Perpajakan -> Akutansi -> Pembayaran
+        $workflowChain = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
         $receiverIndex = array_search($receiverRoleCode, $workflowChain);
 
         if ($receiverIndex !== false && $receiverIndex > 0) {
@@ -1649,10 +1649,10 @@ class Dokumen extends Model
                     $upstreamRoleData = $this->getDataForRole($upstreamRole);
                     $hasParticipated = $upstreamRoleData && $upstreamRoleData->received_at;
 
-                    // For ibua, check if they sent the document (document exists and was sent)
-                    if ($upstreamRole === 'ibua') {
-                        $ibuaHasSent = $this->roleStatuses()->where('role_code', 'ibub')->exists();
-                        $hasParticipated = $ibuaHasSent;
+                    // For Operator, check if they sent the document (document exists and was sent)
+                    if ($upstreamRole === 'operator') {
+                        $OperatorHasSent = $this->roleStatuses()->where('role_code', 'team_verifikasi')->exists();
+                        $hasParticipated = $OperatorHasSent;
                     }
 
                     if ($hasParticipated) {
@@ -1662,8 +1662,8 @@ class Dokumen extends Model
                         if ($nextRoleIndex < count($workflowChain)) {
                             $nextRole = $workflowChain[$nextRoleIndex];
                             $upstreamFinalStatus = match ($upstreamRole) {
-                                'ibua' => 'terkirim',
-                                'ibub' => 'terkirim_perpajakan',
+                                'operator' => 'terkirim',
+                                'team_verifikasi' => 'terkirim_perpajakan',
                                 'perpajakan' => 'terkirim_akutansi',
                                 'akutansi' => 'terkirim_pembayaran',
                                 default => 'terkirim'
@@ -1677,3 +1677,5 @@ class Dokumen extends Model
         }
     }
 }
+
+

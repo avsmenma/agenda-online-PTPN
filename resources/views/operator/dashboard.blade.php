@@ -12,7 +12,7 @@
       font-size: 28px;
     }
 
-    /* Statistics Cards - Inspired by IbuB's Design */
+    /* Statistics Cards - Inspired by Team Verifikasi's Design */
     .stat-card {
       background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
       border-radius: 16px;
@@ -461,7 +461,7 @@
           <div class="stat-content">
             <div class="stat-title">Total Dokumen</div>
             <div class="stat-value">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
-            <div class="stat-description">Semua dokumen yang dibuat</div>
+            <div class="stat-description">Semua dokumen yang dOperatort</div>
           </div>
         </div>
       </div>
@@ -562,11 +562,11 @@
                 </td>
                 <td>
                   @php
-                    $ibuBStatus = $dokumen->getStatusForRole('ibub');
-                    $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
-                    $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
+                    $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                    $isApproved = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
+                    $isPending = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'pending';
                   @endphp
-                  @if(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+                  @if(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
                     <span class="badge badge-pending">
                       <i class="fas fa-clock"></i>
                       Belum Dikirim
@@ -582,7 +582,7 @@
                       <i class="fas fa-check-circle"></i>
                       Terkirim, sedang menunggu approve
                     </span>
-                  @elseif($dokumen->status == 'sent_to_ibub' && $isApproved)
+                  @elseif($dokumen->status == 'sent_to_Team Verifikasi' && $isApproved)
                     <span class="badge badge-sent">
                       <i class="fas fa-check-circle"></i>
                       Terkirim
@@ -597,13 +597,13 @@
                 <td>
                   <div class="action-buttons">
                     @php
-                      // Check if document has been sent to IbuB
-                      $isSentToIbuB = ($dokumen->status ?? '') == 'sent_to_ibub'
-                        || (($dokumen->current_handler ?? 'ibuA') == 'ibuB' && ($dokumen->status ?? '') != 'returned_to_ibua');
+                      // Check if document has been sent to Team Verifikasi
+                      $isSentToTeam Verifikasi = ($dokumen->status ?? '') == 'sent_to_Team Verifikasi'
+                        || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
 
                       // Check if document has been approved by Team Verifikasi and sent to other roles
-                      $ibuBStatus = $dokumen->getStatusForRole('ibub');
-                      $isApprovedByIbuB = $ibuBStatus && $ibuBStatus->status === 'approved';
+                      $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                      $isApprovedByTeam Verifikasi = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
 
                       // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
                       $isSentToOtherRoles = in_array($dokumen->status ?? '', [
@@ -615,18 +615,18 @@
                         'pending_approval_pembayaran'
                       ]);
 
-                      // Document is considered "sent" if sent to IbuB OR approved by IbuB and sent to other roles
-                      $isSent = $isSentToIbuB || ($isApprovedByIbuB && $isSentToOtherRoles);
+                      // Document is considered "sent" if sent to Team Verifikasi OR approved by Team Verifikasi and sent to other roles
+                      $isSent = $isSentToTeam Verifikasi || ($isApprovedByTeam Verifikasi && $isSentToOtherRoles);
 
-                      // Can send only if document is draft/returned and still with IbuA
-                      $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua', 'sedang diproses'])
-                        && ($dokumen->current_handler ?? 'ibuA') == 'ibuA'
-                        && ($dokumen->created_by ?? 'ibuA') == 'ibuA'
+                      // Can send only if document is draft/returned and still with Operator
+                      $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_Operator', 'sedang diproses'])
+                        && ($dokumen->current_handler ?? 'operator') == 'operator'
+                        && ($dokumen->created_by ?? 'operator') == 'operator'
                         && !$isSent;
 
                       // Can edit only if document is not sent and can be edited
-                      $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_ibua'])
-                        && ($dokumen->current_handler ?? 'ibuA') == 'ibuA';
+                      $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_Operator'])
+                        && ($dokumen->current_handler ?? 'operator') == 'operator';
                     @endphp
                     @if($canEdit)
                       <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
@@ -635,7 +635,7 @@
                       </a>
                     @endif
                     @if($canSend)
-                      <button type="button" class="btn-action btn-send" onclick="sendToIbuB({{ $dokumen->id }})"
+                      <button type="button" class="btn-action btn-send" onclick="sendToTeam Verifikasi({{ $dokumen->id }})"
                         title="Kirim ke Team Verifikasi">
                         <i class="fa-solid fa-paper-plane"></i>
                         Kirim
@@ -665,7 +665,7 @@
   </div>
 
   <script>
-    function sendToIbuB(dokumenId) {
+    function sendToTeam Verifikasi(dokumenId) {
       if (!confirm('Apakah Anda yakin ingin mengirim dokumen ini ke Team Verifikasi?')) {
         return;
       }
@@ -706,3 +706,4 @@
   </script>
 
 @endsection
+

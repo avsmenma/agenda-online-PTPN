@@ -2767,7 +2767,7 @@
                   @elseif($dokumen->status == 'sent_to_akutansi' && $dokumen->current_handler != 'akutansi')
                     {{-- Dokumen yang baru dikirim ke akutansi dan belum diproses --}}
                     <span class="badge-status badge-belum">⏳ Belum Diproses</span>
-                  @elseif(in_array($dokumen->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']))
+                  @elseif(in_array($dokumen->status, ['returned_to_Operator', 'returned_to_department', 'dikembalikan']))
                     <span class="badge-status badge-dikembalikan">← Dikembalikan</span>
                   @elseif($dokumen->status == 'completed')
                     <span class="badge-status badge-selesai">✓ Selesai - Sudah Dibayar</span>
@@ -2931,7 +2931,7 @@
     </div>
   </div>
 
-  <!-- Modal for Return to IbuB -->
+  <!-- Modal for Return to Team Verifikasi -->
   <div class="modal fade" id="returnModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -5564,3 +5564,4 @@
   </script>
 
 @endsection
+

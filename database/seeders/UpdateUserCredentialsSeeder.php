@@ -30,20 +30,20 @@ final class UpdateUserCredentialsSeeder extends Seeder
     {
         $users = [
             [
-                'old_username' => 'ibua',
+                'old_username' => 'operator',
                 'new_username' => 'ibutara',
                 'new_password' => 'ibutara825',
-                'name' => 'Ibu Tarapul',
+                'name' => 'Operator',
                 'email' => 'ibutara@ptpn.com',
-                'role' => 'IbuA',
+                'role' => 'operator',
             ],
             [
-                'old_username' => 'ibub',
-                'new_username' => 'teamverifikasi',
+                'old_username' => 'team_verifikasi',
+                'new_username' => 'team_verifikasi',
                 'new_password' => 'teamverifikasi825',
                 'name' => 'Team Verifikasi',
                 'email' => 'teamverifikasi@ptpn.com',
-                'role' => 'IbuB',
+                'role' => 'team_verifikasi',
             ],
             [
                 'old_username' => 'perpajakan',
@@ -113,4 +113,5 @@ final class UpdateUserCredentialsSeeder extends Seeder
         $this->command->info("\n✓ User credentials update completed!");
     }
 }
+
 

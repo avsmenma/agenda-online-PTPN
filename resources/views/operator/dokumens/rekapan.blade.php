@@ -144,7 +144,7 @@
     background-color: #fffef8;
   }
 
-  /* Bagian Statistics - Style konsisten dengan rekapan-ibuB dan rekapan-perpajakan */
+  /* Bagian Statistics - Style konsisten dengan rekapan-Team Verifikasi dan rekapan-perpajakan */
   .bagian-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -643,7 +643,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-title">Dokumen Aktif</div>
-          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_ibub'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
+          <div class="stat-value">{{ number_format($statistics['by_status']['sent_to_Team Verifikasi'] + $statistics['by_status']['sedang diproses'], 0, ',', '.') }}</div>
           <div class="stat-description">Sedang diproses</div>
         </div>
       </div>
@@ -742,13 +742,13 @@
             </td>
             <td>
               @php
-                // Gunakan role-based status display untuk Ibu Tarapul (ibuA)
-                $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('ibuA');
+                // Gunakan role-based status display untuk Ibu Tarapul (Operator)
+                $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('operator');
                 // Check approval status using new dokumen_statuses table
-                $ibuBStatus = $dokumen->getStatusForRole('ibub');
-                $isRejected = $ibuBStatus && $ibuBStatus->status === 'rejected';
-                $isApproved = $ibuBStatus && $ibuBStatus->status === 'approved';
-                $isPending = $ibuBStatus && $ibuBStatus->status === 'pending';
+                $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                $isRejected = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'rejected';
+                $isApproved = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
+                $isPending = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'pending';
               @endphp
               
               @if($isRejected)
@@ -756,7 +756,7 @@
                 <span class="badge badge-returned">
                   <i class="fas fa-times-circle"></i> Dokumen Ditolak
                 </span>
-              @elseif(in_array($dokumen->status, ['draft', 'returned_to_ibua']))
+              @elseif(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
                 <span class="badge badge-draft">
                   <i class="fas fa-file-lines"></i> Belum Dikirim
                 </span>
@@ -775,7 +775,7 @@
                 <span class="badge badge-processing">
                   <i class="fas fa-spinner"></i> {{ $statusLabel }}
                 </span>
-              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_ibua')
+              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_Operator')
                 <span class="badge badge-returned">
                   <i class="fas fa-undo"></i> Dikembalikan untuk Revisi
                 </span>
@@ -808,3 +808,4 @@
 </div>
 
 @endsection
+

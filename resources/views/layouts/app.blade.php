@@ -1406,11 +1406,11 @@
           request()->routeIs('perpajakan.*') ||
           request()->is('*dokumensPerpajakan*') ||
           request()->is('*rekapan-perpajakan*');
-      } elseif ($module === 'ibub') {
+      } elseif ($module === 'team_verifikasi') {
         $isSubmenuPageForHeader = request()->routeIs('dokumensB.*') ||
-          request()->routeIs('ibub.*') ||
+          request()->routeIs('team_verifikasi.*') ||
           request()->is('*dokumensB*') ||
-          request()->is('*rekapan-ibuB*');
+          request()->is('*rekapan-Team Verifikasi*');
       } else {
         $isSubmenuPageForHeader = request()->is('*dokumens*') ||
           request()->is('*rekapan*') ||
@@ -1471,40 +1471,40 @@
     @php
       // Normalize module to lowercase untuk konsistensi
       // Note: $isOwner is already defined at the top of the body section
-      $module = strtolower($module ?? 'ibua');
+      $module = strtolower($module ?? 'operator');
 
       $dashboardUrl = match ($module) {
-        'ibua', 'ibua' => '/dashboard',
-        'ibub', 'ibub' => '/dashboardB',
+        'operator', 'operator' => '/dashboard',
+        'team_verifikasi', 'team_verifikasi' => '/dashboardB',
         'pembayaran' => '/dashboardPembayaran',
         'akutansi' => '/dashboardAkutansi',
         'perpajakan' => '/dashboardPerpajakan',
         default => '/dashboard'
       };
       $dokumenUrl = match ($module) {
-        'ibua', 'ibua' => '/dokumens',
-        'ibub', 'ibub' => '/dokumensB',
+        'operator', 'operator' => '/dokumens',
+        'team_verifikasi', 'team_verifikasi' => '/dokumensB',
         'pembayaran' => '/dokumensPembayaran',
         'akutansi' => '/dokumensAkutansi',
         'perpajakan' => '/dokumensPerpajakan',
         default => '/dokumens'
       };
       $pengembalianUrl = match ($module) {
-        'ibub', 'ibub' => '/pengembalian-dokumensB',
+        'team_verifikasi', 'team_verifikasi' => '/pengembalian-dokumensB',
         'pembayaran' => '/rekapan-keterlambatan',
         'akutansi' => '/pengembalian-dokumensAkutansi',
         'perpajakan' => '/pengembalian-dokumensPerpajakan',
         default => '/pengembalian-dokumens'
       };
       $tambahDokumenUrl = match ($module) {
-        'ibua', 'ibua' => '/dokumens/create',
+        'operator', 'operator' => '/dokumens/create',
         default => null
       };
       $editDokumenUrl = match ($module) {
         'pembayaran' => '/dokumensPembayaran', // This will be handled by individual edit routes
         'akutansi' => '/dokumensAkutansi',
         'perpajakan' => '/dokumensPerpajakan',
-        'ibub', 'ibub' => '/dokumensB',
+        'team_verifikasi', 'team_verifikasi' => '/dokumensB',
         default => null
       };
     @endphp
@@ -1567,9 +1567,9 @@
           </a>
         @endif
 
-        <!-- Inbox Menu - Untuk IbuB, Perpajakan, Akutansi -->
+        <!-- Inbox Menu - Untuk Team Verifikasi, Perpajakan, Akutansi -->
         @php
-          $currentUserRole = 'IbuA'; // Default
+          $currentUserRole = 'operator'; // Default
           if (auth()->check()) {
             $user = auth()->user();
             // Prioritize role field first (most accurate)
@@ -1578,13 +1578,13 @@
             } elseif (isset($user->name)) {
               // Fallback to name mapping if role is not set
               $nameToRole = [
-                'Ibu A' => 'IbuA',
-                'IbuA' => 'IbuA',
-                'Ibu Tarapul' => 'IbuA',
-                'IbuB' => 'IbuB',
-                'Ibu B' => 'IbuB',
-                'Ibu Yuni' => 'IbuB',
-                'Team Verifikasi' => 'IbuB',
+                'Operator' => 'operator',
+                'operator' => 'operator',
+                'Operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
+                'Ibu Yuni' => 'team_verifikasi',
+                'Team Verifikasi' => 'team_verifikasi',
                 'Perpajakan' => 'Perpajakan',
                 'Team Perpajakan' => 'Perpajakan',
                 'Akutansi' => 'Akutansi',
@@ -1592,29 +1592,29 @@
                 'Pembayaran' => 'Pembayaran',
                 'Team Pembayaran' => 'Pembayaran'
               ];
-              $currentUserRole = $nameToRole[$user->name] ?? 'IbuA';
+              $currentUserRole = $nameToRole[$user->name] ?? 'operator';
             }
           }
 
           // Normalize role to check (case-insensitive comparison)
           $currentUserRoleLower = strtolower($currentUserRole);
           // Include all possible variations of role names after lowercase
-          $ibuARoles = ['ibua', 'ibu a', 'ibu tarapul', 'ibutarapul'];
-          $inboxRoles = array_merge($ibuARoles, ['ibub', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
+          $OperatorRoles = ['operator', 'Operator', 'Operator', 'operator'];
+          $inboxRoles = array_merge($OperatorRoles, ['team_verifikasi', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
           $showInbox = in_array($currentUserRoleLower, $inboxRoles);
 
           // Map role to inbox query format
-          $inboxRoleForQuery = 'IbuB';
-          if (in_array($currentUserRoleLower, $ibuARoles)) {
-            $inboxRoleForQuery = 'IbuA';
+          $inboxRoleForQuery = 'team_verifikasi';
+          if (in_array($currentUserRoleLower, $OperatorRoles)) {
+            $inboxRoleForQuery = 'operator';
           } elseif (in_array($currentUserRoleLower, ['perpajakan', 'team perpajakan'])) {
             $inboxRoleForQuery = 'Perpajakan';
           } elseif (in_array($currentUserRoleLower, ['akutansi', 'team akutansi'])) {
             $inboxRoleForQuery = 'Akutansi';
           } elseif (in_array($currentUserRoleLower, ['pembayaran', 'team pembayaran'])) {
             $inboxRoleForQuery = 'Pembayaran';
-          } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'ibub', 'ibu b'])) {
-            $inboxRoleForQuery = 'IbuB'; // Verifikasi uses IbuB inbox
+          } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'team_verifikasi', 'ibu b'])) {
+            $inboxRoleForQuery = 'team_verifikasi'; // Verifikasi uses Team Verifikasi inbox
           }
         @endphp
 
@@ -1655,7 +1655,7 @@
                 'pembayaran' => route('documents.pembayaran.index'),
                 'akutansi' => url($dokumenUrl),
                 'perpajakan' => url($dokumenUrl),
-                'ibub' => url($dokumenUrl),
+                'team_verifikasi' => url($dokumenUrl),
                 default => url($dokumenUrl)
               };
 
@@ -1673,8 +1673,8 @@
                 request()->routeIs('akutansi.*'),
                 'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
                 request()->routeIs('perpajakan.*'),
-                'ibub' => request()->routeIs('dokumensB.*') ||
-                request()->routeIs('ibub.*'),
+                'team_verifikasi' => request()->routeIs('dokumensB.*') ||
+                request()->routeIs('team_verifikasi.*'),
                 default => false
               };
             @endphp
@@ -1688,7 +1688,7 @@
                 Akutansi
               @elseif($module === 'perpajakan')
                 Perpajakan
-              @elseif($module === 'ibub')
+              @elseif($module === 'team_verifikasi')
                 Dokumen
               @else
                 Dokumen
@@ -1710,8 +1710,8 @@
         @else
           @php
             $trackingUrl = match ($module) {
-              'ibua', 'ibua' => '/tracking-dokumen',
-              'ibub', 'ibub' => '/tracking-dokumen',
+              'operator', 'operator' => '/tracking-dokumen',
+              'team_verifikasi', 'team_verifikasi' => '/tracking-dokumen',
               'pembayaran' => '/tracking-dokumen',
               'akutansi' => '/tracking-dokumen',
               'perpajakan' => '/tracking-dokumen',
@@ -1757,12 +1757,12 @@
         @php
           $currentRole = strtolower(request()->route('roleCode') ?? '');
         @endphp
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}"
-          class="{{ $currentRole === 'ibua' ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'operator') }}"
+          class="{{ $currentRole === 'operator' ? 'active' : '' }}">
           <i class="fa-solid fa-user me-2"></i> Ibu Tara
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}"
-          class="{{ $currentRole === 'ibub' ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+          class="{{ $currentRole === 'team_verifikasi' ? 'active' : '' }}">
           <i class="fa-solid fa-users me-2"></i> Team Verifikasi
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
@@ -1806,11 +1806,11 @@
         request()->routeIs('perpajakan.*') ||
         request()->is('*dokumensPerpajakan*') ||
         request()->is('*rekapan-perpajakan*');
-    } elseif ($module === 'ibub') {
+    } elseif ($module === 'team_verifikasi') {
       $isSubmenuPage = request()->routeIs('dokumensB.*') ||
-        request()->routeIs('ibub.*') ||
+        request()->routeIs('team_verifikasi.*') ||
         request()->is('*dokumensB*') ||
-        request()->is('*rekapan-ibuB*');
+        request()->is('*rekapan-Team Verifikasi*');
     } elseif ($isBagianUser) {
       $isSubmenuPage = request()->is('*bagian/documents*') ||
         request()->is('*bagian/tracking*');
@@ -1829,7 +1829,7 @@
       $submenuTitle = 'MENU AKUTANSI';
     } elseif ($module === 'perpajakan') {
       $submenuTitle = 'MENU PERPAJAKAN';
-    } elseif ($module === 'ibub') {
+    } elseif ($module === 'team_verifikasi') {
       $submenuTitle = 'MENU DOKUMEN';
     } elseif ($isBagianUser) {
       $submenuTitle = 'MENU DOKUMEN';
@@ -1906,7 +1906,7 @@
           class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
-      @elseif($module === 'ibub')
+      @elseif($module === 'team_verifikasi')
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
           <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
@@ -1924,12 +1924,12 @@
         <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuB') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/ibuB*') ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/Team Verifikasi*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($isBagianUser)
-        {{-- Bagian submenu (same pattern as IbuA) --}}
+        {{-- Bagian submenu (same pattern as Operator) --}}
         @php
           $isDaftarActive = request()->routeIs('bagian.documents.index') || request()->is('*bagian/documents');
           $isTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
@@ -1946,7 +1946,7 @@
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
         </a>
       @else
-        <!-- IbuA -->
+        <!-- Operator -->
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}">
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
         </a>
@@ -1961,8 +1961,8 @@
         <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'ibuA') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/ibuA*') ? 'active' : '' }}">
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'operator') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/Operator*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @endif
@@ -2148,28 +2148,28 @@
     });
   </script>
 
-  <!-- Auto-Refresh System for IbuB -->
+  <!-- Auto-Refresh System for Team Verifikasi -->
   <script>
     (function() {
       'use strict';
 
       // Get user role from authenticated user
-      let currentUserRole = 'IbuA'; // Default
+      let currentUserRole = 'operator'; // Default
       @php
-        $tempUserRole = 'IbuA';
+        $tempUserRole = 'operator';
         if (auth()->check()) {
           $user = auth()->user();
           if (isset($user->name)) {
             $nameToRole = [
-              'Ibu A' => 'ibuA',
-              'IbuA' => 'ibuA',
-              'IbuB' => 'ibuB',
-              'Ibu B' => 'ibuB',
+              'Operator' => 'operator',
+              'operator' => 'operator',
+              'team_verifikasi' => 'team_verifikasi',
+              'Ibu B' => 'team_verifikasi',
               'Perpajakan' => 'perpajakan',
               'Akutansi' => 'akutansi',
               'Pembayaran' => 'pembayaran'
             ];
-            $tempUserRole = $nameToRole[$user->name] ?? 'IbuA';
+            $tempUserRole = $nameToRole[$user->name] ?? 'operator';
           } elseif (isset($user->role)) {
             $tempUserRole = $user->role;
           }
@@ -2177,16 +2177,16 @@
       @endphp
       currentUserRole = '{{ $tempUserRole }}';
 
-      const isIbuB = currentUserRole.toLowerCase() === 'ibub';
-      const isIbuA = currentUserRole.toLowerCase() === 'ibua';
+      const isTeam Verifikasi = currentUserRole.toLowerCase() === 'team_verifikasi';
+      const isOperator = currentUserRole.toLowerCase() === 'operator';
       const isPerpajakan = currentUserRole.toLowerCase() === 'perpajakan';
       const isAkutansi = currentUserRole.toLowerCase() === 'akutansi';
       const isPembayaran = currentUserRole.toLowerCase() === 'pembayaran';
 
       console.log('Auto-refresh system setup:', {
         userRole: currentUserRole,
-        isIbuB: isIbuB,
-        isIbuA: isIbuA,
+        isTeam Verifikasi: isTeam Verifikasi,
+        isOperator: isoperator,
         isPerpajakan: isPerpajakan,
         isAkutansi: isAkutansi,
         isPembayaran: isPembayaran,
@@ -2198,13 +2198,13 @@
         console.log('🟢 AKUTANSI MODULE DETECTED - Notifications should work');
       }
 
-      // Enable for IbuB, Perpajakan, Akutansi, Pembayaran (any page) - Excluding IbuA only
-      const shouldEnableAutoRefresh = isIbuB || isPerpajakan || isAkutansi || isPembayaran;
+      // Enable for Team Verifikasi, Perpajakan, Akutansi, Pembayaran (any page) - Excluding Operator only
+      const shouldEnableAutoRefresh = isTeam Verifikasi || isPerpajakan || isAkutansi || isPembayaran;
 
       console.log('Should enable auto-refresh:', shouldEnableAutoRefresh);
 
       if (!shouldEnableAutoRefresh) {
-        console.log('Auto-refresh disabled: User is IbuA or role not recognized');
+        console.log('Auto-refresh disabled: User is Operator or role not recognized');
         return;
       }
 
@@ -2243,9 +2243,9 @@
 
         const isTyping = (Date.now() - userActiveState.lastActivity) < 2000; // Reduced from 3s to 2s
 
-        // For IbuA, we want to be less restrictive to show important notifications
-        const isIbuA = currentUserRole.toLowerCase() === 'ibua';
-        if (isIbuA) {
+        // For operator, we want to be less restrictive to show important notifications
+        const isOperator = currentUserRole.toLowerCase() === 'operator';
+        if (isOperator) {
           // Only skip if user is actively typing in an input field
           return isInputting;
         }
@@ -2272,12 +2272,12 @@
       // Initialize known documents from current page
       function initializeKnownDocuments() {
         // For returned documents, we want to start fresh to ensure we show notifications
-        const isIbuA = currentUserRole.toLowerCase() === 'ibua';
+        const isOperator = currentUserRole.toLowerCase() === 'operator';
         const isPerpajakan = currentUserRole.toLowerCase() === 'perpajakan';
         const isAkutansi = currentUserRole.toLowerCase() === 'akutansi';
         
-        if (isIbuA || isPerpajakan || isAkutansi) {
-          // Don't pre-populate known document IDs for IbuA, Perpajakan, and Akutansi 
+        if (isOperator || isPerpajakan || isAkutansi) {
+          // Don't pre-populate known document IDs for operator, Perpajakan, and Akutansi 
           // to ensure notifications work for new documents
           knownDocumentIds.clear();
           console.log('Known document IDs cleared for', currentUserRole, 'notifications');
@@ -2512,7 +2512,7 @@
                   <strong>No. Agenda:</strong> ${doc.nomor_agenda || '-'}<br>
                   <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
                   <strong>Nilai:</strong> ${formattedRupiah}<br>
-                  <small style="opacity: 0.8;">Dokumen baru dari IbuA - ${doc.sent_at}</small>
+                  <small style="opacity: 0.8;">Dokumen baru dari Operator - ${doc.sent_at}</small>
                 </div>
                 <div class="notification-footer">
                   <button class="btn-refresh" onclick="refreshPage()">
@@ -2596,14 +2596,14 @@
           window.location.href = `/dokumensAkutansi#doc-${docId}`;
         } else if (isPerpajakan) {
           window.location.href = `/dokumensPerpajakan#doc-${docId}`;
-        } else if (isIbuB) {
+        } else if (isTeam Verifikasi) {
           window.location.href = `/dokumensB/${docId}/edit`;
         } else {
           window.location.href = `/dokumens/${docId}/edit`;
         }
       };
 
-      // View returned document for IbuA
+      // View returned document for Operator
       window.viewReturnedDocument = function(docId) {
         // Redirect to pengembalian dokumen page with the specific document
         window.location.href = `/pengembalian-dokumens#doc-${docId}`;
@@ -2619,7 +2619,7 @@
         try {
           // Choose endpoint based on current module
           let endpoint;
-          if (isIbuB) {
+          if (isTeam Verifikasi) {
             endpoint = `/dokumensB/check-updates?last_checked=${Math.floor(lastChecked / 1000)}`;
           } else if (isPerpajakan) {
             endpoint = `/perpajakan/check-updates?last_checked=${Math.floor(lastChecked / 1000)}`;
@@ -2632,7 +2632,7 @@
           }
 
           console.log('Checking updates from:', endpoint);
-          console.log('Current module check:', { isIbuB, isIbuA, isPerpajakan, isAkutansi, isPembayaran });
+          console.log('Current module check:', { isTeam Verifikasi, isoperator, isPerpajakan, isAkutansi, isPembayaran });
 
           if (isAkutansi) {
             console.log('🔍 CHECKING FOR AKUTANSI UPDATES from:', endpoint);
@@ -2656,7 +2656,7 @@
 
           // Process data based on module
           let documents;
-          if (isIbuB) {
+          if (isTeam Verifikasi) {
             documents = data.new_documents;
           } else if (isPerpajakan) {
             documents = data.new_documents;
@@ -2677,13 +2677,13 @@
               console.log('New documents found:', newDocuments);
               console.log('🚨 NOTIFICATION TRIGGERED - Type will be:', isAkutansi ? 'akutansi' : (isPerpajakan ? 'perpajakan' : 'other'));
 
-              // Separate new documents from approved documents for IbuB
+              // Separate new documents from approved documents for Team Verifikasi
               let documentsToNotify = newDocuments;
               let approvedDocuments = [];
               let newDocumentsOnly = [];
               
-              if (isIbuB) {
-                newDocumentsOnly = newDocuments.filter(doc => doc.is_new_from_ibua === true);
+              if (isTeam Verifikasi) {
+                newDocumentsOnly = newDocuments.filter(doc => doc.is_new_from_Operator === true);
                 approvedDocuments = newDocuments.filter(doc => doc.approved_by);
                 
                 // Only show notification for approved documents (not as "new document")
@@ -2691,7 +2691,7 @@
                   showNotification(approvedDocuments, 'approved');
                 }
                 
-                // Show notification for new documents from IbuA
+                // Show notification for new documents from Operator
                 if (newDocumentsOnly.length > 0) {
                   showNotification(newDocumentsOnly, 'new');
                 }
@@ -2703,7 +2703,7 @@
               newDocuments.forEach(doc => knownDocumentIds.add(doc.id));
 
               // Show notifications for other roles
-              if (!isIbuB && documentsToNotify.length > 0) {
+              if (!isTeam Verifikasi && documentsToNotify.length > 0) {
                 let notificationType;
                 if (isPerpajakan) {
                   notificationType = 'perpajakan';
@@ -2719,8 +2719,8 @@
               }
 
               // Update badge counter based on type (only for new documents, not approved)
-              if (isIbuB) {
-                // Only count new documents from IbuA, not approved documents
+              if (isTeam Verifikasi) {
+                // Only count new documents from operator, not approved documents
                 notificationCount += newDocumentsOnly.length;
                 updateNotificationBadge(notificationCount, 'new');
               } else if (isPerpajakan) {
@@ -2758,8 +2758,8 @@
 
       // Universal Approval System - Check for waiting documents
       async function checkUniversalNotifications() {
-        // Only check for non-IbuA users
-        if (currentUserRole.toLowerCase() === 'ibua') {
+        // Only check for non-Operator users
+        if (currentUserRole.toLowerCase() === 'operator') {
           return;
         }
 
@@ -2802,13 +2802,13 @@
         // Set up periodic polling
         pollingTimer = setInterval(() => {
           const shouldSkip = isUserActive();
-          const isIbuA = currentUserRole.toLowerCase() === 'ibua';
+          const isOperator = currentUserRole.toLowerCase() === 'operator';
 
-          // Check universal notifications for all non-IbuA users
+          // Check universal notifications for all non-Operator users
           checkUniversalNotifications();
 
-          // For IbuA and Perpajakan, be less aggressive about skipping - only skip if actively typing
-          if ((isIbuA || isPerpajakan || isAkutansi) && shouldSkip) {
+          // For Operator and Perpajakan, be less aggressive about skipping - only skip if actively typing
+          if ((isOperator || isPerpajakan || isAkutansi) && shouldSkip) {
             const activeElement = document.activeElement;
             const isActuallyTyping = activeElement && (
               activeElement.tagName === 'INPUT' ||
@@ -2816,14 +2816,14 @@
               activeElement.tagName === 'SELECT'
             );
 
-            const moduleName = isPerpajakan ? 'Perpajakan' : (isAkutansi ? 'Akutansi' : 'IbuA');
+            const moduleName = isPerpajakan ? 'Perpajakan' : (isAkutansi ? 'Akutansi' : 'operator');
             if (isActuallyTyping) {
               console.log(`${moduleName}: Skipping update check - user is typing`);
               return;
             }
           }
 
-          if (shouldSkip && !isIbuA && !isPerpajakan && !isAkutansi) {
+          if (shouldSkip && !isOperator && !isPerpajakan && !isAkutansi) {
             console.log('Skipping update check - user is active');
           } else {
             checkForUpdates();
@@ -2835,10 +2835,10 @@
       startPolling();
 
       const moduleNames = [];
-      if (isIbuB) moduleNames.push('IbuB');
+      if (isTeam Verifikasi) moduleNames.push('team_verifikasi');
       if (isPerpajakan) moduleNames.push('Perpajakan');
       if (isAkutansi) moduleNames.push('Akutansi');
-      if (isIbuA) moduleNames.push('IbuA');
+      if (isOperator) moduleNames.push('operator');
       if (isPembayaran) moduleNames.push('Pembayaran');
 
       console.log('✅ Auto-refresh system initialized for: ' + moduleNames.join(', '));
@@ -3012,13 +3012,13 @@
 (function() {
     'use strict';
 
-    // Check if user has inbox access (IbuB, Perpajakan, Akutansi) or is IbuA
+    // Check if user has inbox access (Team Verifikasi, Perpajakan, Akutansi) or is Operator
     const userRole = '{{ auth()->user()->role ?? "" }}';
     const userRoleLower = userRole.toLowerCase();
     
     // Case-insensitive check for inbox roles
-    const inboxRoles = ['ibub', 'verifikasi', 'perpajakan', 'akutansi'];
-    const isIbuA = ['ibua', 'ibu a', 'ibu tarapul'].includes(userRoleLower);
+    const inboxRoles = ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi'];
+    const isOperator = ['operator', 'Operator', 'Operator'].includes(userRoleLower);
     const hasInboxAccess = inboxRoles.includes(userRoleLower);
 
     // Debug logging
@@ -3026,33 +3026,33 @@
         userRole: userRole,
         userRoleLower: userRoleLower,
         hasInboxAccess: hasInboxAccess,
-        isIbuA: isIbuA
+        isOperator: isOperator
     });
 
-    // Check if user is IbuB
-    const isIbuB = ['ibub', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
+    // Check if user is Team Verifikasi
+    const isTeam Verifikasi = ['team_verifikasi', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
 
     // Debug logging
     console.log('Notification System Init:', {
         userRole: userRole,
         userRoleLower: userRoleLower,
         hasInboxAccess: hasInboxAccess,
-        isIbuA: isIbuA,
-        isIbuB: isIbuB
+        isOperator: isoperator,
+        isTeam Verifikasi: isTeam Verifikasi
     });
 
-    // Initialize IbuA rejected documents notification if applicable
-    if (isIbuA) {
-        console.log('Initializing IbuA rejected notifications');
-        initIbuARejectedNotifications();
-        // IbuA does not have inbox access, so exit here
+    // Initialize Operator rejected documents notification if applicable
+    if (isOperator) {
+        console.log('Initializing Operator rejected notifications');
+        initOperatorRejectedNotifications();
+        // Operator does not have inbox access, so exit here
         return;
     }
 
-    // Initialize IbuB rejected documents notification if applicable
-    if (isIbuB) {
-        console.log('Initializing IbuB rejected notifications');
-        initIbuBRejectedNotifications();
+    // Initialize Team Verifikasi rejected documents notification if applicable
+    if (isTeam Verifikasi) {
+        console.log('Initializing Team Verifikasi rejected notifications');
+        initTeam VerifikasiRejectedNotifications();
     }
 
     // Only continue with inbox notifications if user has inbox access
@@ -3073,16 +3073,16 @@
 
     // Map user role to inbox role format (case-insensitive)
     const roleMap = {
-        'ibub': 'IbuB',
-        'ibu b': 'IbuB',
-        'ibu yuni': 'IbuB',
-        'team verifikasi': 'IbuB',
+        'team_verifikasi': 'team_verifikasi',
+        'ibu b': 'team_verifikasi',
+        'ibu yuni': 'team_verifikasi',
+        'team verifikasi': 'team_verifikasi',
         'perpajakan': 'Perpajakan',
         'akutansi': 'Akutansi'
     };
     const inboxRole = roleMap[userRoleLower] || (userRoleLower === 'perpajakan' ? 'Perpajakan' : 
                                                     userRoleLower === 'akutansi' ? 'Akutansi' : 
-                                                    userRoleLower === 'ibub' ? 'IbuB' : userRole);
+                                                    userRoleLower === 'team_verifikasi' ? 'team_verifikasi' : userRole);
     
     console.log('Mapped inbox role:', inboxRole);
 
@@ -3098,7 +3098,7 @@
 
                     // Only show notification if it's for this user's role
                     if (e.recipientRole && (e.recipientRole.toLowerCase() === inboxRole.toLowerCase() ||
-                        (e.recipientRole.toLowerCase() === 'ibub' && inboxRole.toLowerCase() === 'ibub'))) {
+                        (e.recipientRole.toLowerCase() === 'team_verifikasi' && inboxRole.toLowerCase() === 'team_verifikasi'))) {
 
                         console.log('✅ Notification is for current user role:', inboxRole);
 
@@ -3242,7 +3242,7 @@
     async function checkInboxNotifications() {
         try {
             // Ensure we have inbox access before checking
-            // IbuA does not have inbox access, so skip the check
+            // Operator does not have inbox access, so skip the check
             if (!hasInboxAccess) {
                 console.log('No inbox access, skipping notification check');
                 return;
@@ -3370,35 +3370,35 @@
         });
     }
 
-    // IbuA Rejected Documents Notification System
-    function initIbuARejectedNotifications() {
-        console.log('initIbuARejectedNotifications function called');
+    // Operator Rejected Documents Notification System
+    function initOperatorRejectedNotifications() {
+        console.log('initOperatorRejectedNotifications function called');
         // Rejected documents notification polling
         // Reset last check time jika lebih dari 24 jam yang lalu untuk memastikan semua dokumen terdeteksi
-        let rejectedLastCheckTime = localStorage.getItem('ibua_rejected_last_check_time');
+        let rejectedLastCheckTime = localStorage.getItem('Operator_rejected_last_check_time');
         if (!rejectedLastCheckTime) {
             rejectedLastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 jam yang lalu
-            localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+            localStorage.setItem('Operator_rejected_last_check_time', rejectedLastCheckTime);
         } else {
             // Jika last check time lebih dari 24 jam yang lalu, reset ke 24 jam yang lalu
             const lastCheck = new Date(rejectedLastCheckTime);
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             if (lastCheck < twentyFourHoursAgo) {
                 rejectedLastCheckTime = twentyFourHoursAgo.toISOString();
-                localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+                localStorage.setItem('Operator_rejected_last_check_time', rejectedLastCheckTime);
                 console.log('🔄 Reset rejected documents last check time to 24 hours ago');
             }
         }
 
         // Track shown rejected notifications to prevent duplicates
-        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('ibua_shown_rejected_notifications') || '[]'));
+        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('Operator_shown_rejected_notifications') || '[]'));
 
         // Function to check for rejected documents
         async function checkRejectedDocuments() {
             try {
                 console.log('🔍 Checking for rejected documents...', { lastCheckTime: rejectedLastCheckTime });
                 
-                const response = await fetch(`/ibua/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
+                const response = await fetch(`/Operator/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -3430,7 +3430,7 @@
                     if (data.current_time) {
                         // Update last check time untuk tracking, tapi jangan gunakan untuk filtering dokumen
                         rejectedLastCheckTime = data.current_time;
-                        localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+                        localStorage.setItem('Operator_rejected_last_check_time', rejectedLastCheckTime);
                         console.log('✅ Updated last check time to:', rejectedLastCheckTime);
                     }
 
@@ -3443,7 +3443,7 @@
                         const userRejectedDocs = data.rejected_documents.filter(doc => {
                             // Hanya dokumen yang created_by milik user yang sedang login
                             const createdBy = (doc.created_by || '').toString().toLowerCase();
-                            return createdBy === 'ibua' || createdBy === 'ibu a' || createdBy === 'ibua' || createdBy === 'ibu tarapul';
+                            return createdBy === 'operator' || createdBy === 'Operator' || createdBy === 'operator' || createdBy === 'Operator';
                         });
 
                         console.log('👤 User rejected documents after filtering:', userRejectedDocs.length);
@@ -3489,7 +3489,7 @@
                         });
 
                         // Save shown notification IDs to localStorage
-                        localStorage.setItem('ibua_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
+                        localStorage.setItem('Operator_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
 
                         // Show notification untuk semua dokumen yang perlu ditampilkan
                         if (newRejectedToShow.length > 0) {
@@ -3546,7 +3546,7 @@
         rejectedDocumentsInterval = setInterval(checkRejectedDocuments, 3000);
         
         // Store interval in window object to ensure it persists
-        window.ibuaRejectedDocumentsInterval = rejectedDocumentsInterval;
+        window.OperatorRejectedDocumentsInterval = rejectedDocumentsInterval;
 
         // Also check when page becomes visible (user switches back to tab)
         document.addEventListener('visibilitychange', function() {
@@ -3576,26 +3576,26 @@
         setTimeout(checkRejectedDocuments, 2000);
     }
 
-    // IbuB Rejected Documents Notification System
-    function initIbuBRejectedNotifications() {
-        console.log('initIbuBRejectedNotifications function called - Initializing IbuB rejected documents notification system');
+    // Team Verifikasi Rejected Documents Notification System
+    function initTeam VerifikasiRejectedNotifications() {
+        console.log('initTeam VerifikasiRejectedNotifications function called - Initializing Team Verifikasi rejected documents notification system');
         
         // Rejected documents notification polling
-        let rejectedLastCheckTime = localStorage.getItem('ibub_rejected_last_check_time');
+        let rejectedLastCheckTime = localStorage.getItem('Team Verifikasi_rejected_last_check_time');
         if (!rejectedLastCheckTime) {
             rejectedLastCheckTime = new Date().toISOString();
-            localStorage.setItem('ibub_rejected_last_check_time', rejectedLastCheckTime);
+            localStorage.setItem('Team Verifikasi_rejected_last_check_time', rejectedLastCheckTime);
         }
 
         // Track shown rejected notifications to prevent duplicates
-        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('ibub_shown_rejected_notifications') || '[]'));
+        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('Team Verifikasi_shown_rejected_notifications') || '[]'));
 
         // Function to check for rejected documents
         async function checkRejectedDocuments() {
             try {
-                console.log('Checking rejected documents for IbuB, last check:', rejectedLastCheckTime);
+                console.log('Checking rejected documents for Team Verifikasi, last check:', rejectedLastCheckTime);
                 
-                const response = await fetch(`/ibub/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
+                const response = await fetch(`/Team Verifikasi/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -3605,26 +3605,26 @@
                 });
 
                 if (!response.ok) {
-                    console.warn('IbuB rejected documents check failed:', response.status, response.statusText);
+                    console.warn('Team Verifikasi rejected documents check failed:', response.status, response.statusText);
                     return;
                 }
 
                 const data = await response.json();
 
-                console.log('IbuB rejected documents data:', data);
+                console.log('Team Verifikasi rejected documents data:', data);
 
                 if (data.success) {
                     // Update last check time
                     if (data.current_time) {
                         rejectedLastCheckTime = data.current_time;
-                        localStorage.setItem('ibub_rejected_last_check_time', rejectedLastCheckTime);
+                        localStorage.setItem('Team Verifikasi_rejected_last_check_time', rejectedLastCheckTime);
                     }
 
                     // If there are rejected documents
                     if (data.rejected_documents_count > 0 && data.rejected_documents.length > 0) {
                         // Filter out already shown notifications
                         const newRejectedToShow = data.rejected_documents.filter(doc => {
-                            const docKey = `ibub_rejected_doc_${doc.id}_shown`;
+                            const docKey = `Team Verifikasi_rejected_doc_${doc.id}_shown`;
                             const shownTime = localStorage.getItem(docKey);
                             const now = Date.now();
                             
@@ -3640,11 +3640,11 @@
                         });
 
                         // Save shown notification IDs to localStorage
-                        localStorage.setItem('ibub_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
+                        localStorage.setItem('Team Verifikasi_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
 
                         // Only show notification if we have new rejected documents
                         if (newRejectedToShow.length > 0) {
-                            console.log('Showing rejected document notifications for IbuB:', newRejectedToShow.length);
+                            console.log('Showing rejected document notifications for Team Verifikasi:', newRejectedToShow.length);
                             
                             // Show toast notification for each rejected document
                             newRejectedToShow.forEach((doc, index) => {
@@ -3661,50 +3661,50 @@
                             console.log('All rejected documents have already been shown recently');
                         }
                     } else {
-                        console.log('No new rejected documents for IbuB');
+                        console.log('No new rejected documents for Team Verifikasi');
                     }
                 } else {
-                    console.warn('IbuB rejected documents check returned unsuccessful:', data.message);
+                    console.warn('Team Verifikasi rejected documents check returned unsuccessful:', data.message);
                 }
             } catch (error) {
-                console.error('Error checking rejected documents for IbuB:', error);
+                console.error('Error checking rejected documents for Team Verifikasi:', error);
             }
         }
 
         // Check immediately on page load (with delay to ensure DOM is ready)
         setTimeout(() => {
-            console.log('IbuB: Running initial rejected documents check');
+            console.log('Team Verifikasi: Running initial rejected documents check');
             checkRejectedDocuments();
         }, 1500);
 
         // Poll every 30 seconds
         const pollInterval = setInterval(checkRejectedDocuments, 30000);
-        console.log('IbuB: Rejected documents polling started, interval:', pollInterval);
+        console.log('Team Verifikasi: Rejected documents polling started, interval:', pollInterval);
 
         // Also check when page becomes visible (user switches back to tab)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                console.log('IbuB: Page visible, checking rejected documents');
+                console.log('Team Verifikasi: Page visible, checking rejected documents');
                 setTimeout(checkRejectedDocuments, 500);
             }
         });
 
         // Check when window gains focus
         window.addEventListener('focus', function() {
-            console.log('IbuB: Window focused, checking rejected documents');
+            console.log('Team Verifikasi: Window focused, checking rejected documents');
             setTimeout(checkRejectedDocuments, 500);
         });
 
         // Also check when page is fully loaded
         if (document.readyState === 'complete') {
             setTimeout(() => {
-                console.log('IbuB: Page complete, checking rejected documents');
+                console.log('Team Verifikasi: Page complete, checking rejected documents');
                 checkRejectedDocuments();
             }, 2000);
         } else {
             window.addEventListener('load', function() {
                 setTimeout(() => {
-                    console.log('IbuB: Page loaded, checking rejected documents');
+                    console.log('Team Verifikasi: Page loaded, checking rejected documents');
                     checkRejectedDocuments();
                 }, 2000);
             });
@@ -3853,7 +3853,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       currentPathCheck.includes('/dokumensPerpajakan') ||
                       currentPathCheck.includes('/rekapan-perpajakan') ||
                       currentPathCheck.includes('/dokumensB') ||
-                      currentPathCheck.includes('/rekapan-ibuB') ||
+                      currentPathCheck.includes('/rekapan-Team Verifikasi') ||
                       currentPathCheck.includes('/documents/pembayaran') ||
                       currentPathCheck.includes('/documents/akutansi') ||
                       currentPathCheck.includes('/documents/perpajakan') ||
@@ -4166,3 +4166,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
+

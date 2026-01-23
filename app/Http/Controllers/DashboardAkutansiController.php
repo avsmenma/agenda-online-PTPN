@@ -343,7 +343,7 @@ class DashboardAkutansiController extends Controller
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
                             ->orWhereIn('status', [
-                                'pending_approval_ibub',
+                                'pending_approval_Team Verifikasi',
                                 'pending_approval_perpajakan',
                                 'pending_approval_akutansi',
                                 'pending_approval_pembayaran',
@@ -1104,10 +1104,10 @@ class DashboardAkutansiController extends Controller
         $totalReturned = (clone $baseQuery)->count();
 
         // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika: masih di ibuB (belum dikirim kembali ke akutansi) ATAU ditolak oleh pembayaran dan masih di akutansi
+        // Logika: masih di Team Verifikasi (belum dikirim kembali ke akutansi) ATAU ditolak oleh pembayaran dan masih di akutansi
         $totalMenungguPerbaikan = (clone $baseQuery)
             ->where(function ($q) {
-                $q->where('current_handler', 'ibuB')
+                $q->where('current_handler', 'team_verifikasi')
                     ->orWhere(function ($pembayaranQ) {
                         $pembayaranQ->where('current_handler', 'akutansi')
                             ->whereHas('roleStatuses', function ($statusQuery) {
@@ -1335,7 +1335,7 @@ class DashboardAkutansiController extends Controller
     public function getDocumentDetail(Dokumen $dokumen)
     {
         // Allow access if document is handled by akutansi or sent to akutansi
-        $allowedHandlers = ['akutansi', 'perpajakan', 'ibuB'];
+        $allowedHandlers = ['akutansi', 'perpajakan', 'team_verifikasi'];
         $allowedStatuses = ['sent_to_akutansi', 'sedang diproses', 'selesai', 'sent_to_pembayaran'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
@@ -1766,7 +1766,7 @@ class DashboardAkutansiController extends Controller
     }
 
     /**
-     * Return document to IbuB
+     * Return document to Team Verifikasi
      */
     public function returnDocument(Request $request, Dokumen $dokumen)
     {
@@ -1809,7 +1809,7 @@ class DashboardAkutansiController extends Controller
             // Update all fields in a single call to avoid multiple queries and potential issues
             $updateData = [
                 'status' => 'returned_to_department',
-                'current_handler' => 'verifikasi',
+                'current_handler' => 'team_verifikasi',
                 'target_department' => 'akutansi',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,
@@ -1827,10 +1827,10 @@ class DashboardAkutansiController extends Controller
                 $akutansiRoleData->save();
             }
 
-            // Only set sent_to_ibub_at if it's null (first time entering IbuB)
+            // Only set sent_to_Team Verifikasi_at if it's null (first time entering Team Verifikasi)
             // This preserves the original entry time for consistent ordering
-            if (is_null($dokumen->sent_to_ibub_at)) {
-                $updateData['sent_to_ibub_at'] = now();
+            if (is_null($dokumen->sent_to_Team Verifikasi_at)) {
+                $updateData['sent_to_Team Verifikasi_at'] = now();
             }
 
             $dokumen->update($updateData);
@@ -1844,7 +1844,7 @@ class DashboardAkutansiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikembalikan ke Team Verifikasi.'
+                'message' => 'Dokumen berhasil dikembalikan ke team_verifikasi.'
             ]);
 
         } catch (\Exception $e) {
@@ -1863,4 +1863,7 @@ class DashboardAkutansiController extends Controller
         }
     }
 }
+
+
+
 

@@ -287,7 +287,7 @@
     <strong>Informasi Dokumen:</strong><br>
     Nomor Agenda: {{ $dokumen->nomor_agenda }} |
     Status: {{ $dokumen->status }} |
-    Dibuat: {{ $dokumen->tanggal_masuk->format('d/m/Y H:i') }}
+    DOperatort: {{ $dokumen->tanggal_masuk->format('d/m/Y H:i') }}
   </div>
 
   <div class="form-container">
@@ -726,10 +726,10 @@
             return satuan[ratusan] + ' ratus' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
           }
           if (n < 1000000) {
-            const ribuan = Math.floor(n / 1000);
+            const rOperatorn = Math.floor(n / 1000);
             const sisa = n % 1000;
-            if (ribuan === 1) return 'seribu' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
-            return terbilangSatuan(ribuan) + ' ribu' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+            if (rOperatorn === 1) return 'seribu' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
+            return terbilangSatuan(rOperatorn) + ' ribu' + (sisa > 0 ? ' ' + terbilangSatuan(sisa) : '');
           }
           if (n < 1000000000) {
             const jutaan = Math.floor(n / 1000000);
@@ -1389,3 +1389,4 @@
   </style>
 
 @endsection
+

@@ -23,7 +23,7 @@ class DokumenHelper
         if (
             in_array($dokumen->status, [
                 'waiting_reviewer_approval',
-                'pending_approval_ibub',
+                'pending_approval_Team Verifikasi',
                 'pending_approval_perpajakan',
             ])
         ) {
@@ -70,9 +70,9 @@ class DokumenHelper
 
         if ($hasPendingStatus) {
             // Skip lock untuk handler yang menggunakan sistem deadline baru (count-up dari received_at)
-            // Perpajakan, ibuB, dan akutansi tidak perlu di-lock berdasarkan pending status
+            // Perpajakan, Team Verifikasi, dan akutansi tidak perlu di-lock berdasarkan pending status
             // karena mereka menggunakan sistem deadline otomatis
-            if (in_array($dokumen->current_handler, ['perpajakan', 'ibuB', 'akutansi'])) {
+            if (in_array($dokumen->current_handler, ['perpajakan', 'Team Verifikasi', 'akutansi'])) {
                 // Handler menggunakan sistem baru, pending status tidak lock dokumen
                 // Biarkan logika lanjut ke switch case di bawah
             } else {
@@ -100,8 +100,8 @@ class DokumenHelper
         // Base condition: must be sent to department without deadline
         $isLocked = !$hasDeadline &&
             in_array($dokumen->status, [
-                'sent_to_ibub',
-                'sedang diproses', // Dokumen yang baru di-approve dari inbox IbuB
+                'sent_to_Team Verifikasi',
+                'sedang diproses', // Dokumen yang baru di-approve dari inbox Team Verifikasi
                 'sent_to_perpajakan'
             ]);
 
@@ -110,7 +110,7 @@ class DokumenHelper
         // Documents can be edited immediately after approval
         // Only lock documents that are pending approval
         switch ($dokumen->current_handler) {
-            case 'ibuB':
+            case 'Team Verifikasi':
             case 'akutansi':
             case 'perpajakan':
                 // Documents are NOT locked after approval
@@ -150,7 +150,7 @@ class DokumenHelper
     {
         if (self::isDocumentLocked($dokumen)) {
             $handlerName = match ($dokumen->current_handler) {
-                'ibuB' => 'Team Verifikasi',
+                'Team Verifikasi' => 'Team Verifikasi',
                 'akutansi' => 'Team Akutansi',
                 'perpajakan' => 'Team Perpajakan',
                 'pembayaran' => 'Pembayaran',
@@ -191,7 +191,7 @@ class DokumenHelper
             in_array($dokumen->status, [
                 'menunggu_di_approve',
                 'waiting_reviewer_approval',
-                'pending_approval_ibub',
+                'pending_approval_Team Verifikasi',
                 'pending_approval_perpajakan',
                 'pending_approval_akutansi'
             ])
@@ -308,7 +308,7 @@ class DokumenHelper
 
         // Check document status based on handler
         $validStatuses = match ($dokumen->current_handler) {
-            'ibuB' => ['sent_to_ibub', 'sedang diproses'], // Include 'sedang diproses' for newly approved from inbox
+            'Team Verifikasi' => ['sent_to_Team Verifikasi', 'sedang diproses'], // Include 'sedang diproses' for newly approved from inbox
             'akutansi' => ['sent_to_akutansi', 'approved_data_sudah_terkirim'],
             'perpajakan' => ['sent_to_perpajakan'], // Dokumen yang baru di-approve dari inbox Perpajakan
             'pembayaran' => ['sent_to_pembayaran'],
@@ -330,3 +330,4 @@ class DokumenHelper
         ];
     }
 }
+

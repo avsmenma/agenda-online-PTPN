@@ -678,7 +678,7 @@
                     <i class="fas fa-hourglass-half"></i>
                     Belum Diproses
                   </span>
-                @elseif(in_array($dokumen->status, ['returned_to_ibua', 'returned_to_department', 'dikembalikan']))
+                @elseif(in_array($dokumen->status, ['returned_to_Operator', 'returned_to_department', 'dikembalikan']))
                   <span class="badge badge-dikembalikan">
                     <i class="fas fa-arrow-left"></i>
                     Dikembalikan
@@ -716,3 +716,4 @@
   </script>
 
 @endsection
+

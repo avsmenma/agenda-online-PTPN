@@ -56,9 +56,9 @@ final readonly class WelcomeMessageComposer
         // Map route patterns to modules
         return match (true) {
             str_contains($routeName, 'dokumens') && !str_contains($routeName, 'dokumensPembayaran') &&
-            !str_contains($routeName, 'dokumensAkutansi') && !str_contains($routeName, 'dokumensPerpajakan') => 'IbuA',
+            !str_contains($routeName, 'dokumensAkutansi') && !str_contains($routeName, 'dokumensPerpajakan') => 'Operator',
 
-            str_contains($routeName, 'dokumensB') => 'ibuB',
+            str_contains($routeName, 'dokumensB') => 'Team Verifikasi',
             str_contains($routeName, 'dokumensPerpajakan') => 'perpajakan',
             str_contains($routeName, 'dokumensAkutansi') => 'akutansi',
             str_contains($routeName, 'dokumensPembayaran') => 'pembayaran',
@@ -79,8 +79,8 @@ final readonly class WelcomeMessageComposer
     private function getModuleFromDashboardRoute(string $routeName): ?string
     {
         return match ($routeName) {
-            'dashboard' => 'IbuA',
-            'dashboardB' => 'ibuB',
+            'dashboard' => 'Operator',
+            'dashboardB' => 'Team Verifikasi',
             'dashboardPerpajakan' => 'perpajakan',
             'dashboardAkutansi' => 'akutansi',
             'dashboardPembayaran' => 'pembayaran',
@@ -89,3 +89,4 @@ final readonly class WelcomeMessageComposer
         };
     }
 }
+

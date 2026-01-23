@@ -36,3 +36,6 @@ class Bagian extends Model
         return $query->orderBy('kode');
     }
 }
+
+
+

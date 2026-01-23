@@ -23,7 +23,7 @@ class DocumentReturned implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct(Dokumen $dokumen, string $alasan_pengembalian, string $returned_by = 'ibuB')
+    public function __construct(Dokumen $dokumen, string $alasan_pengembalian, string $returned_by = 'Team Verifikasi')
     {
         $this->dokumen = $dokumen;
         $this->alasan_pengembalian = $alasan_pengembalian;
@@ -39,7 +39,7 @@ class DocumentReturned implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('documents.ibuA'),
+            new Channel('documents.Operator'),
         ];
     }
 
@@ -68,3 +68,4 @@ class DocumentReturned implements ShouldBroadcast
         ];
     }
 }
+

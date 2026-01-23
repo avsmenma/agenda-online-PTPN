@@ -536,10 +536,10 @@
                 <span class="detail-label">Keterangan</span>
                 <span class="detail-value">{{ $dokumen->keterangan ?? '-' }}</span>
               </div>
-              @if($dokumen->returned_to_ibua_at)
+              @if($dokumen->returned_to_Operator_at)
               <div class="detail-item">
                 <span class="detail-label">Tanggal Dikembalikan</span>
-                <span class="detail-value">{{ $dokumen->returned_to_ibua_at->format('d-m-Y H:i') }}</span>
+                <span class="detail-value">{{ $dokumen->returned_to_Operator_at->format('d-m-Y H:i') }}</span>
               </div>
               @endif
             </div>
@@ -624,3 +624,5 @@ function toggleAlasan(docId) {
 </style>
 
 @endsection
+
+

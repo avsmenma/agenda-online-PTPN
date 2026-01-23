@@ -62,8 +62,8 @@ final readonly class WelcomeMessageService
     private function getDefaultMessage(?string $module): string
     {
         return match ($module) {
-            'IbuA' => 'Selamat datang, Ibu Tarapul',
-            'ibuB' => 'Selamat datang, Team Verifikasi',
+            'Operator' => 'Selamat datang, Ibu Tarapul',
+            'Team Verifikasi' => 'Selamat datang, Team Verifikasi',
             'perpajakan' => 'Selamat datang, Team Perpajakan',
             'akutansi' => 'Selamat datang, Team Akutansi',
             'pembayaran' => '{greeting}, Team Pembayaran!',
@@ -120,7 +120,7 @@ final readonly class WelcomeMessageService
             Cache::forget("welcome_message_{$module}");
         } else {
             // Clear all welcome message caches
-            $modules = ['IbuA', 'ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+            $modules = ['Operator', 'Team Verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
 
             foreach ($modules as $mod) {
                 Cache::forget("welcome_message_{$mod}");
@@ -139,3 +139,4 @@ final readonly class WelcomeMessageService
             ->toArray();
     }
 }
+

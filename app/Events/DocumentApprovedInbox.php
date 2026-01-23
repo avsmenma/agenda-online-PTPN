@@ -69,3 +69,5 @@ class DocumentApprovedInbox implements ShouldBroadcast
         ];
     }
 }
+
+

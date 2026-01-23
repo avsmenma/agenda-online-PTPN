@@ -8,16 +8,16 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Dokumen;
 use Carbon\Carbon;
 
-class IbuACsvImportController extends Controller
+class OperatorCsvImportController extends Controller
 {
     /**
-     * Show import page for IbuA role
+     * Show import page for Operator role
      */
     public function index()
     {
         return view('bagian.dokumens.importCsv', [
             'title' => 'Import Data CSV - Dokumen',
-            'module' => 'ibua',
+            'module' => 'operator',
             'menuDokumen' => 'active'
         ]);
     }
@@ -68,7 +68,7 @@ class IbuACsvImportController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('IbuA CSV Upload Error: ' . $e->getMessage(), [
+            Log::error('Operator CSV Upload Error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
 
@@ -218,7 +218,7 @@ class IbuACsvImportController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('IbuA CSV Preview Error: ' . $e->getMessage());
+            Log::error('Operator CSV Preview Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -365,7 +365,7 @@ class IbuACsvImportController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('IbuA CSV Import Error: ' . $e->getMessage());
+            Log::error('Operator CSV Import Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -390,7 +390,7 @@ class IbuACsvImportController extends Controller
         $skipped = 0;
         $failed = 0;
 
-        $batchId = 'IBUA_CSV_' . now()->format('YmdHis');
+        $batchId = 'OPERATOR_CSV_' . now()->format('YmdHis');
 
         while (($data = fgetcsv($handle)) !== false) {
             if (empty(array_filter($data))) {
@@ -429,10 +429,10 @@ class IbuACsvImportController extends Controller
 
                 $dokumenData = $this->transformRow($row);
 
-                // Set created_by to IbuA and correct status
-                $dokumenData['created_by'] = 'ibuA';
+                // Set created_by to Operator and correct status
+                $dokumenData['created_by'] = 'operator';
                 $dokumenData['status'] = 'draft';  // IMPORTANT: Use 'draft' not 'belum_dikirim'
-                $dokumenData['current_handler'] = 'ibuA';  // IMPORTANT: Set current handler
+                $dokumenData['current_handler'] = 'operator';  // IMPORTANT: Set current handler
 
                 // CSV import tracking
                 if (\Schema::hasColumn('dokumens', 'imported_from_csv')) {
@@ -596,3 +596,6 @@ class IbuACsvImportController extends Controller
         return (float) $cleaned;
     }
 }
+
+
+

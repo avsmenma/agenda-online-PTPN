@@ -12,8 +12,8 @@
         <h5>📝 Cara Penggunaan:</h5>
         <p>Gunakan URL berikut untuk langsung mengakses dashboard dengan role tertentu:</p>
         <ul>
-            <li><strong>IbuA:</strong> <code>/dashboard?role=IbuA</code></li>
-            <li><strong>IbuB:</strong> <code>/dashboardB?role=ibuB</code></li>
+            <li><strong>Operator:</strong> <code>/dashboard?role=Operator</code></li>
+            <li><strong>Team Verifikasi:</strong> <code>/dashboardB?role=Team Verifikasi</code></li>
             <li><strong>Perpajakan:</strong> <code>/dashboardPerpajakan?role=Perpajakan</code></li>
             <li><strong>Akutansi:</strong> <code>/dashboardAkutansi?role=Akutansi</code></li>
             <li><strong>Pembayaran:</strong> <code>/dashboardPembayaran?role=Pembayaran</code></li>
@@ -22,8 +22,8 @@
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <!-- IbuA -->
-        <a href="/dashboard?role=IbuA" style="text-decoration: none;">
+        <!-- Operator -->
+        <a href="/dashboard?role=Operator" style="text-decoration: none;">
             <div style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(8, 62, 64, 0.2);">
                 <div style="font-size: 2em; margin-bottom: 10px;">👩‍💼</div>
                 <h4 style="margin: 0; font-weight: 700;">Ibu A</h4>
@@ -31,8 +31,8 @@
             </div>
         </a>
 
-        <!-- IbuB -->
-        <a href="/dashboardB?role=ibuB" style="text-decoration: none;">
+        <!-- Team Verifikasi -->
+        <a href="/dashboardB?role=Team Verifikasi" style="text-decoration: none;">
             <div style="background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(26, 77, 62, 0.2);">
                 <div style="font-size: 2em; margin-bottom: 10px;">👨‍💼</div>
                 <h4 style="margin: 0; font-weight: 700;">Ibu B</h4>
@@ -71,8 +71,8 @@
     <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 4px solid #28a745;">
         <h5 style="color: #155724; margin-top: 0;">💡 Quick Access:</h5>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <a href="/dev-dashboard/IbuA" class="btn btn-sm" style="background: #083E40; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">IbuA Dashboard</a>
-            <a href="/dev-dashboard/ibuB" class="btn btn-sm" style="background: #1a4d3e; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">IbuB Dashboard</a>
+            <a href="/dev-dashboard/Operator" class="btn btn-sm" style="background: #083E40; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Operator Dashboard</a>
+            <a href="/dev-dashboard/Team Verifikasi" class="btn btn-sm" style="background: #1a4d3e; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Team Verifikasi Dashboard</a>
             <a href="/dev-dashboard/Perpajakan" class="btn btn-sm" style="background: #2c3e50; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Perpajakan Dashboard</a>
             <a href="/dev-dashboard/Akutansi" class="btn btn-sm" style="background: #8e44ad; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Akutansi Dashboard</a>
             <a href="/dev-dashboard/Pembayaran" class="btn btn-sm" style="background: #27ae60; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Pembayaran Dashboard</a>
@@ -92,3 +92,4 @@
 }
 </style>
 @endsection
+

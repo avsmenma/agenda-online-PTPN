@@ -19,7 +19,7 @@ class UniversalApprovalController extends Controller
             $currentUser = auth()->user();
             $userRole = $this->getUserRole($currentUser);
 
-            if (!$userRole || $userRole === 'ibuA') {
+            if (!$userRole || $userRole === 'operator') {
                 abort(403, 'Unauthorized access');
             }
 
@@ -236,9 +236,9 @@ class UniversalApprovalController extends Controller
         if (isset($user->name)) {
             // Map common names to roles
             $nameToRole = [
-                'Ibu A' => 'ibuA',
-                'IbuB' => 'ibuB',
-                'Ibu B' => 'ibuB',
+                'Operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran'
@@ -270,7 +270,7 @@ class UniversalApprovalController extends Controller
     private function getRedirectUrl($userRole)
     {
         $redirectUrls = [
-            'ibuB' => '/dokumensb',
+            'team_verifikasi' => '/dokumensb',
             'perpajakan' => '/dokumensPerpajakan',
             'akutansi' => '/akutansi',
             'pembayaran' => '/daftarPembayaran',
@@ -279,3 +279,6 @@ class UniversalApprovalController extends Controller
         return $redirectUrls[$userRole] ?? '/dashboard';
     }
 }
+
+
+

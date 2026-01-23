@@ -22,3 +22,6 @@ class DibayarKepada extends Model
         return $this->belongsTo(Dokumen::class);
     }
 }
+
+
+

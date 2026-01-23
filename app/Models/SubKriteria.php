@@ -29,3 +29,6 @@ class SubKriteria extends Model
     }
 }
 
+
+
+

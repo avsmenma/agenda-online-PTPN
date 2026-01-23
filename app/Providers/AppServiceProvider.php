@@ -28,3 +28,5 @@ class AppServiceProvider extends ServiceProvider
         View::composer('*', WelcomeMessageComposer::class);
     }
 }
+
+

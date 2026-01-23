@@ -26,18 +26,18 @@ final class UserSeeder extends Seeder
                 'role' => 'Admin',
             ],
             [
-                'name' => 'Ibu A',
-                'username' => 'ibua',
+                'name' => 'Operator',
+                'username' => 'operator',
                 'email' => 'ibua@ptpn.com',
                 'password' => 'ibua123',
-                'role' => 'IbuA',
+                'role' => 'operator',
             ],
             [
                 'name' => 'Ibu B',
-                'username' => 'ibub',
+                'username' => 'team_verifikasi',
                 'email' => 'ibub@ptpn.com',
                 'password' => 'ibub123',
-                'role' => 'IbuB',
+                'role' => 'team_verifikasi',
             ],
             [
                 'name' => 'Pembayaran',
@@ -92,3 +92,4 @@ final class UserSeeder extends Seeder
         $this->command->info('User seeding completed successfully!');
     }
 }
+

@@ -17,7 +17,7 @@ class DokumenRekapanController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Dokumen::where('created_by', 'ibuA')
+        $query = Dokumen::where('created_by', 'operator')
             ->with(['dokumenPos', 'dokumenPrs']);
 
         // Filter by bagian
@@ -57,7 +57,7 @@ class DokumenRekapanController extends Controller
 
         $data = array(
             "title" => "Rekapan Dokumen",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDokumen" => "active",
             "menuRekapan" => "active",
             "menuDaftarDokumen" => "",
@@ -70,7 +70,7 @@ class DokumenRekapanController extends Controller
             "selectedBagian" => $selectedBagian,
         );
 
-        return view('IbuA.dokumens.rekapan', $data);
+        return view('operator.dokumens.rekapan', $data);
     }
 
     /**
@@ -78,7 +78,7 @@ class DokumenRekapanController extends Controller
      */
     private function getStatistics(string $filterBagian = ''): array
     {
-        $query = Dokumen::where('created_by', 'ibuA');
+        $query = Dokumen::where('created_by', 'operator');
 
         if ($filterBagian) {
             $validBagian = Bagian::active()->where('kode', $filterBagian)->exists();
@@ -92,7 +92,7 @@ class DokumenRekapanController extends Controller
         $bagianStats = [];
         $bagianList = Bagian::active()->ordered()->get();
         foreach ($bagianList as $bagian) {
-            $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagian->kode);
+            $bagianQuery = Dokumen::where('created_by', 'operator')->where('bagian', $bagian->kode);
             $bagianStats[$bagian->kode] = [
                 'name' => $bagian->nama,
                 'total' => $bagianQuery->count()
@@ -104,10 +104,10 @@ class DokumenRekapanController extends Controller
             'by_bagian' => $bagianStats,
             'by_status' => [
                 'draft' => $query->where('status', 'draft')->count(),
-                'sent_to_ibub' => $query->where('status', 'sent_to_ibub')->count(),
+                'sent_to_Team Verifikasi' => $query->where('status', 'sent_to_Team Verifikasi')->count(),
                 'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
                 'selesai' => $query->where('status', 'selesai')->count(),
-                'returned_to_ibua' => $query->where('status', 'returned_to_ibua')->count(),
+                'returned_to_Operator' => $query->where('status', 'returned_to_Operator')->count(),
             ]
         ];
     }
@@ -128,7 +128,7 @@ class DokumenRekapanController extends Controller
         }
 
         // Base query for Ibu Tarapul documents
-        $baseQuery = Dokumen::where('created_by', 'ibuA')
+        $baseQuery = Dokumen::where('created_by', 'operator')
             ->whereYear('tanggal_masuk', $selectedYear);
 
         // Filter by bagian if selected
@@ -174,7 +174,7 @@ class DokumenRekapanController extends Controller
         $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get available years
-        $availableYears = Dokumen::where('created_by', 'ibuA')
+        $availableYears = Dokumen::where('created_by', 'operator')
             ->whereNotNull('tanggal_masuk')
             ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
             ->orderBy('year', 'desc')
@@ -188,7 +188,7 @@ class DokumenRekapanController extends Controller
 
         $data = [
             'title' => 'Analitik Dokumen',
-            'module' => 'IbuA',
+            'module' => 'operator',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
             'selectedYear' => (int)$selectedYear,
@@ -201,6 +201,8 @@ class DokumenRekapanController extends Controller
             'bagianList' => Bagian::active()->ordered()->pluck('nama', 'kode')->toArray(),
         ];
 
-        return view('IbuA.dokumens.analytics', $data);
+        return view('operator.dokumens.analytics', $data);
     }
 }
+
+

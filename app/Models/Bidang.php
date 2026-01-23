@@ -37,3 +37,6 @@ class Bidang extends Model
         return "{$this->kode_bidang} - {$this->nama_bidang}";
     }
 }
+
+
+

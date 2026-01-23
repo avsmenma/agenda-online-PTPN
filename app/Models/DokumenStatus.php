@@ -108,3 +108,6 @@ class DokumenStatus extends Model
         return $this;
     }
 }
+
+
+

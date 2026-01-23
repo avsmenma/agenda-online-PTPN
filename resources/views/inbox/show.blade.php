@@ -777,7 +777,7 @@
                                 <th>Pengirim</th>
                                 <td>
                                     @php
-                                        $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                        $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                         $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
                                     @endphp
                                     {{ $senderName }}
@@ -790,7 +790,7 @@
                             <tr>
                                 <th>Dikirim ke Inbox</th>
                                 @php
-                                    $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                    $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                     $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
                                     $roleData = $dokumen->getDataForRole($currentRoleCode);
                                     $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
@@ -837,7 +837,7 @@
                         <div class="timeline-content">
                             <div class="timeline-title">
                                 @php
-                                    $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                    $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                     // Get sender name based on document status and current role
                                     $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
                                 @endphp
@@ -995,7 +995,7 @@
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         <div>
                             <strong>Perhatian:</strong> Dokumen yang ditolak akan dikembalikan ke pengirim (@php
-                                $currentRoleCode = strtolower($userRole ?? 'ibub');
+                                $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
                                 $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
                             @endphp
                             {{ $senderName }}) dan tidak akan masuk ke sistem persetujuan.
@@ -1539,3 +1539,4 @@
     </script>
 
 @endsection
+

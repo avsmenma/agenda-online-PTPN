@@ -28,3 +28,5 @@ class GenerateDummyDocuments extends Command
         //
     }
 }
+
+

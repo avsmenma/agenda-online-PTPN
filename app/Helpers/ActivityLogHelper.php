@@ -25,16 +25,16 @@ class ActivityLogHelper
     }
 
     /**
-     * Log ketika dokumen dibuat
+     * Log ketika dokumen dOperatort
      */
     public static function logCreated(Dokumen $dokumen): void
     {
         self::log(
             $dokumen,
             'created',
-            'Dokumen dibuat',
+            'Dokumen dOperatort',
             'sender',
-            'ibuA',
+            'Operator',
             ['nomor_agenda' => $dokumen->nomor_agenda]
         );
     }
@@ -49,7 +49,7 @@ class ActivityLogHelper
         $stage = self::getStageFromHandler($from); // Stage pengirim, bukan penerima
 
         $descriptions = [
-            'ibuB' => 'Dokumen dikirim ke Team Verifikasi',
+            'Team Verifikasi' => 'Dokumen dikirim ke Team Verifikasi',
             'perpajakan' => 'Dokumen dikirim ke Team Perpajakan',
             'akutansi' => 'Dokumen dikirim ke Team Akutansi',
             'pembayaran' => 'Dokumen dikirim ke Team Pembayaran',
@@ -233,8 +233,8 @@ class ActivityLogHelper
     private static function getStageFromHandler(?string $handler): ?string
     {
         $stageMap = [
-            'ibuA' => 'sender',
-            'ibuB' => 'reviewer',
+            'Operator' => 'sender',
+            'Team Verifikasi' => 'reviewer',
             'perpajakan' => 'tax',
             'akutansi' => 'accounting',
             'pembayaran' => 'payment',
@@ -243,4 +243,6 @@ class ActivityLogHelper
         return $stageMap[$handler] ?? null;
     }
 }
+
+
 

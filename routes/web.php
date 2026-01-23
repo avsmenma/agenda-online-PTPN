@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DashboardBController;
+use App\Http\Controllers\TeamVerifikasiController;
 use App\Http\Controllers\DashboardPembayaranController;
 use App\Http\Controllers\DashboardAkutansiController;
 use App\Http\Controllers\DashboardPerpajakanController;
@@ -136,7 +136,7 @@ if (app()->environment('local', 'development')) {
 
     Route::get('/simple-test', function () {
         $service = app('App\Services\WelcomeMessageService');
-        $message = $service->getWelcomeMessage('IbuA');
+        $message = $service->getWelcomeMessage('operator');
         return "Welcome Message: " . $message;
     })->middleware('auth');
 } else {
@@ -176,14 +176,14 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             : \Carbon\Carbon::now()->subDays(1);
 
         // Cek dokumen yang berubah status setelah lastChecked
-        // Beda antara dokumen baru dari IbuA vs dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
+        // Beda antara dokumen baru dari Operator vs dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
         // Exclude documents imported from CSV to prevent notification spam
         $newDocuments = \App\Models\Dokumen::where(function ($query) use ($lastCheckedDate) {
-            // Dokumen yang masih di ibuB dan updated setelah lastChecked (dokumen baru dari IbuA)
+            // Dokumen yang masih di Team Verifikasi dan updated setelah lastChecked (dokumen baru dari Operator)
             $query->where(function ($q) use ($lastCheckedDate) {
-                $q->where('current_handler', 'ibuB')
+                $q->where('current_handler', 'team_verifikasi')
                     ->where('updated_at', '>', $lastCheckedDate)
-                    ->whereIn('status', ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
+                    ->whereIn('status', ['sent_to_Team Verifikasi', 'sedang diproses', 'menunggu_di_approve']);
             })
                 // Atau dokumen yang baru di-approve oleh perpajakan/akutansi/pembayaran setelah lastChecked
                 ->orWhere(function ($q) use ($lastCheckedDate) {
@@ -200,7 +200,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             })
             ->with([
                 'roleData' => function ($query) {
-                    $query->whereIn('role_code', ['ibub', 'perpajakan', 'akutansi', 'pembayaran']);
+                    $query->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
                 }
             ])
             ->with([
@@ -213,7 +213,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             ->get();
 
         $totalDocuments = \App\Models\Dokumen::where(function ($query) {
-            $query->where('current_handler', 'ibuB')
+            $query->where('current_handler', 'team_verifikasi')
                 ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
         })->count();
 
@@ -222,16 +222,16 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
             'new_count' => $newDocuments->count(),
             'total_documents' => $totalDocuments,
             'new_documents' => $newDocuments->map(function ($doc) {
-                $roleData = $doc->roleData->firstWhere('role_code', 'ibub');
+                $roleData = $doc->roleData->firstWhere('role_code', 'team_verifikasi');
 
-                // Tentukan apakah ini dokumen baru dari IbuA atau dokumen yang sudah di-approve
-                $isNewFromIbuA = $doc->current_handler === 'ibuB' &&
-                    in_array($doc->status, ['sent_to_ibub', 'sedang diproses', 'menunggu_di_approve']);
+                // Tentukan apakah ini dokumen baru dari Operator atau dokumen yang sudah di-approve
+                $isNewFromOperator = $doc->current_handler === 'team_verifikasi' &&
+                    in_array($doc->status, ['sent_to_Team Verifikasi', 'sedang diproses', 'menunggu_di_approve']);
 
                 // Cek apakah dokumen sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
                 $approvedBy = null;
                 $approvedAt = null;
-                if (!$isNewFromIbuA && in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])) {
+                if (!$isNewFromOperator && in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])) {
                     // Cek status dari role yang approve
                     if ($doc->status === 'sent_to_perpajakan') {
                         $perpajakanStatus = $doc->roleStatuses->firstWhere('role_code', 'perpajakan');
@@ -262,7 +262,7 @@ Route::get('/api/documents/verifikasi/check-updates', function () {
                     'nilai_rupiah' => $doc->nilai_rupiah,
                     'status' => $doc->status,
                     'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i'),
-                    'is_new_from_ibua' => $isNewFromIbuA,
+                    'is_new_from_Operator' => $isNewFromOperator,
                     'approved_by' => $approvedBy,
                     'approved_at' => $approvedAt,
                 ];
@@ -308,12 +308,12 @@ Route::get('/pembayaran/check-updates', function () {
 
 // Dashboard routes with role protection - Professional URLs
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth', 'role:admin,ibua,IbuA,ibutarapul')
+    ->middleware('auth', 'role:admin,operator')
     ->name('dashboard.main');
 
 // Professional dashboard routes
-Route::get('dashboard/verifikasi', [DashboardBController::class, 'index'])
-    ->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')
+Route::get('dashboard/verifikasi', [TeamVerifikasiController::class, 'index'])
+    ->middleware('auth', 'role:admin,team_verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
@@ -337,7 +337,7 @@ Route::get('dashboard/verifikasi-role', function () {
 // Backward compatibility - redirect old URLs to new professional URLs
 Route::get('dashboardB', function () {
     return redirect()->route('dashboard.verifikasi', [], 301);
-})->name('dashboard.ibub.old');
+})->name('dashboard.team_verifikasi.old');
 
 Route::get('dashboardPembayaran', function () {
     return redirect()->route('dashboard.pembayaran', [], 301);
@@ -357,31 +357,31 @@ Route::get('dashboardVerifikasi', function () {
 
 // Professional API routes for rejected documents
 Route::get('/api/documents/rejected/check', [DashboardController::class, 'checkRejectedDocuments'])
-    ->middleware('auth', 'role:admin,ibua,IbuA')
+    ->middleware('auth', 'role:admin,Operator,Operator')
     ->name('api.documents.rejected.check');
 Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,ibua,IbuA')
+    ->middleware('auth', 'role:admin,Operator,Operator')
     ->name('api.documents.rejected.show');
-Route::get('/api/documents/verifikasi/rejected/check', [DashboardBController::class, 'checkRejectedDocuments'])
-    ->middleware('auth', 'role:admin,ibub,IbuB')
+Route::get('/api/documents/verifikasi/rejected/check', [TeamVerifikasiController::class, 'checkRejectedDocuments'])
+    ->middleware('auth', 'role:admin,Team Verifikasi,Team Verifikasi')
     ->name('api.documents.verifikasi.rejected.check');
-Route::get('/api/documents/verifikasi/rejected/{dokumen}', [DashboardBController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,ibub,IbuB')
+Route::get('/api/documents/verifikasi/rejected/{dokumen}', [TeamVerifikasiController::class, 'showRejectedDocument'])
+    ->middleware('auth', 'role:admin,Team Verifikasi,Team Verifikasi')
     ->name('api.documents.verifikasi.rejected.show');
 
 // Backward compatibility for old rejected document routes
-Route::get('/ibua/check-rejected', function () {
+Route::get('/Operator/check-rejected', function () {
     return redirect()->route('api.documents.rejected.check', [], 301);
-})->name('ibua.checkRejected.old');
-Route::get('/ibua/rejected/{dokumen}', function ($dokumen) {
+})->name('operator.checkRejected.old');
+Route::get('/Operator/rejected/{dokumen}', function ($dokumen) {
     return redirect()->route('api.documents.rejected.show', ['dokumen' => $dokumen], 301);
-})->name('ibua.rejected.show.old');
-Route::get('/ibub/check-rejected', function () {
+})->name('operator.rejected.show.old');
+Route::get('/Team Verifikasi/check-rejected', function () {
     return redirect()->route('api.documents.verifikasi.rejected.check', [], 301);
-})->name('ibub.checkRejected.old');
-Route::get('/ibub/rejected/{dokumen}', function ($dokumen) {
+})->name('team_verifikasi.checkRejected.old');
+Route::get('/Team Verifikasi/rejected/{dokumen}', function ($dokumen) {
     return redirect()->route('api.documents.verifikasi.rejected.show', ['dokumen' => $dokumen], 301);
-})->name('ibub.rejected.show.old');
+})->name('team_verifikasi.rejected.show.old');
 
 // Owner Dashboard routes (God View)
 // New Home page (main dashboard)
@@ -423,7 +423,7 @@ Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rek
 // Rekapan keterlambatan per role
 Route::get('owner/rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])
     ->middleware('auth')
-    ->where('roleCode', 'ibuA|ibuB|perpajakan|akutansi|pembayaran')
+    ->where('roleCode', 'operator|team_verifikasi|perpajakan|akutansi|pembayaran')
     ->name('owner.rekapan-keterlambatan.role');
 
 // Admin shortcut to Owner Dashboard
@@ -431,30 +431,30 @@ Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin')
     ->name('admin.monitoring');
 
-// Professional Document Routes - IbuA (Owner)
-Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('documents')->name('documents.')->group(function () {
+// Professional Document Routes - Operator (Owner)
+Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('documents.')->group(function () {
     Route::get('/', [DokumenController::class, 'index'])->name('index');
     Route::get('/create', [DokumenController::class, 'create'])->name('create');
     Route::post('/', [DokumenController::class, 'store'])->name('store');
 
     // CSV Import Routes - MUST be before {dokumen} routes to avoid conflict
-    Route::get('/import', [\App\Http\Controllers\IbuACsvImportController::class, 'index'])->name('import.index');
-    Route::post('/import/upload', [\App\Http\Controllers\IbuACsvImportController::class, 'upload'])->name('import.upload');
-    Route::post('/import/preview', [\App\Http\Controllers\IbuACsvImportController::class, 'preview'])->name('import.preview');
-    Route::post('/import', [\App\Http\Controllers\IbuACsvImportController::class, 'import'])->name('import.execute');
+    Route::get('/import', [\App\Http\Controllers\OperatorCsvImportController::class, 'index'])->name('import.index');
+    Route::post('/import/upload', [\App\Http\Controllers\OperatorCsvImportController::class, 'upload'])->name('import.upload');
+    Route::post('/import/preview', [\App\Http\Controllers\OperatorCsvImportController::class, 'preview'])->name('import.preview');
+    Route::post('/import', [\App\Http\Controllers\OperatorCsvImportController::class, 'import'])->name('import.execute');
 
     // Routes with {dokumen} parameter - MUST be after static routes
     Route::get('/{dokumen}/edit', [DokumenController::class, 'edit'])->name('edit');
     Route::get('/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('detail');
-    Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForIbuA'])->name('progress');
+    Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
     Route::put('/{dokumen}', [DokumenController::class, 'update'])->name('update');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
-    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToIbuB'])->name('send-to-verifikasi');
+    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeam Verifikasi'])->name('send-to-verifikasi');
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
 });
 
 // Professional Reports Routes
-Route::middleware(['auth', 'role:admin,ibua,IbuA,ibutarapul'])->prefix('reports')->name('reports.')->group(function () {
+Route::middleware(['auth', 'role:admin,operator'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [DokumenRekapanController::class, 'index'])->name('index');
     Route::get('/analytics', [DokumenRekapanController::class, 'analytics'])->name('analytics');
 });
@@ -487,64 +487,64 @@ Route::get('/api/autocomplete/po-numbers', [AutocompleteController::class, 'getP
 Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getPRNumbers'])->name('autocomplete.pr-numbers');
 Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index']);
 
-// Professional Document Routes - Verifikasi (IbuB)
-Route::middleware(['auth', 'role:admin,ibub,IbuB,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
-    Route::get('/', [DashboardBController::class, 'dokumens'])->name('index');
-    Route::get('/{dokumen}/detail', [DashboardBController::class, 'getDocumentDetail'])->name('detail');
-    Route::get('/{dokumen}/edit', [DashboardBController::class, 'editDokumen'])->name('edit');
-    Route::put('/{dokumen}', [DashboardBController::class, 'updateDokumen'])->name('update');
-    Route::post('/{dokumen}/return-to-department', [DashboardBController::class, 'returnToDepartment'])->name('return-to-department');
-    Route::post('/{dokumen}/send-to-next', [DashboardBController::class, 'sendToNextHandler'])->name('send-to-next');
-    Route::post('/{dokumen}/set-deadline', [DashboardBController::class, 'setDeadline'])->name('set-deadline');
-    Route::post('/{dokumen}/return-to-owner', [DashboardBController::class, 'returnToIbuA'])->name('return-to-owner');
-    Route::post('/{dokumen}/change-status', [DashboardBController::class, 'changeDocumentStatus'])->name('change-status');
+// Professional Document Routes - Verifikasi (Team Verifikasi)
+Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+    Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
+    Route::get('/{dokumen}/detail', [TeamVerifikasiController::class, 'getDocumentDetail'])->name('detail');
+    Route::get('/{dokumen}/edit', [TeamVerifikasiController::class, 'editDokumen'])->name('edit');
+    Route::put('/{dokumen}', [TeamVerifikasiController::class, 'updateDokumen'])->name('update');
+    Route::post('/{dokumen}/return-to-department', [TeamVerifikasiController::class, 'returnToDepartment'])->name('return-to-department');
+    Route::post('/{dokumen}/send-to-next', [TeamVerifikasiController::class, 'sendToNextHandler'])->name('send-to-next');
+    Route::post('/{dokumen}/set-deadline', [TeamVerifikasiController::class, 'setDeadline'])->name('set-deadline');
+    Route::post('/{dokumen}/return-to-owner', [TeamVerifikasiController::class, 'returnToOperator'])->name('return-to-owner');
+    Route::post('/{dokumen}/change-status', [TeamVerifikasiController::class, 'changeDocumentStatus'])->name('change-status');
 });
 
 // Professional Reports Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,ibub,IbuB,verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
-    Route::get('/', [DashboardBController::class, 'rekapan'])->name('index');
-    Route::get('/analytics', [DashboardBController::class, 'rekapanAnalytics'])->name('analytics');
+Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
+    Route::get('/', [TeamVerifikasiController::class, 'rekapan'])->name('index');
+    Route::get('/analytics', [TeamVerifikasiController::class, 'rekapanAnalytics'])->name('analytics');
 });
 
 // Professional Returns Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,ibub,IbuB,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
-    Route::get('/', [DashboardBController::class, 'pengembalian'])->name('index');
-    Route::get('/stats', [DashboardBController::class, 'getPengembalianKeBagianStats'])->name('stats');
-    Route::get('/bidang', [DashboardBController::class, 'pengembalianKeBidang'])->name('bidang');
+Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
+    Route::get('/', [TeamVerifikasiController::class, 'pengembalian'])->name('index');
+    Route::get('/stats', [TeamVerifikasiController::class, 'getPengembalianKeBagianStats'])->name('stats');
+    Route::get('/bidang', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bidang');
 });
 
 
-// Backward compatibility for old IbuB routes
+// Backward compatibility for old Team Verifikasi routes
 Route::get('/dokumensB', function () {
     return redirect()->route('documents.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')->name('dokumensB.index.old');
-Route::get('/rekapan-ibuB', function () {
+})->middleware('auth', 'role:admin,team_verifikasi')->name('dokumensB.index.old');
+Route::get('/rekapan-Team Verifikasi', function () {
     return redirect()->route('reports.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')->name('dokumensB.rekapan.old');
+})->middleware('auth', 'role:admin,team_verifikasi')->name('dokumensB.rekapan.old');
 Route::get('/pengembalian-dokumensB', function () {
     return redirect()->route('returns.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,ibub,IbuB,verifikasi')->name('pengembalianB.index.old');
+})->middleware('auth', 'role:admin,team_verifikasi')->name('pengembalianB.index.old');
 
-// Professional Approval Routes - Verifikasi (IbuB)
-Route::middleware(['auth', 'role:ibub,IbuB,admin,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
-    Route::post('/{dokumen}/accept', [DashboardBController::class, 'acceptDocument'])
+// Professional Approval Routes - Verifikasi (Team Verifikasi)
+Route::middleware(['auth', 'role:team_verifikasi,admin'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+    Route::post('/{dokumen}/accept', [TeamVerifikasiController::class, 'acceptDocument'])
         ->name('accept');
-    Route::post('/{dokumen}/reject', [DashboardBController::class, 'rejectDocument'])
+    Route::post('/{dokumen}/reject', [TeamVerifikasiController::class, 'rejectDocument'])
         ->name('reject');
-    Route::get('/pending-approval', [DashboardBController::class, 'pendingApproval'])
+    Route::get('/pending-approval', [TeamVerifikasiController::class, 'pendingApproval'])
         ->name('pending-approval');
 });
 
-// Backward compatibility for old IbuB approval routes
-Route::post('/ibub/dokumen/{dokumen}/accept', function ($dokumen) {
+// Backward compatibility for old Team Verifikasi approval routes
+Route::post('/Team Verifikasi/dokumen/{dokumen}/accept', function ($dokumen) {
     return redirect()->route('documents.verifikasi.accept', ['dokumen' => $dokumen], 301);
-})->name('ibub.dokumen.accept.old');
-Route::post('/ibub/dokumen/{dokumen}/reject', function ($dokumen) {
+})->name('team_verifikasi.dokumen.accept.old');
+Route::post('/Team Verifikasi/dokumen/{dokumen}/reject', function ($dokumen) {
     return redirect()->route('documents.verifikasi.reject', ['dokumen' => $dokumen], 301);
-})->name('ibub.dokumen.reject.old');
-Route::get('/ibub/pending-approval', function () {
+})->name('team_verifikasi.dokumen.reject.old');
+Route::get('/Team Verifikasi/pending-approval', function () {
     return redirect()->route('documents.verifikasi.pending-approval', [], 301);
-})->name('ibub.pending.approval.old');
+})->name('team_verifikasi.pending.approval.old');
 
 // Document Activity Tracking Routes
 Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
@@ -556,7 +556,7 @@ Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents
         ->name('activity.stop');
 });
 
-// Universal Approval Routes - Untuk semua user kecuali IbuA - dengan auth
+// Universal Approval Routes - Untuk semua user kecuali Operator - dengan auth
 Route::middleware(['auth'])->group(function () {
     Route::post('/universal-approval/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])
         ->name('universal.approval.approve');
@@ -571,8 +571,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('universal.approval.notifications');
 });
 
-// Inbox Routes - Untuk IbuA, IbuB, Perpajakan, Akutansi, Pembayaran, Verifikasi
-Route::middleware(['auth', 'role:IbuA,ibua,ibutarapul,IbuTarapul,Ibu A,Ibu Tarapul,IbuB,ibub,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
+// Inbox Routes - Untuk Operator, Team Verifikasi, Perpajakan, Akutansi, Pembayaran, Verifikasi
+Route::middleware(['auth', 'role:Operator,Operator,ibutarapul,IbuTarapul,Ibu A,Ibu Tarapul,Team Verifikasi,Team Verifikasi,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
@@ -735,8 +735,8 @@ Route::get('/pengembalian-dokumensPerpajakan', function () {
 if (app()->environment('local', 'development')) {
     Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/test-broadcast', function () {
-            $dokumen = \App\Models\Dokumen::where('current_handler', 'ibuB')
-                ->orWhere('status', 'sent_to_ibub')
+            $dokumen = \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
+                ->orWhere('status', 'sent_to_Team Verifikasi')
                 ->latest()
                 ->first();
 
@@ -747,14 +747,14 @@ if (app()->environment('local', 'development')) {
             }
 
             try {
-                broadcast(new \App\Events\DocumentSent($dokumen, 'test', 'ibuB'));
+                broadcast(new \App\Events\DocumentSent($dokumen, 'test', 'team_verifikasi'));
                 \Log::info('Test broadcast sent', ['document_id' => $dokumen->id]);
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Test broadcast sent!',
                     'document_id' => $dokumen->id,
-                    'channel' => 'documents.ibuB'
+                    'channel' => 'documents.Team Verifikasi'
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Test broadcast failed: ' . $e->getMessage());
@@ -765,8 +765,8 @@ if (app()->environment('local', 'development')) {
         });
 
         Route::get('/test-returned-broadcast', function () {
-            $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
-                ->where('status', 'returned_to_ibua')
+            $dokumen = \App\Models\Dokumen::where('created_by', 'operator')
+                ->where('status', 'returned_to_operator')
                 ->latest()
                 ->first();
 
@@ -777,14 +777,14 @@ if (app()->environment('local', 'development')) {
             }
 
             try {
-                broadcast(new \App\Events\DocumentReturned($dokumen, $dokumen->alasan_pengembalian ?: 'Test alasan pengembalian', 'ibuB'));
+                broadcast(new \App\Events\DocumentReturned($dokumen, $dokumen->alasan_pengembalian ?: 'Test alasan pengembalian', 'team_verifikasi'));
                 \Log::info('Test returned broadcast sent', ['document_id' => $dokumen->id]);
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Test returned broadcast sent!',
                     'document_id' => $dokumen->id,
-                    'channel' => 'documents.ibuA'
+                    'channel' => 'documents.Operator'
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Test returned broadcast failed: ' . $e->getMessage());
@@ -807,8 +807,8 @@ if (app()->environment('local', 'development')) {
         });
 
         Route::get('/test-trigger-notification', function () {
-            $dokumen = \App\Models\Dokumen::where('created_by', 'ibuA')
-                ->where('status', 'returned_to_ibua')
+            $dokumen = \App\Models\Dokumen::where('created_by', 'operator')
+                ->where('status', 'returned_to_operator')
                 ->first();
 
             if (!$dokumen) {
@@ -818,7 +818,7 @@ if (app()->environment('local', 'development')) {
             }
 
             $dokumen->update([
-                'returned_to_ibua_at' => \Illuminate\Support\Carbon::now()->subMinutes(1),
+                'returned_to_operator_at' => \Illuminate\Support\Carbon::now()->subMinutes(1),
                 'alasan_pengembalian' => 'Test notification trigger at ' . \Illuminate\Support\Carbon::now()->format('H:i:s')
             ]);
 
@@ -826,7 +826,7 @@ if (app()->environment('local', 'development')) {
                 'success' => true,
                 'message' => 'Test notification triggered!',
                 'document_id' => $dokumen->id,
-                'returned_at' => $dokumen->returned_to_ibua_at,
+                'returned_at' => $dokumen->returned_to_operator_at,
             ]);
         });
     });
@@ -860,7 +860,7 @@ if (app()->environment('local', 'development')) {
             abort(403, 'Role switching disabled for security');
         })->name('switch.role');
 
-        Route::get('/dev-dashboard/{role?}', function ($role = 'IbuA') {
+        Route::get('/dev-dashboard/{role?}', function ($role = 'operator') {
             abort(403, 'Development dashboard disabled for security');
         })->name('dev.dashboard');
 
@@ -899,10 +899,12 @@ Route::middleware(['auth', 'bagian'])
             Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail');
             Route::put('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'update'])->name('update');
             Route::delete('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'destroy'])->name('destroy');
-            Route::post('/{dokumen}/send-to-ibua', [\App\Http\Controllers\BagianDokumenController::class, 'sendToIbuA'])->name('send-to-ibua');
+            Route::post('/{dokumen}/send-to-Operator', [\App\Http\Controllers\BagianDokumenController::class, 'sendToOperator'])->name('send-to-Operator');
         });
 
         // Tracking
         Route::get('bagian/tracking', [\App\Http\Controllers\BagianDokumenController::class, 'tracking'])
             ->name('bagian.tracking');
     });
+
+
