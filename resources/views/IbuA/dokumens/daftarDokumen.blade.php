@@ -2382,7 +2382,7 @@
                     </a>
                   @endif
                   @if($canSend)
-                    <form action="{{ route('documents.send-to-ibub', $dokumen->id) }}" method="POST" style="display: inline;">
+                    <form action="{{ route('send-to-verifikasi', $dokumen->id) }}" method="POST" style="display: inline;">
                       @csrf
                       <button type="submit" class="btn-action btn-send" title="Kirim ke Team Verifikasi">
                         <i class="fa-solid fa-paper-plane"></i>
