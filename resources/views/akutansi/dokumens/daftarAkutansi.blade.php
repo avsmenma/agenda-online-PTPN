@@ -5500,6 +5500,67 @@
       }
     }
   });
+
+  // ===== LIVE SEARCH FUNCTIONALITY =====
+  // Debounce function
+  function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+          const later = () => {
+              clearTimeout(timeout);
+              func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+      };
+  }
+
+  // Live search handler
+  const searchInput = document.querySelector('input[name="search"]');
+  if (searchInput) {
+      const liveSearchHandler = debounce(function() {
+          const form = searchInput.closest('form');
+          if (!form) return;
+          
+          const searchValue = searchInput.value.trim();
+          const url = new URL(form.action);
+          
+          if (searchValue) {
+              url.searchParams.set('search', searchValue);
+          } else {
+              url.searchParams.delete('search');
+          }
+          
+          const yearInput = form.querySelector('input[name="year"]');
+          if (yearInput && yearInput.value) {
+              url.searchParams.set('year', yearInput.value);
+          }
+          
+          const yearFilterType = form.querySelector('input[name="year_filter_type"]');
+          if (yearFilterType && yearFilterType.value) {
+              url.searchParams.set('year_filter_type', yearFilterType.value);
+          }
+          
+          const statusInput = form.querySelector('input[name="status_filter"]');
+          if (statusInput && statusInput.value) {
+              url.searchParams.set('status_filter', statusInput.value);
+          }
+          
+          const perPage = new URLSearchParams(window.location.search).get('per_page');
+          if (perPage) {
+              url.searchParams.set('per_page', perPage);
+          }
+          
+          const columnInputs = form.querySelectorAll('input[name="columns[]"]');
+          columnInputs.forEach(input => {
+              url.searchParams.append('columns[]', input.value);
+          });
+          
+          window.location.href = url.toString();
+      }, 500);
+      
+      searchInput.addEventListener('input', liveSearchHandler);
+  }
   </script>
 
 @endsection
