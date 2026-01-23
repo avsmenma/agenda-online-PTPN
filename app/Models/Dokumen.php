@@ -223,6 +223,26 @@ class Dokumen extends Model
         );
     }
 
+    /**
+     * Scope to exclude documents that are still in inbox (waiting for approval)
+     * These documents should only appear in the inbox, not in main document lists
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeExcludeInbox($query)
+    {
+        // Inbox statuses that should be excluded from main document lists
+        $inboxStatuses = [
+            'waiting_reviewer_approval',     // Team Verifikasi inbox
+            'pending_approval_perpajakan',   // Perpajakan inbox
+            'pending_approval_akutansi',     // Akutansi inbox
+            'menunggu_di_approve',           // Generic inbox status
+        ];
+
+        return $query->whereNotIn('status', $inboxStatuses);
+    }
+
     public function documentTrackings(): HasMany
     {
         return $this->hasMany(DocumentTracking::class, 'document_id');
