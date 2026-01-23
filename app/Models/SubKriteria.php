@@ -32,3 +32,4 @@ class SubKriteria extends Model
 
 
 
+

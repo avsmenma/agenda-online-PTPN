@@ -1093,7 +1093,7 @@ class Dokumen extends Model
     public function getoperatorStatusDisplay()
     {
         // Prioritaskan milestone historical PERMANENT
-        if ($this->approved_by_Team Verifikasi_at) {
+        if ($this->approved_by_team_verifikasi_at) {
             return 'Document Approved'; // ✅ PERMANENT MILESTONE - TIDAK AKAN TERGANGGU REJECT
         }
 
@@ -1106,7 +1106,7 @@ class Dokumen extends Model
         }
 
         // Jika ada milestone, gunakan itu - jangan overwrite dengan current status!
-        if ($this->approved_by_Team Verifikasi_at || $this->approved_by_perpajakan_at || $this->approved_by_akutansi_at) {
+        if ($this->approved_by_team_verifikasi_at || $this->approved_by_perpajakan_at || $this->approved_by_akutansi_at) {
             // Cari status milestone yang sesuai
             $milestoneStatuses = [
                 'approved_data_sudah_terkirim' => 'Document Approved',
@@ -1161,7 +1161,7 @@ class Dokumen extends Model
     public function getCorrectStatusDisplay()
     {
         // Jika ada milestone historical, gunakan itu
-        if ($this->approved_by_Team Verifikasi_at) {
+        if ($this->approved_by_team_verifikasi_at) {
             return 'Document Approved'; // ✅ MILESTONE SELALU BENAR
         }
 
@@ -1244,16 +1244,16 @@ class Dokumen extends Model
             // This check must be done FIRST before any other status checks
             // to ensure documents approved by Ibu Yuni always show as "Terkirim" for Ibu Tarapul
             // Use new dokumen_statuses table instead of removed inbox_approval columns
-            $Team VerifikasiStatus = $this->getStatusForRole('team_verifikasi');
-            if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
+            $teamVerifikasiStatus = $this->getStatusForRole('team_verifikasi');
+            if ($teamVerifikasiStatus && $teamVerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                 // Document was approved by Ibu Yuni - ALWAYS show as "Terkirim" for Ibu Tarapul
                 // regardless of current status (even if sent to perpajakan/akutansi)
                 return 'Terkirim';
             }
 
-            // Check if document has been sent to Team Verifikasi (using roleData instead of removed sent_to_Team Verifikasi_at)
-            $Team VerifikasiRoleData = $this->getDataForRole('team_verifikasi');
-            if ($Team VerifikasiRoleData && $Team VerifikasiRoleData->received_at) {
+            // Check if document has been sent to Team Verifikasi (using roleData instead of removed sent_to_team_verifikasi_at)
+            $teamVerifikasiRoleData = $this->getDataForRole('team_verifikasi');
+            if ($teamVerifikasiRoleData && $teamVerifikasiRoleData->received_at) {
                 // Document has been sent to reviewer
                 // Check if there's a rejection from later stages
                 if ($this->last_action_status && strpos($this->last_action_status, 'rejected') !== false) {
@@ -1269,7 +1269,7 @@ class Dokumen extends Model
                 // If document is at reviewer stage waiting approval
                 if (
                     $this->status === 'waiting_reviewer_approval' ||
-                    ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_PENDING)
+                    ($teamVerifikasiStatus && $teamVerifikasiStatus->status === DokumenStatus::STATUS_PENDING)
                 ) {
                     return 'Menunggu Approval Reviewer';
                 }
@@ -1286,7 +1286,7 @@ class Dokumen extends Model
                     $this->status === 'pending_approval_pembayaran'
                 ) {
                     // Check again if approved (double check for safety)
-                    if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
+                    if ($teamVerifikasiStatus && $teamVerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                         return 'Terkirim';
                     }
                     return 'Sedang Proses';
@@ -1295,7 +1295,7 @@ class Dokumen extends Model
                 // If status is 'sedang diproses', check approval status
                 if ($this->status === 'sedang diproses') {
                     // Double check: if approved by Ibu Yuni, show as "Terkirim"
-                    if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
+                    if ($teamVerifikasiStatus && $teamVerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                         return 'Terkirim';
                     }
                     // Only show 'Menunggu Approval Reviewer' if NOT yet approved
@@ -1332,7 +1332,7 @@ class Dokumen extends Model
             // For 'sedang diproses', check if it's after reviewer approval
             if ($this->status === 'sedang diproses') {
                 // If approved by Ibu Yuni, show as "Terkirim"
-                if ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
+                if ($teamVerifikasiStatus && $teamVerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                     return 'Terkirim';
                 }
                 // Otherwise, it's still waiting for approval
@@ -1340,10 +1340,10 @@ class Dokumen extends Model
             }
 
             // Final fallback: check approval status one more time
-            if ($Team VerifikasiStatus) {
-                if ($Team VerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
+            if ($teamVerifikasiStatus) {
+                if ($teamVerifikasiStatus->status === DokumenStatus::STATUS_APPROVED) {
                     return 'Terkirim';
-                } elseif ($Team VerifikasiStatus->status === DokumenStatus::STATUS_PENDING) {
+                } elseif ($teamVerifikasiStatus->status === DokumenStatus::STATUS_PENDING) {
                     return 'Menunggu Approval Reviewer';
                 }
             }
@@ -1354,10 +1354,10 @@ class Dokumen extends Model
         // REVIEWER VIEW (Ibu Yuni / Team Verifikasi)
         if ($userRole === 'team_verifikasi') {
             // Check if document is waiting for reviewer approval using new dokumen_statuses table
-            $Team VerifikasiStatus = $this->getStatusForRole('team_verifikasi');
+            $teamVerifikasiStatus = $this->getStatusForRole('team_verifikasi');
             if (
                 $this->status === 'waiting_reviewer_approval' ||
-                ($Team VerifikasiStatus && $Team VerifikasiStatus->status === DokumenStatus::STATUS_PENDING)
+                ($teamVerifikasiStatus && $teamVerifikasiStatus->status === DokumenStatus::STATUS_PENDING)
             ) {
                 return 'Menunggu Approval';
             }
@@ -1677,5 +1677,7 @@ class Dokumen extends Model
         }
     }
 }
+
+
 
 

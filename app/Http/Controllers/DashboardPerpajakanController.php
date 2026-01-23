@@ -1443,10 +1443,10 @@ class DashboardPerpajakanController extends Controller
                 'tanggal_selesai_verifikasi_pajak' => null,
             ];
 
-            // Only set sent_to_Team Verifikasi_at if it's null (first time entering Team Verifikasi)
+            // Only set sent_to_team_verifikasi_at if it's null (first time entering Team Verifikasi)
             // This preserves the original entry time for consistent ordering
-            if (is_null($dokumen->sent_to_Team Verifikasi_at)) {
-                $updateData['sent_to_Team Verifikasi_at'] = now();
+            if (is_null($dokumen->sent_to_team_verifikasi_at)) {
+                $updateData['sent_to_team_verifikasi_at'] = now();
             }
 
             $dokumen->update($updateData);
@@ -2556,6 +2556,7 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.export.pdf', $data);
     }
 }
+
 
 
 

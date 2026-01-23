@@ -3581,14 +3581,14 @@
         console.log('initTeam VerifikasiRejectedNotifications function called - Initializing Team Verifikasi rejected documents notification system');
         
         // Rejected documents notification polling
-        let rejectedLastCheckTime = localStorage.getItem('Team Verifikasi_rejected_last_check_time');
+        let rejectedLastCheckTime = localStorage.getItem('team_verifikasi_rejected_last_check_time');
         if (!rejectedLastCheckTime) {
             rejectedLastCheckTime = new Date().toISOString();
-            localStorage.setItem('Team Verifikasi_rejected_last_check_time', rejectedLastCheckTime);
+            localStorage.setItem('team_verifikasi_rejected_last_check_time', rejectedLastCheckTime);
         }
 
         // Track shown rejected notifications to prevent duplicates
-        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('Team Verifikasi_shown_rejected_notifications') || '[]'));
+        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('team_verifikasi_shown_rejected_notifications') || '[]'));
 
         // Function to check for rejected documents
         async function checkRejectedDocuments() {
@@ -3617,14 +3617,14 @@
                     // Update last check time
                     if (data.current_time) {
                         rejectedLastCheckTime = data.current_time;
-                        localStorage.setItem('Team Verifikasi_rejected_last_check_time', rejectedLastCheckTime);
+                        localStorage.setItem('team_verifikasi_rejected_last_check_time', rejectedLastCheckTime);
                     }
 
                     // If there are rejected documents
                     if (data.rejected_documents_count > 0 && data.rejected_documents.length > 0) {
                         // Filter out already shown notifications
                         const newRejectedToShow = data.rejected_documents.filter(doc => {
-                            const docKey = `Team Verifikasi_rejected_doc_${doc.id}_shown`;
+                            const docKey = `team_verifikasi_rejected_doc_${doc.id}_shown`;
                             const shownTime = localStorage.getItem(docKey);
                             const now = Date.now();
                             
@@ -3640,7 +3640,7 @@
                         });
 
                         // Save shown notification IDs to localStorage
-                        localStorage.setItem('Team Verifikasi_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
+                        localStorage.setItem('team_verifikasi_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
 
                         // Only show notification if we have new rejected documents
                         if (newRejectedToShow.length > 0) {
@@ -4166,5 +4166,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
 
 

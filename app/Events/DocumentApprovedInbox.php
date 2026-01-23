@@ -71,3 +71,4 @@ class DocumentApprovedInbox implements ShouldBroadcast
 }
 
 
+

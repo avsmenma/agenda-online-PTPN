@@ -123,10 +123,10 @@
     <span class="detail-value">{{ $dokumen->created_at->format('d M Y H:i') }}</span>
   </div>
   @endif
-  @if($dokumen->sent_to_Team Verifikasi_at)
+  @if($dokumen->sent_to_team_verifikasi_at)
   <div class="detail-item">
     <span class="detail-label">Dikirim ke Ibu Yuni</span>
-    <span class="detail-value">{{ $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') }}</span>
+    <span class="detail-value">{{ $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') }}</span>
   </div>
   @endif
   @if($dokumen->processed_at)
@@ -148,4 +148,5 @@
   </div>
   @endif
 </div>
+
 

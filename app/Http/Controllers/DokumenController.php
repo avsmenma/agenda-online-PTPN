@@ -385,7 +385,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_team_verifikasi_at ? $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -403,7 +403,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_team_verifikasi_at ? $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -429,7 +429,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_team_verifikasi_at ? $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -456,7 +456,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
-                'time' => $dokumen->sent_to_Team Verifikasi_at ? $dokumen->sent_to_Team Verifikasi_at->format('d M Y H:i') : '',
+                'time' => $dokumen->sent_to_team_verifikasi_at ? $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') : '',
                 'description' => 'Dokumen telah dikirim ke Ibu Yuni untuk diproses',
                 'percentage' => 30
             ];
@@ -795,8 +795,8 @@ class DokumenController extends Controller
 
         // Check if document is rejected
         $isRejected = false;
-        $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-        if ($Team VerifikasiStatus && strtolower($Team VerifikasiStatus->status ?? '') === 'rejected') {
+        $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+        if ($teamVerifikasiStatus && strtolower($teamVerifikasiStatus->status ?? '') === 'rejected') {
             $isRejected = true;
         } else {
             $rejectedStatus = $dokumen->roleStatuses()
@@ -1146,8 +1146,8 @@ class DokumenController extends Controller
 
             // Check if document is rejected (can be sent again)
             $isRejected = false;
-            $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-            if ($Team VerifikasiStatus && strtolower($Team VerifikasiStatus->status ?? '') === 'rejected') {
+            $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+            if ($teamVerifikasiStatus && strtolower($teamVerifikasiStatus->status ?? '') === 'rejected') {
                 $isRejected = true;
             } else {
                 // Fallback: check from roleStatuses directly
@@ -1380,6 +1380,7 @@ class DokumenController extends Controller
         return $suggestions;
     }
 }
+
 
 
 

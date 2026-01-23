@@ -2152,7 +2152,7 @@
                           ->exists();
 
                         // Cek apakah Team Verifikasi sudah APPROVE (bukan pending)
-                        $Team VerifikasiHasApproved = $dokumen->roleStatuses()
+                        $teamVerifikasiHasApproved = $dokumen->roleStatuses()
                           ->where('role_code', 'team_verifikasi')
                           ->where('status', 'approved')
                           ->exists();
@@ -2167,7 +2167,7 @@
                           $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
                         } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_Team Verifikasi')) {
                           $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                        } elseif ($Team VerifikasiHasApproved || $hasPerpajakanStatus) {
+                        } elseif ($teamVerifikasiHasApproved || $hasPerpajakanStatus) {
                           // Team Verifikasi sudah approve ATAU sudah sampai ke role berikutnya
                           $OperatorDisplayStatus = 'terkirim';
                         } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_Operator'])) {
@@ -2256,15 +2256,15 @@
                       || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
 
                     // Check if document has been approved by Team Verifikasi and sent to other roles
-                    $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-                    $isApprovedByTeam Verifikasi = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
+                    $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                    $isApprovedByTeam Verifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
 
                     // Check if document is rejected - check from roleStatuses
                     // More comprehensive check to ensure we catch all rejected documents
                     $isRejected = false;
 
                     // Method 1: Check from getStatusForRole
-                    if ($Team VerifikasiStatus && strtolower($Team VerifikasiStatus->status ?? '') === 'rejected') {
+                    if ($teamVerifikasiStatus && strtolower($teamVerifikasiStatus->status ?? '') === 'rejected') {
                       $isRejected = true;
                     }
 
@@ -2442,9 +2442,9 @@
   @if(isset($dokumens))
     @foreach($dokumens as $dokumen)
       @php
-        $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-        $isRejected = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'rejected';
-        $rejectReason = $Team VerifikasiStatus?->notes ?? null;
+        $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+        $isRejected = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
+        $rejectReason = $teamVerifikasiStatus?->notes ?? null;
       @endphp
       @if($isRejected && $rejectReason)
         <div class="modal fade" id="rejectReasonModal{{ $dokumen->id }}" tabindex="-1"
@@ -2482,8 +2482,8 @@
                       }
 
                       // Fallback ke role dari dokumen_statuses
-                      if (!$rejectedBy && $Team VerifikasiStatus) {
-                        $rejectedBy = $Team VerifikasiStatus->changed_by ?? 'Ibu Yuni';
+                      if (!$rejectedBy && $teamVerifikasiStatus) {
+                        $rejectedBy = $teamVerifikasiStatus->changed_by ?? 'Ibu Yuni';
                       }
 
                       // Format nama yang lebih ramah
@@ -4552,6 +4552,7 @@
           </script>
 
 @endsection
+
 
 
 

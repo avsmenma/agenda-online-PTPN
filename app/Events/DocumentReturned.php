@@ -69,3 +69,4 @@ class DocumentReturned implements ShouldBroadcast
     }
 }
 
+

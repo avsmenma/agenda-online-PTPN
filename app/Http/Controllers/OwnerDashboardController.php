@@ -445,9 +445,9 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 2: Dikirim ke Ibu Yuni
-        $Team VerifikasiData = $dokumen->getDataForRole('team_verifikasi');
-        if ($Team VerifikasiData && $Team VerifikasiData->received_at) {
-            $receivedAt = $Team VerifikasiData->received_at;
+        $teamVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+        if ($teamVerifikasiData && $teamVerifikasiData->received_at) {
+            $receivedAt = $teamVerifikasiData->received_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_Team Verifikasi',
@@ -855,17 +855,17 @@ class OwnerDashboardController extends Controller
             $startTime = Carbon::parse($dokumen->processed_at);
         } else {
             // Try to get from roleData - when received by Team Verifikasi (approval from inbox)
-            $Team VerifikasiData = null;
+            $teamVerifikasiData = null;
             if (method_exists($dokumen, 'getDataForRole')) {
-                $Team VerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+                $teamVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
             } elseif (isset($dokumen->roleData)) {
-                $Team VerifikasiData = $dokumen->roleData->where('role_code', 'team_verifikasi')->first();
+                $teamVerifikasiData = $dokumen->roleData->where('role_code', 'team_verifikasi')->first();
             }
 
-            if ($Team VerifikasiData && isset($Team VerifikasiData->processed_at) && $Team VerifikasiData->processed_at) {
-                $startTime = Carbon::parse($Team VerifikasiData->processed_at);
-            } elseif ($Team VerifikasiData && isset($Team VerifikasiData->received_at) && $Team VerifikasiData->received_at) {
-                $startTime = Carbon::parse($Team VerifikasiData->received_at);
+            if ($teamVerifikasiData && isset($teamVerifikasiData->processed_at) && $teamVerifikasiData->processed_at) {
+                $startTime = Carbon::parse($teamVerifikasiData->processed_at);
+            } elseif ($teamVerifikasiData && isset($teamVerifikasiData->received_at) && $teamVerifikasiData->received_at) {
+                $startTime = Carbon::parse($teamVerifikasiData->received_at);
             }
         }
 
@@ -1079,8 +1079,8 @@ class OwnerDashboardController extends Controller
             }
 
             // Get sent_at from previous role or dokumen timestamps
-            if ($role === 'team_verifikasi' && $dokumen->sent_to_Team Verifikasi_at) {
-                $sentAt = $dokumen->sent_to_Team Verifikasi_at;
+            if ($role === 'team_verifikasi' && $dokumen->sent_to_team_verifikasi_at) {
+                $sentAt = $dokumen->sent_to_team_verifikasi_at;
             } elseif ($index > 0) {
                 $prevRole = $roleKeys[$index - 1];
                 $prevRoleData = null;
@@ -1856,14 +1856,14 @@ class OwnerDashboardController extends Controller
                 }
 
                 // Check if sent to Ibu B again after return
-                $Team VerifikasiReceivedAt = $dokumen->getDataForRole('team_verifikasi')?->received_at;
+                $teamVerifikasiReceivedAt = $dokumen->getDataForRole('team_verifikasi')?->received_at;
                 if (
-                    $Team VerifikasiReceivedAt &&
-                    $Team VerifikasiReceivedAt->gt($dokumen->returned_to_Operator_at)
+                    $teamVerifikasiReceivedAt &&
+                    $teamVerifikasiReceivedAt->gt($dokumen->returned_to_Operator_at)
                 ) {
                     $isResend = true;
-                    if (!$resendTimestamp || $Team VerifikasiReceivedAt->gt($resendTimestamp)) {
-                        $resendTimestamp = $Team VerifikasiReceivedAt;
+                    if (!$resendTimestamp || $teamVerifikasiReceivedAt->gt($resendTimestamp)) {
+                        $resendTimestamp = $teamVerifikasiReceivedAt;
                     }
                     $attemptCount = max($attemptCount, 2);
                 }
@@ -3403,5 +3403,6 @@ class OwnerDashboardController extends Controller
         }
     }
 }
+
 
 

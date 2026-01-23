@@ -745,10 +745,10 @@
                 // Gunakan role-based status display untuk Ibu Tarapul (Operator)
                 $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('operator');
                 // Check approval status using new dokumen_statuses table
-                $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-                $isRejected = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'rejected';
-                $isApproved = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
-                $isPending = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'pending';
+                $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                $isRejected = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
+                $isApproved = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
+                $isPending = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'pending';
               @endphp
               
               @if($isRejected)
@@ -808,4 +808,5 @@
 </div>
 
 @endsection
+
 

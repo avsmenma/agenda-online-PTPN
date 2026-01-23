@@ -38,7 +38,7 @@ final class SetDeadlineRequest extends FormRequest
             $hasRole = $roles->contains('Team Verifikasi') || $roles->contains('Team Verifikasi') || $roles->contains('Team Verifikasi');
             \Log::info('SetDeadlineRequest: Using getRoleNames', [
                 'roles' => $roles->toArray(),
-                'has_Team Verifikasi_role' => $hasRole
+                'has_team_verifikasi_role' => $hasRole
             ]);
             return $hasRole;
         }
@@ -50,7 +50,7 @@ final class SetDeadlineRequest extends FormRequest
             \Log::info('SetDeadlineRequest: Using role field', [
                 'role_value' => $user->role,
                 'normalized_role' => $role,
-                'has_Team Verifikasi_role' => $hasRole
+                'has_team_verifikasi_role' => $hasRole
             ]);
             return $hasRole;
         }
@@ -62,7 +62,7 @@ final class SetDeadlineRequest extends FormRequest
             \Log::info('SetDeadlineRequest: Using name field', [
                 'name_value' => $user->name,
                 'normalized_name' => $name,
-                'has_Team Verifikasi_role' => $hasRole
+                'has_team_verifikasi_role' => $hasRole
             ]);
             return $hasRole;
         }
@@ -125,5 +125,6 @@ final class SetDeadlineRequest extends FormRequest
         ], 422));
     }
 }
+
 
 

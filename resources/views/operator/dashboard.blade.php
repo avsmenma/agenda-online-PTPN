@@ -562,9 +562,9 @@
                 </td>
                 <td>
                   @php
-                    $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-                    $isApproved = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
-                    $isPending = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'pending';
+                    $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                    $isApproved = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
+                    $isPending = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'pending';
                   @endphp
                   @if(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
                     <span class="badge badge-pending">
@@ -602,8 +602,8 @@
                         || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
 
                       // Check if document has been approved by Team Verifikasi and sent to other roles
-                      $Team VerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
-                      $isApprovedByTeam Verifikasi = $Team VerifikasiStatus && $Team VerifikasiStatus->status === 'approved';
+                      $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                      $isApprovedByTeam Verifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
 
                       // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
                       $isSentToOtherRoles = in_array($dokumen->status ?? '', [
@@ -706,4 +706,5 @@
   </script>
 
 @endsection
+
 

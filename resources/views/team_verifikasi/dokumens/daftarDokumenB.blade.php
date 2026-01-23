@@ -3649,8 +3649,8 @@
                 // NEW SIMPLIFIED APPROACH: Use display_status from dokumen_role_data
                 // The display_status is set by backend (sendToRoleInbox/approveFromRoleInbox)
                 // and is FINAL/frozen - it won't change when downstream roles act
-                $Team VerifikasiRoleData = $roleData; // roleData is already set for 'team_verifikasi' above
-                $displayStatus = $Team VerifikasiRoleData?->display_status;
+                $teamVerifikasiRoleData = $roleData; // roleData is already set for 'team_verifikasi' above
+                $displayStatus = $teamVerifikasiRoleData?->display_status;
 
                 // Get human-readable label from display_status
                 $displayStatusLabel = $displayStatus ? \App\Models\Dokumen::getFinalStatusLabel($displayStatus) : null;
@@ -6877,5 +6877,6 @@
     </script>
 
 @endsection
+
 
 
