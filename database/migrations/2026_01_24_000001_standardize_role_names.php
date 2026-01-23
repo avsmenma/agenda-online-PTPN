@@ -150,46 +150,79 @@ return new class extends Migration {
         }
 
         // ========================================
-        // 7. Update roles table
+        // 7. Update roles table - Handle duplicates carefully
         // ========================================
         if (Schema::hasTable('roles')) {
-            // Update operator role
-            foreach ($this->oldOperatorNames as $oldName) {
-                DB::table('roles')
-                    ->where('code', $oldName)
-                    ->update([
+            // First, check if new roles already exist
+            $operatorExists = DB::table('roles')->where('code', 'operator')->exists();
+            $teamVerifikasiExists = DB::table('roles')->where('code', 'team_verifikasi')->exists();
+
+            // Delete old role entries (they will be replaced by new ones)
+            // Only delete if the new role already exists (to prevent duplicates)
+            if ($operatorExists) {
+                foreach ($this->oldOperatorNames as $oldName) {
+                    DB::table('roles')->where('code', $oldName)->delete();
+                }
+            } else {
+                // Update the first old role to new name, delete the rest
+                $updated = false;
+                foreach ($this->oldOperatorNames as $oldName) {
+                    if (!$updated) {
+                        $affected = DB::table('roles')
+                            ->where('code', $oldName)
+                            ->update([
+                                'code' => 'operator',
+                                'name' => 'Operator'
+                            ]);
+                        if ($affected > 0) {
+                            $updated = true;
+                        }
+                    } else {
+                        DB::table('roles')->where('code', $oldName)->delete();
+                    }
+                }
+                // If no update happened, insert new role
+                if (!$updated && !DB::table('roles')->where('code', 'operator')->exists()) {
+                    DB::table('roles')->insert([
                         'code' => 'operator',
-                        'name' => 'Operator'
+                        'name' => 'Operator',
+                        'created_at' => now(),
+                        'updated_at' => now()
                     ]);
+                }
             }
 
-            // Update team_verifikasi role
-            foreach ($this->oldTeamVerifikasiNames as $oldName) {
-                DB::table('roles')
-                    ->where('code', $oldName)
-                    ->update([
+            if ($teamVerifikasiExists) {
+                foreach ($this->oldTeamVerifikasiNames as $oldName) {
+                    DB::table('roles')->where('code', $oldName)->delete();
+                }
+            } else {
+                // Update the first old role to new name, delete the rest
+                $updated = false;
+                foreach ($this->oldTeamVerifikasiNames as $oldName) {
+                    if (!$updated) {
+                        $affected = DB::table('roles')
+                            ->where('code', $oldName)
+                            ->update([
+                                'code' => 'team_verifikasi',
+                                'name' => 'Team Verifikasi'
+                            ]);
+                        if ($affected > 0) {
+                            $updated = true;
+                        }
+                    } else {
+                        DB::table('roles')->where('code', $oldName)->delete();
+                    }
+                }
+                // If no update happened, insert new role
+                if (!$updated && !DB::table('roles')->where('code', 'team_verifikasi')->exists()) {
+                    DB::table('roles')->insert([
                         'code' => 'team_verifikasi',
-                        'name' => 'Team Verifikasi'
+                        'name' => 'Team Verifikasi',
+                        'created_at' => now(),
+                        'updated_at' => now()
                     ]);
-            }
-
-            // Insert if not exists
-            if (!DB::table('roles')->where('code', 'operator')->exists()) {
-                DB::table('roles')->insert([
-                    'code' => 'operator',
-                    'name' => 'Operator',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            if (!DB::table('roles')->where('code', 'team_verifikasi')->exists()) {
-                DB::table('roles')->insert([
-                    'code' => 'team_verifikasi',
-                    'name' => 'Team Verifikasi',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                }
             }
         }
 
