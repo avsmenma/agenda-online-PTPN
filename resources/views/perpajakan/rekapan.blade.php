@@ -495,7 +495,7 @@
               @case('selesai')
                 <span class="badge badge-completed">Selesai</span>
                 @break
-              @case('returned_to_Operator')
+              @case('returned_to_operator')
                 <span class="badge badge-returned">Dikembalikan ke Ibu Tarapul</span>
                 @break
               @case('returned_to_department')
@@ -525,6 +525,7 @@
 @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 @endsection
+
 
 
 

@@ -739,7 +739,7 @@
                     <i class="fas fa-check"></i> Selesai
                   </span>
                   @break
-                @case('returned_to_Operator')
+                @case('returned_to_operator')
                   <span class="badge badge-returned">
                     <i class="fas fa-undo"></i> Dikembalikan ke Ibu Tarapul
                   </span>
@@ -778,6 +778,7 @@
 </div>
 
 @endsection
+
 
 
 

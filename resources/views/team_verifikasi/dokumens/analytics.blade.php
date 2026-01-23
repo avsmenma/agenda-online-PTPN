@@ -948,7 +948,7 @@
                   }
 
                   // Special cases
-                  if (in_array($dokumen->status, ['draft', 'returned_to_Operator'])) {
+                  if (in_array($dokumen->status, ['draft', 'returned_to_operator'])) {
                     $statusStyle = $statusColors['Belum Dikirim'];
                     $statusLabel = 'Belum Dikirim';
                   } elseif (stripos($statusLabel, 'Dikembalikan') !== false || stripos($statusLabel, 'Revisi') !== false) {
@@ -1206,6 +1206,7 @@
   </script>
 
 @endsection
+
 
 
 

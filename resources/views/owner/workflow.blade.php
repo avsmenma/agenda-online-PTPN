@@ -1494,7 +1494,7 @@
         'draft' => 'Draft',
         'sedang diproses' => 'Sedang Diproses',
         'menunggu_verifikasi' => 'Menunggu Verifikasi',
-        'pending_approval_Team Verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+        'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
         'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
         'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
         'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
@@ -1507,7 +1507,7 @@
         'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
         'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
         'selesai' => 'Selesai',
-        'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
+        'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
         'returned_to_department' => 'Dikembalikan ke Department',
         'returned_to_bidang' => 'Dikembalikan ke Bidang',
       ];
@@ -2360,6 +2360,7 @@
   </script>
 
 @endsection
+
 
 
 

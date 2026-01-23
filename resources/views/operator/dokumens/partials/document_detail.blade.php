@@ -110,7 +110,7 @@
   <div class="detail-item">
     <span class="detail-label">Status</span>
     <span class="detail-value">
-      @if(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
+      @if(in_array($dokumen->status, ['draft', 'returned_to_operator']))
         <span class="badge badge-status badge-yellow">⏳ Belum Dikirim</span>
       @else
         <span class="badge badge-status badge-green">✓ Sudah Dikirim ke Ibu Yuni</span>
@@ -135,10 +135,10 @@
     <span class="detail-value">{{ $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-' }}</span>
   </div>
   @endif
-  @if($dokumen->returned_to_Operator_at)
+  @if($dokumen->returned_to_operator_at)
   <div class="detail-item">
     <span class="detail-label">Dikembalikan</span>
-    <span class="detail-value">{{ $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d M Y H:i') : '-' }}</span>
+    <span class="detail-value">{{ $dokumen->returned_to_operator_at ? $dokumen->returned_to_operator_at->format('d M Y H:i') : '-' }}</span>
   </div>
   @endif
   @if($dokumen->keterangan)
@@ -148,6 +148,7 @@
   </div>
   @endif
 </div>
+
 
 
 

@@ -2146,7 +2146,7 @@
                         $statusLower = strtolower($dokumen->status ?? 'draft');
 
                         // PERBAIKAN: Cek apakah dokumen PENDING di inbox Team Verifikasi (Verifikasi)
-                        $isPendingInTeam Verifikasi = $dokumen->roleStatuses()
+                        $isPendingInTeamVerifikasi = $dokumen->roleStatuses()
                           ->where('role_code', 'team_verifikasi')
                           ->where('status', 'pending')
                           ->exists();
@@ -2163,14 +2163,14 @@
                           ->exists();
 
                         // PRIORITAS: Pending di inbox Team Verifikasi -> Menunggu Approval
-                        if ($isPendingInTeam Verifikasi) {
+                        if ($isPendingInTeamVerifikasi) {
                           $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                        } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_Team Verifikasi')) {
+                        } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_team_verifikasi')) {
                           $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
                         } elseif ($teamVerifikasiHasApproved || $hasPerpajakanStatus) {
                           // Team Verifikasi sudah approve ATAU sudah sampai ke role berikutnya
                           $OperatorDisplayStatus = 'terkirim';
-                        } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_Operator'])) {
+                        } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_operator'])) {
                           $OperatorDisplayStatus = 'draft';
                         } else {
                           // Default: cek current_handler untuk menentukan status
@@ -2253,7 +2253,7 @@
                   @php
                     // Check if document has been sent to Team Verifikasi
                     $isSentToTeamVerifikasi = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
-                      || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
+                      || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
 
                     // Check if document has been approved by Team Verifikasi and sent to other roles
                     $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
@@ -2277,9 +2277,9 @@
                       $isRejected = $rejectedStatus !== null;
                     }
 
-                    // Method 3: Check if status is returned_to_Operator AND has rejection in roleStatuses
+                    // Method 3: Check if status is returned_to_operator AND has rejection in roleStatuses
                     // This catches documents that were rejected but status might not be set correctly
-                    if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_Operator') {
+                    if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
                       // Check if there's any rejection status in roleStatuses relationship
                       $hasAnyRejection = $dokumen->roleStatuses()
                         ->where('status', 'rejected')
@@ -2304,7 +2304,7 @@
                     $isSent = ($isSentToTeamVerifikasi || ($isApprovedByTeamVerifikasi && $isSentToOtherRoles)) && !$isRejected;
 
                     // Can send only if document is draft/returned and still with Operator
-                    // Include rejected documents (returned_to_Operator) so they can be sent again
+                    // Include rejected documents (returned_to_operator) so they can be sent again
                     // IMPORTANT: Rejected documents should always be able to be sent again
 
                     // Check if document is created by Operator (case-insensitive)
@@ -2314,7 +2314,7 @@
                     $currentHandlerOperator = in_array(strtolower($dokumen->current_handler ?? ''), ['operator', 'Operator', 'operator']);
 
                     // Check if document is returned (case-insensitive)
-                    $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_Operator';
+                    $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_operator';
 
                     // Initialize canSend
                     $canSend = false;
@@ -2324,8 +2324,8 @@
                     if ($isRejected && $currentHandlerOperator && $createdByOperator) {
                       $canSend = true;
                     }
-                    // PRIORITY 2: Returned documents (returned_to_Operator) can be sent
-                    // This includes rejected documents that have status returned_to_Operator
+                    // PRIORITY 2: Returned documents (returned_to_operator) can be sent
+                    // This includes rejected documents that have status returned_to_operator
                     elseif ($isReturned && $currentHandlerOperator && $createdByOperator && !$isSent) {
                       $canSend = true;
                     }
@@ -2347,8 +2347,8 @@
                     //   'current_handler' => $dokumen->current_handler,
                     //   'created_by' => $dokumen->created_by,
                     //   'status' => $dokumen->status,
-                    //   'currentHandlerOperator' => $currentHandleroperator,
-                    //   'createdByOperator' => $createdByoperator,
+                    //   'currentHandlerOperator' => $currentHandlerOperator,
+                    //   'createdByOperator' => $createdByOperator,
                     //   'isSent' => $isSent,
                     //   'canSend' => $canSend,
                     // ]);
@@ -2361,7 +2361,7 @@
                     if ($isRejected && $currentHandlerOperator && $createdByOperator) {
                       $canEdit = true;
                     }
-                    // PRIORITY 2: Returned documents (returned_to_Operator) can be edited
+                    // PRIORITY 2: Returned documents (returned_to_operator) can be edited
                     elseif ($isReturned && $currentHandlerOperator && $createdByOperator && !$isSent) {
                       $canEdit = true;
                     }
@@ -4552,6 +4552,8 @@
           </script>
 
 @endsection
+
+
 
 
 

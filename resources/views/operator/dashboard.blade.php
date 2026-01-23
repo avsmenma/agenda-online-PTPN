@@ -566,7 +566,7 @@
                     $isApproved = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
                     $isPending = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'pending';
                   @endphp
-                  @if(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
+                  @if(in_array($dokumen->status, ['draft', 'returned_to_operator']))
                     <span class="badge badge-pending">
                       <i class="fas fa-clock"></i>
                       Belum Dikirim
@@ -599,7 +599,7 @@
                     @php
                       // Check if document has been sent to Team Verifikasi
                       $isSentToTeamVerifikasi = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
-                        || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_Operator');
+                        || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
 
                       // Check if document has been approved by Team Verifikasi and sent to other roles
                       $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
@@ -619,13 +619,13 @@
                       $isSent = $isSentToTeamVerifikasi || ($isApprovedByTeamVerifikasi && $isSentToOtherRoles);
 
                       // Can send only if document is draft/returned and still with Operator
-                      $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_Operator', 'sedang diproses'])
+                      $canSend = in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_operator', 'sedang diproses'])
                         && ($dokumen->current_handler ?? 'operator') == 'operator'
                         && ($dokumen->created_by ?? 'operator') == 'operator'
                         && !$isSent;
 
                       // Can edit only if document is not sent and can be edited
-                      $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_Operator'])
+                      $canEdit = !$isSent && in_array($dokumen->status ?? 'draft', ['draft', 'returned_to_operator'])
                         && ($dokumen->current_handler ?? 'operator') == 'operator';
                     @endphp
                     @if($canEdit)
@@ -706,6 +706,7 @@
   </script>
 
 @endsection
+
 
 
 

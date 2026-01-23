@@ -756,7 +756,7 @@
                 <span class="badge badge-returned">
                   <i class="fas fa-times-circle"></i> Dokumen Ditolak
                 </span>
-              @elseif(in_array($dokumen->status, ['draft', 'returned_to_Operator']))
+              @elseif(in_array($dokumen->status, ['draft', 'returned_to_operator']))
                 <span class="badge badge-draft">
                   <i class="fas fa-file-lines"></i> Belum Dikirim
                 </span>
@@ -775,7 +775,7 @@
                 <span class="badge badge-processing">
                   <i class="fas fa-spinner"></i> {{ $statusLabel }}
                 </span>
-              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_Operator')
+              @elseif($statusLabel == 'Dikembalikan untuk Revisi' || $dokumen->status == 'returned_to_operator')
                 <span class="badge badge-returned">
                   <i class="fas fa-undo"></i> Dikembalikan untuk Revisi
                 </span>
@@ -808,6 +808,7 @@
 </div>
 
 @endsection
+
 
 
 

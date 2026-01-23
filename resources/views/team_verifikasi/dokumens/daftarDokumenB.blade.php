@@ -3598,7 +3598,7 @@
                 // Dokumen ditolak jika:
                 // 1. Ditolak oleh Team Verifikasi sendiri, ATAU
                 // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = Team Verifikasi)
-                $isRejectedByTeam Verifikasi = $dokumen->roleStatuses()
+                $isRejectedByTeamVerifikasi = $dokumen->roleStatuses()
                   ->where('role_code', 'team_verifikasi')
                   ->where('status', 'rejected')
                   ->exists();
@@ -3619,7 +3619,7 @@
                   }
                 }
 
-                $isRejected = $isRejectedByTeam Verifikasi || $isRejectedByOtherRole;
+                $isRejected = $isRejectedByTeamVerifikasi || $isRejectedByOtherRole;
 
                 // Check pending status from roleStatuses
                 $isPending = $dokumen->roleStatuses()
@@ -3937,7 +3937,7 @@
                     <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
                   @elseif($dokumen->status == 'sent_to_pembayaran')
                     <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
-                  @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_Team Verifikasi']) || $isPending)
+                  @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi']) || $isPending)
                     <span class="badge-status"
                       style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                       <i class="fa-solid fa-clock me-1"></i>
@@ -3954,7 +3954,7 @@
                     <span class="badge-status badge-proses">⏳ Diproses</span>
                   @elseif($dokumen->status == 'sent_to_team_verifikasi' && $isLocked)
                     <span class="badge-status badge-locked">🔒 Terkunci</span>
-                  @elseif($dokumen->status == 'returned_to_Operator')
+                  @elseif($dokumen->status == 'returned_to_operator')
                     <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
                   @elseif($dokumen->status == 'returned_to_department')
                     <span class="badge-status badge-dikembalikan">
@@ -3997,7 +3997,7 @@
                           <span>Balik</span>
                         </button>
                       </div>
-                    @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_Team Verifikasi', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
+                    @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
                       <!-- Document already sent, waiting approval, or completed - show status -->
                       @if($isApprovedByOtherRole || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar')
                         <!-- Document has been approved/completed - show approved status -->
@@ -6877,6 +6877,8 @@
     </script>
 
 @endsection
+
+
 
 
 

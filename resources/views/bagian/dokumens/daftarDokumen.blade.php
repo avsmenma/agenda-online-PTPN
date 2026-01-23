@@ -606,7 +606,7 @@
                               <i class="fa-solid fa-clock"></i>
                               <span>Menunggu Approval Keuangan</span>
                             </span>
-                          @elseif(in_array($statusLower, ['sent_to_team_verifikasi', 'pending_approval_Team Verifikasi', 'terkirim']))
+                          @elseif(in_array($statusLower, ['sent_to_team_verifikasi', 'pending_approval_team_verifikasi', 'terkirim']))
                             <span class="badge-status badge-terkirim">
                               <i class="fa-solid fa-check"></i>
                               <span>Terkirim</span>
@@ -855,6 +855,7 @@
   </script>
 
 @endsection
+
 
 
 

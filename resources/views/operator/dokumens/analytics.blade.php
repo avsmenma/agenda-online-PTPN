@@ -642,7 +642,7 @@
               @php
                 $statusLabel = $dokumen->status_for_user ?? $dokumen->getStatusForUser('operator');
               @endphp
-              @if($statusLabel == 'Belum Dikirim' || in_array($dokumen->status, ['draft', 'returned_to_Operator']))
+              @if($statusLabel == 'Belum Dikirim' || in_array($dokumen->status, ['draft', 'returned_to_operator']))
                 <span class="badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 4px 12px; border-radius: 12px;">
                   Belum Dikirim
                 </span>
@@ -737,6 +737,7 @@ function showAllMonths() {
 </script>
 
 @endsection
+
 
 
 
