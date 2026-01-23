@@ -3052,7 +3052,7 @@
     // Initialize Team Verifikasi rejected documents notification if applicable
     if (isTeam Verifikasi) {
         console.log('Initializing Team Verifikasi rejected notifications');
-        initTeam VerifikasiRejectedNotifications();
+        initTeamVerifikasiRejectedNotifications();
     }
 
     // Only continue with inbox notifications if user has inbox access
@@ -3577,8 +3577,8 @@
     }
 
     // Team Verifikasi Rejected Documents Notification System
-    function initTeam VerifikasiRejectedNotifications() {
-        console.log('initTeam VerifikasiRejectedNotifications function called - Initializing Team Verifikasi rejected documents notification system');
+    function initTeamVerifikasiRejectedNotifications() {
+        console.log('initTeamVerifikasiRejectedNotifications function called - Initializing Team Verifikasi rejected documents notification system');
         
         // Rejected documents notification polling
         let rejectedLastCheckTime = localStorage.getItem('team_verifikasi_rejected_last_check_time');
@@ -4166,6 +4166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
 
 
 

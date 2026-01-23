@@ -449,7 +449,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
     Route::put('/{dokumen}', [DokumenController::class, 'update'])->name('update');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
-    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeam Verifikasi'])->name('send-to-verifikasi');
+    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeamVerifikasi'])->name('send-to-verifikasi');
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
 });
 
@@ -906,5 +906,6 @@ Route::middleware(['auth', 'bagian'])
         Route::get('bagian/tracking', [\App\Http\Controllers\BagianDokumenController::class, 'tracking'])
             ->name('bagian.tracking');
     });
+
 
 
