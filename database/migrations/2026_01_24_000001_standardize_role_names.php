@@ -262,9 +262,9 @@ return new class extends Migration {
             }
 
             // ========================================
-            // 10. Update document_activities table
+            // 10. Update document_activities table (if column exists)
             // ========================================
-            if (Schema::hasTable('document_activities')) {
+            if (Schema::hasTable('document_activities') && Schema::hasColumn('document_activities', 'performed_by')) {
                 foreach ($this->oldOperatorNames as $oldName) {
                     DB::table('document_activities')
                         ->where('performed_by', $oldName)
