@@ -97,13 +97,19 @@ class IbuACsvImportController extends Controller
         $handle = fopen($filePath, 'r');
 
         // First row is headers
-        $headers = fgetcsv($handle);
-        $headers = $this->cleanHeaders($headers);
+        $rawHeaders = fgetcsv($handle);
+        $headerData = $this->cleanHeaders($rawHeaders);
+        $headers = $headerData['headers'];
+        $skipFirstColumn = $headerData['skip_first'];
 
         // Get first 10 data rows for preview
         $rowCount = 0;
         while (($data = fgetcsv($handle)) !== false && $rowCount < 10) {
             if (!empty(array_filter($data))) {
+                // Skip first column if needed
+                if ($skipFirstColumn && count($data) > 0) {
+                    array_shift($data);
+                }
                 $rows[] = $data;
                 $rowCount++;
             }
@@ -122,13 +128,33 @@ class IbuACsvImportController extends Controller
     }
 
     /**
-     * Clean header names
+     * Clean header names and handle empty first column
+     * 
+     * Expected columns: Agenda, Bulan, Tahun, Kriteria, No SPP, Tanggal SPP, Tanggal Masuk, Dibayarkan Kepada, Uraian SPP, Nilai
      */
     private function cleanHeaders($headers)
     {
-        return array_map(function ($header) {
+        // Check if first column is empty (common issue with some CSV exports)
+        $skipFirstColumn = false;
+        if (count($headers) > 0 && empty(trim($headers[0]))) {
+            // Remove empty first column
+            array_shift($headers);
+            $skipFirstColumn = true;
+        }
+
+        // Clean headers
+        $cleanedHeaders = array_map(function ($header) {
+            // Remove newlines and extra spaces from headers like "Tanggal\nSPP" or "Nilai\n(Rp)"
+            $header = preg_replace('/\s+/', ' ', trim($header));
+            // Normalize common header variations
+            $header = str_replace(['(Rp)', '(RP)'], '', $header);
             return trim($header);
         }, $headers);
+
+        return [
+            'headers' => $cleanedHeaders,
+            'skip_first' => $skipFirstColumn,
+        ];
     }
 
     /**
@@ -173,8 +199,10 @@ class IbuACsvImportController extends Controller
     {
         $handle = fopen($filePath, 'r');
 
-        $headers = fgetcsv($handle);
-        $headers = $this->cleanHeaders($headers);
+        $rawHeaders = fgetcsv($handle);
+        $headerData = $this->cleanHeaders($rawHeaders);
+        $headers = $headerData['headers'];
+        $skipFirstColumn = $headerData['skip_first'];
 
         $validCount = 0;
         $errorCount = 0;
@@ -187,6 +215,11 @@ class IbuACsvImportController extends Controller
         while (($data = fgetcsv($handle)) !== false) {
             if (empty(array_filter($data))) {
                 continue;
+            }
+
+            // Skip first column if needed
+            if ($skipFirstColumn && count($data) > 0) {
+                array_shift($data);
             }
 
             // Ensure data array matches headers count
@@ -311,8 +344,10 @@ class IbuACsvImportController extends Controller
     {
         $handle = fopen($filePath, 'r');
 
-        $headers = fgetcsv($handle);
-        $headers = $this->cleanHeaders($headers);
+        $rawHeaders = fgetcsv($handle);
+        $headerData = $this->cleanHeaders($rawHeaders);
+        $headers = $headerData['headers'];
+        $skipFirstColumn = $headerData['skip_first'];
 
         $imported = 0;
         $skipped = 0;
@@ -323,6 +358,11 @@ class IbuACsvImportController extends Controller
         while (($data = fgetcsv($handle)) !== false) {
             if (empty(array_filter($data))) {
                 continue;
+            }
+
+            // Skip first column if needed
+            if ($skipFirstColumn && count($data) > 0) {
+                array_shift($data);
             }
 
             // Ensure data array matches headers count
