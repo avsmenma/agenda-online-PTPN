@@ -101,6 +101,7 @@ class IbuACsvImportController extends Controller
         $headerData = $this->cleanHeaders($rawHeaders);
         $headers = $headerData['headers'];
         $skipFirstColumn = $headerData['skip_first'];
+        $validIndices = $headerData['valid_indices'];
 
         // Get first 10 data rows for preview
         $rowCount = 0;
@@ -110,7 +111,14 @@ class IbuACsvImportController extends Controller
                 if ($skipFirstColumn && count($data) > 0) {
                     array_shift($data);
                 }
-                $rows[] = $data;
+
+                // Only take columns at valid indices
+                $filteredData = [];
+                foreach ($validIndices as $index) {
+                    $filteredData[] = $data[$index] ?? '';
+                }
+
+                $rows[] = $filteredData;
                 $rowCount++;
             }
         }
@@ -130,7 +138,10 @@ class IbuACsvImportController extends Controller
     /**
      * Clean header names and handle empty first column
      * 
-     * Expected columns: Agenda, Bulan, Tahun, Kriteria, No SPP, Tanggal SPP, Tanggal Masuk, Dibayarkan Kepada, Uraian SPP, Nilai
+     * Only these columns will be imported:
+     * Agenda, Bulan, Tahun, Kriteria, No SPP, Tanggal SPP, Tanggal Masuk, Dibayarkan Kepada, Uraian SPP, Nilai
+     * 
+     * Columns like "Kontrol" will be skipped
      */
     private function cleanHeaders($headers)
     {
@@ -142,18 +153,41 @@ class IbuACsvImportController extends Controller
             $skipFirstColumn = true;
         }
 
-        // Clean headers
-        $cleanedHeaders = array_map(function ($header) {
-            // Remove newlines and extra spaces from headers like "Tanggal\nSPP" or "Nilai\n(Rp)"
+        // Define allowed columns (these are the only columns we want to import)
+        $allowedColumns = [
+            'Agenda',
+            'Bulan',
+            'Tahun',
+            'Kriteria',
+            'No SPP',
+            'Tanggal SPP',
+            'Tanggal Masuk',
+            'Dibayarkan Kepada',
+            'Uraian SPP',
+            'Nilai',  // Will match "Nilai (Rp)" after cleaning
+        ];
+
+        // Clean headers and track which indices to keep
+        $filteredHeaders = [];
+        $validIndices = [];
+
+        foreach ($headers as $index => $header) {
+            // Clean the header
             $header = preg_replace('/\s+/', ' ', trim($header));
-            // Normalize common header variations
             $header = str_replace(['(Rp)', '(RP)'], '', $header);
-            return trim($header);
-        }, $headers);
+            $header = trim($header);
+
+            // Check if this is an allowed column
+            if (in_array($header, $allowedColumns)) {
+                $filteredHeaders[] = $header;
+                $validIndices[] = $index;
+            }
+        }
 
         return [
-            'headers' => $cleanedHeaders,
+            'headers' => $filteredHeaders,
             'skip_first' => $skipFirstColumn,
+            'valid_indices' => $validIndices,
         ];
     }
 
@@ -203,6 +237,7 @@ class IbuACsvImportController extends Controller
         $headerData = $this->cleanHeaders($rawHeaders);
         $headers = $headerData['headers'];
         $skipFirstColumn = $headerData['skip_first'];
+        $validIndices = $headerData['valid_indices'];
 
         $validCount = 0;
         $errorCount = 0;
@@ -222,12 +257,13 @@ class IbuACsvImportController extends Controller
                 array_shift($data);
             }
 
-            // Ensure data array matches headers count
-            while (count($data) < count($headers)) {
-                $data[] = '';
+            // Only take columns at valid indices
+            $filteredData = [];
+            foreach ($validIndices as $index) {
+                $filteredData[] = $data[$index] ?? '';
             }
 
-            $row = array_combine($headers, $data);
+            $row = array_combine($headers, $filteredData);
             $validation = $this->validateRow($row, $rowNumber);
 
             if (!empty($validation['errors'])) {
@@ -348,6 +384,7 @@ class IbuACsvImportController extends Controller
         $headerData = $this->cleanHeaders($rawHeaders);
         $headers = $headerData['headers'];
         $skipFirstColumn = $headerData['skip_first'];
+        $validIndices = $headerData['valid_indices'];
 
         $imported = 0;
         $skipped = 0;
@@ -365,12 +402,13 @@ class IbuACsvImportController extends Controller
                 array_shift($data);
             }
 
-            // Ensure data array matches headers count
-            while (count($data) < count($headers)) {
-                $data[] = '';
+            // Only take columns at valid indices
+            $filteredData = [];
+            foreach ($validIndices as $index) {
+                $filteredData[] = $data[$index] ?? '';
             }
 
-            $row = array_combine($headers, $data);
+            $row = array_combine($headers, $filteredData);
 
             // Skip rows without required fields
             if (empty(trim($row['Agenda'] ?? '')) || empty(trim($row['No SPP'] ?? ''))) {
@@ -467,8 +505,14 @@ class IbuACsvImportController extends Controller
         // We'll store it as jenis_dokumen or kategori based on pattern
         $kriteria = trim($row['Kriteria'] ?? '');
 
+        // Get nomor agenda and add _2026 suffix
+        $nomorAgenda = trim($row['Agenda'] ?? '');
+        if (!empty($nomorAgenda) && !str_contains($nomorAgenda, '_2026')) {
+            $nomorAgenda .= '_2026';
+        }
+
         return [
-            'nomor_agenda' => trim($row['Agenda'] ?? ''),
+            'nomor_agenda' => $nomorAgenda,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'nomor_spp' => trim($row['No SPP'] ?? $kriteria), // Use Kriteria as No SPP if not provided
