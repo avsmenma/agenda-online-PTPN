@@ -2382,11 +2382,13 @@
                     </a>
                   @endif
                   @if($canSend)
-                    <button class="btn-action btn-send" onclick="sendToIbuB({{ $dokumen->id }})"
-                      title="Kirim ke Team Verifikasi">
-                      <i class="fa-solid fa-paper-plane"></i>
-                      <span>Kirim</span>
-                    </button>
+                    <form action="{{ route('documents.send-to-ibub', $dokumen->id) }}" method="POST" style="display: inline;">
+                      @csrf
+                      <button type="submit" class="btn-action btn-send" title="Kirim ke Team Verifikasi">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Kirim</span>
+                      </button>
+                    </form>
                   @elseif($isSent)
                     <button class="btn-action btn-send" disabled title="Dokumen sudah dikirim">
                       <i class="fa-solid fa-paper-plane"></i>
@@ -2651,37 +2653,7 @@
     </div>
   </div>
 
-  <!-- Modal: Send Confirmation -->
-  <div class="modal fade" id="sendConfirmationModal" tabindex="-1" aria-labelledby="sendConfirmationModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #1a4d3e 0%, #0f8357 100%); color: white;">
-          <h5 class="modal-title" id="sendConfirmationModalLabel">
-            <i class="fa-solid fa-paper-plane me-2"></i>Konfirmasi Pengiriman
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center">
-          <div class="mb-3">
-            <i class="fa-solid fa-question-circle" style="font-size: 52px; color: #0f8357;"></i>
-          </div>
-          <h5 class="fw-bold mb-3">Apakah Anda yakin ingin mengirim dokumen ini ke Team Verifikasi?</h5>
-          <p class="text-muted mb-0">
-            Dokumen akan langsung dikirim ke Team Verifikasi dan muncul di daftar dokumen Team Verifikasi untuk diproses.
-          </p>
-        </div>
-        <div class="modal-footer border-0 justify-content-center gap-2">
-          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-            <i class="fa-solid fa-times me-2"></i>Batal
-          </button>
-          <button type="button" class="btn btn-success px-4" id="confirmSendToIbuBBtn">
-            <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Modal: Send Success -->
   <div class="modal fade" id="sendSuccessModal" tabindex="-1" aria-labelledby="sendSuccessModalLabel" aria-hidden="true">
