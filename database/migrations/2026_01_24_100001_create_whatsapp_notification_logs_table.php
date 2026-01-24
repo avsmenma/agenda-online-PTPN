@@ -27,7 +27,7 @@ return new class extends Migration {
             $table->index('dokumen_id');
             $table->index('role_code');
             $table->index('user_id');
-            $table->index(['dokumen_id', 'role_code', 'message_type']);
+            $table->index(['dokumen_id', 'role_code', 'message_type'], 'wa_notif_doc_role_type_idx');
             $table->index('sent_at');
 
             // Foreign keys
