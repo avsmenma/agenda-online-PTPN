@@ -83,6 +83,7 @@ final class User extends Authenticatable
         'password',
         'role',
         'bagian_code',
+        'phone_number',
         'table_columns_preferences',
         'two_factor_enabled',
         'two_factor_secret',
