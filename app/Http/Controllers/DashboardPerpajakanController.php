@@ -67,10 +67,10 @@ class DashboardPerpajakanController extends Controller
         })
             ->excludeCsvImports()
             ->with([
-                    'roleData' => function ($q) {
-                        $q->where('role_code', 'perpajakan');
-                    }
-                ])
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'perpajakan');
+                }
+            ])
             ->get();
 
         $dokumenLessThan24h = 0;  // < 24 jam (green)
@@ -259,13 +259,13 @@ class DashboardPerpajakanController extends Controller
                     // Dokumen yang sedang diproses oleh perpajakan
                     $query->where('current_handler', 'perpajakan')
                         ->whereNotIn('status', [
-                                'sent_to_akutansi',
-                                'sent_to_pembayaran',
-                                'pending_approval_akutansi',
-                                'pending_approval_pembayaran',
-                                'completed',
-                                'selesai'
-                            ])
+                            'sent_to_akutansi',
+                            'sent_to_pembayaran',
+                            'pending_approval_akutansi',
+                            'pending_approval_pembayaran',
+                            'completed',
+                            'selesai'
+                        ])
                         // Exclude dokumen yang pending approval dari perpajakan
                         ->whereDoesntHave('roleStatuses', function ($statusQ) {
                             $statusQ->where('role_code', 'perpajakan')
@@ -307,13 +307,13 @@ class DashboardPerpajakanController extends Controller
                             $statusQ->where('status', DokumenStatus::STATUS_PENDING);
                         })
                             ->orWhereIn('status', [
-                                    'pending_approval_team_verifikasi',
-                                    'pending_approval_perpajakan',
-                                    'pending_approval_akutansi',
-                                    'pending_approval_pembayaran',
-                                    'waiting_reviewer_approval',
-                                    'menunggu_di_approve'
-                                ]);
+                                'pending_approval_team_verifikasi',
+                                'pending_approval_perpajakan',
+                                'pending_approval_akutansi',
+                                'pending_approval_pembayaran',
+                                'waiting_reviewer_approval',
+                                'menunggu_di_approve'
+                            ]);
                     });
                     break;
                 case 'ditolak':
@@ -1520,6 +1520,21 @@ class DashboardPerpajakanController extends Controller
             // Simpan status original sebelum dikirim ke inbox
             $originalStatus = $dokumen->status;
 
+            // IMPORTANT: Explicitly set processed_at for perpajakan role before sending to inbox
+            // This freezes the deadline timer, preserving the time already spent in perpajakan
+            // The issue was that sendToRoleInbox might not correctly detect the sender role
+            $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+            if ($perpajakanRoleData && $perpajakanRoleData->received_at && !$perpajakanRoleData->processed_at) {
+                $perpajakanRoleData->processed_at = now();
+                $perpajakanRoleData->save();
+                \Log::info('Set processed_at for perpajakan before sending to next role', [
+                    'document_id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'received_at' => $perpajakanRoleData->received_at,
+                    'processed_at' => $perpajakanRoleData->processed_at
+                ]);
+            }
+
             // Kirim ke inbox menggunakan sistem inbox yang sudah ada
             $dokumen->sendToInbox($inboxRole);
 
@@ -1589,10 +1604,10 @@ class DashboardPerpajakanController extends Controller
                     });
                 })
                 ->with([
-                        'roleData' => function ($query) {
-                            $query->where('role_code', 'perpajakan');
-                        }
-                    ])
+                    'roleData' => function ($query) {
+                        $query->where('role_code', 'perpajakan');
+                    }
+                ])
                 ->latest('updated_at')
                 ->take(10)
                 ->get();
