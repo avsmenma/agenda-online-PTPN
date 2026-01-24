@@ -684,6 +684,16 @@
       /* paper-plane */
     }
 
+    /* OVERRIDE: Force gray color for deadline-sent indicators regardless of other color classes */
+    .deadline-card.deadline-sent .deadline-indicator,
+    .deadline-card.deadline-sent .deadline-indicator.deadline-green,
+    .deadline-card.deadline-sent .deadline-indicator.deadline-yellow,
+    .deadline-card.deadline-sent .deadline-indicator.deadline-red {
+      background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
+      color: white !important;
+      box-shadow: 0 2px 6px rgba(107, 114, 128, 0.3) !important;
+    }
+
     /* Enhanced late information */
     .late-info {
       display: inline-flex;
