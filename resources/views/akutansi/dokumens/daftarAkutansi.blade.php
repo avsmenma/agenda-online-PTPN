@@ -1192,9 +1192,10 @@
       }
 
       .btn-sent {
-        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
         color: white;
         cursor: default;
+        opacity: 0.85;
       }
 
       .btn-sent:hover {
@@ -2853,7 +2854,7 @@
                           @elseif($dokumen->status == 'sent_to_pembayaran')
                             <button type="button" class="btn-action btn-sent btn-full-width" disabled>
                               <i class="fa-solid fa-check-circle"></i>
-                              <span>Terkirim ke Pembayaran</span>
+                              <span>Terkirim</span>
                             </button>
                           @endif
                         @endunless

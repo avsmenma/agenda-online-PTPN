@@ -1418,9 +1418,9 @@
       }
 
       .btn-action.locked {
-        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
         cursor: not-allowed;
-        opacity: 0.7;
+        opacity: 0.85;
       }
 
       .btn-action.locked:hover {
@@ -1429,9 +1429,10 @@
       }
 
       .btn-terkirim {
-        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
         color: white;
         cursor: default;
+        opacity: 0.85;
       }
 
       .btn-terkirim:hover {
