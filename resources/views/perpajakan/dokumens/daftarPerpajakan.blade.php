@@ -2854,9 +2854,9 @@
                       <i class="fa-solid fa-calendar"></i>
                       <span>{{ $receivedAt->format('d M Y, H:i') }}</span>
                     </div>
-                    <div class="deadline-indicator deadline-{{ $ageColor }}">
-                      <i class="fa-solid {{ $ageIcon }}"></i>
-                      <span class="status-text">{{ $ageLabel }}</span>
+                    <div class="deadline-indicator deadline-{{ ($isSent || $isCompleted) ? 'sent' : $ageColor }}">
+                      <i class="fa-solid {{ ($isSent || $isCompleted) ? 'fa-paper-plane' : $ageIcon }}"></i>
+                      <span class="status-text">{{ ($isSent || $isCompleted) ? 'TERKIRIM' : $ageLabel }}</span>
                     </div>
                     <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
                       <i class="fa-solid fa-hourglass-half"></i>
