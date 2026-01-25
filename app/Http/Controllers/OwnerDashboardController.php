@@ -3200,11 +3200,21 @@ class OwnerDashboardController extends Controller
             $roleCodeLower = strtolower($roleCode);
 
             // Get ALL documents that have ever been in this role
-            $allRoleDocs = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+            $allRoleDocsQuery = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
                 ->whereNotNull('dokumen_role_data.received_at')
-                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
-                ->select('dokumen_role_data.*')
-                ->get();
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id');
+
+            // Apply year filter to card stats if present
+            if ($request->has('year') && $request->year) {
+                $allRoleDocsQuery->where('dokumens.tahun', $request->year);
+            }
+
+            // Apply month filter to card stats if present
+            if ($request->has('month') && $request->month) {
+                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
+            }
+
+            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*')->get();
 
             // Card 1: Dokumen dengan umur < 24 jam (hijau) - AMAN
             $card1Count = 0;
@@ -3231,15 +3241,25 @@ class OwnerDashboardController extends Controller
             }
         } elseif ($roleCode === 'pembayaran') {
             // Pembayaran: weekly thresholds (1 week = 168 hours, 3 weeks = 504 hours)
-            $allRoleDocs = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+            $allRoleDocsQuery = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
                 ->whereNotNull('dokumen_role_data.received_at')
                 ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
                 ->where(function ($q) {
                     $q->whereNull('dokumens.status_pembayaran')
                         ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
-                })
-                ->select('dokumen_role_data.*')
-                ->get();
+                });
+
+            // Apply year filter to card stats if present
+            if ($request->has('year') && $request->year) {
+                $allRoleDocsQuery->where('dokumens.tahun', $request->year);
+            }
+
+            // Apply month filter to card stats if present
+            if ($request->has('month') && $request->month) {
+                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
+            }
+
+            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*')->get();
 
             // Card 1: < 1 minggu (< 168 jam) - AMAN
             $card1Count = 0;
