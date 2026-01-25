@@ -1653,6 +1653,34 @@
         toggleFilterPanel();
       }
     });
+
+    // Timeframe Filter Function (for horizontal year/month filter)
+    function applyTimeframeFilter() {
+      const yearSelect = document.querySelector('.timeframe-filter-select[name="year"]');
+      const monthSelect = document.querySelector('.timeframe-filter-select[name="month"]');
+      
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
+      
+      // Update year parameter
+      if (yearSelect && yearSelect.value) {
+        params.set('year', yearSelect.value);
+      } else if (yearSelect) {
+        params.delete('year');
+      }
+      
+      // Update month parameter
+      if (monthSelect && monthSelect.value) {
+        params.set('month', monthSelect.value);
+      } else if (monthSelect) {
+        params.delete('month');
+      }
+      
+      // Remove page parameter to go back to first page
+      params.delete('page');
+      
+      window.location.href = currentUrl.toString();
+    }
   </script>
 
 @endsection
