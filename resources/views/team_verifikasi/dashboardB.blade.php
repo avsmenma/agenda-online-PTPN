@@ -786,15 +786,8 @@
   </div>
 
 
-  <!-- Search Box -->
-  <div class="search-box">
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="fa-solid fa-magnifying-glass text-muted"></i>
-      </span>
-      <input type="text" class="form-control" placeholder="Cari dokumen..." id="searchInput">
-    </div>
-  </div>
+  {{-- Advanced Search Panel --}}
+  @include('partials.advanced-search-panel')
 
   <!-- Dokumen Terbaru Table -->
   <div class="table-container">
@@ -879,25 +872,7 @@
     </div>
   </div>
 
-  <!-- Simple Search Script -->
-  <script>
-    document.getElementById('searchInput').addEventListener('input', function (e) {
-      const searchTerm = e.target.value.toLowerCase();
-      const rows = document.querySelectorAll('tbody tr');
-
-      rows.forEach(row => {
-        if (row.querySelector('td[colspan]')) {
-          // Skip empty state row
-          return;
-        }
-
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchTerm) ? '' : 'none';
-      });
-    });
-  </script>
-
-    <!-- Include Document Preview Modal -->
-    @include('partials.document-preview-modal')
+  <!-- Include Document Preview Modal -->
+  @include('partials.document-preview-modal')
 
 @endsection
