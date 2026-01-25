@@ -79,10 +79,10 @@ class TeamVerifikasiController extends Controller
                 });
             })
             ->with([
-                    'roleData' => function ($q) {
-                        $q->where('role_code', 'team_verifikasi');
-                    }
-                ])
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'team_verifikasi');
+                }
+            ])
             ->get();
 
         $dokumenLessThan24h = 0;  // < 24 jam (green)
@@ -233,44 +233,44 @@ class TeamVerifikasiController extends Controller
                 ->where('team_verifikasi_data.role_code', '=', 'team_verifikasi');
         })
             ->select([
-                    'dokumens.id',
-                    'dokumens.nomor_agenda',
-                    'dokumens.nomor_spp',
-                    'dokumens.uraian_spp',
-                    'dokumens.nilai_rupiah',
-                    'dokumens.status',
-                    'dokumens.created_at',
-                    'dokumens.tanggal_masuk',
-                    'dokumens.tanggal_spp',
-                    'dokumens.keterangan',
-                    'dokumens.alasan_pengembalian',
-                    // Deadline fields are now in dokumen_role_data table - use aliases for easier access
-                    'team_verifikasi_data.deadline_at as deadline_at',
-                    'team_verifikasi_data.deadline_days as deadline_days',
-                    'team_verifikasi_data.deadline_note as deadline_note',
-                    'dokumens.current_handler',
-                    'dokumens.bulan',
-                    'dokumens.tahun',
-                    'dokumens.kategori',
-                    'dokumens.kebun',
-                    'dokumens.jenis_dokumen',
-                    'dokumens.jenis_sub_pekerjaan',
-                    'dokumens.updated_at',
-                    'dokumens.tanggal_spk',
-                    'dokumens.tanggal_berakhir_spk',
-                    'dokumens.no_spk',
-                    'dokumens.nomor_miro',
-                    'dokumens.nama_pengirim',
-                    'dokumens.jenis_pembayaran',
-                    'dokumens.dibayar_kepada',
-                    'dokumens.no_berita_acara',
-                    'dokumens.tanggal_berita_acara',
-                    // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
-                    // 'dokumens.inbox_approval_reason', // REMOVED
-                    // 'dokumens.inbox_approval_for', // REMOVED
-                    // 'dokumens.inbox_approval_status', // REMOVED
-                    'dokumens.created_by'
-                ])
+                'dokumens.id',
+                'dokumens.nomor_agenda',
+                'dokumens.nomor_spp',
+                'dokumens.uraian_spp',
+                'dokumens.nilai_rupiah',
+                'dokumens.status',
+                'dokumens.created_at',
+                'dokumens.tanggal_masuk',
+                'dokumens.tanggal_spp',
+                'dokumens.keterangan',
+                'dokumens.alasan_pengembalian',
+                // Deadline fields are now in dokumen_role_data table - use aliases for easier access
+                'team_verifikasi_data.deadline_at as deadline_at',
+                'team_verifikasi_data.deadline_days as deadline_days',
+                'team_verifikasi_data.deadline_note as deadline_note',
+                'dokumens.current_handler',
+                'dokumens.bulan',
+                'dokumens.tahun',
+                'dokumens.kategori',
+                'dokumens.kebun',
+                'dokumens.jenis_dokumen',
+                'dokumens.jenis_sub_pekerjaan',
+                'dokumens.updated_at',
+                'dokumens.tanggal_spk',
+                'dokumens.tanggal_berakhir_spk',
+                'dokumens.no_spk',
+                'dokumens.nomor_miro',
+                'dokumens.nama_pengirim',
+                'dokumens.jenis_pembayaran',
+                'dokumens.dibayar_kepada',
+                'dokumens.no_berita_acara',
+                'dokumens.tanggal_berita_acara',
+                // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
+                // 'dokumens.inbox_approval_reason', // REMOVED
+                // 'dokumens.inbox_approval_for', // REMOVED
+                // 'dokumens.inbox_approval_status', // REMOVED
+                'dokumens.created_by'
+            ])
             ->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
@@ -431,9 +431,9 @@ class TeamVerifikasiController extends Controller
             }
         ])
             ->withCount([
-                    'dokumenPos',
-                    'dokumenPrs'
-                ]);
+                'dokumenPos',
+                'dokumenPrs'
+            ]);
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
@@ -563,7 +563,7 @@ class TeamVerifikasiController extends Controller
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
         );
-        return view('team_verifikasi.dokumens.daftarDokumenB', $data);
+        return view('team_verifikasi.dokumens.daftarDokumen', $data);
     }
 
     public function createDokumen()
@@ -575,7 +575,7 @@ class TeamVerifikasiController extends Controller
             'menuDokumen' => 'Active',
             'menuTambahDokumen' => 'Active',
         );
-        return view('team_verifikasi.dokumens.tambahDokumenB', $data);
+        return view('team_verifikasi.dokumens.tambahDokumen', $data);
     }
 
     public function storeDokumen(Request $request)
@@ -675,7 +675,7 @@ class TeamVerifikasiController extends Controller
             'jenisPembayaranList' => $jenisPembayaranList,
             'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
         );
-        return view('team_verifikasi.dokumens.editDokumenB', $data);
+        return view('team_verifikasi.dokumens.editDokumen', $data);
     }
 
     public function updateDokumen(Request $request, Dokumen $dokumen)
@@ -3053,13 +3053,13 @@ class TeamVerifikasiController extends Controller
                         ->where('status_changed_at', '>=', $checkFrom);
                 })
                 ->with([
-                        'roleStatuses' => function ($query) {
-                            $query->whereIn('role_code', ['perpajakan', 'akutansi'])
-                                ->where('status', 'rejected')
-                                ->latest('status_changed_at');
-                        },
-                        'activityLogs'
-                    ])
+                    'roleStatuses' => function ($query) {
+                        $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                            ->where('status', 'rejected')
+                            ->latest('status_changed_at');
+                    },
+                    'activityLogs'
+                ])
                 ->get()
                 ->filter(function ($doc) {
                     // Filter to only include documents with rejection status
