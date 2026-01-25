@@ -152,7 +152,7 @@ class TeamVerifikasiController extends Controller
             'totalTerkirim' => $totalTerkirim,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
-        return view('team_verifikasi.dashboardB', $data);
+        return view('team_verifikasi.dashboard', $data);
     }
 
     public function dokumens(Request $request)
