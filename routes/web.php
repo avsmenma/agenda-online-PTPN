@@ -56,12 +56,29 @@ Route::middleware('auth')->group(function () {
 
     // Document Preview API Routes (for all authenticated users)
     Route::prefix('api')->name('api.')->group(function () {
+        // Document Preview
         Route::get('/documents/{id}/preview', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'getPreviewData'])
             ->name('documents.preview');
         Route::post('/documents/{id}/quick-approve', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'quickApprove'])
             ->name('documents.quick-approve');
         Route::post('/documents/{id}/quick-reject', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'quickReject'])
             ->name('documents.quick-reject');
+
+        // Advanced Search & Filters
+        Route::post('/search/documents', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'search'])
+            ->name('search.documents');
+        Route::get('/search/filter-options', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'getFilterOptions'])
+            ->name('search.filter-options');
+
+        // Filter Presets
+        Route::get('/search/presets', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'loadPresets'])
+            ->name('search.presets.index');
+        Route::post('/search/presets', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'savePreset'])
+            ->name('search.presets.store');
+        Route::post('/search/presets/{id}/use', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'usePreset'])
+            ->name('search.presets.use');
+        Route::delete('/search/presets/{id}', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'deletePreset'])
+            ->name('search.presets.destroy');
     });
 });
 
