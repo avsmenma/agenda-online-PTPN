@@ -19,6 +19,9 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!-- Flatpickr Indonesian Locale -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+  
+  <!-- Mobile Responsive CSS -->
+  <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 
   <style>
     body {
