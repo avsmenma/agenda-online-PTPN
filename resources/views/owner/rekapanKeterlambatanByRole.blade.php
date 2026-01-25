@@ -26,6 +26,56 @@
       font-size: 28px;
     }
 
+    /* Timeframe Filter - Horizontal Layout */
+    .timeframe-filter-container {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .timeframe-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timeframe-filter-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-color);
+      white-space: nowrap;
+    }
+
+    .timeframe-filter-select {
+      padding: 8px 16px;
+      border: 2px solid var(--primary-border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 180px;
+    }
+
+    .timeframe-filter-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-rgba);
+    }
+
+    .timeframe-filter-select:hover {
+      border-color: var(--secondary-color);
+    }
+
     /* Timeframe Settings Panel */
     .timeframe-settings {
       background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
@@ -733,6 +783,28 @@
   <div class="container-fluid">
     <h2><i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan - {{ $roleConfig[$roleCode]['name'] }}</h2>
 
+    <!-- Horizontal Year/Month Filter -->
+    <div class="timeframe-filter-container">
+      <div class="timeframe-filter-group">
+        <label class="timeframe-filter-label">Filter Tahun:</label>
+        <select name="year" class="timeframe-filter-select" onchange="applyTimeframeFilter()">
+          <option value="">Semua Tahun</option>
+          @foreach($availableYears as $year)
+            <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="timeframe-filter-group">
+        <label class="timeframe-filter-label">Pilih Bulan:</label>
+        <select name="month" class="timeframe-filter-select" onchange="applyTimeframeFilter()">
+          <option value="">Semua Bulan</option>
+          @foreach($availableMonths as $monthNum => $monthName)
+            <option value="{{ $monthNum }}" {{ request('month') == $monthNum ? 'selected' : '' }}>{{ $monthName }}</option>
+          @endforeach
+        </select>
+      </div>
+    </div>
 
     <!-- Card Statistics - New Deadline Design -->
     @if(in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi']))
@@ -1351,7 +1423,7 @@
 
       // Clear all filter_ parameters
       for (let key of Array.from(params.keys())) {
-        if (key.startsWith('filter_') || key === 'search' || key === 'year') {
+        if (key.startsWith('filter_') || key === 'search' || key === 'year' || key === 'month') {
           params.delete(key);
         }
       }
@@ -1374,7 +1446,7 @@
         if (key.startsWith('filter_') && value && value !== '') {
           count++;
         }
-        if (key === 'year' && value && value !== '') {
+        if ((key === 'year' || key === 'month') && value && value !== '') {
           count++;
         }
         if (key === 'search' && value && value !== '') {
