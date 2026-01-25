@@ -53,6 +53,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/update-email', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('update-email');
         Route::post('/update-password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('update-password');
     });
+
+    // Document Preview API Routes (for all authenticated users)
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/documents/{id}/preview', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'getPreviewData'])
+            ->name('documents.preview');
+        Route::post('/documents/{id}/quick-approve', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'quickApprove'])
+            ->name('documents.quick-approve');
+        Route::post('/documents/{id}/quick-reject', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'quickReject'])
+            ->name('documents.quick-reject');
+    });
 });
 
 // SECURITY FIX: Custom broadcast authentication route with CSRF protection

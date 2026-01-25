@@ -852,9 +852,17 @@
                 @endif
               </td>
               <td>
+                <!-- Quick Preview Button -->
+                <button type="button" class="btn btn-sm btn-outline-primary me-2"
+                  onclick="openDocumentPreview({{ $dokumen->id }})" title="Quick Preview"
+                  style="padding: 8px 12px; border-radius: 8px;">
+                  <i class="fa-solid fa-eye"></i> Preview
+                </button>
+
+                <!-- Detail View Button -->
                 <a href="{{ url('/dokumensB') }}" class="btn-view" title="Lihat Detail">
-                  <i class="fa-solid fa-eye"></i>
-                  Lihat Detail
+                  <i class="fa-solid fa-file-alt"></i>
+                  Detail
                 </a>
               </td>
             </tr>
@@ -889,8 +897,7 @@
     });
   </script>
 
+    <!-- Include Document Preview Modal -->
+    @include('partials.document-preview-modal')
+
 @endsection
-
-
-
-
