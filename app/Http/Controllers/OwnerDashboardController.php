@@ -2987,6 +2987,11 @@ class OwnerDashboardController extends Controller
             $query->where('dokumens.tahun', $request->year);
         }
 
+        // Filter by month from received_at
+        if ($request->has('month') && $request->month) {
+            $query->whereMonth('dokumen_role_data.received_at', $request->month);
+        }
+
         // Apply advanced filters (similar to owner dashboard)
         if ($request->has('filter_bagian') && $request->filter_bagian) {
             $query->where('dokumens.bagian', $request->filter_bagian);
@@ -3337,6 +3342,22 @@ class OwnerDashboardController extends Controller
             ->pluck('tahun')
             ->toArray();
 
+        // Get available months (1-12)
+        $availableMonths = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
 
         // Get filter data for dropdowns
         $filterData = $this->getFilterData();
@@ -3346,6 +3367,7 @@ class OwnerDashboardController extends Controller
             'cardStats',
             'totalDocuments',
             'availableYears',
+            'availableMonths',
             'roleConfig',
             'roleCode',
             'filterData'
