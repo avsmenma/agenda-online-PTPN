@@ -33,7 +33,7 @@ final class UserSeeder extends Seeder
                 'role' => 'operator',
             ],
             [
-                'name' => 'Ibu B',
+                'name' => 'Team Verifikasi',
                 'username' => 'team_verifikasi',
                 'email' => 'ibub@ptpn.com',
                 'password' => 'ibub123',

@@ -16,6 +16,7 @@ use App\Http\Controllers\AutocompleteController;
 use App\Http\Controllers\WelcomeMessageController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\OwnerDashboardController;
+use App\Http\Controllers\BulkOperationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -934,6 +935,14 @@ Route::middleware(['auth', 'bagian'])
             ->name('bagian.tracking');
     });
 
-
-
-
+// =============================================================================
+// BULK OPERATIONS - Team Verifikasi
+// =============================================================================
+Route::middleware(['auth', 'role:team_verifikasi'])
+    ->prefix('team-verifikasi/bulk')
+    ->name('team-verifikasi.bulk.')
+    ->group(function () {
+        Route::post('/approve', [BulkOperationController::class, 'bulkApprove'])->name('approve');
+        Route::post('/reject', [BulkOperationController::class, 'bulkReject'])->name('reject');
+        Route::post('/forward', [BulkOperationController::class, 'bulkForward'])->name('forward');
+    });
