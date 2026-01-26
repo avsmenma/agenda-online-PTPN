@@ -3598,6 +3598,9 @@
           <table class="table table-enhanced mb-0">
             <thead>
               <tr>
+                <th class="col-checkbox sticky-column" style="width: 50px;">
+                  <input type="checkbox" id="selectAll" title="Pilih Semua">
+                </th>
                 <th class="col-no sticky-column">No</th>
                 @foreach($selectedColumns as $col)
                   @if($col !== 'status')
@@ -3718,10 +3721,22 @@
                     }
                   }
                 @endphp
-                <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
-                  onclick="handleRowClick(event, {{ $dokumen->id }})" style="cursor: pointer;">
-                  <td class="col-no" style="text-align: center;">
-                    {{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $loop->iteration }}
+                @php
+                  $rowClass = $isLocked ? 'locked-row' : '';
+                @endphp
+                <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
+                  onclick="handleRowClick(event, {{ $dokumen->id }})">
+                  {{-- Checkbox Column --}}
+                  <td class="col-checkbox text-center">
+                    <input type="checkbox"
+                           class="document-checkbox"
+                           value="{{ $dokumen->id }}"
+                           data-nomor="{{ $dokumen->nomor_agenda }}"
+                           onclick="event.stopPropagation();">
+                  </td>
+                  {{-- No Column --}}
+                  <td class="col-no"  style="width: 40px;">
+                    {{ $loop->iteration + ($dokumens->currentPage() - 1) * $dokumens->perPage() }}
                   </td>
                   @foreach($selectedColumns as $col)
                     @if($col !== 'status')
@@ -6904,6 +6919,9 @@
           searchInput.addEventListener('input', liveSearchHandler);
       }
       </script>
+
+  {{-- Include Bulk Operations Partial --}}
+  @include('team_verifikasi.partials.bulk-operations')
 
 @endsection
 
