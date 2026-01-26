@@ -40,7 +40,18 @@ class TeamVerifikasiController extends Controller
         // 1. Total dokumen - semua dokumen yang terlihat oleh Team Verifikasi (same as dokumens() query)
         $totalDokumen = Dokumen::where(function ($q) {
             $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']);
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve'
+                ]);
         })
             ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -69,7 +80,18 @@ class TeamVerifikasiController extends Controller
         // Get all documents currently handled by Team Verifikasi/verifikasi AND sent documents with their roleData
         $teamVerifikasiDocuments = Dokumen::where(function ($q) {
             $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']);
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve'
+                ]);
         })
             ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -96,7 +118,16 @@ class TeamVerifikasiController extends Controller
 
                 // Check if document is sent - use processed_at as end time (frozen)
                 // For active documents - use now as end time (counting up)
-                $isSent = in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+                $isSent = in_array($doc->status, [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi'
+                ]);
 
                 if ($isSent && $roleData->processed_at) {
                     // Sent documents: calculate time taken (frozen)
