@@ -398,32 +398,47 @@
                 method: 'POST',
                 data: data,
                 success: function (response) {
-                    $('#bulkConfirmModal').modal('hide');
+          $('#bulkConfirmModal').modal('hide');
 
-                    if (response.success) {
-                        const successMsg = `Berhasil mengirim ${response.processed} dokumen!`;
-                        const detailsHtml = `
+          if (response.success) {
+            let detailsHtml = `
               <div class="result-detail-item">
                 <span class="result-detail-label">Berhasil:</span>
                 <span class="result-detail-value success">${response.processed} dokumen</span>
               </div>
-              ${response.failed > 0 ? `
+            `;
+            
+            if (response.failed > 0) {
+              detailsHtml += `
               <div class="result-detail-item">
                 <span class="result-detail-label">Gagal:</span>
                 <span class="result-detail-value error">${response.failed} dokumen</span>
               </div>
-              ` : ''}
-            `;
-                        showResultModal('success', 'Pengiriman Berhasil!', successMsg, detailsHtml, true);
-                    } else {
-                        showResultModal('error', 'Pengiriman Gagal', response.message || 'Terjadi kesalahan saat mengirim dokumen.');
-                    }
-                },
+              `;
+            }
+
+            // Show error details if present
+            if (response.errors && response.errors.length > 0) {
+              detailsHtml += '<div class="mt-3"><strong>Detail Error:</strong><ul class="text-start mt-2">';
+              response.errors.forEach(err => {
+                detailsHtml += `<li style="color: #dc3545; font-size: 14px;">${err}</li>`;
+              });
+              detailsHtml += '</ul></div>';
+            }
+
+            const successMsg = response.processed > 0 
+              ? `Berhasil mengirim ${response.processed} dokumen!`
+              : 'Tidak ada dokumen yang berhasil dikirim.';
+            
+            showResultModal('success', 'Pengiriman Selesai', successMsg, detailsHtml, response.processed > 0);
+          } else {
+            showResultModal('error', 'Pengiriman Gagal', response.message || 'Terjadi kesalahan saat mengirim dokumen.');
+          }
+        },
                 error: function (xhr) {
                     $('#bulkConfirmModal').modal('hide');
                     const errorMsg = xhr.responseJSON?.message || 'Terjadi kesalahan pada server';
                     showResultModal('error', 'Error', errorMsg);
-                    $('#confirmBulkAction').prop('disabled', false).html('<i class="fas fa-check"></i> Lanjutkan');
                 }
             });
         }

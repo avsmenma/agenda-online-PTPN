@@ -304,21 +304,37 @@ final class BulkOperationController extends Controller
 
             DB::commit();
 
-            return response()->json([
+            $responseData = [
                 'success' => true,
                 'processed' => $processed,
                 'failed' => $failed,
-                'errors' => $errors,
                 'message' => "Successfully forwarded {$processed} document(s) to {$targetRole}" . ($failed > 0 ? ", {$failed} failed" : '')
-            ]);
+            ];
+
+            // Always include errors for debugging
+            if (!empty($errors)) {
+                $responseData['errors'] = $errors;
+                $responseData['debug_info'] = [
+                    'total_requested' => count($documentIds),
+                    'processed_count' => $processed,
+                    'failed_count' => $failed,
+                    'target_role' => $targetRole,
+                ];
+            }
+
+            return response()->json($responseData);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Bulk forward transaction failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Bulk operation failed: ' . $e->getMessage()
+                'message' => 'Bulk operation failed: ' . $e->getMessage(),
+                'error_type' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ], 500);
         }
     }
