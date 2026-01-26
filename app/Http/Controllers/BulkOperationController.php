@@ -248,10 +248,21 @@ final class BulkOperationController extends Controller
                         continue;
                     }
 
-                    // Verify document is assigned to this user
-                    if ($dokumen->current_handler !== $role) {
+                    // Check if document is accessible by team_verifikasi
+                    // A document is accessible if it has role_data for team_verifikasi
+                    $verifikasiRoleData = $dokumen->getDataForRole('team_verifikasi');
+
+                    if (!$verifikasiRoleData) {
                         $failed++;
-                        $errors[] = "Document {$dokumen->nomor_agenda} not assigned to you";
+                        $errors[] = "Document {$dokumen->nomor_agenda} not accessible to Team Verifikasi";
+                        continue;
+                    }
+
+                    // Check if already sent to target role (prevent duplicate sends)
+                    $targetRoleData = $dokumen->getDataForRole($targetRole);
+                    if ($targetRoleData && $targetRoleData->received_at) {
+                        $failed++;
+                        $errors[] = "Document {$dokumen->nomor_agenda} already sent to {$targetRole}";
                         continue;
                     }
 
