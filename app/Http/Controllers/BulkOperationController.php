@@ -44,7 +44,7 @@ final class BulkOperationController extends Controller
         try {
             foreach ($documentIds as $docId) {
                 try {
-                    $dokumen = Dokumen::with('latestRoleData')->find($docId);
+                    $dokumen = Dokumen::with('roleData')->find($docId);
 
                     if (!$dokumen) {
                         $failed++;
@@ -136,7 +136,7 @@ final class BulkOperationController extends Controller
         try {
             foreach ($documentIds as $docId) {
                 try {
-                    $dokumen = Dokumen::with('latestRoleData')->find($docId);
+                    $dokumen = Dokumen::with('roleData')->find($docId);
 
                     if (!$dokumen) {
                         $failed++;
@@ -240,7 +240,7 @@ final class BulkOperationController extends Controller
         try {
             foreach ($documentIds as $docId) {
                 try {
-                    $dokumen = Dokumen::with('latestRoleData')->find($docId);
+                    $dokumen = Dokumen::with('roleData')->find($docId);
 
                     if (!$dokumen) {
                         $failed++;
