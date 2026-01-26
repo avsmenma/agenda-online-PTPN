@@ -273,8 +273,10 @@ final class BulkOperationController extends Controller
                         ]);
                     }
 
-                    // Determine status based on target role
-                    $newStatus = $targetRole === 'perpajakan' ? 'sent_to_perpajakan' : 'sent_to_akutansi';
+                    // Determine status based on target role - should be "waiting approval" not "sent to"
+                    $newStatus = $targetRole === 'perpajakan'
+                        ? 'waiting_approval_perpajakan'
+                        : 'waiting_approval_akuntansi';
 
                     // Update document
                     $dokumen->update([
@@ -282,7 +284,7 @@ final class BulkOperationController extends Controller
                         'current_handler' => $targetRole,
                     ]);
 
-                    // Create role data for target role
+                    // Create role data for target role (inbox entry)
                     DokumenRoleData::create([
                         'dokumen_id' => $dokumen->id,
                         'role_code' => $targetRole,
