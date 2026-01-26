@@ -336,12 +336,12 @@ Route::get('/pembayaran/check-updates', function () {
 
 // Dashboard routes with role protection - Professional URLs
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth', 'role:admin,operator')
+    ->middleware('auth', 'role:admin,operator,Operator')
     ->name('dashboard.main');
 
 // Professional dashboard routes
 Route::get('dashboard/verifikasi', [TeamVerifikasiController::class, 'index'])
-    ->middleware('auth', 'role:admin,team_verifikasi')
+    ->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
@@ -359,7 +359,7 @@ Route::get('dashboard/perpajakan', [DashboardPerpajakanController::class, 'index
 // Dashboard for Verifikasi role (future implementation)
 Route::get('dashboard/verifikasi-role', function () {
     return view('verifikasi.dashboard');
-})->middleware('role:admin,verifikasi')
+})->middleware('role:admin,team_verifikasi,verifikasi,Verifikasi')
     ->name('dashboard.verifikasi-role');
 
 // Backward compatibility - redirect old URLs to new professional URLs
@@ -516,7 +516,7 @@ Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getP
 Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index']);
 
 // Professional Document Routes - Verifikasi (Team Verifikasi)
-Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [TeamVerifikasiController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/edit', [TeamVerifikasiController::class, 'editDokumen'])->name('edit');
@@ -529,13 +529,13 @@ Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('documents/ver
 });
 
 // Professional Reports Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'rekapan'])->name('index');
     Route::get('/analytics', [TeamVerifikasiController::class, 'rekapanAnalytics'])->name('analytics');
 });
 
 // Professional Returns Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'pengembalian'])->name('index');
     Route::get('/stats', [TeamVerifikasiController::class, 'getPengembalianKeBagianStats'])->name('stats');
     Route::get('/bidang', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bidang');
@@ -545,16 +545,16 @@ Route::middleware(['auth', 'role:admin,team_verifikasi'])->prefix('returns/verif
 // Backward compatibility for old Team Verifikasi routes
 Route::get('/dokumensB', function () {
     return redirect()->route('documents.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi')->name('dokumensB.index.old');
+})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')->name('dokumensB.index.old');
 Route::get('/rekapan-Team Verifikasi', function () {
     return redirect()->route('reports.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi')->name('dokumensB.rekapan.old');
+})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')->name('dokumensB.rekapan.old');
 Route::get('/pengembalian-dokumensB', function () {
     return redirect()->route('returns.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi')->name('pengembalianB.index.old');
+})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')->name('pengembalianB.index.old');
 
 // Professional Approval Routes - Verifikasi (Team Verifikasi)
-Route::middleware(['auth', 'role:team_verifikasi,admin'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::post('/{dokumen}/accept', [TeamVerifikasiController::class, 'acceptDocument'])
         ->name('accept');
     Route::post('/{dokumen}/reject', [TeamVerifikasiController::class, 'rejectDocument'])
@@ -600,7 +600,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Inbox Routes - Untuk Operator, Team Verifikasi, Perpajakan, Akutansi, Pembayaran, Verifikasi
-Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
+Route::middleware(['auth', 'role:operator,Operator,team_verifikasi,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
