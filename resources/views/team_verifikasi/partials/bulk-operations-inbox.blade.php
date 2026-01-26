@@ -1,4 +1,4 @@
-{{-- Bulk Operations for Daftar Dokumen - Forward Only (No Approve/Reject) --}}
+{{-- Bulk Operations for INBOX - Full Features (Approve, Reject, Forward) --}}
 <style>
     /* Bulk Operations Styles */
     .bulk-action-bar {
@@ -212,12 +212,14 @@
             <div class="bulk-actions">
                 <select id="bulkAction" class="form-select">
                     <option value="">Pilih Aksi...</option>
+                    <option value="approve">✅ Approve Semua</option>
+                    <option value="reject">❌ Reject Semua</option>
                     <option value="forward-perpajakan">➡️ Kirim ke Perpajakan</option>
                     <option value="forward-akuntansi">➡️ Kirim ke Akuntansi</option>
                 </select>
 
                 <button id="executeBulk" class="btn btn-bulk-execute">
-                    <i class="fas fa-paper-plane"></i> Kirim
+                    <i class="fas fa-check-circle"></i> Jalankan
                 </button>
 
                 <button id="cancelBulk" class="btn btn-bulk-cancel">
@@ -237,13 +239,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-info">
+                <div class="alert alert-warning">
                     <strong>Anda akan melakukan:</strong> <span id="actionName"></span><br>
                     <strong>Untuk:</strong> <span id="affectedCount"></span> dokumen
                 </div>
 
                 <div id="documentList" class="list-group" style="max-height: 300px; overflow-y: auto;">
                     <!-- Populated by JavaScript -->
+                </div>
+
+                <div id="additionalInputs" class="mt-3">
+                    <!-- Reject reason input if needed -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -276,7 +282,7 @@
     </div>
 </div>
 
-{{-- Bulk Operations JavaScript (Forward Only) --}}
+{{-- Bulk Operations JavaScript (INBOX - Full Features) --}}
 <script>
     let selectedDocuments = [];
 
@@ -323,7 +329,7 @@
         $('#executeBulk').on('click', function () {
             const action = $('#bulkAction').val();
             if (!action) {
-                showResultModal('error', 'Pilih Tujuan', 'Harap pilih tujuan pengiriman terlebih dahulu.');
+                showResultModal('error', 'Pilih aksi terlebih dahulu!', '');
                 return;
             }
 
@@ -341,8 +347,16 @@
         // Show confirmation modal
         function showConfirmationModal(action) {
             let actionText = '';
+            let needsInput = false;
 
             switch (action) {
+                case 'approve':
+                    actionText = 'Approve';
+                    break;
+                case 'reject':
+                    actionText = 'Reject';
+                    needsInput = true;
+                    break;
                 case 'forward-perpajakan':
                     actionText = 'Kirim ke Perpajakan';
                     break;
@@ -360,6 +374,17 @@
                 listHtml += `<div class="list-group-item">${index + 1}. ${doc.nomor}</div>`;
             });
             $('#documentList').html(listHtml);
+
+            // Show/hide additional inputs
+            if (needsInput) {
+                $('#additionalInputs').html(`
+          <label for="rejectReason" class="form-label"><strong>Alasan Penolakan:</strong></label>
+          <textarea id="rejectReason" class="form-control" rows="3" 
+                    placeholder="Masukkan alasan penolakan..." required></textarea>
+        `);
+            } else {
+                $('#additionalInputs').html('');
+            }
 
             $('#bulkConfirmModal').modal('show');
         }
@@ -380,6 +405,18 @@
             };
 
             switch (action) {
+                case 'approve':
+                    url = '{{ route("team-verifikasi.bulk.approve") }}';
+                    break;
+                case 'reject':
+                    const reason = $('#rejectReason').val();
+                    if (!reason || reason.trim() === '') {
+                        showResultModal('error', 'Alasan Penolakan Diperlukan', 'Mohon masukkan alasan penolakan sebelum melanjutkan.');
+                        return;
+                    }
+                    url = '{{ route("team-verifikasi.bulk.reject") }}';
+                    data.reason = reason;
+                    break;
                 case 'forward-perpajakan':
                     url = '{{ route("team-verifikasi.bulk.forward") }}';
                     data.target_role = 'perpajakan';
@@ -401,7 +438,7 @@
                     $('#bulkConfirmModal').modal('hide');
 
                     if (response.success) {
-                        const successMsg = `Berhasil mengirim ${response.processed} dokumen!`;
+                        const successMsg = `Berhasil memproses ${response.processed} dokumen!`;
                         const detailsHtml = `
               <div class="result-detail-item">
                 <span class="result-detail-label">Berhasil:</span>
@@ -414,9 +451,9 @@
               </div>
               ` : ''}
             `;
-                        showResultModal('success', 'Pengiriman Berhasil!', successMsg, detailsHtml, true);
+                        showResultModal('success', 'Operasi Berhasil!', successMsg, detailsHtml, true);
                     } else {
-                        showResultModal('error', 'Pengiriman Gagal', response.message || 'Terjadi kesalahan saat mengirim dokumen.');
+                        showResultModal('error', 'Operasi Gagal', response.message || 'Terjadi kesalahan saat memproses dokumen.');
                     }
                 },
                 error: function (xhr) {
