@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - Agenda Online PTPN</title>
+    <title>Agenda Online - PTPN</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,7 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <style>
         * {
@@ -24,73 +26,203 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: #f8f9fa;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            overflow-x: hidden;
         }
 
-        .login-container {
+        /* ==================== LANDING PAGE ==================== */
+        .landing-page {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 450px;
+            height: 100vh;
+            background: url('{{ asset('images/landing-bg.png') }}') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 80px;
+            z-index: 10;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
-        .login-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            animation: slideUp 0.5s ease-out;
-            border: 1px solid #e5e7eb;
+        .landing-page.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
 
-        @keyframes slideUp {
+        .landing-content {
+            text-align: center;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
+        .btn-login-landing {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(13, 148, 136, 0.4);
+            text-decoration: none;
+        }
+
+        .btn-login-landing:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(13, 148, 136, 0.5);
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            color: white;
+        }
+
+        .btn-login-landing:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-login-landing i {
+            font-size: 20px;
+        }
+
+        /* ==================== LOGIN FORM OVERLAY ==================== */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: url('{{ asset('images/landing-bg.png') }}') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .login-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+        }
+
+        .login-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .login-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            z-index: 1;
+            animation: scaleIn 0.4s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateX(-5px);
+        }
+
         .login-header {
-            background: #ffffff;
-            padding: 40px 30px;
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            padding: 35px 30px;
             text-align: center;
-            color: #374151;
-            border-bottom: 1px solid #f3f4f6;
+            color: white;
         }
 
         .login-header .logo {
             width: 72px;
             height: 72px;
-            background: #f3f4f6;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 16px;
             margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(10px);
         }
 
         .login-header .logo i {
             font-size: 32px;
-            color: #6b7280;
+            color: white;
         }
 
         .login-header h1 {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 8px;
-            color: #111827;
         }
 
         .login-header p {
             font-size: 14px;
-            color: #6b7280;
+            opacity: 0.9;
             margin: 0;
         }
 
@@ -114,8 +246,7 @@
             position: relative;
         }
 
-        /* Base styling for left icons (user, lock) - exclude password toggle */
-        .input-group-custom > i:not(.password-toggle) {
+        .input-group-custom>i:not(.password-toggle) {
             position: absolute;
             left: 15px;
             top: 50%;
@@ -123,10 +254,9 @@
             color: #999;
             font-size: 16px;
             z-index: 10;
-            pointer-events: none; /* Prevent icon from blocking clicks */
+            pointer-events: none;
         }
 
-        /* Specific styling for password field lock icon - ensure it's on the left */
         .password-lock-icon,
         .password-field-wrapper .fa-lock {
             position: absolute !important;
@@ -135,24 +265,23 @@
             top: 50% !important;
             transform: translateY(-50%) !important;
             z-index: 10 !important;
-            pointer-events: none !important; /* Prevent lock icon from blocking clicks */
+            pointer-events: none !important;
         }
 
         .form-control {
             height: 48px;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
+            border-radius: 10px;
             padding-left: 45px;
-            padding-right: 45px; /* Add right padding for eye icon */
+            padding-right: 45px;
             font-size: 14px;
             transition: all 0.3s ease;
             background: #ffffff;
         }
-        
-        /* Ensure password field has proper padding for both icons */
+
         #password {
-            padding-left: 45px !important; /* Space for lock icon on left */
-            padding-right: 50px !important; /* Extra space for eye icon on right */
+            padding-left: 45px !important;
+            padding-right: 50px !important;
         }
 
         .form-control::placeholder {
@@ -160,11 +289,10 @@
         }
 
         .form-control:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
         }
 
-        /* Eye icon for password toggle - must be on the right side */
         .password-toggle,
         .password-field-wrapper .password-toggle,
         #togglePassword {
@@ -175,7 +303,7 @@
             transform: translateY(-50%) !important;
             cursor: pointer;
             color: #999;
-            z-index: 30 !important; /* Higher z-index than lock icon and input */
+            z-index: 30 !important;
             font-size: 16px;
             width: 24px;
             height: 24px;
@@ -186,16 +314,12 @@
             background: transparent;
             border: none;
             padding: 0;
-            pointer-events: auto !important; /* Ensure eye icon is clickable */
+            pointer-events: auto !important;
             margin: 0;
         }
 
         .password-toggle:hover {
-            color: #3b82f6;
-        }
-
-        .password-toggle:active {
-            transform: translateY(-50%) scale(0.95);
+            color: #0d9488;
         }
 
         .remember-forgot {
@@ -214,27 +338,27 @@
 
         .forgot-password {
             font-size: 14px;
-            color: #3b82f6;
+            color: #0d9488;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s ease;
         }
 
         .forgot-password:hover {
-            color: #2563eb;
+            color: #0f766e;
         }
 
         .btn-login {
             width: 100%;
-            height: 48px;
-            background: #3b82f6;
+            height: 50px;
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             color: white;
-            font-size: 15px;
-            font-weight: 500;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -242,9 +366,9 @@
         }
 
         .btn-login:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(13, 148, 136, 0.3);
         }
 
         .btn-login:active {
@@ -257,7 +381,7 @@
         }
 
         .alert {
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 12px 16px;
             margin-bottom: 20px;
             font-size: 14px;
@@ -283,29 +407,9 @@
             color: #16a34a;
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 25px 0;
-            color: #999;
-            font-size: 14px;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e0e0e0;
-        }
-
-        .divider span {
-            padding: 0 15px;
-        }
-
         .login-footer {
             text-align: center;
-            padding: 0 30px 30px;
+            padding: 0 30px 25px;
             font-size: 13px;
             color: #9ca3af;
         }
@@ -319,9 +423,23 @@
             display: inline-block;
         }
 
+        .form-check-input:checked {
+            background-color: #0d9488;
+            border-color: #0d9488;
+        }
+
         @media (max-width: 576px) {
+            .landing-page {
+                padding-bottom: 60px;
+            }
+
+            .btn-login-landing {
+                padding: 14px 36px;
+                font-size: 16px;
+            }
+
             .login-card {
-                border-radius: 15px;
+                border-radius: 16px;
             }
 
             .login-header {
@@ -329,11 +447,11 @@
             }
 
             .login-header h1 {
-                font-size: 24px;
+                font-size: 22px;
             }
 
             .login-body {
-                padding: 30px 20px;
+                padding: 25px 20px;
             }
 
             .remember-forgot {
@@ -341,104 +459,116 @@
                 gap: 15px;
                 align-items: flex-start;
             }
-        }
 
-        .form-check-input:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
+            .btn-back {
+                top: -45px;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="logo">
-                    <i class="fas fa-calendar-check"></i>
+    <!-- Landing Page -->
+    <div class="landing-page" id="landingPage">
+        <div class="landing-content">
+            <button class="btn-login-landing" id="showLoginBtn">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Masuk</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Login Form Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-container">
+            <a href="#" class="btn-back" id="backBtn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Kembali</span>
+            </a>
+
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h1>Agenda Online PTPN</h1>
+                    <p>Sistem Manajemen Dokumen</p>
                 </div>
-                <h1>Agenda Online PTPN</h1>
-                <p>Sistem Manajemen Dokumen</p>
-            </div>
 
-            <div class="login-body">
-                @if(session('success'))
-                    <div class="alert alert-success" role="alert">
-                        <i class="fas fa-check-circle"></i> {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-danger" role="alert">
-                        <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-                    </div>
-                @endif
-
-                @if($errors->any())
-                    <div class="alert alert-danger" role="alert">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <ul style="margin: 5px 0 0 20px; padding: 0;">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form method="POST" action="{{ route('login.store') }}" id="loginForm">
-                    @csrf
-
-                    <div class="form-group">
-                        <label class="form-label">Username atau Email</label>
-                        <div class="input-group-custom">
-                            <i class="fas fa-user"></i>
-                            <input type="text"
-                                   class="form-control"
-                                   name="username"
-                                   placeholder="Masukkan username atau email"
-                                   value="{{ old('username') }}"
-                                   required
-                                   autofocus>
+                <div class="login-body">
+                    @if(session('success'))
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle"></i> {{ session('success') }}
                         </div>
-                        <small class="text-muted" style="font-size: 12px; margin-top: 4px; display: block;">
-                            Anda bisa login menggunakan username atau email Anda
-                        </small>
-                    </div>
+                    @endif
 
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <div class="input-group-custom password-field-wrapper">
-                            <i class="fas fa-lock password-lock-icon"></i>
-                            <input type="password"
-                                   class="form-control"
-                                   name="password"
-                                   id="password"
-                                   placeholder="Masukkan password"
-                                   required>
-                            <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+                    @if(session('error'))
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
                         </div>
-                    </div>
+                    @endif
 
-                    <div class="remember-forgot">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                            <label class="form-check-label" for="remember">
-                                Ingat Saya
-                            </label>
+                    @if($errors->any())
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <ul style="margin: 5px 0 0 20px; padding: 0;">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                         </div>
-                        <a href="#" class="forgot-password">Lupa Password?</a>
-                    </div>
+                    @endif
 
-                    <button type="submit" class="btn-login" id="loginBtn">
-                        <span>Masuk</span>
-                        <div class="spinner-border spinner-border-sm loading-spinner" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                    <form method="POST" action="{{ route('login.store') }}" id="loginForm">
+                        @csrf
+
+                        <div class="form-group">
+                            <label class="form-label">Username atau Email</label>
+                            <div class="input-group-custom">
+                                <i class="fas fa-user"></i>
+                                <input type="text" class="form-control" name="username"
+                                    placeholder="Masukkan username atau email" value="{{ old('username') }}" required
+                                    autofocus>
+                            </div>
+                            <small class="text-muted" style="font-size: 12px; margin-top: 4px; display: block;">
+                                Anda bisa login menggunakan username atau email Anda
+                            </small>
                         </div>
-                    </button>
-                </form>
-            </div>
 
-            <div class="login-footer">
-                <p>&copy; {{ date('Y') }} PTPN. All rights reserved.</p>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div class="input-group-custom password-field-wrapper">
+                                <i class="fas fa-lock password-lock-icon"></i>
+                                <input type="password" class="form-control" name="password" id="password"
+                                    placeholder="Masukkan password" required>
+                                <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+                            </div>
+                        </div>
+
+                        <div class="remember-forgot">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                                <label class="form-check-label" for="remember">
+                                    Ingat Saya
+                                </label>
+                            </div>
+                            <a href="#" class="forgot-password">Lupa Password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-login" id="loginBtn">
+                            <span>Masuk</span>
+                            <div class="spinner-border spinner-border-sm loading-spinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="login-footer">
+                    <p>&copy; {{ date('Y') }} PTPN. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -447,27 +577,43 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Toggle password visibility
+        // Elements
+        const landingPage = document.getElementById('landingPage');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const showLoginBtn = document.getElementById('showLoginBtn');
+        const backBtn = document.getElementById('backBtn');
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
 
-        togglePassword.addEventListener('click', function(e) {
+        // Show login form
+        showLoginBtn.addEventListener('click', function () {
+            landingPage.classList.add('hidden');
+            loginOverlay.classList.add('active');
+        });
+
+        // Back to landing page
+        backBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            loginOverlay.classList.remove('active');
+            landingPage.classList.remove('hidden');
+        });
+
+        // Toggle password visibility
+        togglePassword.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
 
-            // Toggle between eye and eye-slash icons
             this.classList.toggle('fa-eye');
             this.classList.toggle('fa-eye-slash');
         });
 
         // Form submission loading state
-        const loginForm = document.getElementById('loginForm');
-        const loginBtn = document.getElementById('loginBtn');
-
-        loginForm.addEventListener('submit', function() {
+        loginForm.addEventListener('submit', function () {
             loginBtn.classList.add('loading');
             loginBtn.disabled = true;
             loginBtn.querySelector('span').textContent = 'Memproses...';
@@ -482,11 +628,13 @@
                 setTimeout(() => alert.remove(), 500);
             }, 5000);
         });
+
+        // If there are errors, show login form automatically
+        @if($errors->any() || session('error'))
+            landingPage.classList.add('hidden');
+            loginOverlay.classList.add('active');
+        @endif
     </script>
 </body>
+
 </html>
-
-
-
-
-
