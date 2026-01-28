@@ -37,15 +37,24 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background: url('{{ asset('images/landing-bg.png') }}') no-repeat center center;
-            background-size: cover;
+            background: linear-gradient(to bottom, #4fc3f7 0%, #29b6f6 50%, #03a9f4 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 80px;
+            justify-content: center;
             z-index: 10;
             transition: opacity 0.5s ease, visibility 0.5s ease;
+            overflow: hidden;
+        }
+
+        .landing-bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
         }
 
         .landing-page.hidden {
@@ -54,8 +63,13 @@
         }
 
         .landing-content {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
             animation: fadeInUp 1s ease-out;
+            z-index: 5;
         }
 
         @keyframes fadeInUp {
@@ -472,6 +486,7 @@
 <body>
     <!-- Landing Page -->
     <div class="landing-page" id="landingPage">
+        <img src="{{ asset('images/landing-bg.png') }}" alt="Agenda Online" class="landing-bg-image">
         <div class="landing-content">
             <button class="btn-login-landing" id="showLoginBtn">
                 <i class="fas fa-sign-in-alt"></i>
