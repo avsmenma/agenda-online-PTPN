@@ -2458,10 +2458,10 @@ class OwnerDashboardController extends Controller
      */
     public function rekapanKeterlambatan(Request $request)
     {
-        // Redirect langsung ke submenu Ibu Tara dengan mempertahankan query parameters
+        // Redirect langsung ke submenu Team Verifikasi dengan mempertahankan query parameters
         $queryParams = $request->query();
         return redirect()->route('owner.rekapan-keterlambatan.role', [
-            'roleCode' => 'operator'
+            'roleCode' => 'team_verifikasi'
         ] + $queryParams);
     }
 
