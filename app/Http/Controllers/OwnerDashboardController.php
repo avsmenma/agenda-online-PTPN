@@ -2466,6 +2466,22 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * Export rekapan keterlambatan semua role ke Excel
+     */
+    public function exportRekapanKeterlambatan(Request $request)
+    {
+        $year = $request->get('year');
+        $month = $request->get('month');
+
+        $filename = 'Rekapan_Keterlambatan_' . now()->format('Y-m-d_H-i') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\RekapanKeterlambatanExport($year, $month),
+            $filename
+        );
+    }
+
+    /**
      * Get statistics for rekapan
      */
     private function getRekapanStatistics($filterBagian = '')

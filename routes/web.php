@@ -454,6 +454,11 @@ Route::get('owner/rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::
     ->where('roleCode', 'operator|team_verifikasi|perpajakan|akutansi|pembayaran')
     ->name('owner.rekapan-keterlambatan.role');
 
+// Export rekapan keterlambatan all roles to Excel
+Route::get('owner/rekapan-keterlambatan-export', [OwnerDashboardController::class, 'exportRekapanKeterlambatan'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.rekapan-keterlambatan.export');
+
 // Admin shortcut to Owner Dashboard
 Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin')

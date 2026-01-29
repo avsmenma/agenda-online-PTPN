@@ -981,16 +981,26 @@
     @endif
 
     <!-- Show Entries Bar -->
-    <div class="entries-bar" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-      <span style="font-size: 0.875rem; color: #555;">Show</span>
-      <select id="entriesPerPage" onchange="changeEntriesPerPage(this.value)"
-        style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.875rem; cursor: pointer; background: white;">
-        <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-        <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
-        <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
-        <option value="100" {{ request('per_page', 10) == 100 ? 'selected' : '' }}>100</option>
-      </select>
-      <span style="font-size: 0.875rem; color: #555;">entries</span>
+    <div class="entries-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.875rem; color: #555;">Show</span>
+        <select id="entriesPerPage" onchange="changeEntriesPerPage(this.value)"
+          style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.875rem; cursor: pointer; background: white;">
+          <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+          <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
+          <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
+          <option value="100" {{ request('per_page', 10) == 100 ? 'selected' : '' }}>100</option>
+        </select>
+        <span style="font-size: 0.875rem; color: #555;">entries</span>
+      </div>
+      
+      <!-- Export Excel Button -->
+      <a href="{{ route('owner.rekapan-keterlambatan.export') }}" 
+         class="btn-export-excel"
+         style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 16px; background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(33, 115, 70, 0.25);">
+        <i class="fas fa-file-excel"></i>
+        <span>Export Excel (Semua Role)</span>
+      </a>
     </div>
 
     <!-- Modern Filter Panel -->
