@@ -1760,10 +1760,6 @@
         @php
           $currentRole = strtolower(request()->route('roleCode') ?? '');
         @endphp
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'operator') }}"
-          class="{{ $currentRole === 'operator' ? 'active' : '' }}">
-          <i class="fa-solid fa-user me-2"></i> Ibu Tara
-        </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
           class="{{ $currentRole === 'team_verifikasi' ? 'active' : '' }}">
           <i class="fa-solid fa-users me-2"></i> Team Verifikasi
