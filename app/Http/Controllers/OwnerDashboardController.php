@@ -2466,7 +2466,8 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Export rekapan keterlambatan per role ke Excel
+     * Export rekapan keterlambatan per role ke Excel (CSV format)
+     * Using pure PHP without maatwebsite/excel dependency
      */
     public function exportRekapanKeterlambatan(Request $request, $roleCode)
     {
@@ -2480,18 +2481,123 @@ class OwnerDashboardController extends Controller
         $month = $request->get('month');
 
         $roleNames = [
-            'team_verifikasi' => 'Team_Verifikasi',
+            'team_verifikasi' => 'Team Verifikasi',
             'perpajakan' => 'Perpajakan',
             'akutansi' => 'Akutansi',
             'pembayaran' => 'Pembayaran',
         ];
 
-        $filename = 'Rekapan_Keterlambatan_' . $roleNames[$roleCode] . '_' . now()->format('Y-m-d_H-i') . '.xlsx';
+        $roleName = $roleNames[$roleCode] ?? $roleCode;
+        $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . '_' . now()->format('Y-m-d_H-i') . '.csv';
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\RekapanKeterlambatanExport($roleCode, $year, $month),
-            $filename
-        );
+        // Deadline thresholds per role (in days)
+        $deadlineThresholds = [
+            'team_verifikasi' => [1, 3],
+            'perpajakan' => [1, 3],
+            'akutansi' => [1, 3],
+            'pembayaran' => [7, 21],
+        ];
+
+        $thresholds = $deadlineThresholds[$roleCode] ?? [1, 3];
+        $isWeekly = $roleCode === 'pembayaran';
+
+        // Get data
+        $query = DokumenRoleData::where('role_code', $roleCode)
+            ->whereNotNull('received_at')
+            ->with(['dokumen']);
+
+        if ($year) {
+            $query->whereYear('received_at', $year);
+        }
+        if ($month) {
+            $query->whereMonth('received_at', $month);
+        }
+
+        $roleDataList = $query->orderBy('received_at', 'asc')->get();
+        $now = \Carbon\Carbon::now();
+
+        // Create CSV response
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($roleDataList, $roleName, $thresholds, $isWeekly, $now) {
+            $file = fopen('php://output', 'w');
+
+            // Add BOM for Excel UTF-8 compatibility
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header row
+            fputcsv($file, [
+                'No',
+                'No. Agenda',
+                'No. SPP',
+                'Uraian',
+                'Nilai (Rupiah)',
+                'Tanggal Terima di ' . $roleName,
+                'Durasi',
+                'Status Deadline',
+                'Status Proses',
+                'Tanggal Selesai',
+            ]);
+
+            $no = 1;
+            foreach ($roleDataList as $roleData) {
+                $dokumen = $roleData->dokumen;
+                if (!$dokumen)
+                    continue;
+
+                // Calculate days since received
+                $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
+                $daysDiff = $receivedAt->diffInDays($now);
+
+                // Determine status
+                if ($isWeekly) {
+                    if ($daysDiff < $thresholds[0]) {
+                        $status = 'AMAN';
+                    } elseif ($daysDiff <= $thresholds[1]) {
+                        $status = 'PERINGATAN';
+                    } else {
+                        $status = 'TERLAMBAT';
+                    }
+                    $duration = floor($daysDiff / 7) . ' minggu';
+                } else {
+                    if ($daysDiff < $thresholds[0]) {
+                        $status = 'AMAN';
+                    } elseif ($daysDiff <= $thresholds[1]) {
+                        $status = 'PERINGATAN';
+                    } else {
+                        $status = 'TERLAMBAT';
+                    }
+                    $duration = $daysDiff . ' hari';
+                }
+
+                // Check if completed
+                $completedAt = $roleData->processed_at;
+                $isCompleted = !is_null($completedAt);
+
+                fputcsv($file, [
+                    $no++,
+                    $dokumen->nomor_agenda ?? '-',
+                    $dokumen->nomor_spp ?? '-',
+                    \Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 50),
+                    $dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-',
+                    $receivedAt->format('d/m/Y H:i'),
+                    $duration,
+                    $status,
+                    $isCompleted ? 'Selesai' : 'Sedang Diproses',
+                    $isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
