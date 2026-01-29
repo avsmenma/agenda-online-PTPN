@@ -33,6 +33,56 @@
             overflow-x: hidden;
         }
 
+        /* ==================== LOADING SCREEN ==================== */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(to bottom, #4fc3f7 0%, #29b6f6 50%, #03a9f4 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .loading-screen.loaded {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loading-spinner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .loading-spinner-container .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-spinner-container p {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* ==================== LANDING PAGE ==================== */
         .landing-page {
             position: fixed;
@@ -58,6 +108,12 @@
             height: 100%;
             object-fit: contain;
             object-position: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .landing-bg-image.loaded {
+            opacity: 1;
         }
 
         .landing-page.hidden {
@@ -71,8 +127,25 @@
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
-            animation: fadeInUp 1s ease-out;
             z-index: 5;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .landing-content.visible {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
         }
 
         @keyframes fadeInUp {
@@ -487,10 +560,17 @@
 </head>
 
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner-container">
+            <div class="spinner"></div>
+            <p>Memuat...</p>
+        </div>
+    </div>
+
     <!-- Landing Page -->
     <div class="landing-page" id="landingPage">
-        <img src="{{ asset('images/landing-bg.png') }}" alt="Agenda Online" class="landing-bg-image" loading="eager"
-            fetchpriority="high" decoding="sync">
+        <img src="{{ asset('images/landing-bg.png') }}" alt="Agenda Online" class="landing-bg-image" id="landingBgImage">
         <div class="landing-content">
             <button class="btn-login-landing" id="showLoginBtn">
                 <i class="fas fa-sign-in-alt"></i>
@@ -596,6 +676,35 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // Preload image and show content when ready
+        const loadingScreen = document.getElementById('loadingScreen');
+        const landingBgImage = document.getElementById('landingBgImage');
+        const landingContent = document.querySelector('.landing-content');
+
+        // Function to show content after image loads
+        function showContent() {
+            landingBgImage.classList.add('loaded');
+            loadingScreen.classList.add('loaded');
+            setTimeout(() => {
+                landingContent.classList.add('visible');
+            }, 200);
+        }
+
+        // Check if image is already cached/loaded
+        if (landingBgImage.complete && landingBgImage.naturalHeight !== 0) {
+            showContent();
+        } else {
+            landingBgImage.addEventListener('load', showContent);
+            landingBgImage.addEventListener('error', showContent); // Show content even on error
+        }
+
+        // Fallback: show content after 3 seconds maximum
+        setTimeout(() => {
+            if (!loadingScreen.classList.contains('loaded')) {
+                showContent();
+            }
+        }, 3000);
+
         // Elements
         const landingPage = document.getElementById('landingPage');
         const loginOverlay = document.getElementById('loginOverlay');
