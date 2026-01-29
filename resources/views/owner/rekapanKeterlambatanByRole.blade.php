@@ -962,23 +962,48 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                      {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                          {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                      {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                          {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                      {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                          {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
     @endif
+
+    <!-- Show Entries and Quick Search Bar -->
+    <div class="entries-search-bar"
+      style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+      <!-- Show Entries -->
+      <div class="show-entries" style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.875rem; color: #555;">Show</span>
+        <select id="entriesPerPage" onchange="changeEntriesPerPage(this.value)"
+          style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.875rem; cursor: pointer; background: white;">
+          <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+          <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
+          <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
+          <option value="100" {{ request('per_page', 10) == 100 ? 'selected' : '' }}>100</option>
+        </select>
+        <span style="font-size: 0.875rem; color: #555;">entries</span>
+      </div>
+
+      <!-- Quick Search -->
+      <div class="quick-search" style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.875rem; color: #555;">Search:</span>
+        <input type="text" id="quickSearchInput" value="{{ request('search', '') }}" placeholder=""
+          onkeydown="if(event.key==='Enter') applyQuickSearch()"
+          style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.875rem; width: 200px;">
+      </div>
+    </div>
 
     <!-- Modern Filter Panel -->
     <div class="modern-filter-container">
@@ -1201,7 +1226,7 @@
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
                     style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1495,11 +1520,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                      <span>${label}: ${displayValue}</span>
-                      <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                        <i class="fas fa-times"></i>
-                      </button>
-                    `;
+                        <span>${label}: ${displayValue}</span>
+                        <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      `;
           badgesContainer.appendChild(badge);
         }
       }
@@ -1658,25 +1683,60 @@
     function applyTimeframeFilter() {
       const yearSelect = document.querySelector('.timeframe-filter-select[name="year"]');
       const monthSelect = document.querySelector('.timeframe-filter-select[name="month"]');
-      
+
       const currentUrl = new URL(window.location.href);
       const params = currentUrl.searchParams;
-      
+
       // Update year parameter
       if (yearSelect && yearSelect.value) {
         params.set('year', yearSelect.value);
       } else if (yearSelect) {
         params.delete('year');
       }
-      
+
       // Update month parameter
       if (monthSelect && monthSelect.value) {
         params.set('month', monthSelect.value);
       } else if (monthSelect) {
         params.delete('month');
       }
-      
+
       // Remove page parameter to go back to first page
+      params.delete('page');
+
+      window.location.href = currentUrl.toString();
+    }
+
+    // Change entries per page
+    function changeEntriesPerPage(value) {
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
+      
+      if (value && value !== '10') {
+        params.set('per_page', value);
+      } else {
+        params.delete('per_page');
+      }
+      
+      // Reset to page 1 when changing entries
+      params.delete('page');
+      
+      window.location.href = currentUrl.toString();
+    }
+
+    // Apply quick search
+    function applyQuickSearch() {
+      const searchValue = document.getElementById('quickSearchInput').value.trim();
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
+      
+      if (searchValue) {
+        params.set('search', searchValue);
+      } else {
+        params.delete('search');
+      }
+      
+      // Reset to page 1 when searching
       params.delete('page');
       
       window.location.href = currentUrl.toString();
