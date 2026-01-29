@@ -2466,8 +2466,9 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Export rekapan keterlambatan per role ke Excel (XLSX format)
-     * Using PhpSpreadsheet directly for proper formatting
+     * Export rekapan keterlambatan per role ke Excel (HTML format)
+     * Using HTML table with inline CSS - no external dependencies needed
+     * Excel can open HTML files with proper formatting
      */
     public function exportRekapanKeterlambatan(Request $request, $roleCode)
     {
@@ -2488,7 +2489,7 @@ class OwnerDashboardController extends Controller
         ];
 
         $roleName = $roleNames[$roleCode] ?? $roleCode;
-        $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . '_' . now()->format('Y-m-d_H-i') . '.xlsx';
+        $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . '_' . now()->format('Y-m-d_H-i') . '.xls';
 
         // Deadline thresholds per role (in days)
         $deadlineThresholds = [
@@ -2516,74 +2517,50 @@ class OwnerDashboardController extends Controller
         $roleDataList = $query->orderBy('received_at', 'asc')->get();
         $now = \Carbon\Carbon::now();
 
-        // Create PhpSpreadsheet
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle(substr($roleName, 0, 31)); // Max 31 chars for sheet name
+        // Build HTML table that Excel can read
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+        .title { background-color: #2E7D32; color: white; font-size: 18px; font-weight: bold; text-align: center; }
+        .subtitle { background-color: #E8F5E9; color: #666; font-size: 12px; text-align: center; font-style: italic; }
+        .header { background-color: #1976D2; color: white; font-weight: bold; text-align: center; }
+        .row-even { background-color: #F5F5F5; }
+        .status-aman { background-color: #4CAF50; color: white; font-weight: bold; text-align: center; }
+        .status-peringatan { background-color: #FFC107; color: black; font-weight: bold; text-align: center; }
+        .status-terlambat { background-color: #F44336; color: white; font-weight: bold; text-align: center; }
+        .proses-selesai { background-color: #4CAF50; color: white; text-align: center; }
+        .proses-pending { background-color: #2196F3; color: white; text-align: center; }
+        .summary { background-color: #E3F2FD; font-weight: bold; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <td colspan="10" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . '</td>
+    </tr>
+    <tr>
+        <td colspan="10" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . $month : '') . '</td>
+    </tr>
+    <tr><td colspan="10"></td></tr>
+    <tr class="header">
+        <th>No</th>
+        <th>No. Agenda</th>
+        <th>No. SPP</th>
+        <th>Uraian</th>
+        <th>Nilai (Rupiah)</th>
+        <th>Tanggal Terima</th>
+        <th>Durasi</th>
+        <th>Status Deadline</th>
+        <th>Status Proses</th>
+        <th>Tanggal Selesai</th>
+    </tr>';
 
-        // Define columns
-        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-        $headers = [
-            'No',
-            'No. Agenda',
-            'No. SPP',
-            'Uraian',
-            'Nilai (Rupiah)',
-            'Tanggal Terima',
-            'Durasi',
-            'Status Deadline',
-            'Status Proses',
-            'Tanggal Selesai',
-        ];
-
-        // Title row
-        $sheet->mergeCells('A1:J1');
-        $sheet->setCellValue('A1', 'REKAPAN KETERLAMBATAN - ' . strtoupper($roleName));
-        $sheet->getStyle('A1')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => 'FFFFFF']],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '2E7D32'], // Dark green
-            ],
-        ]);
-        $sheet->getRowDimension(1)->setRowHeight(30);
-
-        // Subtitle row with date info
-        $sheet->mergeCells('A2:J2');
-        $dateInfo = 'Diekspor: ' . now()->format('d/m/Y H:i');
-        if ($year)
-            $dateInfo .= ' | Tahun: ' . $year;
-        if ($month)
-            $dateInfo .= ' | Bulan: ' . $month;
-        $sheet->setCellValue('A2', $dateInfo);
-        $sheet->getStyle('A2')->applyFromArray([
-            'font' => ['italic' => true, 'size' => 10, 'color' => ['rgb' => '666666']],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-        ]);
-
-        // Header row (row 4)
-        $headerRow = 4;
-        foreach ($columns as $idx => $col) {
-            $sheet->setCellValue($col . $headerRow, $headers[$idx]);
-        }
-        $sheet->getStyle('A4:J4')->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '1976D2'], // Blue header
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000'],
-                ],
-            ],
-        ]);
-
-        // Data rows
-        $row = 5;
         $no = 1;
         foreach ($roleDataList as $roleData) {
             $dokumen = $roleData->dokumen;
@@ -2594,29 +2571,29 @@ class OwnerDashboardController extends Controller
             $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
             $daysDiff = $receivedAt->diffInDays($now);
 
-            // Determine status and color
+            // Determine status
             if ($isWeekly) {
                 if ($daysDiff < $thresholds[0]) {
                     $status = 'AMAN';
-                    $statusColor = '4CAF50'; // Green
+                    $statusClass = 'status-aman';
                 } elseif ($daysDiff <= $thresholds[1]) {
                     $status = 'PERINGATAN';
-                    $statusColor = 'FFC107'; // Yellow/Amber
+                    $statusClass = 'status-peringatan';
                 } else {
                     $status = 'TERLAMBAT';
-                    $statusColor = 'F44336'; // Red
+                    $statusClass = 'status-terlambat';
                 }
                 $duration = floor($daysDiff / 7) . ' minggu';
             } else {
                 if ($daysDiff < $thresholds[0]) {
                     $status = 'AMAN';
-                    $statusColor = '4CAF50'; // Green
+                    $statusClass = 'status-aman';
                 } elseif ($daysDiff <= $thresholds[1]) {
                     $status = 'PERINGATAN';
-                    $statusColor = 'FFC107'; // Yellow/Amber
+                    $statusClass = 'status-peringatan';
                 } else {
                     $status = 'TERLAMBAT';
-                    $statusColor = 'F44336'; // Red
+                    $statusClass = 'status-terlambat';
                 }
                 $duration = $daysDiff . ' hari';
             }
@@ -2624,93 +2601,39 @@ class OwnerDashboardController extends Controller
             // Check if completed
             $completedAt = $roleData->processed_at;
             $isCompleted = !is_null($completedAt);
+            $prosesClass = $isCompleted ? 'proses-selesai' : 'proses-pending';
 
-            // Set cell values
-            $sheet->setCellValue('A' . $row, $no++);
-            $sheet->setCellValue('B' . $row, $dokumen->nomor_agenda ?? '-');
-            $sheet->setCellValue('C' . $row, $dokumen->nomor_spp ?? '-');
-            $sheet->setCellValue('D' . $row, \Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 60));
-            $sheet->setCellValue('E' . $row, $dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-');
-            $sheet->setCellValue('F' . $row, $receivedAt->format('d/m/Y H:i'));
-            $sheet->setCellValue('G' . $row, $duration);
-            $sheet->setCellValue('H' . $row, $status);
-            $sheet->setCellValue('I' . $row, $isCompleted ? 'Selesai' : 'Sedang Diproses');
-            $sheet->setCellValue('J' . $row, $isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-');
+            $rowClass = ($no % 2 == 0) ? 'row-even' : '';
 
-            // Apply row border
-            $sheet->getStyle('A' . $row . ':J' . $row)->applyFromArray([
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => 'CCCCCC'],
-                    ],
-                ],
-            ]);
-
-            // Alternate row colors
-            if ($no % 2 == 0) {
-                $sheet->getStyle('A' . $row . ':J' . $row)->applyFromArray([
-                    'fill' => [
-                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'F5F5F5'],
-                    ],
-                ]);
-            }
-
-            // Status cell color
-            $sheet->getStyle('H' . $row)->applyFromArray([
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => $statusColor],
-                ],
-            ]);
-
-            // Process status color
-            $processColor = $isCompleted ? '4CAF50' : '2196F3'; // Green if done, blue if processing
-            $sheet->getStyle('I' . $row)->applyFromArray([
-                'font' => ['color' => ['rgb' => 'FFFFFF']],
-                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => $processColor],
-                ],
-            ]);
-
-            $row++;
+            $html .= '
+    <tr class="' . $rowClass . '">
+        <td class="center">' . $no++ . '</td>
+        <td>' . htmlspecialchars($dokumen->nomor_agenda ?? '-') . '</td>
+        <td>' . htmlspecialchars($dokumen->nomor_spp ?? '-') . '</td>
+        <td>' . htmlspecialchars(\Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 60)) . '</td>
+        <td class="right">' . ($dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-') . '</td>
+        <td class="center">' . $receivedAt->format('d/m/Y H:i') . '</td>
+        <td class="center">' . $duration . '</td>
+        <td class="' . $statusClass . '">' . $status . '</td>
+        <td class="' . $prosesClass . '">' . ($isCompleted ? 'Selesai' : 'Sedang Diproses') . '</td>
+        <td class="center">' . ($isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-') . '</td>
+    </tr>';
         }
 
-        // Auto-size columns
-        foreach ($columns as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
+        $html .= '
+    <tr><td colspan="10"></td></tr>
+    <tr class="summary">
+        <td colspan="4">Total Dokumen: ' . ($no - 1) . '</td>
+        <td colspan="6"></td>
+    </tr>
+</table>
+</body>
+</html>';
 
-        // Summary row
-        $summaryRow = $row + 1;
-        $sheet->mergeCells('A' . $summaryRow . ':D' . $summaryRow);
-        $sheet->setCellValue('A' . $summaryRow, 'Total Dokumen: ' . ($no - 1));
-        $sheet->getStyle('A' . $summaryRow)->applyFromArray([
-            'font' => ['bold' => true, 'size' => 11],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'E3F2FD'],
-            ],
-        ]);
-
-        // Freeze header row
-        $sheet->freezePane('A5');
-
-        // Create writer and output
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-
-        // Create response
-        return response()->streamDownload(function () use ($writer) {
-            $writer->save('php://output');
-        }, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Cache-Control' => 'max-age=0',
-        ]);
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
     }
 
     /**
