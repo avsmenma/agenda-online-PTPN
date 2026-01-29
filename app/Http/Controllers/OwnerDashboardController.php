@@ -2567,12 +2567,33 @@ class OwnerDashboardController extends Controller
             if (!$dokumen)
                 continue;
 
-            // Calculate days since received
+            // Calculate time difference with full precision
             $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
-            $daysDiff = $receivedAt->diffInDays($now);
+            $diffInMinutes = $receivedAt->diffInMinutes($now);
+            $daysDiff = floor($diffInMinutes / (60 * 24));
 
-            // Determine status
+            // Calculate readable duration
+            $totalMinutes = $diffInMinutes;
+            $days = floor($totalMinutes / (60 * 24));
+            $hours = floor(($totalMinutes % (60 * 24)) / 60);
+            $minutes = $totalMinutes % 60;
+
+            // Build human-readable duration string
+            $durationParts = [];
+            if ($days > 0) {
+                $durationParts[] = $days . ' hari';
+            }
+            if ($hours > 0) {
+                $durationParts[] = $hours . ' jam';
+            }
+            if ($minutes > 0 || empty($durationParts)) {
+                $durationParts[] = $minutes . ' menit';
+            }
+            $duration = implode(' ', $durationParts);
+
+            // Determine status based on days for threshold comparison
             if ($isWeekly) {
+                $weeksCount = floor($daysDiff / 7);
                 if ($daysDiff < $thresholds[0]) {
                     $status = 'AMAN';
                     $statusClass = 'status-aman';
@@ -2583,7 +2604,6 @@ class OwnerDashboardController extends Controller
                     $status = 'TERLAMBAT';
                     $statusClass = 'status-terlambat';
                 }
-                $duration = floor($daysDiff / 7) . ' minggu';
             } else {
                 if ($daysDiff < $thresholds[0]) {
                     $status = 'AMAN';
@@ -2595,7 +2615,6 @@ class OwnerDashboardController extends Controller
                     $status = 'TERLAMBAT';
                     $statusClass = 'status-terlambat';
                 }
-                $duration = $daysDiff . ' hari';
             }
 
             // Check if completed
