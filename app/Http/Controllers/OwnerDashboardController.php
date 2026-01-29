@@ -2466,17 +2466,30 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Export rekapan keterlambatan semua role ke Excel
+     * Export rekapan keterlambatan per role ke Excel
      */
-    public function exportRekapanKeterlambatan(Request $request)
+    public function exportRekapanKeterlambatan(Request $request, $roleCode)
     {
+        // Validate roleCode
+        $validRoles = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+        if (!in_array($roleCode, $validRoles)) {
+            abort(404, 'Role tidak ditemukan');
+        }
+
         $year = $request->get('year');
         $month = $request->get('month');
 
-        $filename = 'Rekapan_Keterlambatan_' . now()->format('Y-m-d_H-i') . '.xlsx';
+        $roleNames = [
+            'team_verifikasi' => 'Team_Verifikasi',
+            'perpajakan' => 'Perpajakan',
+            'akutansi' => 'Akutansi',
+            'pembayaran' => 'Pembayaran',
+        ];
+
+        $filename = 'Rekapan_Keterlambatan_' . $roleNames[$roleCode] . '_' . now()->format('Y-m-d_H-i') . '.xlsx';
 
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\RekapanKeterlambatanExport($year, $month),
+            new \App\Exports\RekapanKeterlambatanExport($roleCode, $year, $month),
             $filename
         );
     }

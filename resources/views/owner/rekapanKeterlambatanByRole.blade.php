@@ -995,11 +995,11 @@
       </div>
       
       <!-- Export Excel Button -->
-      <a href="{{ route('owner.rekapan-keterlambatan.export') }}" 
+      <a href="{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}" 
          class="btn-export-excel"
          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 16px; background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(33, 115, 70, 0.25);">
         <i class="fas fa-file-excel"></i>
-        <span>Export Excel (Semua Role)</span>
+        <span>Export Excel</span>
       </a>
     </div>
 
