@@ -17,6 +17,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <!-- Preload Landing Background Image -->
+    <link rel="preload" as="image" href="{{ asset('images/landing-bg.png') }}" fetchpriority="high">
+
     <style>
         * {
             margin: 0;
@@ -486,7 +489,8 @@
 <body>
     <!-- Landing Page -->
     <div class="landing-page" id="landingPage">
-        <img src="{{ asset('images/landing-bg.png') }}" alt="Agenda Online" class="landing-bg-image">
+        <img src="{{ asset('images/landing-bg.png') }}" alt="Agenda Online" class="landing-bg-image" loading="eager"
+            fetchpriority="high" decoding="sync">
         <div class="landing-content">
             <button class="btn-login-landing" id="showLoginBtn">
                 <i class="fas fa-sign-in-alt"></i>
