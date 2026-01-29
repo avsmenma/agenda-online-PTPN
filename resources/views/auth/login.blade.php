@@ -570,7 +570,8 @@
 
     <!-- Landing Page -->
     <div class="landing-page" id="landingPage">
-        <img src="{{ asset('images/landing-bg.png') }}" alt="Agenda Online" class="landing-bg-image" id="landingBgImage">
+        <!-- Image will be set via JavaScript after preloading -->
+        <img src="" alt="Agenda Online" class="landing-bg-image" id="landingBgImage">
         <div class="landing-content">
             <button class="btn-login-landing" id="showLoginBtn">
                 <i class="fas fa-sign-in-alt"></i>
@@ -676,34 +677,52 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Preload image and show content when ready
+        // Image URL to preload
+        const imageUrl = "{{ asset('images/landing-bg.png') }}";
+        
+        // Elements
         const loadingScreen = document.getElementById('loadingScreen');
         const landingBgImage = document.getElementById('landingBgImage');
         const landingContent = document.querySelector('.landing-content');
 
-        // Function to show content after image loads
+        // Function to show content after image is fully loaded
         function showContent() {
-            landingBgImage.classList.add('loaded');
-            loadingScreen.classList.add('loaded');
-            setTimeout(() => {
-                landingContent.classList.add('visible');
-            }, 200);
+            // Set the preloaded image to the visible img element
+            landingBgImage.src = imageUrl;
+            
+            // Force browser to complete rendering
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    landingBgImage.classList.add('loaded');
+                    loadingScreen.classList.add('loaded');
+                    
+                    setTimeout(() => {
+                        landingContent.classList.add('visible');
+                    }, 100);
+                });
+            });
         }
 
-        // Check if image is already cached/loaded
-        if (landingBgImage.complete && landingBgImage.naturalHeight !== 0) {
+        // Preload image in memory (hidden) before displaying
+        const preloadImage = new Image();
+        preloadImage.onload = function() {
+            // Image is fully downloaded in memory, now show it
             showContent();
-        } else {
-            landingBgImage.addEventListener('load', showContent);
-            landingBgImage.addEventListener('error', showContent); // Show content even on error
-        }
+        };
+        preloadImage.onerror = function() {
+            // Show content even if image fails to load
+            showContent();
+        };
+        
+        // Start preloading
+        preloadImage.src = imageUrl;
 
-        // Fallback: show content after 3 seconds maximum
+        // Fallback: show content after 5 seconds maximum
         setTimeout(() => {
             if (!loadingScreen.classList.contains('loaded')) {
                 showContent();
             }
-        }, 3000);
+        }, 5000);
 
         // Elements
         const landingPage = document.getElementById('landingPage');
