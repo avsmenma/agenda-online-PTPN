@@ -477,6 +477,9 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::post('/import/preview', [\App\Http\Controllers\OperatorCsvImportController::class, 'preview'])->name('import.preview');
     Route::post('/import', [\App\Http\Controllers\OperatorCsvImportController::class, 'import'])->name('import.execute');
 
+    // Bulk send route (static route, before parameterized routes)
+    Route::post('/bulk-send-to-verifikasi', [DokumenController::class, 'bulkSendToTeamVerifikasi'])->name('bulk-send-to-verifikasi');
+
     // Routes with {dokumen} parameter - MUST be after static routes
     Route::get('/{dokumen}/edit', [DokumenController::class, 'edit'])->name('edit');
     Route::get('/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('detail');

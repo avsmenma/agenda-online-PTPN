@@ -1976,6 +1976,376 @@
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
     }
+
+    /* ===== Multi-Select Bulk Send Styles ===== */
+    
+    /* Checkbox Column */
+    .col-checkbox {
+      width: 45px !important;
+      min-width: 45px !important;
+      max-width: 45px !important;
+      text-align: center;
+      padding: 8px !important;
+      position: sticky;
+      left: 0;
+      background: inherit;
+      z-index: 2;
+    }
+
+    .col-checkbox::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(8, 62, 64, 0.1);
+    }
+
+    /* Custom Checkbox Styling */
+    .bulk-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #dee2e6;
+      border-radius: 4px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background: white;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .bulk-checkbox:hover {
+      border-color: #889717;
+      box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+    }
+
+    .bulk-checkbox:checked {
+      background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
+      border-color: #889717;
+    }
+
+    .bulk-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .bulk-checkbox:disabled {
+      background: #f8f9fa;
+      border-color: #dee2e6;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    /* Select All Checkbox */
+    #selectAllCheckbox {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Selected Row Highlight */
+    .main-row.selected-for-bulk {
+      background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%) !important;
+      border-left: 3px solid #889717 !important;
+    }
+
+    .main-row.selected-for-bulk:hover {
+      background: linear-gradient(135deg, rgba(136, 151, 23, 0.12) 0%, rgba(136, 151, 23, 0.08) 100%) !important;
+    }
+
+    /* Floating Action Bar */
+    .bulk-action-bar {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(8, 62, 64, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .bulk-action-bar.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .bulk-action-bar .selected-count {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .bulk-action-bar .selected-count .count-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .bulk-action-bar .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .bulk-action-bar .btn-cancel-selection {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bulk-action-bar .btn-cancel-selection:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .bulk-action-bar .btn-bulk-send {
+      background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+    }
+
+    .bulk-action-bar .btn-bulk-send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(136, 151, 23, 0.4);
+    }
+
+    .bulk-action-bar .btn-bulk-send:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Bulk Send Confirmation Modal */
+    .bulk-send-modal .modal-content {
+      border-radius: 20px;
+      border: none;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .bulk-send-modal .modal-header {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      padding: 20px 24px;
+      border: none;
+    }
+
+    .bulk-send-modal .modal-header .modal-title {
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bulk-send-modal .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+      opacity: 0.8;
+    }
+
+    .bulk-send-modal .modal-body {
+      padding: 24px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .bulk-send-modal .document-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .bulk-send-modal .document-list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .bulk-send-modal .document-list-item:hover {
+      background: #e9ecef;
+    }
+
+    .bulk-send-modal .document-list-item .doc-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+    }
+
+    .bulk-send-modal .document-list-item .doc-info {
+      flex: 1;
+    }
+
+    .bulk-send-modal .document-list-item .doc-agenda {
+      font-weight: 600;
+      color: #083E40;
+      font-size: 14px;
+    }
+
+    .bulk-send-modal .document-list-item .doc-spp {
+      font-size: 12px;
+      color: #6c757d;
+    }
+
+    .bulk-send-modal .document-list-item .doc-value {
+      font-weight: 600;
+      color: #889717;
+      font-size: 14px;
+    }
+
+    .bulk-send-modal .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e9ecef;
+      background: #f8f9fa;
+    }
+
+    .bulk-send-modal .summary-info {
+      background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, rgba(136, 151, 23, 0.05) 100%);
+      border: 1px solid rgba(136, 151, 23, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .bulk-send-modal .summary-info .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .bulk-send-modal .summary-info .summary-row:last-child {
+      margin-bottom: 0;
+      padding-top: 8px;
+      border-top: 1px solid rgba(136, 151, 23, 0.2);
+      font-weight: 700;
+    }
+
+    .bulk-send-modal .summary-info .summary-label {
+      color: #495057;
+    }
+
+    .bulk-send-modal .summary-info .summary-value {
+      font-weight: 600;
+      color: #083E40;
+    }
+
+    /* Loading Overlay for Bulk Send */
+    .bulk-send-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(8, 62, 64, 0.9);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .bulk-send-loading.visible {
+      display: flex;
+    }
+
+    .bulk-send-loading .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #889717;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .bulk-send-loading .loading-text {
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .bulk-send-loading .loading-progress {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive for Bulk Action Bar */
+    @media (max-width: 576px) {
+      .bulk-action-bar {
+        left: 16px;
+        right: 16px;
+        transform: translateX(0) translateY(100px);
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .bulk-action-bar.visible {
+        transform: translateX(0) translateY(0);
+      }
+
+      .bulk-action-bar .action-buttons {
+        width: 100%;
+      }
+
+      .bulk-action-bar .btn-cancel-selection,
+      .bulk-action-bar .btn-bulk-send {
+        flex: 1;
+        justify-content: center;
+      }
+    }
   </style>
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
@@ -2098,6 +2468,9 @@
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>
+            <th class="col-checkbox">
+              <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
+            </th>
             <th class="col-no sticky-column">No</th>
             @php
               $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
@@ -2112,8 +2485,76 @@
         </thead>
         <tbody>
           @forelse($dokumens as $index => $dokumen)
+            @php
+              // === Compute canSend early for checkbox ===
+              // Check if document has been sent to Team Verifikasi
+              $isSentToTeamVerifikasiForCheck = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
+                || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
+              
+              // Check if approved by Team Verifikasi
+              $teamVerifikasiStatusForCheck = $dokumen->roleStatuses()
+                ->where('role_code', 'team_verifikasi')
+                ->where('status', 'approved')
+                ->first();
+              $isApprovedByTeamVerifikasiForCheck = $teamVerifikasiStatusForCheck !== null;
+              
+              // Check if rejected
+              $teamVerifikasiRejectedForCheck = $dokumen->roleStatuses()
+                ->where('role_code', 'team_verifikasi')
+                ->where('status', 'rejected')
+                ->first();
+              $isRejectedForCheck = $teamVerifikasiRejectedForCheck !== null;
+              
+              // Check if returned
+              if (!$isRejectedForCheck && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
+                $hasAnyRejectionForCheck = $dokumen->roleStatuses()->where('status', 'rejected')->exists();
+                if ($hasAnyRejectionForCheck) {
+                  $isRejectedForCheck = true;
+                }
+              }
+              
+              // Check if sent to other roles
+              $isSentToOtherRolesForCheck = in_array($dokumen->status ?? '', [
+                'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran'
+              ]);
+              
+              // Final isSent check
+              $isSentForCheck = ($isSentToTeamVerifikasiForCheck || ($isApprovedByTeamVerifikasiForCheck && $isSentToOtherRolesForCheck)) && !$isRejectedForCheck;
+              
+              // Compute canSend
+              $createdByOperatorForCheck = in_array(strtolower($dokumen->created_by ?? ''), ['operator']);
+              $currentHandlerOperatorForCheck = in_array(strtolower($dokumen->current_handler ?? ''), ['operator']);
+              $isReturnedForCheck = strtolower($dokumen->status ?? '') === 'returned_to_operator';
+              
+              $canSendForBulk = false;
+              if ($isRejectedForCheck && $currentHandlerOperatorForCheck && $createdByOperatorForCheck) {
+                $canSendForBulk = true;
+              } elseif ($isReturnedForCheck && $currentHandlerOperatorForCheck && $createdByOperatorForCheck && !$isSentForCheck) {
+                $canSendForBulk = true;
+              } elseif (in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses']) && $currentHandlerOperatorForCheck && $createdByOperatorForCheck && !$isSentForCheck) {
+                $canSendForBulk = true;
+              }
+            @endphp
             <tr class="main-row clickable-row" data-id="{{ $dokumen->id }}"
+              data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
+              data-nomor-spp="{{ $dokumen->nomor_spp }}"
+              data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
+              data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})">
+              <td class="col-checkbox" onclick="event.stopPropagation()">
+                @if($canSendForBulk)
+                  <input type="checkbox" 
+                    class="bulk-checkbox doc-checkbox" 
+                    data-id="{{ $dokumen->id }}"
+                    data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
+                    data-nomor-spp="{{ $dokumen->nomor_spp }}"
+                    data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
+                    title="Pilih dokumen ini untuk bulk send">
+                @else
+                  <input type="checkbox" class="bulk-checkbox" disabled title="Dokumen ini tidak dapat dikirim">
+                @endif
+              </td>
               <td class="col-no sticky-column">{{ $dokumens->firstItem() + $index }}</td>
               @php
                 $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
@@ -4549,6 +4990,366 @@
               }, 500);
             @endif
           });
+          </script>
+
+          <!-- ===== MULTI-SELECT BULK SEND COMPONENTS ===== -->
+          
+          <!-- Floating Action Bar -->
+          <div class="bulk-action-bar" id="bulkActionBar">
+            <div class="selected-count">
+              <i class="fa-solid fa-check-circle"></i>
+              <span><span class="count-badge" id="selectedCount">0</span> dokumen dipilih</span>
+            </div>
+            <div class="action-buttons">
+              <button type="button" class="btn-cancel-selection" onclick="clearAllSelections()">
+                <i class="fa-solid fa-times"></i>
+                Batal
+              </button>
+              <button type="button" class="btn-bulk-send" id="btnBulkSend" onclick="showBulkSendConfirmation()">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Kirim ke Team Verifikasi</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bulk Send Confirmation Modal -->
+          <div class="modal fade bulk-send-modal" id="bulkSendConfirmModal" tabindex="-1" aria-labelledby="bulkSendConfirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="bulkSendConfirmModalLabel">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    Konfirmasi Kirim Dokumen
+                  </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="summary-info">
+                    <div class="summary-row">
+                      <span class="summary-label">Jumlah Dokumen:</span>
+                      <span class="summary-value" id="summaryDocCount">0 dokumen</span>
+                    </div>
+                    <div class="summary-row">
+                      <span class="summary-label">Total Nilai:</span>
+                      <span class="summary-value" id="summaryTotalValue">Rp 0</span>
+                    </div>
+                  </div>
+                  
+                  <p style="color: #495057; margin-bottom: 12px;">
+                    <i class="fa-solid fa-info-circle text-muted me-2"></i>
+                    Dokumen berikut akan dikirim ke <strong>Team Verifikasi</strong> untuk diproses:
+                  </p>
+                  
+                  <ul class="document-list" id="bulkSendDocumentList">
+                    <!-- Document list items will be populated by JavaScript -->
+                  </ul>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 20px; border-radius: 10px; font-weight: 600;">
+                    <i class="fa-solid fa-times me-2"></i>Batal
+                  </button>
+                  <button type="button" class="btn btn-success" id="confirmBulkSendBtn" onclick="executeBulkSend()" style="padding: 10px 20px; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #889717 0%, #6b7814 100%); border: none;">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading Overlay -->
+          <div class="bulk-send-loading" id="bulkSendLoading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Mengirim dokumen...</div>
+            <div class="loading-progress" id="loadingProgress">Memproses...</div>
+          </div>
+
+          <!-- Bulk Send JavaScript -->
+          <script>
+            // Store selected documents
+            let selectedDocuments = new Map();
+
+            // Initialize bulk select functionality
+            document.addEventListener('DOMContentLoaded', function() {
+              initBulkSelect();
+            });
+
+            function initBulkSelect() {
+              // Get all document checkboxes
+              const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+              const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+              // Handle individual checkbox changes
+              docCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                  const docId = this.dataset.id;
+                  const row = this.closest('tr');
+
+                  if (this.checked) {
+                    selectedDocuments.set(docId, {
+                      id: docId,
+                      nomor_agenda: this.dataset.nomorAgenda,
+                      nomor_spp: this.dataset.nomorSpp,
+                      nilai_rupiah: this.dataset.nilaiRupiah
+                    });
+                    row.classList.add('selected-for-bulk');
+                  } else {
+                    selectedDocuments.delete(docId);
+                    row.classList.remove('selected-for-bulk');
+                  }
+
+                  updateBulkActionBar();
+                  updateSelectAllCheckbox();
+                });
+              });
+
+              // Handle Select All checkbox
+              if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                  const isChecked = this.checked;
+                  
+                  docCheckboxes.forEach(checkbox => {
+                    if (!checkbox.disabled) {
+                      checkbox.checked = isChecked;
+                      const row = checkbox.closest('tr');
+                      const docId = checkbox.dataset.id;
+
+                      if (isChecked) {
+                        selectedDocuments.set(docId, {
+                          id: docId,
+                          nomor_agenda: checkbox.dataset.nomorAgenda,
+                          nomor_spp: checkbox.dataset.nomorSpp,
+                          nilai_rupiah: checkbox.dataset.nilaiRupiah
+                        });
+                        row.classList.add('selected-for-bulk');
+                      } else {
+                        selectedDocuments.delete(docId);
+                        row.classList.remove('selected-for-bulk');
+                      }
+                    }
+                  });
+
+                  updateBulkActionBar();
+                });
+              }
+            }
+
+            function updateSelectAllCheckbox() {
+              const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+              const allCheckboxes = document.querySelectorAll('.doc-checkbox:not(:disabled)');
+              const checkedCheckboxes = document.querySelectorAll('.doc-checkbox:not(:disabled):checked');
+
+              if (!selectAllCheckbox) return;
+
+              if (allCheckboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+              } else if (checkedCheckboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+              } else if (checkedCheckboxes.length === allCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+              } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+              }
+            }
+
+            function updateBulkActionBar() {
+              const actionBar = document.getElementById('bulkActionBar');
+              const countElement = document.getElementById('selectedCount');
+              const count = selectedDocuments.size;
+
+              countElement.textContent = count;
+
+              if (count > 0) {
+                actionBar.classList.add('visible');
+              } else {
+                actionBar.classList.remove('visible');
+              }
+            }
+
+            function clearAllSelections() {
+              selectedDocuments.clear();
+              
+              document.querySelectorAll('.doc-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+                const row = checkbox.closest('tr');
+                if (row) {
+                  row.classList.remove('selected-for-bulk');
+                }
+              });
+
+              const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+              if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+              }
+
+              updateBulkActionBar();
+            }
+
+            function showBulkSendConfirmation() {
+              if (selectedDocuments.size === 0) {
+                alert('Pilih minimal satu dokumen untuk dikirim.');
+                return;
+              }
+
+              // Populate modal with selected documents
+              const documentList = document.getElementById('bulkSendDocumentList');
+              documentList.innerHTML = '';
+
+              let totalValue = 0;
+              let counter = 1;
+
+              selectedDocuments.forEach((doc, id) => {
+                // Parse nilai rupiah for total calculation
+                const nilaiStr = doc.nilai_rupiah.replace(/[^\d]/g, '');
+                const nilaiNum = parseInt(nilaiStr) || 0;
+                totalValue += nilaiNum;
+
+                const listItem = document.createElement('li');
+                listItem.className = 'document-list-item';
+                listItem.innerHTML = `
+                  <div class="doc-icon">
+                    <i class="fa-solid fa-file-lines"></i>
+                  </div>
+                  <div class="doc-info">
+                    <div class="doc-agenda">${doc.nomor_agenda || '-'}</div>
+                    <div class="doc-spp">SPP: ${doc.nomor_spp || '-'}</div>
+                  </div>
+                  <div class="doc-value">${doc.nilai_rupiah || '-'}</div>
+                `;
+                documentList.appendChild(listItem);
+                counter++;
+              });
+
+              // Update summary
+              document.getElementById('summaryDocCount').textContent = `${selectedDocuments.size} dokumen`;
+              document.getElementById('summaryTotalValue').textContent = formatRupiah(totalValue);
+
+              // Show modal
+              const modal = new bootstrap.Modal(document.getElementById('bulkSendConfirmModal'));
+              modal.show();
+            }
+
+            function formatRupiah(number) {
+              return 'Rp ' + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            function executeBulkSend() {
+              if (selectedDocuments.size === 0) {
+                alert('Tidak ada dokumen yang dipilih.');
+                return;
+              }
+
+              // Disable button and show loading
+              const confirmBtn = document.getElementById('confirmBulkSendBtn');
+              confirmBtn.disabled = true;
+              confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
+
+              // Close modal and show loading overlay
+              const modal = bootstrap.Modal.getInstance(document.getElementById('bulkSendConfirmModal'));
+              modal.hide();
+
+              // Show loading overlay
+              const loadingOverlay = document.getElementById('bulkSendLoading');
+              loadingOverlay.classList.add('visible');
+              document.getElementById('loadingProgress').textContent = `Mengirim ${selectedDocuments.size} dokumen...`;
+
+              // Prepare data
+              const documentIds = Array.from(selectedDocuments.keys()).map(id => parseInt(id));
+
+              // Send request
+              fetch('{{ route("documents.bulk-send-to-verifikasi") }}', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                  document_ids: documentIds
+                })
+              })
+              .then(response => response.json())
+              .then(data => {
+                // Hide loading overlay
+                loadingOverlay.classList.remove('visible');
+
+                if (data.success) {
+                  // Show success message
+                  showBulkSendResult(true, data);
+                  
+                  // Clear selections
+                  clearAllSelections();
+
+                  // Reload page after delay to show updated data
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 2000);
+                } else {
+                  // Show error message
+                  showBulkSendResult(false, data);
+                  
+                  // Reset button
+                  confirmBtn.disabled = false;
+                  confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
+                }
+              })
+              .catch(error => {
+                console.error('Bulk send error:', error);
+                loadingOverlay.classList.remove('visible');
+                
+                alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
+                
+                // Reset button
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
+              });
+            }
+
+            function showBulkSendResult(success, data) {
+              // Create toast notification
+              const toastContainer = document.createElement('div');
+              toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+              toastContainer.style.zIndex = '11000';
+
+              let message = '';
+              let bgClass = '';
+
+              if (success) {
+                bgClass = 'bg-success';
+                message = `<i class="fa-solid fa-check-circle me-2"></i>
+                  <strong>Berhasil!</strong> ${data.success_count || selectedDocuments.size} dokumen telah dikirim ke Team Verifikasi.`;
+                
+                if (data.failed_count && data.failed_count > 0) {
+                  message += `<br><small>${data.failed_count} dokumen gagal dikirim.</small>`;
+                }
+              } else {
+                bgClass = 'bg-danger';
+                message = `<i class="fa-solid fa-exclamation-circle me-2"></i>
+                  <strong>Gagal!</strong> ${data.message || 'Terjadi kesalahan saat mengirim dokumen.'}`;
+              }
+
+              toastContainer.innerHTML = `
+                <div class="toast align-items-center text-white ${bgClass} border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px;">
+                  <div class="d-flex">
+                    <div class="toast-body" style="padding: 16px 20px; font-size: 14px;">
+                      ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                  </div>
+                </div>
+              `;
+
+              document.body.appendChild(toastContainer);
+
+              // Auto-remove after 5 seconds
+              setTimeout(() => {
+                toastContainer.remove();
+              }, 5000);
+            }
           </script>
 
 @endsection

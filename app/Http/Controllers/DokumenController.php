@@ -1280,6 +1280,175 @@ class DokumenController extends Controller
     }
 
     /**
+     * Bulk send multiple documents to Team Verifikasi
+     * Uses same logic as sendToTeamVerifikasi but for multiple documents
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkSendToTeamVerifikasi(Request $request)
+    {
+        $request->validate([
+            'document_ids' => 'required|array|min:1',
+            'document_ids.*' => 'exists:dokumens,id'
+        ]);
+
+        $successCount = 0;
+        $failedCount = 0;
+        $failedDocuments = [];
+        $successDocuments = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->document_ids as $docId) {
+                $dokumen = Dokumen::find($docId);
+
+                if (!$dokumen) {
+                    $failedCount++;
+                    $failedDocuments[] = ['id' => $docId, 'reason' => 'Dokumen tidak ditemukan'];
+                    continue;
+                }
+
+                // Validate document can be sent using helper method
+                $canSendResult = $this->canSendToVerifikasi($dokumen);
+
+                if ($canSendResult['canSend']) {
+                    // Use the same sendToInbox method as single send to ensure consistency
+                    // This ensures documents are NOT deleted, maintain proper status, etc.
+                    $dokumen->sendToInbox('team_verifikasi');
+                    $dokumen->refresh();
+
+                    $successCount++;
+                    $successDocuments[] = $dokumen->nomor_agenda;
+
+                    \Log::info('Bulk send: Document sent to Team Verifikasi inbox', [
+                        'document_id' => $dokumen->id,
+                        'nomor_agenda' => $dokumen->nomor_agenda,
+                        'status' => $dokumen->status,
+                        'inbox_status' => $dokumen->getStatusForRole('team_verifikasi')->status ?? 'unknown'
+                    ]);
+                } else {
+                    $failedCount++;
+                    $failedDocuments[] = [
+                        'nomor_agenda' => $dokumen->nomor_agenda,
+                        'reason' => $canSendResult['reason']
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            // Log summary
+            \Log::info('Bulk send completed', [
+                'total_requested' => count($request->document_ids),
+                'success_count' => $successCount,
+                'failed_count' => $failedCount,
+                'success_documents' => $successDocuments,
+                'failed_documents' => $failedDocuments
+            ]);
+
+            // Build response message
+            $message = "Berhasil mengirim {$successCount} dokumen ke inbox Team Verifikasi.";
+            if ($failedCount > 0) {
+                $message .= " ({$failedCount} dokumen gagal dikirim)";
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'successCount' => $successCount,
+                'failedCount' => $failedCount,
+                'successDocuments' => $successDocuments,
+                'failedDocuments' => $failedDocuments
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollback();
+
+            \Log::error('Bulk send failed: ' . $e->getMessage(), [
+                'document_ids' => $request->document_ids,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper: Check if document can be sent to Team Verifikasi
+     * Returns array with canSend boolean and reason string
+     * 
+     * @param Dokumen $dokumen
+     * @return array ['canSend' => bool, 'reason' => string]
+     */
+    private function canSendToVerifikasi(Dokumen $dokumen): array
+    {
+        // Get document properties
+        $currentHandler = strtolower($dokumen->current_handler ?? 'operator');
+        $createdBy = strtolower($dokumen->created_by ?? 'operator');
+
+        // Check if created by Operator (case-insensitive)
+        $operatorAliases = ['operator'];
+        $createdByOperator = in_array($createdBy, $operatorAliases);
+        $currentHandlerOperator = in_array($currentHandler, $operatorAliases);
+
+        // Permission check
+        if (!$createdByOperator || !$currentHandlerOperator) {
+            return [
+                'canSend' => false,
+                'reason' => 'Dokumen tidak sedang di-handle oleh Operator'
+            ];
+        }
+
+        // Check if document is rejected (can always resend)
+        $isRejected = false;
+        $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+        if ($teamVerifikasiStatus && strtolower($teamVerifikasiStatus->status ?? '') === 'rejected') {
+            $isRejected = true;
+        } else {
+            $rejectedStatus = $dokumen->roleStatuses()
+                ->where('status', 'rejected')
+                ->whereIn('role_code', ['team_verifikasi'])
+                ->first();
+            $isRejected = $rejectedStatus !== null;
+        }
+
+        // If rejected, can always resend
+        if ($isRejected) {
+            return ['canSend' => true, 'reason' => ''];
+        }
+
+        // Check status for non-rejected documents
+        $statusLower = strtolower($dokumen->status ?? '');
+        $allowedStatuses = ['draft', 'returned_to_operator', 'sedang diproses'];
+
+        if (!in_array($statusLower, $allowedStatuses)) {
+            return [
+                'canSend' => false,
+                'reason' => 'Status dokumen tidak memungkinkan pengiriman (' . $dokumen->status . ')'
+            ];
+        }
+
+        // Check if already sent and pending approval
+        $isPending = $dokumen->roleStatuses()
+            ->where('role_code', 'team_verifikasi')
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($isPending) {
+            return [
+                'canSend' => false,
+                'reason' => 'Dokumen sudah dikirim dan menunggu approval'
+            ];
+        }
+
+        return ['canSend' => true, 'reason' => ''];
+    }
+
+    /**
      * Helper untuk mendapatkan role user
      */
     private function getUserRole($user)
