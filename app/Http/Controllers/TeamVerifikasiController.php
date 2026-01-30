@@ -215,7 +215,7 @@ class TeamVerifikasiController extends Controller
                         })
                             ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
                     })
-                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve']) // Include documents sent to perpajakan/akutansi/pembayaran
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve', 'waiting_approval_perpajakan', 'waiting_approval_akuntansi']) // Include documents sent to perpajakan/akutansi/pembayaran AND waiting approval
                     ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
                         // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
                         $pembayaranQ->where(function ($statusQ) {

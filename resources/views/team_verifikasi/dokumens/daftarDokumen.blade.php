@@ -173,10 +173,10 @@
 
         // Show loading state
         detailContent.innerHTML = `
-                        <div class="text-center p-4">
-                            <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-                        </div>
-                              `;
+                          <div class="text-center p-4">
+                              <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
+                          </div>
+                                `;
 
         // Get CSRF token
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -214,15 +214,15 @@
           .catch(error => {
             console.error('Error loading document detail:', error);
             detailContent.innerHTML = `
-                            <div class="text-center p-4 text-danger">
-                                <i class="fa-solid fa-exclamation-triangle me-2"></i>
-                                Gagal memuat detail dokumen.
-                                <br><small class="text-muted">Error: ${error.message}</small>
-                                <br><button class="btn btn-sm btn-primary mt-2" onclick="loadDocumentDetail(${docId})">
-                                    <i class="fa-solid fa-refresh me-1"></i> Coba Lagi
-                                </button>
-                            </div>
-                        `;
+                              <div class="text-center p-4 text-danger">
+                                  <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                                  Gagal memuat detail dokumen.
+                                  <br><small class="text-muted">Error: ${error.message}</small>
+                                  <br><button class="btn btn-sm btn-primary mt-2" onclick="loadDocumentDetail(${docId})">
+                                      <i class="fa-solid fa-refresh me-1"></i> Coba Lagi
+                                  </button>
+                              </div>
+                          `;
           });
       }
 
@@ -236,11 +236,11 @@
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.innerHTML = `
-                        <div class="notification-content">
-                            <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
-                            <span>${message}</span>
-                        </div>
-                    `;
+                          <div class="notification-content">
+                              <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                              <span>${message}</span>
+                          </div>
+                      `;
 
         // Add to page
         document.body.appendChild(notification);
@@ -762,2822 +762,2822 @@
     }
 
     /* OVERRIDE: Force gray theme for entire deadline card when sent, regardless of color classes */
-        .deadline-card.deadline-sent.deadline-green,
-        .deadline-card.deadline-sent.deadline-yellow,
-        .deadline-card.deadline-sent.deadline-red {
-          --deadline-color: #6b7280 !important;
-          --deadline-color-light: #9ca3af !important;
-          --deadline-bg: #f9fafb !important;
-          --deadline-text: #4b5563 !important;
-          background: #f9fafb !important;
-          border-color: rgba(107, 114, 128, 0.2) !important;
-          opacity: 0.8;
-        }
-
-        .deadline-card.deadline-sent.deadline-green .deadline-time,
-        .deadline-card.deadline-sent.deadline-yellow .deadline-time,
-        .deadline-card.deadline-sent.deadline-red .deadline-time {
-          color: #4b5563 !important;
-        }
-
-        /* New System: Age-based deadline colors (count up from received_at) */
-        /* Green - Aman (<1 hari) */
-        .deadline-card.deadline-green {
-          --deadline-color: #10b981;
-          --deadline-color-light: #34d399;
-          --deadline-bg: #ecfdf5;
-          --deadline-text: #065f46;
-        }
-
-        .deadline-card.deadline-green {
-          background: var(--deadline-bg) !important;
-          border-color: rgba(16, 185, 129, 0.2) !important;
-        }
-
-        .deadline-card.deadline-green .deadline-time {
-          color: var(--deadline-text) !important;
-        }
-
-        .deadline-indicator.deadline-green {
-          background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
-          color: white;
-          box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
-        }
-
-        /* Yellow - Perlu Perhatian (>=1 hari <3 hari) */
-        .deadline-card.deadline-yellow {
-          --deadline-color: #f59e0b;
-          --deadline-color-light: #fbbf24;
-          --deadline-bg: #fffbeb;
-          --deadline-text: #92400e;
-        }
-
-        .deadline-card.deadline-yellow {
-          background: var(--deadline-bg) !important;
-          border-color: rgba(245, 158, 11, 0.2) !important;
-        }
-
-        .deadline-card.deadline-yellow .deadline-time {
-          color: var(--deadline-text) !important;
-        }
-
-        .deadline-indicator.deadline-yellow {
-          background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
-          color: white;
-          box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
-        }
-
-        /* Red - Terlambat (>=3 hari) */
-        .deadline-card.deadline-red {
-          --deadline-color: #ef4444;
-          --deadline-color-light: #f87171;
-          --deadline-bg: #fef2f2;
-          --deadline-text: #991b1b;
-        }
-
-        .deadline-card.deadline-red {
-          background: var(--deadline-bg) !important;
-          border-color: rgba(239, 68, 68, 0.2) !important;
-        }
-
-        .deadline-card.deadline-red .deadline-time {
-          color: var(--deadline-text) !important;
-          font-weight: 800;
-        }
-
-        .deadline-indicator.deadline-red {
-          background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
-          color: white;
-          box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
-          animation: danger-pulse 2s infinite;
-        }
-
-        /* Completed State - Green Theme (for completed documents) */
-        .deadline-card.deadline-completed {
-          --deadline-color: #10b981;
-          --deadline-color-light: #34d399;
-          --deadline-bg: #ecfdf5;
-          --deadline-text: #065f46;
-        }
-
-        .deadline-card.deadline-completed {
-          background: var(--deadline-bg) !important;
-          border-color: rgba(16, 185, 129, 0.3) !important;
-          opacity: 0.9;
-        }
-
-        .deadline-card.deadline-completed .deadline-time {
-          color: var(--deadline-text) !important;
-        }
-
-        .deadline-indicator.deadline-completed {
-          background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
-          color: white;
-          box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
-        }
-
-        .deadline-indicator.deadline-completed i::before {
-          content: "\f058";
-          /* check-circle */
-        }
-
-        .deadline-card.deadline-overdue .deadline-time {
-          color: var(--deadline-text) !important;
-          font-weight: 800;
-        }
-
-        .deadline-indicator.deadline-overdue {
-          background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
-          color: white;
-          box-shadow: 0 4px 16px rgba(220, 38, 68, 0.5);
-          font-weight: 800;
-          animation: overdue-glow 1.5s infinite;
-        }
-
-        .deadline-indicator.deadline-overdue i::before {
-          content: "\f071";
-          /* exclamation-triangle */
-          animation: warning-shake 1s infinite;
-        }
-
-        /* Enhanced late information */
-        .late-info {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 10px;
-          font-weight: 700;
-          margin-top: 8px;
-          padding: 6px 10px;
-          border-radius: 20px;
-          background: linear-gradient(135deg, rgba(220, 38, 68, 0.1) 0%, rgba(239, 68, 68, 0.15) 100%);
-          border: 1px solid rgba(220, 38, 68, 0.3);
-          color: #991b1b;
-          animation: late-warning 2s infinite;
-        }
-
-        .late-info i {
-          font-size: 11px;
-          color: #dc2626;
-        }
-
-        .late-info .late-text {
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .deadline-progress {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg,
-              var(--deadline-color) 0%,
-              var(--deadline-color-light) 50%,
-              var(--deadline-color) 100%);
-          border-radius: 0 0 10px 10px;
-          transform-origin: left;
-          transition: transform 0.5s ease;
-        }
-
-        .deadline-note {
-          font-size: 9px;
-          color: #6b7280;
-          font-style: italic;
-          margin-top: 4px;
-          line-height: 1.3;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          text-align: center;
-        }
-
-        .no-deadline {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          color: #9ca3af;
-          font-size: 11px;
-          font-style: italic;
-          padding: 8px 12px;
-          border-radius: 20px;
-          background: #f9fafb;
-          border: 1px dashed #d1d5db;
-          transition: all 0.3s ease;
-        }
-
-        .no-deadline:hover {
-          background: #f3f4f6;
-          border-color: #9ca3af;
-        }
-
-        .no-deadline i {
-          font-size: 11px;
-          opacity: 0.7;
-        }
-
-        @keyframes overdue-alert {
-
-          0%,
-          85%,
-          100% {
-            border-color: rgba(220, 38, 38, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-          }
-
-          90%,
-          95% {
-            border-color: rgba(220, 38, 38, 0.8);
-            box-shadow: 0 0 16px rgba(220, 38, 38, 0.4);
-          }
-        }
-
-        @keyframes overdue-glow {
-
-          0%,
-          100% {
-            box-shadow: 0 4px 16px rgba(220, 38, 68, 0.5);
-            transform: translateY(0);
-          }
-
-          50% {
-            box-shadow: 0 6px 24px rgba(220, 38, 68, 0.7);
-            transform: translateY(-1px);
-          }
-        }
-
-        @keyframes late-warning {
-
-          0%,
-          100% {
-            background: linear-gradient(135deg, rgba(220, 38, 68, 0.1) 0%, rgba(239, 68, 68, 0.15) 100%);
-            transform: scale(1);
-          }
-
-          50% {
-            background: linear-gradient(135deg, rgba(220, 38, 68, 0.15) 0%, rgba(239, 68, 68, 0.25) 100%);
-            transform: scale(1.02);
-          }
-        }
-
-        @keyframes warning-shake {
-
-          0%,
-          100% {
-            transform: translateX(0) rotate(0deg);
-          }
-
-          25% {
-            transform: translateX(-1px) rotate(-1deg);
-          }
-
-          75% {
-            transform: translateX(1px) rotate(1deg);
-          }
-        }
-
-        @keyframes danger-pulse {
-
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-
-          50% {
-            transform: scale(1.05);
-            opacity: 0.9;
-          }
-        }
-
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-          .deadline-card {
-            padding: 8px 10px;
-            max-width: 130px;
-          }
-
-          .deadline-time {
-            font-size: 10px;
-          }
-
-          .deadline-indicator {
-            font-size: 9px;
-            padding: 4px 10px;
-          }
-
-          .late-info {
-            font-size: 9px;
-            padding: 4px 8px;
-            margin-top: 6px;
-          }
-
-          .deadline-note {
-            font-size: 8px;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .deadline-card {
-            padding: 6px 8px;
-            max-width: 120px;
-          }
-
-          .deadline-time {
-            font-size: 9px;
-          }
-
-          .deadline-indicator {
-            font-size: 8px;
-            padding: 3px 8px;
-          }
-
-          .deadline-note {
-            font-size: 7px;
-          }
-
-          .no-deadline {
-            font-size: 9px;
-            padding: 6px 10px;
-          }
-
-          .late-info {
-            font-size: 8px;
-            padding: 3px 6px;
-          }
-        }
-
-        /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
-          .table-enhanced .col-deadline {
-            min-width: 140px;
-          }
-
-          .deadline-card {
-            padding: 8px 10px;
-            max-width: 130px;
-          }
-
-          .deadline-time {
-            font-size: 10px;
-          }
-
-          .deadline-indicator {
-            font-size: 9px;
-            padding: 4px 10px;
-          }
-
-          .late-info {
-            font-size: 9px;
-            padding: 4px 8px;
-            margin-top: 6px;
-          }
-
-          .deadline-note {
-            font-size: 8px;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .deadline-card {
-            padding: 6px 8px;
-            max-width: 120px;
-          }
-
-          .deadline-time {
-            font-size: 9px;
-          }
-
-          .deadline-indicator {
-            font-size: 8px;
-            padding: 3px 8px;
-          }
-
-          .deadline-note {
-            font-size: 7px;
-          }
-
-          .no-deadline {
-            font-size: 9px;
-            padding: 6px 10px;
-          }
-
-          .late-info {
-            font-size: 8px;
-            padding: 3px 6px;
-          }
-        }
-
-        /* Responsive Locked State Enhancements */
-        @media (max-width: 768px) {
-          .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
-            top: -6px;
-            right: -6px;
-            font-size: 8px;
-          }
-
-          .table-enhanced tbody tr.locked-row:hover {
-            transform: translateY(-1px);
-          }
-        }
-
-        @media (max-width: 480px) {
-          /* Removed locked-row::before styles */
-
-          .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
-            display: none;
-            /* Hide warning icon on very small screens */
-          }
-
-          /* Reduce animation intensity on mobile for better performance */
-          .table-enhanced tbody tr.locked-row .btn-action.locked::before {
-            animation-duration: 4s;
-            /* Slower shimmer on mobile */
-          }
-        }
-
-        /* Animations for enhanced UX */
-        /* Removed animations (badge-glow, warning-bounce) for better readability */
-
-        /* Reduced motion support for accessibility */
-        @media (prefers-reduced-motion: reduce) {
-
-          .table-enhanced tbody tr.locked-row .col-status .badge-locked,
-          .table-enhanced tbody tr.locked-row .btn-action.locked::before,
-          .table-enhanced tbody tr.locked-row .deadline-empty {
-            animation: none;
-          }
-        }
-
-        .table-enhanced td {
-          padding: 12px;
-          vertical-align: middle;
-          border-right: 1px solid #e0e0e0;
-          white-space: nowrap;
-        }
-
-        /* Column width optimization */
-        .table-enhanced .col-no {
-          width: 80px;
-          min-width: 80px;
-        }
-
-        .table-enhanced .col-surat {
-          width: 120px;
-          min-width: 120px;
-        }
-
-        .table-enhanced .col-spp {
-          width: 140px;
-          min-width: 140px;
-        }
-
-        .table-enhanced .col-uraian {
-          width: 700px;
-          min-width: 500px;
-          max-width: 1000px;
-          word-wrap: break-word;
-          white-space: normal;
-          overflow-wrap: break-word;
-          line-height: 1.6;
-          vertical-align: top;
-          padding: 12px;
-        }
-
-        .table-enhanced .col-uraian span {
-          display: block;
-          word-wrap: break-word;
-          white-space: normal;
-          overflow-wrap: break-word;
-          line-height: 1.6;
-          width: 100%;
-        }
-
-        .table-enhanced .col-nilai {
-          width: 120px;
-          min-width: 120px;
-        }
-
-        .table-enhanced .col-deadline {
-          width: 160px;
-          min-width: 140px;
-        }
-
-        .table-enhanced .col-status {
-          width: 120px;
-          min-width: 100px;
-        }
-
-        .table-enhanced .col-action {
-          width: 120px;
-          min-width: 120px;
-        }
-
-        .table-enhanced .col-paraf {
-          width: 120px;
-          min-width: 120px;
-        }
-
-        .table-enhanced .col-sticky {
-          position: sticky;
-          left: 0;
-          background: white;
-          z-index: 5;
-        }
-
-        /* Mobile optimization */
-        @media (max-width: 768px) {
-          .table-dokumen {
-            padding: 15px;
-            border-radius: 12px;
-          }
-
-          .table-enhanced {
-            min-width: 800px;
-            font-size: 12px;
-          }
-
-          .table-enhanced th {
-            padding: 14px 8px;
-            font-size: 11px;
-          }
-
-          .table-enhanced td {
-            padding: 12px 8px;
-            font-size: 12px;
-          }
-
-          .badge-status {
-            padding: 6px 12px;
-            font-size: 11px;
-            min-width: 80px;
-          }
-
-          .action-buttons {
-            gap: 4px;
-          }
-
-          .btn-action {
-            min-width: 40px;
-            min-height: 40px;
-            padding: 6px 10px;
-            font-size: 10px;
-          }
-
-          .btn-action span {
-            font-size: 9px;
-          }
-
-          .search-box {
-            padding: 15px;
-            margin-bottom: 15px;
-          }
-
-          /* Enhanced mobile horizontal scroll */
-          .table-responsive {
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            /* Hide scrollbar on mobile */
-          }
-
-          .table-responsive::-webkit-scrollbar {
-            display: none;
-          }
-
-          /* Add scroll hint for mobile */
-          .table-responsive::after {
-            content: '→ Swipe to see more →';
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(8, 62, 64, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 10px;
-            z-index: 5;
-            animation: fadeInOut 3s infinite;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .table-enhanced {
-            min-width: 900px;
-            /* Still allow horizontal scroll on very small screens */
-          }
-        }
-
-        @keyframes fadeInOut {
-
-          0%,
-          100% {
-            opacity: 0.3;
-          }
-
-          50% {
-            opacity: 1;
-          }
-        }
-
-        .table-enhanced .col-no {
-          width: 60px;
-          min-width: 60px;
-        }
-
-        .table-enhanced .col-surat {
-          width: 80px;
-          min-width: 80px;
-        }
-
-        .table-enhanced .col-spp {
-          width: 100px;
-          min-width: 100px;
-        }
-
-        .table-enhanced .col-uraian {
-          width: 500px;
-          min-width: 400px;
-          max-width: 700px;
-          word-wrap: break-word;
-          white-space: normal;
-          overflow-wrap: break-word;
-          line-height: 1.6;
-          vertical-align: top;
-          padding: 12px;
-        }
-
-        .table-enhanced .col-nilai {
-          width: 80px;
-          min-width: 80px;
-        }
-
-        .table-enhanced .col-deadline {
-          width: 100px;
-          min-width: 100px;
-        }
-
-        .table-enhanced .col-status {
-          width: 80px;
-          min-width: 80px;
-        }
-
-        .table-enhanced .col-action {
-          width: 80px;
-          min-width: 80px;
-        }
-
-        .table-enhanced .col-paraf {
-          width: 80px;
-          min-width: 80px;
-        }
-        }
-
-        @media (max-width: 480px) {
-          .table-enhanced {
-            min-width: 480px;
-          }
-
-          .table-enhanced th {
-            padding: 10px 6px;
-            font-size: 11px;
-          }
-
-          .table-enhanced td {
-            padding: 8px 6px;
-            font-size: 11px;
-          }
-
-          .table-enhanced .col-no {
-            width: 50px;
-            min-width: 50px;
-          }
-
-          .table-enhanced .col-surat {
-            width: 70px;
-            min-width: 70px;
-          }
-
-          .table-enhanced .col-spp {
-            width: 80px;
-            min-width: 80px;
-          }
-
-          .table-enhanced .col-uraian {
-            width: 400px;
-            min-width: 300px;
-            max-width: 600px;
-            word-wrap: break-word;
-            white-space: normal;
-            overflow-wrap: break-word;
-            line-height: 1.6;
-            vertical-align: top;
-            padding: 12px;
-          }
-
-          .table-enhanced .col-nilai {
-            width: 60px;
-            min-width: 60px;
-          }
-
-          .table-enhanced .col-deadline {
-            width: 90px;
-            min-width: 90px;
-          }
-
-          .table-enhanced .col-status {
-            width: 70px;
-            min-width: 70px;
-          }
-
-          .table-enhanced .col-action {
-            width: 70px;
-            min-width: 70px;
-          }
-
-          .table-enhanced .col-paraf {
-            width: 70px;
-            min-width: 70px;
-          }
-        }
-
-        .table-dokumen thead {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-          color: white;
-          position: relative;
-        }
-
-        .table-dokumen thead::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, transparent 0%, #889717 50%, transparent 100%);
-        }
-
-        .table-dokumen thead th {
-          padding: 16px 12px;
-          font-weight: 600;
-          font-size: 13px;
-          border: none;
-          text-align: center;
-          letter-spacing: 0.5px;
-        }
-
-        .table-dokumen tbody tr.main-row {
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border-left: 3px solid transparent;
-          position: relative;
-        }
-
-        .table-dokumen tbody tr.main-row::after {
-          content: '';
-          position: absolute;
-          right: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 10px;
-          color: #889717;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          pointer-events: none;
-          background: white;
-          padding: 2px 6px;
-          border-radius: 4px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .table-dokumen tbody tr.main-row:hover {
-          background: linear-gradient(90deg, rgba(183, 204, 26, 0.05) 0%, transparent 100%);
-          border-left: 3px solid #889717;
-          transform: scale(1.005);
-        }
-
-        .table-dokumen tbody tr.main-row:hover::after {
-          opacity: 0;
-        }
-
-        .table-dokumen tbody tr.main-row.highlight {
-          background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%) !important;
-          border-left: 3px solid #889717;
-        }
-
-        .table-dokumen tbody tr.main-row.selected {
-          background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
-          border-left: 3px solid #083E40;
-        }
-
-        .table-dokumen tbody td {
-          padding: 14px 12px;
-          font-size: 13px;
-          vertical-align: middle;
-          border-bottom: 1px solid rgba(8, 62, 64, 0.05);
-        }
-
-        /* Detail Row Styles */
-        .detail-row {
-          display: none;
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        }
-
-        .detail-row.show {
-          display: table-row;
-          animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .detail-content {
-          padding: 20px;
-          border-top: 2px solid rgba(8, 62, 64, 0.1);
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          width: 100%;
-          box-sizing: border-box;
-          overflow-x: hidden;
-        }
-
-        /* Detail Grid - Horizontal Layout */
-        .detail-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 16px;
-          margin-top: 0;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .detail-item {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          /* Gap untuk background spacing */
-          padding: 12px;
-          background: #ffffff;
-          /* Putih bersih untuk contrast dengan label */
-          border-radius: 8px;
-          border: 1px solid #f1f5f9;
-          /* Border yang sangat tipis */
-          transition: all 0.2s ease;
-          min-width: 0;
-          width: 100%;
-          overflow: visible;
-          box-sizing: border-box;
-        }
-
-        .detail-item:hover {
-          border-color: #e2e8f0;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-          transform: translateY(-1px);
-        }
-
-        .detail-label {
-          display: inline-block;
-          /* Inline block untuk background yang tepat */
-          font-size: 11px;
-          font-weight: 700;
-          /* Extra bold */
-          color: #374151;
-          /* text-gray-700 - lebih gelap untuk kontras maksimal */
-          text-transform: uppercase;
-          letter-spacing: 0.7px;
-          background: #f3f4f6;
-          /* bg-gray-100 - background yang jelas terlihat */
-          padding: 6px 10px;
-          /* Padding yang visible */
-          border-radius: 6px;
-          /* Rounded corners yang lembut */
-          border-left: 3px solid #6366f1;
-          /* Aksen biru di kiri untuk visual distinction */
-          margin-bottom: 2px;
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-          white-space: normal;
-          max-width: 100%;
-          width: fit-content;
-          /* Hanya selebar teks */
-          min-width: 120px;
-          /* Minimum width untuk konsistensi */
-        }
-
-        .detail-value {
-          font-size: 14px;
-          color: #111827;
-          /* text-gray-900 - hampir hitam */
-          font-weight: 600;
-          /* Semi-bold untuk menonjol sebagai data utama */
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-          word-break: break-word;
-          hyphens: auto;
-          white-space: normal;
-          max-width: 100%;
-          width: 100%;
-          overflow: visible;
-          line-height: 1.6;
-          padding: 4px 0;
-          /* Sedikit padding atas/bawah */
-          position: relative;
-        }
-
-        /* Special styling for different field types */
-        .detail-value.text-danger {
-          color: #dc2626;
-          font-weight: 600;
-        }
-
-        .detail-value .badge {
-          font-size: 11px;
-          font-weight: 600;
-        }
-
-        /* Badge in detail */
-        .detail-value .badge {
-          font-size: 11px;
-          padding: 4px 12px;
-          border-radius: 20px;
-        }
-
-        .badge-selesai {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-        }
-
-        .badge-proses {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-        }
-
-        .badge-dikembalikan {
-          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-          color: white;
-        }
-
-        .badge-sent {
-          background: #083E40;
-          color: white;
-        }
-
-        /* Responsive Detail Grid */
-        @media (max-width: 1200px) {
-          .detail-grid {
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 12px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .detail-content {
-            padding: 16px;
-          }
-
-          .detail-grid {
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 10px;
-          }
-
-          .detail-item {
-            padding: 10px;
-          }
-
-          .detail-label {
-            font-size: 10px;
-          }
-
-          .detail-value {
-            font-size: 12px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .detail-grid {
-            grid-template-columns: 1fr;
-            gap: 8px;
-          }
-
-          .detail-item {
-            padding: 8px;
-          }
-        }
-
-        /* Simplified Status System - 3 States */
-        .badge-status {
-          padding: 8px 16px;
-          border-radius: 25px;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-          border: 2px solid transparent;
-          text-align: center;
-          min-width: 100px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          transition: all 0.3s ease;
-        }
-
-        /* State 1: 🔒 Terkunci (Locked - Waiting for Deadline) - Simplified */
-        .badge-status.badge-locked {
-          background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-          color: white;
-          border-color: #495057;
-          position: relative;
-          /* Removed overflow and animation for better readability */
-        }
-
-        .badge-status.badge-locked::before {
-          display: none;
-          /* Removed shimmer animation */
-        }
-
-        /* State 2: ⏳ Diproses (In Progress) */
-        .badge-status.badge-proses {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-          border-color: #083E40;
-        }
-
-        .badge-status.badge-proses::after {
-          content: '';
-          display: inline-block;
-          width: 6px;
-          height: 6px;
-          background: white;
-          border-radius: 50%;
-          margin-left: 6px;
-          animation: pulse 1.5s infinite;
-        }
-
-        /* State 3: ✅ Selesai (Completed) */
-        .badge-status.badge-selesai {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-          border-color: #083E40;
-        }
-
-        /* Special state for returned/rejected documents */
-        .badge-status.badge-dikembalikan {
-          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-          color: white;
-          border-color: #dc3545;
-          position: relative;
-        }
-
-        .badge-status.badge-dikembalikan::before {
-          content: '⚠️';
-          margin-right: 4px;
-        }
-
-        /* Status Dropdown Styles */
-        .status-dropdown {
-          position: relative;
-          display: inline-block;
-          z-index: 999;
-        }
-
-        /* Ensure status button is clickable */
-        .status-button-simple {
-          pointer-events: auto !important;
-          cursor: pointer !important;
-          position: relative;
-          z-index: 1000;
-        }
-
-        .status-button {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px !important;
-          border: none !important;
-          border-radius: 25px !important;
-          font-size: 12px !important;
-          font-weight: 600 !important;
-          cursor: pointer !important;
-          transition: all 0.3s ease !important;
-          position: relative;
-          min-width: 140px;
-          justify-content: space-between;
-          pointer-events: auto !important;
-          user-select: none;
-          z-index: 1000;
-        }
-
-        .status-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-        }
-
-        .status-button .dropdown-arrow {
-          transition: transform 0.3s ease;
-          font-size: 10px;
-        }
-
-        .status-dropdown.active .dropdown-arrow {
-          transform: rotate(180deg);
-        }
-
-        .status-menu {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-          border: 1px solid rgba(0, 0, 0, 0.1);
-          z-index: 5;
-          min-width: 160px;
-          margin-top: 4px;
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(-10px);
-          transition: all 0.3s ease;
-          pointer-events: none;
-        }
-
-        .status-dropdown.active .status-menu {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
-          pointer-events: auto;
-        }
-
-        /* Support for status-menu-visible class used in inline styles */
-        .status-menu-visible {
-          position: absolute !important;
-          top: 100% !important;
-          left: 0 !important;
-          right: 0 !important;
-          background: white !important;
-          border-radius: 12px !important;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
-          border: 1px solid rgba(0, 0, 0, 0.2) !important;
-          z-index: 5 !important;
-          min-width: 160px !important;
-          margin-top: 4px !important;
-        }
-
-        .status-dropdown.active .status-menu-visible {
-          opacity: 1 !important;
-          visibility: visible !important;
-          transform: translateY(0) !important;
-          pointer-events: auto !important;
-        }
-
-        .status-option {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 16px;
-          border: none;
-          background: none;
-          width: 100%;
-          text-align: left;
-          font-size: 13px;
-          color: #2c3e50;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border-radius: 0;
-        }
-
-        .status-option:first-child {
-          border-radius: 12px 12px 0 0;
-        }
-
-        .status-option:last-child {
-          border-radius: 0 0 12px 12px;
-        }
-
-        .status-option:hover {
-          background: linear-gradient(135deg, rgba(26, 77, 62, 0.1) 0%, rgba(15, 61, 46, 0.05) 100%);
-          color: #1a4d3e;
-        }
-
-        .status-option.approve {
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .status-option.approve:hover {
-          background: linear-gradient(135deg, rgba(82, 183, 136, 0.1) 0%, rgba(64, 145, 108, 0.05) 100%);
-        }
-
-        .status-option.reject:hover {
-          background: linear-gradient(135deg, rgba(116, 198, 157, 0.1) 0%, rgba(82, 183, 136, 0.05) 100%);
-        }
-
-        .status-option i {
-          width: 16px;
-          text-align: center;
-          font-size: 14px;
-        }
-
-        .status-option.approve i {
-          color: #40916c;
-        }
-
-        .status-option.reject i {
-          color: #74c69d;
-        }
-
-        /* Loading state */
-        .status-button.loading {
-          pointer-events: none;
-          opacity: 0.7;
-        }
-
-        .status-button.loading::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 16px;
-          height: 16px;
-          margin: -8px 0 0 -8px;
-          border: 2px solid transparent;
-          border-top: 2px solid #1a4d3e;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-
-        /* Special state for sent documents */
-        .badge-status.badge-sent {
-          background: #083E40;
-          color: white;
-          border-color: #083E40;
-          position: relative;
-        }
-
-        /* Animations */
-        @keyframes shimmer {
-          0% {
-            left: -100%;
-          }
-
-          100% {
-            left: 100%;
-          }
-        }
-
-        @keyframes pulse {
-
-          0%,
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-
-          50% {
-            opacity: 0.5;
-            transform: scale(1.2);
-          }
-        }
-
-        /* Enhanced hover effects */
-        .badge-status:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Responsive Status Badges */
-        @media (max-width: 768px) {
-          .badge-status {
-            padding: 6px 12px;
-            font-size: 11px;
-            min-width: 80px;
-            gap: 4px;
-          }
-
-          .badge-status.badge-proses::after {
-            width: 4px;
-            height: 4px;
-            margin-left: 4px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .badge-status {
-            padding: 5px 10px;
-            font-size: 10px;
-            min-width: 70px;
-            border-radius: 15px;
-          }
-
-          .badge-status span {
-            display: none;
-            /* Hide text on very small screens, show only icons */
-          }
-
-          .badge-status::before {
-            font-size: 14px;
-          }
-        }
-
-        .action-buttons {
-          display: flex;
-          gap: 8px;
-          justify-content: center;
-        }
-
-        .btn-action {
-          padding: 8px 12px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 12px;
-          transition: all 0.3s ease;
-          font-weight: 600;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-edit {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-        }
-
-        .btn-kirim {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-        }
-
-
-        .btn-view {
-          background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-          color: white;
-        }
-
-        .btn-action:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-action:active {
-          transform: translateY(-1px);
-        }
-
-        .btn-action.locked {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-          cursor: not-allowed;
-          opacity: 0.85;
-        }
-
-        .btn-action.locked:hover {
-          transform: none;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-action:disabled,
-        .btn-action[disabled] {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-          cursor: not-allowed !important;
-          opacity: 0.85 !important;
-          pointer-events: none !important;
-        }
-
-        .btn-action:disabled:hover,
-        .btn-action[disabled]:hover {
-          transform: none !important;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        .btn-set-deadline {
-          background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%) !important;
-          color: white;
-        }
-
-        .btn-set-deadline:hover {
-          background: linear-gradient(135deg, #ff8c00 0%, #e67300 100%) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
-        }
-
-        /* Enhanced Responsive Action Buttons */
-        .action-buttons {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          justify-content: center;
-          align-items: stretch;
-          width: 100%;
-        }
-
-        /* Hybrid Layout: Full-width button on top, row buttons below */
-        .action-buttons-hybrid {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          width: 100%;
-        }
-
-        .action-buttons-hybrid .btn-full-width {
-          width: 100%;
-          min-width: 100%;
-        }
-
-        .action-buttons-hybrid .action-row {
-          display: flex;
-          gap: 6px;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .action-buttons-hybrid .action-row .btn-action {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .btn-kirim {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
-          color: white;
-        }
-
-        .btn-kirim:hover {
-          background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
-        }
-
-        .btn-kembalikan {
-          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-          color: white;
-        }
-
-        .btn-kembalikan:hover {
-          background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-          color: white;
-        }
-
-        /* Touch-friendly button sizes */
-        .btn-action {
-          min-width: 44px;
-          min-height: 44px;
-          padding: 10px 12px;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 11px;
-          font-weight: 600;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          text-decoration: none;
-          user-select: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn-action i {
-          font-size: 12px;
-          flex-shrink: 0;
-        }
-
-        .btn-action span {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        /* Enhanced hover and active states */
-        .btn-action:hover:not(.locked) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-action:active:not(.locked) {
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Ripple effect for better touch feedback */
-        .btn-action::before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 0;
-          height: 0;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.3);
-          transform: translate(-50%, -50%);
-          transition: width 0.3s ease, height 0.3s ease;
-        }
-
-        .btn-action:active::before {
-          width: 100px;
-          height: 100px;
-        }
-
-        /* Action button types with enhanced gradients */
-        .btn-edit {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
-          color: white;
-        }
-
-        .btn-edit:hover {
-          background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
-        }
-
-        .btn-return {
-          background: linear-gradient(135deg, #dc3545 0%, #c82333 50%, #bd2130 100%);
-          color: white;
-        }
-
-        .btn-return:hover {
-          background: linear-gradient(135deg, #c82333 0%, #bd2130 50%, #a71e2a 100%);
-        }
-
-
-        .btn-chevron {
-          background: linear-gradient(135deg, #6c757d 0%, #5a6268 50%, #495057 100%);
-          color: white;
-          min-width: 36px;
-          min-height: 36px;
-        }
-
-        .btn-chevron:hover {
-          background: linear-gradient(135deg, #5a6268 0%, #495057 50%, #343a40 100%);
-        }
-
-        .btn-chevron.active {
-          background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-          transform: rotate(180deg);
-        }
-
-        /* Responsive Action Button Styles */
-        @media (max-width: 1200px) {
-          .btn-action {
-            padding: 8px 10px;
-            font-size: 10px;
-            gap: 3px;
-          }
-
-          .btn-action i {
-            font-size: 11px;
-          }
-
-          .action-buttons {
-            gap: 4px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .action-buttons {
-            flex-direction: column;
-            gap: 6px;
-            align-items: stretch;
-          }
-
-          .btn-action {
-            width: 100%;
-            min-width: 48px;
-            min-height: 48px;
-            padding: 12px 8px;
-            font-size: 11px;
-            border-radius: 8px;
-            justify-content: center;
-            gap: 6px;
-          }
-
-          .btn-action i {
-            font-size: 14px;
-          }
-
-          .btn-chevron {
-            min-width: 48px;
-            min-height: 36px;
-            width: auto;
-            max-width: 80px;
-          }
-
-          /* Button tooltips on mobile */
-          .btn-action[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            white-space: nowrap;
-            z-index: 1000;
-            margin-bottom: 4px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .action-buttons {
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 3px;
-            overflow-x: auto;
-            padding: 2px;
-            -webkit-overflow-scrolling: touch;
-          }
-
-          .btn-action {
-            flex-shrink: 0;
-            min-width: 44px;
-            min-height: 44px;
-            padding: 8px 6px;
-            font-size: 0;
-            border-radius: 6px;
-          }
-
-          .btn-action i {
-            font-size: 16px;
-            margin: 0;
-          }
-
-          .btn-action span {
-            display: none;
-          }
-
-          /* Special cases for important buttons */
-          .btn-set-deadline {
-            background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-            min-width: 48px;
-          }
-
-          .btn-set-deadline::before {
-            content: '⏰';
-            font-size: 14px;
-            font-style: normal;
-          }
-
-          .btn-set-deadline i {
-            display: none;
-          }
-        }
-
-        /* High contrast mode support */
-        @media (prefers-contrast: high) {
-          .btn-action {
-            border: 2px solid currentColor;
-            background: white;
-            color: black;
-          }
-
-          .btn-edit {
-            border-color: #083E40;
-            color: #083E40;
-          }
-
-          .btn-return {
-            border-color: #dc3545;
-            color: #dc3545;
-          }
-
-          .btn-chevron {
-            border-color: #6c757d;
-            color: #6c757d;
-          }
-        }
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-          .btn-action {
-            background: linear-gradient(135deg, #495057 0%, #343a40 100%);
-            color: white;
-          }
-
-          .btn-action:hover:not(.locked) {
-            background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
-          }
-        }
-
-        .filter-section {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        }
-
-        .year-dropdown-wrapper {
-          position: relative;
-        }
-
-        .btn-year-select {
-          padding: 10px 16px;
-          background: white;
-          color: #495057;
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: all 0.3s ease;
-          display: inline-flex;
-          align-items: center;
-          min-height: 44px;
-          white-space: nowrap;
-          width: 100%;
-          justify-content: space-between;
-        }
-
-        .btn-year-select:hover {
-          border-color: #889717;
-          background: #f8f9fa;
-        }
-
-        .btn-year-select.active {
-          border-color: #889717;
-          background: #f8f9fa;
-        }
-
-        .year-dropdown-menu {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          background: white;
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          min-width: 150px;
-          z-index: 1000;
-          overflow: hidden;
-          display: none;
-        }
-
-        .year-dropdown-menu.show,
-        .year-dropdown-menu[style*="block"] {
-          display: block;
-        }
-
-        .year-dropdown-item {
-          display: block;
-          padding: 12px 16px;
-          color: #495057;
-          text-decoration: none;
-          transition: all 0.2s ease;
-          font-size: 14px;
-          border-bottom: 1px solid #f1f3f5;
-        }
-
-        .year-dropdown-item:last-child {
-          border-bottom: none;
-        }
-
-        .year-dropdown-item:hover {
-          background: #f8f9fa;
-          color: #889717;
-        }
-
-        .year-dropdown-item.active {
-          background: #e8f5e9;
-          color: #889717;
-          font-weight: 600;
-        }
-
-        .filter-section select,
-        .filter-section input {
-          padding: 10px 14px;
-          border: 2px solid rgba(8, 62, 64, 0.1);
-          border-radius: 10px;
-          font-size: 13px;
-          transition: all 0.3s ease;
-          background: white;
-          font-weight: 500;
-        }
-
-        .filter-section select:focus,
-        .filter-section input:focus {
-          outline: none;
-          border-color: #889717;
-          box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
-        }
-
-        .btn-filter {
-          padding: 10px 24px;
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
-        }
-
-        .btn-filter:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(8, 62, 64, 0.3);
-        }
-
-        .btn-tambah {
-          padding: 10px 24px;
-          background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(136, 151, 23, 0.2);
-        }
-
-        .btn-tambah:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(136, 151, 23, 0.3);
-        }
-
-        .btn-excel {
-          padding: 10px 24px;
-          background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-          margin-left: 0;
-        }
-
-        .btn-excel:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-customize-columns-inline {
-          padding: 10px 20px;
-          background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          min-height: 44px;
-          white-space: nowrap;
-          margin-right: 20px;
-        }
-
-        .btn-customize-columns-inline:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
-          background: linear-gradient(135deg, #9ab01f 0%, #a8bf23 100%);
-          color: white;
-        }
-
-        .btn-customize-columns-inline:active {
-          transform: translateY(0);
-          box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
-        }
-
-        .chevron-icon {
-          transition: transform 0.4s ease;
-          color: #fff;
-        }
-
-        .chevron-icon.rotate {
-          transform: rotate(180deg);
-        }
-
-        .pagination {
-          display: flex;
-          justify-content: center;
-          gap: 8px;
-          margin-top: 24px;
-        }
-
-        .pagination button {
-          padding: 10px 16px;
-          border: 2px solid rgba(8, 62, 64, 0.1);
-          background-color: white;
-          cursor: pointer;
-          border-radius: 10px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          color: #083E40;
-        }
-
-        .pagination button:hover {
-          border-color: #889717;
-          background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, transparent 100%);
-          transform: translateY(-2px);
-        }
-
-        .pagination button.active {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-          color: white;
-          border-color: transparent;
-          box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-        }
-
-        .btn-chevron {
-          background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-          color: white;
-        }
-
-        .btn-chevron:hover {
-          background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
-        }
-
-        .btn-paraf {
-          padding: 10px 24px;
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
-        }
-
-        .btn-paraf-selesai {
-          padding: 10px 24px;
-          background: linear-gradient(135deg, #5eff00ff 0%, #07ff13ff 100%);
-          color: hitam;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
-        }
-
-        .span-terlambat {
-          font-weight: 600;
-          color: #ff002bff;
-          font-size: 12px;
-          margin-bottom: 6px;
-          letter-spacing: 0.3px;
-          text-transform: uppercase;
-        }
-
-        .span-tepatWaktu {
-          font-weight: 600;
-          color: #08c757ff;
-          font-size: 12px;
-          margin-bottom: 6px;
-          letter-spacing: 0.3px;
-          text-transform: uppercase;
-        }
-
-        .span-proses {
-          font-weight: 600;
-          color: #ffca2c;
-          font-size: 12px;
-          margin-bottom: 6px;
-          letter-spacing: 0.3px;
-          text-transform: uppercase;
-        }
-
-        /* Chevron Icon Animation */
-        .chevron-icon {
-          transition: transform 0.3s ease;
-        }
-
-        .chevron-icon.rotate {
-          transform: rotate(180deg);
-        }
-
-        .btn-chevron {
-          background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
-          padding: 8px 12px;
-        }
-
-        /* Modal Customization Styles */
-        .customization-modal {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.7);
-          z-index: 9999;
-          overflow-y: auto;
-          padding: 20px;
-          box-sizing: border-box;
-        }
-
-        .customization-modal.show {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-
-          to {
-            opacity: 1;
-          }
-        }
-
-        .modal-content-custom {
-          background: white;
-          border-radius: 20px;
-          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
-          max-width: 90%;
-          width: 90%;
-          max-height: 90vh;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-          from {
-            transform: translateY(-30px);
-            opacity: 0;
-          }
-
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        .modal-header-custom {
-          background: #f8f9fa;
-          border-bottom: 1px solid #e9ecef;
-          padding: 24px 40px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-shrink: 0;
-        }
-
-        .modal-header-custom h3 {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
-          color: #212529;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .modal-body-custom {
-          padding: 24px 32px;
-          flex: 1;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-
-        .customization-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-          flex: 1;
-          min-height: 0;
-        }
-
-        .selection-panel {
-          background: #f8f9fa;
-          border-radius: 12px;
-          padding: 24px;
-          border: 1px solid #e9ecef;
-          display: flex;
-          flex-direction: column;
-          flex-shrink: 0;
-        }
-
-        .panel-title {
-          font-size: 18px;
-          font-weight: 600;
-          color: #212529;
-          margin-bottom: 12px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .panel-description {
-          font-size: 13px;
-          color: #6c757d;
-          margin-bottom: 16px;
-          line-height: 1.6;
-        }
-
-        .column-selection-list {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
-          max-height: 200px;
-          overflow-y: auto;
-          padding: 8px;
-          background: white;
-          border-radius: 8px;
-          border: 1px solid #dee2e6;
-        }
-
-        @media (max-width: 900px) {
-          .column-selection-list {
-            grid-template-columns: repeat(3, 1fr);
-          }
-        }
-
-        @media (max-width: 600px) {
-          .column-selection-list {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        .column-item {
-          display: flex;
-          align-items: center;
-          padding: 10px 12px;
-          background: #ffffff;
-          border-radius: 8px;
-          border: 2px solid #e9ecef;
-          cursor: move;
-          transition: all 0.2s ease;
-          position: relative;
-          user-select: none;
-          min-height: 44px;
-          gap: 8px;
-        }
-
-        .column-item.selected {
-          border-color: #28a745;
-          background: #f0f9f4;
-          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
-        }
-
-        .column-item.dragging {
-          opacity: 0.6;
-          transform: scale(0.98);
-        }
-
-        .drag-handle {
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #6c757d;
-          cursor: grab;
-          flex-shrink: 0;
-          font-size: 12px;
-        }
-
-        .column-item.selected .drag-handle {
-          color: #28a745;
-        }
-
-        .column-item:not(.selected) .drag-handle {
-          opacity: 0.3;
-          cursor: default;
-        }
-
-        .column-item-checkbox {
-          width: 18px;
-          height: 18px;
-          cursor: pointer;
-          flex-shrink: 0;
-        }
-
-        .column-item-label {
-          font-size: 14px;
-          color: #212529;
-          font-weight: 500;
-          flex: 1;
-          cursor: pointer;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .column-item-order {
-          width: 24px;
-          height: 24px;
-          background: #28a745;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 600;
-          opacity: 0;
-          transform: scale(0);
-          transition: all 0.2s ease;
-          flex-shrink: 0;
-        }
-
-        .column-item.selected .column-item-order {
-          opacity: 1;
-          transform: scale(1);
-        }
-
-        .preview-panel {
-          background: #ffffff;
-          border-radius: 12px;
-          padding: 24px;
-          border: 1px solid #e9ecef;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          min-height: 0;
-        }
-
-        .preview-container {
-          flex: 1;
-          overflow-x: auto;
-          overflow-y: auto;
-          background: #f8f9fa;
-          border-radius: 8px;
-          padding: 16px;
-          min-height: 400px;
-          width: 100%;
-        }
-
-        .preview-table {
-          width: 100%;
-          min-width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          background: white;
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          font-size: 13px;
-          table-layout: auto;
-        }
-
-        .preview-table thead {
-          background: #212529;
-        }
-
-        .preview-table th {
-          background: #212529;
-          color: white;
-          padding: 14px 12px;
-          text-align: center;
-          font-weight: 600;
-          font-size: 12px;
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
-          white-space: nowrap;
-        }
-
-        .preview-table th:last-child {
-          border-right: none;
-        }
-
-        .preview-table tbody tr:hover {
-          background-color: #f8f9fa;
-        }
-
-        .preview-table td {
-          padding: 12px;
-          text-align: center;
-          border-right: 1px solid #e9ecef;
-          border-bottom: 1px solid #e9ecef;
-          color: #495057;
-          font-size: 13px;
-        }
-
-        .preview-table td:last-child {
-          border-right: none;
-        }
-
-        .preview-table tbody tr:last-child td {
-          border-bottom: none;
-        }
-
-        .empty-preview {
-          text-align: center;
-          padding: 60px 20px;
-          color: #6c757d;
-        }
-
-        .modal-footer-custom {
-          padding: 20px 40px;
-          border-top: 1px solid #e9ecef;
-          background: #ffffff;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 16px;
-          flex-shrink: 0;
-          position: sticky;
-          bottom: 0;
-          z-index: 100;
-          box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .selected-count {
-          font-size: 15px;
-          color: #495057;
-          font-weight: 500;
-        }
-
-        .selected-count strong {
-          color: #28a745;
-          font-size: 18px;
-        }
-
-        .modal-actions {
-          display: flex;
-          gap: 12px;
-        }
-
-        .btn-modal {
-          padding: 12px 32px;
-          border: none;
-          border-radius: 10px;
-          font-size: 15px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          min-height: 48px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .btn-cancel {
-          background: #6c757d;
-          color: white;
-        }
-
-        .btn-cancel:hover {
-          background: #5a6268;
-          transform: translateY(-1px);
-        }
-
-        .btn-save {
-          background: #28a745;
-          color: white;
-        }
-
-        .btn-save:hover {
-          background: #218838;
-          transform: translateY(-1px);
-        }
-
-        .btn-save:disabled {
-          background: #adb5bd;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        /* Year Filter Button Styles */
-        .btn-year-filter {
-          display: inline-flex;
-          align-items: center;
-          padding: 10px 16px;
-          background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 6px rgba(26, 77, 62, 0.2);
-        }
-
-        .btn-year-filter:hover {
-          background: linear-gradient(135deg, #0a3d2e 0%, #083020 100%);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(26, 77, 62, 0.3);
-        }
-
-        .btn-year-filter i {
-          font-size: 12px;
-        }
-
-        /* Year Filter Modal Styles */
-        .year-filter-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.5);
-          display: none;
-          justify-content: center;
-          align-items: center;
-          z-index: 9999;
-          backdrop-filter: blur(4px);
-        }
-
-        .year-filter-modal-overlay.active {
-          display: flex;
-        }
-
-        .year-filter-modal {
-          background: white;
-          border-radius: 16px;
-          width: 100%;
-          max-width: 480px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          animation: modalSlideIn 0.3s ease;
-          overflow: hidden;
-        }
-
-        @keyframes modalSlideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-30px) scale(0.95);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        .year-filter-modal-header {
-          background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-          color: white;
-          padding: 20px 24px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .year-filter-modal-header h5 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .year-filter-modal-close {
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-        }
-
-        .year-filter-modal-close:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-
-        .year-filter-modal-body {
-          padding: 24px;
-        }
-
-        .filter-type-section {
-          margin-bottom: 24px;
-        }
-
-        .filter-type-section h6 {
-          font-size: 14px;
-          font-weight: 700;
-          color: #1a4d3e;
-          margin-bottom: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .filter-type-options {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .filter-type-option {
-          display: flex;
-          align-items: center;
-          padding: 12px 16px;
-          background: #f8f9fa;
-          border: 2px solid #e9ecef;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .filter-type-option:hover {
-          background: #e9f5f0;
-          border-color: #1a4d3e;
-        }
-
-        .filter-type-option.selected {
-          background: linear-gradient(135deg, #e9f5f0 0%, #d4ebe4 100%);
-          border-color: #1a4d3e;
-        }
-
-        .filter-type-option input[type="radio"] {
-          margin-right: 12px;
-          accent-color: #1a4d3e;
-          transform: scale(1.2);
-        }
-
-        .filter-type-option label {
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          color: #333;
-          flex: 1;
-        }
-
-        .filter-type-option small {
-          color: #6c757d;
-          font-size: 12px;
-        }
-
-        .year-selection-section h6 {
-          font-size: 14px;
-          font-weight: 700;
-          color: #1a4d3e;
-          margin-bottom: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .year-buttons-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
-        }
-
-        .year-btn {
-          padding: 14px 16px;
-          border: 2px solid #e9ecef;
-          background: #f8f9fa;
-          border-radius: 10px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: #333;
-        }
-
-        .year-btn:hover {
-          background: #e9f5f0;
-          border-color: #1a4d3e;
-        }
-
-        .year-btn.selected {
-          background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
-          border-color: #1a4d3e;
-          color: white;
-        }
-
-        .year-btn.all-years {
-          grid-column: span 4;
-          background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-          color: white;
-          border-color: #6c757d;
-        }
-
-        .year-btn.all-years.selected {
-          background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
-          border-color: #1a4d3e;
-        }
-
-        .year-filter-modal-footer {
-          padding: 16px 24px;
-          background: #f8f9fa;
-          border-top: 1px solid #e9ecef;
-          display: flex;
-          justify-content: flex-end;
-          gap: 12px;
-        }
-
-        .btn-reset-filter {
-          padding: 10px 20px;
-          background: #fff;
-          border: 2px solid #dc3545;
-          color: #dc3545;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .btn-reset-filter:hover {
-          background: #dc3545;
-          color: white;
-        }
-
-        .btn-apply-filter {
-          padding: 10px 24px;
-          background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
-          border: none;
-          color: white;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .btn-apply-filter:hover {
-          background: linear-gradient(135deg, #0a3d2e 0%, #083020 100%);
-          transform: translateY(-1px);
-        }
-      </style>
-
-      <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
-
-
-
-      <!-- Enhanced Search & Filter Box -->
-      <div class="search-box">
-        <form id="filterForm" action="{{ route('documents.verifikasi.index') }}" method="GET"
-          class="d-flex align-items-center flex-wrap gap-3">
-          <div class="input-group" style="flex: 1; min-width: 300px;">
-            <span class="input-group-text">
-              <i class="fa-solid fa-magnifying-glass text-muted"></i>
-            </span>
-            <input type="text" class="form-control" name="search"
-              placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
-          </div>
-          <div class="filter-section">
-            <div class="year-filter-wrapper" style="position: relative;">
-              <button type="button" class="btn-year-filter" id="yearFilterBtn" onclick="openYearFilterModal()">
-                <i class="fa-solid fa-calendar-alt me-2"></i>
-                <span id="yearFilterBtnText">
-                  @php
-                    $year = request('year');
-                    $filterType = request('year_filter_type', 'tanggal_spp');
-                    $filterTypeLabels = [
-                      'tanggal_spp' => 'Tgl SPP',
-                      'tanggal_masuk' => 'Tgl Masuk',
-                      'nomor_spp' => 'No SPP'
-                    ];
-                  @endphp
-                  @if($year)
-                    {{ $year }} ({{ $filterTypeLabels[$filterType] ?? 'Tgl SPP' }})
-                  @else
-                    Filter Tahun
-                  @endif
-                </span>
-                <i class="fa-solid fa-chevron-down ms-2"></i>
-              </button>
-              <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
-              <input type="hidden" name="year_filter_type" id="yearFilterType"
-                value="{{ request('year_filter_type', 'tanggal_spp') }}">
-            </div>
-            <div class="status-dropdown-wrapper" style="position: relative;">
-              <button type="button" class="btn-year-select" id="statusSelectBtn">
-                <span id="statusSelectText">
-                  @php
-                    $statusFilter = request('status');
-                    $statusLabels = [
-                      '' => 'Semua Status',
-                      'menunggu_approve' => 'Menunggu Approve',
-                      'sedang_proses' => 'Sedang Proses',
-                      'terkirim_perpajakan' => 'Terkirim ke Perpajakan',
-                      'terkirim_akutansi' => 'Terkirim ke Akutansi',
-                      'terkirim_pembayaran' => 'Terkirim ke Pembayaran',
-                      'ditolak' => 'Dokumen Ditolak'
-                    ];
-                  @endphp
-                  {{ $statusLabels[$statusFilter] ?? 'Semua Status' }}
-                </span>
-                <i class="fa-solid fa-chevron-down ms-2"></i>
-              </button>
-              <div class="year-dropdown-menu" id="statusDropdownMenu" style="display: none;">
-                <a href="#" class="year-dropdown-item {{ !request('status') ? 'active' : '' }}" data-status="">
-                  Semua Status
-                </a>
-                <a href="#" class="year-dropdown-item {{ request('status') == 'menunggu_approve' ? 'active' : '' }}"
-                  data-status="menunggu_approve">
-                  Menunggu Approve
-                </a>
-                <a href="#" class="year-dropdown-item {{ request('status') == 'sedang_proses' ? 'active' : '' }}"
-                  data-status="sedang_proses">
-                  Sedang Proses
-                </a>
-                <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_perpajakan' ? 'active' : '' }}"
-                  data-status="terkirim_perpajakan">
-                  Terkirim ke Perpajakan
-                </a>
-                <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_akutansi' ? 'active' : '' }}"
-                  data-status="terkirim_akutansi">
-                  Terkirim ke Akutansi
-                </a>
-                <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_pembayaran' ? 'active' : '' }}"
-                  data-status="terkirim_pembayaran">
-                  Terkirim ke Pembayaran
-                </a>
-                <a href="#" class="year-dropdown-item {{ request('status') == 'ditolak' ? 'active' : '' }}"
-                  data-status="ditolak">
-                  Dokumen Ditolak
-                </a>
-              </div>
-              <input type="hidden" name="status" id="statusSelect" value="{{ request('status') }}">
-            </div>
-          </div>
-          <button type="submit" class="btn-filter">
-            <i class="fa-solid fa-filter me-2"></i>Filter
-          </button>
-          <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
-            <i class="fa-solid fa-table-columns me-2"></i>
-            Kustomisasi Kolom Tabel
-          </button>
-
-          <!-- Preserve per_page and columns parameters -->
-          @if(request('per_page'))
-            <input type="hidden" name="per_page" value="{{ request('per_page') }}">
-          @endif
-          @if(request('columns'))
-            @foreach(request('columns') as $column)
-              <input type="hidden" name="columns[]" value="{{ $column }}">
-            @endforeach
-          @endif
-        </form>
+    .deadline-card.deadline-sent.deadline-green,
+    .deadline-card.deadline-sent.deadline-yellow,
+    .deadline-card.deadline-sent.deadline-red {
+      --deadline-color: #6b7280 !important;
+      --deadline-color-light: #9ca3af !important;
+      --deadline-bg: #f9fafb !important;
+      --deadline-text: #4b5563 !important;
+      background: #f9fafb !important;
+      border-color: rgba(107, 114, 128, 0.2) !important;
+      opacity: 0.8;
+    }
+
+    .deadline-card.deadline-sent.deadline-green .deadline-time,
+    .deadline-card.deadline-sent.deadline-yellow .deadline-time,
+    .deadline-card.deadline-sent.deadline-red .deadline-time {
+      color: #4b5563 !important;
+    }
+
+    /* New System: Age-based deadline colors (count up from received_at) */
+    /* Green - Aman (<1 hari) */
+    .deadline-card.deadline-green {
+      --deadline-color: #10b981;
+      --deadline-color-light: #34d399;
+      --deadline-bg: #ecfdf5;
+      --deadline-text: #065f46;
+    }
+
+    .deadline-card.deadline-green {
+      background: var(--deadline-bg) !important;
+      border-color: rgba(16, 185, 129, 0.2) !important;
+    }
+
+    .deadline-card.deadline-green .deadline-time {
+      color: var(--deadline-text) !important;
+    }
+
+    .deadline-indicator.deadline-green {
+      background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+      color: white;
+      box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Yellow - Perlu Perhatian (>=1 hari <3 hari) */
+    .deadline-card.deadline-yellow {
+      --deadline-color: #f59e0b;
+      --deadline-color-light: #fbbf24;
+      --deadline-bg: #fffbeb;
+      --deadline-text: #92400e;
+    }
+
+    .deadline-card.deadline-yellow {
+      background: var(--deadline-bg) !important;
+      border-color: rgba(245, 158, 11, 0.2) !important;
+    }
+
+    .deadline-card.deadline-yellow .deadline-time {
+      color: var(--deadline-text) !important;
+    }
+
+    .deadline-indicator.deadline-yellow {
+      background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+      color: white;
+      box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Red - Terlambat (>=3 hari) */
+    .deadline-card.deadline-red {
+      --deadline-color: #ef4444;
+      --deadline-color-light: #f87171;
+      --deadline-bg: #fef2f2;
+      --deadline-text: #991b1b;
+    }
+
+    .deadline-card.deadline-red {
+      background: var(--deadline-bg) !important;
+      border-color: rgba(239, 68, 68, 0.2) !important;
+    }
+
+    .deadline-card.deadline-red .deadline-time {
+      color: var(--deadline-text) !important;
+      font-weight: 800;
+    }
+
+    .deadline-indicator.deadline-red {
+      background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+      color: white;
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+      animation: danger-pulse 2s infinite;
+    }
+
+    /* Completed State - Green Theme (for completed documents) */
+    .deadline-card.deadline-completed {
+      --deadline-color: #10b981;
+      --deadline-color-light: #34d399;
+      --deadline-bg: #ecfdf5;
+      --deadline-text: #065f46;
+    }
+
+    .deadline-card.deadline-completed {
+      background: var(--deadline-bg) !important;
+      border-color: rgba(16, 185, 129, 0.3) !important;
+      opacity: 0.9;
+    }
+
+    .deadline-card.deadline-completed .deadline-time {
+      color: var(--deadline-text) !important;
+    }
+
+    .deadline-indicator.deadline-completed {
+      background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+      color: white;
+      box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .deadline-indicator.deadline-completed i::before {
+      content: "\f058";
+      /* check-circle */
+    }
+
+    .deadline-card.deadline-overdue .deadline-time {
+      color: var(--deadline-text) !important;
+      font-weight: 800;
+    }
+
+    .deadline-indicator.deadline-overdue {
+      background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+      color: white;
+      box-shadow: 0 4px 16px rgba(220, 38, 68, 0.5);
+      font-weight: 800;
+      animation: overdue-glow 1.5s infinite;
+    }
+
+    .deadline-indicator.deadline-overdue i::before {
+      content: "\f071";
+      /* exclamation-triangle */
+      animation: warning-shake 1s infinite;
+    }
+
+    /* Enhanced late information */
+    .late-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(220, 38, 68, 0.1) 0%, rgba(239, 68, 68, 0.15) 100%);
+      border: 1px solid rgba(220, 38, 68, 0.3);
+      color: #991b1b;
+      animation: late-warning 2s infinite;
+    }
+
+    .late-info i {
+      font-size: 11px;
+      color: #dc2626;
+    }
+
+    .late-info .late-text {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .deadline-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+          var(--deadline-color) 0%,
+          var(--deadline-color-light) 50%,
+          var(--deadline-color) 100%);
+      border-radius: 0 0 10px 10px;
+      transform-origin: left;
+      transition: transform 0.5s ease;
+    }
+
+    .deadline-note {
+      font-size: 9px;
+      color: #6b7280;
+      font-style: italic;
+      margin-top: 4px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    .no-deadline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #9ca3af;
+      font-size: 11px;
+      font-style: italic;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: #f9fafb;
+      border: 1px dashed #d1d5db;
+      transition: all 0.3s ease;
+    }
+
+    .no-deadline:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    .no-deadline i {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    @keyframes overdue-alert {
+
+      0%,
+      85%,
+      100% {
+        border-color: rgba(220, 38, 38, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      90%,
+      95% {
+        border-color: rgba(220, 38, 38, 0.8);
+        box-shadow: 0 0 16px rgba(220, 38, 38, 0.4);
+      }
+    }
+
+    @keyframes overdue-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 16px rgba(220, 38, 68, 0.5);
+        transform: translateY(0);
+      }
+
+      50% {
+        box-shadow: 0 6px 24px rgba(220, 38, 68, 0.7);
+        transform: translateY(-1px);
+      }
+    }
+
+    @keyframes late-warning {
+
+      0%,
+      100% {
+        background: linear-gradient(135deg, rgba(220, 38, 68, 0.1) 0%, rgba(239, 68, 68, 0.15) 100%);
+        transform: scale(1);
+      }
+
+      50% {
+        background: linear-gradient(135deg, rgba(220, 38, 68, 0.15) 0%, rgba(239, 68, 68, 0.25) 100%);
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes warning-shake {
+
+      0%,
+      100% {
+        transform: translateX(0) rotate(0deg);
+      }
+
+      25% {
+        transform: translateX(-1px) rotate(-1deg);
+      }
+
+      75% {
+        transform: translateX(1px) rotate(1deg);
+      }
+    }
+
+    @keyframes danger-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .deadline-card {
+        padding: 8px 10px;
+        max-width: 130px;
+      }
+
+      .deadline-time {
+        font-size: 10px;
+      }
+
+      .deadline-indicator {
+        font-size: 9px;
+        padding: 4px 10px;
+      }
+
+      .late-info {
+        font-size: 9px;
+        padding: 4px 8px;
+        margin-top: 6px;
+      }
+
+      .deadline-note {
+        font-size: 8px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .deadline-card {
+        padding: 6px 8px;
+        max-width: 120px;
+      }
+
+      .deadline-time {
+        font-size: 9px;
+      }
+
+      .deadline-indicator {
+        font-size: 8px;
+        padding: 3px 8px;
+      }
+
+      .deadline-note {
+        font-size: 7px;
+      }
+
+      .no-deadline {
+        font-size: 9px;
+        padding: 6px 10px;
+      }
+
+      .late-info {
+        font-size: 8px;
+        padding: 3px 6px;
+      }
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+      .table-enhanced .col-deadline {
+        min-width: 140px;
+      }
+
+      .deadline-card {
+        padding: 8px 10px;
+        max-width: 130px;
+      }
+
+      .deadline-time {
+        font-size: 10px;
+      }
+
+      .deadline-indicator {
+        font-size: 9px;
+        padding: 4px 10px;
+      }
+
+      .late-info {
+        font-size: 9px;
+        padding: 4px 8px;
+        margin-top: 6px;
+      }
+
+      .deadline-note {
+        font-size: 8px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .deadline-card {
+        padding: 6px 8px;
+        max-width: 120px;
+      }
+
+      .deadline-time {
+        font-size: 9px;
+      }
+
+      .deadline-indicator {
+        font-size: 8px;
+        padding: 3px 8px;
+      }
+
+      .deadline-note {
+        font-size: 7px;
+      }
+
+      .no-deadline {
+        font-size: 9px;
+        padding: 6px 10px;
+      }
+
+      .late-info {
+        font-size: 8px;
+        padding: 3px 6px;
+      }
+    }
+
+    /* Responsive Locked State Enhancements */
+    @media (max-width: 768px) {
+      .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
+        top: -6px;
+        right: -6px;
+        font-size: 8px;
+      }
+
+      .table-enhanced tbody tr.locked-row:hover {
+        transform: translateY(-1px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      /* Removed locked-row::before styles */
+
+      .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
+        display: none;
+        /* Hide warning icon on very small screens */
+      }
+
+      /* Reduce animation intensity on mobile for better performance */
+      .table-enhanced tbody tr.locked-row .btn-action.locked::before {
+        animation-duration: 4s;
+        /* Slower shimmer on mobile */
+      }
+    }
+
+    /* Animations for enhanced UX */
+    /* Removed animations (badge-glow, warning-bounce) for better readability */
+
+    /* Reduced motion support for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+
+      .table-enhanced tbody tr.locked-row .col-status .badge-locked,
+      .table-enhanced tbody tr.locked-row .btn-action.locked::before,
+      .table-enhanced tbody tr.locked-row .deadline-empty {
+        animation: none;
+      }
+    }
+
+    .table-enhanced td {
+      padding: 12px;
+      vertical-align: middle;
+      border-right: 1px solid #e0e0e0;
+      white-space: nowrap;
+    }
+
+    /* Column width optimization */
+    .table-enhanced .col-no {
+      width: 80px;
+      min-width: 80px;
+    }
+
+    .table-enhanced .col-surat {
+      width: 120px;
+      min-width: 120px;
+    }
+
+    .table-enhanced .col-spp {
+      width: 140px;
+      min-width: 140px;
+    }
+
+    .table-enhanced .col-uraian {
+      width: 700px;
+      min-width: 500px;
+      max-width: 1000px;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+      vertical-align: top;
+      padding: 12px;
+    }
+
+    .table-enhanced .col-uraian span {
+      display: block;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+      width: 100%;
+    }
+
+    .table-enhanced .col-nilai {
+      width: 120px;
+      min-width: 120px;
+    }
+
+    .table-enhanced .col-deadline {
+      width: 160px;
+      min-width: 140px;
+    }
+
+    .table-enhanced .col-status {
+      width: 120px;
+      min-width: 100px;
+    }
+
+    .table-enhanced .col-action {
+      width: 120px;
+      min-width: 120px;
+    }
+
+    .table-enhanced .col-paraf {
+      width: 120px;
+      min-width: 120px;
+    }
+
+    .table-enhanced .col-sticky {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 5;
+    }
+
+    /* Mobile optimization */
+    @media (max-width: 768px) {
+      .table-dokumen {
+        padding: 15px;
+        border-radius: 12px;
+      }
+
+      .table-enhanced {
+        min-width: 800px;
+        font-size: 12px;
+      }
+
+      .table-enhanced th {
+        padding: 14px 8px;
+        font-size: 11px;
+      }
+
+      .table-enhanced td {
+        padding: 12px 8px;
+        font-size: 12px;
+      }
+
+      .badge-status {
+        padding: 6px 12px;
+        font-size: 11px;
+        min-width: 80px;
+      }
+
+      .action-buttons {
+        gap: 4px;
+      }
+
+      .btn-action {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 6px 10px;
+        font-size: 10px;
+      }
+
+      .btn-action span {
+        font-size: 9px;
+      }
+
+      .search-box {
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+
+      /* Enhanced mobile horizontal scroll */
+      .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        /* Hide scrollbar on mobile */
+      }
+
+      .table-responsive::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Add scroll hint for mobile */
+      .table-responsive::after {
+        content: '→ Swipe to see more →';
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(8, 62, 64, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 10px;
+        z-index: 5;
+        animation: fadeInOut 3s infinite;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .table-enhanced {
+        min-width: 900px;
+        /* Still allow horizontal scroll on very small screens */
+      }
+    }
+
+    @keyframes fadeInOut {
+
+      0%,
+      100% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .table-enhanced .col-no {
+      width: 60px;
+      min-width: 60px;
+    }
+
+    .table-enhanced .col-surat {
+      width: 80px;
+      min-width: 80px;
+    }
+
+    .table-enhanced .col-spp {
+      width: 100px;
+      min-width: 100px;
+    }
+
+    .table-enhanced .col-uraian {
+      width: 500px;
+      min-width: 400px;
+      max-width: 700px;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+      vertical-align: top;
+      padding: 12px;
+    }
+
+    .table-enhanced .col-nilai {
+      width: 80px;
+      min-width: 80px;
+    }
+
+    .table-enhanced .col-deadline {
+      width: 100px;
+      min-width: 100px;
+    }
+
+    .table-enhanced .col-status {
+      width: 80px;
+      min-width: 80px;
+    }
+
+    .table-enhanced .col-action {
+      width: 80px;
+      min-width: 80px;
+    }
+
+    .table-enhanced .col-paraf {
+      width: 80px;
+      min-width: 80px;
+    }
+    }
+
+    @media (max-width: 480px) {
+      .table-enhanced {
+        min-width: 480px;
+      }
+
+      .table-enhanced th {
+        padding: 10px 6px;
+        font-size: 11px;
+      }
+
+      .table-enhanced td {
+        padding: 8px 6px;
+        font-size: 11px;
+      }
+
+      .table-enhanced .col-no {
+        width: 50px;
+        min-width: 50px;
+      }
+
+      .table-enhanced .col-surat {
+        width: 70px;
+        min-width: 70px;
+      }
+
+      .table-enhanced .col-spp {
+        width: 80px;
+        min-width: 80px;
+      }
+
+      .table-enhanced .col-uraian {
+        width: 400px;
+        min-width: 300px;
+        max-width: 600px;
+        word-wrap: break-word;
+        white-space: normal;
+        overflow-wrap: break-word;
+        line-height: 1.6;
+        vertical-align: top;
+        padding: 12px;
+      }
+
+      .table-enhanced .col-nilai {
+        width: 60px;
+        min-width: 60px;
+      }
+
+      .table-enhanced .col-deadline {
+        width: 90px;
+        min-width: 90px;
+      }
+
+      .table-enhanced .col-status {
+        width: 70px;
+        min-width: 70px;
+      }
+
+      .table-enhanced .col-action {
+        width: 70px;
+        min-width: 70px;
+      }
+
+      .table-enhanced .col-paraf {
+        width: 70px;
+        min-width: 70px;
+      }
+    }
+
+    .table-dokumen thead {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+      color: white;
+      position: relative;
+    }
+
+    .table-dokumen thead::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, #889717 50%, transparent 100%);
+    }
+
+    .table-dokumen thead th {
+      padding: 16px 12px;
+      font-weight: 600;
+      font-size: 13px;
+      border: none;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .table-dokumen tbody tr.main-row {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+      position: relative;
+    }
+
+    .table-dokumen tbody tr.main-row::after {
+      content: '';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: #889717;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-dokumen tbody tr.main-row:hover {
+      background: linear-gradient(90deg, rgba(183, 204, 26, 0.05) 0%, transparent 100%);
+      border-left: 3px solid #889717;
+      transform: scale(1.005);
+    }
+
+    .table-dokumen tbody tr.main-row:hover::after {
+      opacity: 0;
+    }
+
+    .table-dokumen tbody tr.main-row.highlight {
+      background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%) !important;
+      border-left: 3px solid #889717;
+    }
+
+    .table-dokumen tbody tr.main-row.selected {
+      background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
+      border-left: 3px solid #083E40;
+    }
+
+    .table-dokumen tbody td {
+      padding: 14px 12px;
+      font-size: 13px;
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+    }
+
+    /* Detail Row Styles */
+    .detail-row {
+      display: none;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .detail-row.show {
+      display: table-row;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .detail-content {
+      padding: 20px;
+      border-top: 2px solid rgba(8, 62, 64, 0.1);
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    /* Detail Grid - Horizontal Layout */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      /* Gap untuk background spacing */
+      padding: 12px;
+      background: #ffffff;
+      /* Putih bersih untuk contrast dengan label */
+      border-radius: 8px;
+      border: 1px solid #f1f5f9;
+      /* Border yang sangat tipis */
+      transition: all 0.2s ease;
+      min-width: 0;
+      width: 100%;
+      overflow: visible;
+      box-sizing: border-box;
+    }
+
+    .detail-item:hover {
+      border-color: #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transform: translateY(-1px);
+    }
+
+    .detail-label {
+      display: inline-block;
+      /* Inline block untuk background yang tepat */
+      font-size: 11px;
+      font-weight: 700;
+      /* Extra bold */
+      color: #374151;
+      /* text-gray-700 - lebih gelap untuk kontras maksimal */
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      background: #f3f4f6;
+      /* bg-gray-100 - background yang jelas terlihat */
+      padding: 6px 10px;
+      /* Padding yang visible */
+      border-radius: 6px;
+      /* Rounded corners yang lembut */
+      border-left: 3px solid #6366f1;
+      /* Aksen biru di kiri untuk visual distinction */
+      margin-bottom: 2px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
+      max-width: 100%;
+      width: fit-content;
+      /* Hanya selebar teks */
+      min-width: 120px;
+      /* Minimum width untuk konsistensi */
+    }
+
+    .detail-value {
+      font-size: 14px;
+      color: #111827;
+      /* text-gray-900 - hampir hitam */
+      font-weight: 600;
+      /* Semi-bold untuk menonjol sebagai data utama */
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      hyphens: auto;
+      white-space: normal;
+      max-width: 100%;
+      width: 100%;
+      overflow: visible;
+      line-height: 1.6;
+      padding: 4px 0;
+      /* Sedikit padding atas/bawah */
+      position: relative;
+    }
+
+    /* Special styling for different field types */
+    .detail-value.text-danger {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .detail-value .badge {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Badge in detail */
+    .detail-value .badge {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .badge-selesai {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+    }
+
+    .badge-proses {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+    }
+
+    .badge-dikembalikan {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    .badge-sent {
+      background: #083E40;
+      color: white;
+    }
+
+    /* Responsive Detail Grid */
+    @media (max-width: 1200px) {
+      .detail-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .detail-content {
+        padding: 16px;
+      }
+
+      .detail-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 10px;
+      }
+
+      .detail-item {
+        padding: 10px;
+      }
+
+      .detail-label {
+        font-size: 10px;
+      }
+
+      .detail-value {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .detail-item {
+        padding: 8px;
+      }
+    }
+
+    /* Simplified Status System - 3 States */
+    .badge-status {
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+      border: 2px solid transparent;
+      text-align: center;
+      min-width: 100px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+    }
+
+    /* State 1: 🔒 Terkunci (Locked - Waiting for Deadline) - Simplified */
+    .badge-status.badge-locked {
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      color: white;
+      border-color: #495057;
+      position: relative;
+      /* Removed overflow and animation for better readability */
+    }
+
+    .badge-status.badge-locked::before {
+      display: none;
+      /* Removed shimmer animation */
+    }
+
+    /* State 2: ⏳ Diproses (In Progress) */
+    .badge-status.badge-proses {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      border-color: #083E40;
+    }
+
+    .badge-status.badge-proses::after {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      margin-left: 6px;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* State 3: ✅ Selesai (Completed) */
+    .badge-status.badge-selesai {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      border-color: #083E40;
+    }
+
+    /* Special state for returned/rejected documents */
+    .badge-status.badge-dikembalikan {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      border-color: #dc3545;
+      position: relative;
+    }
+
+    .badge-status.badge-dikembalikan::before {
+      content: '⚠️';
+      margin-right: 4px;
+    }
+
+    /* Status Dropdown Styles */
+    .status-dropdown {
+      position: relative;
+      display: inline-block;
+      z-index: 999;
+    }
+
+    /* Ensure status button is clickable */
+    .status-button-simple {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+      position: relative;
+      z-index: 1000;
+    }
+
+    .status-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px !important;
+      border: none !important;
+      border-radius: 25px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.3s ease !important;
+      position: relative;
+      min-width: 140px;
+      justify-content: space-between;
+      pointer-events: auto !important;
+      user-select: none;
+      z-index: 1000;
+    }
+
+    .status-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .status-button .dropdown-arrow {
+      transition: transform 0.3s ease;
+      font-size: 10px;
+    }
+
+    .status-dropdown.active .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .status-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      z-index: 5;
+      min-width: 160px;
+      margin-top: 4px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .status-dropdown.active .status-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Support for status-menu-visible class used in inline styles */
+    .status-menu-visible {
+      position: absolute !important;
+      top: 100% !important;
+      left: 0 !important;
+      right: 0 !important;
+      background: white !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+      border: 1px solid rgba(0, 0, 0, 0.2) !important;
+      z-index: 5 !important;
+      min-width: 160px !important;
+      margin-top: 4px !important;
+    }
+
+    .status-dropdown.active .status-menu-visible {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      pointer-events: auto !important;
+    }
+
+    .status-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 13px;
+      color: #2c3e50;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 0;
+    }
+
+    .status-option:first-child {
+      border-radius: 12px 12px 0 0;
+    }
+
+    .status-option:last-child {
+      border-radius: 0 0 12px 12px;
+    }
+
+    .status-option:hover {
+      background: linear-gradient(135deg, rgba(26, 77, 62, 0.1) 0%, rgba(15, 61, 46, 0.05) 100%);
+      color: #1a4d3e;
+    }
+
+    .status-option.approve {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .status-option.approve:hover {
+      background: linear-gradient(135deg, rgba(82, 183, 136, 0.1) 0%, rgba(64, 145, 108, 0.05) 100%);
+    }
+
+    .status-option.reject:hover {
+      background: linear-gradient(135deg, rgba(116, 198, 157, 0.1) 0%, rgba(82, 183, 136, 0.05) 100%);
+    }
+
+    .status-option i {
+      width: 16px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .status-option.approve i {
+      color: #40916c;
+    }
+
+    .status-option.reject i {
+      color: #74c69d;
+    }
+
+    /* Loading state */
+    .status-button.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .status-button.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid transparent;
+      border-top: 2px solid #1a4d3e;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Special state for sent documents */
+    .badge-status.badge-sent {
+      background: #083E40;
+      color: white;
+      border-color: #083E40;
+      position: relative;
+    }
+
+    /* Animations */
+    @keyframes shimmer {
+      0% {
+        left: -100%;
+      }
+
+      100% {
+        left: 100%;
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+      }
+    }
+
+    /* Enhanced hover effects */
+    .badge-status:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Responsive Status Badges */
+    @media (max-width: 768px) {
+      .badge-status {
+        padding: 6px 12px;
+        font-size: 11px;
+        min-width: 80px;
+        gap: 4px;
+      }
+
+      .badge-status.badge-proses::after {
+        width: 4px;
+        height: 4px;
+        margin-left: 4px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .badge-status {
+        padding: 5px 10px;
+        font-size: 10px;
+        min-width: 70px;
+        border-radius: 15px;
+      }
+
+      .badge-status span {
+        display: none;
+        /* Hide text on very small screens, show only icons */
+      }
+
+      .badge-status::before {
+        font-size: 14px;
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .btn-action {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-edit {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+    }
+
+    .btn-kirim {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+    }
+
+
+    .btn-view {
+      background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+      color: white;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-action:active {
+      transform: translateY(-1px);
+    }
+
+    .btn-action.locked {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    .btn-action.locked:hover {
+      transform: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action:disabled,
+    .btn-action[disabled] {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
+      cursor: not-allowed !important;
+      opacity: 0.85 !important;
+      pointer-events: none !important;
+    }
+
+    .btn-action:disabled:hover,
+    .btn-action[disabled]:hover {
+      transform: none !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-set-deadline {
+      background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%) !important;
+      color: white;
+    }
+
+    .btn-set-deadline:hover {
+      background: linear-gradient(135deg, #ff8c00 0%, #e67300 100%) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    }
+
+    /* Enhanced Responsive Action Buttons */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      justify-content: center;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    /* Hybrid Layout: Full-width button on top, row buttons below */
+    .action-buttons-hybrid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .action-buttons-hybrid .btn-full-width {
+      width: 100%;
+      min-width: 100%;
+    }
+
+    .action-buttons-hybrid .action-row {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .action-buttons-hybrid .action-row .btn-action {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .btn-kirim {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
+      color: white;
+    }
+
+    .btn-kirim:hover {
+      background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
+    }
+
+    .btn-kembalikan {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    .btn-kembalikan:hover {
+      background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+      color: white;
+    }
+
+    /* Touch-friendly button sizes */
+    .btn-action {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-decoration: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-action i {
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .btn-action span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Enhanced hover and active states */
+    .btn-action:hover:not(.locked) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-action:active:not(.locked) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Ripple effect for better touch feedback */
+    .btn-action::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.3s ease, height 0.3s ease;
+    }
+
+    .btn-action:active::before {
+      width: 100px;
+      height: 100px;
+    }
+
+    /* Action button types with enhanced gradients */
+    .btn-edit {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #0d5f63 100%);
+      color: white;
+    }
+
+    .btn-edit:hover {
+      background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 50%, #0f6f74 100%);
+    }
+
+    .btn-return {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 50%, #bd2130 100%);
+      color: white;
+    }
+
+    .btn-return:hover {
+      background: linear-gradient(135deg, #c82333 0%, #bd2130 50%, #a71e2a 100%);
+    }
+
+
+    .btn-chevron {
+      background: linear-gradient(135deg, #6c757d 0%, #5a6268 50%, #495057 100%);
+      color: white;
+      min-width: 36px;
+      min-height: 36px;
+    }
+
+    .btn-chevron:hover {
+      background: linear-gradient(135deg, #5a6268 0%, #495057 50%, #343a40 100%);
+    }
+
+    .btn-chevron.active {
+      background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+      transform: rotate(180deg);
+    }
+
+    /* Responsive Action Button Styles */
+    @media (max-width: 1200px) {
+      .btn-action {
+        padding: 8px 10px;
+        font-size: 10px;
+        gap: 3px;
+      }
+
+      .btn-action i {
+        font-size: 11px;
+      }
+
+      .action-buttons {
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .action-buttons {
+        flex-direction: column;
+        gap: 6px;
+        align-items: stretch;
+      }
+
+      .btn-action {
+        width: 100%;
+        min-width: 48px;
+        min-height: 48px;
+        padding: 12px 8px;
+        font-size: 11px;
+        border-radius: 8px;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .btn-action i {
+        font-size: 14px;
+      }
+
+      .btn-chevron {
+        min-width: 48px;
+        min-height: 36px;
+        width: auto;
+        max-width: 80px;
+      }
+
+      /* Button tooltips on mobile */
+      .btn-action[title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 4px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .action-buttons {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 3px;
+        overflow-x: auto;
+        padding: 2px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .btn-action {
+        flex-shrink: 0;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 6px;
+        font-size: 0;
+        border-radius: 6px;
+      }
+
+      .btn-action i {
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .btn-action span {
+        display: none;
+      }
+
+      /* Special cases for important buttons */
+      .btn-set-deadline {
+        background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+        min-width: 48px;
+      }
+
+      .btn-set-deadline::before {
+        content: '⏰';
+        font-size: 14px;
+        font-style: normal;
+      }
+
+      .btn-set-deadline i {
+        display: none;
+      }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      .btn-action {
+        border: 2px solid currentColor;
+        background: white;
+        color: black;
+      }
+
+      .btn-edit {
+        border-color: #083E40;
+        color: #083E40;
+      }
+
+      .btn-return {
+        border-color: #dc3545;
+        color: #dc3545;
+      }
+
+      .btn-chevron {
+        border-color: #6c757d;
+        color: #6c757d;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      .btn-action {
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+        color: white;
+      }
+
+      .btn-action:hover:not(.locked) {
+        background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+      }
+    }
+
+    .filter-section {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .year-dropdown-wrapper {
+      position: relative;
+    }
+
+    .btn-year-select {
+      padding: 10px 16px;
+      background: white;
+      color: #495057;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      white-space: nowrap;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .btn-year-select:hover {
+      border-color: #889717;
+      background: #f8f9fa;
+    }
+
+    .btn-year-select.active {
+      border-color: #889717;
+      background: #f8f9fa;
+    }
+
+    .year-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 150px;
+      z-index: 1000;
+      overflow: hidden;
+      display: none;
+    }
+
+    .year-dropdown-menu.show,
+    .year-dropdown-menu[style*="block"] {
+      display: block;
+    }
+
+    .year-dropdown-item {
+      display: block;
+      padding: 12px 16px;
+      color: #495057;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      border-bottom: 1px solid #f1f3f5;
+    }
+
+    .year-dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .year-dropdown-item:hover {
+      background: #f8f9fa;
+      color: #889717;
+    }
+
+    .year-dropdown-item.active {
+      background: #e8f5e9;
+      color: #889717;
+      font-weight: 600;
+    }
+
+    .filter-section select,
+    .filter-section input {
+      padding: 10px 14px;
+      border: 2px solid rgba(8, 62, 64, 0.1);
+      border-radius: 10px;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      background: white;
+      font-weight: 500;
+    }
+
+    .filter-section select:focus,
+    .filter-section input:focus {
+      outline: none;
+      border-color: #889717;
+      box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
+    }
+
+    .btn-filter {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+    }
+
+    .btn-filter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(8, 62, 64, 0.3);
+    }
+
+    .btn-tambah {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(136, 151, 23, 0.2);
+    }
+
+    .btn-tambah:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(136, 151, 23, 0.3);
+    }
+
+    .btn-excel {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+      margin-left: 0;
+    }
+
+    .btn-excel:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-customize-columns-inline {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      white-space: nowrap;
+      margin-right: 20px;
+    }
+
+    .btn-customize-columns-inline:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+      background: linear-gradient(135deg, #9ab01f 0%, #a8bf23 100%);
+      color: white;
+    }
+
+    .btn-customize-columns-inline:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+    }
+
+    .chevron-icon {
+      transition: transform 0.4s ease;
+      color: #fff;
+    }
+
+    .chevron-icon.rotate {
+      transform: rotate(180deg);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .pagination button {
+      padding: 10px 16px;
+      border: 2px solid rgba(8, 62, 64, 0.1);
+      background-color: white;
+      cursor: pointer;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: #083E40;
+    }
+
+    .pagination button:hover {
+      border-color: #889717;
+      background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, transparent 100%);
+      transform: translateY(-2px);
+    }
+
+    .pagination button.active {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+    }
+
+    .btn-chevron {
+      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+      color: white;
+    }
+
+    .btn-chevron:hover {
+      background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    }
+
+    .btn-paraf {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+    }
+
+    .btn-paraf-selesai {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #5eff00ff 0%, #07ff13ff 100%);
+      color: hitam;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.2);
+    }
+
+    .span-terlambat {
+      font-weight: 600;
+      color: #ff002bff;
+      font-size: 12px;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .span-tepatWaktu {
+      font-weight: 600;
+      color: #08c757ff;
+      font-size: 12px;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .span-proses {
+      font-weight: 600;
+      color: #ffca2c;
+      font-size: 12px;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    /* Chevron Icon Animation */
+    .chevron-icon {
+      transition: transform 0.3s ease;
+    }
+
+    .chevron-icon.rotate {
+      transform: rotate(180deg);
+    }
+
+    .btn-chevron {
+      background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+      padding: 8px 12px;
+    }
+
+    /* Modal Customization Styles */
+    .customization-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .customization-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal-content-custom {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+      max-width: 90%;
+      width: 90%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header-custom {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-header-custom h3 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #212529;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-body-custom {
+      padding: 24px 32px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .customization-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .selection-panel {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-description {
+      font-size: 13px;
+      color: #6c757d;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .column-selection-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+
+    @media (max-width: 900px) {
+      .column-selection-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .column-selection-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+      cursor: move;
+      transition: all 0.2s ease;
+      position: relative;
+      user-select: none;
+      min-height: 44px;
+      gap: 8px;
+    }
+
+    .column-item.selected {
+      border-color: #28a745;
+      background: #f0f9f4;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+    }
+
+    .column-item.dragging {
+      opacity: 0.6;
+      transform: scale(0.98);
+    }
+
+    .drag-handle {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c757d;
+      cursor: grab;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+
+    .column-item.selected .drag-handle {
+      color: #28a745;
+    }
+
+    .column-item:not(.selected) .drag-handle {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .column-item-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .column-item-label {
+      font-size: 14px;
+      color: #212529;
+      font-weight: 500;
+      flex: 1;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .column-item-order {
+      width: 24px;
+      height: 24px;
+      background: #28a745;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .column-item.selected .column-item-order {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .preview-panel {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .preview-container {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: auto;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 400px;
+      width: 100%;
+    }
+
+    .preview-table {
+      width: 100%;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      font-size: 13px;
+      table-layout: auto;
+    }
+
+    .preview-table thead {
+      background: #212529;
+    }
+
+    .preview-table th {
+      background: #212529;
+      color: white;
+      padding: 14px 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      white-space: nowrap;
+    }
+
+    .preview-table th:last-child {
+      border-right: none;
+    }
+
+    .preview-table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .preview-table td {
+      padding: 12px;
+      text-align: center;
+      border-right: 1px solid #e9ecef;
+      border-bottom: 1px solid #e9ecef;
+      color: #495057;
+      font-size: 13px;
+    }
+
+    .preview-table td:last-child {
+      border-right: none;
+    }
+
+    .preview-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .empty-preview {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6c757d;
+    }
+
+    .modal-footer-custom {
+      padding: 20px 40px;
+      border-top: 1px solid #e9ecef;
+      background: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 100;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .selected-count {
+      font-size: 15px;
+      color: #495057;
+      font-weight: 500;
+    }
+
+    .selected-count strong {
+      color: #28a745;
+      font-size: 18px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-modal {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-cancel {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+    }
+
+    .btn-save {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #218838;
+      transform: translateY(-1px);
+    }
+
+    .btn-save:disabled {
+      background: #adb5bd;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Year Filter Button Styles */
+    .btn-year-filter {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(26, 77, 62, 0.2);
+    }
+
+    .btn-year-filter:hover {
+      background: linear-gradient(135deg, #0a3d2e 0%, #083020 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(26, 77, 62, 0.3);
+    }
+
+    .btn-year-filter i {
+      font-size: 12px;
+    }
+
+    /* Year Filter Modal Styles */
+    .year-filter-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    }
+
+    .year-filter-modal-overlay.active {
+      display: flex;
+    }
+
+    .year-filter-modal {
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: modalSlideIn 0.3s ease;
+      overflow: hidden;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .year-filter-modal-header {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .year-filter-modal-header h5 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .year-filter-modal-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .year-filter-modal-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .year-filter-modal-body {
+      padding: 24px;
+    }
+
+    .filter-type-section {
+      margin-bottom: 24px;
+    }
+
+    .filter-type-section h6 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a4d3e;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-type-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-type-option {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-type-option:hover {
+      background: #e9f5f0;
+      border-color: #1a4d3e;
+    }
+
+    .filter-type-option.selected {
+      background: linear-gradient(135deg, #e9f5f0 0%, #d4ebe4 100%);
+      border-color: #1a4d3e;
+    }
+
+    .filter-type-option input[type="radio"] {
+      margin-right: 12px;
+      accent-color: #1a4d3e;
+      transform: scale(1.2);
+    }
+
+    .filter-type-option label {
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+    }
+
+    .filter-type-option small {
+      color: #6c757d;
+      font-size: 12px;
+    }
+
+    .year-selection-section h6 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a4d3e;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .year-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .year-btn {
+      padding: 14px 16px;
+      border: 2px solid #e9ecef;
+      background: #f8f9fa;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #333;
+    }
+
+    .year-btn:hover {
+      background: #e9f5f0;
+      border-color: #1a4d3e;
+    }
+
+    .year-btn.selected {
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border-color: #1a4d3e;
+      color: white;
+    }
+
+    .year-btn.all-years {
+      grid-column: span 4;
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      color: white;
+      border-color: #6c757d;
+    }
+
+    .year-btn.all-years.selected {
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border-color: #1a4d3e;
+    }
+
+    .year-filter-modal-footer {
+      padding: 16px 24px;
+      background: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-reset-filter {
+      padding: 10px 20px;
+      background: #fff;
+      border: 2px solid #dc3545;
+      color: #dc3545;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset-filter:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-apply-filter {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0a3d2e 100%);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-apply-filter:hover {
+      background: linear-gradient(135deg, #0a3d2e 0%, #083020 100%);
+      transform: translateY(-1px);
+    }
+  </style>
+
+  <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
+
+
+
+  <!-- Enhanced Search & Filter Box -->
+  <div class="search-box">
+    <form id="filterForm" action="{{ route('documents.verifikasi.index') }}" method="GET"
+      class="d-flex align-items-center flex-wrap gap-3">
+      <div class="input-group" style="flex: 1; min-width: 300px;">
+        <span class="input-group-text">
+          <i class="fa-solid fa-magnifying-glass text-muted"></i>
+        </span>
+        <input type="text" class="form-control" name="search"
+          placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
       </div>
+      <div class="filter-section">
+        <div class="year-filter-wrapper" style="position: relative;">
+          <button type="button" class="btn-year-filter" id="yearFilterBtn" onclick="openYearFilterModal()">
+            <i class="fa-solid fa-calendar-alt me-2"></i>
+            <span id="yearFilterBtnText">
+              @php
+                $year = request('year');
+                $filterType = request('year_filter_type', 'tanggal_spp');
+                $filterTypeLabels = [
+                  'tanggal_spp' => 'Tgl SPP',
+                  'tanggal_masuk' => 'Tgl Masuk',
+                  'nomor_spp' => 'No SPP'
+                ];
+              @endphp
+              @if($year)
+                {{ $year }} ({{ $filterTypeLabels[$filterType] ?? 'Tgl SPP' }})
+              @else
+                Filter Tahun
+              @endif
+            </span>
+            <i class="fa-solid fa-chevron-down ms-2"></i>
+          </button>
+          <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
+          <input type="hidden" name="year_filter_type" id="yearFilterType"
+            value="{{ request('year_filter_type', 'tanggal_spp') }}">
+        </div>
+        <div class="status-dropdown-wrapper" style="position: relative;">
+          <button type="button" class="btn-year-select" id="statusSelectBtn">
+            <span id="statusSelectText">
+              @php
+                $statusFilter = request('status');
+                $statusLabels = [
+                  '' => 'Semua Status',
+                  'menunggu_approve' => 'Menunggu Approve',
+                  'sedang_proses' => 'Sedang Proses',
+                  'terkirim_perpajakan' => 'Terkirim ke Perpajakan',
+                  'terkirim_akutansi' => 'Terkirim ke Akutansi',
+                  'terkirim_pembayaran' => 'Terkirim ke Pembayaran',
+                  'ditolak' => 'Dokumen Ditolak'
+                ];
+              @endphp
+              {{ $statusLabels[$statusFilter] ?? 'Semua Status' }}
+            </span>
+            <i class="fa-solid fa-chevron-down ms-2"></i>
+          </button>
+          <div class="year-dropdown-menu" id="statusDropdownMenu" style="display: none;">
+            <a href="#" class="year-dropdown-item {{ !request('status') ? 'active' : '' }}" data-status="">
+              Semua Status
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('status') == 'menunggu_approve' ? 'active' : '' }}"
+              data-status="menunggu_approve">
+              Menunggu Approve
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('status') == 'sedang_proses' ? 'active' : '' }}"
+              data-status="sedang_proses">
+              Sedang Proses
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_perpajakan' ? 'active' : '' }}"
+              data-status="terkirim_perpajakan">
+              Terkirim ke Perpajakan
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_akutansi' ? 'active' : '' }}"
+              data-status="terkirim_akutansi">
+              Terkirim ke Akutansi
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('status') == 'terkirim_pembayaran' ? 'active' : '' }}"
+              data-status="terkirim_pembayaran">
+              Terkirim ke Pembayaran
+            </a>
+            <a href="#" class="year-dropdown-item {{ request('status') == 'ditolak' ? 'active' : '' }}"
+              data-status="ditolak">
+              Dokumen Ditolak
+            </a>
+          </div>
+          <input type="hidden" name="status" id="statusSelect" value="{{ request('status') }}">
+        </div>
+      </div>
+      <button type="submit" class="btn-filter">
+        <i class="fa-solid fa-filter me-2"></i>Filter
+      </button>
+      <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
+        <i class="fa-solid fa-table-columns me-2"></i>
+        Kustomisasi Kolom Tabel
+      </button>
 
-      @if(isset($suggestions) && !empty($suggestions) && request('search'))
-        <!-- Search Suggestions Alert -->
-        <div class="alert alert-info alert-dismissible fade show suggestion-alert" role="alert"
-          style="margin-bottom: 20px; border-left: 4px solid #0dcaf0; background-color: #e7f3ff;">
-          <div class="d-flex align-items-start">
-            <i class="fa-solid fa-lightbulb me-2 mt-1" style="color: #0dcaf0; font-size: 18px;"></i>
-            <div style="flex: 1;">
-              <strong style="color: #0a58ca;">Apakah yang Anda maksud?</strong>
-              <p class="mb-2 mt-2" style="color: #055160;">
-                Tidak ada hasil ditemukan untuk "<strong>{{ request('search') }}</strong>". Mungkin maksud Anda:
-              </p>
-              <div class="suggestion-buttons d-flex flex-wrap gap-2">
-                @foreach($suggestions as $suggestion)
-                  <button type="button" class="btn btn-sm btn-outline-primary suggestion-btn" data-suggestion="{{ $suggestion }}"
-                    style="border-color: #0dcaf0; color: #0dcaf0;">
-                    <i class="fa-solid fa-magnifying-glass me-1"></i>{{ $suggestion }}
-                  </button>
-                @endforeach
-              </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      <!-- Preserve per_page and columns parameters -->
+      @if(request('per_page'))
+        <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+      @endif
+      @if(request('columns'))
+        @foreach(request('columns') as $column)
+          <input type="hidden" name="columns[]" value="{{ $column }}">
+        @endforeach
+      @endif
+    </form>
+  </div>
+
+  @if(isset($suggestions) && !empty($suggestions) && request('search'))
+    <!-- Search Suggestions Alert -->
+    <div class="alert alert-info alert-dismissible fade show suggestion-alert" role="alert"
+      style="margin-bottom: 20px; border-left: 4px solid #0dcaf0; background-color: #e7f3ff;">
+      <div class="d-flex align-items-start">
+        <i class="fa-solid fa-lightbulb me-2 mt-1" style="color: #0dcaf0; font-size: 18px;"></i>
+        <div style="flex: 1;">
+          <strong style="color: #0a58ca;">Apakah yang Anda maksud?</strong>
+          <p class="mb-2 mt-2" style="color: #055160;">
+            Tidak ada hasil ditemukan untuk "<strong>{{ request('search') }}</strong>". Mungkin maksud Anda:
+          </p>
+          <div class="suggestion-buttons d-flex flex-wrap gap-2">
+            @foreach($suggestions as $suggestion)
+              <button type="button" class="btn btn-sm btn-outline-primary suggestion-btn" data-suggestion="{{ $suggestion }}"
+                style="border-color: #0dcaf0; color: #0dcaf0;">
+                <i class="fa-solid fa-magnifying-glass me-1"></i>{{ $suggestion }}
+              </button>
+            @endforeach
           </div>
         </div>
-      @endif
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    </div>
+  @endif
 
-      <!-- Tabel Dokumen -->
-      <div class="table-dokumen">
-        <div class="table-container-header">
-          <h3 class="table-container-title">
-            <i class="fa-solid fa-file-lines"></i>
-            Daftar Dokumen Team Verifikasi
-          </h3>
-          <div class="table-container-stats">
-            <div class="stat-item">
-              <span class="stat-value">{{ count($dokumens) }}</span>
-              <span class="stat-label">Total</span>
-            </div>
-            <div class="stat-item">
-              <span
-                class="stat-value">{{ $dokumens->whereIn('status', ['selesai', 'approved_Team Verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi'])->count() }}</span>
-              <span class="stat-label">Selesai</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ $dokumens->filter(function ($dokumen) {
+  <!-- Tabel Dokumen -->
+  <div class="table-dokumen">
+    <div class="table-container-header">
+      <h3 class="table-container-title">
+        <i class="fa-solid fa-file-lines"></i>
+        Daftar Dokumen Team Verifikasi
+      </h3>
+      <div class="table-container-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ count($dokumens) }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-item">
+          <span
+            class="stat-value">{{ $dokumens->whereIn('status', ['selesai', 'approved_Team Verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi'])->count() }}</span>
+          <span class="stat-label">Selesai</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ $dokumens->filter(function ($dokumen) {
     $roleData = $dokumen->getDataForRole('team_verifikasi');
     $hasDeadline = ($roleData && $roleData->deadline_at) || $dokumen->deadline_at;
     $isRejected = $dokumen->roleStatuses()
@@ -3590,2455 +3590,670 @@
       && is_null($dokumen->returned_to_bidang_at)
       && !$isRejected;
   })->count() }}</span>
-              <span class="stat-label">Terkunci</span>
-            </div>
-          </div>
+          <span class="stat-label">Terkunci</span>
         </div>
-        <div class="table-responsive table-container">
-          <table class="table table-enhanced mb-0">
-            <thead>
-              <tr>
-                <th class="col-checkbox sticky-column" style="width: 50px;">
-                  <input type="checkbox" id="selectAll" title="Pilih Semua">
-                </th>
-                <th class="col-no sticky-column">No</th>
-                @foreach($selectedColumns as $col)
-                  @if($col !== 'status')
-                    <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
-                  @endif
-                @endforeach
-                <th class="col-deadline sticky-column">Deadline</th>
-                <th class="col-status sticky-column">Status</th>
-                <th class="col-action sticky-column">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($dokumens ?? [] as $dokumen)
-                @php
-                  // Get deadline from roleData relationship
-                  $roleData = $dokumen->getDataForRole('team_verifikasi');
-                  $hasDeadline = false;
+      </div>
+    </div>
+    <div class="table-responsive table-container">
+      <table class="table table-enhanced mb-0">
+        <thead>
+          <tr>
+            <th class="col-checkbox sticky-column" style="width: 50px;">
+              <input type="checkbox" id="selectAll" title="Pilih Semua">
+            </th>
+            <th class="col-no sticky-column">No</th>
+            @foreach($selectedColumns as $col)
+              @if($col !== 'status')
+                <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
+              @endif
+            @endforeach
+            <th class="col-deadline sticky-column">Deadline</th>
+            <th class="col-status sticky-column">Status</th>
+            <th class="col-action sticky-column">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($dokumens ?? [] as $dokumen)
+            @php
+              // Get deadline from roleData relationship
+              $roleData = $dokumen->getDataForRole('team_verifikasi');
+              $hasDeadline = false;
 
-                  if ($roleData && $roleData->deadline_at) {
-                    $hasDeadline = true;
-                  } elseif ($dokumen->deadline_at) {
-                    // Fallback: check alias value
-                    $hasDeadline = !is_null($dokumen->deadline_at);
-                  }
+              if ($roleData && $roleData->deadline_at) {
+                $hasDeadline = true;
+              } elseif ($dokumen->deadline_at) {
+                // Fallback: check alias value
+                $hasDeadline = !is_null($dokumen->deadline_at);
+              }
 
-                  // Check rejection status from roleStatuses
-                  // Dokumen ditolak jika:
-                  // 1. Ditolak oleh Team Verifikasi sendiri, ATAU
-                  // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = Team Verifikasi)
-                  $isRejectedByTeamVerifikasi = $dokumen->roleStatuses()
-                    ->where('role_code', 'team_verifikasi')
-                    ->where('status', 'rejected')
-                    ->exists();
+              // Check rejection status from roleStatuses
+              // Dokumen ditolak jika:
+              // 1. Ditolak oleh Team Verifikasi sendiri, ATAU
+              // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = Team Verifikasi)
+              $isRejectedByTeamVerifikasi = $dokumen->roleStatuses()
+                ->where('role_code', 'team_verifikasi')
+                ->where('status', 'rejected')
+                ->exists();
 
-                  $isRejectedByOtherRole = false;
-                  $rejectedByRole = null;
-                  if ($dokumen->current_handler === 'team_verifikasi') {
-                    // Cek apakah ada rejection dari perpajakan atau akutansi
-                    $rejectedStatus = $dokumen->roleStatuses()
-                      ->whereIn('role_code', ['perpajakan', 'akutansi'])
-                      ->where('status', 'rejected')
-                      ->latest('status_changed_at')
-                      ->first();
+              $isRejectedByOtherRole = false;
+              $rejectedByRole = null;
+              if ($dokumen->current_handler === 'team_verifikasi') {
+                // Cek apakah ada rejection dari perpajakan atau akutansi
+                $rejectedStatus = $dokumen->roleStatuses()
+                  ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                  ->where('status', 'rejected')
+                  ->latest('status_changed_at')
+                  ->first();
 
-                    if ($rejectedStatus) {
-                      $isRejectedByOtherRole = true;
-                      $rejectedByRole = $rejectedStatus->role_code;
-                    }
-                  }
+                if ($rejectedStatus) {
+                  $isRejectedByOtherRole = true;
+                  $rejectedByRole = $rejectedStatus->role_code;
+                }
+              }
 
-                  $isRejected = $isRejectedByTeamVerifikasi || $isRejectedByOtherRole;
+              $isRejected = $isRejectedByTeamVerifikasi || $isRejectedByOtherRole;
 
-                  // Check pending status from roleStatuses
-                  $isPending = $dokumen->roleStatuses()
-                    ->where('role_code', 'team_verifikasi')
+              // Check pending status from roleStatuses
+              $isPending = $dokumen->roleStatuses()
+                ->where('role_code', 'team_verifikasi')
+                ->where('status', 'pending')
+                ->exists();
+
+              // Document is NO LONGER locked after approval
+              // Deadline is now determined by database config and calculated from received_at (count up)
+              // Documents can be edited immediately after approval
+              $isLocked = false;
+
+              $isReturnedStatus = Str::startsWith($dokumen->status, 'returned_')
+                || in_array($dokumen->status, ['returned_to_department']);
+
+              if ($isReturnedStatus || $isRejected) {
+                $isLocked = false;
+              }
+
+              // Check if document has been approved by Perpajakan or Akutansi
+              $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
+              $akutansiStatus = $dokumen->getStatusForRole('akutansi');
+              $isApprovedByPerpajakan = $perpajakanStatus && $perpajakanStatus->status === 'approved';
+              $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
+              $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
+
+              // NEW SIMPLIFIED APPROACH: Use display_status from dokumen_role_data
+              // The display_status is set by backend (sendToRoleInbox/approveFromRoleInbox)
+              // and is FINAL/frozen - it won't change when downstream roles act
+              $teamVerifikasiRoleData = $roleData; // roleData is already set for 'team_verifikasi' above
+              $displayStatus = $teamVerifikasiRoleData?->display_status;
+
+              // Get human-readable label from display_status
+              $displayStatusLabel = $displayStatus ? \App\Models\Dokumen::getFinalStatusLabel($displayStatus) : null;
+
+              // FALLBACK: If display_status is not set yet, use legacy detection
+              // This handles documents created before this feature was implemented
+              $sentToTeamLabel = null;
+              $isPendingPerpajakan = false;
+
+              if (!$displayStatus) {
+                // Legacy detection for backward compatibility
+                // FIX: For Verifikasi, ALWAYS show "Terkirim ke Team Perpajakan" once sent
+                // We don't care about downstream status (akutansi, pembayaran)
+                $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+
+                // Check if document was ever sent to perpajakan
+                $wasSentToPerpajakan = (
+                  ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
+                  in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'waiting_approval_perpajakan', 'waiting_approval_akuntansi']) ||
+                  in_array($dokumen->current_handler, ['perpajakan', 'akutansi', 'pembayaran'])
+                );
+
+                if ($wasSentToPerpajakan && !$isRejected) {
+                  // Check if perpajakan is still pending (document in perpajakan inbox)
+                  $perpajakanIsPendingInbox = $dokumen->roleStatuses()
+                    ->where('role_code', 'perpajakan')
                     ->where('status', 'pending')
                     ->exists();
 
-                  // Document is NO LONGER locked after approval
-                  // Deadline is now determined by database config and calculated from received_at (count up)
-                  // Documents can be edited immediately after approval
-                  $isLocked = false;
-
-                  $isReturnedStatus = Str::startsWith($dokumen->status, 'returned_')
-                    || in_array($dokumen->status, ['returned_to_department']);
-
-                  if ($isReturnedStatus || $isRejected) {
-                    $isLocked = false;
-                  }
-
-                  // Check if document has been approved by Perpajakan or Akutansi
-                  $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
-                  $akutansiStatus = $dokumen->getStatusForRole('akutansi');
-                  $isApprovedByPerpajakan = $perpajakanStatus && $perpajakanStatus->status === 'approved';
-                  $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
-                  $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
-
-                  // NEW SIMPLIFIED APPROACH: Use display_status from dokumen_role_data
-                  // The display_status is set by backend (sendToRoleInbox/approveFromRoleInbox)
-                  // and is FINAL/frozen - it won't change when downstream roles act
-                  $teamVerifikasiRoleData = $roleData; // roleData is already set for 'team_verifikasi' above
-                  $displayStatus = $teamVerifikasiRoleData?->display_status;
-
-                  // Get human-readable label from display_status
-                  $displayStatusLabel = $displayStatus ? \App\Models\Dokumen::getFinalStatusLabel($displayStatus) : null;
-
-                  // FALLBACK: If display_status is not set yet, use legacy detection
-                  // This handles documents created before this feature was implemented
-                  $sentToTeamLabel = null;
-                  $isPendingPerpajakan = false;
-
-                  if (!$displayStatus) {
-                    // Legacy detection for backward compatibility
-                    // FIX: For Verifikasi, ALWAYS show "Terkirim ke Team Perpajakan" once sent
-                    // We don't care about downstream status (akutansi, pembayaran)
-                    $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
-
-                    // Check if document was ever sent to perpajakan
-                    $wasSentToPerpajakan = (
-                      ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
-                      in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']) ||
-                      in_array($dokumen->current_handler, ['perpajakan', 'akutansi', 'pembayaran'])
-                    );
-
-                    if ($wasSentToPerpajakan && !$isRejected) {
-                      // Check if perpajakan is still pending (document in perpajakan inbox)
-                      $perpajakanIsPendingInbox = $dokumen->roleStatuses()
-                        ->where('role_code', 'perpajakan')
-                        ->where('status', 'pending')
-                        ->exists();
-
-                      if ($perpajakanIsPendingInbox) {
-                        $isPendingPerpajakan = true;
-                      } else {
-                        // Document has passed perpajakan - show FINAL status
-                        $sentToTeamLabel = 'Team Perpajakan';
-                      }
-                    }
-                  }
-                @endphp
-                @php
-                  $rowClass = $isLocked ? 'locked-row' : '';
-                @endphp
-                <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
-                  onclick="handleRowClick(event, {{ $dokumen->id }})">
-                  {{-- Checkbox Column --}}
-                  <td class="col-checkbox text-center">
-                    <input type="checkbox"
-                           class="document-checkbox"
-                           value="{{ $dokumen->id }}"
-                           data-nomor="{{ $dokumen->nomor_agenda }}"
-                           onclick="event.stopPropagation();">
-                  </td>
-                  {{-- No Column --}}
-                  <td class="col-no"  style="width: 40px;">
-                    {{ $loop->iteration + ($dokumens->currentPage() - 1) * $dokumens->perPage() }}
-                  </td>
-                  @foreach($selectedColumns as $col)
-                    @if($col !== 'status')
-                      <td class="col-{{ $col }}">
-                        @if($col == 'nomor_agenda')
-                          <span class="select-text">{{ $dokumen->nomor_agenda }}</span>
-                        @elseif($col == 'nomor_spp')
-                          <span class="select-text">{{ $dokumen->nomor_spp }}</span>
-                        @elseif($col == 'tanggal_masuk')
-                          <span
-                            class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</span>
-                        @elseif($col == 'nilai_rupiah')
-                          <strong
-                            class="select-text">{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
-                        @elseif($col == 'nomor_mirror')
-                          {{ $dokumen->nomor_mirror ?? '-' }}
-                        @elseif($col == 'tanggal_spp')
-                          {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y H:i') : '-' }}
-                        @elseif($col == 'uraian_spp')
-                          <span title="{{ $dokumen->uraian_spp ?? '-' }}"
-                            style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">
-                            {{ $dokumen->uraian_spp ?? '-' }}
-                          </span>
-                        @elseif($col == 'kategori')
-                          {{ $dokumen->kategori ?? '-' }}
-                        @elseif($col == 'kebun')
-                          {{ $dokumen->kebun ?? '-' }}
-                        @elseif($col == 'jenis_dokumen')
-                          {{ $dokumen->jenis_dokumen ?? '-' }}
-                        @elseif($col == 'jenis_sub_pekerjaan')
-                          {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
-                        @elseif($col == 'jenis_pembayaran')
-                          {{ $dokumen->jenis_pembayaran ?? '-' }}
-                        @elseif($col == 'nama_pengirim')
-                          {{ $dokumen->nama_pengirim ?? '-' }}
-                        @elseif($col == 'dibayar_kepada')
-                          @if($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
-                            {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
-                          @else
-                            {{ $dokumen->dibayar_kepada ?? '-' }}
-                          @endif
-                        @elseif($col == 'no_berita_acara')
-                          {{ $dokumen->no_berita_acara ?? '-' }}
-                        @elseif($col == 'tanggal_berita_acara')
-                          {{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}
-                        @elseif($col == 'no_spk')
-                          {{ $dokumen->no_spk ?? '-' }}
-                        @elseif($col == 'tanggal_spk')
-                          {{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}
-                        @elseif($col == 'tanggal_berakhir_spk')
-                          {{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}
-                        @else
-                          -
-                        @endif
-                      </td>
-                    @endif
-                  @endforeach
-                  <!-- Kolom Deadline -->
-                  <td class="col-deadline">
-                    @php
-                      // Get received_at from roleData to calculate document age (count up)
-                      $roleData = $dokumen->getDataForRole('team_verifikasi');
-                      $receivedAt = $roleData?->received_at;
-
-                      // Check if document is already sent to other roles
-                      $isSent = in_array($dokumen->status, [
-                        'sent_to_perpajakan',
-                        'sent_to_akutansi',
-                        'sent_to_pembayaran',
-                        'pending_approval_perpajakan',
-                        'pending_approval_akutansi',
-                        'pending_approval_pembayaran',
-                      ]);
-
-                      // Check if document is completed
-                      $isCompleted = in_array($dokumen->status, [
-                        'selesai',
-                        'completed',
-                        'approved_data_sudah_terkirim',
-                      ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
-
-                      // Calculate document age from received_at (count up)
-                      $ageText = '-';
-                      $ageLabel = '-';
-                      $ageColor = 'gray';
-                      $ageIcon = 'fa-clock';
-                      $ageDays = 0;
-
-                      if ($receivedAt) {
-                        // For sent/completed documents, use processed_at as end time
-                        // For active documents, use current time
-                        $processedAt = $roleData?->processed_at;
-
-                        if (($isSent || $isCompleted) && $processedAt) {
-                          // Document is sent/completed - calculate time taken (frozen, not counting)
-                          $endTime = \Carbon\Carbon::parse($processedAt);
-                          $diff = $receivedAt->diff($endTime);
-                        } else {
-                          // Document still active - count up from received_at to now
-                          $now = \Carbon\Carbon::now();
-                          $diff = $receivedAt->diff($now);
-                        }
-
-                        $ageDays = $diff->days;
-
-                        // Format elapsed time as "X hari Y jam Z menit"
-                        $elapsedParts = [];
-                        if ($diff->days > 0) {
-                          $elapsedParts[] = $diff->days . ' hari';
-                        }
-                        if ($diff->h > 0) {
-                          $elapsedParts[] = $diff->h . ' jam';
-                        }
-                        if ($diff->i > 0 || empty($elapsedParts)) {
-                          $elapsedParts[] = $diff->i . ' menit';
-                        }
-                        $ageText = implode(' ', $elapsedParts);
-
-                        // Determine label and color based on elapsed time (in hours)
-                        // Green: < 24 hours, Yellow: 24-72 hours, Red: > 72 hours
-                        $totalHours = ($diff->days * 24) + $diff->h;
-
-                        if ($totalHours >= 72) {
-                          $ageLabel = 'TERLAMBAT';
-                          $ageColor = 'red';
-                          $ageIcon = 'fa-times-circle';
-                        } elseif ($totalHours >= 24) {
-                          $ageLabel = 'PERINGATAN';
-                          $ageColor = 'yellow';
-                          $ageIcon = 'fa-exclamation-triangle';
-                        } else {
-                          $ageLabel = 'AMAN';
-                          $ageColor = 'green';
-                          $ageIcon = 'fa-check-circle';
-                        }
-                      }
-
-                      // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
-                      $deadlineType = 'active';
-                      if ($isCompleted) {
-                        $deadlineType = 'completed';
-                      } elseif ($isSent) {
-                        $deadlineType = 'sent';
-                      }
-                    @endphp
-                    @if($receivedAt)
-                      <div class="deadline-card deadline-{{ $deadlineType }} deadline-{{ $ageColor }}"
-                        data-received-at="{{ $receivedAt->format('Y-m-d H:i:s') }}" data-age-days="{{ $ageDays }}"
-                        data-sent="{{ $isSent ? 'true' : 'false' }}" data-completed="{{ $isCompleted ? 'true' : 'false' }}">
-                        <div class="deadline-time">
-                          <i class="fa-solid fa-calendar"></i>
-                          <span>{{ $receivedAt->format('d M Y, H:i') }}</span>
-                        </div>
-                        <div class="deadline-indicator deadline-{{ ($isSent || $isCompleted) ? 'sent' : $ageColor }}">
-                          <i class="fa-solid {{ ($isSent || $isCompleted) ? 'fa-paper-plane' : $ageIcon }}"></i>
-                          <span class="status-text">{{ ($isSent || $isCompleted) ? 'TERKIRIM' : $ageLabel }}</span>
-                        </div>
-                        <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
-                          <i class="fa-solid fa-hourglass-half"></i>
-                          <span>{{ $ageText }}</span>
-                        </div>
-                        @if($isSent)
-                          <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
-                            <i class="fa-solid fa-paper-plane"></i> Terkirim
-                          </div>
-                        @elseif($isCompleted)
-                          <div class="deadline-label" style="font-size: 8px; color: #10b981; margin-top: 4px; font-weight: 600;">
-                            <i class="fa-solid fa-check-circle"></i> Selesai
-                          </div>
-                        @endif
-                      </div>
-                    @else
-                      <div class="no-deadline">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>Belum diterima</span>
-                      </div>
-                    @endif
-                  </td>
-                  <!-- Kolom Status: Menampilkan status badge -->
-                  <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-                    @if($isRejected)
-                      {{-- Dokumen ditolak dari inbox atau dari perpajakan/akutansi --}}
-                      @if($isRejectedByOtherRole && $rejectedByRole)
-                        {{-- Dokumen ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi --}}
-                        <span class="badge-status badge-dikembalikan" style="position: relative;">
-                          <i class="fa-solid fa-times-circle me-1"></i>
-                          <span>Dokumen ditolak,
-                            <a href="{{ route('returns.verifikasi.index') }}?search={{ $dokumen->nomor_agenda }}"
-                              class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
-                              style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
-                              cek disini
-                            </a>
-                          </span>
-                        </span>
-                      @else
-                        {{-- Dokumen ditolak dari inbox (oleh Team Verifikasi sendiri) --}}
-                        <span class="badge-status badge-dikembalikan" style="position: relative;">
-                          <i class="fa-solid fa-times-circle me-1"></i>
-                          <span>Dokumen Ditolak,
-                            <a href="{{ route('api.documents.verifikasi.rejected.show', $dokumen) }}"
-                              class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
-                              style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
-                              Alasan
-                            </a>
-                          </span>
-                        </span>
-                      @endif
-                    @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi')
-                      {{-- Dokumen yang benar-benar sudah selesai diproses --}}
-                      <span class="badge-status badge-selesai">✓
-                        {{ $dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai' }}</span>
-                    @elseif($dokumen->status == 'rejected_Team Verifikasi')
-                      <span class="badge-status badge-dikembalikan">Rejected</span>
-                    @elseif($displayStatusLabel)
-                      {{-- NEW: Use display_status from dokumen_role_data (FINAL/frozen status) --}}
-                      @if(str_starts_with($displayStatus, 'terkirim'))
-                        <span class="badge-status badge-sent">📤 {{ $displayStatusLabel }}</span>
-                      @elseif(str_starts_with($displayStatus, 'menunggu'))
-                        <span class="badge-status badge-warning">
-                          <i class="fa-solid fa-clock me-1"></i>
-                          {{ $displayStatusLabel }}
-                        </span>
-                      @elseif($displayStatus === 'sedang_diproses')
-                        <span class="badge-status badge-proses">⏳ {{ $displayStatusLabel }}</span>
-                      @elseif($displayStatus === 'terkunci')
-                        <span class="badge-status badge-locked">🔒 {{ $displayStatusLabel }}</span>
-                      @else
-                        <span class="badge-status badge-proses">{{ $displayStatusLabel }}</span>
-                      @endif
-                    @elseif($isPendingPerpajakan)
-                      {{-- FALLBACK: Legacy detection for documents without display_status --}}
-                      <span class="badge-status badge-warning">
-                        <i class="fa-solid fa-clock me-1"></i>
-                        Menunggu Approval dari Team Perpajakan
-                      </span>
-                    @elseif($sentToTeamLabel)
-                      {{-- FALLBACK: Legacy detection --}}
-                      <span class="badge-status badge-sent">📤 Terkirim ke {{ $sentToTeamLabel }}</span>
-                    @elseif($dokumen->status == 'sent_to_perpajakan')
-                      <span class="badge-status badge-sent">📤 Terkirim ke Team Perpajakan</span>
-                    @elseif($dokumen->status == 'sent_to_akutansi')
-                      <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
-                    @elseif($dokumen->status == 'sent_to_pembayaran')
-                      <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
-                    @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi']) || $isPending)
-                      <span class="badge-status"
-                        style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                        <i class="fa-solid fa-clock me-1"></i>
-                        <span>{{ $dokumen->getDetailedApprovalText() }}</span>
-                      </span>
-                    @elseif($dokumen->status == 'sedang diproses' && $isLocked)
-                      {{-- Dokumen yang baru di-approve dari inbox tapi belum di-set deadline --}}
-                      <span class="badge-status badge-locked">🔒 Terkunci</span>
-                    @elseif($dokumen->status == 'sedang diproses')
-                      {{-- Dokumen yang baru di-approve dari inbox dan sudah di-set deadline --}}
-                      <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
-                    @elseif(in_array($dokumen->status, ['sent_to_team_verifikasi']) && !$isLocked)
-                      {{-- Dokumen yang sedang diproses (status lama) --}}
-                      <span class="badge-status badge-proses">⏳ Diproses</span>
-                    @elseif($dokumen->status == 'sent_to_team_verifikasi' && $isLocked)
-                      <span class="badge-status badge-locked">🔒 Terkunci</span>
-                    @elseif($dokumen->status == 'returned_to_operator')
-                      <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
-                    @elseif($dokumen->status == 'returned_to_department')
-                      <span class="badge-status badge-dikembalikan">
-                        Dikembalikan dari {{ Str::title($dokumen->target_department ?? 'Bagian Terkait') }}
-                      </span>
-                    @elseif(Str::startsWith($dokumen->status, 'returned_from_'))
-                      @php
-                        $source = Str::after($dokumen->status, 'returned_from_');
-                        $sourceLabel = match ($source) {
-                          'akutansi' => 'Team Akutansi',
-                          'perpajakan' => 'Team Perpajakan',
-                          default => Str::title(str_replace('_', ' ', $source)),
-                        };
-                      @endphp
-                      <span class="badge-status badge-dikembalikan">Dikembalikan dari {{ $sourceLabel }}</span>
-                    @else
-                      <span class="badge-status badge-proses">⏳ {{ ucfirst($dokumen->status) }}</span>
-                    @endif
-                  </td>
-                  <td class="col-action" onclick="event.stopPropagation()">
-                    <div class="action-buttons-hybrid">
-                      @if($isRejected)
-                        <!-- Dokumen ditolak dari inbox - tampilkan Kirim (full width), Edit dan Kembalikan di bawah -->
-                        <button type="button" class="btn-action btn-kirim btn-full-width"
-                          onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
-                          <i class="fa-solid fa-paper-plane"></i>
-                          <span>Kirim Data</span>
-                        </button>
-                        <div class="action-row">
-                          <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
-                            style="flex: 1; text-decoration: none;">
-                            <button class="btn-action btn-edit" style="width: 100%;">
-                              <i class="fa-solid fa-pen"></i>
-                              <span>Edit</span>
-                            </button>
-                          </a>
-                          <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                            onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')" title="Kembalikan Dokumen">
-                            <i class="fa-solid fa-undo"></i>
-                            <span>Balik</span>
-                          </button>
-                        </div>
-                      @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
-                        <!-- Document already sent, waiting approval, or completed - show status -->
-                        @if($isApprovedByOtherRole || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar')
-                          <!-- Document has been approved/completed - show approved status -->
-                          <button class="btn-action btn-edit locked btn-full-width" disabled
-                            title="Dokumen sudah selesai diproses">
-                            <i class="fa-solid fa-check-circle"></i>
-                            <span>Terkirim</span>
-                          </button>
-                        @else
-                          <!-- Document waiting approval - show waiting status -->
-                          <button class="btn-action btn-edit locked btn-full-width" disabled
-                            title="Dokumen sedang menunggu approval, tidak dapat diedit">
-                            <i class="fa-solid fa-clock"></i>
-                            <span>{{ $dokumen->getDetailedApprovalText() }}</span>
-                          </button>
-                        @endif
-                      @else
-                        <!-- Unlocked state - buttons enabled -->
-                        @if(in_array($dokumen->status, ['sent_to_team_verifikasi', 'approved_Team Verifikasi', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
-                          <!-- Only show "Kirim Data" button if document hasn't been approved by other roles yet -->
-                          <button type="button" class="btn-action btn-kirim btn-full-width"
-                            onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
-                            <i class="fa-solid fa-paper-plane"></i>
-                            <span>Kirim Data</span>
-                          </button>
-                        @elseif($isApprovedByOtherRole)
-                          <!-- Document has been approved by Perpajakan/Akutansi - show approved status -->
-                          <button class="btn-action btn-edit locked btn-full-width" disabled
-                            title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
-                            <i class="fa-solid fa-check-circle"></i>
-                            <span>Terkirim</span>
-                          </button>
-                        @endif
-                        <div class="action-row">
-                          <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
-                            style="flex: 1; text-decoration: none;">
-                            <button class="btn-action btn-edit" style="width: 100%;">
-                              <i class="fa-solid fa-pen"></i>
-                              <span>Edit</span>
-                            </button>
-                          </a>
-                          <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                            onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')" title="Kembalikan Dokumen">
-                            <i class="fa-solid fa-undo"></i>
-                            <span>Balik</span>
-                          </button>
-                        </div>
-                      @endif
-                    </div>
-                  </td>
-                </tr>
-                <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-                  <td colspan="9">
-                    <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
-                      <div class="text-center p-4">
-                        <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center" style="padding: 40px;">
-                    <i class="fa-solid fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 16px;"></i>
-                    <p style="color: #999; font-size: 14px;">Belum ada dokumen</p>
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Pagination -->
-      @if(isset($dokumens) && $dokumens->hasPages())
-        @include('partials.pagination-enhanced', ['paginator' => $dokumens])
-      @endif
-
-      <!-- Modal Alasan Pengembalian -->
-
-      <script>
-            // Core JavaScript functions - Load first to ensure availabilit        y
-            document.addEventListener('DOMContentLoaded', function() {
-              console.log('DOM loaded, checking function availability...');
-
-              // Wait for scripts to fully load
-              setTimeout(() => {
-                console.log('Checking function types:');
-                console.log('window.toggleDetail type:', typeof window.toggleDetail);
-                console.log('window.loadDocumentDetail type:', typeof window.loadDocumentDetail);
-
-                if (typeof window.toggleDetail === 'function') {
-                  console.log('✓ toggleDetail is properly loaded');
-                } else {
-                  console.error('✗ toggleDetail is not a function');
-                }
-
-                if (typeof window.loadDocumentDetail === 'function') {
-                  console.log('✓ loadDocumentDetail is properly loaded');
-                } else {
-                  console.error('✗ loadDocumentDetail is not a function');
-                }
-
-                // Test with a click on first document row if available
-                const firstRow = document.querySelector('tr.main-row');
-                if (firstRow) {
-                  console.log('Found document rows, ready for clicking');
-                }
-              }, 1000);
-            });
-
-            // Confirm paraf function - Define as global
-            window.confirmParaf = function(dokumenId) {
-              if (confirm("Yakin mau menandai bahwa dokumen ini telah diparaf (selesai)?")) {
-                // Implementation for paraf action
-                console.log("Paraf confirmed for document:", dokumenId);
-              }
-            };
-
-            console.log('Additional functions loaded');
-            console.log('Final toggleDetail type:', typeof window.toggleDetail);
-            console.log('Final loadDocumentDetail type:', typeof window.loadDocumentDetail);
-
-            // Simple approve function
-            function quickApprove(docId) {
-              console.log('Quick approve called for docId:', docId);
-
-              if (confirm('Apakah Anda yakin ingin menyetujui (approve) dokumen ini?')) {
-                changeDocumentStatus(docId, 'approved');
-              }
-            }
-
-            // Simple reject function
-            function quickReject(docId) {
-              console.log('Quick reject called for docId:', docId);
-
-              if (confirm('Apakah Anda yakin ingin menolak (reject) dokumen ini?')) {
-                changeDocumentStatus(docId, 'rejected');
-              }
-            }
-
-            // Simplified status change function
-            function changeDocumentStatus(docId, action, event) {
-              if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-
-              console.log('Change status called for docId:', docId, 'action:', action);
-
-              // Try multiple selectors to find the status container
-              let statusContainer = document.querySelector(`#status-dropdown-${docId}`);
-              if (!statusContainer) {
-                statusContainer = document.querySelector(`[onclick*="quickApprove(${docId})"]`).closest('td');
-              }
-              if (!statusContainer) {
-                statusContainer = document.querySelector(`[onclick*="quickReject(${docId})"]`).closest('td');
-              }
-              if (!statusContainer) {
-                statusContainer = document.querySelector(`tr:has([onclick*="${docId}"]) .col-status`);
-              }
-
-              if (!statusContainer) {
-                console.error('Status container not found for docId:', docId);
-                console.log('Available containers with docId:', document.querySelectorAll(`[onclick*="${docId}"]`));
-                return;
-              }
-
-              console.log('Found status container:', statusContainer);
-
-              // Show loading state
-              const originalHTML = statusContainer.innerHTML;
-              statusContainer.innerHTML = `
-                <div style="
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  justify-content: center;
-                  color: #1a4d3e;
-                  font-weight: 600;
-                  font-size: 12px;
-                ">
-                  <i class="fa-solid fa-spinner fa-spin"></i>
-                  <span>Processing...</span>
-                </div>
-              `;
-
-              // Send AJAX request
-              fetch(`/documents/verifikasi/${docId}/change-status`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                  'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                  status: action,
-                  document_id: docId  // FIX: Kirim document ID untuk mencegah cross-interference
-                })
-              })
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-              })
-              .then(data => {
-                if (data.success) {
-                  // Show success notification
-                  showNotification(data.message, 'success');
-                  console.log('Status changed successfully:', data);
-
-                  // Update display
-                  const statusText = action === 'approved' ? 'Approved' : 'Rejected';
-                  const badgeClass = action === 'approved' ? 'badge-selesai' : 'badge-dikembalikan';
-
-                  statusContainer.innerHTML = `
-                    <span class="badge-status ${badgeClass}">
-                      ${action === 'approved' ? '✓' : '✗'} ${statusText}
-                    </span>
-                  `;
-
-                  // Update action buttons for this row
-                  updateActionButtons(docId, action);
-
-                  // Refresh page after delay to update dashboard stats
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 2000);
-
-                } else {
-                  // Show error notification
-                  showNotification(data.message, 'error');
-                  console.error('Status change failed:', data);
-                  statusContainer.innerHTML = originalHTML;
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                showNotification('Terjadi kesalahan saat mengubah status dokumen.', 'error');
-                statusContainer.innerHTML = originalHTML;
-              });
-            }
-
-            function updateActionButtons(docId, action) {
-              const row = document.querySelector(`tr:has(#status-dropdown-${docId})`);
-              if (!row) return;
-
-              const actionCell = row.querySelector('.col-action');
-              if (!actionCell) return;
-
-              // Disable action buttons based on status
-              const actionButtons = actionCell.querySelectorAll('.btn-action');
-              actionButtons.forEach(btn => {
-                if (action === 'approved') {
-                  // Keep some buttons for approved documents
-                  if (!btn.classList.contains('btn-edit') && !btn.classList.contains('btn-paraf')) {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                    btn.style.cursor = 'not-allowed';
-                  }
-                } else if (action === 'rejected') {
-                  // Disable most action buttons for rejected documents
-                  btn.disabled = true;
-                  btn.style.opacity = '0.5';
-                  btn.style.cursor = 'not-allowed';
-                }
-              });
-            }
-
-            // Optimized countdown timer with performance improvements
-            let countdownUpdateInterval = null;
-            let countdownTimers = new Map();
-
-            function initializeCountdowns() {
-              // Clear existing timers to prevent memory leaks
-              if (countdownUpdateInterval) {
-                clearInterval(countdownUpdateInterval);
-              }
-              countdownTimers.forEach(timer => clearInterval(timer));
-              countdownTimers.clear();
-            }
-
-            // Enhanced deadline system with color coding and late information
-            function initializeDeadlines() {
-              console.log('Initializing deadlines...');
-              const deadlineElements = document.querySelectorAll('.deadline-card');
-              console.log('Found deadline cards:', deadlineElements.length);
-
-              deadlineElements.forEach(card => {
-                updateDeadlineCard(card);
-              });
-
-              // Update every 30 seconds for better responsiveness
-              setInterval(() => {
-                const cards = document.querySelectorAll('.deadline-card');
-                cards.forEach(card => {
-                  updateDeadlineCard(card);
-                });
-              }, 30000); // Update every 30 seconds
-            }
-
-            function updateDeadlineCard(card) {
-              const deadlineStr = card.dataset.deadline;
-              if (!deadlineStr) {
-                console.warn('Deadline card missing data-deadline attribute');
-                return;
-              }
-
-              // Check if document is already sent or completed
-              const isSent = card.dataset.sent === 'true';
-              const isCompleted = card.dataset.completed === 'true';
-
-              const deadline = new Date(deadlineStr);
-              const now = new Date();
-              const diffMs = deadline - now;
-
-              // Remove existing status classes
-              card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue', 'deadline-sent', 'deadline-completed');
-
-              // Find status indicator
-              const statusIndicator = card.querySelector('.deadline-indicator');
-              if (!statusIndicator) {
-                console.error('Deadline indicator not found in card:', card);
-                return;
-              }
-              const statusText = card.querySelector('.status-text');
-              if (!statusText) {
-                console.error('Status text not found in card:', card);
-                return;
-              }
-              const statusIcon = statusIndicator.querySelector('i');
-              if (!statusIcon) {
-                console.error('Status icon not found in card:', card);
-                return;
-              }
-
-              // Remove existing late info and time hints
-              const existingLateInfo = card.querySelector('.late-info');
-              const existingTimeHint = card.querySelector('div[style*="margin-top: 2px"]');
-              const existingProgress = card.querySelector('.deadline-progress');
-
-              if (existingLateInfo) existingLateInfo.remove();
-              if (existingTimeHint) existingTimeHint.remove();
-              if (existingProgress) existingProgress.remove();
-
-              // Handle completed documents - show as completed (green, no countdown)
-              if (isCompleted) {
-                card.classList.add('deadline-completed');
-                statusText.textContent = 'SELESAI';
-                statusIcon.className = 'fa-solid fa-check-circle';
-                statusIndicator.className = 'deadline-indicator deadline-completed';
-                return; // Don't show countdown for completed documents
-              }
-
-              // Handle sent documents - show as sent (gray, no countdown, no overdue)
-              if (isSent) {
-                card.classList.add('deadline-sent');
-                statusText.textContent = 'TERKIRIM';
-                statusIcon.className = 'fa-solid fa-paper-plane';
-                statusIndicator.className = 'deadline-indicator deadline-sent';
-                return; // Don't show countdown or overdue for sent documents
-              }
-
-              // Handle active documents (still being processed) - show countdown
-              if (diffMs < 0) {
-                // Overdue state - only for active documents
-                card.classList.add('deadline-overdue');
-
-                // Calculate how late
-                const diffHours = Math.abs(Math.floor(diffMs / (1000 * 60 * 60)));
-                const diffDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-
-                // Update status text
-                statusText.textContent = 'TERLAMBAT';
-                statusIcon.className = 'fa-solid fa-exclamation-triangle';
-                statusIndicator.className = 'deadline-indicator deadline-overdue';
-
-                // Show late info for active documents
-                let lateText;
-                if (diffDays >= 1) {
-                  lateText = `${diffDays} HARI TELAT`;
-                } else if (diffHours >= 1) {
-                  lateText = `${diffHours} JAM TELAT`;
-                } else {
-                  lateText = 'BARU SAJA TELAT';
-                }
-
-                const lateInfo = document.createElement('div');
-                lateInfo.className = 'late-info';
-                lateInfo.innerHTML = `
-                  <i class="fa-solid fa-exclamation-triangle"></i>
-                  <span class="late-text">${lateText}</span>
-                `;
-
-                card.appendChild(lateInfo);
-
-                // Add progress bar at bottom
-                const progressBar = document.createElement('div');
-                progressBar.className = 'deadline-progress';
-                card.appendChild(progressBar);
-
-              } else {
-                // Time remaining - only for active documents
-                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                // Get original deadline_days from data attribute
-                const deadlineDays = parseInt(card.dataset.deadlineDays) || null;
-
-                // Calculate remaining hours for more accurate display
-                const totalHoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
-
-                // Determine display text based on deadline_days and remaining time
-                let displayText = '';
-                let shouldShowDays = false;
-
-                if (deadlineDays && deadlineDays > 0) {
-                  // If original deadline was set for X days, show "X hari lagi" 
-                  // as long as we're still within that period
-                  // Logic: Show days if remaining hours >= 12 hours OR if we're still in the first day
-                  if (totalHoursRemaining >= 12) {
-                    // Calculate how many full days remaining
-                    const fullDaysRemaining = Math.floor(totalHoursRemaining / 24);
-                    // If we have at least 12 hours, show at least "1 hari lagi" for deadline 1 hari
-                    // For deadline 2+ hari, show actual days remaining (capped at deadline_days)
-                    if (deadlineDays === 1) {
-                      // For 1 day deadline, show "1 hari lagi" if >= 12 hours remaining
-                      displayText = '1 hari lagi';
-                      shouldShowDays = true;
-                    } else {
-                      // For 2+ days deadline, show actual days remaining
-                      const daysToShow = Math.min(Math.max(1, fullDaysRemaining + (totalHoursRemaining % 24 >= 12 ? 1 : 0)), deadlineDays);
-                      displayText = `${daysToShow} ${daysToShow === 1 ? 'hari' : 'hari'} lagi`;
-                      shouldShowDays = daysToShow >= 1;
-                    }
+                  if ($perpajakanIsPendingInbox) {
+                    $isPendingPerpajakan = true;
                   } else {
-                    // Less than 12 hours remaining, show hours
-                    displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-                    shouldShowDays = false;
-                  }
-                } else {
-                  // No deadline_days info, use standard calculation
-                  if (diffDays >= 1) {
-                    displayText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
-                    shouldShowDays = true;
-                  } else if (diffHours >= 1) {
-                    displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-                    shouldShowDays = false;
-                  } else {
-                    displayText = `${diffMinutes} menit lagi`;
-                    shouldShowDays = false;
+                    // Document has passed perpajakan - show FINAL status
+                    $sentToTeamLabel = 'Team Perpajakan';
                   }
                 }
-
-                // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning
-                if (shouldShowDays || diffDays >= 1) {
-                  // Safe (>= 1 day or still within original deadline period) - Green
-                  card.classList.add('deadline-safe');
-                  statusText.textContent = 'AMAN';
-                  statusIcon.className = 'fa-solid fa-check-circle';
-                  statusIndicator.className = 'deadline-indicator deadline-safe';
-
-                  // Add time remaining hint
-                  const timeHint = document.createElement('div');
-                  timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
-                  timeHint.textContent = displayText;
-                  card.appendChild(timeHint);
-
-                } else if (diffHours >= 1 || diffMinutes >= 1) {
-                  // Warning (< 1 day or less than 12 hours remaining) - Yellow
-                  card.classList.add('deadline-warning');
-                  statusText.textContent = 'DEKAT';
-                  statusIcon.className = 'fa-solid fa-exclamation-triangle';
-                  statusIndicator.className = 'deadline-indicator deadline-warning';
-
-                  // Add time remaining hint
-                  const timeHint = document.createElement('div');
-                  timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
-                  if (diffHours >= 1) {
-                    timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
-                  } else {
-                    timeHint.textContent = `${diffMinutes} menit lagi`;
-                    timeHint.style.animation = 'warning-shake 1s infinite';
-                  }
-                  card.appendChild(timeHint);
-                }
-
-                // Add progress bar
-                const progressBar = document.createElement('div');
-                progressBar.className = 'deadline-progress';
-                card.appendChild(progressBar);
               }
-            }
-
-            // Initialize on page load - Make sure function is available globally
-            window.initializeDeadlines = initializeDeadlines;
-
-            // Initialize deadlines when DOM is ready
-            if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM fully loaded, initializing deadlines...');
-                initializeDeadlines();
-              });
-            } else {
-              console.log('DOM already loaded, initializing deadlines immediately...');
-              initializeDeadlines();
-            }
-            </script>
-
-            <style>
-            /* Optimized Deadline Display System */
-            .deadline-info {
-              position: relative;
-              padding: 10px;
-              border-radius: 12px;
-              background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-              border: 1px solid rgba(8, 62, 64, 0.1);
-              transition: all 0.3s ease;
-              overflow: hidden;
-            }
-
-            .deadline-info::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 4px;
-              height: 100%;
-              background: linear-gradient(180deg, var(--deadline-color, #28a745) 0%, var(--deadline-color-dark, #1e7e34) 100%);
-              transition: all 0.3s ease;
-            }
-
-            .deadline-info:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 4px 16px rgba(8, 62, 64, 0.15);
-            }
-
-            /* Simplified deadline styling - progress bar removed */
-
-            /* Deadline Status States */
-            .deadline-info.status-safe {
-              --deadline-color: #28a745;
-              --deadline-color-dark: #1e7e34;
-              --deadline-color-light: #34ce57;
-            }
-
-            .deadline-info.status-warning {
-              --deadline-color: #ffc107;
-              --deadline-color-dark: #e0a800;
-              --deadline-color-light: #ffcd39;
-            }
-
-            .deadline-info.status-danger {
-              --deadline-color: #dc3545;
-              --deadline-color-dark: #c82333;
-              --deadline-color-light: #e4606d;
-            }
-
-            .deadline-info.status-overdue {
-              --deadline-color: #6f42c1;
-              --deadline-color-dark: #59359a;
-              --deadline-color-light: #7950b2;
-              animation: overdue-pulse 2s infinite;
-            }
-
-            @keyframes overdue-pulse {
-              0%, 100% {
-                box-shadow: 0 0 0 0 rgba(111, 66, 193, 0.4);
-              }
-              50% {
-                box-shadow: 0 0 0 8px rgba(111, 66, 193, 0);
-              }
-            }
-
-            /* Optimized Countdown Display */
-            .deadline-countdown {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 8px;
-              margin-bottom: 6px;
-              font-weight: 600;
-              font-size: 13px;
-              color: #083E40;
-            }
-
-            .deadline-countdown-icon {
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              font-size: 12px;
-            }
-
-            .deadline-countdown-text {
-              font-weight: 700;
-              flex: 1;
-              text-align: right;
-            }
-
-            /* Deadline Date and Note */
-            .deadline-date {
-              font-size: 11px;
-              color: #666;
-              margin-top: 4px;
-              display: flex;
-              align-items: center;
-              gap: 4px;
-            }
-
-            .deadline-date small {
-              font-weight: 500;
-            }
-
-            .deadline-note {
-              font-size: 10px;
-              color: #888;
-              margin-top: 6px;
-              padding-top: 6px;
-              border-top: 1px solid rgba(8, 62, 64, 0.1);
-              font-style: italic;
-              display: flex;
-              align-items: center;
-              gap: 4px;
-            }
-
-            /* Responsive Deadline Display */
-            @media (max-width: 768px) {
-              .deadline-info {
-                padding: 8px;
-              }
-
-              .deadline-progress {
-                height: 5px;
-                margin-bottom: 6px;
-              }
-
-              .deadline-countdown {
-                font-size: 12px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 4px;
-              }
-
-              .deadline-countdown-text {
-                text-align: left;
-              }
-
-              .deadline-date {
-                font-size: 10px;
-              }
-
-              .deadline-note {
-                font-size: 9px;
-              }
-            }
-
-            @media (max-width: 480px) {
-              .deadline-info {
-                padding: 6px;
-              }
-
-              .deadline-progress {
-                height: 4px;
-                margin-bottom: 4px;
-              }
-
-              .deadline-countdown {
-                font-size: 11px;
-              }
-
-              .deadline-date {
-                display: none; /* Hide date on very small screens */
-              }
-
-              .deadline-note {
-                margin-top: 4px;
-                padding-top: 4px;
-              }
-            }
-
-            /* No deadline state */
-            .deadline-empty {
-              color: #999;
-              font-size: 12px;
-              font-style: italic;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 6px;
-              padding: 8px;
-            }
-            </style>
-
-            <!-- Modal for Setting Deadline -->
-            <div class="modal fade" id="setDeadlineModal" tabindex="-1">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                    <h5 class="modal-title">
-                      <i class="fa-solid fa-clock me-2"></i>Tetapkan Deadline Verifikasi
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <input type="hidden" id="deadlineDocId">
-
-                    <div class="alert alert-info border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 140, 0, 0.1) 100%); border-left: 4px solid #ffc107;">
-                      <i class="fa-solid fa-info-circle me-2"></i>
-                      <strong>Penting:</strong> Setelah deadline ditetapkan, dokumen akan terbuka untuk diproses lebih lanjut.
-                    </div>
-
-                    <div class="mb-4">
-                      <label class="form-label fw-bold">
-                        <i class="fa-solid fa-calendar-days me-2"></i>Periode Deadline*
-                      </label>
-                      <select class="form-select" id="deadlineDays" required>
-                        <option value="">Pilih periode deadline</option>
-                        <option value="1">1 hari</option>
-                        <option value="2">2 hari</option>
-                        <option value="3">3 hari (maksimal)</option>
-                      </select>
-                      <div class="form-text">Maksimal deadline adalah 3 hari untuk efisiensi proses</div>
-                    </div>
-
-                    <div class="mb-4">
-                      <label class="form-label fw-bold">
-                        <i class="fa-solid fa-sticky-note me-2"></i>Catatan Deadline <span class="text-muted">(opsional)</span>
-                      </label>
-                      <textarea class="form-control" id="deadlineNote" rows="3"
-                                placeholder="Contoh: Perlu verifikasi dokumen pendukung tambahan..."
-                                maxlength="500"></textarea>
-                      <div class="form-text">
-                        <span id="charCount">0</span>/500 karakter
-                      </div>
-                    </div>
-
-                    <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 140, 0, 0.05) 100%);">
-                      <i class="fa-solid fa-exclamation-triangle me-2"></i>
-                      <small>
-                        <strong>Catatan:</strong> Deadline yang telah ditetapkan tidak dapat diubah kembali. Pastikan periode yang dipilih sudah sesuai.
-                      </small>
-                    </div>
-                  </div>
-                  <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                      <i class="fa-solid fa-times me-2"></i>Batal
-                    </button>
-                    <button type="button" class="btn btn-warning" onclick="confirmSetDeadline()">
-                      <i class="fa-solid fa-check me-2"></i>Tetapkan Deadline
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Modal for Sending to Next Handler -->
-            <div class="modal fade" id="sendToNextModal" tabindex="-1">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
-                    <h5 class="modal-title">Kirim Dokumen ke Bidang Berikutnya</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <input type="hidden" id="nextDocId">
-
-                    <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%); border-left: 4px solid #083E40;">
-                      <i class="fa-solid fa-info-circle me-2"></i>
-                      <strong>Catatan:</strong> Deadline akan ditetapkan oleh departemen tujuan (Team Perpajakan, Team Akutansi, atau Team Pembayaran) setelah dokumen diterima.
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">
-                        <i class="fa-solid fa-location-arrow me-2"></i>Pilih Tujuan Pengiriman:
-                      </label>
-                      <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
-                        <input class="form-check-input" type="radio" name="next_handler" id="perpajakan" value="perpajakan" required>
-                        <label class="form-check-label w-100" for="perpajakan" style="cursor: pointer;">
-                          <div class="d-flex align-items-start">
-                            <i class="fa-solid fa-receipt me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
-                            <div>
-                              <strong style="color: #083E40;">Team Perpajakan</strong>
-                              <small class="text-muted d-block">Untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu. Dokumen akan terkunci hingga Team Perpajakan menetapkan deadline.</small>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                      <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
-                        <input class="form-check-input" type="radio" name="next_handler" id="akutansi" value="akutansi">
-                        <label class="form-check-label w-100" for="akutansi" style="cursor: pointer;">
-                          <div class="d-flex align-items-start">
-                            <i class="fa-solid fa-calculator me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
-                            <div>
-                              <strong style="color: #083E40;">Team Akutansi</strong>
-                              <small class="text-muted d-block">Untuk dokumen yang bisa langsung ke Team Akutansi. Dokumen akan terkunci hingga Team Akutansi menetapkan deadline.</small>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                      <div class="form-check" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
-                        <input class="form-check-input" type="radio" name="next_handler" id="pembayaran" value="pembayaran">
-                        <label class="form-check-label w-100" for="pembayaran" style="cursor: pointer;">
-                          <div class="d-flex align-items-start">
-                            <i class="fa-solid fa-money-bill-wave me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
-                            <div>
-                              <strong style="color: #083E40;">Team Pembayaran</strong>
-                              <small class="text-muted d-block">Untuk dokumen yang siap untuk diproses pembayaran. Status akan berubah menjadi "Siap Bayar" di halaman pembayaran.</small>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" onclick="confirmSendToNext()">
-                      <i class="fa-solid fa-paper-plane me-2"></i>Kirim
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Modal for Send Destination Warning -->
-            <div class="modal fade" id="sendDestinationWarningModal" tabindex="-1" aria-labelledby="sendDestinationWarningModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                    <h5 class="modal-title" id="sendDestinationWarningModalLabel">
-                      <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body text-center">
-                    <div class="mb-3">
-                      <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Pilih Tujuan Pengiriman Terlebih Dahulu!</h5>
-                    <p class="text-muted mb-0">
-                      Silakan pilih tujuan pengiriman dokumen terlebih dahulu:
-                      <br>• <strong>Team Perpajakan</strong> - untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu
-                      <br>• <strong>Team Akutansi</strong> - untuk dokumen yang bisa langsung ke Team Akutansi
-                      <br>• <strong>Team Pembayaran</strong> - untuk dokumen yang siap diproses pembayaran
-                    </p>
-                  </div>
-                  <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
-                      <i class="fa-solid fa-check me-2"></i>Mengerti
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Modal for Send Success -->
-            <div class="modal fade" id="sendSuccessModal" tabindex="-1" aria-labelledby="sendSuccessModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #11823b 0%, #1cb666 100%); color: white;">
-                    <h5 class="modal-title" id="sendSuccessModalLabel">
-                      <i class="fa-solid fa-circle-check me-2"></i>Pengiriman Berhasil
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body text-center">
-                    <div class="mb-3">
-                      <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #1cb666;"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2">Dokumen berhasil dikirim!</h5>
-                    <p class="text-muted mb-0" id="sendSuccessMessage">
-                      Dokumen telah dikirim dan akan muncul di halaman tujuan.
-                    </p>
-                  </div>
-                  <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
-                      <i class="fa-solid fa-check me-2"></i>Selesai
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Modal for Deadline Success -->
-            <div class="modal fade" id="deadlineSuccessModal" tabindex="-1" aria-labelledby="deadlineSuccessModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                    <h5 class="modal-title" id="deadlineSuccessModalLabel">
-                      <i class="fa-solid fa-circle-check me-2"></i>Deadline Berhasil Ditentukan
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body text-center">
-                    <div class="mb-3">
-                      <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #ffc107;"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2">Deadline berhasil ditetapkan!</h5>
-                    <p class="text-muted mb-0" id="deadlineSuccessMessage">
-                      Dokumen sekarang terbuka untuk diproses lebih lanjut.
-                    </p>
-                  </div>
-                  <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal" id="deadlineSuccessBtn">
-                      <i class="fa-solid fa-check me-2"></i>Selesai
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Modal for Deadline Warning -->
-            <div class="modal fade" id="deadlineWarningModal" tabindex="-1" aria-labelledby="deadlineWarningModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                    <h5 class="modal-title" id="deadlineWarningModalLabel">
-                      <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body text-center">
-                    <div class="mb-3">
-                      <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Pilih Periode Deadline Terlebih Dahulu!</h5>
-                    <p class="text-muted mb-0">
-                      Silakan pilih periode deadline (1 hari, 2 hari, atau 3 hari) sebelum menetapkan deadline.
-                    </p>
-                  </div>
-                  <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
-                      <i class="fa-solid fa-check me-2"></i>Mengerti
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <script>
-            function openSetDeadlineModal(docId) {
-              document.getElementById('deadlineDocId').value = docId;
-              document.getElementById('deadlineDays').value = '';
-              document.getElementById('deadlineNote').value = '';
-              document.getElementById('charCount').textContent = '0';
-              const modal = new bootstrap.Modal(document.getElementById('setDeadlineModal'));
-              modal.show();
-            }
-
-            function confirmSetDeadline() {
-              const docId = document.getElementById('deadlineDocId').value;
-              const deadlineDays = document.getElementById('deadlineDays').value;
-              const deadlineNote = document.getElementById('deadlineNote').value;
-
-              if (!deadlineDays) {
-                // Show warning modal instead of alert
-                const warningModal = new bootstrap.Modal(document.getElementById('deadlineWarningModal'));
-                warningModal.show();
-                return;
-              }
-
-              // Show loading state
-              const submitBtn = document.querySelector('[onclick="confirmSetDeadline()"]');
-              const originalHTML = submitBtn.innerHTML;
-              submitBtn.disabled = true;
-              submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menetapkan...';
-
-              // Get CSRF token from meta tag or hidden input
-              let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-              // Fallback to hidden input if meta tag not found
-              if (!csrfToken) {
-                const hiddenInput = document.querySelector('input[name="_token"]');
-                if (hiddenInput) {
-                  csrfToken = hiddenInput.value;
-                }
-              }
-
-              // Fallback to Laravel's global csrf_token() if available in window
-              if (!csrfToken && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
-                csrfToken = window.Laravel.csrfToken;
-              }
-
-              if (!csrfToken) {
-                console.error('CSRF token not found in any location!');
-                alert('CSRF token tidak ditemukan. Silakan refresh halaman.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalHTML;
-                return;
-              }
-
-              console.log('CSRF Token found:', csrfToken.substring(0, 20) + '...');
-
-              // Type casting untuk memastikan integer
-              const deadlineDaysInt = parseInt(deadlineDays);
-
-              console.log('Sending request to: ', `/documents/verifikasi/${docId}/set-deadline`);
-              console.log('Request payload: ', {
-                deadline_days: deadlineDaysInt,
-                deadline_note: deadlineNote
-              });
-              console.log('Deadline days type: ' + typeof deadlineDaysInt + ' value: ' + deadlineDaysInt);
-
-              fetch(`/documents/verifikasi/${docId}/set-deadline`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-TOKEN': csrfToken,
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                  deadline_days: deadlineDaysInt,
-                  deadline_note: deadlineNote
-                })
-              })
-              .then(async response => {
-                console.log('Response status:', response.status);
-
-                // Try to parse response as JSON first
-                let responseData;
-                try {
-                  responseData = await response.json();
-                } catch (e) {
-                  // If response is not JSON, create error object
-                  responseData = {
-                    success: false,
-                    message: `Server error: ${response.status} ${response.statusText}`
-                  };
-                }
-
-                if (!response.ok) {
-                  // Extract error message from response
-                  const errorMessage = responseData.message || responseData.error || `HTTP error! status: ${response.status}`;
-
-                  // Log debug info if available
-                  if (responseData.debug_info) {
-                    console.error('Debug info:', responseData.debug_info);
-                  }
-
-                  throw new Error(errorMessage);
-                }
-
-                return responseData;
-              })
-              .then(data => {
-                console.log('Response data:', data);
-                if (data.success) {
-                  const deadlineModal = bootstrap.Modal.getInstance(document.getElementById('setDeadlineModal'));
-                  deadlineModal.hide();
-
-                  // Show success modal
-                  const successModalEl = document.getElementById('deadlineSuccessModal');
-                  const successModal = new bootstrap.Modal(successModalEl);
-                  const successMessageEl = document.getElementById('deadlineSuccessMessage');
-
-                  if (data.deadline) {
-                    successMessageEl.textContent = 
-                      `Deadline: ${data.deadline}. Dokumen sekarang terbuka untuk diproses.`;
-                  } else {
-                    successMessageEl.textContent = data.message || 'Deadline berhasil ditetapkan.';
-                  }
-
-                  // Reload page when modal is closed
-                  successModalEl.addEventListener('hidden.bs.modal', function() {
-                    location.reload();
-                  }, { once: true });
-
-                  successModal.show();
-                } else {
-                  alert('Gagal menetapkan deadline: ' + (data.message || 'Terjadi kesalahan yang tidak diketahui'));
-                  submitBtn.disabled = false;
-                  submitBtn.innerHTML = originalHTML;
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                console.error('Error details:', error.message);
-                alert('Terjadi kesalahan saat menetapkan deadline: ' + error.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalHTML;
-              });
-            }
-
-            // Character counter for deadline note
-            document.addEventListener('DOMContentLoaded', function() {
-              const deadlineNote = document.getElementById('deadlineNote');
-              const charCount = document.getElementById('charCount');
-
-              if (deadlineNote && charCount) {
-                deadlineNote.addEventListener('input', function() {
-                  charCount.textContent = this.value.length;
-                });
-              }
-            });
-
-            function openSendToNextModal(docId) {
-              document.getElementById('nextDocId').value = docId;
-              const modal = new bootstrap.Modal(document.getElementById('sendToNextModal'));
-              modal.show();
-            }
-
-            function confirmSendToNext() {
-              const docId = document.getElementById('nextDocId').value;
-              const nextHandler = document.querySelector('input[name="next_handler"]:checked')?.value;
-
-              if (!nextHandler) {
-                // Ensure sendToNextModal stays open
-                const sendModal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
-                if (!sendModal || !sendModal._isShown) {
-                  // If send modal is not open, open it first
-                  const sendModalNew = new bootstrap.Modal(document.getElementById('sendToNextModal'));
-                  sendModalNew.show();
-                }
-
-                // Show warning modal instead of alert
-                const warningModal = new bootstrap.Modal(document.getElementById('sendDestinationWarningModal'));
-                warningModal.show();
-
-                // Focus back to first radio button when warning modal is closed
-                const warningModalEl = document.getElementById('sendDestinationWarningModal');
-                warningModalEl.addEventListener('hidden.bs.modal', function() {
-                  const firstRadio = document.getElementById('perpajakan');
-                  if (firstRadio) {
-                    setTimeout(() => {
-                      firstRadio.focus();
-                    }, 100);
-                  }
-                }, { once: true });
-
-                return;
-              }
-
-              const submitBtn = event.target;
-              const originalHTML = submitBtn.innerHTML;
-              submitBtn.disabled = true;
-              submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
-
-              fetch(`/documents/verifikasi/${docId}/send-to-next`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                  next_handler: nextHandler
-                })
-              })
-              .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-              })
-              .then(data => {
-                console.log('Response data:', data);
-                if (data.success) {
-                  const modal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
-                  modal.hide();
-
-                  showSendSuccessModal(data.message);
-                } else {
-                  alert('Gagal mengirim: ' + data.message);
-                  submitBtn.disabled = false;
-                  submitBtn.innerHTML = originalHTML;
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan saat mengirim dokumen: ' + error.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalHTML;
-              });
-            }
-
-            let shouldReloadAfterSendSuccess = false;
-
-            function showSendSuccessModal(message) {
-              const modalEl = document.getElementById('sendSuccessModal');
-              if (!modalEl) {
-                location.reload();
-                return;
-              }
-
-              const textEl = document.getElementById('sendSuccessMessage');
-              if (textEl) {
-                textEl.textContent = message || 'Dokumen telah dikirim dan akan muncul di halaman tujuan.';
-              }
-
-              shouldReloadAfterSendSuccess = true;
-              const modal = new bootstrap.Modal(modalEl);
-              modal.show();
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-              const successModalEl = document.getElementById('sendSuccessModal');
-              if (successModalEl) {
-                successModalEl.addEventListener('hidden.bs.modal', function() {
-                  if (shouldReloadAfterSendSuccess) {
-                    shouldReloadAfterSendSuccess = false;
-                    location.reload();
-                  }
-                });
-              }
-            });
-            </script>
-
-            <!-- Return to Bidang Modal -->
-            <div class="modal fade" id="returnToBidangModal" tabindex="-1" aria-labelledby="returnToBidangModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-xl">
-                <div class="modal-content" style="max-height: 90vh; overflow: hidden;">
-                  <div class="modal-header" style="background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%); color: white; flex-shrink: 0;">
-                    <h5 class="modal-title" id="returnToBidangModalLabel">
-                      <i class="fa-solid fa-sitemap me-2"></i>Kembalikan Dokumen ke Bidang
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
-                    <div class="row g-4">
-                      <!-- Left Column: Document Info -->
-                      <div class="col-lg-5">
-                        <div class="sticky-top" style="top: 1rem;">
-                          <h6 class="text-muted mb-3">
-                            <i class="fa-solid fa-file-lines me-2"></i>Informasi Dokumen:
-                          </h6>
-                          <div id="return-bidang-doc-info" class="border rounded p-3 bg-light" style="min-height: 200px;">
-                            <!-- Document info akan dimuat di sini -->
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Right Column: Form -->
-                      <div class="col-lg-7">
-                        <div class="sticky-top" style="top: 1rem;">
-                          <h6 class="text-muted mb-3">
-                            <i class="fa-solid fa-edit me-2"></i>Form Pengembalian:
-                          </h6>
-                          <form id="return-bidang-form" class="needs-validation" novalidate>
-                            <input type="hidden" id="return-bidang-doc-id" name="doc_id">
-
-                            <!-- Target Bidang -->
-                            <div class="mb-4">
-                              <label for="target_bidang" class="form-label fw-bold">
-                                <i class="fa-solid fa-sitemap me-2 text-primary"></i>Bidang Tujuan
-                                <span class="text-danger">*</span>
-                              </label>
-                              <select class="form-select form-select-lg" id="target_bidang" name="target_bidang" required>
-                                <option value="">-- Pilih Bidang Tujuan --</option>
-                                <option value="DPM">DPM - Divisi Produksi dan Manufaktur</option>
-                                <option value="SKH">SKH - Sub Kontrak Hutan</option>
-                                <option value="SDM">SDM - Sumber Daya Manusia</option>
-                                <option value="TEP">TEP - Teknik dan Perencanaan</option>
-                                <option value="KPL">KPL - Keuangan dan Pelaporan</option>
-                                <option value="AKN">AKN - Akuntansi</option>
-                                <option value="TAN">TAN - Tanaman dan Perkebunan</option>
-                                <option value="PMO">PMO - Project Management Office</option>
-                              </select>
-                              <div class="invalid-feedback">
-                                Silakan pilih bidang tujuan pengembalian.
-                              </div>
-                            </div>
-
-                            <!-- Return Reason -->
-                            <div class="mb-4">
-                              <label for="bidang_return_reason" class="form-label fw-bold">
-                                <i class="fa-solid fa-comment me-2 text-primary"></i>Alasan Pengembalian
-                                <span class="text-danger">*</span>
-                              </label>
-                              <textarea class="form-control" id="bidang_return_reason" name="bidang_return_reason"
-                                        rows="3" placeholder="Jelaskan alasan pengembalian dokumen ke bidang ini..."
-                                        style="resize: vertical; min-height: 80px;" required></textarea>
-                              <div class="d-flex justify-content-between mt-2">
-                                <div class="form-text">Minimal 5 karakter</div>
-                                <div class="form-text">
-                                  <span id="bidang-char-count">0</span>/1000 karakter
-                                </div>
-                              </div>
-                              <div class="invalid-feedback">
-                                Alasan pengembalian minimal 5 karakter dan maksimal 1000 karakter.
-                              </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="d-flex gap-2 mt-4">
-                              <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">
-                                <i class="fa-solid fa-times me-2"></i>Batal
-                              </button>
-                              <button type="button" class="btn btn-primary flex-fill" id="submit-return-bidang" onclick="returnToBidang()">
-                                <i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang
-                              </button>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <style>
-            /* Sticky positioning fix for modal */
-            .modal .sticky-top {
-              z-index: 1;
-            }
-            </style>
-
-            <script>
-            // Open Return to Bidang Modal
-            function openReturnToBidangModal(docId) {
-              // Fetch document details via AJAX (returns HTML)
-              fetch(`/dokumens/${docId}/detail`, {
-                method: 'GET',
-                headers: {
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'Accept': 'text/html'
-                }
-              })
-                .then(response => response.text())
-                .then(html => {
-                  // Set document info in modal
-                  document.getElementById('return-bidang-doc-info').innerHTML = html;
-                  document.getElementById('return-bidang-doc-id').value = docId;
-
-                  // Reset form
-                  document.getElementById('target_bidang').value = '';
-                  document.getElementById('bidang_return_reason').value = '';
-                  document.getElementById('bidang-char-count').textContent = '0';
-
-                  // Show modal
-                  const modal = new bootstrap.Modal(document.getElementById('returnToBidangModal'));
-                  modal.show();
-                })
-                .catch(error => {
-                  console.error('Error:', error);
-                  alert('Gagal memuat detail dokumen.');
-                });
-            }
-
-            // Return to Bidang function
-            function returnToBidang() {
-              const docId = document.getElementById('return-bidang-doc-id').value;
-              const targetBidang = document.getElementById('target_bidang').value;
-              const reason = document.getElementById('bidang_return_reason').value;
-
-              if (!targetBidang) {
-                alert('Pilih bidang tujuan terlebih dahulu.');
-                return;
-              }
-
-              if (!reason || reason.trim().length < 5) {
-                alert('Alasan pengembalian minimal 5 karakter.');
-                return;
-              }
-
-              const submitBtn = document.getElementById('submit-return-bidang');
-
-              // Show loading state
-              submitBtn.disabled = true;
-              submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
-
-              fetch(`/documents/verifikasi/${docId}/return-to-bidang`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                  target_bidang: targetBidang,
-                  bidang_return_reason: reason
-                })
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  // Close modal
-                  const modal = bootstrap.Modal.getInstance(document.getElementById('returnToBidangModal'));
-                  modal.hide();
-
-                  // Show success notification
-                  showNotification(`Dokumen berhasil dikembalikan ke bidang ${data.target_bidang}`, 'success');
-
-                  // Reload page after 2 seconds
-                  setTimeout(() => {
-                    location.reload();
-                  }, 2000);
-                } else {
-                  alert(data.message || 'Gagal mengembalikan dokumen ke bidang.');
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan saat mengembalikan dokumen ke bidang.');
-              })
-              .finally(() => {
-                // Restore button state
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang';
-              });
-            }
-
-            // Character counter for bidang return reason textarea
-            document.addEventListener('DOMContentLoaded', function() {
-              const bidangReasonTextarea = document.getElementById('bidang_return_reason');
-              const bidangCharCount = document.getElementById('bidang-char-count');
-
-              if (bidangReasonTextarea && bidangCharCount) {
-                bidangReasonTextarea.addEventListener('input', function() {
-                  const length = this.value.length;
-                  bidangCharCount.textContent = length;
-
-                  // Update color based on length
-                  bidangCharCount.classList.remove('warning', 'danger');
-                  if (length > 900) {
-                    bidangCharCount.classList.add('danger');
-                  } else if (length > 800) {
-                    bidangCharCount.classList.add('warning');
-                  }
-                });
-              }
-            });
-            </script>
-
-            <!-- Notification Styles -->
-            <style>
-            .notification {
-              position: fixed;
-              top: 20px;
-              right: 20px;
-              z-index: 9999;
-              transform: translateX(100%);
-              transition: all 0.3s ease;
-              max-width: 400px;
-              border-radius: 12px;
-              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            }
-
-            .notification.show {
-              transform: translateX(0);
-            }
-
-            .notification-content {
-              padding: 16px 20px;
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              color: white;
-              font-weight: 500;
-            }
-
-            .notification-success {
-              background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            }
-
-            .notification-info {
-              background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            }
-
-            @media (max-width: 768px) {
-              .notification {
-                left: 20px;
-                right: 20px;
-                max-width: none;
-                top: 10px;
-              }
-            }
-
-            /* Send to Next Modal - Radio Button Styles */
-            #sendToNextModal .form-check {
-              transition: all 0.3s ease;
-            }
-
-            #sendToNextModal .form-check:hover {
-              border-color: #083E40 !important;
-              background: linear-gradient(135deg, rgba(8, 62, 64, 0.05) 0%, rgba(136, 151, 23, 0.05) 100%);
-              transform: translateX(4px);
-              box-shadow: 0 2px 12px rgba(8, 62, 64, 0.15);
-            }
-
-            #sendToNextModal .form-check-input:checked ~ .form-check-label {
-              color: #083E40;
-            }
-
-            #sendToNextModal .form-check:has(.form-check-input:checked) {
-              border-color: #083E40 !important;
-              background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%);
-              box-shadow: 0 4px 16px rgba(8, 62, 64, 0.2);
-            }
-
-            #sendToNextModal .form-check-input {
-              width: 20px;
-              height: 20px;
-              margin-top: 2px;
-              cursor: pointer;
-            }
-
-            #sendToNextModal .form-check-input:checked {
-              background-color: #083E40;
-              border-color: #083E40;
-            }
-            </style>
-
-            <script>
-            // Handle suggestion button clicks
-            document.addEventListener('DOMContentLoaded', function() {
-                const suggestionButtons = document.querySelectorAll('.suggestion-btn');
-
-                suggestionButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const suggestion = this.getAttribute('data-suggestion');
-                        const searchInput = document.querySelector('input[name="search"]');
-                        const form = searchInput.closest('form');
-
-                        // Set the suggestion value to search input
-                        searchInput.value = suggestion;
-
-                        // Submit the form
-                        form.submit();
-                    });
-                });
-            });
-            </script>
-
-            <!-- Modal: Column Customization -->
-            <div class="customization-modal" id="columnCustomizationModal">
-              <div class="modal-content-custom">
-                <div class="modal-header-custom">
-                  <h3>
-                    <i class="fa-solid fa-table-columns"></i>
-                    Kustomisasi Kolom Tabel
-                  </h3>
-                </div>
-
-                <div class="modal-body-custom">
-                  <div class="customization-grid">
-                    <!-- Selection Panel -->
-                    <div class="selection-panel">
-                      <div class="panel-title">
-                        <i class="fa-solid fa-check-square"></i>
-                        Pilih Kolom
-                      </div>
-                      <div class="panel-description">
-                        Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
-                      </div>
-                      <div class="column-selection-list" id="columnSelectionList">
-                        @foreach($availableColumns as $key => $label)
-                          <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
-                               data-column="{{ $key }}"
-                               draggable="{{ in_array($key, $selectedColumns) ? 'true' : 'false' }}"
-                               onclick="toggleColumn(this)">
-                            <div class="drag-handle">
-                              <i class="fa-solid fa-grip-vertical"></i>
-                            </div>
-                            <input type="checkbox"
-                                   class="column-item-checkbox"
-                                   value="{{ $key }}"
-                                   {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
-                                   onclick="event.stopPropagation()">
-                            <label class="column-item-label">{{ $label }}</label>
-                            <span class="column-item-order">
-                              {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
-                            </span>
-                          </div>
-                        @endforeach
-                      </div>
-                    </div>
-
-                    <!-- Preview Panel -->
-                    <div class="preview-panel">
-                      <div class="panel-title">
-                        <i class="fa-solid fa-eye"></i>
-                        Preview Hasil
-                      </div>
-                      <div class="panel-description">
-                        Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
-                      </div>
-                      <div class="preview-container">
-                        <div id="tablePreview">
-                          @if(count($selectedColumns) > 0)
-                            <table class="preview-table">
-                              <thead>
-                                <tr>
-                                  <th>No</th>
-                                  @foreach($selectedColumns as $col)
-                                    <th>{{ $availableColumns[$col] ?? $col }}</th>
-                                  @endforeach
-                                  <th>Aksi</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                @for($i = 1; $i <= 5; $i++)
-                                  <tr>
-                                    <td>{{ $i }}</td>
-                                    @foreach($selectedColumns as $col)
-                                      <td>
-                                        @if($col == 'nomor_agenda')
-                                          AGD/{{ 100 + $i }}/XII/2024
-                                        @elseif($col == 'nomor_spp')
-                                          {{ 200 + $i }}/M/SPP/8/04/2024
-                                        @elseif($col == 'tanggal_masuk')
-                                          {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
-                                        @elseif($col == 'nilai_rupiah')
-                                          Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
-                                        @elseif($col == 'nomor_mirror')
-                                          MIR-{{ 1000 + $i }}
-                                        @else
-                                          Contoh Data {{ $i }}
-                                        @endif
-                                      </td>
-                                    @endforeach
-                                    <td>Edit, Kirim</td>
-                                  </tr>
-                                @endfor
-                              </tbody>
-                            </table>
-                          @else
-                            <div class="empty-preview">
-                              <i class="fa-solid fa-table"></i>
-                              <p>Belum ada kolom yang dipilih</p>
-                              <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                            </div>
-                          @endif
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="modal-footer-custom">
-                  <div class="selected-count">
-                    <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
-                    @if(count($selectedColumns) > 0)
-                                                                                                    <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
-                        return $availableColumns[$col] ?? $col;
-                      }, $selectedColumns)) }}</small>
-                    @endif
-                  </div>
-                  <div class="modal-actions">
-                    <button type="button" class="btn-modal btn-cancel" onclick="closeColumnCustomizationModal()">
-                      <i class="fa-solid fa-times"></i>
-                      Batal
-                    </button>
-                    <button type="button" class="btn-modal btn-save" id="saveCustomizationBtn" onclick="saveColumnCustomization()">
-                      <i class="fa-solid fa-save"></i>
-                      Simpan Perubahan
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <script>
-            // Global variables for column customization
-            let selectedColumnsOrder = [];
-            let availableColumnsData = {};
-
-            // Initialize available columns data from PHP
-            @php
-              $columnsJson = json_encode($availableColumns);
-              echo "availableColumnsData = {$columnsJson};";
             @endphp
+            @php
+              $rowClass = $isLocked ? 'locked-row' : '';
+            @endphp
+            <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
+              onclick="handleRowClick(event, {{ $dokumen->id }})">
+              {{-- Checkbox Column --}}
+              <td class="col-checkbox text-center">
+                <input type="checkbox" class="document-checkbox" value="{{ $dokumen->id }}"
+                  data-nomor="{{ $dokumen->nomor_agenda }}" onclick="event.stopPropagation();">
+              </td>
+              {{-- No Column --}}
+              <td class="col-no" style="width: 40px;">
+                {{ $loop->iteration + ($dokumens->currentPage() - 1) * $dokumens->perPage() }}
+              </td>
+              @foreach($selectedColumns as $col)
+                @if($col !== 'status')
+                  <td class="col-{{ $col }}">
+                    @if($col == 'nomor_agenda')
+                      <span class="select-text">{{ $dokumen->nomor_agenda }}</span>
+                    @elseif($col == 'nomor_spp')
+                      <span class="select-text">{{ $dokumen->nomor_spp }}</span>
+                    @elseif($col == 'tanggal_masuk')
+                      <span
+                        class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i') : '-' }}</span>
+                    @elseif($col == 'nilai_rupiah')
+                      <strong
+                        class="select-text">{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
+                    @elseif($col == 'nomor_mirror')
+                      {{ $dokumen->nomor_mirror ?? '-' }}
+                    @elseif($col == 'tanggal_spp')
+                      {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y H:i') : '-' }}
+                    @elseif($col == 'uraian_spp')
+                      <span title="{{ $dokumen->uraian_spp ?? '-' }}"
+                        style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">
+                        {{ $dokumen->uraian_spp ?? '-' }}
+                      </span>
+                    @elseif($col == 'kategori')
+                      {{ $dokumen->kategori ?? '-' }}
+                    @elseif($col == 'kebun')
+                      {{ $dokumen->kebun ?? '-' }}
+                    @elseif($col == 'jenis_dokumen')
+                      {{ $dokumen->jenis_dokumen ?? '-' }}
+                    @elseif($col == 'jenis_sub_pekerjaan')
+                      {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
+                    @elseif($col == 'jenis_pembayaran')
+                      {{ $dokumen->jenis_pembayaran ?? '-' }}
+                    @elseif($col == 'nama_pengirim')
+                      {{ $dokumen->nama_pengirim ?? '-' }}
+                    @elseif($col == 'dibayar_kepada')
+                      @if($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
+                        {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
+                      @else
+                        {{ $dokumen->dibayar_kepada ?? '-' }}
+                      @endif
+                    @elseif($col == 'no_berita_acara')
+                      {{ $dokumen->no_berita_acara ?? '-' }}
+                    @elseif($col == 'tanggal_berita_acara')
+                      {{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}
+                    @elseif($col == 'no_spk')
+                      {{ $dokumen->no_spk ?? '-' }}
+                    @elseif($col == 'tanggal_spk')
+                      {{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}
+                    @elseif($col == 'tanggal_berakhir_spk')
+                      {{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}
+                    @else
+                      -
+                    @endif
+                  </td>
+                @endif
+              @endforeach
+              <!-- Kolom Deadline -->
+              <td class="col-deadline">
+                @php
+                  // Get received_at from roleData to calculate document age (count up)
+                  $roleData = $dokumen->getDataForRole('team_verifikasi');
+                  $receivedAt = $roleData?->received_at;
 
-            // Initialize selected columns from existing selection
-            @if(count($selectedColumns) > 0)
-              selectedColumnsOrder = @json($selectedColumns);
-            @endif
+                  // Check if document is already sent to other roles (including waiting approval statuses)
+                  $isSent = in_array($dokumen->status, [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                  ]);
 
-            // Global Functions
-            function openColumnCustomizationModal() {
-              const modal = document.getElementById('columnCustomizationModal');
-              modal.classList.add('show');
-              document.body.style.overflow = 'hidden';
-              initializeModalState();
-            }
+                  // Check if document is completed
+                  $isCompleted = in_array($dokumen->status, [
+                    'selesai',
+                    'completed',
+                    'approved_data_sudah_terkirim',
+                  ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
 
-            function closeColumnCustomizationModal() {
-              const modal = document.getElementById('columnCustomizationModal');
-              modal.classList.remove('show');
-              document.body.style.overflow = '';
-            }
+                  // Calculate document age from received_at (count up)
+                  $ageText = '-';
+                  $ageLabel = '-';
+                  $ageColor = 'gray';
+                  $ageIcon = 'fa-clock';
+                  $ageDays = 0;
 
-            function toggleColumn(columnElement) {
-              const columnKey = columnElement.dataset.column;
-              const checkbox = columnElement.querySelector('.column-item-checkbox');
-              const isChecked = checkbox.checked;
+                  if ($receivedAt) {
+                    // For sent/completed documents, use processed_at as end time
+                    // For active documents, use current time
+                    $processedAt = $roleData?->processed_at;
 
-              if (!isChecked) {
-                if (!selectedColumnsOrder.includes(columnKey)) {
-                  selectedColumnsOrder.push(columnKey);
-                }
-                checkbox.checked = true;
-                columnElement.classList.add('selected');
-                columnElement.setAttribute('draggable', 'true');
-              } else {
-                selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
-                checkbox.checked = false;
-                columnElement.classList.remove('selected');
-                columnElement.setAttribute('draggable', 'false');
-              }
+                    if (($isSent || $isCompleted) && $processedAt) {
+                      // Document is sent/completed - calculate time taken (frozen, not counting)
+                      $endTime = \Carbon\Carbon::parse($processedAt);
+                      $diff = $receivedAt->diff($endTime);
+                    } else {
+                      // Document still active - count up from received_at to now
+                      $now = \Carbon\Carbon::now();
+                      $diff = $receivedAt->diff($now);
+                    }
 
-              updateColumnOrderBadges();
-              updatePreviewTable();
-              updateSelectedCount();
-              updateDraggableState();
-            }
+                    $ageDays = $diff->days;
 
-            function updateColumnOrderBadges() {
-              document.querySelectorAll('.column-item').forEach(item => {
-                const columnKey = item.dataset.column;
-                const orderBadge = item.querySelector('.column-item-order');
-                const index = selectedColumnsOrder.indexOf(columnKey);
+                    // Format elapsed time as "X hari Y jam Z menit"
+                    $elapsedParts = [];
+                    if ($diff->days > 0) {
+                      $elapsedParts[] = $diff->days . ' hari';
+                    }
+                    if ($diff->h > 0) {
+                      $elapsedParts[] = $diff->h . ' jam';
+                    }
+                    if ($diff->i > 0 || empty($elapsedParts)) {
+                      $elapsedParts[] = $diff->i . ' menit';
+                    }
+                    $ageText = implode(' ', $elapsedParts);
 
-                if (index !== -1) {
-                  orderBadge.textContent = index + 1;
-                } else {
-                  orderBadge.textContent = '';
-                }
-              });
-            }
+                    // Determine label and color based on elapsed time (in hours)
+                    // Green: < 24 hours, Yellow: 24-72 hours, Red: > 72 hours
+                    $totalHours = ($diff->days * 24) + $diff->h;
 
-            function updatePreviewTable() {
-              const previewContainer = document.getElementById('tablePreview');
+                    if ($totalHours >= 72) {
+                      $ageLabel = 'TERLAMBAT';
+                      $ageColor = 'red';
+                      $ageIcon = 'fa-times-circle';
+                    } elseif ($totalHours >= 24) {
+                      $ageLabel = 'PERINGATAN';
+                      $ageColor = 'yellow';
+                      $ageIcon = 'fa-exclamation-triangle';
+                    } else {
+                      $ageLabel = 'AMAN';
+                      $ageColor = 'green';
+                      $ageIcon = 'fa-check-circle';
+                    }
+                  }
 
-              if (selectedColumnsOrder.length === 0) {
-                previewContainer.innerHTML = `
-                  <div class="empty-preview">
-                    <i class="fa-solid fa-table fa-2x mb-2"></i>
-                    <p>Belum ada kolom yang dipilih</p>
-                    <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                  // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
+                  $deadlineType = 'active';
+                  if ($isCompleted) {
+                    $deadlineType = 'completed';
+                  } elseif ($isSent) {
+                    $deadlineType = 'sent';
+                  }
+                @endphp
+                @if($receivedAt)
+                  <div class="deadline-card deadline-{{ $deadlineType }} deadline-{{ $ageColor }}"
+                    data-received-at="{{ $receivedAt->format('Y-m-d H:i:s') }}" data-age-days="{{ $ageDays }}"
+                    data-sent="{{ $isSent ? 'true' : 'false' }}" data-completed="{{ $isCompleted ? 'true' : 'false' }}">
+                    <div class="deadline-time">
+                      <i class="fa-solid fa-calendar"></i>
+                      <span>{{ $receivedAt->format('d M Y, H:i') }}</span>
+                    </div>
+                    <div class="deadline-indicator deadline-{{ ($isSent || $isCompleted) ? 'sent' : $ageColor }}">
+                      <i class="fa-solid {{ ($isSent || $isCompleted) ? 'fa-paper-plane' : $ageIcon }}"></i>
+                      <span class="status-text">{{ ($isSent || $isCompleted) ? 'TERKIRIM' : $ageLabel }}</span>
+                    </div>
+                    <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                      <i class="fa-solid fa-hourglass-half"></i>
+                      <span>{{ $ageText }}</span>
+                    </div>
+                    @if($isSent)
+                      <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-paper-plane"></i> Terkirim
+                      </div>
+                    @elseif($isCompleted)
+                      <div class="deadline-label" style="font-size: 8px; color: #10b981; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-check-circle"></i> Selesai
+                      </div>
+                    @endif
                   </div>
-                `;
-                return;
-              }
+                @else
+                  <div class="no-deadline">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>Belum diterima</span>
+                  </div>
+                @endif
+              </td>
+              <!-- Kolom Status: Menampilkan status badge -->
+              <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
+                @if($isRejected)
+                  {{-- Dokumen ditolak dari inbox atau dari perpajakan/akutansi --}}
+                  @if($isRejectedByOtherRole && $rejectedByRole)
+                    {{-- Dokumen ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi --}}
+                    <span class="badge-status badge-dikembalikan" style="position: relative;">
+                      <i class="fa-solid fa-times-circle me-1"></i>
+                      <span>Dokumen ditolak,
+                        <a href="{{ route('returns.verifikasi.index') }}?search={{ $dokumen->nomor_agenda }}"
+                          class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
+                          style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
+                          cek disini
+                        </a>
+                      </span>
+                    </span>
+                  @else
+                    {{-- Dokumen ditolak dari inbox (oleh Team Verifikasi sendiri) --}}
+                    <span class="badge-status badge-dikembalikan" style="position: relative;">
+                      <i class="fa-solid fa-times-circle me-1"></i>
+                      <span>Dokumen Ditolak,
+                        <a href="{{ route('api.documents.verifikasi.rejected.show', $dokumen) }}"
+                          class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
+                          style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
+                          Alasan
+                        </a>
+                      </span>
+                    </span>
+                  @endif
+                @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi')
+                  {{-- Dokumen yang benar-benar sudah selesai diproses --}}
+                  <span class="badge-status badge-selesai">✓
+                    {{ $dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai' }}</span>
+                @elseif($dokumen->status == 'rejected_Team Verifikasi')
+                  <span class="badge-status badge-dikembalikan">Rejected</span>
+                @elseif($displayStatusLabel)
+                  {{-- NEW: Use display_status from dokumen_role_data (FINAL/frozen status) --}}
+                  @if(str_starts_with($displayStatus, 'terkirim'))
+                    <span class="badge-status badge-sent">📤 {{ $displayStatusLabel }}</span>
+                  @elseif(str_starts_with($displayStatus, 'menunggu'))
+                    <span class="badge-status badge-warning">
+                      <i class="fa-solid fa-clock me-1"></i>
+                      {{ $displayStatusLabel }}
+                    </span>
+                  @elseif($displayStatus === 'sedang_diproses')
+                    <span class="badge-status badge-proses">⏳ {{ $displayStatusLabel }}</span>
+                  @elseif($displayStatus === 'terkunci')
+                    <span class="badge-status badge-locked">🔒 {{ $displayStatusLabel }}</span>
+                  @else
+                    <span class="badge-status badge-proses">{{ $displayStatusLabel }}</span>
+                  @endif
+                @elseif($isPendingPerpajakan)
+                  {{-- FALLBACK: Legacy detection for documents without display_status --}}
+                  <span class="badge-status badge-warning">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Menunggu Approval dari Team Perpajakan
+                  </span>
+                @elseif($sentToTeamLabel)
+                  {{-- FALLBACK: Legacy detection --}}
+                  <span class="badge-status badge-sent">📤 Terkirim ke {{ $sentToTeamLabel }}</span>
+                @elseif($dokumen->status == 'sent_to_perpajakan')
+                  <span class="badge-status badge-sent">📤 Terkirim ke Team Perpajakan</span>
+                @elseif($dokumen->status == 'sent_to_akutansi')
+                  <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
+                @elseif($dokumen->status == 'sent_to_pembayaran')
+                  <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
+                @elseif($dokumen->status == 'waiting_approval_perpajakan')
+                  {{-- Bulk send: Menunggu Approve dari Team Perpajakan --}}
+                  <span class="badge-status badge-warning" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    <span>Menunggu Approve Team Perpajakan</span>
+                  </span>
+                @elseif($dokumen->status == 'waiting_approval_akuntansi')
+                  {{-- Bulk send: Menunggu Approve dari Team Akuntansi --}}
+                  <span class="badge-status badge-warning" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    <span>Menunggu Approve Team Akuntansi</span>
+                  </span>
+                @elseif(in_array($dokumen->status, ['menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi']) || $isPending)
+                  <span class="badge-status"
+                    style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    <span>{{ $dokumen->getDetailedApprovalText() }}</span>
+                  </span>
+                @elseif($dokumen->status == 'sedang diproses' && $isLocked)
+                  {{-- Dokumen yang baru di-approve dari inbox tapi belum di-set deadline --}}
+                  <span class="badge-status badge-locked">🔒 Terkunci</span>
+                @elseif($dokumen->status == 'sedang diproses')
+                  {{-- Dokumen yang baru di-approve dari inbox dan sudah di-set deadline --}}
+                  <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
+                @elseif(in_array($dokumen->status, ['sent_to_team_verifikasi']) && !$isLocked)
+                  {{-- Dokumen yang sedang diproses (status lama) --}}
+                  <span class="badge-status badge-proses">⏳ Diproses</span>
+                @elseif($dokumen->status == 'sent_to_team_verifikasi' && $isLocked)
+                  <span class="badge-status badge-locked">🔒 Terkunci</span>
+                @elseif($dokumen->status == 'returned_to_operator')
+                  <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
+                @elseif($dokumen->status == 'returned_to_department')
+                  <span class="badge-status badge-dikembalikan">
+                    Dikembalikan dari {{ Str::title($dokumen->target_department ?? 'Bagian Terkait') }}
+                  </span>
+                @elseif(Str::startsWith($dokumen->status, 'returned_from_'))
+                  @php
+                    $source = Str::after($dokumen->status, 'returned_from_');
+                    $sourceLabel = match ($source) {
+                      'akutansi' => 'Team Akutansi',
+                      'perpajakan' => 'Team Perpajakan',
+                      default => Str::title(str_replace('_', ' ', $source)),
+                    };
+                  @endphp
+                  <span class="badge-status badge-dikembalikan">Dikembalikan dari {{ $sourceLabel }}</span>
+                @else
+                  <span class="badge-status badge-proses">⏳ {{ ucfirst($dokumen->status) }}</span>
+                @endif
+              </td>
+              <td class="col-action" onclick="event.stopPropagation()">
+                <div class="action-buttons-hybrid">
+                  @if($isRejected)
+                    <!-- Dokumen ditolak dari inbox - tampilkan Kirim (full width), Edit dan Kembalikan di bawah -->
+                    <button type="button" class="btn-action btn-kirim btn-full-width"
+                      onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
+                      <i class="fa-solid fa-paper-plane"></i>
+                      <span>Kirim Data</span>
+                    </button>
+                    <div class="action-row">
+                      <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
+                        style="flex: 1; text-decoration: none;">
+                        <button class="btn-action btn-edit" style="width: 100%;">
+                          <i class="fa-solid fa-pen"></i>
+                          <span>Edit</span>
+                        </button>
+                      </a>
+                      <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
+                        onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')"
+                        title="Kembalikan Dokumen">
+                        <i class="fa-solid fa-undo"></i>
+                        <span>Balik</span>
+                      </button>
+                    </div>
+                  @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi', 'completed', 'selesai']) || $isPending || $dokumen->status_pembayaran === 'sudah_dibayar')
+                    <!-- Document already sent, waiting approval, or completed - show status -->
+                    @if($isApprovedByOtherRole || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar')
+                      <!-- Document has been approved/completed - show approved status -->
+                      <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah selesai diproses">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Terkirim</span>
+                      </button>
+                    @else
+                      <!-- Document waiting approval - show waiting status -->
+                      <button class="btn-action btn-edit locked btn-full-width" disabled
+                        title="Dokumen sedang menunggu approval, tidak dapat diedit">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>{{ $dokumen->getDetailedApprovalText() }}</span>
+                      </button>
+                    @endif
+                  @else
+                    <!-- Unlocked state - buttons enabled -->
+                    @if(in_array($dokumen->status, ['sent_to_team_verifikasi', 'approved_Team Verifikasi', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)
+                      <!-- Only show "Kirim Data" button if document hasn't been approved by other roles yet -->
+                      <button type="button" class="btn-action btn-kirim btn-full-width"
+                        onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Kirim Data</span>
+                      </button>
+                    @elseif($isApprovedByOtherRole)
+                      <!-- Document has been approved by Perpajakan/Akutansi - show approved status -->
+                      <button class="btn-action btn-edit locked btn-full-width" disabled
+                        title="Dokumen sudah di-approve oleh {{ $isApprovedByPerpajakan ? 'Team Perpajakan' : 'Team Akutansi' }}">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Terkirim</span>
+                      </button>
+                    @endif
+                    <div class="action-row">
+                      <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
+                        style="flex: 1; text-decoration: none;">
+                        <button class="btn-action btn-edit" style="width: 100%;">
+                          <i class="fa-solid fa-pen"></i>
+                          <span>Edit</span>
+                        </button>
+                      </a>
+                      <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
+                        onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')"
+                        title="Kembalikan Dokumen">
+                        <i class="fa-solid fa-undo"></i>
+                        <span>Balik</span>
+                      </button>
+                    </div>
+                  @endif
+                </div>
+              </td>
+            </tr>
+            <tr class="detail-row" id="detail-{{ $dokumen->id }}">
+              <td colspan="9">
+                <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
+                  <div class="text-center p-4">
+                    <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
+                  </div>
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center" style="padding: 40px;">
+                <i class="fa-solid fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 16px;"></i>
+                <p style="color: #999; font-size: 14px;">Belum ada dokumen</p>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-              let previewHTML = `
-                <table class="preview-table">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-              `;
+  <!-- Pagination -->
+  @if(isset($dokumens) && $dokumens->hasPages())
+    @include('partials.pagination-enhanced', ['paginator' => $dokumens])
+  @endif
 
-              selectedColumnsOrder.forEach(columnKey => {
-                const columnLabel = availableColumnsData[columnKey] || columnKey;
-                previewHTML += `<th>${columnLabel}</th>`;
+  <!-- Modal Alasan Pengembalian -->
+
+  <script>
+              // Core JavaScript functions - Load first to ensure availabilit            y
+              document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, checking function availability...');
+
+                // Wait for scripts to fully load
+                setTimeout(() => {
+                  console.log('Checking function types:');
+                  console.log('window.toggleDetail type:', typeof window.toggleDetail);
+                  console.log('window.loadDocumentDetail type:', typeof window.loadDocumentDetail);
+
+                  if (typeof window.toggleDetail === 'function') {
+                    console.log('✓ toggleDetail is properly loaded');
+                  } else {
+                    console.error('✗ toggleDetail is not a function');
+                  }
+
+                  if (typeof window.loadDocumentDetail === 'function') {
+                    console.log('✓ loadDocumentDetail is properly loaded');
+                  } else {
+                    console.error('✗ loadDocumentDetail is not a function');
+                  }
+
+                  // Test with a click on first document row if available
+                  const firstRow = document.querySelector('tr.main-row');
+                  if (firstRow) {
+                    console.log('Found document rows, ready for clicking');
+                  }
+                }, 1000);
               });
 
-              previewHTML += `
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-              `;
-
-              const sampleData = {
-                'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
-                'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
-                'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
-                'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
-                'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
-                'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
-                'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
+              // Confirm paraf function - Define as global
+              window.confirmParaf = function(dokumenId) {
+                if (confirm("Yakin mau menandai bahwa dokumen ini telah diparaf (selesai)?")) {
+                  // Implementation for paraf action
+                  console.log("Paraf confirmed for document:", dokumenId);
+                }
               };
 
-              for (let i = 0; i < 5; i++) {
-                previewHTML += `<tr>`;
-                previewHTML += `<td>${i + 1}</td>`;
+              console.log('Additional functions loaded');
+              console.log('Final toggleDetail type:', typeof window.toggleDetail);
+              console.log('Final loadDocumentDetail type:', typeof window.loadDocumentDetail);
 
-                selectedColumnsOrder.forEach(columnKey => {
-                  // Skip 'status' column as it's always shown as a special column
-                  if (columnKey === 'status') {
-                    return;
-                  }
+              // Simple approve function
+              function quickApprove(docId) {
+                console.log('Quick approve called for docId:', docId);
 
-                  const columnLabel = availableColumnsData[columnKey] || columnKey;
-                  let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
-
-                  previewHTML += `<td>${cellValue}</td>`;
-                });
-
-                previewHTML += `<td>Edit, Kirim</td>`;
-                previewHTML += `</tr>`;
-              }
-
-              previewHTML += `
-                  </tbody>
-                </table>
-              `;
-
-              previewContainer.innerHTML = previewHTML;
-            }
-
-            function updateSelectedCount() {
-              const countElement = document.getElementById('selectedColumnCount');
-              countElement.textContent = selectedColumnsOrder.length;
-
-              const saveButton = document.getElementById('saveCustomizationBtn');
-              saveButton.disabled = selectedColumnsOrder.length === 0;
-            }
-
-            function saveColumnCustomization() {
-              if (selectedColumnsOrder.length === 0) {
-                alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
-                return;
-              }
-
-              // Try multiple selectors to find the form
-              let filterForm = document.getElementById('filterForm');
-              if (!filterForm) {
-                filterForm = document.querySelector('form[action*="verifikasi"]');
-              }
-              if (!filterForm) {
-                filterForm = document.querySelector('form[action*="dokumensB"]');
-              }
-              if (!filterForm) {
-                // Fallback: use first form on page
-                filterForm = document.querySelector('form');
-              }
-
-              if (!filterForm) {
-                alert('Form tidak ditemukan.');
-                return;
-              }
-
-              // Remove existing column inputs
-              document.querySelectorAll('input[name="columns[]"]').forEach(input => {
-                if (input.type === 'hidden') {
-                  input.remove();
-                }
-              });
-
-              // Add hidden inputs for selected columns in order
-              selectedColumnsOrder.forEach(columnKey => {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'columns[]';
-                hiddenInput.value = columnKey;
-                filterForm.appendChild(hiddenInput);
-              });
-
-              // Add enable customization flag
-              const enableInput = document.createElement('input');
-              enableInput.type = 'hidden';
-              enableInput.name = 'enable_customization';
-              enableInput.value = '1';
-              filterForm.appendChild(enableInput);
-
-              closeColumnCustomizationModal();
-              filterForm.submit();
-            }
-
-            function initializeModalState() {
-              document.querySelectorAll('.column-item').forEach(item => {
-                const columnKey = item.dataset.column;
-                const checkbox = item.querySelector('.column-item-checkbox');
-
-                if (selectedColumnsOrder.includes(columnKey)) {
-                  checkbox.checked = true;
-                  item.classList.add('selected');
-                  item.setAttribute('draggable', 'true');
-                } else {
-                  checkbox.checked = false;
-                  item.classList.remove('selected');
-                  item.setAttribute('draggable', 'false');
-                }
-              });
-
-              initializeDragAndDrop();
-              updateColumnOrderBadges();
-              updatePreviewTable();
-              updateSelectedCount();
-            }
-
-            function updateDraggableState() {
-              document.querySelectorAll('.column-item').forEach(item => {
-                const columnKey = item.dataset.column;
-                if (selectedColumnsOrder.includes(columnKey)) {
-                  item.setAttribute('draggable', 'true');
-                } else {
-                  item.setAttribute('draggable', 'false');
-                }
-              });
-            }
-
-            let draggedElement = null;
-
-            function initializeDragAndDrop() {
-              const columnList = document.getElementById('columnSelectionList');
-              if (!columnList) return;
-
-              const newList = columnList.cloneNode(true);
-              columnList.parentNode.replaceChild(newList, columnList);
-
-              newList.querySelectorAll('.column-item.selected').forEach(item => {
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragend', handleDragEnd);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-              });
-            }
-
-            function handleDragStart(e) {
-              draggedElement = this;
-              this.classList.add('dragging');
-              e.dataTransfer.effectAllowed = 'move';
-            }
-
-            function handleDragEnd(e) {
-              this.classList.remove('dragging');
-              document.querySelectorAll('.column-item').forEach(el => {
-                el.classList.remove('drag-over');
-              });
-              draggedElement = null;
-            }
-
-            function handleDragOver(e) {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = 'move';
-
-              if (this !== draggedElement && this.classList.contains('selected')) {
-                const afterElement = getDragAfterElement(this.parentNode, e.clientY);
-
-                if (afterElement == null) {
-                  this.parentNode.appendChild(draggedElement);
-                } else {
-                  this.parentNode.insertBefore(draggedElement, afterElement);
+                if (confirm('Apakah Anda yakin ingin menyetujui (approve) dokumen ini?')) {
+                  changeDocumentStatus(docId, 'approved');
                 }
               }
 
-              return false;
-            }
+              // Simple reject function
+              function quickReject(docId) {
+                console.log('Quick reject called for docId:', docId);
 
-            function handleDrop(e) {
-              e.preventDefault();
-              e.stopPropagation();
-
-              this.classList.remove('drag-over');
-
-              if (this !== draggedElement && this.classList.contains('selected')) {
-                const columnList = document.getElementById('columnSelectionList');
-                const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
-                const newOrder = selectedItems.map(item => item.dataset.column);
-
-                selectedColumnsOrder = newOrder;
-
-                updateColumnOrderBadges();
-                updatePreviewTable();
-
-                setTimeout(() => {
-                  initializeDragAndDrop();
-                }, 50);
+                if (confirm('Apakah Anda yakin ingin menolak (reject) dokumen ini?')) {
+                  changeDocumentStatus(docId, 'rejected');
+                }
               }
 
-              return false;
-            }
-
-            function getDragAfterElement(container, y) {
-              const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
-
-              return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-
-                if (offset < 0 && offset > closest.offset) {
-                  return { offset: offset, element: child };
-                } else {
-                  return closest;
+              // Simplified status change function
+              function changeDocumentStatus(docId, action, event) {
+                if (event) {
+                  event.preventDefault();
+                  event.stopPropagation();
                 }
-              }, { offset: Number.NEGATIVE_INFINITY }).element;
-            }
 
-            // Close modal when clicking outside
-            document.addEventListener('click', function(e) {
-              const modal = document.getElementById('columnCustomizationModal');
-              if (modal && modal.classList.contains('show') && e.target === modal) {
-                closeColumnCustomizationModal();
-              }
-            });
-            </script>
+                console.log('Change status called for docId:', docId, 'action:', action);
 
-            <script>
-            // Open View Document Modal
-            function openViewDocumentModal(docId) {
-              // Set document ID
-              document.getElementById('view-dokumen-id').value = docId;
-
-              // Set edit button URL
-              document.getElementById('view-edit-btn').href = `/documents/verifikasi/${docId}/edit`;
-
-              // Load document data via AJAX
-              fetch(`/documents/verifikasi/${docId}/detail`, {
-                headers: {
-                  'Accept': 'application/json',
-                  'X-Requested-With': 'XMLHttpRequest'
+                // Try multiple selectors to find the status container
+                let statusContainer = document.querySelector(`#status-dropdown-${docId}`);
+                if (!statusContainer) {
+                  statusContainer = document.querySelector(`[onclick*="quickApprove(${docId})"]`).closest('td');
                 }
-              })
+                if (!statusContainer) {
+                  statusContainer = document.querySelector(`[onclick*="quickReject(${docId})"]`).closest('td');
+                }
+                if (!statusContainer) {
+                  statusContainer = document.querySelector(`tr:has([onclick*="${docId}"]) .col-status`);
+                }
+
+                if (!statusContainer) {
+                  console.error('Status container not found for docId:', docId);
+                  console.log('Available containers with docId:', document.querySelectorAll(`[onclick*="${docId}"]`));
+                  return;
+                }
+
+                console.log('Found status container:', statusContainer);
+
+                // Show loading state
+                const originalHTML = statusContainer.innerHTML;
+                statusContainer.innerHTML = `
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    justify-content: center;
+                    color: #1a4d3e;
+                    font-weight: 600;
+                    font-size: 12px;
+                  ">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <span>Processing...</span>
+                  </div>
+                `;
+
+                // Send AJAX request
+                fetch(`/documents/verifikasi/${docId}/change-status`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                  },
+                  body: JSON.stringify({
+                    status: action,
+                    document_id: docId  // FIX: Kirim document ID untuk mencegah cross-interference
+                  })
+                })
                 .then(response => {
                   if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -6046,1638 +4261,3435 @@
                   return response.json();
                 })
                 .then(data => {
-                  console.log('Document data received:', data);
-                  if (data.success && data.dokumen) {
-                    const dok = data.dokumen;
+                  if (data.success) {
+                    // Show success notification
+                    showNotification(data.message, 'success');
+                    console.log('Status changed successfully:', data);
 
-                    // Identitas Dokumen
-                    document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
-                    document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
-                    document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
-                    document.getElementById('view-bulan').textContent = dok.bulan || '-';
-                    document.getElementById('view-tahun').textContent = dok.tahun || '-';
-                    document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
-                    document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
-                    document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
-                    document.getElementById('view-kategori').textContent = dok.kategori || '-';
-                    document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+                    // Update display
+                    const statusText = action === 'approved' ? 'Approved' : 'Rejected';
+                    const badgeClass = action === 'approved' ? 'badge-selesai' : 'badge-dikembalikan';
 
-                    // Detail Keuangan & Vendor
-                    document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
-                    document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
-                    // Ejaan nilai rupiah
-                    if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
-                      document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
-                    } else {
-                      document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
-                    }
-                    document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
-                    document.getElementById('view-kebun').textContent = dok.kebun || '-';
+                    statusContainer.innerHTML = `
+                      <span class="badge-status ${badgeClass}">
+                        ${action === 'approved' ? '✓' : '✗'} ${statusText}
+                      </span>
+                    `;
 
-                    // Referensi Pendukung
-                    document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
-                    document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
-                    document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-                    document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
-                    document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
-                    document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+                    // Update action buttons for this row
+                    updateActionButtons(docId, action);
 
-                    // Informasi Akutansi
-                    document.getElementById('view-nomor-miro-akutansi').textContent = dok.nomor_miro || '-';
-                    document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? formatDate(dok.tanggal_miro) : '-';
+                    // Refresh page after delay to update dashboard stats
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 2000);
 
-                    // Nomor PO & PR
-                    const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
-                      ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
-                      : '-';
-                    const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
-                      ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
-                      : '-';
-                    document.getElementById('view-nomor-po').textContent = poList;
-                    document.getElementById('view-nomor-pr').textContent = prList;
-
-                    // Show modal after data is loaded
-                    const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
-                    modal.show();
-
-                    // Ensure edit button works correctly - prevent any interference
-                    const editBtn = document.getElementById('view-edit-btn');
-                    if (editBtn) {
-                      // Remove any existing event listeners by cloning and replacing
-                      const newEditBtn = editBtn.cloneNode(true);
-                      editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-
-                      // Add click handler to ensure navigation works
-                      newEditBtn.addEventListener('click', function(e) {
-                        const href = this.getAttribute('href');
-                        if (href && href !== '#' && !href.startsWith('#')) {
-                          // Valid URL, allow navigation
-                          window.location.href = href;
-                        }
-                      });
-                    }
                   } else {
-                    console.error('Invalid response format:', data);
-                    alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
+                    // Show error notification
+                    showNotification(data.message, 'error');
+                    console.error('Status change failed:', data);
+                    statusContainer.innerHTML = originalHTML;
                   }
                 })
                 .catch(error => {
-                  console.error('Error loading document:', error);
-                  alert('Gagal memuat data dokumen: ' + error.message);
+                  console.error('Error:', error);
+                  showNotification('Terjadi kesalahan saat mengubah status dokumen.', 'error');
+                  statusContainer.innerHTML = originalHTML;
                 });
-            }
-
-            // Helper functions for formatting
-            function formatDate(dateStr) {
-              if (!dateStr) return '-';
-              const date = new Date(dateStr);
-              return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            }
-
-            function formatDateTime(dateStr) {
-              if (!dateStr) return '-';
-              const date = new Date(dateStr);
-              return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            }
-
-            function formatNumber(num) {
-              if (!num) return '-';
-              return new Intl.NumberFormat('id-ID').format(num);
-            }
-
-            // Function to convert number to Indonesian terbilang
-            function terbilangRupiah(number) {
-              number = parseFloat(number) || 0;
-
-              if (number == 0) {
-                return 'nol rupiah';
               }
 
-              const angka = [
-                '', 'satu', 'dua', 'tiga', 'empat', 'lima',
-                'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
-                'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
-                'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
-              ];
+              function updateActionButtons(docId, action) {
+                const row = document.querySelector(`tr:has(#status-dropdown-${docId})`);
+                if (!row) return;
 
-              let hasil = '';
+                const actionCell = row.querySelector('.col-action');
+                if (!actionCell) return;
 
-              // Handle triliun
-              if (number >= 1000000000000) {
-                const triliun = Math.floor(number / 1000000000000);
-                hasil += terbilangSatuan(triliun, angka) + ' triliun ';
-                number = number % 1000000000000;
+                // Disable action buttons based on status
+                const actionButtons = actionCell.querySelectorAll('.btn-action');
+                actionButtons.forEach(btn => {
+                  if (action === 'approved') {
+                    // Keep some buttons for approved documents
+                    if (!btn.classList.contains('btn-edit') && !btn.classList.contains('btn-paraf')) {
+                      btn.disabled = true;
+                      btn.style.opacity = '0.5';
+                      btn.style.cursor = 'not-allowed';
+                    }
+                  } else if (action === 'rejected') {
+                    // Disable most action buttons for rejected documents
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                  }
+                });
               }
 
-              // Handle milyar
-              if (number >= 1000000000) {
-                const milyar = Math.floor(number / 1000000000);
-                hasil += terbilangSatuan(milyar, angka) + ' milyar ';
-                number = number % 1000000000;
-              }
+              // Optimized countdown timer with performance improvements
+              let countdownUpdateInterval = null;
+              let countdownTimers = new Map();
 
-              // Handle juta
-              if (number >= 1000000) {
-                const juta = Math.floor(number / 1000000);
-                hasil += terbilangSatuan(juta, angka) + ' juta ';
-                number = number % 1000000;
-              }
-
-              // Handle ribu
-              if (number >= 1000) {
-                const ribu = Math.floor(number / 1000);
-                if (ribu == 1) {
-                  hasil += 'seribu ';
-                } else {
-                  hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+              function initializeCountdowns() {
+                // Clear existing timers to prevent memory leaks
+                if (countdownUpdateInterval) {
+                  clearInterval(countdownUpdateInterval);
                 }
-                number = number % 1000;
+                countdownTimers.forEach(timer => clearInterval(timer));
+                countdownTimers.clear();
               }
 
-              // Handle ratusan, puluhan, dan satuan
-              if (number > 0) {
-                hasil += terbilangSatuan(number, angka);
+              // Enhanced deadline system with color coding and late information
+              function initializeDeadlines() {
+                console.log('Initializing deadlines...');
+                const deadlineElements = document.querySelectorAll('.deadline-card');
+                console.log('Found deadline cards:', deadlineElements.length);
+
+                deadlineElements.forEach(card => {
+                  updateDeadlineCard(card);
+                });
+
+                // Update every 30 seconds for better responsiveness
+                setInterval(() => {
+                  const cards = document.querySelectorAll('.deadline-card');
+                  cards.forEach(card => {
+                    updateDeadlineCard(card);
+                  });
+                }, 30000); // Update every 30 seconds
               }
 
-              return hasil.trim() + ' rupiah';
-            }
-
-            function terbilangSatuan(number, angka) {
-              let hasil = '';
-              number = parseInt(number);
-
-              if (number == 0) {
-                return '';
-              }
-
-              // Handle ratusan
-              if (number >= 100) {
-                const ratus = Math.floor(number / 100);
-                if (ratus == 1) {
-                  hasil += 'seratus ';
-                } else {
-                  hasil += angka[ratus] + ' ratus ';
+              function updateDeadlineCard(card) {
+                const deadlineStr = card.dataset.deadline;
+                if (!deadlineStr) {
+                  console.warn('Deadline card missing data-deadline attribute');
+                  return;
                 }
-                number = number % 100;
-              }
 
-              // Handle puluhan dan satuan (0-99)
-              if (number > 0) {
-                if (number < 20) {
-                  hasil += angka[number] + ' ';
-                } else {
-                  const puluhan = Math.floor(number / 10);
-                  const satuan = number % 10;
+                // Check if document is already sent or completed
+                const isSent = card.dataset.sent === 'true';
+                const isCompleted = card.dataset.completed === 'true';
 
-                  if (puluhan == 1) {
-                    hasil += angka[10 + satuan] + ' ';
+                const deadline = new Date(deadlineStr);
+                const now = new Date();
+                const diffMs = deadline - now;
+
+                // Remove existing status classes
+                card.classList.remove('deadline-safe', 'deadline-warning', 'deadline-danger', 'deadline-overdue', 'deadline-sent', 'deadline-completed');
+
+                // Find status indicator
+                const statusIndicator = card.querySelector('.deadline-indicator');
+                if (!statusIndicator) {
+                  console.error('Deadline indicator not found in card:', card);
+                  return;
+                }
+                const statusText = card.querySelector('.status-text');
+                if (!statusText) {
+                  console.error('Status text not found in card:', card);
+                  return;
+                }
+                const statusIcon = statusIndicator.querySelector('i');
+                if (!statusIcon) {
+                  console.error('Status icon not found in card:', card);
+                  return;
+                }
+
+                // Remove existing late info and time hints
+                const existingLateInfo = card.querySelector('.late-info');
+                const existingTimeHint = card.querySelector('div[style*="margin-top: 2px"]');
+                const existingProgress = card.querySelector('.deadline-progress');
+
+                if (existingLateInfo) existingLateInfo.remove();
+                if (existingTimeHint) existingTimeHint.remove();
+                if (existingProgress) existingProgress.remove();
+
+                // Handle completed documents - show as completed (green, no countdown)
+                if (isCompleted) {
+                  card.classList.add('deadline-completed');
+                  statusText.textContent = 'SELESAI';
+                  statusIcon.className = 'fa-solid fa-check-circle';
+                  statusIndicator.className = 'deadline-indicator deadline-completed';
+                  return; // Don't show countdown for completed documents
+                }
+
+                // Handle sent documents - show as sent (gray, no countdown, no overdue)
+                if (isSent) {
+                  card.classList.add('deadline-sent');
+                  statusText.textContent = 'TERKIRIM';
+                  statusIcon.className = 'fa-solid fa-paper-plane';
+                  statusIndicator.className = 'deadline-indicator deadline-sent';
+                  return; // Don't show countdown or overdue for sent documents
+                }
+
+                // Handle active documents (still being processed) - show countdown
+                if (diffMs < 0) {
+                  // Overdue state - only for active documents
+                  card.classList.add('deadline-overdue');
+
+                  // Calculate how late
+                  const diffHours = Math.abs(Math.floor(diffMs / (1000 * 60 * 60)));
+                  const diffDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+                  // Update status text
+                  statusText.textContent = 'TERLAMBAT';
+                  statusIcon.className = 'fa-solid fa-exclamation-triangle';
+                  statusIndicator.className = 'deadline-indicator deadline-overdue';
+
+                  // Show late info for active documents
+                  let lateText;
+                  if (diffDays >= 1) {
+                    lateText = `${diffDays} HARI TELAT`;
+                  } else if (diffHours >= 1) {
+                    lateText = `${diffHours} JAM TELAT`;
                   } else {
-                    hasil += angka[puluhan] + ' puluh ';
-                    if (satuan > 0) {
-                      hasil += angka[satuan] + ' ';
+                    lateText = 'BARU SAJA TELAT';
+                  }
+
+                  const lateInfo = document.createElement('div');
+                  lateInfo.className = 'late-info';
+                  lateInfo.innerHTML = `
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <span class="late-text">${lateText}</span>
+                  `;
+
+                  card.appendChild(lateInfo);
+
+                  // Add progress bar at bottom
+                  const progressBar = document.createElement('div');
+                  progressBar.className = 'deadline-progress';
+                  card.appendChild(progressBar);
+
+                } else {
+                  // Time remaining - only for active documents
+                  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                  // Get original deadline_days from data attribute
+                  const deadlineDays = parseInt(card.dataset.deadlineDays) || null;
+
+                  // Calculate remaining hours for more accurate display
+                  const totalHoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
+
+                  // Determine display text based on deadline_days and remaining time
+                  let displayText = '';
+                  let shouldShowDays = false;
+
+                  if (deadlineDays && deadlineDays > 0) {
+                    // If original deadline was set for X days, show "X hari lagi" 
+                    // as long as we're still within that period
+                    // Logic: Show days if remaining hours >= 12 hours OR if we're still in the first day
+                    if (totalHoursRemaining >= 12) {
+                      // Calculate how many full days remaining
+                      const fullDaysRemaining = Math.floor(totalHoursRemaining / 24);
+                      // If we have at least 12 hours, show at least "1 hari lagi" for deadline 1 hari
+                      // For deadline 2+ hari, show actual days remaining (capped at deadline_days)
+                      if (deadlineDays === 1) {
+                        // For 1 day deadline, show "1 hari lagi" if >= 12 hours remaining
+                        displayText = '1 hari lagi';
+                        shouldShowDays = true;
+                      } else {
+                        // For 2+ days deadline, show actual days remaining
+                        const daysToShow = Math.min(Math.max(1, fullDaysRemaining + (totalHoursRemaining % 24 >= 12 ? 1 : 0)), deadlineDays);
+                        displayText = `${daysToShow} ${daysToShow === 1 ? 'hari' : 'hari'} lagi`;
+                        shouldShowDays = daysToShow >= 1;
+                      }
+                    } else {
+                      // Less than 12 hours remaining, show hours
+                      displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+                      shouldShowDays = false;
+                    }
+                  } else {
+                    // No deadline_days info, use standard calculation
+                    if (diffDays >= 1) {
+                      displayText = `${diffDays} ${diffDays === 1 ? 'hari' : 'hari'} lagi`;
+                      shouldShowDays = true;
+                    } else if (diffHours >= 1) {
+                      displayText = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+                      shouldShowDays = false;
+                    } else {
+                      displayText = `${diffMinutes} menit lagi`;
+                      shouldShowDays = false;
+                    }
+                  }
+
+                  // Simplified 3-status logic: >= 1 hari = hijau, < 1 hari = kuning
+                  if (shouldShowDays || diffDays >= 1) {
+                    // Safe (>= 1 day or still within original deadline period) - Green
+                    card.classList.add('deadline-safe');
+                    statusText.textContent = 'AMAN';
+                    statusIcon.className = 'fa-solid fa-check-circle';
+                    statusIndicator.className = 'deadline-indicator deadline-safe';
+
+                    // Add time remaining hint
+                    const timeHint = document.createElement('div');
+                    timeHint.style.cssText = 'font-size: 8px; color: #065f46; margin-top: 2px; font-weight: 600;';
+                    timeHint.textContent = displayText;
+                    card.appendChild(timeHint);
+
+                  } else if (diffHours >= 1 || diffMinutes >= 1) {
+                    // Warning (< 1 day or less than 12 hours remaining) - Yellow
+                    card.classList.add('deadline-warning');
+                    statusText.textContent = 'DEKAT';
+                    statusIcon.className = 'fa-solid fa-exclamation-triangle';
+                    statusIndicator.className = 'deadline-indicator deadline-warning';
+
+                    // Add time remaining hint
+                    const timeHint = document.createElement('div');
+                    timeHint.style.cssText = 'font-size: 8px; color: #92400e; margin-top: 2px; font-weight: 700;';
+                    if (diffHours >= 1) {
+                      timeHint.textContent = `${diffHours} ${diffHours === 1 ? 'jam' : 'jam'} lagi`;
+                    } else {
+                      timeHint.textContent = `${diffMinutes} menit lagi`;
+                      timeHint.style.animation = 'warning-shake 1s infinite';
+                    }
+                    card.appendChild(timeHint);
+                  }
+
+                  // Add progress bar
+                  const progressBar = document.createElement('div');
+                  progressBar.className = 'deadline-progress';
+                  card.appendChild(progressBar);
+                }
+              }
+
+              // Initialize on page load - Make sure function is available globally
+              window.initializeDeadlines = initializeDeadlines;
+
+              // Initialize deadlines when DOM is ready
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  console.log('DOM fully loaded, initializing deadlines...');
+                  initializeDeadlines();
+                });
+              } else {
+                console.log('DOM already loaded, initializing deadlines immediately...');
+                initializeDeadlines();
+              }
+              </script>
+
+              <style>
+              /* Optimized Deadline Display System */
+              .deadline-info {
+                position: relative;
+                padding: 10px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                border: 1px solid rgba(8, 62, 64, 0.1);
+                transition: all 0.3s ease;
+                overflow: hidden;
+              }
+
+              .deadline-info::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 4px;
+                height: 100%;
+                background: linear-gradient(180deg, var(--deadline-color, #28a745) 0%, var(--deadline-color-dark, #1e7e34) 100%);
+                transition: all 0.3s ease;
+              }
+
+              .deadline-info:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 16px rgba(8, 62, 64, 0.15);
+              }
+
+              /* Simplified deadline styling - progress bar removed */
+
+              /* Deadline Status States */
+              .deadline-info.status-safe {
+                --deadline-color: #28a745;
+                --deadline-color-dark: #1e7e34;
+                --deadline-color-light: #34ce57;
+              }
+
+              .deadline-info.status-warning {
+                --deadline-color: #ffc107;
+                --deadline-color-dark: #e0a800;
+                --deadline-color-light: #ffcd39;
+              }
+
+              .deadline-info.status-danger {
+                --deadline-color: #dc3545;
+                --deadline-color-dark: #c82333;
+                --deadline-color-light: #e4606d;
+              }
+
+              .deadline-info.status-overdue {
+                --deadline-color: #6f42c1;
+                --deadline-color-dark: #59359a;
+                --deadline-color-light: #7950b2;
+                animation: overdue-pulse 2s infinite;
+              }
+
+              @keyframes overdue-pulse {
+                0%, 100% {
+                  box-shadow: 0 0 0 0 rgba(111, 66, 193, 0.4);
+                }
+                50% {
+                  box-shadow: 0 0 0 8px rgba(111, 66, 193, 0);
+                }
+              }
+
+              /* Optimized Countdown Display */
+              .deadline-countdown {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                margin-bottom: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                color: #083E40;
+              }
+
+              .deadline-countdown-icon {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+              }
+
+              .deadline-countdown-text {
+                font-weight: 700;
+                flex: 1;
+                text-align: right;
+              }
+
+              /* Deadline Date and Note */
+              .deadline-date {
+                font-size: 11px;
+                color: #666;
+                margin-top: 4px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              }
+
+              .deadline-date small {
+                font-weight: 500;
+              }
+
+              .deadline-note {
+                font-size: 10px;
+                color: #888;
+                margin-top: 6px;
+                padding-top: 6px;
+                border-top: 1px solid rgba(8, 62, 64, 0.1);
+                font-style: italic;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              }
+
+              /* Responsive Deadline Display */
+              @media (max-width: 768px) {
+                .deadline-info {
+                  padding: 8px;
+                }
+
+                .deadline-progress {
+                  height: 5px;
+                  margin-bottom: 6px;
+                }
+
+                .deadline-countdown {
+                  font-size: 12px;
+                  flex-direction: column;
+                  align-items: flex-start;
+                  gap: 4px;
+                }
+
+                .deadline-countdown-text {
+                  text-align: left;
+                }
+
+                .deadline-date {
+                  font-size: 10px;
+                }
+
+                .deadline-note {
+                  font-size: 9px;
+                }
+              }
+
+              @media (max-width: 480px) {
+                .deadline-info {
+                  padding: 6px;
+                }
+
+                .deadline-progress {
+                  height: 4px;
+                  margin-bottom: 4px;
+                }
+
+                .deadline-countdown {
+                  font-size: 11px;
+                }
+
+                .deadline-date {
+                  display: none; /* Hide date on very small screens */
+                }
+
+                .deadline-note {
+                  margin-top: 4px;
+                  padding-top: 4px;
+                }
+              }
+
+              /* No deadline state */
+              .deadline-empty {
+                color: #999;
+                font-size: 12px;
+                font-style: italic;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 8px;
+              }
+              </style>
+
+              <!-- Modal for Setting Deadline -->
+              <div class="modal fade" id="setDeadlineModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                      <h5 class="modal-title">
+                        <i class="fa-solid fa-clock me-2"></i>Tetapkan Deadline Verifikasi
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" id="deadlineDocId">
+
+                      <div class="alert alert-info border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 140, 0, 0.1) 100%); border-left: 4px solid #ffc107;">
+                        <i class="fa-solid fa-info-circle me-2"></i>
+                        <strong>Penting:</strong> Setelah deadline ditetapkan, dokumen akan terbuka untuk diproses lebih lanjut.
+                      </div>
+
+                      <div class="mb-4">
+                        <label class="form-label fw-bold">
+                          <i class="fa-solid fa-calendar-days me-2"></i>Periode Deadline*
+                        </label>
+                        <select class="form-select" id="deadlineDays" required>
+                          <option value="">Pilih periode deadline</option>
+                          <option value="1">1 hari</option>
+                          <option value="2">2 hari</option>
+                          <option value="3">3 hari (maksimal)</option>
+                        </select>
+                        <div class="form-text">Maksimal deadline adalah 3 hari untuk efisiensi proses</div>
+                      </div>
+
+                      <div class="mb-4">
+                        <label class="form-label fw-bold">
+                          <i class="fa-solid fa-sticky-note me-2"></i>Catatan Deadline <span class="text-muted">(opsional)</span>
+                        </label>
+                        <textarea class="form-control" id="deadlineNote" rows="3"
+                                  placeholder="Contoh: Perlu verifikasi dokumen pendukung tambahan..."
+                                  maxlength="500"></textarea>
+                        <div class="form-text">
+                          <span id="charCount">0</span>/500 karakter
+                        </div>
+                      </div>
+
+                      <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 140, 0, 0.05) 100%);">
+                        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                        <small>
+                          <strong>Catatan:</strong> Deadline yang telah ditetapkan tidak dapat diubah kembali. Pastikan periode yang dipilih sudah sesuai.
+                        </small>
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-times me-2"></i>Batal
+                      </button>
+                      <button type="button" class="btn btn-warning" onclick="confirmSetDeadline()">
+                        <i class="fa-solid fa-check me-2"></i>Tetapkan Deadline
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Sending to Next Handler -->
+              <div class="modal fade" id="sendToNextModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white;">
+                      <h5 class="modal-title">Kirim Dokumen ke Bidang Berikutnya</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" id="nextDocId">
+
+                      <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%); border-left: 4px solid #083E40;">
+                        <i class="fa-solid fa-info-circle me-2"></i>
+                        <strong>Catatan:</strong> Deadline akan ditetapkan oleh departemen tujuan (Team Perpajakan, Team Akutansi, atau Team Pembayaran) setelah dokumen diterima.
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">
+                          <i class="fa-solid fa-location-arrow me-2"></i>Pilih Tujuan Pengiriman:
+                        </label>
+                        <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+                          <input class="form-check-input" type="radio" name="next_handler" id="perpajakan" value="perpajakan" required>
+                          <label class="form-check-label w-100" for="perpajakan" style="cursor: pointer;">
+                            <div class="d-flex align-items-start">
+                              <i class="fa-solid fa-receipt me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
+                              <div>
+                                <strong style="color: #083E40;">Team Perpajakan</strong>
+                                <small class="text-muted d-block">Untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu. Dokumen akan terkunci hingga Team Perpajakan menetapkan deadline.</small>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                        <div class="form-check mb-3" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+                          <input class="form-check-input" type="radio" name="next_handler" id="akutansi" value="akutansi">
+                          <label class="form-check-label w-100" for="akutansi" style="cursor: pointer;">
+                            <div class="d-flex align-items-start">
+                              <i class="fa-solid fa-calculator me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
+                              <div>
+                                <strong style="color: #083E40;">Team Akutansi</strong>
+                                <small class="text-muted d-block">Untuk dokumen yang bisa langsung ke Team Akutansi. Dokumen akan terkunci hingga Team Akutansi menetapkan deadline.</small>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                        <div class="form-check" style="border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+                          <input class="form-check-input" type="radio" name="next_handler" id="pembayaran" value="pembayaran">
+                          <label class="form-check-label w-100" for="pembayaran" style="cursor: pointer;">
+                            <div class="d-flex align-items-start">
+                              <i class="fa-solid fa-money-bill-wave me-3 mt-1" style="color: #083E40; font-size: 20px;"></i>
+                              <div>
+                                <strong style="color: #083E40;">Team Pembayaran</strong>
+                                <small class="text-muted d-block">Untuk dokumen yang siap untuk diproses pembayaran. Status akan berubah menjadi "Siap Bayar" di halaman pembayaran.</small>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                      <button type="button" class="btn btn-primary" onclick="confirmSendToNext()">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Kirim
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Send Destination Warning -->
+              <div class="modal fade" id="sendDestinationWarningModal" tabindex="-1" aria-labelledby="sendDestinationWarningModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                      <h5 class="modal-title" id="sendDestinationWarningModalLabel">
+                        <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <div class="mb-3">
+                        <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
+                      </div>
+                      <h5 class="fw-bold mb-3">Pilih Tujuan Pengiriman Terlebih Dahulu!</h5>
+                      <p class="text-muted mb-0">
+                        Silakan pilih tujuan pengiriman dokumen terlebih dahulu:
+                        <br>• <strong>Team Perpajakan</strong> - untuk dokumen yang perlu diproses Team Perpajakan terlebih dahulu
+                        <br>• <strong>Team Akutansi</strong> - untuk dokumen yang bisa langsung ke Team Akutansi
+                        <br>• <strong>Team Pembayaran</strong> - untuk dokumen yang siap diproses pembayaran
+                      </p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                      <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-check me-2"></i>Mengerti
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Send Success -->
+              <div class="modal fade" id="sendSuccessModal" tabindex="-1" aria-labelledby="sendSuccessModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #11823b 0%, #1cb666 100%); color: white;">
+                      <h5 class="modal-title" id="sendSuccessModalLabel">
+                        <i class="fa-solid fa-circle-check me-2"></i>Pengiriman Berhasil
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <div class="mb-3">
+                        <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #1cb666;"></i>
+                      </div>
+                      <h5 class="fw-bold mb-2">Dokumen berhasil dikirim!</h5>
+                      <p class="text-muted mb-0" id="sendSuccessMessage">
+                        Dokumen telah dikirim dan akan muncul di halaman tujuan.
+                      </p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                      <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-check me-2"></i>Selesai
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Deadline Success -->
+              <div class="modal fade" id="deadlineSuccessModal" tabindex="-1" aria-labelledby="deadlineSuccessModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                      <h5 class="modal-title" id="deadlineSuccessModalLabel">
+                        <i class="fa-solid fa-circle-check me-2"></i>Deadline Berhasil Ditentukan
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <div class="mb-3">
+                        <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #ffc107;"></i>
+                      </div>
+                      <h5 class="fw-bold mb-2">Deadline berhasil ditetapkan!</h5>
+                      <p class="text-muted mb-0" id="deadlineSuccessMessage">
+                        Dokumen sekarang terbuka untuk diproses lebih lanjut.
+                      </p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                      <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal" id="deadlineSuccessBtn">
+                        <i class="fa-solid fa-check me-2"></i>Selesai
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal for Deadline Warning -->
+              <div class="modal fade" id="deadlineWarningModal" tabindex="-1" aria-labelledby="deadlineWarningModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                      <h5 class="modal-title" id="deadlineWarningModalLabel">
+                        <i class="fa-solid fa-exclamation-triangle me-2"></i>Perhatian
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <div class="mb-3">
+                        <i class="fa-solid fa-exclamation-circle" style="font-size: 52px; color: #ffc107;"></i>
+                      </div>
+                      <h5 class="fw-bold mb-3">Pilih Periode Deadline Terlebih Dahulu!</h5>
+                      <p class="text-muted mb-0">
+                        Silakan pilih periode deadline (1 hari, 2 hari, atau 3 hari) sebelum menetapkan deadline.
+                      </p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                      <button type="button" class="btn btn-warning px-4" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-check me-2"></i>Mengerti
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+              function openSetDeadlineModal(docId) {
+                document.getElementById('deadlineDocId').value = docId;
+                document.getElementById('deadlineDays').value = '';
+                document.getElementById('deadlineNote').value = '';
+                document.getElementById('charCount').textContent = '0';
+                const modal = new bootstrap.Modal(document.getElementById('setDeadlineModal'));
+                modal.show();
+              }
+
+              function confirmSetDeadline() {
+                const docId = document.getElementById('deadlineDocId').value;
+                const deadlineDays = document.getElementById('deadlineDays').value;
+                const deadlineNote = document.getElementById('deadlineNote').value;
+
+                if (!deadlineDays) {
+                  // Show warning modal instead of alert
+                  const warningModal = new bootstrap.Modal(document.getElementById('deadlineWarningModal'));
+                  warningModal.show();
+                  return;
+                }
+
+                // Show loading state
+                const submitBtn = document.querySelector('[onclick="confirmSetDeadline()"]');
+                const originalHTML = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menetapkan...';
+
+                // Get CSRF token from meta tag or hidden input
+                let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                // Fallback to hidden input if meta tag not found
+                if (!csrfToken) {
+                  const hiddenInput = document.querySelector('input[name="_token"]');
+                  if (hiddenInput) {
+                    csrfToken = hiddenInput.value;
+                  }
+                }
+
+                // Fallback to Laravel's global csrf_token() if available in window
+                if (!csrfToken && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
+                  csrfToken = window.Laravel.csrfToken;
+                }
+
+                if (!csrfToken) {
+                  console.error('CSRF token not found in any location!');
+                  alert('CSRF token tidak ditemukan. Silakan refresh halaman.');
+                  submitBtn.disabled = false;
+                  submitBtn.innerHTML = originalHTML;
+                  return;
+                }
+
+                console.log('CSRF Token found:', csrfToken.substring(0, 20) + '...');
+
+                // Type casting untuk memastikan integer
+                const deadlineDaysInt = parseInt(deadlineDays);
+
+                console.log('Sending request to: ', `/documents/verifikasi/${docId}/set-deadline`);
+                console.log('Request payload: ', {
+                  deadline_days: deadlineDaysInt,
+                  deadline_note: deadlineNote
+                });
+                console.log('Deadline days type: ' + typeof deadlineDaysInt + ' value: ' + deadlineDaysInt);
+
+                fetch(`/documents/verifikasi/${docId}/set-deadline`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    deadline_days: deadlineDaysInt,
+                    deadline_note: deadlineNote
+                  })
+                })
+                .then(async response => {
+                  console.log('Response status:', response.status);
+
+                  // Try to parse response as JSON first
+                  let responseData;
+                  try {
+                    responseData = await response.json();
+                  } catch (e) {
+                    // If response is not JSON, create error object
+                    responseData = {
+                      success: false,
+                      message: `Server error: ${response.status} ${response.statusText}`
+                    };
+                  }
+
+                  if (!response.ok) {
+                    // Extract error message from response
+                    const errorMessage = responseData.message || responseData.error || `HTTP error! status: ${response.status}`;
+
+                    // Log debug info if available
+                    if (responseData.debug_info) {
+                      console.error('Debug info:', responseData.debug_info);
+                    }
+
+                    throw new Error(errorMessage);
+                  }
+
+                  return responseData;
+                })
+                .then(data => {
+                  console.log('Response data:', data);
+                  if (data.success) {
+                    const deadlineModal = bootstrap.Modal.getInstance(document.getElementById('setDeadlineModal'));
+                    deadlineModal.hide();
+
+                    // Show success modal
+                    const successModalEl = document.getElementById('deadlineSuccessModal');
+                    const successModal = new bootstrap.Modal(successModalEl);
+                    const successMessageEl = document.getElementById('deadlineSuccessMessage');
+
+                    if (data.deadline) {
+                      successMessageEl.textContent = 
+                        `Deadline: ${data.deadline}. Dokumen sekarang terbuka untuk diproses.`;
+                    } else {
+                      successMessageEl.textContent = data.message || 'Deadline berhasil ditetapkan.';
+                    }
+
+                    // Reload page when modal is closed
+                    successModalEl.addEventListener('hidden.bs.modal', function() {
+                      location.reload();
+                    }, { once: true });
+
+                    successModal.show();
+                  } else {
+                    alert('Gagal menetapkan deadline: ' + (data.message || 'Terjadi kesalahan yang tidak diketahui'));
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHTML;
+                  }
+                })
+                .catch(error => {
+                  console.error('Error:', error);
+                  console.error('Error details:', error.message);
+                  alert('Terjadi kesalahan saat menetapkan deadline: ' + error.message);
+                  submitBtn.disabled = false;
+                  submitBtn.innerHTML = originalHTML;
+                });
+              }
+
+              // Character counter for deadline note
+              document.addEventListener('DOMContentLoaded', function() {
+                const deadlineNote = document.getElementById('deadlineNote');
+                const charCount = document.getElementById('charCount');
+
+                if (deadlineNote && charCount) {
+                  deadlineNote.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                  });
+                }
+              });
+
+              function openSendToNextModal(docId) {
+                document.getElementById('nextDocId').value = docId;
+                const modal = new bootstrap.Modal(document.getElementById('sendToNextModal'));
+                modal.show();
+              }
+
+              function confirmSendToNext() {
+                const docId = document.getElementById('nextDocId').value;
+                const nextHandler = document.querySelector('input[name="next_handler"]:checked')?.value;
+
+                if (!nextHandler) {
+                  // Ensure sendToNextModal stays open
+                  const sendModal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
+                  if (!sendModal || !sendModal._isShown) {
+                    // If send modal is not open, open it first
+                    const sendModalNew = new bootstrap.Modal(document.getElementById('sendToNextModal'));
+                    sendModalNew.show();
+                  }
+
+                  // Show warning modal instead of alert
+                  const warningModal = new bootstrap.Modal(document.getElementById('sendDestinationWarningModal'));
+                  warningModal.show();
+
+                  // Focus back to first radio button when warning modal is closed
+                  const warningModalEl = document.getElementById('sendDestinationWarningModal');
+                  warningModalEl.addEventListener('hidden.bs.modal', function() {
+                    const firstRadio = document.getElementById('perpajakan');
+                    if (firstRadio) {
+                      setTimeout(() => {
+                        firstRadio.focus();
+                      }, 100);
+                    }
+                  }, { once: true });
+
+                  return;
+                }
+
+                const submitBtn = event.target;
+                const originalHTML = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
+
+                fetch(`/documents/verifikasi/${docId}/send-to-next`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    next_handler: nextHandler
+                  })
+                })
+                .then(response => {
+                  console.log('Response status:', response.status);
+                  if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  return response.json();
+                })
+                .then(data => {
+                  console.log('Response data:', data);
+                  if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('sendToNextModal'));
+                    modal.hide();
+
+                    showSendSuccessModal(data.message);
+                  } else {
+                    alert('Gagal mengirim: ' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHTML;
+                  }
+                })
+                .catch(error => {
+                  console.error('Error:', error);
+                  alert('Terjadi kesalahan saat mengirim dokumen: ' + error.message);
+                  submitBtn.disabled = false;
+                  submitBtn.innerHTML = originalHTML;
+                });
+              }
+
+              let shouldReloadAfterSendSuccess = false;
+
+              function showSendSuccessModal(message) {
+                const modalEl = document.getElementById('sendSuccessModal');
+                if (!modalEl) {
+                  location.reload();
+                  return;
+                }
+
+                const textEl = document.getElementById('sendSuccessMessage');
+                if (textEl) {
+                  textEl.textContent = message || 'Dokumen telah dikirim dan akan muncul di halaman tujuan.';
+                }
+
+                shouldReloadAfterSendSuccess = true;
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+              }
+
+              document.addEventListener('DOMContentLoaded', function() {
+                const successModalEl = document.getElementById('sendSuccessModal');
+                if (successModalEl) {
+                  successModalEl.addEventListener('hidden.bs.modal', function() {
+                    if (shouldReloadAfterSendSuccess) {
+                      shouldReloadAfterSendSuccess = false;
+                      location.reload();
+                    }
+                  });
+                }
+              });
+              </script>
+
+              <!-- Return to Bidang Modal -->
+              <div class="modal fade" id="returnToBidangModal" tabindex="-1" aria-labelledby="returnToBidangModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                  <div class="modal-content" style="max-height: 90vh; overflow: hidden;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #6f42c1 0%, #a855f7 100%); color: white; flex-shrink: 0;">
+                      <h5 class="modal-title" id="returnToBidangModalLabel">
+                        <i class="fa-solid fa-sitemap me-2"></i>Kembalikan Dokumen ke Bidang
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
+                      <div class="row g-4">
+                        <!-- Left Column: Document Info -->
+                        <div class="col-lg-5">
+                          <div class="sticky-top" style="top: 1rem;">
+                            <h6 class="text-muted mb-3">
+                              <i class="fa-solid fa-file-lines me-2"></i>Informasi Dokumen:
+                            </h6>
+                            <div id="return-bidang-doc-info" class="border rounded p-3 bg-light" style="min-height: 200px;">
+                              <!-- Document info akan dimuat di sini -->
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Right Column: Form -->
+                        <div class="col-lg-7">
+                          <div class="sticky-top" style="top: 1rem;">
+                            <h6 class="text-muted mb-3">
+                              <i class="fa-solid fa-edit me-2"></i>Form Pengembalian:
+                            </h6>
+                            <form id="return-bidang-form" class="needs-validation" novalidate>
+                              <input type="hidden" id="return-bidang-doc-id" name="doc_id">
+
+                              <!-- Target Bidang -->
+                              <div class="mb-4">
+                                <label for="target_bidang" class="form-label fw-bold">
+                                  <i class="fa-solid fa-sitemap me-2 text-primary"></i>Bidang Tujuan
+                                  <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-lg" id="target_bidang" name="target_bidang" required>
+                                  <option value="">-- Pilih Bidang Tujuan --</option>
+                                  <option value="DPM">DPM - Divisi Produksi dan Manufaktur</option>
+                                  <option value="SKH">SKH - Sub Kontrak Hutan</option>
+                                  <option value="SDM">SDM - Sumber Daya Manusia</option>
+                                  <option value="TEP">TEP - Teknik dan Perencanaan</option>
+                                  <option value="KPL">KPL - Keuangan dan Pelaporan</option>
+                                  <option value="AKN">AKN - Akuntansi</option>
+                                  <option value="TAN">TAN - Tanaman dan Perkebunan</option>
+                                  <option value="PMO">PMO - Project Management Office</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                  Silakan pilih bidang tujuan pengembalian.
+                                </div>
+                              </div>
+
+                              <!-- Return Reason -->
+                              <div class="mb-4">
+                                <label for="bidang_return_reason" class="form-label fw-bold">
+                                  <i class="fa-solid fa-comment me-2 text-primary"></i>Alasan Pengembalian
+                                  <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="bidang_return_reason" name="bidang_return_reason"
+                                          rows="3" placeholder="Jelaskan alasan pengembalian dokumen ke bidang ini..."
+                                          style="resize: vertical; min-height: 80px;" required></textarea>
+                                <div class="d-flex justify-content-between mt-2">
+                                  <div class="form-text">Minimal 5 karakter</div>
+                                  <div class="form-text">
+                                    <span id="bidang-char-count">0</span>/1000 karakter
+                                  </div>
+                                </div>
+                                <div class="invalid-feedback">
+                                  Alasan pengembalian minimal 5 karakter dan maksimal 1000 karakter.
+                                </div>
+                              </div>
+
+                              <!-- Action Buttons -->
+                              <div class="d-flex gap-2 mt-4">
+                                <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">
+                                  <i class="fa-solid fa-times me-2"></i>Batal
+                                </button>
+                                <button type="button" class="btn btn-primary flex-fill" id="submit-return-bidang" onclick="returnToBidang()">
+                                  <i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <style>
+              /* Sticky positioning fix for modal */
+              .modal .sticky-top {
+                z-index: 1;
+              }
+              </style>
+
+              <script>
+              // Open Return to Bidang Modal
+              function openReturnToBidangModal(docId) {
+                // Fetch document details via AJAX (returns HTML)
+                fetch(`/dokumens/${docId}/detail`, {
+                  method: 'GET',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                  }
+                })
+                  .then(response => response.text())
+                  .then(html => {
+                    // Set document info in modal
+                    document.getElementById('return-bidang-doc-info').innerHTML = html;
+                    document.getElementById('return-bidang-doc-id').value = docId;
+
+                    // Reset form
+                    document.getElementById('target_bidang').value = '';
+                    document.getElementById('bidang_return_reason').value = '';
+                    document.getElementById('bidang-char-count').textContent = '0';
+
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('returnToBidangModal'));
+                    modal.show();
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal memuat detail dokumen.');
+                  });
+              }
+
+              // Return to Bidang function
+              function returnToBidang() {
+                const docId = document.getElementById('return-bidang-doc-id').value;
+                const targetBidang = document.getElementById('target_bidang').value;
+                const reason = document.getElementById('bidang_return_reason').value;
+
+                if (!targetBidang) {
+                  alert('Pilih bidang tujuan terlebih dahulu.');
+                  return;
+                }
+
+                if (!reason || reason.trim().length < 5) {
+                  alert('Alasan pengembalian minimal 5 karakter.');
+                  return;
+                }
+
+                const submitBtn = document.getElementById('submit-return-bidang');
+
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Memproses...';
+
+                fetch(`/documents/verifikasi/${docId}/return-to-bidang`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                  },
+                  body: JSON.stringify({
+                    target_bidang: targetBidang,
+                    bidang_return_reason: reason
+                  })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('returnToBidangModal'));
+                    modal.hide();
+
+                    // Show success notification
+                    showNotification(`Dokumen berhasil dikembalikan ke bidang ${data.target_bidang}`, 'success');
+
+                    // Reload page after 2 seconds
+                    setTimeout(() => {
+                      location.reload();
+                    }, 2000);
+                  } else {
+                    alert(data.message || 'Gagal mengembalikan dokumen ke bidang.');
+                  }
+                })
+                .catch(error => {
+                  console.error('Error:', error);
+                  alert('Terjadi kesalahan saat mengembalikan dokumen ke bidang.');
+                })
+                .finally(() => {
+                  // Restore button state
+                  submitBtn.disabled = false;
+                  submitBtn.innerHTML = '<i class="fa-solid fa-sitemap me-2"></i>Kembalikan ke Bidang';
+                });
+              }
+
+              // Character counter for bidang return reason textarea
+              document.addEventListener('DOMContentLoaded', function() {
+                const bidangReasonTextarea = document.getElementById('bidang_return_reason');
+                const bidangCharCount = document.getElementById('bidang-char-count');
+
+                if (bidangReasonTextarea && bidangCharCount) {
+                  bidangReasonTextarea.addEventListener('input', function() {
+                    const length = this.value.length;
+                    bidangCharCount.textContent = length;
+
+                    // Update color based on length
+                    bidangCharCount.classList.remove('warning', 'danger');
+                    if (length > 900) {
+                      bidangCharCount.classList.add('danger');
+                    } else if (length > 800) {
+                      bidangCharCount.classList.add('warning');
+                    }
+                  });
+                }
+              });
+              </script>
+
+              <!-- Notification Styles -->
+              <style>
+              .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                max-width: 400px;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+              }
+
+              .notification.show {
+                transform: translateX(0);
+              }
+
+              .notification-content {
+                padding: 16px 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: white;
+                font-weight: 500;
+              }
+
+              .notification-success {
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+              }
+
+              .notification-info {
+                background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+              }
+
+              @media (max-width: 768px) {
+                .notification {
+                  left: 20px;
+                  right: 20px;
+                  max-width: none;
+                  top: 10px;
+                }
+              }
+
+              /* Send to Next Modal - Radio Button Styles */
+              #sendToNextModal .form-check {
+                transition: all 0.3s ease;
+              }
+
+              #sendToNextModal .form-check:hover {
+                border-color: #083E40 !important;
+                background: linear-gradient(135deg, rgba(8, 62, 64, 0.05) 0%, rgba(136, 151, 23, 0.05) 100%);
+                transform: translateX(4px);
+                box-shadow: 0 2px 12px rgba(8, 62, 64, 0.15);
+              }
+
+              #sendToNextModal .form-check-input:checked ~ .form-check-label {
+                color: #083E40;
+              }
+
+              #sendToNextModal .form-check:has(.form-check-input:checked) {
+                border-color: #083E40 !important;
+                background: linear-gradient(135deg, rgba(8, 62, 64, 0.1) 0%, rgba(136, 151, 23, 0.1) 100%);
+                box-shadow: 0 4px 16px rgba(8, 62, 64, 0.2);
+              }
+
+              #sendToNextModal .form-check-input {
+                width: 20px;
+                height: 20px;
+                margin-top: 2px;
+                cursor: pointer;
+              }
+
+              #sendToNextModal .form-check-input:checked {
+                background-color: #083E40;
+                border-color: #083E40;
+              }
+              </style>
+
+              <script>
+              // Handle suggestion button clicks
+              document.addEventListener('DOMContentLoaded', function() {
+                  const suggestionButtons = document.querySelectorAll('.suggestion-btn');
+
+                  suggestionButtons.forEach(button => {
+                      button.addEventListener('click', function() {
+                          const suggestion = this.getAttribute('data-suggestion');
+                          const searchInput = document.querySelector('input[name="search"]');
+                          const form = searchInput.closest('form');
+
+                          // Set the suggestion value to search input
+                          searchInput.value = suggestion;
+
+                          // Submit the form
+                          form.submit();
+                      });
+                  });
+              });
+              </script>
+
+              <!-- Modal: Column Customization -->
+              <div class="customization-modal" id="columnCustomizationModal">
+                <div class="modal-content-custom">
+                  <div class="modal-header-custom">
+                    <h3>
+                      <i class="fa-solid fa-table-columns"></i>
+                      Kustomisasi Kolom Tabel
+                    </h3>
+                  </div>
+
+                  <div class="modal-body-custom">
+                    <div class="customization-grid">
+                      <!-- Selection Panel -->
+                      <div class="selection-panel">
+                        <div class="panel-title">
+                          <i class="fa-solid fa-check-square"></i>
+                          Pilih Kolom
+                        </div>
+                        <div class="panel-description">
+                          Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+                        </div>
+                        <div class="column-selection-list" id="columnSelectionList">
+                          @foreach($availableColumns as $key => $label)
+                            <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
+                                 data-column="{{ $key }}"
+                                 draggable="{{ in_array($key, $selectedColumns) ? 'true' : 'false' }}"
+                                 onclick="toggleColumn(this)">
+                              <div class="drag-handle">
+                                <i class="fa-solid fa-grip-vertical"></i>
+                              </div>
+                              <input type="checkbox"
+                                     class="column-item-checkbox"
+                                     value="{{ $key }}"
+                                     {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
+                                     onclick="event.stopPropagation()">
+                              <label class="column-item-label">{{ $label }}</label>
+                              <span class="column-item-order">
+                                {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
+                              </span>
+                            </div>
+                          @endforeach
+                        </div>
+                      </div>
+
+                      <!-- Preview Panel -->
+                      <div class="preview-panel">
+                        <div class="panel-title">
+                          <i class="fa-solid fa-eye"></i>
+                          Preview Hasil
+                        </div>
+                        <div class="panel-description">
+                          Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
+                        </div>
+                        <div class="preview-container">
+                          <div id="tablePreview">
+                            @if(count($selectedColumns) > 0)
+                              <table class="preview-table">
+                                <thead>
+                                  <tr>
+                                    <th>No</th>
+                                    @foreach($selectedColumns as $col)
+                                      <th>{{ $availableColumns[$col] ?? $col }}</th>
+                                    @endforeach
+                                    <th>Aksi</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for($i = 1; $i <= 5; $i++)
+                                    <tr>
+                                      <td>{{ $i }}</td>
+                                      @foreach($selectedColumns as $col)
+                                        <td>
+                                          @if($col == 'nomor_agenda')
+                                            AGD/{{ 100 + $i }}/XII/2024
+                                          @elseif($col == 'nomor_spp')
+                                            {{ 200 + $i }}/M/SPP/8/04/2024
+                                          @elseif($col == 'tanggal_masuk')
+                                            {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
+                                          @elseif($col == 'nilai_rupiah')
+                                            Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
+                                          @elseif($col == 'nomor_mirror')
+                                            MIR-{{ 1000 + $i }}
+                                          @else
+                                            Contoh Data {{ $i }}
+                                          @endif
+                                        </td>
+                                      @endforeach
+                                      <td>Edit, Kirim</td>
+                                    </tr>
+                                  @endfor
+                                </tbody>
+                              </table>
+                            @else
+                              <div class="empty-preview">
+                                <i class="fa-solid fa-table"></i>
+                                <p>Belum ada kolom yang dipilih</p>
+                                <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                              </div>
+                            @endif
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer-custom">
+                    <div class="selected-count">
+                      <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
+                      @if(count($selectedColumns) > 0)
+                                                                                                                          <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
+                          return $availableColumns[$col] ?? $col;
+                        }, $selectedColumns)) }}</small>
+                      @endif
+                    </div>
+                    <div class="modal-actions">
+                      <button type="button" class="btn-modal btn-cancel" onclick="closeColumnCustomizationModal()">
+                        <i class="fa-solid fa-times"></i>
+                        Batal
+                      </button>
+                      <button type="button" class="btn-modal btn-save" id="saveCustomizationBtn" onclick="saveColumnCustomization()">
+                        <i class="fa-solid fa-save"></i>
+                        Simpan Perubahan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+              // Global variables for column customization
+              let selectedColumnsOrder = [];
+              let availableColumnsData = {};
+
+              // Initialize available columns data from PHP
+              @php
+                $columnsJson = json_encode($availableColumns);
+                echo "availableColumnsData = {$columnsJson};";
+              @endphp
+
+              // Initialize selected columns from existing selection
+              @if(count($selectedColumns) > 0)
+                selectedColumnsOrder = @json($selectedColumns);
+              @endif
+
+              // Global Functions
+              function openColumnCustomizationModal() {
+                const modal = document.getElementById('columnCustomizationModal');
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                initializeModalState();
+              }
+
+              function closeColumnCustomizationModal() {
+                const modal = document.getElementById('columnCustomizationModal');
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+              }
+
+              function toggleColumn(columnElement) {
+                const columnKey = columnElement.dataset.column;
+                const checkbox = columnElement.querySelector('.column-item-checkbox');
+                const isChecked = checkbox.checked;
+
+                if (!isChecked) {
+                  if (!selectedColumnsOrder.includes(columnKey)) {
+                    selectedColumnsOrder.push(columnKey);
+                  }
+                  checkbox.checked = true;
+                  columnElement.classList.add('selected');
+                  columnElement.setAttribute('draggable', 'true');
+                } else {
+                  selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
+                  checkbox.checked = false;
+                  columnElement.classList.remove('selected');
+                  columnElement.setAttribute('draggable', 'false');
+                }
+
+                updateColumnOrderBadges();
+                updatePreviewTable();
+                updateSelectedCount();
+                updateDraggableState();
+              }
+
+              function updateColumnOrderBadges() {
+                document.querySelectorAll('.column-item').forEach(item => {
+                  const columnKey = item.dataset.column;
+                  const orderBadge = item.querySelector('.column-item-order');
+                  const index = selectedColumnsOrder.indexOf(columnKey);
+
+                  if (index !== -1) {
+                    orderBadge.textContent = index + 1;
+                  } else {
+                    orderBadge.textContent = '';
+                  }
+                });
+              }
+
+              function updatePreviewTable() {
+                const previewContainer = document.getElementById('tablePreview');
+
+                if (selectedColumnsOrder.length === 0) {
+                  previewContainer.innerHTML = `
+                    <div class="empty-preview">
+                      <i class="fa-solid fa-table fa-2x mb-2"></i>
+                      <p>Belum ada kolom yang dipilih</p>
+                      <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                    </div>
+                  `;
+                  return;
+                }
+
+                let previewHTML = `
+                  <table class="preview-table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                `;
+
+                selectedColumnsOrder.forEach(columnKey => {
+                  const columnLabel = availableColumnsData[columnKey] || columnKey;
+                  previewHTML += `<th>${columnLabel}</th>`;
+                });
+
+                previewHTML += `
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+                const sampleData = {
+                  'nomor_agenda': ['AGD/822/XII/2024', 'AGD/258/XII/2024', 'AGD/992/XII/2024', 'AGD/92/XII/2024', 'AGD/546/XII/2024'],
+                  'nomor_spp': ['627/M/SPP/8/04/2024', '32/M/SPP/3/09/2024', '205/M/SPP/5/05/2024', '331/M/SPP/19/12/2024', '580/M/SPP/28/08/2024'],
+                  'tanggal_masuk': ['24/11/2024 08:49', '24/11/2024 08:37', '24/11/2024 08:18', '24/11/2024 08:13', '24/11/2024 08:09'],
+                  'nilai_rupiah': ['Rp. 241.650.650', 'Rp. 751.897.501', 'Rp. 232.782.087', 'Rp. 490.050.679', 'Rp. 397.340.004'],
+                  'nomor_mirror': ['MIR-1001', 'MIR-1002', 'MIR-1003', 'MIR-1004', 'MIR-1005'],
+                  'kategori': ['Operasional', 'Investasi', 'Operasional', 'Investasi', 'Operasional'],
+                  'kebun': ['Kebun A', 'Kebun B', 'Kebun C', 'Kebun A', 'Kebun B'],
+                };
+
+                for (let i = 0; i < 5; i++) {
+                  previewHTML += `<tr>`;
+                  previewHTML += `<td>${i + 1}</td>`;
+
+                  selectedColumnsOrder.forEach(columnKey => {
+                    // Skip 'status' column as it's always shown as a special column
+                    if (columnKey === 'status') {
+                      return;
+                    }
+
+                    const columnLabel = availableColumnsData[columnKey] || columnKey;
+                    let cellValue = sampleData[columnKey] ? sampleData[columnKey][i] : `Contoh ${columnLabel} ${i + 1}`;
+
+                    previewHTML += `<td>${cellValue}</td>`;
+                  });
+
+                  previewHTML += `<td>Edit, Kirim</td>`;
+                  previewHTML += `</tr>`;
+                }
+
+                previewHTML += `
+                    </tbody>
+                  </table>
+                `;
+
+                previewContainer.innerHTML = previewHTML;
+              }
+
+              function updateSelectedCount() {
+                const countElement = document.getElementById('selectedColumnCount');
+                countElement.textContent = selectedColumnsOrder.length;
+
+                const saveButton = document.getElementById('saveCustomizationBtn');
+                saveButton.disabled = selectedColumnsOrder.length === 0;
+              }
+
+              function saveColumnCustomization() {
+                if (selectedColumnsOrder.length === 0) {
+                  alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
+                  return;
+                }
+
+                // Try multiple selectors to find the form
+                let filterForm = document.getElementById('filterForm');
+                if (!filterForm) {
+                  filterForm = document.querySelector('form[action*="verifikasi"]');
+                }
+                if (!filterForm) {
+                  filterForm = document.querySelector('form[action*="dokumensB"]');
+                }
+                if (!filterForm) {
+                  // Fallback: use first form on page
+                  filterForm = document.querySelector('form');
+                }
+
+                if (!filterForm) {
+                  alert('Form tidak ditemukan.');
+                  return;
+                }
+
+                // Remove existing column inputs
+                document.querySelectorAll('input[name="columns[]"]').forEach(input => {
+                  if (input.type === 'hidden') {
+                    input.remove();
+                  }
+                });
+
+                // Add hidden inputs for selected columns in order
+                selectedColumnsOrder.forEach(columnKey => {
+                  const hiddenInput = document.createElement('input');
+                  hiddenInput.type = 'hidden';
+                  hiddenInput.name = 'columns[]';
+                  hiddenInput.value = columnKey;
+                  filterForm.appendChild(hiddenInput);
+                });
+
+                // Add enable customization flag
+                const enableInput = document.createElement('input');
+                enableInput.type = 'hidden';
+                enableInput.name = 'enable_customization';
+                enableInput.value = '1';
+                filterForm.appendChild(enableInput);
+
+                closeColumnCustomizationModal();
+                filterForm.submit();
+              }
+
+              function initializeModalState() {
+                document.querySelectorAll('.column-item').forEach(item => {
+                  const columnKey = item.dataset.column;
+                  const checkbox = item.querySelector('.column-item-checkbox');
+
+                  if (selectedColumnsOrder.includes(columnKey)) {
+                    checkbox.checked = true;
+                    item.classList.add('selected');
+                    item.setAttribute('draggable', 'true');
+                  } else {
+                    checkbox.checked = false;
+                    item.classList.remove('selected');
+                    item.setAttribute('draggable', 'false');
+                  }
+                });
+
+                initializeDragAndDrop();
+                updateColumnOrderBadges();
+                updatePreviewTable();
+                updateSelectedCount();
+              }
+
+              function updateDraggableState() {
+                document.querySelectorAll('.column-item').forEach(item => {
+                  const columnKey = item.dataset.column;
+                  if (selectedColumnsOrder.includes(columnKey)) {
+                    item.setAttribute('draggable', 'true');
+                  } else {
+                    item.setAttribute('draggable', 'false');
+                  }
+                });
+              }
+
+              let draggedElement = null;
+
+              function initializeDragAndDrop() {
+                const columnList = document.getElementById('columnSelectionList');
+                if (!columnList) return;
+
+                const newList = columnList.cloneNode(true);
+                columnList.parentNode.replaceChild(newList, columnList);
+
+                newList.querySelectorAll('.column-item.selected').forEach(item => {
+                  item.addEventListener('dragstart', handleDragStart);
+                  item.addEventListener('dragend', handleDragEnd);
+                  item.addEventListener('dragover', handleDragOver);
+                  item.addEventListener('drop', handleDrop);
+                });
+              }
+
+              function handleDragStart(e) {
+                draggedElement = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+              }
+
+              function handleDragEnd(e) {
+                this.classList.remove('dragging');
+                document.querySelectorAll('.column-item').forEach(el => {
+                  el.classList.remove('drag-over');
+                });
+                draggedElement = null;
+              }
+
+              function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                if (this !== draggedElement && this.classList.contains('selected')) {
+                  const afterElement = getDragAfterElement(this.parentNode, e.clientY);
+
+                  if (afterElement == null) {
+                    this.parentNode.appendChild(draggedElement);
+                  } else {
+                    this.parentNode.insertBefore(draggedElement, afterElement);
+                  }
+                }
+
+                return false;
+              }
+
+              function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                this.classList.remove('drag-over');
+
+                if (this !== draggedElement && this.classList.contains('selected')) {
+                  const columnList = document.getElementById('columnSelectionList');
+                  const selectedItems = Array.from(columnList.querySelectorAll('.column-item.selected'));
+                  const newOrder = selectedItems.map(item => item.dataset.column);
+
+                  selectedColumnsOrder = newOrder;
+
+                  updateColumnOrderBadges();
+                  updatePreviewTable();
+
+                  setTimeout(() => {
+                    initializeDragAndDrop();
+                  }, 50);
+                }
+
+                return false;
+              }
+
+              function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.column-item.selected:not(.dragging)')];
+
+                return draggableElements.reduce((closest, child) => {
+                  const box = child.getBoundingClientRect();
+                  const offset = y - box.top - box.height / 2;
+
+                  if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                  } else {
+                    return closest;
+                  }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+              }
+
+              // Close modal when clicking outside
+              document.addEventListener('click', function(e) {
+                const modal = document.getElementById('columnCustomizationModal');
+                if (modal && modal.classList.contains('show') && e.target === modal) {
+                  closeColumnCustomizationModal();
+                }
+              });
+              </script>
+
+              <script>
+              // Open View Document Modal
+              function openViewDocumentModal(docId) {
+                // Set document ID
+                document.getElementById('view-dokumen-id').value = docId;
+
+                // Set edit button URL
+                document.getElementById('view-edit-btn').href = `/documents/verifikasi/${docId}/edit`;
+
+                // Load document data via AJAX
+                fetch(`/documents/verifikasi/${docId}/detail`, {
+                  headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                  }
+                })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                  })
+                  .then(data => {
+                    console.log('Document data received:', data);
+                    if (data.success && data.dokumen) {
+                      const dok = data.dokumen;
+
+                      // Identitas Dokumen
+                      document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
+                      document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
+                      document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
+                      document.getElementById('view-bulan').textContent = dok.bulan || '-';
+                      document.getElementById('view-tahun').textContent = dok.tahun || '-';
+                      document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
+                      document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
+                      document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
+                      document.getElementById('view-kategori').textContent = dok.kategori || '-';
+                      document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
+
+                      // Detail Keuangan & Vendor
+                      document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
+                      document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
+                      // Ejaan nilai rupiah
+                      if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
+                        document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
+                      } else {
+                        document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
+                      }
+                      document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
+                      document.getElementById('view-kebun').textContent = dok.kebun || '-';
+
+                      // Referensi Pendukung
+                      document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
+                      document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
+                      document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
+                      document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+                      document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
+                      document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
+
+                      // Informasi Akutansi
+                      document.getElementById('view-nomor-miro-akutansi').textContent = dok.nomor_miro || '-';
+                      document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? formatDate(dok.tanggal_miro) : '-';
+
+                      // Nomor PO & PR
+                      const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
+                        ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
+                        : '-';
+                      const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
+                        ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
+                        : '-';
+                      document.getElementById('view-nomor-po').textContent = poList;
+                      document.getElementById('view-nomor-pr').textContent = prList;
+
+                      // Show modal after data is loaded
+                      const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+                      modal.show();
+
+                      // Ensure edit button works correctly - prevent any interference
+                      const editBtn = document.getElementById('view-edit-btn');
+                      if (editBtn) {
+                        // Remove any existing event listeners by cloning and replacing
+                        const newEditBtn = editBtn.cloneNode(true);
+                        editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+
+                        // Add click handler to ensure navigation works
+                        newEditBtn.addEventListener('click', function(e) {
+                          const href = this.getAttribute('href');
+                          if (href && href !== '#' && !href.startsWith('#')) {
+                            // Valid URL, allow navigation
+                            window.location.href = href;
+                          }
+                        });
+                      }
+                    } else {
+                      console.error('Invalid response format:', data);
+                      alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error loading document:', error);
+                    alert('Gagal memuat data dokumen: ' + error.message);
+                  });
+              }
+
+              // Helper functions for formatting
+              function formatDate(dateStr) {
+                if (!dateStr) return '-';
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              }
+
+              function formatDateTime(dateStr) {
+                if (!dateStr) return '-';
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+              }
+
+              function formatNumber(num) {
+                if (!num) return '-';
+                return new Intl.NumberFormat('id-ID').format(num);
+              }
+
+              // Function to convert number to Indonesian terbilang
+              function terbilangRupiah(number) {
+                number = parseFloat(number) || 0;
+
+                if (number == 0) {
+                  return 'nol rupiah';
+                }
+
+                const angka = [
+                  '', 'satu', 'dua', 'tiga', 'empat', 'lima',
+                  'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
+                  'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas',
+                  'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'
+                ];
+
+                let hasil = '';
+
+                // Handle triliun
+                if (number >= 1000000000000) {
+                  const triliun = Math.floor(number / 1000000000000);
+                  hasil += terbilangSatuan(triliun, angka) + ' triliun ';
+                  number = number % 1000000000000;
+                }
+
+                // Handle milyar
+                if (number >= 1000000000) {
+                  const milyar = Math.floor(number / 1000000000);
+                  hasil += terbilangSatuan(milyar, angka) + ' milyar ';
+                  number = number % 1000000000;
+                }
+
+                // Handle juta
+                if (number >= 1000000) {
+                  const juta = Math.floor(number / 1000000);
+                  hasil += terbilangSatuan(juta, angka) + ' juta ';
+                  number = number % 1000000;
+                }
+
+                // Handle ribu
+                if (number >= 1000) {
+                  const ribu = Math.floor(number / 1000);
+                  if (ribu == 1) {
+                    hasil += 'seribu ';
+                  } else {
+                    hasil += terbilangSatuan(ribu, angka) + ' ribu ';
+                  }
+                  number = number % 1000;
+                }
+
+                // Handle ratusan, puluhan, dan satuan
+                if (number > 0) {
+                  hasil += terbilangSatuan(number, angka);
+                }
+
+                return hasil.trim() + ' rupiah';
+              }
+
+              function terbilangSatuan(number, angka) {
+                let hasil = '';
+                number = parseInt(number);
+
+                if (number == 0) {
+                  return '';
+                }
+
+                // Handle ratusan
+                if (number >= 100) {
+                  const ratus = Math.floor(number / 100);
+                  if (ratus == 1) {
+                    hasil += 'seratus ';
+                  } else {
+                    hasil += angka[ratus] + ' ratus ';
+                  }
+                  number = number % 100;
+                }
+
+                // Handle puluhan dan satuan (0-99)
+                if (number > 0) {
+                  if (number < 20) {
+                    hasil += angka[number] + ' ';
+                  } else {
+                    const puluhan = Math.floor(number / 10);
+                    const satuan = number % 10;
+
+                    if (puluhan == 1) {
+                      hasil += angka[10 + satuan] + ' ';
+                    } else {
+                      hasil += angka[puluhan] + ' puluh ';
+                      if (satuan > 0) {
+                        hasil += angka[satuan] + ' ';
+                      }
                     }
                   }
                 }
+
+                return hasil.trim();
               }
+              </script>
 
-              return hasil.trim();
-            }
-            </script>
+              <!-- Modal View Document Detail -->
+              <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
+                  <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
+                    <!-- Sticky Header -->
+                    <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
+                      <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
+                        <i class="fa-solid fa-file-lines me-2"></i>
+                        Detail Dokumen Lengkap
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
 
-            <!-- Modal View Document Detail -->
-            <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
-                <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
-                  <!-- Sticky Header -->
-                  <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
-                    <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
-                      <i class="fa-solid fa-file-lines me-2"></i>
-                      Detail Dokumen Lengkap
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
+                    <!-- Scrollable Body -->
+                    <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
+                      <input type="hidden" id="view-dokumen-id">
 
-                  <!-- Scrollable Body -->
-                  <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
-                    <input type="hidden" id="view-dokumen-id">
-
-                    <!-- Section 1: Identitas Dokumen -->
-                    <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                      <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                          <i class="fa-solid fa-id-card"></i>
-                          IDENTITAS DOKUMEN
-                        </h6>
+                      <!-- Section 1: Identitas Dokumen -->
+                      <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                        <div class="section-header mb-3">
+                          <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-id-card"></i>
+                            IDENTITAS DOKUMEN
+                          </h6>
+                        </div>
+                        <div class="row g-3">
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Nomor Agenda</label>
+                              <div class="detail-value" id="view-nomor-agenda">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Nomor SPP</label>
+                              <div class="detail-value" id="view-nomor-spp">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Tanggal SPP</label>
+                              <div class="detail-value" id="view-tanggal-spp">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Bulan</label>
+                              <div class="detail-value" id="view-bulan">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Tahun</label>
+                              <div class="detail-value" id="view-tahun">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Tanggal Masuk</label>
+                              <div class="detail-value" id="view-tanggal-masuk">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Kriteria CF</label>
+                              <div class="detail-value" id="view-kategori">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Sub Kriteria</label>
+                              <div class="detail-value" id="view-jenis-dokumen">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Item Sub Kriteria</label>
+                              <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="detail-item">
+                              <label class="detail-label">Jenis Pembayaran</label>
+                              <div class="detail-value" id="view-jenis-pembayaran">-</div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div class="row g-3">
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Nomor Agenda</label>
-                            <div class="detail-value" id="view-nomor-agenda">-</div>
+
+                      <!-- Section 2: Detail Keuangan & Vendor -->
+                      <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                        <div class="section-header mb-3">
+                          <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                            DETAIL KEUANGAN & VENDOR
+                          </h6>
+                        </div>
+                        <div class="row g-3">
+                          <div class="col-12">
+                            <div class="detail-item">
+                              <label class="detail-label">Uraian SPP</label>
+                              <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Nilai Rupiah</label>
+                              <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Ejaan Nilai Rupiah</label>
+                              <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Dibayar Kepada (Vendor)</label>
+                              <div class="detail-value" id="view-dibayar-kepada">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Kebun / Unit Kerja</label>
+                              <div class="detail-value" id="view-kebun">-</div>
+                            </div>
                           </div>
                         </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Nomor SPP</label>
-                            <div class="detail-value" id="view-nomor-spp">-</div>
+                      </div>
+
+                      <!-- Section 3: Referensi Pendukung -->
+                      <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                        <div class="section-header mb-3">
+                          <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-file-contract"></i>
+                            REFERENSI PENDUKUNG
+                          </h6>
+                        </div>
+                        <div class="row g-3">
+                          <div class="col-md-3">
+                            <div class="detail-item">
+                              <label class="detail-label">No. SPK</label>
+                              <div class="detail-value" id="view-no-spk">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="detail-item">
+                              <label class="detail-label">Tanggal SPK</label>
+                              <div class="detail-value" id="view-tanggal-spk">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="detail-item">
+                              <label class="detail-label">Tanggal Berakhir SPK</label>
+                              <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="detail-item">
+                              <label class="detail-label">Nomor Miro</label>
+                              <div class="detail-value" id="view-nomor-miro">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">No. Berita Acara</label>
+                              <div class="detail-value" id="view-no-berita-acara">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Tanggal Berita Acara</label>
+                              <div class="detail-value" id="view-tanggal-berita-acara">-</div>
+                            </div>
                           </div>
                         </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Tanggal SPP</label>
-                            <div class="detail-value" id="view-tanggal-spp">-</div>
+                      </div>
+
+                      <!-- Section 4: Nomor PO & PR -->
+                      <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
+                        <div class="section-header mb-3">
+                          <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-hashtag"></i>
+                            NOMOR PO & PR
+                          </h6>
+                        </div>
+                        <div class="row g-3">
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Nomor PO</label>
+                              <div class="detail-value" id="view-nomor-po">-</div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Nomor PR</label>
+                              <div class="detail-value" id="view-nomor-pr">-</div>
+                            </div>
                           </div>
                         </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Bulan</label>
-                            <div class="detail-value" id="view-bulan">-</div>
-                          </div>
+                      </div>
+
+                      <!-- Section 5: Informasi Akutansi -->
+                      <div class="form-section mb-4" style="background: linear-gradient(135deg, #f0f4f0 0%, #e8ede8 100%); border-radius: 12px; padding: 20px; border: 2px solid #889717;">
+                        <div class="section-header mb-3">
+                          <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-calculator"></i>
+                            INFORMASI AKUTANSI
+                            <span style="background: #889717; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DATA AKUTANSI</span>
+                          </h6>
                         </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Tahun</label>
-                            <div class="detail-value" id="view-tahun">-</div>
+                        <div class="row g-3">
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Nomor MIRO</label>
+                              <div class="detail-value" id="view-nomor-miro-akutansi" style="font-weight: 700; color: #083E40;">-</div>
+                            </div>
                           </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Tanggal Masuk</label>
-                            <div class="detail-value" id="view-tanggal-masuk">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Kriteria CF</label>
-                            <div class="detail-value" id="view-kategori">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Sub Kriteria</label>
-                            <div class="detail-value" id="view-jenis-dokumen">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Item Sub Kriteria</label>
-                            <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="detail-item">
-                            <label class="detail-label">Jenis Pembayaran</label>
-                            <div class="detail-value" id="view-jenis-pembayaran">-</div>
+                          <div class="col-md-6">
+                            <div class="detail-item">
+                              <label class="detail-label">Tanggal MIRO</label>
+                              <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <!-- Section 2: Detail Keuangan & Vendor -->
-                    <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                      <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                          <i class="fa-solid fa-money-bill-wave"></i>
-                          DETAIL KEUANGAN & VENDOR
-                        </h6>
-                      </div>
-                      <div class="row g-3">
-                        <div class="col-12">
-                          <div class="detail-item">
-                            <label class="detail-label">Uraian SPP</label>
-                            <div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Nilai Rupiah</label>
-                            <div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Ejaan Nilai Rupiah</label>
-                            <div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Dibayar Kepada (Vendor)</label>
-                            <div class="detail-value" id="view-dibayar-kepada">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Kebun / Unit Kerja</label>
-                            <div class="detail-value" id="view-kebun">-</div>
-                          </div>
-                        </div>
-                      </div>
+                    <!-- Sticky Footer -->
+                    <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
+                        <i class="fa-solid fa-times me-2"></i>Tutup
+                      </button>
+                      <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
+                        <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
+                      </a>
                     </div>
-
-                    <!-- Section 3: Referensi Pendukung -->
-                    <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                      <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                          <i class="fa-solid fa-file-contract"></i>
-                          REFERENSI PENDUKUNG
-                        </h6>
-                      </div>
-                      <div class="row g-3">
-                        <div class="col-md-3">
-                          <div class="detail-item">
-                            <label class="detail-label">No. SPK</label>
-                            <div class="detail-value" id="view-no-spk">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-3">
-                          <div class="detail-item">
-                            <label class="detail-label">Tanggal SPK</label>
-                            <div class="detail-value" id="view-tanggal-spk">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-3">
-                          <div class="detail-item">
-                            <label class="detail-label">Tanggal Berakhir SPK</label>
-                            <div class="detail-value" id="view-tanggal-berakhir-spk">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-3">
-                          <div class="detail-item">
-                            <label class="detail-label">Nomor Miro</label>
-                            <div class="detail-value" id="view-nomor-miro">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">No. Berita Acara</label>
-                            <div class="detail-value" id="view-no-berita-acara">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Tanggal Berita Acara</label>
-                            <div class="detail-value" id="view-tanggal-berita-acara">-</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Section 4: Nomor PO & PR -->
-                    <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                      <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                          <i class="fa-solid fa-hashtag"></i>
-                          NOMOR PO & PR
-                        </h6>
-                      </div>
-                      <div class="row g-3">
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Nomor PO</label>
-                            <div class="detail-value" id="view-nomor-po">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Nomor PR</label>
-                            <div class="detail-value" id="view-nomor-pr">-</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Section 5: Informasi Akutansi -->
-                    <div class="form-section mb-4" style="background: linear-gradient(135deg, #f0f4f0 0%, #e8ede8 100%); border-radius: 12px; padding: 20px; border: 2px solid #889717;">
-                      <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                          <i class="fa-solid fa-calculator"></i>
-                          INFORMASI AKUTANSI
-                          <span style="background: #889717; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DATA AKUTANSI</span>
-                        </h6>
-                      </div>
-                      <div class="row g-3">
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Nomor MIRO</label>
-                            <div class="detail-value" id="view-nomor-miro-akutansi" style="font-weight: 700; color: #083E40;">-</div>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="detail-item">
-                            <label class="detail-label">Tanggal MIRO</label>
-                            <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Sticky Footer -->
-                  <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
-                      <i class="fa-solid fa-times me-2"></i>Tutup
-                    </button>
-                    <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
-                      <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
-                    </a>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <style>
-            /* Detail Item Styles for View Modal */
-            .detail-item {
-              margin-bottom: 8px;
-            }
-
-            .detail-label {
-              display: block;
-              font-size: 10px;
-              font-weight: 700;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 4px;
-            }
-
-            .detail-value {
-              font-size: 14px;
-              color: #1f2937;
-              padding: 8px 12px;
-              background: white;
-              border-radius: 6px;
-              border: 1px solid #e5e7eb;
-              min-height: 38px;
-              display: flex;
-              align-items: center;
-            }
-            </style>
-
-            <!-- Dropdown Filter Script -->
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Year Dropdown Handler
-                const yearSelectBtn = document.getElementById('yearSelectBtn');
-                const yearDropdownMenu = document.getElementById('yearDropdownMenu');
-                const yearSelect = document.getElementById('yearSelect');
-                const yearSelectText = document.getElementById('yearSelectText');
-                const yearDropdownItems = document.querySelectorAll('#yearDropdownMenu .year-dropdown-item');
-
-                if (yearSelectBtn && yearDropdownMenu && yearSelect) {
-                    // Toggle dropdown menu
-                    yearSelectBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Close status dropdown if open
-                        const statusDropdownMenu = document.getElementById('statusDropdownMenu');
-                        const statusSelectBtn = document.getElementById('statusSelectBtn');
-                        if (statusDropdownMenu) statusDropdownMenu.style.display = 'none';
-                        if (statusSelectBtn) statusSelectBtn.classList.remove('active');
-
-                        // Toggle year dropdown visibility
-                        if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
-                            yearDropdownMenu.style.display = 'block';
-                            yearSelectBtn.classList.add('active');
-                        } else {
-                            yearDropdownMenu.style.display = 'none';
-                            yearSelectBtn.classList.remove('active');
-                        }
-                    });
-
-                    // Handle year selection
-                    yearDropdownItems.forEach(item => {
-                        item.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            const selectedYear = this.getAttribute('data-year');
-
-                            // Update hidden input
-                            yearSelect.value = selectedYear;
-
-                            // Update button text
-                            yearSelectText.textContent = selectedYear || 'Semua Tahun';
-
-                            // Update active state
-                            yearDropdownItems.forEach(i => i.classList.remove('active'));
-                            this.classList.add('active');
-
-                            // Close dropdown
-                            yearDropdownMenu.style.display = 'none';
-                            yearSelectBtn.classList.remove('active');
-
-                            // Submit form
-                            const form = document.getElementById('filterForm');
-                            if (form) form.submit();
-                        });
-                    });
-
-                    // Close dropdown when clicking outside
-                    document.addEventListener('click', function(e) {
-                        if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
-                            yearDropdownMenu.style.display = 'none';
-                            yearSelectBtn.classList.remove('active');
-                        }
-                    });
-
-                    // Prevent dropdown from closing when clicking inside
-                    yearDropdownMenu.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                    });
-                }
-
-                // Status Dropdown Handler
-                const statusSelectBtn = document.getElementById('statusSelectBtn');
-                const statusDropdownMenu = document.getElementById('statusDropdownMenu');
-                const statusSelect = document.getElementById('statusSelect');
-                const statusSelectText = document.getElementById('statusSelectText');
-                const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
-
-                if (statusSelectBtn && statusDropdownMenu && statusSelect) {
-                    // Toggle dropdown menu
-                    statusSelectBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Close year dropdown if open
-                        if (yearDropdownMenu) yearDropdownMenu.style.display = 'none';
-                        if (yearSelectBtn) yearSelectBtn.classList.remove('active');
-
-                        // Toggle status dropdown visibility
-                        if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
-                            statusDropdownMenu.style.display = 'block';
-                            statusSelectBtn.classList.add('active');
-                        } else {
-                            statusDropdownMenu.style.display = 'none';
-                            statusSelectBtn.classList.remove('active');
-                        }
-                    });
-
-                    // Handle status selection
-                    statusDropdownItems.forEach(item => {
-                        item.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            const selectedStatus = this.getAttribute('data-status');
-
-                            // Update hidden input
-                            statusSelect.value = selectedStatus;
-
-                            // Update button text
-                            const statusLabels = {
-                                '': 'Semua Status',
-                                'menunggu_approve': 'Menunggu Approve',
-                                'sedang_proses': 'Sedang Proses',
-                                'terkirim_perpajakan': 'Terkirim ke Perpajakan',
-                                'terkirim_akutansi': 'Terkirim ke Akutansi',
-                                'terkirim_pembayaran': 'Terkirim ke Pembayaran',
-                                'ditolak': 'Dokumen Ditolak'
-                            };
-                            statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
-
-                            // Update active state
-                            statusDropdownItems.forEach(i => i.classList.remove('active'));
-                            this.classList.add('active');
-
-                            // Close dropdown
-                            statusDropdownMenu.style.display = 'none';
-                            statusSelectBtn.classList.remove('active');
-
-                            // Submit form
-                            const form = document.getElementById('filterForm');
-                            if (form) form.submit();
-                        });
-                    });
-
-                    // Close dropdown when clicking outside
-                    document.addEventListener('click', function(e) {
-                        if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
-                            statusDropdownMenu.style.display = 'none';
-                            statusSelectBtn.classList.remove('active');
-                        }
-                    });
-
-                    // Prevent dropdown from closing when clicking inside
-                    statusDropdownMenu.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                    });
-                }
-            });
-            </script>
-
-      <!-- Year Filter Modal -->
-      <div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
-        <div class="year-filter-modal" onclick="event.stopPropagation()">
-          <div class="year-filter-modal-header">
-            <h5>
-              <i class="fa-solid fa-calendar-alt"></i>
-              Filter Tahun
-            </h5>
-            <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
-              <i class="fa-solid fa-times"></i>
-            </button>
-          </div>
-          <div class="year-filter-modal-body">
-            <!-- Filter Type Selection -->
-            <div class="filter-type-section">
-              <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
-              <div class="filter-type-options">
-                <div class="filter-type-option {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
-                     onclick="selectFilterType('tanggal_spp', this)">
-                  <input type="radio" name="modal_filter_type" value="tanggal_spp" 
-                         {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
-                  <label>
-                    <strong>Tanggal SPP</strong>
-                    <small class="d-block">Tahun dari kolom Tanggal SPP</small>
-                  </label>
-                </div>
-                <div class="filter-type-option {{ request('year_filter_type') == 'tanggal_masuk' ? 'selected' : '' }}" 
-                     onclick="selectFilterType('tanggal_masuk', this)">
-                  <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
-                         {{ request('year_filter_type') == 'tanggal_masuk' ? 'checked' : '' }}>
-                  <label>
-                    <strong>Tanggal Masuk</strong>
-                    <small class="d-block">Tahun dari timestamp dokumen masuk</small>
-                  </label>
-                </div>
-                <div class="filter-type-option {{ request('year_filter_type') == 'nomor_spp' ? 'selected' : '' }}" 
-                     onclick="selectFilterType('nomor_spp', this)">
-                  <input type="radio" name="modal_filter_type" value="nomor_spp" 
-                         {{ request('year_filter_type') == 'nomor_spp' ? 'checked' : '' }}>
-                  <label>
-                    <strong>Tahun di Nomor SPP</strong>
-                    <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Year Selection -->
-            <div class="year-selection-section">
-              <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
-              <div class="year-buttons-grid">
-                <button type="button" class="year-btn all-years {{ !request('year') ? 'selected' : '' }}" 
-                        onclick="selectYear('', this)">
-                  Semua Tahun
-                </button>
-                <button type="button" class="year-btn {{ request('year') == '2024' ? 'selected' : '' }}" 
-                        onclick="selectYear('2024', this)">2024</button>
-                <button type="button" class="year-btn {{ request('year') == '2025' ? 'selected' : '' }}" 
-                        onclick="selectYear('2025', this)">2025</button>
-                <button type="button" class="year-btn {{ request('year') == '2026' ? 'selected' : '' }}" 
-                        onclick="selectYear('2026', this)">2026</button>
-                <button type="button" class="year-btn {{ request('year') == '2027' ? 'selected' : '' }}" 
-                        onclick="selectYear('2027', this)">2027</button>
-                <button type="button" class="year-btn {{ request('year') == '2028' ? 'selected' : '' }}" 
-                        onclick="selectYear('2028', this)">2028</button>
-                <button type="button" class="year-btn {{ request('year') == '2029' ? 'selected' : '' }}" 
-                        onclick="selectYear('2029', this)">2029</button>
-                <button type="button" class="year-btn {{ request('year') == '2030' ? 'selected' : '' }}" 
-                        onclick="selectYear('2030', this)">2030</button>
-              </div>
-            </div>
-          </div>
-          <div class="year-filter-modal-footer">
-            <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
-              <i class="fa-solid fa-rotate-left me-2"></i>Reset
-            </button>
-            <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
-              <i class="fa-solid fa-check me-2"></i>Terapkan Filter
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <script>
-      // Year Filter Modal Functions
-      let selectedYear = '{{ request('year') }}';
-      let selectedFilterType = '{{ request('year_filter_type', 'tanggal_spp') }}';
-
-      function openYearFilterModal() {
-        document.getElementById('yearFilterModalOverlay').classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeYearFilterModal(event) {
-        if (event && event.target !== event.currentTarget) return;
-        document.getElementById('yearFilterModalOverlay').classList.remove('active');
-        document.body.style.overflow = '';
-      }
-
-      function selectFilterType(type, element) {
-        selectedFilterType = type;
-
-        // Update visual state
-        document.querySelectorAll('.filter-type-option').forEach(opt => {
-          opt.classList.remove('selected');
-          opt.querySelector('input').checked = false;
-        });
-        element.classList.add('selected');
-        element.querySelector('input').checked = true;
-      }
-
-      function selectYear(year, element) {
-        selectedYear = year;
-
-        // Update visual state
-        document.querySelectorAll('.year-btn').forEach(btn => {
-          btn.classList.remove('selected');
-        });
-        element.classList.add('selected');
-      }
-
-      function resetYearFilter() {
-        selectedYear = '';
-        selectedFilterType = 'tanggal_spp';
-
-        // Reset visual state
-        document.querySelectorAll('.year-btn').forEach(btn => {
-          btn.classList.remove('selected');
-          if (btn.classList.contains('all-years')) {
-            btn.classList.add('selected');
-          }
-        });
-
-        document.querySelectorAll('.filter-type-option').forEach((opt, index) => {
-          opt.classList.remove('selected');
-          opt.querySelector('input').checked = false;
-          if (index === 0) {
-            opt.classList.add('selected');
-            opt.querySelector('input').checked = true;
-          }
-        });
-
-        // Apply immediately
-        applyYearFilter();
-      }
-
-      function applyYearFilter() {
-        // Update hidden inputs
-        document.getElementById('yearSelect').value = selectedYear;
-        document.getElementById('yearFilterType').value = selectedFilterType;
-
-        // Update button text
-        const filterTypeLabels = {
-          'tanggal_spp': 'Tgl SPP',
-          'tanggal_masuk': 'Tgl Masuk',
-          'nomor_spp': 'No SPP'
-        };
-
-        const btnText = document.getElementById('yearFilterBtnText');
-        if (selectedYear) {
-          btnText.textContent = selectedYear + ' (' + filterTypeLabels[selectedFilterType] + ')';
-        } else {
-          btnText.textContent = 'Filter Tahun';
-        }
-
-        // Close modal
-        closeYearFilterModal();
-
-        // Submit form
-        document.getElementById('filterForm').submit();
-      }
-
-      // Close modal on Escape key
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeYearFilterModal();
-        }
-      });
-
-      // ===== LIVE SEARCH FUNCTIONALITY =====
-      // Debounce function to limit the rate of function calls
-      function debounce(func, wait) {
-          let timeout;
-          return function executedFunction(...args) {
-              const later = () => {
-                  clearTimeout(timeout);
-                  func(...args);
-              };
-              clearTimeout(timeout);
-              timeout = setTimeout(later, wait);
-          };
-      }
-
-      // Live search handler
-      const searchInput = document.querySelector('input[name="search"]');
-      if (searchInput) {
-          const liveSearchHandler = debounce(function() {
-              const form = searchInput.closest('form');
-              if (!form) return;
-
-              const searchValue = searchInput.value.trim();
-
-              // Build URL with all parameters
-              const url = new URL(form.action);
-
-              // Add search parameter
-              if (searchValue) {
-                  url.searchParams.set('search', searchValue);
-              } else {
-                  url.searchParams.delete('search');
+              <style>
+              /* Detail Item Styles for View Modal */
+              .detail-item {
+                margin-bottom: 8px;
               }
 
-              // Preserve year filter (if exists)
-              const yearInput = form.querySelector('input[name="year"]');
-              if (yearInput && yearInput.value) {
-                  url.searchParams.set('year', yearInput.value);
+              .detail-label {
+                display: block;
+                font-size: 10px;
+                font-weight: 700;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
               }
 
-              // Preserve year filter type (if exists)
-              const yearFilterType = form.querySelector('input[name="year_filter_type"]');
-              if (yearFilterType && yearFilterType.value) {
-                  url.searchParams.set('year_filter_type', yearFilterType.value);
+              .detail-value {
+                font-size: 14px;
+                color: #1f2937;
+                padding: 8px 12px;
+                background: white;
+                border-radius: 6px;
+                border: 1px solid #e5e7eb;
+                min-height: 38px;
+                display: flex;
+                align-items: center;
               }
+              </style>
 
-              // Preserve status filter (if exists)
-              const statusInput = form.querySelector('input[name="status_filter"]');
-              if (statusInput && statusInput.value) {
-                  url.searchParams.set('status_filter', statusInput.value);
-              }
+              <!-- Dropdown Filter Script -->
+              <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  // Year Dropdown Handler
+                  const yearSelectBtn = document.getElementById('yearSelectBtn');
+                  const yearDropdownMenu = document.getElementById('yearDropdownMenu');
+                  const yearSelect = document.getElementById('yearSelect');
+                  const yearSelectText = document.getElementById('yearSelectText');
+                  const yearDropdownItems = document.querySelectorAll('#yearDropdownMenu .year-dropdown-item');
 
-              // Preserve per_page
-              const perPage = new URLSearchParams(window.location.search).get('per_page');
-              if (perPage) {
-                  url.searchParams.set('per_page', perPage);
-              }
+                  if (yearSelectBtn && yearDropdownMenu && yearSelect) {
+                      // Toggle dropdown menu
+                      yearSelectBtn.addEventListener('click', function(e) {
+                          e.preventDefault();
+                          e.stopPropagation();
 
-              // Preserve column customization (if exists)
-              const columnInputs = form.querySelectorAll('input[name="columns[]"]');
-              columnInputs.forEach(input => {
-                  url.searchParams.append('columns[]', input.value);
+                          // Close status dropdown if open
+                          const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+                          const statusSelectBtn = document.getElementById('statusSelectBtn');
+                          if (statusDropdownMenu) statusDropdownMenu.style.display = 'none';
+                          if (statusSelectBtn) statusSelectBtn.classList.remove('active');
+
+                          // Toggle year dropdown visibility
+                          if (yearDropdownMenu.style.display === 'none' || yearDropdownMenu.style.display === '') {
+                              yearDropdownMenu.style.display = 'block';
+                              yearSelectBtn.classList.add('active');
+                          } else {
+                              yearDropdownMenu.style.display = 'none';
+                              yearSelectBtn.classList.remove('active');
+                          }
+                      });
+
+                      // Handle year selection
+                      yearDropdownItems.forEach(item => {
+                          item.addEventListener('click', function(e) {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              const selectedYear = this.getAttribute('data-year');
+
+                              // Update hidden input
+                              yearSelect.value = selectedYear;
+
+                              // Update button text
+                              yearSelectText.textContent = selectedYear || 'Semua Tahun';
+
+                              // Update active state
+                              yearDropdownItems.forEach(i => i.classList.remove('active'));
+                              this.classList.add('active');
+
+                              // Close dropdown
+                              yearDropdownMenu.style.display = 'none';
+                              yearSelectBtn.classList.remove('active');
+
+                              // Submit form
+                              const form = document.getElementById('filterForm');
+                              if (form) form.submit();
+                          });
+                      });
+
+                      // Close dropdown when clicking outside
+                      document.addEventListener('click', function(e) {
+                          if (!yearSelectBtn.contains(e.target) && !yearDropdownMenu.contains(e.target)) {
+                              yearDropdownMenu.style.display = 'none';
+                              yearSelectBtn.classList.remove('active');
+                          }
+                      });
+
+                      // Prevent dropdown from closing when clicking inside
+                      yearDropdownMenu.addEventListener('click', function(e) {
+                          e.stopPropagation();
+                      });
+                  }
+
+                  // Status Dropdown Handler
+                  const statusSelectBtn = document.getElementById('statusSelectBtn');
+                  const statusDropdownMenu = document.getElementById('statusDropdownMenu');
+                  const statusSelect = document.getElementById('statusSelect');
+                  const statusSelectText = document.getElementById('statusSelectText');
+                  const statusDropdownItems = document.querySelectorAll('#statusDropdownMenu .year-dropdown-item');
+
+                  if (statusSelectBtn && statusDropdownMenu && statusSelect) {
+                      // Toggle dropdown menu
+                      statusSelectBtn.addEventListener('click', function(e) {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          // Close year dropdown if open
+                          if (yearDropdownMenu) yearDropdownMenu.style.display = 'none';
+                          if (yearSelectBtn) yearSelectBtn.classList.remove('active');
+
+                          // Toggle status dropdown visibility
+                          if (statusDropdownMenu.style.display === 'none' || statusDropdownMenu.style.display === '') {
+                              statusDropdownMenu.style.display = 'block';
+                              statusSelectBtn.classList.add('active');
+                          } else {
+                              statusDropdownMenu.style.display = 'none';
+                              statusSelectBtn.classList.remove('active');
+                          }
+                      });
+
+                      // Handle status selection
+                      statusDropdownItems.forEach(item => {
+                          item.addEventListener('click', function(e) {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              const selectedStatus = this.getAttribute('data-status');
+
+                              // Update hidden input
+                              statusSelect.value = selectedStatus;
+
+                              // Update button text
+                              const statusLabels = {
+                                  '': 'Semua Status',
+                                  'menunggu_approve': 'Menunggu Approve',
+                                  'sedang_proses': 'Sedang Proses',
+                                  'terkirim_perpajakan': 'Terkirim ke Perpajakan',
+                                  'terkirim_akutansi': 'Terkirim ke Akutansi',
+                                  'terkirim_pembayaran': 'Terkirim ke Pembayaran',
+                                  'ditolak': 'Dokumen Ditolak'
+                              };
+                              statusSelectText.textContent = statusLabels[selectedStatus] || 'Semua Status';
+
+                              // Update active state
+                              statusDropdownItems.forEach(i => i.classList.remove('active'));
+                              this.classList.add('active');
+
+                              // Close dropdown
+                              statusDropdownMenu.style.display = 'none';
+                              statusSelectBtn.classList.remove('active');
+
+                              // Submit form
+                              const form = document.getElementById('filterForm');
+                              if (form) form.submit();
+                          });
+                      });
+
+                      // Close dropdown when clicking outside
+                      document.addEventListener('click', function(e) {
+                          if (!statusSelectBtn.contains(e.target) && !statusDropdownMenu.contains(e.target)) {
+                              statusDropdownMenu.style.display = 'none';
+                              statusSelectBtn.classList.remove('active');
+                          }
+                      });
+
+                      // Prevent dropdown from closing when clicking inside
+                      statusDropdownMenu.addEventListener('click', function(e) {
+                          e.stopPropagation();
+                      });
+                  }
               });
+              </script>
 
-              // Navigate to the new URL
-              window.location.href = url.toString();
-          }, 500); // 500ms debounce delay
-
-          // Attach input event listener
-          searchInput.addEventListener('input', liveSearchHandler);
-      }
-      </script>
-
-  {{-- ===== MULTI-SELECT BULK SEND COMPONENTS (Operator-style) ===== --}}
-  
-  <style>
-    /* ===== Multi-Select Bulk Send Styles ===== */
-    
-    /* Checkbox Column Enhancements */
-    .col-checkbox {
-      width: 45px !important;
-      min-width: 45px !important;
-      max-width: 45px !important;
-      text-align: center;
-      padding: 8px !important;
-    }
-
-    /* Custom Checkbox Styling */
-    .document-checkbox {
-      width: 18px;
-      height: 18px;
-      border: 2px solid #dee2e6;
-      border-radius: 4px;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background: white;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .document-checkbox:hover {
-      border-color: #889717;
-      box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
-    }
-
-    .document-checkbox:checked {
-      background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
-      border-color: #889717;
-    }
-
-    .document-checkbox:checked::after {
-      content: '✓';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .document-checkbox:disabled {
-      background: #f8f9fa;
-      border-color: #dee2e6;
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-
-    /* Select All Checkbox */
-    #selectAll {
-      width: 18px;
-      height: 18px;
-      border: 2px solid #dee2e6;
-      border-radius: 4px;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background: white;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    #selectAll:checked {
-      background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
-      border-color: #889717;
-    }
-
-    #selectAll:checked::after {
-      content: '✓';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    /* Selected Row Highlight */
-    .document-row.selected-for-bulk {
-      background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%) !important;
-      border-left: 3px solid #889717 !important;
-    }
-
-    .document-row.selected-for-bulk:hover {
-      background: linear-gradient(135deg, rgba(136, 151, 23, 0.12) 0%, rgba(136, 151, 23, 0.08) 100%) !important;
-    }
-
-    /* Floating Action Bar */
-    .bulk-action-bar {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(8, 62, 64, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
-      z-index: 1050;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-
-    .bulk-action-bar.visible {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .bulk-action-bar .selected-count {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .bulk-action-bar .selected-count .count-badge {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-weight: 700;
-    }
-
-    .bulk-action-bar .action-buttons {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .bulk-action-bar .btn-cancel-selection {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .bulk-action-bar .btn-cancel-selection:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .bulk-action-bar .btn-bulk-send {
-      background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
-    }
-
-    .bulk-action-bar .btn-bulk-send:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(136, 151, 23, 0.4);
-    }
-
-    .bulk-action-bar .btn-bulk-send:disabled {
-      background: #6c757d;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    /* Destination Dropdown */
-    .bulk-action-bar .destination-select {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      min-width: 180px;
-    }
-
-    .bulk-action-bar .destination-select option {
-      background: #083E40;
-      color: white;
-    }
-
-    /* Bulk Send Confirmation Modal */
-    .bulk-send-modal .modal-content {
-      border-radius: 20px;
-      border: none;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .bulk-send-modal .modal-header {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-      color: white;
-      padding: 20px 24px;
-      border: none;
-    }
-
-    .bulk-send-modal .modal-header .modal-title {
-      font-weight: 700;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .bulk-send-modal .modal-header .btn-close {
-      filter: brightness(0) invert(1);
-      opacity: 0.8;
-    }
-
-    .bulk-send-modal .modal-body {
-      padding: 24px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .bulk-send-modal .summary-info {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .bulk-send-modal .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-    }
-
-    .bulk-send-modal .summary-label {
-      color: #374151;
-      font-weight: 500;
-    }
-
-    .bulk-send-modal .summary-value {
-      color: #083E40;
-      font-weight: 700;
-      font-size: 16px;
-    }
-
-    .bulk-send-modal .document-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .bulk-send-modal .document-list-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .bulk-send-modal .document-list-item:hover {
-      background: #e9ecef;
-    }
-
-    .bulk-send-modal .doc-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-
-    .bulk-send-modal .doc-info {
-      flex: 1;
-    }
-
-    .bulk-send-modal .doc-agenda {
-      font-weight: 600;
-      color: #1f2937;
-      font-size: 14px;
-    }
-
-    .bulk-send-modal .doc-spp {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
-    .bulk-send-modal .doc-value {
-      font-weight: 700;
-      color: #059669;
-      font-size: 14px;
-    }
-
-    /* Loading Overlay */
-    .bulk-send-loading {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .bulk-send-loading.visible {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .bulk-send-loading .loading-spinner {
-      width: 60px;
-      height: 60px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #889717;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .bulk-send-loading .loading-text {
-      color: white;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .bulk-send-loading .loading-progress {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 14px;
-      margin-top: 8px;
-    }
-  </style>
-
-  <!-- Floating Action Bar -->
-  <div class="bulk-action-bar" id="bulkActionBar">
-    <div class="selected-count">
-      <i class="fa-solid fa-check-circle"></i>
-      <span><span class="count-badge" id="selectedCount">0</span> dokumen dipilih</span>
-    </div>
-    <div class="action-buttons">
-      <select class="destination-select" id="destinationSelect">
-        <option value="">Pilih Tujuan...</option>
-        <option value="perpajakan">📋 Kirim ke Perpajakan</option>
-        <option value="akuntansi">📊 Kirim ke Akuntansi</option>
-      </select>
-      <button type="button" class="btn-cancel-selection" onclick="clearAllSelections()">
-        <i class="fa-solid fa-times"></i>
-        Batal
-      </button>
-      <button type="button" class="btn-bulk-send" id="btnBulkSend" onclick="showBulkSendConfirmation()">
-        <i class="fa-solid fa-paper-plane"></i>
-        <span>Kirim</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Bulk Send Confirmation Modal -->
-  <div class="modal fade bulk-send-modal" id="bulkSendConfirmModal" tabindex="-1" aria-labelledby="bulkSendConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="bulkSendConfirmModalLabel">
-            <i class="fa-solid fa-paper-plane"></i>
-            Konfirmasi Kirim Dokumen
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="summary-info">
-            <div class="summary-row">
-              <span class="summary-label">Jumlah Dokumen:</span>
-              <span class="summary-value" id="summaryDocCount">0 dokumen</span>
+        <!-- Year Filter Modal -->
+        <div class="year-filter-modal-overlay" id="yearFilterModalOverlay" onclick="closeYearFilterModal(event)">
+          <div class="year-filter-modal" onclick="event.stopPropagation()">
+            <div class="year-filter-modal-header">
+              <h5>
+                <i class="fa-solid fa-calendar-alt"></i>
+                Filter Tahun
+              </h5>
+              <button type="button" class="year-filter-modal-close" onclick="closeYearFilterModal()">
+                <i class="fa-solid fa-times"></i>
+              </button>
             </div>
-            <div class="summary-row">
-              <span class="summary-label">Total Nilai:</span>
-              <span class="summary-value" id="summaryTotalValue">Rp 0</span>
+            <div class="year-filter-modal-body">
+              <!-- Filter Type Selection -->
+              <div class="filter-type-section">
+                <h6><i class="fa-solid fa-filter me-2"></i>Filter Berdasarkan</h6>
+                <div class="filter-type-options">
+                  <div class="filter-type-option {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'selected' : '' }}" 
+                       onclick="selectFilterType('tanggal_spp', this)">
+                    <input type="radio" name="modal_filter_type" value="tanggal_spp" 
+                           {{ request('year_filter_type', 'tanggal_spp') == 'tanggal_spp' ? 'checked' : '' }}>
+                    <label>
+                      <strong>Tanggal SPP</strong>
+                      <small class="d-block">Tahun dari kolom Tanggal SPP</small>
+                    </label>
+                  </div>
+                  <div class="filter-type-option {{ request('year_filter_type') == 'tanggal_masuk' ? 'selected' : '' }}" 
+                       onclick="selectFilterType('tanggal_masuk', this)">
+                    <input type="radio" name="modal_filter_type" value="tanggal_masuk" 
+                           {{ request('year_filter_type') == 'tanggal_masuk' ? 'checked' : '' }}>
+                    <label>
+                      <strong>Tanggal Masuk</strong>
+                      <small class="d-block">Tahun dari timestamp dokumen masuk</small>
+                    </label>
+                  </div>
+                  <div class="filter-type-option {{ request('year_filter_type') == 'nomor_spp' ? 'selected' : '' }}" 
+                       onclick="selectFilterType('nomor_spp', this)">
+                    <input type="radio" name="modal_filter_type" value="nomor_spp" 
+                           {{ request('year_filter_type') == 'nomor_spp' ? 'checked' : '' }}>
+                    <label>
+                      <strong>Tahun di Nomor SPP</strong>
+                      <small class="d-block">Ekstrak tahun dari format nomor SPP (contoh: 192/M/SPP/14/03/2024)</small>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Year Selection -->
+              <div class="year-selection-section">
+                <h6><i class="fa-solid fa-calendar me-2"></i>Pilih Tahun</h6>
+                <div class="year-buttons-grid">
+                  <button type="button" class="year-btn all-years {{ !request('year') ? 'selected' : '' }}" 
+                          onclick="selectYear('', this)">
+                    Semua Tahun
+                  </button>
+                  <button type="button" class="year-btn {{ request('year') == '2024' ? 'selected' : '' }}" 
+                          onclick="selectYear('2024', this)">2024</button>
+                  <button type="button" class="year-btn {{ request('year') == '2025' ? 'selected' : '' }}" 
+                          onclick="selectYear('2025', this)">2025</button>
+                  <button type="button" class="year-btn {{ request('year') == '2026' ? 'selected' : '' }}" 
+                          onclick="selectYear('2026', this)">2026</button>
+                  <button type="button" class="year-btn {{ request('year') == '2027' ? 'selected' : '' }}" 
+                          onclick="selectYear('2027', this)">2027</button>
+                  <button type="button" class="year-btn {{ request('year') == '2028' ? 'selected' : '' }}" 
+                          onclick="selectYear('2028', this)">2028</button>
+                  <button type="button" class="year-btn {{ request('year') == '2029' ? 'selected' : '' }}" 
+                          onclick="selectYear('2029', this)">2029</button>
+                  <button type="button" class="year-btn {{ request('year') == '2030' ? 'selected' : '' }}" 
+                          onclick="selectYear('2030', this)">2030</button>
+                </div>
+              </div>
             </div>
-            <div class="summary-row">
-              <span class="summary-label">Tujuan:</span>
-              <span class="summary-value" id="summaryDestination">-</span>
+            <div class="year-filter-modal-footer">
+              <button type="button" class="btn-reset-filter" onclick="resetYearFilter()">
+                <i class="fa-solid fa-rotate-left me-2"></i>Reset
+              </button>
+              <button type="button" class="btn-apply-filter" onclick="applyYearFilter()">
+                <i class="fa-solid fa-check me-2"></i>Terapkan Filter
+              </button>
             </div>
           </div>
-          
-          <p style="color: #495057; margin-bottom: 12px;">
-            <i class="fa-solid fa-info-circle text-muted me-2"></i>
-            Dokumen berikut akan dikirim:
-          </p>
-          
-          <ul class="document-list" id="bulkSendDocumentList">
-            <!-- Document list items will be populated by JavaScript -->
-          </ul>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 20px; border-radius: 10px; font-weight: 600;">
-            <i class="fa-solid fa-times me-2"></i>Batal
-          </button>
-          <button type="button" class="btn btn-success" id="confirmBulkSendBtn" onclick="executeBulkSend()" style="padding: 10px 20px; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #889717 0%, #6b7814 100%); border: none;">
-            <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Loading Overlay -->
-  <div class="bulk-send-loading" id="bulkSendLoading">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Mengirim dokumen...</div>
-    <div class="loading-progress" id="loadingProgress">Memproses...</div>
-  </div>
+        <script>
+        // Year Filter Modal Functions
+        let selectedYear = '{{ request('year') }}';
+        let selectedFilterType = '{{ request('year_filter_type', 'tanggal_spp') }}';
 
-  <!-- Bulk Send JavaScript -->
-  <script>
-    // Store selected documents
-    let selectedDocuments = new Map();
-    let currentDestination = '';
+        function openYearFilterModal() {
+          document.getElementById('yearFilterModalOverlay').classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
 
-    // Initialize bulk select functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      initBulkSelect();
-    });
+        function closeYearFilterModal(event) {
+          if (event && event.target !== event.currentTarget) return;
+          document.getElementById('yearFilterModalOverlay').classList.remove('active');
+          document.body.style.overflow = '';
+        }
 
-    function initBulkSelect() {
-      // Get all document checkboxes
-      const docCheckboxes = document.querySelectorAll('.document-checkbox');
-      const selectAllCheckbox = document.getElementById('selectAll');
+        function selectFilterType(type, element) {
+          selectedFilterType = type;
 
-      console.log('Initializing bulk select. Found checkboxes:', docCheckboxes.length);
+          // Update visual state
+          document.querySelectorAll('.filter-type-option').forEach(opt => {
+            opt.classList.remove('selected');
+            opt.querySelector('input').checked = false;
+          });
+          element.classList.add('selected');
+          element.querySelector('input').checked = true;
+        }
 
-      // Handle individual checkbox changes
-      docCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-          const docId = this.value;
-          const row = this.closest('tr');
+        function selectYear(year, element) {
+          selectedYear = year;
 
-          if (this.checked) {
-            selectedDocuments.set(docId, {
-              id: docId,
-              nomor_agenda: this.dataset.nomor || row.querySelector('.col-nomor_agenda')?.textContent?.trim() || '-',
-              nomor_spp: row.querySelector('.col-nomor_spp')?.textContent?.trim() || '-',
-              nilai_rupiah: row.querySelector('.col-nilai_rupiah')?.textContent?.trim() || 'Rp 0'
-            });
-            row.classList.add('selected-for-bulk');
-          } else {
-            selectedDocuments.delete(docId);
-            row.classList.remove('selected-for-bulk');
-          }
+          // Update visual state
+          document.querySelectorAll('.year-btn').forEach(btn => {
+            btn.classList.remove('selected');
+          });
+          element.classList.add('selected');
+        }
 
-          updateBulkActionBar();
-          updateSelectAllCheckbox();
-        });
-      });
+        function resetYearFilter() {
+          selectedYear = '';
+          selectedFilterType = 'tanggal_spp';
 
-      // Handle Select All checkbox
-      if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-          const isChecked = this.checked;
-          
-          docCheckboxes.forEach(checkbox => {
-            if (!checkbox.disabled) {
-              checkbox.checked = isChecked;
-              const row = checkbox.closest('tr');
-              const docId = checkbox.value;
-
-              if (isChecked) {
-                selectedDocuments.set(docId, {
-                  id: docId,
-                  nomor_agenda: checkbox.dataset.nomor || row.querySelector('.col-nomor_agenda')?.textContent?.trim() || '-',
-                  nomor_spp: row.querySelector('.col-nomor_spp')?.textContent?.trim() || '-',
-                  nilai_rupiah: row.querySelector('.col-nilai_rupiah')?.textContent?.trim() || 'Rp 0'
-                });
-                row.classList.add('selected-for-bulk');
-              } else {
-                selectedDocuments.delete(docId);
-                row.classList.remove('selected-for-bulk');
-              }
+          // Reset visual state
+          document.querySelectorAll('.year-btn').forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.classList.contains('all-years')) {
+              btn.classList.add('selected');
             }
           });
 
-          updateBulkActionBar();
-        });
-      }
-    }
+          document.querySelectorAll('.filter-type-option').forEach((opt, index) => {
+            opt.classList.remove('selected');
+            opt.querySelector('input').checked = false;
+            if (index === 0) {
+              opt.classList.add('selected');
+              opt.querySelector('input').checked = true;
+            }
+          });
 
-    function updateSelectAllCheckbox() {
-      const selectAllCheckbox = document.getElementById('selectAll');
-      const allCheckboxes = document.querySelectorAll('.document-checkbox:not(:disabled)');
-      const checkedCheckboxes = document.querySelectorAll('.document-checkbox:not(:disabled):checked');
-
-      if (!selectAllCheckbox) return;
-
-      if (allCheckboxes.length === 0) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-      } else if (checkedCheckboxes.length === 0) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-      } else if (checkedCheckboxes.length === allCheckboxes.length) {
-        selectAllCheckbox.checked = true;
-        selectAllCheckbox.indeterminate = false;
-      } else {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = true;
-      }
-    }
-
-    function updateBulkActionBar() {
-      const actionBar = document.getElementById('bulkActionBar');
-      const countElement = document.getElementById('selectedCount');
-      const count = selectedDocuments.size;
-
-      countElement.textContent = count;
-
-      if (count > 0) {
-        actionBar.classList.add('visible');
-      } else {
-        actionBar.classList.remove('visible');
-      }
-    }
-
-    function clearAllSelections() {
-      selectedDocuments.clear();
-      
-      document.querySelectorAll('.document-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-        const row = checkbox.closest('tr');
-        if (row) {
-          row.classList.remove('selected-for-bulk');
+          // Apply immediately
+          applyYearFilter();
         }
+
+        function applyYearFilter() {
+          // Update hidden inputs
+          document.getElementById('yearSelect').value = selectedYear;
+          document.getElementById('yearFilterType').value = selectedFilterType;
+
+          // Update button text
+          const filterTypeLabels = {
+            'tanggal_spp': 'Tgl SPP',
+            'tanggal_masuk': 'Tgl Masuk',
+            'nomor_spp': 'No SPP'
+          };
+
+          const btnText = document.getElementById('yearFilterBtnText');
+          if (selectedYear) {
+            btnText.textContent = selectedYear + ' (' + filterTypeLabels[selectedFilterType] + ')';
+          } else {
+            btnText.textContent = 'Filter Tahun';
+          }
+
+          // Close modal
+          closeYearFilterModal();
+
+          // Submit form
+          document.getElementById('filterForm').submit();
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            closeYearFilterModal();
+          }
+        });
+
+        // ===== LIVE SEARCH FUNCTIONALITY =====
+        // Debounce function to limit the rate of function calls
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Live search handler
+        const searchInput = document.querySelector('input[name="search"]');
+        if (searchInput) {
+            const liveSearchHandler = debounce(function() {
+                const form = searchInput.closest('form');
+                if (!form) return;
+
+                const searchValue = searchInput.value.trim();
+
+                // Build URL with all parameters
+                const url = new URL(form.action);
+
+                // Add search parameter
+                if (searchValue) {
+                    url.searchParams.set('search', searchValue);
+                } else {
+                    url.searchParams.delete('search');
+                }
+
+                // Preserve year filter (if exists)
+                const yearInput = form.querySelector('input[name="year"]');
+                if (yearInput && yearInput.value) {
+                    url.searchParams.set('year', yearInput.value);
+                }
+
+                // Preserve year filter type (if exists)
+                const yearFilterType = form.querySelector('input[name="year_filter_type"]');
+                if (yearFilterType && yearFilterType.value) {
+                    url.searchParams.set('year_filter_type', yearFilterType.value);
+                }
+
+                // Preserve status filter (if exists)
+                const statusInput = form.querySelector('input[name="status_filter"]');
+                if (statusInput && statusInput.value) {
+                    url.searchParams.set('status_filter', statusInput.value);
+                }
+
+                // Preserve per_page
+                const perPage = new URLSearchParams(window.location.search).get('per_page');
+                if (perPage) {
+                    url.searchParams.set('per_page', perPage);
+                }
+
+                // Preserve column customization (if exists)
+                const columnInputs = form.querySelectorAll('input[name="columns[]"]');
+                columnInputs.forEach(input => {
+                    url.searchParams.append('columns[]', input.value);
+                });
+
+                // Navigate to the new URL
+                window.location.href = url.toString();
+            }, 500); // 500ms debounce delay
+
+            // Attach input event listener
+            searchInput.addEventListener('input', liveSearchHandler);
+        }
+        </script>
+
+    {{-- ===== MULTI-SELECT BULK SEND COMPONENTS (Operator-style) ===== --}}
+
+    <style>
+      /* ===== Multi-Select Bulk Send Styles ===== */
+
+      /* Checkbox Column Enhancements */
+      .col-checkbox {
+        width: 45px !important;
+        min-width: 45px !important;
+        max-width: 45px !important;
+        text-align: center;
+        padding: 8px !important;
+      }
+
+      /* Custom Checkbox Styling */
+      .document-checkbox {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background: white;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .document-checkbox:hover {
+        border-color: #889717;
+        box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+      }
+
+      .document-checkbox:checked {
+        background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
+        border-color: #889717;
+      }
+
+      .document-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .document-checkbox:disabled {
+        background: #f8f9fa;
+        border-color: #dee2e6;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      /* Select All Checkbox */
+      #selectAll {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background: white;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      #selectAll:checked {
+        background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
+        border-color: #889717;
+      }
+
+      #selectAll:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      /* Selected Row Highlight */
+      .document-row.selected-for-bulk {
+        background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%) !important;
+        border-left: 3px solid #889717 !important;
+      }
+
+      .document-row.selected-for-bulk:hover {
+        background: linear-gradient(135deg, rgba(136, 151, 23, 0.12) 0%, rgba(136, 151, 23, 0.08) 100%) !important;
+      }
+
+      /* Floating Action Bar */
+      .bulk-action-bar {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(8, 62, 64, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+
+      .bulk-action-bar.visible {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .bulk-action-bar .selected-count {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .bulk-action-bar .selected-count .count-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+      }
+
+      .bulk-action-bar .action-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .bulk-action-bar .btn-cancel-selection {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .bulk-action-bar .btn-cancel-selection:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .bulk-action-bar .btn-bulk-send {
+        background: linear-gradient(135deg, #889717 0%, #6b7814 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+      }
+
+      .bulk-action-bar .btn-bulk-send:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(136, 151, 23, 0.4);
+      }
+
+      .bulk-action-bar .btn-bulk-send:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* Destination Dropdown */
+      .bulk-action-bar .destination-select {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        min-width: 180px;
+      }
+
+      .bulk-action-bar .destination-select option {
+        background: #083E40;
+        color: white;
+      }
+
+      /* Bulk Send Confirmation Modal */
+      .bulk-send-modal .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .bulk-send-modal .modal-header {
+        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+        color: white;
+        padding: 20px 24px;
+        border: none;
+      }
+
+      .bulk-send-modal .modal-header .modal-title {
+        font-weight: 700;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .bulk-send-modal .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
+      }
+
+      .bulk-send-modal .modal-body {
+        padding: 24px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .bulk-send-modal .summary-info {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+
+      .bulk-send-modal .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+      }
+
+      .bulk-send-modal .summary-label {
+        color: #374151;
+        font-weight: 500;
+      }
+
+      .bulk-send-modal .summary-value {
+        color: #083E40;
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .bulk-send-modal .document-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .bulk-send-modal .document-list-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .bulk-send-modal .document-list-item:hover {
+        background: #e9ecef;
+      }
+
+      .bulk-send-modal .doc-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .bulk-send-modal .doc-info {
+        flex: 1;
+      }
+
+      .bulk-send-modal .doc-agenda {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 14px;
+      }
+
+      .bulk-send-modal .doc-spp {
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      .bulk-send-modal .doc-value {
+        font-weight: 700;
+        color: #059669;
+        font-size: 14px;
+      }
+
+      /* Loading Overlay */
+      .bulk-send-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .bulk-send-loading.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .bulk-send-loading .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #889717;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .bulk-send-loading .loading-text {
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .bulk-send-loading .loading-progress {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        margin-top: 8px;
+      }
+    </style>
+
+    <!-- Floating Action Bar -->
+    <div class="bulk-action-bar" id="bulkActionBar">
+      <div class="selected-count">
+        <i class="fa-solid fa-check-circle"></i>
+        <span><span class="count-badge" id="selectedCount">0</span> dokumen dipilih</span>
+      </div>
+      <div class="action-buttons">
+        <select class="destination-select" id="destinationSelect">
+          <option value="">Pilih Tujuan...</option>
+          <option value="perpajakan">📋 Kirim ke Perpajakan</option>
+          <option value="akuntansi">📊 Kirim ke Akuntansi</option>
+        </select>
+        <button type="button" class="btn-cancel-selection" onclick="clearAllSelections()">
+          <i class="fa-solid fa-times"></i>
+          Batal
+        </button>
+        <button type="button" class="btn-bulk-send" id="btnBulkSend" onclick="showBulkSendConfirmation()">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Kirim</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bulk Send Confirmation Modal -->
+    <div class="modal fade bulk-send-modal" id="bulkSendConfirmModal" tabindex="-1" aria-labelledby="bulkSendConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="bulkSendConfirmModalLabel">
+              <i class="fa-solid fa-paper-plane"></i>
+              Konfirmasi Kirim Dokumen
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="summary-info">
+              <div class="summary-row">
+                <span class="summary-label">Jumlah Dokumen:</span>
+                <span class="summary-value" id="summaryDocCount">0 dokumen</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Total Nilai:</span>
+                <span class="summary-value" id="summaryTotalValue">Rp 0</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Tujuan:</span>
+                <span class="summary-value" id="summaryDestination">-</span>
+              </div>
+            </div>
+
+            <p style="color: #495057; margin-bottom: 12px;">
+              <i class="fa-solid fa-info-circle text-muted me-2"></i>
+              Dokumen berikut akan dikirim:
+            </p>
+
+            <ul class="document-list" id="bulkSendDocumentList">
+              <!-- Document list items will be populated by JavaScript -->
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 20px; border-radius: 10px; font-weight: 600;">
+              <i class="fa-solid fa-times me-2"></i>Batal
+            </button>
+            <button type="button" class="btn btn-success" id="confirmBulkSendBtn" onclick="executeBulkSend()" style="padding: 10px 20px; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #889717 0%, #6b7814 100%); border: none;">
+              <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="bulk-send-loading" id="bulkSendLoading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Mengirim dokumen...</div>
+      <div class="loading-progress" id="loadingProgress">Memproses...</div>
+    </div>
+
+    <!-- Bulk Send JavaScript -->
+    <script>
+      // Store selected documents
+      let selectedDocuments = new Map();
+      let currentDestination = '';
+
+      // Initialize bulk select functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        initBulkSelect();
       });
 
-      const selectAllCheckbox = document.getElementById('selectAll');
-      if (selectAllCheckbox) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
+      function initBulkSelect() {
+        // Get all document checkboxes
+        const docCheckboxes = document.querySelectorAll('.document-checkbox');
+        const selectAllCheckbox = document.getElementById('selectAll');
+
+        console.log('Initializing bulk select. Found checkboxes:', docCheckboxes.length);
+
+        // Handle individual checkbox changes
+        docCheckboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', function() {
+            const docId = this.value;
+            const row = this.closest('tr');
+
+            if (this.checked) {
+              selectedDocuments.set(docId, {
+                id: docId,
+                nomor_agenda: this.dataset.nomor || row.querySelector('.col-nomor_agenda')?.textContent?.trim() || '-',
+                nomor_spp: row.querySelector('.col-nomor_spp')?.textContent?.trim() || '-',
+                nilai_rupiah: row.querySelector('.col-nilai_rupiah')?.textContent?.trim() || 'Rp 0'
+              });
+              row.classList.add('selected-for-bulk');
+            } else {
+              selectedDocuments.delete(docId);
+              row.classList.remove('selected-for-bulk');
+            }
+
+            updateBulkActionBar();
+            updateSelectAllCheckbox();
+          });
+        });
+
+        // Handle Select All checkbox
+        if (selectAllCheckbox) {
+          selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+
+            docCheckboxes.forEach(checkbox => {
+              if (!checkbox.disabled) {
+                checkbox.checked = isChecked;
+                const row = checkbox.closest('tr');
+                const docId = checkbox.value;
+
+                if (isChecked) {
+                  selectedDocuments.set(docId, {
+                    id: docId,
+                    nomor_agenda: checkbox.dataset.nomor || row.querySelector('.col-nomor_agenda')?.textContent?.trim() || '-',
+                    nomor_spp: row.querySelector('.col-nomor_spp')?.textContent?.trim() || '-',
+                    nilai_rupiah: row.querySelector('.col-nilai_rupiah')?.textContent?.trim() || 'Rp 0'
+                  });
+                  row.classList.add('selected-for-bulk');
+                } else {
+                  selectedDocuments.delete(docId);
+                  row.classList.remove('selected-for-bulk');
+                }
+              }
+            });
+
+            updateBulkActionBar();
+          });
+        }
       }
 
-      document.getElementById('destinationSelect').value = '';
-      updateBulkActionBar();
-    }
+      function updateSelectAllCheckbox() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const allCheckboxes = document.querySelectorAll('.document-checkbox:not(:disabled)');
+        const checkedCheckboxes = document.querySelectorAll('.document-checkbox:not(:disabled):checked');
 
-    function showBulkSendConfirmation() {
-      if (selectedDocuments.size === 0) {
-        alert('Pilih minimal satu dokumen untuk dikirim.');
-        return;
-      }
+        if (!selectAllCheckbox) return;
 
-      const destination = document.getElementById('destinationSelect').value;
-      if (!destination) {
-        alert('Pilih tujuan pengiriman terlebih dahulu.');
-        return;
-      }
-
-      currentDestination = destination;
-
-      // Populate modal with selected documents
-      const documentList = document.getElementById('bulkSendDocumentList');
-      documentList.innerHTML = '';
-
-      let totalValue = 0;
-      let counter = 1;
-
-      selectedDocuments.forEach((doc, id) => {
-        // Parse nilai rupiah for total calculation
-        const nilaiStr = (doc.nilai_rupiah || '0').replace(/[^\d]/g, '');
-        const nilaiNum = parseInt(nilaiStr) || 0;
-        totalValue += nilaiNum;
-
-        const listItem = document.createElement('li');
-        listItem.className = 'document-list-item';
-        listItem.innerHTML = `
-          <div class="doc-icon">
-            <i class="fa-solid fa-file-lines"></i>
-          </div>
-          <div class="doc-info">
-            <div class="doc-agenda">${doc.nomor_agenda || '-'}</div>
-            <div class="doc-spp">SPP: ${doc.nomor_spp || '-'}</div>
-          </div>
-          <div class="doc-value">${doc.nilai_rupiah || '-'}</div>
-        `;
-        documentList.appendChild(listItem);
-        counter++;
-      });
-
-      // Update summary
-      document.getElementById('summaryDocCount').textContent = `${selectedDocuments.size} dokumen`;
-      document.getElementById('summaryTotalValue').textContent = formatRupiah(totalValue);
-      document.getElementById('summaryDestination').textContent = destination === 'perpajakan' ? 'Team Perpajakan' : 'Team Akuntansi';
-
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('bulkSendConfirmModal'));
-      modal.show();
-    }
-
-    function formatRupiah(number) {
-      return 'Rp ' + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    }
-
-    function executeBulkSend() {
-      if (selectedDocuments.size === 0) {
-        alert('Tidak ada dokumen yang dipilih.');
-        return;
-      }
-
-      if (!currentDestination) {
-        alert('Tujuan pengiriman tidak valid.');
-        return;
-      }
-
-      // Disable button and show loading
-      const confirmBtn = document.getElementById('confirmBulkSendBtn');
-      confirmBtn.disabled = true;
-      confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
-
-      // Close modal and show loading overlay
-      const modal = bootstrap.Modal.getInstance(document.getElementById('bulkSendConfirmModal'));
-      modal.hide();
-
-      // Show loading overlay
-      const loadingOverlay = document.getElementById('bulkSendLoading');
-      loadingOverlay.classList.add('visible');
-      document.getElementById('loadingProgress').textContent = `Mengirim ${selectedDocuments.size} dokumen ke Team ${currentDestination === 'perpajakan' ? 'Perpajakan' : 'Akuntansi'}...`;
-
-      // Prepare data
-      const documentIds = Array.from(selectedDocuments.keys()).map(id => parseInt(id));
-
-      // Send request
-      fetch('{{ route("team-verifikasi.bulk.forward") }}', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          document_ids: documentIds,
-          target_role: currentDestination
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Hide loading overlay
-        loadingOverlay.classList.remove('visible');
-
-        if (data.success) {
-          // Show success message
-          showBulkSendResult(true, data);
-          
-          // Clear selections
-          clearAllSelections();
-
-          // Reload page after delay to show updated data
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+        if (allCheckboxes.length === 0) {
+          selectAllCheckbox.checked = false;
+          selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === 0) {
+          selectAllCheckbox.checked = false;
+          selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+          selectAllCheckbox.checked = true;
+          selectAllCheckbox.indeterminate = false;
         } else {
-          // Show error message
-          showBulkSendResult(false, data);
-          
+          selectAllCheckbox.checked = false;
+          selectAllCheckbox.indeterminate = true;
+        }
+      }
+
+      function updateBulkActionBar() {
+        const actionBar = document.getElementById('bulkActionBar');
+        const countElement = document.getElementById('selectedCount');
+        const count = selectedDocuments.size;
+
+        countElement.textContent = count;
+
+        if (count > 0) {
+          actionBar.classList.add('visible');
+        } else {
+          actionBar.classList.remove('visible');
+        }
+      }
+
+      function clearAllSelections() {
+        selectedDocuments.clear();
+
+        document.querySelectorAll('.document-checkbox').forEach(checkbox => {
+          checkbox.checked = false;
+          const row = checkbox.closest('tr');
+          if (row) {
+            row.classList.remove('selected-for-bulk');
+          }
+        });
+
+        const selectAllCheckbox = document.getElementById('selectAll');
+        if (selectAllCheckbox) {
+          selectAllCheckbox.checked = false;
+          selectAllCheckbox.indeterminate = false;
+        }
+
+        document.getElementById('destinationSelect').value = '';
+        updateBulkActionBar();
+      }
+
+      function showBulkSendConfirmation() {
+        if (selectedDocuments.size === 0) {
+          alert('Pilih minimal satu dokumen untuk dikirim.');
+          return;
+        }
+
+        const destination = document.getElementById('destinationSelect').value;
+        if (!destination) {
+          alert('Pilih tujuan pengiriman terlebih dahulu.');
+          return;
+        }
+
+        currentDestination = destination;
+
+        // Populate modal with selected documents
+        const documentList = document.getElementById('bulkSendDocumentList');
+        documentList.innerHTML = '';
+
+        let totalValue = 0;
+        let counter = 1;
+
+        selectedDocuments.forEach((doc, id) => {
+          // Parse nilai rupiah for total calculation
+          const nilaiStr = (doc.nilai_rupiah || '0').replace(/[^\d]/g, '');
+          const nilaiNum = parseInt(nilaiStr) || 0;
+          totalValue += nilaiNum;
+
+          const listItem = document.createElement('li');
+          listItem.className = 'document-list-item';
+          listItem.innerHTML = `
+            <div class="doc-icon">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <div class="doc-info">
+              <div class="doc-agenda">${doc.nomor_agenda || '-'}</div>
+              <div class="doc-spp">SPP: ${doc.nomor_spp || '-'}</div>
+            </div>
+            <div class="doc-value">${doc.nilai_rupiah || '-'}</div>
+          `;
+          documentList.appendChild(listItem);
+          counter++;
+        });
+
+        // Update summary
+        document.getElementById('summaryDocCount').textContent = `${selectedDocuments.size} dokumen`;
+        document.getElementById('summaryTotalValue').textContent = formatRupiah(totalValue);
+        document.getElementById('summaryDestination').textContent = destination === 'perpajakan' ? 'Team Perpajakan' : 'Team Akuntansi';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('bulkSendConfirmModal'));
+        modal.show();
+      }
+
+      function formatRupiah(number) {
+        return 'Rp ' + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      }
+
+      function executeBulkSend() {
+        if (selectedDocuments.size === 0) {
+          alert('Tidak ada dokumen yang dipilih.');
+          return;
+        }
+
+        if (!currentDestination) {
+          alert('Tujuan pengiriman tidak valid.');
+          return;
+        }
+
+        // Disable button and show loading
+        const confirmBtn = document.getElementById('confirmBulkSendBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengirim...';
+
+        // Close modal and show loading overlay
+        const modal = bootstrap.Modal.getInstance(document.getElementById('bulkSendConfirmModal'));
+        modal.hide();
+
+        // Show loading overlay
+        const loadingOverlay = document.getElementById('bulkSendLoading');
+        loadingOverlay.classList.add('visible');
+        document.getElementById('loadingProgress').textContent = `Mengirim ${selectedDocuments.size} dokumen ke Team ${currentDestination === 'perpajakan' ? 'Perpajakan' : 'Akuntansi'}...`;
+
+        // Prepare data
+        const documentIds = Array.from(selectedDocuments.keys()).map(id => parseInt(id));
+
+        // Send request
+        fetch('{{ route("team-verifikasi.bulk.forward") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            document_ids: documentIds,
+            target_role: currentDestination
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Hide loading overlay
+          loadingOverlay.classList.remove('visible');
+
+          if (data.success) {
+            // Show success message
+            showBulkSendResult(true, data);
+
+            // Clear selections
+            clearAllSelections();
+
+            // Reload page after delay to show updated data
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else {
+            // Show error message
+            showBulkSendResult(false, data);
+
+            // Reset button
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
+          }
+        })
+        .catch(error => {
+          console.error('Bulk send error:', error);
+          loadingOverlay.classList.remove('visible');
+
+          alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
+
           // Reset button
           confirmBtn.disabled = false;
           confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
-        }
-      })
-      .catch(error => {
-        console.error('Bulk send error:', error);
-        loadingOverlay.classList.remove('visible');
-        
-        alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
-        
-        // Reset button
-        confirmBtn.disabled = false;
-        confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
-      });
-    }
-
-    function showBulkSendResult(success, data) {
-      // Create toast notification
-      const toastContainer = document.createElement('div');
-      toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
-      toastContainer.style.zIndex = '11000';
-
-      let message = '';
-      let bgClass = '';
-
-      if (success) {
-        bgClass = 'bg-success';
-        const targetLabel = currentDestination === 'perpajakan' ? 'Team Perpajakan' : 'Team Akuntansi';
-        message = `<i class="fa-solid fa-check-circle me-2"></i>
-          <strong>Berhasil!</strong> ${data.processed || selectedDocuments.size} dokumen telah dikirim ke ${targetLabel}.`;
-        
-        if (data.failed && data.failed > 0) {
-          message += `<br><small>${data.failed} dokumen gagal dikirim.</small>`;
-        }
-      } else {
-        bgClass = 'bg-danger';
-        message = `<i class="fa-solid fa-exclamation-circle me-2"></i>
-          <strong>Gagal!</strong> ${data.message || 'Terjadi kesalahan saat mengirim dokumen.'}`;
+        });
       }
 
-      toastContainer.innerHTML = `
-        <div class="toast align-items-center text-white ${bgClass} border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px;">
-          <div class="d-flex">
-            <div class="toast-body" style="padding: 16px 20px; font-size: 14px;">
-              ${message}
+      function showBulkSendResult(success, data) {
+        // Create toast notification
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+        toastContainer.style.zIndex = '11000';
+
+        let message = '';
+        let bgClass = '';
+
+        if (success) {
+          bgClass = 'bg-success';
+          const targetLabel = currentDestination === 'perpajakan' ? 'Team Perpajakan' : 'Team Akuntansi';
+          message = `<i class="fa-solid fa-check-circle me-2"></i>
+            <strong>Berhasil!</strong> ${data.processed || selectedDocuments.size} dokumen telah dikirim ke ${targetLabel}.`;
+
+          if (data.failed && data.failed > 0) {
+            message += `<br><small>${data.failed} dokumen gagal dikirim.</small>`;
+          }
+        } else {
+          bgClass = 'bg-danger';
+          message = `<i class="fa-solid fa-exclamation-circle me-2"></i>
+            <strong>Gagal!</strong> ${data.message || 'Terjadi kesalahan saat mengirim dokumen.'}`;
+        }
+
+        toastContainer.innerHTML = `
+          <div class="toast align-items-center text-white ${bgClass} border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px;">
+            <div class="d-flex">
+              <div class="toast-body" style="padding: 16px 20px; font-size: 14px;">
+                ${message}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
           </div>
-        </div>
-      `;
+        `;
 
-      document.body.appendChild(toastContainer);
+        document.body.appendChild(toastContainer);
 
-      // Auto-remove after 5 seconds
-      setTimeout(() => {
-        toastContainer.remove();
-      }, 5000);
-    }
-  </script>
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          toastContainer.remove();
+        }, 5000);
+      }
+    </script>
 
 @endsection
 
