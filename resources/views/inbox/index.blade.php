@@ -5,8 +5,8 @@
 @push('styles')
     <style>
         /* ============================================
-                   MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
-                   ============================================ */
+                       MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
+                       ============================================ */
 
         :root {
             --primary-color: #083E40;
@@ -36,8 +36,8 @@
         }
 
         /* ============================================
-                   HEADER SECTION - Clean & Professional
-                   ============================================ */
+                       HEADER SECTION - Clean & Professional
+                       ============================================ */
         .inbox-header {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             border-radius: 16px;
@@ -159,8 +159,8 @@
         }
 
         /* ============================================
-                   STATS CARDS - Clean & Organized
-                   ============================================ */
+                       STATS CARDS - Clean & Organized
+                       ============================================ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -261,8 +261,8 @@
         }
 
         /* ============================================
-                   DOCUMENT SECTION - Clean Card Design
-                   ============================================ */
+                       DOCUMENT SECTION - Clean Card Design
+                       ============================================ */
         .documents-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -312,8 +312,8 @@
         }
 
         /* ============================================
-                   SEARCH & FILTER - Clean Input Design
-                   ============================================ */
+                       SEARCH & FILTER - Clean Input Design
+                       ============================================ */
         .search-filter-section {
             padding: 1.5rem 2rem;
             background: var(--bg-light);
@@ -382,8 +382,8 @@
         }
 
         /* ============================================
-                   DOCUMENT CARDS - Clean Card Layout
-                   ============================================ */
+                       DOCUMENT CARDS - Clean Card Layout
+                       ============================================ */
         .documents-list {
             padding: 1.5rem 2rem;
         }
@@ -573,8 +573,8 @@
         }
 
         /* ============================================
-                   EMPTY STATE - Clean & Encouraging
-                   ============================================ */
+                       EMPTY STATE - Clean & Encouraging
+                       ============================================ */
         .empty-state {
             padding: 3.5rem 2rem;
             text-align: center;
@@ -642,28 +642,211 @@
         }
 
         /* ============================================
-                   PAGINATION - Clean Design
-                   ============================================ */
+                       PAGINATION - Clean Design
+                       ============================================ */
         .pagination-wrapper {
             padding: 1.5rem 2rem;
             border-top: 1px solid var(--border-color);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
             background: var(--bg-light);
         }
 
+        /* Laravel Default Pagination Container */
+        .pagination-wrapper>nav {
+            width: 100%;
+        }
+
+        /* Main flex container for "Previous" and "Next" with page numbers */
+        .pagination-wrapper nav>div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Hide the first div that shows "Showing X to Y of Z results" on mobile, show on desktop */
+        .pagination-wrapper nav>div:first-child {
+            display: none;
+        }
+
+        @media (min-width: 640px) {
+            .pagination-wrapper nav>div:first-child {
+                display: block;
+            }
+        }
+
+        /* The second div contains the actual pagination links */
+        .pagination-wrapper nav>div:last-child {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Results info text */
+        .pagination-wrapper p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0;
+            text-align: center;
+        }
+
+        .pagination-wrapper p span {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Previous/Next links and page number container */
+        .pagination-wrapper nav span,
+        .pagination-wrapper nav a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0.5rem 0.875rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--bg-white);
+            border: 1.5px solid var(--border-color);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        /* First and last items get rounded corners */
+        .pagination-wrapper nav span:first-child,
+        .pagination-wrapper nav a:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .pagination-wrapper nav span:last-child,
+        .pagination-wrapper nav a:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Remove double borders */
+        .pagination-wrapper nav span+span,
+        .pagination-wrapper nav span+a,
+        .pagination-wrapper nav a+span,
+        .pagination-wrapper nav a+a {
+            margin-left: -1.5px;
+        }
+
+        /* Hover state for links */
+        .pagination-wrapper nav a:hover {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+            z-index: 1;
+            position: relative;
+        }
+
+        /* Active page - using aria-current */
+        .pagination-wrapper nav span[aria-current="page"] {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+            z-index: 1;
+            position: relative;
+        }
+
+        /* Disabled state (usually for "Previous" on first page, "Next" on last page) */
+        .pagination-wrapper nav span[aria-disabled="true"],
+        .pagination-wrapper nav span.cursor-not-allowed {
+            color: var(--text-muted);
+            background: var(--bg-light);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* FIX: SVG icons in Laravel pagination - THIS IS CRITICAL */
+        .pagination-wrapper svg {
+            width: 16px !important;
+            height: 16px !important;
+            max-width: 16px !important;
+            max-height: 16px !important;
+            flex-shrink: 0;
+        }
+
+        /* Alternative pagination layout for Tailwind pagination */
+        .pagination-wrapper .relative.inline-flex,
+        .pagination-wrapper .inline-flex {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* Fix for the flex layout that wraps pagination */
+        .pagination-wrapper .flex.justify-between,
+        .pagination-wrapper .sm\\:flex-1,
+        .pagination-wrapper .sm\\:items-center,
+        .pagination-wrapper .sm\\:justify-between {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        @media (min-width: 640px) {
+
+            .pagination-wrapper .flex.justify-between,
+            .pagination-wrapper .sm\\:flex-1.sm\\:flex.sm\\:items-center.sm\\:justify-between {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        /* Hide the mobile simple pagination, show full pagination */
+        .pagination-wrapper .flex-1.flex.justify-between.sm\\:hidden {
+            display: none;
+        }
+
+        .pagination-wrapper .hidden.sm\\:flex-1 {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .pagination-wrapper .hidden.sm\\:flex-1 {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        /* Standard Bootstrap/Laravel Pagination */
         .pagination-wrapper .pagination {
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .pagination-wrapper .page-item {
             margin: 0;
         }
 
         .pagination-wrapper .page-link {
             border-radius: 8px;
-            margin: 0 0.25rem;
             border: 1.5px solid var(--border-color);
             color: var(--text-primary);
             padding: 0.5rem 0.875rem;
             transition: all 0.2s ease;
             font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
         }
 
         .pagination-wrapper .page-link:hover {
@@ -678,9 +861,22 @@
             color: white;
         }
 
+        .pagination-wrapper .page-item.disabled .page-link {
+            color: var(--text-muted);
+            background: var(--bg-light);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* SVG icons in page links */
+        .pagination-wrapper .page-link svg {
+            width: 14px !important;
+            height: 14px !important;
+        }
+
         /* ============================================
-                   RESPONSIVE DESIGN
-                   ============================================ */
+                       RESPONSIVE DESIGN
+                       ============================================ */
         @media (max-width: 768px) {
             .inbox-container {
                 padding: 1rem;
@@ -741,8 +937,8 @@
         }
 
         /* ============================================
-                   UTILITY CLASSES
-                   ============================================ */
+                       UTILITY CLASSES
+                       ============================================ */
         .text-truncate-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -751,8 +947,8 @@
         }
 
         /* ============================================
-                   NOTIFICATION BADGE
-                   ============================================ */
+                       NOTIFICATION BADGE
+                       ============================================ */
         .new-documents-badge {
             background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
             color: white;
@@ -1576,12 +1772,12 @@
                             noResultsMsg = document.createElement('div');
                             noResultsMsg.className = 'empty-state';
                             noResultsMsg.innerHTML = `
-                                    <div class="empty-state-icon">
-                                        <i class="fas fa-search" style="color: var(--text-muted);"></i>
-                                    </div>
-                                    <h3 class="empty-state-title">Tidak Ada Hasil</h3>
-                                    <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
-                                `;
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Tidak Ada Hasil</h3>
+                                        <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
+                                    `;
                             documentsList.appendChild(noResultsMsg);
                         }
                     } else if (noResultsMsg) {
@@ -1689,11 +1885,11 @@
                     const documentsHeader = document.querySelector('.documents-header .col-md-4');
                     if (documentsHeader) {
                         const badgeHtml = `
-                                <span class="new-documents-badge" id="newDocumentsBadge">
-                                    <i class="fas fa-bell"></i>
-                                    <span id="newDocumentsCount">${newCount}</span> Baru
-                                </span>
-                            `;
+                                    <span class="new-documents-badge" id="newDocumentsBadge">
+                                        <i class="fas fa-bell"></i>
+                                        <span id="newDocumentsCount">${newCount}</span> Baru
+                                    </span>
+                                `;
                         documentsHeader.querySelector('.d-flex').insertAdjacentHTML('afterbegin', badgeHtml);
                     }
                 } else {
@@ -1774,17 +1970,17 @@
             };
 
             toast.innerHTML = `
-                    <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-                    <div class="notification-content">
-                        <div class="notification-icon">
-                            ${icons[type] || icons.success}
+                        <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                        <div class="notification-content">
+                            <div class="notification-icon">
+                                ${icons[type] || icons.success}
+                            </div>
+                            <div class="notification-body">
+                                <div class="notification-title">${title}</div>
+                                <div class="notification-message">${message}</div>
+                            </div>
                         </div>
-                        <div class="notification-body">
-                            <div class="notification-title">${title}</div>
-                            <div class="notification-message">${message}</div>
-                        </div>
-                    </div>
-                `;
+                    `;
 
             container.appendChild(toast);
 
@@ -1830,18 +2026,18 @@
             };
 
             toast.innerHTML = `
-                    <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-                    <div class="notification-content">
-                        <div class="notification-icon">
-                            ${icons[type] || icons.info}
+                        <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                        <div class="notification-content">
+                            <div class="notification-icon">
+                                ${icons[type] || icons.info}
+                            </div>
+                            <div class="notification-body">
+                                <div class="notification-title">${title}</div>
+                                <div class="notification-message">${message}</div>
+                                ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
+                            </div>
                         </div>
-                        <div class="notification-body">
-                            <div class="notification-title">${title}</div>
-                            <div class="notification-message">${message}</div>
-                            ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
-                        </div>
-                    </div>
-                `;
+                    `;
 
             container.appendChild(toast);
 
@@ -2115,11 +2311,11 @@
         function loadHistoryData(dateFilter) {
             const body = document.getElementById('historyModalBody');
             body.innerHTML = `
-                        <div class="history-loading">
-                            <i class="fas fa-spinner"></i>
-                            <p>Memuat data...</p>
-                        </div>
-                    `;
+                            <div class="history-loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Memuat data...</p>
+                            </div>
+                        `;
 
             fetch(`{{ route('inbox.history') }}?date=${encodeURIComponent(dateFilter)}`, {
                 method: 'GET',
@@ -2135,21 +2331,21 @@
                         renderHistoryDocuments(data);
                     } else {
                         body.innerHTML = `
-                                <div class="history-empty-state">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    <p>${data.message || 'Gagal memuat data'}</p>
-                                </div>
-                            `;
+                                    <div class="history-empty-state">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <p>${data.message || 'Gagal memuat data'}</p>
+                                    </div>
+                                `;
                     }
                 })
                 .catch(error => {
                     console.error('Error loading history:', error);
                     body.innerHTML = `
-                            <div class="history-empty-state">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <p>Terjadi kesalahan saat memuat data</p>
-                            </div>
-                        `;
+                                <div class="history-empty-state">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <p>Terjadi kesalahan saat memuat data</p>
+                                </div>
+                            `;
                 });
         }
 
@@ -2158,45 +2354,45 @@
 
             if (data.documents_count === 0) {
                 body.innerHTML = `
-                            <div class="history-date-label">
-                                ${data.date_label}
-                                <span class="count-badge">0 dokumen</span>
-                            </div>
-                            <div class="history-empty-state">
-                                <i class="fas fa-inbox"></i>
-                                <p>Tidak ada dokumen yang masuk pada periode ini</p>
-                            </div>
-                        `;
+                                <div class="history-date-label">
+                                    ${data.date_label}
+                                    <span class="count-badge">0 dokumen</span>
+                                </div>
+                                <div class="history-empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>Tidak ada dokumen yang masuk pada periode ini</p>
+                                </div>
+                            `;
                 return;
             }
 
             let html = `
-                        <div class="history-date-label">
-                            ${data.date_label}
-                            <span class="count-badge">${data.documents_count} dokumen</span>
-                        </div>
-                        <div class="history-doc-list">
-                    `;
+                            <div class="history-date-label">
+                                ${data.date_label}
+                                <span class="count-badge">${data.documents_count} dokumen</span>
+                            </div>
+                            <div class="history-doc-list">
+                        `;
 
             data.documents.forEach(doc => {
                 const statusClass = doc.status || 'pending';
                 html += `
-                            <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
-                                <div class="history-doc-header">
-                                    <span class="history-doc-agenda">${doc.nomor_agenda}</span>
-                                    <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
+                                <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
+                                    <div class="history-doc-header">
+                                        <span class="history-doc-agenda">${doc.nomor_agenda}</span>
+                                        <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
+                                    </div>
+                                    <div class="history-doc-spp">${doc.nomor_spp}</div>
+                                    <div class="history-doc-uraian">${doc.uraian_spp}</div>
+                                    <div class="history-doc-footer">
+                                        <span class="history-doc-time">
+                                            <i class="fas fa-clock"></i>
+                                            Masuk: ${doc.received_at}
+                                        </span>
+                                        <span class="history-doc-value">${doc.nilai_rupiah}</span>
+                                    </div>
                                 </div>
-                                <div class="history-doc-spp">${doc.nomor_spp}</div>
-                                <div class="history-doc-uraian">${doc.uraian_spp}</div>
-                                <div class="history-doc-footer">
-                                    <span class="history-doc-time">
-                                        <i class="fas fa-clock"></i>
-                                        Masuk: ${doc.received_at}
-                                    </span>
-                                    <span class="history-doc-value">${doc.nilai_rupiah}</span>
-                                </div>
-                            </div>
-                        `;
+                            `;
             });
 
             html += '</div>';
@@ -2211,7 +2407,3 @@
         });
     </script>
 @endsection
-
-
-
-
