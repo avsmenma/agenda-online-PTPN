@@ -613,6 +613,10 @@ Route::middleware(['auth', 'role:operator,Operator,team_verifikasi,verifikasi,Ve
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
+
+    // Bulk approve route (static, before parameterized routes)
+    Route::post('/inbox/bulk-approve', [\App\Http\Controllers\InboxController::class, 'bulkApprove'])->name('inbox.bulk-approve');
+
     Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show');
     Route::post('/inbox/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])->name('inbox.approve');
     Route::post('/inbox/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])->name('inbox.reject');

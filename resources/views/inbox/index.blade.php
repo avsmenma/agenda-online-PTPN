@@ -5,8 +5,8 @@
 @push('styles')
     <style>
         /* ============================================
-                       MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
-                       ============================================ */
+                                           MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
+                                           ============================================ */
 
         :root {
             --primary-color: #083E40;
@@ -36,8 +36,8 @@
         }
 
         /* ============================================
-                       HEADER SECTION - Clean & Professional
-                       ============================================ */
+                                           HEADER SECTION - Clean & Professional
+                                           ============================================ */
         .inbox-header {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             border-radius: 16px;
@@ -159,8 +159,8 @@
         }
 
         /* ============================================
-                       STATS CARDS - Clean & Organized
-                       ============================================ */
+                                           STATS CARDS - Clean & Organized
+                                           ============================================ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -261,8 +261,8 @@
         }
 
         /* ============================================
-                       DOCUMENT SECTION - Clean Card Design
-                       ============================================ */
+                                           DOCUMENT SECTION - Clean Card Design
+                                           ============================================ */
         .documents-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -312,8 +312,8 @@
         }
 
         /* ============================================
-                       SEARCH & FILTER - Clean Input Design
-                       ============================================ */
+                                           SEARCH & FILTER - Clean Input Design
+                                           ============================================ */
         .search-filter-section {
             padding: 1.5rem 2rem;
             background: var(--bg-light);
@@ -382,8 +382,8 @@
         }
 
         /* ============================================
-                       DOCUMENT CARDS - Clean Card Layout
-                       ============================================ */
+                                           DOCUMENT CARDS - Clean Card Layout
+                                           ============================================ */
         .documents-list {
             padding: 1.5rem 2rem;
         }
@@ -573,8 +573,8 @@
         }
 
         /* ============================================
-                       EMPTY STATE - Clean & Encouraging
-                       ============================================ */
+                                           EMPTY STATE - Clean & Encouraging
+                                           ============================================ */
         .empty-state {
             padding: 3.5rem 2rem;
             text-align: center;
@@ -642,8 +642,8 @@
         }
 
         /* ============================================
-                       PAGINATION - Clean Design
-                       ============================================ */
+                                           PAGINATION - Clean Design
+                                           ============================================ */
         .pagination-wrapper {
             padding: 1.5rem 2rem;
             border-top: 1px solid var(--border-color);
@@ -875,8 +875,8 @@
         }
 
         /* ============================================
-                       RESPONSIVE DESIGN
-                       ============================================ */
+                                           RESPONSIVE DESIGN
+                                           ============================================ */
         @media (max-width: 768px) {
             .inbox-container {
                 padding: 1rem;
@@ -937,8 +937,8 @@
         }
 
         /* ============================================
-                       UTILITY CLASSES
-                       ============================================ */
+                                           UTILITY CLASSES
+                                           ============================================ */
         .text-truncate-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -947,8 +947,8 @@
         }
 
         /* ============================================
-                       NOTIFICATION BADGE
-                       ============================================ */
+                                           NOTIFICATION BADGE
+                                           ============================================ */
         .new-documents-badge {
             background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
             color: white;
@@ -1569,105 +1569,133 @@
                         </div>
                     </div>
 
+                    <!-- Select All Header for Bulk Actions -->
+                    <div class="select-all-container" id="selectAllContainer">
+                        <label class="bulk-checkbox">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            <span class="checkmark"></span>
+                        </label>
+                        <label class="select-all-label" for="selectAllCheckbox">Pilih Semua</label>
+                        <span class="selected-count-badge" id="selectedCountBadge">0 dipilih</span>
+                    </div>
+
                     <!-- Documents List -->
                     <div class="documents-list" id="documentsList">
                         @foreach($documents as $dokumen)
-                            <div class="document-card clickable-card" data-agenda="{{ strtolower($dokumen->nomor_agenda) }}"
+                            <div class="document-card clickable-card" data-id="{{ $dokumen->id }}"
+                                data-agenda="{{ strtolower($dokumen->nomor_agenda) }}"
                                 data-spp="{{ strtolower($dokumen->nomor_spp) }}"
                                 data-uraian="{{ strtolower($dokumen->uraian_spp ?? '') }}"
-                                onclick="handleItemClick(event, '{{ route('inbox.show', $dokumen) }}')">
-                                <div class="document-card-header">
-                                    <div class="document-number">
-                                        <div class="document-agenda">
-                                            <i class="fas fa-file-invoice"></i>
-                                            <span>{{ $dokumen->nomor_agenda }}</span>
-                                        </div>
-                                        <div class="document-spp select-text">{{ $dokumen->nomor_spp }}</div>
+                                data-nilai="{{ $dokumen->nilai_rupiah ?? 0 }}">
+                                <div class="document-card-with-checkbox">
+                                    <!-- Checkbox for bulk selection -->
+                                    <div class="document-checkbox-wrapper">
+                                        <label class="bulk-checkbox" onclick="event.stopPropagation();">
+                                            <input type="checkbox" class="doc-checkbox" data-id="{{ $dokumen->id }}"
+                                                data-agenda="{{ $dokumen->nomor_agenda }}" data-spp="{{ $dokumen->nomor_spp }}"
+                                                data-nilai="{{ $dokumen->nilai_rupiah ?? 0 }}"
+                                                onchange="handleDocCheckboxChange(this)">
+                                            <span class="checkmark"></span>
+                                        </label>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        @php
-                                            // Get sent_at from dokumen_statuses or dokumen_role_data
-                                            $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
-                                            $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
-                                            $roleData = $dokumen->getDataForRole($currentRoleCode);
-                                            $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
-                                            $isNew = $sentAt && $sentAt->gte(now()->subHours(24));
-                                        @endphp
-                                        @if($isNew)
-                                            <span class="new-badge">
-                                                <i class="fas fa-star"></i>
-                                                NEW
-                                            </span>
-                                        @endif
-                                        <div class="document-status-badge">
-                                            <i class="fas fa-clock"></i>
-                                            Menunggu
+                                    <!-- Document content -->
+                                    <div class="document-card-content"
+                                        onclick="handleItemClick(event, '{{ route('inbox.show', $dokumen) }}')">
+                                        <div class="document-card-header">
+                                            <div class="document-number">
+                                                <div class="document-agenda">
+                                                    <i class="fas fa-file-invoice"></i>
+                                                    <span>{{ $dokumen->nomor_agenda }}</span>
+                                                </div>
+                                                <div class="document-spp select-text">{{ $dokumen->nomor_spp }}</div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @php
+                                                    // Get sent_at from dokumen_statuses or dokumen_role_data
+                                                    $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
+                                                    $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                                    $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                                    $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                                    $isNew = $sentAt && $sentAt->gte(now()->subHours(24));
+                                                @endphp
+                                                @if($isNew)
+                                                    <span class="new-badge">
+                                                        <i class="fas fa-star"></i>
+                                                        NEW
+                                                    </span>
+                                                @endif
+                                                <div class="document-status-badge">
+                                                    <i class="fas fa-clock"></i>
+                                                    Menunggu
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div class="document-body">
-                                    <div class="document-info-item">
-                                        <div class="document-info-label">Uraian</div>
-                                        <div class="document-info-value text-truncate-2">
-                                            {{ $dokumen->uraian_spp ?? '-' }}
+                                        <div class="document-body">
+                                            <div class="document-info-item">
+                                                <div class="document-info-label">Uraian</div>
+                                                <div class="document-info-value text-truncate-2">
+                                                    {{ $dokumen->uraian_spp ?? '-' }}
+                                                </div>
+                                            </div>
+
+                                            <div class="document-info-item">
+                                                <div class="document-info-label">Pengirim</div>
+                                                <div class="document-info-value">
+                                                    <i class="fas fa-user"></i>
+                                                    @php
+                                                        $currentRoleCode = strtolower($userRole ?? '');
+                                                        $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
+                                                    @endphp
+                                                    <span>{{ $senderName }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="document-info-item">
+                                                <div class="document-info-label">Tanggal Kirim</div>
+                                                <div class="document-info-value">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    @php
+                                                        $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
+                                                        $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                                        $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                                        $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                                    @endphp
+                                                    <span>{{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="document-info-item">
+                                                <div class="document-info-label">Nilai</div>
+                                                <div class="document-info-value text-success">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                    <span class="select-text">Rp
+                                                        {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="document-footer">
+                                            <div class="document-time">
+                                                <i class="far fa-clock"></i>
+                                                @php
+                                                    $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
+                                                    $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
+                                                    $roleData = $dokumen->getDataForRole($currentRoleCode);
+                                                    $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
+                                                @endphp
+                                                <span>Diterima {{ $sentAt ? $sentAt->diffForHumans() : '-' }}</span>
+                                            </div>
+                                            <a href="{{ route('inbox.show', $dokumen) }}" class="btn-view-detail"
+                                                onclick="event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                                Lihat Detail
+                                            </a>
                                         </div>
                                     </div>
-
-                                    <div class="document-info-item">
-                                        <div class="document-info-label">Pengirim</div>
-                                        <div class="document-info-value">
-                                            <i class="fas fa-user"></i>
-                                            @php
-                                                $currentRoleCode = strtolower($userRole ?? '');
-                                                $senderName = $dokumen->getInboxSenderDisplayName($currentRoleCode);
-                                            @endphp
-                                            <span>{{ $senderName }}</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="document-info-item">
-                                        <div class="document-info-label">Tanggal Kirim</div>
-                                        <div class="document-info-value">
-                                            <i class="fas fa-calendar-alt"></i>
-                                            @php
-                                                $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
-                                                $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
-                                                $roleData = $dokumen->getDataForRole($currentRoleCode);
-                                                $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
-                                            @endphp
-                                            <span>{{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="document-info-item">
-                                        <div class="document-info-label">Nilai</div>
-                                        <div class="document-info-value text-success">
-                                            <i class="fas fa-money-bill-wave"></i>
-                                            <span class="select-text">Rp
-                                                {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="document-footer">
-                                    <div class="document-time">
-                                        <i class="far fa-clock"></i>
-                                        @php
-                                            $currentRoleCode = strtolower($userRole ?? 'team_verifikasi');
-                                            $roleStatus = $dokumen->getStatusForRole($currentRoleCode);
-                                            $roleData = $dokumen->getDataForRole($currentRoleCode);
-                                            $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
-                                        @endphp
-                                        <span>Diterima {{ $sentAt ? $sentAt->diffForHumans() : '-' }}</span>
-                                    </div>
-                                    <a href="{{ route('inbox.show', $dokumen) }}" class="btn-view-detail"
-                                        onclick="event.stopPropagation();">
-                                        <i class="fas fa-eye"></i>
-                                        Lihat Detail
-                                    </a>
-                                </div>
-                            </div>
+                                    <!-- end document-card-content -->
+                                </div><!-- end document-card-with-checkbox -->
+                            </div><!-- end document-card -->
                         @endforeach
                     </div>
 
@@ -1772,12 +1800,12 @@
                             noResultsMsg = document.createElement('div');
                             noResultsMsg.className = 'empty-state';
                             noResultsMsg.innerHTML = `
-                                        <div class="empty-state-icon">
-                                            <i class="fas fa-search" style="color: var(--text-muted);"></i>
-                                        </div>
-                                        <h3 class="empty-state-title">Tidak Ada Hasil</h3>
-                                        <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
-                                    `;
+                                                            <div class="empty-state-icon">
+                                                                <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                                                            </div>
+                                                            <h3 class="empty-state-title">Tidak Ada Hasil</h3>
+                                                            <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
+                                                                                   `;
                             documentsList.appendChild(noResultsMsg);
                         }
                     } else if (noResultsMsg) {
@@ -1885,11 +1913,11 @@
                     const documentsHeader = document.querySelector('.documents-header .col-md-4');
                     if (documentsHeader) {
                         const badgeHtml = `
-                                    <span class="new-documents-badge" id="newDocumentsBadge">
-                                        <i class="fas fa-bell"></i>
-                                        <span id="newDocumentsCount">${newCount}</span> Baru
-                                    </span>
-                                `;
+                                                        <span class="new-documents-badge" id="newDocumentsBadge">
+                                                            <i class="fas fa-bell"></i>
+                                                            <span id="newDocumentsCount">${newCount}</span> Baru
+                                                        </span>
+                                                    `;
                         documentsHeader.querySelector('.d-flex').insertAdjacentHTML('afterbegin', badgeHtml);
                     }
                 } else {
@@ -1970,17 +1998,17 @@
             };
 
             toast.innerHTML = `
-                        <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-                        <div class="notification-content">
-                            <div class="notification-icon">
-                                ${icons[type] || icons.success}
-                            </div>
-                            <div class="notification-body">
-                                <div class="notification-title">${title}</div>
-                                <div class="notification-message">${message}</div>
-                            </div>
-                        </div>
-                    `;
+                                            <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                                            <div class="notification-content">
+                                                <div class="notification-icon">
+                                                    ${icons[type] || icons.success}
+                                                </div>
+                                                <div class="notification-body">
+                                                    <div class="notification-title">${title}</div>
+                                                    <div class="notification-message">${message}</div>
+                                                </div>
+                                            </div>
+                                        `;
 
             container.appendChild(toast);
 
@@ -2026,18 +2054,18 @@
             };
 
             toast.innerHTML = `
-                        <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-                        <div class="notification-content">
-                            <div class="notification-icon">
-                                ${icons[type] || icons.info}
-                            </div>
-                            <div class="notification-body">
-                                <div class="notification-title">${title}</div>
-                                <div class="notification-message">${message}</div>
-                                ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
-                            </div>
-                        </div>
-                    `;
+                                            <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                                            <div class="notification-content">
+                                                <div class="notification-icon">
+                                                    ${icons[type] || icons.info}
+                                                </div>
+                                                <div class="notification-body">
+                                                    <div class="notification-title">${title}</div>
+                                                    <div class="notification-message">${message}</div>
+                                                    ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
+                                                </div>
+                                            </div>
+                                        `;
 
             container.appendChild(toast);
 
@@ -2221,6 +2249,447 @@
         .notification-close:hover {
             color: #2d3748;
         }
+
+        /* ============================================
+                               MULTI-SELECT BULK APPROVE STYLES
+                               ============================================ */
+
+        /* Select All Header */
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 0;
+        }
+
+        /* Custom Checkbox Styling */
+        .bulk-checkbox {
+            position: relative;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .bulk-checkbox input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+            margin: 0;
+        }
+
+        .bulk-checkbox .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .bulk-checkbox:hover .checkmark {
+            border-color: var(--accent-blue);
+            background: #ebf8ff;
+        }
+
+        .bulk-checkbox input[type="checkbox"]:checked+.checkmark {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #63b3ed 100%);
+            border-color: var(--accent-blue);
+        }
+
+        .bulk-checkbox .checkmark::after {
+            content: '';
+            position: absolute;
+            display: none;
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .bulk-checkbox input[type="checkbox"]:checked+.checkmark::after {
+            display: block;
+        }
+
+        .select-all-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .selected-count-badge {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #63b3ed 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .selected-count-badge.show {
+            display: inline-flex;
+        }
+
+        /* Document card checkbox positioning */
+        .document-card-with-checkbox {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .document-checkbox-wrapper {
+            padding-top: 0.25rem;
+        }
+
+        .document-card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Selected state for document card */
+        .document-card.selected {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, #ebf8ff 0%, #f7fafc 100%);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        }
+
+        .document-card.selected::before {
+            transform: scaleY(1);
+            background: var(--accent-blue);
+        }
+
+        /* ============================================
+                               FLOATING ACTION BAR
+                               ============================================ */
+        .bulk-action-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            z-index: 1000;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .bulk-action-bar.show {
+            bottom: 30px;
+        }
+
+        .bulk-action-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+        }
+
+        .bulk-action-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(66, 153, 225, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #63b3ed;
+            font-size: 1.125rem;
+        }
+
+        .bulk-action-text {
+            font-size: 0.9375rem;
+            font-weight: 600;
+        }
+
+        .bulk-action-text span {
+            color: #63b3ed;
+        }
+
+        .bulk-action-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-bulk-approve {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-bulk-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-bulk-approve:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-bulk-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-bulk-cancel:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* ============================================
+                               BULK APPROVE CONFIRMATION MODAL
+                               ============================================ */
+        .bulk-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .bulk-modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .bulk-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease;
+        }
+
+        .bulk-modal-header {
+            padding: 1.5rem 1.75rem;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bulk-modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .bulk-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .bulk-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .bulk-modal-body {
+            padding: 1.5rem 1.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bulk-modal-summary {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .bulk-modal-summary-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .bulk-modal-summary-text {
+            flex: 1;
+        }
+
+        .bulk-modal-summary-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .bulk-modal-summary-label {
+            font-size: 0.8125rem;
+            color: #718096;
+        }
+
+        .bulk-modal-doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .bulk-modal-doc-item {
+            background: #f7fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bulk-modal-doc-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .bulk-modal-doc-agenda {
+            font-weight: 600;
+            color: var(--accent-blue);
+            font-size: 0.875rem;
+        }
+
+        .bulk-modal-doc-spp {
+            font-size: 0.75rem;
+            color: #718096;
+        }
+
+        .bulk-modal-doc-value {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.875rem;
+        }
+
+        .bulk-modal-footer {
+            padding: 1.25rem 1.75rem;
+            background: #f7fafc;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .btn-modal-cancel {
+            background: white;
+            color: #4a5568;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-modal-cancel:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .btn-modal-confirm {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-modal-confirm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-modal-confirm:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-modal-confirm .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-modal-confirm.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-modal-confirm.loading .btn-text {
+            display: none;
+        }
     </style>
 
     <!-- History Modal -->
@@ -2241,9 +2710,11 @@
                         Ini</button>
                     <button class="filter-btn" data-filter="yesterday"
                         onclick="loadHistoryByFilter('yesterday', this)">Kemarin</button>
-                    <button class="filter-btn" data-filter="3days" onclick="loadHistoryByFilter('3days', this)">3 Hari
+                    <button class="filter-btn" data-filter="3days" onclick="loadHistoryByFilter('3days', this)">3
+                        Hari
                         Lalu</button>
-                    <button class="filter-btn" data-filter="7days" onclick="loadHistoryByFilter('7days', this)">7 Hari
+                    <button class="filter-btn" data-filter="7days" onclick="loadHistoryByFilter('7days', this)">7
+                        Hari
                         Lalu</button>
                 </div>
                 <div class="custom-date-wrapper">
@@ -2311,11 +2782,11 @@
         function loadHistoryData(dateFilter) {
             const body = document.getElementById('historyModalBody');
             body.innerHTML = `
-                            <div class="history-loading">
-                                <i class="fas fa-spinner"></i>
-                                <p>Memuat data...</p>
-                            </div>
-                        `;
+                                                <div class="history-loading">
+                                                    <i class="fas fa-spinner"></i>
+                                                    <p>Memuat data...</p>
+                                                </div>
+                                            `;
 
             fetch(`{{ route('inbox.history') }}?date=${encodeURIComponent(dateFilter)}`, {
                 method: 'GET',
@@ -2331,21 +2802,21 @@
                         renderHistoryDocuments(data);
                     } else {
                         body.innerHTML = `
-                                    <div class="history-empty-state">
-                                        <i class="fas fa-exclamation-circle"></i>
-                                        <p>${data.message || 'Gagal memuat data'}</p>
-                                    </div>
-                                `;
+                                                        <div class="history-empty-state">
+                                                            <i class="fas fa-exclamation-circle"></i>
+                                                            <p>${data.message || 'Gagal memuat data'}</p>
+                                                        </div>
+                                                    `;
                     }
                 })
                 .catch(error => {
                     console.error('Error loading history:', error);
                     body.innerHTML = `
-                                <div class="history-empty-state">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <p>Terjadi kesalahan saat memuat data</p>
-                                </div>
-                            `;
+                                                    <div class="history-empty-state">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        <p>Terjadi kesalahan saat memuat data</p>
+                                                    </div>
+                                                `;
                 });
         }
 
@@ -2354,45 +2825,45 @@
 
             if (data.documents_count === 0) {
                 body.innerHTML = `
-                                <div class="history-date-label">
-                                    ${data.date_label}
-                                    <span class="count-badge">0 dokumen</span>
-                                </div>
-                                <div class="history-empty-state">
-                                    <i class="fas fa-inbox"></i>
-                                    <p>Tidak ada dokumen yang masuk pada periode ini</p>
-                                </div>
-                            `;
+                                                    <div class="history-date-label">
+                                                        ${data.date_label}
+                                                        <span class="count-badge">0 dokumen</span>
+                                                    </div>
+                                                    <div class="history-empty-state">
+                                                        <i class="fas fa-inbox"></i>
+                                                        <p>Tidak ada dokumen yang masuk pada periode ini</p>
+                                                    </div>
+                                                `;
                 return;
             }
 
             let html = `
-                            <div class="history-date-label">
-                                ${data.date_label}
-                                <span class="count-badge">${data.documents_count} dokumen</span>
-                            </div>
-                            <div class="history-doc-list">
-                        `;
+                                                <div class="history-date-label">
+                                                    ${data.date_label}
+                                                    <span class="count-badge">${data.documents_count} dokumen</span>
+                                                </div>
+                                                <div class="history-doc-list">
+                                            `;
 
             data.documents.forEach(doc => {
                 const statusClass = doc.status || 'pending';
                 html += `
-                                <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
-                                    <div class="history-doc-header">
-                                        <span class="history-doc-agenda">${doc.nomor_agenda}</span>
-                                        <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
-                                    </div>
-                                    <div class="history-doc-spp">${doc.nomor_spp}</div>
-                                    <div class="history-doc-uraian">${doc.uraian_spp}</div>
-                                    <div class="history-doc-footer">
-                                        <span class="history-doc-time">
-                                            <i class="fas fa-clock"></i>
-                                            Masuk: ${doc.received_at}
-                                        </span>
-                                        <span class="history-doc-value">${doc.nilai_rupiah}</span>
-                                    </div>
-                                </div>
-                            `;
+                                                    <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
+                                                        <div class="history-doc-header">
+                                                            <span class="history-doc-agenda">${doc.nomor_agenda}</span>
+                                                            <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
+                                                        </div>
+                                                        <div class="history-doc-spp">${doc.nomor_spp}</div>
+                                                        <div class="history-doc-uraian">${doc.uraian_spp}</div>
+                                                        <div class="history-doc-footer">
+                                                            <span class="history-doc-time">
+                                                                <i class="fas fa-clock"></i>
+                                                                Masuk: ${doc.received_at}
+                                                            </span>
+                                                            <span class="history-doc-value">${doc.nilai_rupiah}</span>
+                                                        </div>
+                                                    </div>
+                                                `;
             });
 
             html += '</div>';
@@ -2403,7 +2874,321 @@
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeHistoryModal();
+                closeBulkApproveModal();
             }
         });
+    </script>
+
+    <!-- Floating Action Bar for Bulk Approve -->
+    <div class="bulk-action-bar" id="bulkActionBar">
+        <div class="bulk-action-info">
+            <div class="bulk-action-icon">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <div class="bulk-action-text">
+                <span id="bulkSelectedCount">0</span> dokumen dipilih
+            </div>
+        </div>
+        <div class="bulk-action-buttons">
+            <button type="button" class="btn-bulk-cancel" onclick="clearAllSelections()">
+                <i class="fas fa-times"></i> Batal
+            </button>
+            <button type="button" class="btn-bulk-approve" onclick="showBulkApproveModal()">
+                <i class="fas fa-check"></i> Approve Semua
+            </button>
+        </div>
+    </div>
+
+    <!-- Bulk Approve Confirmation Modal -->
+    <div class="bulk-modal-overlay" id="bulkApproveModalOverlay" onclick="closeBulkApproveModalOnOverlay(event)">
+        <div class="bulk-modal">
+            <div class="bulk-modal-header">
+                <h3 class="bulk-modal-title">
+                    <i class="fas fa-check-double"></i>
+                    Konfirmasi Bulk Approve
+                </h3>
+                <button class="bulk-modal-close" onclick="closeBulkApproveModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="bulk-modal-body">
+                <div class="bulk-modal-summary">
+                    <div class="bulk-modal-summary-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="bulk-modal-summary-text">
+                        <div class="bulk-modal-summary-count" id="modalSelectedCount">0</div>
+                        <div class="bulk-modal-summary-label">Dokumen akan disetujui</div>
+                    </div>
+                </div>
+                <div class="bulk-modal-doc-list" id="modalDocList">
+                    <!-- Document list populated dynamically -->
+                </div>
+            </div>
+            <div class="bulk-modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeBulkApproveModal()">
+                    Batal
+                </button>
+                <button type="button" class="btn-modal-confirm" id="btnConfirmBulkApprove" onclick="executeBulkApprove()">
+                    <i class="fas fa-spinner spinner"></i>
+                    <span class="btn-text"><i class="fas fa-check"></i> Ya, Setujui Semua</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // BULK APPROVE MULTI-SELECT FUNCTIONALITY
+        // ============================================
+
+        let selectedDocuments = new Map();
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+
+            docCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                handleDocCheckboxChange(checkbox, false);
+            });
+
+            updateSelectedCount();
+        }
+
+        function handleDocCheckboxChange(checkbox, updateCount = true) {
+            const docId = checkbox.dataset.id;
+            const docCard = checkbox.closest('.document-card');
+
+            if (checkbox.checked) {
+                selectedDocuments.set(docId, {
+                    id: docId,
+                    agenda: checkbox.dataset.agenda,
+                    spp: checkbox.dataset.spp,
+                    nilai: parseFloat(checkbox.dataset.nilai) || 0
+                });
+                docCard?.classList.add('selected');
+            } else {
+                selectedDocuments.delete(docId);
+                docCard?.classList.remove('selected');
+            }
+
+            if (updateCount) {
+                updateSelectedCount();
+            }
+
+            updateSelectAllState();
+        }
+
+        function updateSelectAllState() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+            const checkedCount = document.querySelectorAll('.doc-checkbox:checked').length;
+
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === docCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+
+        function updateSelectedCount() {
+            const count = selectedDocuments.size;
+            const actionBar = document.getElementById('bulkActionBar');
+            const countBadge = document.getElementById('selectedCountBadge');
+            const bulkCountSpan = document.getElementById('bulkSelectedCount');
+
+            countBadge.textContent = count + ' dipilih';
+            bulkCountSpan.textContent = count;
+
+            if (count > 0) {
+                actionBar.classList.add('show');
+                countBadge.classList.add('show');
+            } else {
+                actionBar.classList.remove('show');
+                countBadge.classList.remove('show');
+            }
+        }
+
+        function clearAllSelections() {
+            selectedDocuments.clear();
+
+            document.querySelectorAll('.doc-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            document.querySelectorAll('.document-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            document.getElementById('selectAllCheckbox').checked = false;
+            document.getElementById('selectAllCheckbox').indeterminate = false;
+
+            updateSelectedCount();
+        }
+
+        function showBulkApproveModal() {
+            if (selectedDocuments.size === 0) {
+                alert('Pilih minimal 1 dokumen untuk di-approve');
+                return;
+            }
+
+            const overlay = document.getElementById('bulkApproveModalOverlay');
+            const modalDocList = document.getElementById('modalDocList');
+            const modalCount = document.getElementById('modalSelectedCount');
+
+            modalCount.textContent = selectedDocuments.size;
+
+            let html = '';
+            selectedDocuments.forEach((doc, id) => {
+                const formattedNilai = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(doc.nilai);
+
+                html += `
+                        <div class="bulk-modal-doc-item">
+                            <div class="bulk-modal-doc-info">
+                                <div class="bulk-modal-doc-agenda">${doc.agenda}</div>
+                                <div class="bulk-modal-doc-spp">${doc.spp}</div>
+                            </div>
+                            <div class="bulk-modal-doc-value">${formattedNilai}</div>
+                        </div>
+                    `;
+            });
+
+            modalDocList.innerHTML = html;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBulkApproveModal() {
+            const overlay = document.getElementById('bulkApproveModalOverlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+
+            const confirmBtn = document.getElementById('btnConfirmBulkApprove');
+            confirmBtn.classList.remove('loading');
+            confirmBtn.disabled = false;
+        }
+
+        function closeBulkApproveModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeBulkApproveModal();
+            }
+        }
+
+        function executeBulkApprove() {
+            const confirmBtn = document.getElementById('btnConfirmBulkApprove');
+
+            if (selectedDocuments.size === 0) {
+                alert('Tidak ada dokumen yang dipilih');
+                return;
+            }
+
+            confirmBtn.classList.add('loading');
+            confirmBtn.disabled = true;
+
+            const documentIds = Array.from(selectedDocuments.keys()).map(id => parseInt(id));
+
+            fetch('{{ route("inbox.bulk-approve") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    document_ids: documentIds
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showBulkNotification('success', data.message);
+                        closeBulkApproveModal();
+
+                        selectedDocuments.forEach((doc, id) => {
+                            const card = document.querySelector(`.document-card[data-id="${id}"]`);
+                            if (card) {
+                                card.style.transition = 'opacity 0.3s, transform 0.3s';
+                                card.style.opacity = '0';
+                                card.style.transform = 'translateX(-20px)';
+                                setTimeout(() => card.remove(), 300);
+                            }
+                        });
+
+                        setTimeout(() => {
+                            clearAllSelections();
+                            setTimeout(() => window.location.reload(), 1500);
+                        }, 400);
+
+                    } else {
+                        showBulkNotification('error', data.message || 'Terjadi kesalahan');
+                        confirmBtn.classList.remove('loading');
+                        confirmBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Bulk approve error:', error);
+                    showBulkNotification('error', 'Terjadi kesalahan saat memproses bulk approve');
+                    confirmBtn.classList.remove('loading');
+                    confirmBtn.disabled = false;
+                });
+        }
+
+        function showBulkNotification(type, message) {
+            const existingNotif = document.querySelector('.bulk-notification');
+            if (existingNotif) existingNotif.remove();
+
+            const notifDiv = document.createElement('div');
+            notifDiv.className = `bulk-notification ${type}`;
+            notifDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 1rem 1.5rem;
+                    border-radius: 12px;
+                    color: white;
+                    font-weight: 600;
+                    z-index: 3000;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                    animation: slideInRight 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                `;
+
+            const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            const bgColor = type === 'success' ? 'linear-gradient(135deg, #48bb78, #38a169)' : 'linear-gradient(135deg, #f56565, #e53e3e)';
+            notifDiv.style.background = bgColor;
+
+            notifDiv.innerHTML = `<i class="${icon}"></i><span>${message}</span>`;
+            document.body.appendChild(notifDiv);
+
+            setTimeout(() => {
+                notifDiv.style.opacity = '0';
+                notifDiv.style.transform = 'translateX(20px)';
+                setTimeout(() => notifDiv.remove(), 300);
+            }, 4000);
+        }
+
+        // Add animation style
+        const bulkStyle = document.createElement('style');
+        bulkStyle.textContent = `
+                @keyframes slideInRight {
+                    from { opacity: 0; transform: translateX(20px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
+            `;
+        document.head.appendChild(bulkStyle);
     </script>
 @endsection

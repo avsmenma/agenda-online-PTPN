@@ -910,6 +910,103 @@ class InboxController extends Controller
             return response()->json(['success' => false], 500);
         }
     }
+
+    /**
+     * Bulk approve multiple documents from inbox
+     * Allows roles to approve multiple documents at once for efficiency
+     */
+    public function bulkApprove(Request $request)
+    {
+        $request->validate([
+            'document_ids' => 'required|array|min:1',
+            'document_ids.*' => 'exists:dokumens,id'
+        ]);
+
+        $user = auth()->user();
+        $userRole = $this->getUserRole($user);
+        $roleCode = strtolower($userRole);
+
+        $successCount = 0;
+        $failedCount = 0;
+        $failedDocuments = [];
+        $successDocuments = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->document_ids as $docId) {
+                $dokumen = Dokumen::findOrFail($docId);
+
+                // Refresh to prevent race condition
+                $dokumen->refresh();
+                $dokumen->load('roleStatuses');
+
+                // Check if document is pending for this role
+                if (!$dokumen->isPendingForRole($roleCode)) {
+                    // Check if already approved
+                    $status = $dokumen->getStatusForRole($roleCode);
+                    if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
+                        // Already approved, count as success but note it
+                        $successCount++;
+                        $successDocuments[] = [
+                            'nomor_agenda' => $dokumen->nomor_agenda,
+                            'note' => 'Sudah disetujui sebelumnya'
+                        ];
+                        continue;
+                    }
+
+                    $failedCount++;
+                    $failedDocuments[] = [
+                        'nomor_agenda' => $dokumen->nomor_agenda,
+                        'reason' => 'Dokumen tidak pending untuk role ini'
+                    ];
+                    continue;
+                }
+
+                // Approve document using existing method
+                // This will also update sender's display_status to "terkirim"
+                $dokumen->approveFromRoleInbox($roleCode);
+                $successCount++;
+                $successDocuments[] = [
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'note' => 'Berhasil disetujui'
+                ];
+            }
+
+            DB::commit();
+
+            Log::info('Bulk approve completed', [
+                'user_role' => $userRole,
+                'success_count' => $successCount,
+                'failed_count' => $failedCount,
+                'success_documents' => array_column($successDocuments, 'nomor_agenda'),
+                'failed_documents' => $failedDocuments
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil menyetujui {$successCount} dokumen." .
+                    ($failedCount > 0 ? " {$failedCount} dokumen gagal." : ''),
+                'details' => [
+                    'success_count' => $successCount,
+                    'failed_count' => $failedCount,
+                    'success_documents' => $successDocuments,
+                    'failed_documents' => $failedDocuments
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in bulk approve: ' . $e->getMessage(), [
+                'user_role' => $userRole ?? 'unknown',
+                'document_ids' => $request->document_ids,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses bulk approve: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
 
 
