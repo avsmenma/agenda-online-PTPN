@@ -184,7 +184,6 @@ class DashboardPembayaranController extends Controller
                     ->orWhere('nomor_spp', 'like', "%{$searchTerm}%")
                     ->orWhere('uraian_spp', 'like', "%{$searchTerm}%")
                     ->orWhere('dibayar_kepada', 'like', "%{$searchTerm}%")
-                    ->orWhere('nomor_mirror', 'like', "%{$searchTerm}%")
                     ->orWhere('no_berita_acara', 'like', "%{$searchTerm}%")
                     ->orWhere('no_spk', 'like', "%{$searchTerm}%");
 
