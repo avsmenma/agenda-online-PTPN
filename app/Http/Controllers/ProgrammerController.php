@@ -69,7 +69,7 @@ final class ProgrammerController extends Controller
                     'nomor_agenda' => $dokumen->nomor_agenda,
                     'nomor_spp' => $dokumen->nomor_spp,
                     'uraian_spp' => $dokumen->uraian_spp,
-                    'nilai_rupiah' => number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.'),
+                    'nilai_rupiah' => number_format((float) ($dokumen->nilai_rupiah ?? 0), 0, ',', '.'),
                     'current_handler' => $dokumen->current_handler ?? 'operator',
                     'status' => $dokumen->status,
                 ];
