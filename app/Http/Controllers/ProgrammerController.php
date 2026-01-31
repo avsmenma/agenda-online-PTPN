@@ -125,8 +125,8 @@ final class ProgrammerController extends Controller
                         continue;
                     }
 
-                    // Direct send to pembayaran (bypass approval workflow)
-                    $this->sendDirectToPembayaran($dokumen, $user->name ?? 'Programmer');
+                    // Simulate manual workflow - step by step through each role
+                    $this->simulateManualWorkflow($dokumen, $user->name ?? 'Programmer');
 
                     $processed++;
                     $processedDocs[] = $nomorAgenda;
@@ -163,100 +163,81 @@ final class ProgrammerController extends Controller
     }
 
     /**
-     * Send document directly to pembayaran using existing workflow
-     * Document stays visible in current role with "Terkirim ke Pembayaran" status
+     * Simulate manual workflow - step-by-step role transitions
+     * Each step: sendToRoleInbox -> approveFromRoleInbox
+     * This ensures proper deadline tracking and status consistency
      */
-    private function sendDirectToPembayaran(Dokumen $dokumen, string $performedBy): void
+    private function simulateManualWorkflow(Dokumen $dokumen, string $performedBy): void
     {
         $currentRole = $dokumen->current_handler ?? 'operator';
 
-        // Normalize role name for consistency
+        // Normalize role name
         $normalizedCurrentRole = strtolower($currentRole);
         if ($normalizedCurrentRole === 'verifikasi') {
             $normalizedCurrentRole = 'team_verifikasi';
         }
 
-        // 1. Ensure current role has received_at and processed_at set (stops deadline)
-        $currentRoleData = $dokumen->getDataForRole($normalizedCurrentRole);
-        if (!$currentRoleData) {
-            // Create role data if doesn't exist
-            $currentRoleData = DokumenRoleData::create([
-                'dokumen_id' => $dokumen->id,
-                'role_code' => $normalizedCurrentRole,
-                'received_at' => now(),
-                'processed_at' => now(), // Stops deadline
-            ]);
-        } else {
-            // Update to stop deadline
-            $currentRoleData->update([
-                'processed_at' => now(),
-            ]);
-        }
+        // Get workflow path based on current position
+        $workflowPath = $this->getWorkflowPath($normalizedCurrentRole);
 
-        // 2. Set current role's display_status to show "Terkirim ke Pembayaran"
-        $dokumen->setDisplayStatusForRole($normalizedCurrentRole, 'terkirim_ke_pembayaran');
-
-        // 3. Set status as approved for current role (so it shows as completed)
-        $dokumen->setStatusForRole(
-            $normalizedCurrentRole,
-            DokumenStatus::STATUS_APPROVED,
-            $performedBy,
-            'Bulk direct to payment by programmer'
-        );
-
-        // 4. Create pembayaran role data with received_at (starts their deadline)
-        $pembayaranData = $dokumen->getDataForRole('pembayaran');
-        if (!$pembayaranData) {
-            DokumenRoleData::create([
-                'dokumen_id' => $dokumen->id,
-                'role_code' => 'pembayaran',
-                'received_at' => now(),
-                'processed_at' => null,
-            ]);
-        } else {
-            $pembayaranData->update([
-                'received_at' => $pembayaranData->received_at ?? now(),
-                'processed_at' => null,
-            ]);
-        }
-
-        // 5. Set pembayaran status to pending (appears in their inbox)
-        $dokumen->setStatusForRole(
-            'pembayaran',
-            DokumenStatus::STATUS_PENDING,
-            $performedBy,
-            'Received via bulk direct from programmer'
-        );
-
-        // 6. Update main document - keep current_handler as 'pembayaran' for inbox visibility
-        // But the document also stays visible in previous role with "terkirim" status
-        $dokumen->update([
-            'current_handler' => 'pembayaran',
-            'current_stage' => 'payment',
-            'status' => 'sent_to_pembayaran',
-            'last_action_status' => 'bulk_direct_to_payment',
+        Log::info("Bulk workflow simulation starting for {$dokumen->nomor_agenda}", [
+            'from_role' => $normalizedCurrentRole,
+            'path' => $workflowPath,
+            'performed_by' => $performedBy
         ]);
 
-        // 7. Log activity
+        // Execute each step in the workflow
+        foreach ($workflowPath as $index => $targetRole) {
+            // Step 1: Send to target role's inbox
+            $dokumen->sendToRoleInbox($targetRole, $performedBy);
+
+            Log::info("Bulk workflow: {$dokumen->nomor_agenda} sent to {$targetRole} inbox");
+
+            // Step 2: Auto-approve from inbox (sets received_at, processed_at, deadline)
+            $dokumen->approveFromRoleInbox($targetRole);
+
+            Log::info("Bulk workflow: {$dokumen->nomor_agenda} approved in {$targetRole}");
+        }
+
+        // Log final activity
         \App\Models\DokumenActivityLog::create([
             'dokumen_id' => $dokumen->id,
             'stage' => 'pembayaran',
-            'action' => 'bulk_direct_to_payment',
-            'action_description' => "Dokumen dikirim langsung ke Pembayaran dari {$normalizedCurrentRole} (Programmer bulk operation)",
+            'action' => 'bulk_workflow_complete',
+            'action_description' => "Dokumen dipercepat ke Pembayaran via workflow simulasi dari {$normalizedCurrentRole} (Programmer bulk operation)",
             'performed_by' => $performedBy,
             'action_at' => now(),
             'details' => [
-                'method' => 'bulk_direct_to_payment',
+                'method' => 'simulate_manual_workflow',
                 'from_role' => $normalizedCurrentRole,
-                'skip_workflow' => true,
+                'workflow_path' => $workflowPath,
             ],
         ]);
 
-        Log::info("Bulk direct to payment: {$dokumen->nomor_agenda}", [
+        Log::info("Bulk workflow completed: {$dokumen->nomor_agenda}", [
             'from_role' => $normalizedCurrentRole,
             'to_role' => 'pembayaran',
+            'steps' => count($workflowPath),
             'by' => $performedBy
         ]);
+    }
+
+    /**
+     * Get workflow path to reach pembayaran from current role
+     */
+    private function getWorkflowPath(string $currentRole): array
+    {
+        // Define paths from each role to pembayaran
+        // Direct path: skip perpajakan/akutansi, go straight to pembayaran
+        $paths = [
+            'operator' => ['team_verifikasi', 'pembayaran'],
+            'team_verifikasi' => ['pembayaran'],
+            'perpajakan' => ['pembayaran'],
+            'akutansi' => ['pembayaran'],
+            'pembayaran' => [], // Already at destination
+        ];
+
+        return $paths[strtolower($currentRole)] ?? ['pembayaran'];
     }
 
 
