@@ -163,33 +163,48 @@ final class ProgrammerController extends Controller
     }
 
     /**
-     * Send document directly to pembayaran, bypassing normal workflow
+     * Send document directly to pembayaran using existing workflow
+     * Document stays visible in current role with "Terkirim ke Pembayaran" status
      */
     private function sendDirectToPembayaran(Dokumen $dokumen, string $performedBy): void
     {
-        // Mark all intermediate role data as processed
-        $intermediateRoles = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
+        $currentRole = $dokumen->current_handler ?? 'operator';
 
-        foreach ($intermediateRoles as $roleCode) {
-            $roleData = $dokumen->getDataForRole($roleCode);
-
-            if (!$roleData) {
-                // Create role data if doesn't exist
-                $roleData = DokumenRoleData::create([
-                    'dokumen_id' => $dokumen->id,
-                    'role_code' => $roleCode,
-                    'received_at' => now(),
-                    'processed_at' => now(),
-                ]);
-            } else if (!$roleData->processed_at) {
-                $roleData->update(['processed_at' => now()]);
-            }
-
-            // Set status as approved for this role
-            $dokumen->setStatusForRole($roleCode, DokumenStatus::STATUS_APPROVED, $performedBy, 'Bulk direct to payment by programmer');
+        // Normalize role name for consistency
+        $normalizedCurrentRole = strtolower($currentRole);
+        if ($normalizedCurrentRole === 'verifikasi') {
+            $normalizedCurrentRole = 'team_verifikasi';
         }
 
-        // Create pembayaran role data
+        // 1. Ensure current role has received_at and processed_at set (stops deadline)
+        $currentRoleData = $dokumen->getDataForRole($normalizedCurrentRole);
+        if (!$currentRoleData) {
+            // Create role data if doesn't exist
+            $currentRoleData = DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => $normalizedCurrentRole,
+                'received_at' => now(),
+                'processed_at' => now(), // Stops deadline
+            ]);
+        } else {
+            // Update to stop deadline
+            $currentRoleData->update([
+                'processed_at' => now(),
+            ]);
+        }
+
+        // 2. Set current role's display_status to show "Terkirim ke Pembayaran"
+        $dokumen->setDisplayStatusForRole($normalizedCurrentRole, 'terkirim_ke_pembayaran');
+
+        // 3. Set status as approved for current role (so it shows as completed)
+        $dokumen->setStatusForRole(
+            $normalizedCurrentRole,
+            DokumenStatus::STATUS_APPROVED,
+            $performedBy,
+            'Bulk direct to payment by programmer'
+        );
+
+        // 4. Create pembayaran role data with received_at (starts their deadline)
         $pembayaranData = $dokumen->getDataForRole('pembayaran');
         if (!$pembayaranData) {
             DokumenRoleData::create([
@@ -200,15 +215,21 @@ final class ProgrammerController extends Controller
             ]);
         } else {
             $pembayaranData->update([
-                'received_at' => now(),
+                'received_at' => $pembayaranData->received_at ?? now(),
                 'processed_at' => null,
             ]);
         }
 
-        // Set pembayaran status to pending
-        $dokumen->setStatusForRole('pembayaran', DokumenStatus::STATUS_PENDING, $performedBy, 'Received via bulk direct from programmer');
+        // 5. Set pembayaran status to pending (appears in their inbox)
+        $dokumen->setStatusForRole(
+            'pembayaran',
+            DokumenStatus::STATUS_PENDING,
+            $performedBy,
+            'Received via bulk direct from programmer'
+        );
 
-        // Update main document fields
+        // 6. Update main document - keep current_handler as 'pembayaran' for inbox visibility
+        // But the document also stays visible in previous role with "terkirim" status
         $dokumen->update([
             'current_handler' => 'pembayaran',
             'current_stage' => 'payment',
@@ -216,20 +237,28 @@ final class ProgrammerController extends Controller
             'last_action_status' => 'bulk_direct_to_payment',
         ]);
 
-        // Log activity
+        // 7. Log activity
         \App\Models\DokumenActivityLog::create([
             'dokumen_id' => $dokumen->id,
             'stage' => 'pembayaran',
             'action' => 'bulk_direct_to_payment',
-            'action_description' => 'Dokumen dikirim langsung ke Pembayaran melalui bulk operation (Programmer)',
+            'action_description' => "Dokumen dikirim langsung ke Pembayaran dari {$normalizedCurrentRole} (Programmer bulk operation)",
             'performed_by' => $performedBy,
             'action_at' => now(),
             'details' => [
                 'method' => 'bulk_direct_to_payment',
+                'from_role' => $normalizedCurrentRole,
                 'skip_workflow' => true,
             ],
         ]);
+
+        Log::info("Bulk direct to payment: {$dokumen->nomor_agenda}", [
+            'from_role' => $normalizedCurrentRole,
+            'to_role' => 'pembayaran',
+            'by' => $performedBy
+        ]);
     }
+
 
     /**
      * Parse nomor_agenda list from various input formats

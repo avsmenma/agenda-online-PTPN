@@ -142,21 +142,24 @@
             </div>
         </div>
     </div>
-@endsection
 
-@push('scripts')
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             let previewData = null;
 
+            console.log('Programmer bulk-to-payment JS loaded');
+
             // Preview button click
-            $('#btn-preview').on('click', function () {
+            $('#btn-preview').on('click', function() {
+                console.log('Preview button clicked');
                 const nomorAgendas = $('#nomor_agendas').val().trim();
 
                 if (!nomorAgendas) {
                     alert('Silakan masukkan daftar nomor agenda');
                     return;
                 }
+
+                console.log('Sending preview request...');
 
                 // Show loading
                 $('#preview-empty').hide();
@@ -172,7 +175,8 @@
                         nomor_agendas: nomorAgendas,
                         _token: '{{ csrf_token() }}'
                     },
-                    success: function (response) {
+                    success: function(response) {
+                        console.log('Preview response:', response);
                         $('#preview-loading').hide();
 
                         if (response.success) {
@@ -192,13 +196,13 @@
 
                             // Populate found table
                             let tableHtml = '';
-                            response.found.forEach(function (doc) {
-                                tableHtml += `<tr>
-                                <td><strong>${doc.nomor_agenda}</strong></td>
-                                <td>${doc.nomor_spp || '-'}</td>
-                                <td>Rp ${doc.nilai_rupiah}</td>
-                                <td><span class="badge bg-secondary">${doc.current_handler}</span></td>
-                            </tr>`;
+                            response.found.forEach(function(doc) {
+                                tableHtml += '<tr>' +
+                                    '<td><strong>' + doc.nomor_agenda + '</strong></td>' +
+                                    '<td>' + (doc.nomor_spp || '-') + '</td>' +
+                                    '<td>Rp ' + doc.nilai_rupiah + '</td>' +
+                                    '<td><span class="badge bg-secondary">' + doc.current_handler + '</span></td>' +
+                                    '</tr>';
                             });
                             $('#found-table-body').html(tableHtml);
 
@@ -210,7 +214,8 @@
                             $('#preview-result').show();
                         }
                     },
-                    error: function (xhr) {
+                    error: function(xhr) {
+                        console.log('Preview error:', xhr);
                         $('#preview-loading').hide();
                         $('#preview-empty').show();
                         alert('Error: ' + (xhr.responseJSON?.message || 'Gagal memuat preview'));
@@ -219,8 +224,9 @@
             });
 
             // Execute button click
-            $('#btn-execute').on('click', function () {
-                if (!confirm('Apakah Anda yakin ingin mengirim ' + previewData.total_found + ' dokumen langsung ke Pembayaran?\n\nProses ini TIDAK DAPAT dibatalkan!')) {
+            $('#btn-execute').on('click', function() {
+                if (!confirm('Apakah Anda yakin ingin mengirim ' + previewData.total_found +
+                        ' dokumen langsung ke Pembayaran?\n\nProses ini TIDAK DAPAT dibatalkan!')) {
                     return;
                 }
 
@@ -234,7 +240,7 @@
                         nomor_agendas: $('#nomor_agendas').val().trim(),
                         _token: '{{ csrf_token() }}'
                     },
-                    success: function (response) {
+                    success: function(response) {
                         btn.html('<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
 
                         // Show execution result
@@ -243,7 +249,7 @@
 
                         if (response.errors && response.errors.length > 0) {
                             let errorHtml = '';
-                            response.errors.forEach(function (err) {
+                            response.errors.forEach(function(err) {
                                 errorHtml += '<li>' + err + '</li>';
                             });
                             $('#exec-error-list').html(errorHtml);
@@ -262,12 +268,13 @@
                             $('#preview-empty').show();
                         }
                     },
-                    error: function (xhr) {
-                        btn.prop('disabled', false).html('<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
+                    error: function(xhr) {
+                        btn.prop('disabled', false).html(
+                            '<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
                         alert('Error: ' + (xhr.responseJSON?.message || 'Gagal mengeksekusi'));
                     }
                 });
             });
         });
     </script>
-@endpush
+@endsection
