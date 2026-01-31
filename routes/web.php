@@ -959,3 +959,13 @@ Route::middleware(['auth', 'role:team_verifikasi'])
         Route::post('/reject', [BulkOperationController::class, 'bulkReject'])->name('reject');
         Route::post('/forward', [BulkOperationController::class, 'bulkForward'])->name('forward');
     });
+
+// =============================================================================
+// BULK OPERATIONS - Common route for all allowed roles
+// =============================================================================
+Route::middleware(['auth', 'role:team_verifikasi,perpajakan,akutansi'])
+    ->prefix('bulk-operations')
+    ->name('bulk-operations.')
+    ->group(function () {
+        Route::post('/forward', [BulkOperationController::class, 'bulkForward'])->name('forward');
+    });
