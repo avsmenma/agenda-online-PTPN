@@ -186,17 +186,23 @@ final class ProgrammerController extends Controller
             'performed_by' => $performedBy
         ]);
 
+        // Track sender role through workflow
+        $senderRole = $normalizedCurrentRole;
+
         // Execute each step in the workflow
         foreach ($workflowPath as $index => $targetRole) {
-            // Step 1: Send to target role's inbox
-            $dokumen->sendToRoleInbox($targetRole, $performedBy);
+            // Step 1: Send to target role's inbox with proper sender role
+            $dokumen->sendToRoleInbox($targetRole, $senderRole);
 
-            Log::info("Bulk workflow: {$dokumen->nomor_agenda} sent to {$targetRole} inbox");
+            Log::info("Bulk workflow: {$dokumen->nomor_agenda} sent to {$targetRole} inbox from {$senderRole}");
 
             // Step 2: Auto-approve from inbox (sets received_at, processed_at, deadline)
             $dokumen->approveFromRoleInbox($targetRole);
 
             Log::info("Bulk workflow: {$dokumen->nomor_agenda} approved in {$targetRole}");
+
+            // Update sender role for next step
+            $senderRole = $targetRole;
         }
 
         // Log final activity
