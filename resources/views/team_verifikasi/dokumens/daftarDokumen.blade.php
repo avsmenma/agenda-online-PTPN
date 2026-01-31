@@ -3691,32 +3691,42 @@
               // This handles documents created before this feature was implemented
               $sentToTeamLabel = null;
               $isPendingPerpajakan = false;
+              $isPendingAkuntansi = false;
 
               if (!$displayStatus) {
-                // Legacy detection for backward compatibility
-                // FIX: For Verifikasi, ALWAYS show "Terkirim ke Team Perpajakan" once sent
-                // We don't care about downstream status (akutansi, pembayaran)
-                $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+                // FIRST: Check if document is waiting for approval (bulk send)
+                // These should show "Menunggu Approve" NOT "Terkirim"
+                if ($dokumen->status === 'waiting_approval_perpajakan') {
+                  $isPendingPerpajakan = true;
+                } elseif ($dokumen->status === 'waiting_approval_akuntansi') {
+                  $isPendingAkuntansi = true;
+                } else {
+                  // Legacy detection for backward compatibility
+                  // FIX: For Verifikasi, ALWAYS show "Terkirim ke Team Perpajakan" once sent
+                  // We don't care about downstream status (akutansi, pembayaran)
+                  $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
 
-                // Check if document was ever sent to perpajakan
-                $wasSentToPerpajakan = (
-                  ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
-                  in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'waiting_approval_perpajakan', 'waiting_approval_akuntansi']) ||
-                  in_array($dokumen->current_handler, ['perpajakan', 'akutansi', 'pembayaran'])
-                );
+                  // Check if document was ever sent to perpajakan
+                  // NOTE: Do NOT include waiting_approval_* here - those are handled above
+                  $wasSentToPerpajakan = (
+                    ($perpajakanRoleData && $perpajakanRoleData->received_at) ||
+                    in_array($dokumen->status, ['sent_to_perpajakan', 'pending_approval_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran']) ||
+                    in_array($dokumen->current_handler, ['perpajakan', 'akutansi', 'pembayaran'])
+                  );
 
-                if ($wasSentToPerpajakan && !$isRejected) {
-                  // Check if perpajakan is still pending (document in perpajakan inbox)
-                  $perpajakanIsPendingInbox = $dokumen->roleStatuses()
-                    ->where('role_code', 'perpajakan')
-                    ->where('status', 'pending')
-                    ->exists();
+                  if ($wasSentToPerpajakan && !$isRejected) {
+                    // Check if perpajakan is still pending (document in perpajakan inbox)
+                    $perpajakanIsPendingInbox = $dokumen->roleStatuses()
+                      ->where('role_code', 'perpajakan')
+                      ->where('status', 'pending')
+                      ->exists();
 
-                  if ($perpajakanIsPendingInbox) {
-                    $isPendingPerpajakan = true;
-                  } else {
-                    // Document has passed perpajakan - show FINAL status
-                    $sentToTeamLabel = 'Team Perpajakan';
+                    if ($perpajakanIsPendingInbox) {
+                      $isPendingPerpajakan = true;
+                    } else {
+                      // Document has passed perpajakan - show FINAL status
+                      $sentToTeamLabel = 'Team Perpajakan';
+                    }
                   }
                 }
               }
@@ -3967,9 +3977,15 @@
                   @endif
                 @elseif($isPendingPerpajakan)
                   {{-- FALLBACK: Legacy detection for documents without display_status --}}
-                  <span class="badge-status badge-warning">
+                  <span class="badge-status badge-warning" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
                     <i class="fa-solid fa-clock me-1"></i>
                     Menunggu Approval dari Team Perpajakan
+                  </span>
+                @elseif($isPendingAkuntansi)
+                  {{-- FALLBACK: Legacy detection for documents without display_status --}}
+                  <span class="badge-status badge-warning" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Menunggu Approval dari Team Akutansi
                   </span>
                 @elseif($sentToTeamLabel)
                   {{-- FALLBACK: Legacy detection --}}
