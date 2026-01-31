@@ -216,7 +216,7 @@ final class BulkOperationController extends Controller
         $validated = $request->validate([
             'document_ids' => 'required|array|min:1|max:50',
             'document_ids.*' => 'required|integer|exists:dokumens,id',
-            'target_role' => 'required|in:perpajakan,akuntansi',
+            'target_role' => 'required|in:perpajakan,akuntansi,pembayaran',
         ]);
 
         $user = Auth::user();
@@ -274,9 +274,12 @@ final class BulkOperationController extends Controller
                     }
 
                     // Determine status based on target role - should be "waiting approval" not "sent to"
-                    $newStatus = $targetRole === 'perpajakan'
-                        ? 'waiting_approval_perpajakan'
-                        : 'waiting_approval_akuntansi';
+                    $newStatus = match ($targetRole) {
+                        'perpajakan' => 'waiting_approval_perpajakan',
+                        'akuntansi' => 'waiting_approval_akuntansi',
+                        'pembayaran' => 'waiting_approval_pembayaran',
+                        default => 'waiting_approval_perpajakan',
+                    };
 
                     // Update document
                     $dokumen->update([
