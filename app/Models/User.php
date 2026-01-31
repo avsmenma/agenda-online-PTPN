@@ -16,6 +16,7 @@ final class User extends Authenticatable
     public const ROLES = [
         'Admin' => 'Admin',
         'owner' => 'Owner',
+        'programmer' => 'Programmer',  // Special role for developer/programmer operations
         'operator' => 'Operator',  // Standardized from Operator/Ibu Tarapul
         'team_verifikasi' => 'Team Verifikasi',  // Standardized from Team Verifikasi/Verifikasi
         'Pembayaran' => 'Pembayaran',
@@ -44,6 +45,7 @@ final class User extends Authenticatable
         'Admin' => '/owner/home',
         'owner' => '/owner/home',
         'Owner' => '/owner/home',
+        'programmer' => '/programmer/dashboard',  // Programmer dashboard
         // New standardized role names
         'operator' => '/dashboard',
         'team_verifikasi' => '/dashboard/verifikasi',

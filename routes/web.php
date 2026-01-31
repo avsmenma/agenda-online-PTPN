@@ -969,3 +969,24 @@ Route::middleware(['auth', 'role:team_verifikasi,verifikasi,Verifikasi,perpajaka
     ->group(function () {
         Route::post('/forward', [BulkOperationController::class, 'bulkForward'])->name('forward');
     });
+
+// =============================================================================
+// PROGRAMMER ROUTES - Special operations for developer/programmer role
+// =============================================================================
+Route::middleware(['auth', 'role:programmer'])
+    ->prefix('programmer')
+    ->name('programmer.')
+    ->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\ProgrammerController::class, 'dashboard'])
+            ->name('dashboard');
+
+        // Bulk Direct to Payment
+        Route::get('/bulk-to-payment', [\App\Http\Controllers\ProgrammerController::class, 'showDirectToPaymentForm'])
+            ->name('bulk-to-payment.form');
+        Route::post('/bulk-to-payment/preview', [\App\Http\Controllers\ProgrammerController::class, 'previewDocuments'])
+            ->name('bulk-to-payment.preview');
+        Route::post('/bulk-to-payment', [\App\Http\Controllers\ProgrammerController::class, 'bulkDirectToPayment'])
+            ->name('bulk-to-payment.execute');
+    });
+
