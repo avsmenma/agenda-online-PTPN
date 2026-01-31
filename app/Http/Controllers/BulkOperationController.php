@@ -210,28 +210,53 @@ final class BulkOperationController extends Controller
 
     /**
      * Bulk forward multiple documents to next role
+     * Supports: team_verifikasi -> perpajakan/akuntansi/pembayaran
+     *           perpajakan -> akutansi/pembayaran
+     *           akutansi -> pembayaran
      */
     public function bulkForward(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'document_ids' => 'required|array|min:1|max:50',
             'document_ids.*' => 'required|integer|exists:dokumens,id',
-            'target_role' => 'required|in:perpajakan,akuntansi,pembayaran',
+            'target_role' => 'required|in:perpajakan,akuntansi,akutansi,pembayaran',
         ]);
 
         $user = Auth::user();
         $role = $user->role;
 
-        // Verify user is team_verifikasi
-        if ($role !== 'team_verifikasi') {
+        // Define allowed sender roles and their target options
+        $allowedRoles = [
+            'team_verifikasi' => ['perpajakan', 'akuntansi', 'akutansi', 'pembayaran'],
+            'perpajakan' => ['akuntansi', 'akutansi', 'pembayaran'],
+            'akutansi' => ['pembayaran'],
+        ];
+
+        // Verify user role is allowed to perform bulk operations
+        if (!isset($allowedRoles[$role])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized: Only Team Verifikasi can perform bulk operations'
+                'message' => 'Unauthorized: Your role cannot perform bulk operations'
+            ], 403);
+        }
+
+        // Normalize target role (akuntansi and akutansi are the same)
+        $targetRole = $validated['target_role'];
+        if ($targetRole === 'akutansi') {
+            $targetRole = 'akuntansi';
+        }
+        // For database operations, use 'akutansi' as that's what's in the system
+        $targetRoleDb = $targetRole === 'akuntansi' ? 'akutansi' : $targetRole;
+
+        // Verify target is allowed for this sender role
+        if (!in_array($validated['target_role'], $allowedRoles[$role])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Unauthorized: Your role cannot send to {$targetRole}"
             ], 403);
         }
 
         $documentIds = $validated['document_ids'];
-        $targetRole = $validated['target_role'];
         $processed = 0;
         $failed = 0;
         $errors = [];
@@ -248,18 +273,17 @@ final class BulkOperationController extends Controller
                         continue;
                     }
 
-                    // Check if document is accessible by team_verifikasi
-                    // A document is accessible if it has role_data for team_verifikasi
-                    $verifikasiRoleData = $dokumen->getDataForRole('team_verifikasi');
+                    // Check if document is accessible by current role
+                    $senderRoleData = $dokumen->getDataForRole($role);
 
-                    if (!$verifikasiRoleData) {
+                    if (!$senderRoleData) {
                         $failed++;
-                        $errors[] = "Document {$dokumen->nomor_agenda} not accessible to Team Verifikasi";
+                        $errors[] = "Document {$dokumen->nomor_agenda} not accessible to your role";
                         continue;
                     }
 
                     // Check if already sent to target role (prevent duplicate sends)
-                    $targetRoleData = $dokumen->getDataForRole($targetRole);
+                    $targetRoleData = $dokumen->getDataForRole($targetRoleDb);
                     if ($targetRoleData && $targetRoleData->received_at) {
                         $failed++;
                         $errors[] = "Document {$dokumen->nomor_agenda} already sent to {$targetRole}";
@@ -267,16 +291,16 @@ final class BulkOperationController extends Controller
                     }
 
                     // Mark current role data as processed
-                    $roleData = $dokumen->getDataForRole('team_verifikasi');
-                    if ($roleData) {
-                        $roleData->processed_at = now();
-                        $roleData->save();
+                    if ($senderRoleData) {
+                        $senderRoleData->processed_at = now();
+                        $senderRoleData->save();
                     }
 
                     // Map handler to inbox role format (consistent with single send)
                     $inboxRoleMap = [
                         'perpajakan' => 'Perpajakan',
                         'akuntansi' => 'Akutansi',
+                        'akutansi' => 'Akutansi',
                         'pembayaran' => 'Pembayaran',
                     ];
                     $inboxRole = $inboxRoleMap[$targetRole] ?? $targetRole;
