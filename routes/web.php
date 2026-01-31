@@ -963,7 +963,7 @@ Route::middleware(['auth', 'role:team_verifikasi'])
 // =============================================================================
 // BULK OPERATIONS - Common route for all allowed roles
 // =============================================================================
-Route::middleware(['auth', 'role:team_verifikasi,perpajakan,akutansi'])
+Route::middleware(['auth', 'role:team_verifikasi,verifikasi,Verifikasi,perpajakan,Perpajakan,akutansi,Akutansi'])
     ->prefix('bulk-operations')
     ->name('bulk-operations.')
     ->group(function () {

@@ -223,7 +223,7 @@ final class BulkOperationController extends Controller
         ]);
 
         $user = Auth::user();
-        $role = $user->role;
+        $role = strtolower($user->role); // Normalize role to lowercase
 
         // Define allowed sender roles and their target options
         $allowedRoles = [
