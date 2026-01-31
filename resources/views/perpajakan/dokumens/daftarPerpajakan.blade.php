@@ -5808,150 +5808,6 @@
 
                 searchInput.addEventListener('input', liveSearchHandler);
             }
-
-        // ===== BULK SEND FUNCTIONALITY =====
-        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-        const docCheckboxes = document.querySelectorAll('.doc-checkbox');
-        const floatingActionBar = document.getElementById('floatingActionBar');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const bulkDestinationSelect = document.getElementById('bulkDestination');
-        const bulkModalOverlay = document.getElementById('bulkModalOverlay');
-        const bulkLoadingOverlay = document.getElementById('bulkLoadingOverlay');
-        
-        let selectedDocuments = [];
-
-        // Update floating action bar visibility
-        function updateFloatingBar() {
-            selectedDocuments = [];
-            docCheckboxes.forEach(cb => {
-                if (cb.checked) {
-                    selectedDocuments.push({
-                        id: cb.dataset.id,
-                        agenda: cb.dataset.agenda
-                    });
-                }
-            });
-            
-            if (selectedDocuments.length > 0) {
-                floatingActionBar.classList.add('show');
-                selectedCountSpan.textContent = selectedDocuments.length;
-            } else {
-                floatingActionBar.classList.remove('show');
-            }
-            
-            // Update select all checkbox state
-            const allChecked = docCheckboxes.length > 0 && 
-                Array.from(docCheckboxes).every(cb => cb.checked);
-            const someChecked = Array.from(docCheckboxes).some(cb => cb.checked);
-            
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = allChecked;
-                selectAllCheckbox.indeterminate = someChecked && !allChecked;
-            }
-        }
-
-        // Select all checkbox handler
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                docCheckboxes.forEach(cb => {
-                    cb.checked = this.checked;
-                });
-                updateFloatingBar();
-            });
-        }
-
-        // Individual checkbox handlers
-        docCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateFloatingBar);
-        });
-
-        // Cancel bulk selection
-        function cancelBulkSelection() {
-            docCheckboxes.forEach(cb => cb.checked = false);
-            if (selectAllCheckbox) selectAllCheckbox.checked = false;
-            updateFloatingBar();
-        }
-
-        // Open confirmation modal
-        function openBulkConfirmModal() {
-            const destination = bulkDestinationSelect.value;
-            if (!destination) {
-                alert('Pilih tujuan pengiriman terlebih dahulu');
-                return;
-            }
-            
-            const destinationLabel = destination === 'akuntansi' ? 'Team Akutansi' : 'Team Pembayaran';
-            
-            document.getElementById('summaryDocCount').textContent = selectedDocuments.length + ' dokumen';
-            document.getElementById('summaryDestination').textContent = destinationLabel;
-            
-            bulkModalOverlay.classList.add('show');
-        }
-
-        // Close confirmation modal
-        function closeBulkConfirmModal() {
-            bulkModalOverlay.classList.remove('show');
-        }
-
-        // Execute bulk send
-        async function executeBulkSend() {
-            closeBulkConfirmModal();
-            
-            const destination = bulkDestinationSelect.value;
-            const destinationLabel = destination === 'akuntansi' ? 'Team Akutansi' : 'Team Pembayaran';
-            const documentIds = selectedDocuments.map(doc => parseInt(doc.id));
-            
-            // Show loading overlay
-            bulkLoadingOverlay.classList.add('show');
-            document.getElementById('loadingText').textContent = `Mengirim ${documentIds.length} dokumen ke ${destinationLabel}...`;
-            document.getElementById('progressText').textContent = 'Mohon tunggu...';
-            
-            try {
-                const response = await fetch('/bulk-operations/forward', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        document_ids: documentIds,
-                        target_role: destination
-                    })
-                });
-                
-                const result = await response.json();
-                
-                bulkLoadingOverlay.classList.remove('show');
-                
-                if (result.success) {
-                    alert(`✅ Berhasil!\n\n${result.processed} dokumen berhasil dikirim ke inbox ${destinationLabel}.\n\nDokumen akan muncul di inbox ${destinationLabel} menunggu persetujuan.`);
-                    window.location.reload();
-                } else {
-                    alert(`❌ Gagal!\n\n${result.message}`);
-                }
-            } catch (error) {
-                bulkLoadingOverlay.classList.remove('show');
-                console.error('Bulk send error:', error);
-                alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
-            }
-        }
-
-        // Close modal on overlay click
-        if (bulkModalOverlay) {
-            bulkModalOverlay.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeBulkConfirmModal();
-                }
-            });
-        }
-
-        // Close modal on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && bulkModalOverlay && bulkModalOverlay.classList.contains('show')) {
-                closeBulkConfirmModal();
-            }
-        });
         </script>
 
 <!-- Floating Action Bar -->
@@ -6008,6 +5864,159 @@
   <div id="loadingText" class="loading-text">Memproses...</div>
   <div id="progressText" class="progress-text">Mohon tunggu...</div>
 </div>
+
+<!-- Bulk Send JavaScript (MUST be after HTML elements) -->
+<script>
+    // ===== BULK SEND FUNCTIONALITY =====
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+    const floatingActionBar = document.getElementById('floatingActionBar');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const bulkDestinationSelect = document.getElementById('bulkDestination');
+    const bulkModalOverlay = document.getElementById('bulkModalOverlay');
+    const bulkLoadingOverlay = document.getElementById('bulkLoadingOverlay');
+    
+    let selectedDocuments = [];
+
+    // Update floating action bar visibility
+    function updateFloatingBar() {
+        selectedDocuments = [];
+        docCheckboxes.forEach(cb => {
+            if (cb.checked) {
+                selectedDocuments.push({
+                    id: cb.dataset.id,
+                    agenda: cb.dataset.agenda
+                });
+            }
+        });
+        
+        if (selectedDocuments.length > 0 && floatingActionBar) {
+            floatingActionBar.classList.add('show');
+            if (selectedCountSpan) selectedCountSpan.textContent = selectedDocuments.length;
+        } else if (floatingActionBar) {
+            floatingActionBar.classList.remove('show');
+        }
+        
+        // Update select all checkbox state
+        const allChecked = docCheckboxes.length > 0 && 
+            Array.from(docCheckboxes).every(cb => cb.checked);
+        const someChecked = Array.from(docCheckboxes).some(cb => cb.checked);
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        }
+    }
+
+    // Select all checkbox handler
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            docCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+            updateFloatingBar();
+        });
+    }
+
+    // Individual checkbox handlers
+    docCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateFloatingBar);
+    });
+
+    // Cancel bulk selection
+    function cancelBulkSelection() {
+        docCheckboxes.forEach(cb => cb.checked = false);
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        updateFloatingBar();
+    }
+
+    // Open confirmation modal
+    function openBulkConfirmModal() {
+        const destination = bulkDestinationSelect ? bulkDestinationSelect.value : '';
+        if (!destination) {
+            alert('Pilih tujuan pengiriman terlebih dahulu');
+            return;
+        }
+        
+        const destinationLabel = destination === 'akuntansi' ? 'Team Akutansi' : 'Team Pembayaran';
+        
+        const summaryDocCount = document.getElementById('summaryDocCount');
+        const summaryDestination = document.getElementById('summaryDestination');
+        if (summaryDocCount) summaryDocCount.textContent = selectedDocuments.length + ' dokumen';
+        if (summaryDestination) summaryDestination.textContent = destinationLabel;
+        
+        if (bulkModalOverlay) bulkModalOverlay.classList.add('show');
+    }
+
+    // Close confirmation modal
+    function closeBulkConfirmModal() {
+        if (bulkModalOverlay) bulkModalOverlay.classList.remove('show');
+    }
+
+    // Execute bulk send
+    async function executeBulkSend() {
+        closeBulkConfirmModal();
+        
+        const destination = bulkDestinationSelect ? bulkDestinationSelect.value : '';
+        const destinationLabel = destination === 'akuntansi' ? 'Team Akutansi' : 'Team Pembayaran';
+        const documentIds = selectedDocuments.map(doc => parseInt(doc.id));
+        
+        // Show loading overlay
+        if (bulkLoadingOverlay) {
+            bulkLoadingOverlay.classList.add('show');
+            const loadingText = document.getElementById('loadingText');
+            const progressText = document.getElementById('progressText');
+            if (loadingText) loadingText.textContent = `Mengirim ${documentIds.length} dokumen ke ${destinationLabel}...`;
+            if (progressText) progressText.textContent = 'Mohon tunggu...';
+        }
+        
+        try {
+            const response = await fetch('/bulk-operations/forward', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    document_ids: documentIds,
+                    target_role: destination
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (bulkLoadingOverlay) bulkLoadingOverlay.classList.remove('show');
+            
+            if (result.success) {
+                alert(`✅ Berhasil!\n\n${result.processed} dokumen berhasil dikirim ke inbox ${destinationLabel}.\n\nDokumen akan muncul di inbox ${destinationLabel} menunggu persetujuan.`);
+                window.location.reload();
+            } else {
+                alert(`❌ Gagal!\n\n${result.message}`);
+            }
+        } catch (error) {
+            if (bulkLoadingOverlay) bulkLoadingOverlay.classList.remove('show');
+            console.error('Bulk send error:', error);
+            alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
+        }
+    }
+
+    // Close modal on overlay click
+    if (bulkModalOverlay) {
+        bulkModalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBulkConfirmModal();
+            }
+        });
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && bulkModalOverlay && bulkModalOverlay.classList.contains('show')) {
+            closeBulkConfirmModal();
+        }
+    });
+</script>
 
 @endsection
 
