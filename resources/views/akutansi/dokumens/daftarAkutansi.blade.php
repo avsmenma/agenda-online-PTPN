@@ -5887,6 +5887,300 @@
   <div id="progressText" class="progress-text">Mohon tunggu...</div>
 </div>
 
+<!-- Bulk Send Success Modal -->
+<div id="bulkSuccessModal" class="bulk-success-overlay">
+  <div class="bulk-success-modal">
+    <div class="success-icon-container">
+      <div class="success-circle">
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+          <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+          <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+      </div>
+      <div class="confetti">
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+      </div>
+    </div>
+    <h2 class="success-title">Berhasil Terkirim!</h2>
+    <div class="success-details">
+      <div class="success-stat">
+        <span class="stat-number" id="successDocCount">0</span>
+        <span class="stat-label">Dokumen</span>
+      </div>
+      <div class="success-arrow">
+        <i class="fas fa-arrow-right"></i>
+      </div>
+      <div class="success-destination">
+        <i class="fas fa-inbox"></i>
+        <span id="successDestination">Team Pembayaran</span>
+      </div>
+    </div>
+    <p class="success-message">
+      <i class="fas fa-info-circle"></i>
+      Dokumen telah masuk ke <strong>inbox</strong> dan menunggu persetujuan
+    </p>
+    <button type="button" class="btn-success-close" onclick="closeSuccessAndReload()">
+      <i class="fas fa-check"></i> Mengerti
+    </button>
+  </div>
+</div>
+
+<style>
+/* Success Modal Styles */
+.bulk-success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bulk-success-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+.bulk-success-modal {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: scale(0.8) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.success-icon-container {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.success-circle {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+
+.checkmark {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 2;
+  stroke: #10b981;
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px #10b981;
+  animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+}
+
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke: #10b981;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes fill {
+  100% { box-shadow: inset 0px 0px 0px 30px rgba(16, 185, 129, 0.1); }
+}
+
+@keyframes scale {
+  0%, 100% { transform: none; }
+  50% { transform: scale3d(1.1, 1.1, 1); }
+}
+
+/* Confetti Animation */
+.confetti {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti-fall 1s ease-out forwards;
+  opacity: 0;
+}
+
+.confetti-piece:nth-child(1) { background: #f59e0b; animation-delay: 0.2s; }
+.confetti-piece:nth-child(2) { background: #10b981; animation-delay: 0.3s; }
+.confetti-piece:nth-child(3) { background: #3b82f6; animation-delay: 0.4s; }
+.confetti-piece:nth-child(4) { background: #ec4899; animation-delay: 0.5s; }
+.confetti-piece:nth-child(5) { background: #8b5cf6; animation-delay: 0.6s; }
+.confetti-piece:nth-child(6) { background: #ef4444; animation-delay: 0.7s; }
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx, 50px), var(--ty, 80px)) rotate(var(--rot, 360deg)) scale(0.5);
+  }
+}
+
+.confetti-piece:nth-child(1) { --tx: -60px; --ty: -40px; --rot: 180deg; }
+.confetti-piece:nth-child(2) { --tx: 70px; --ty: -50px; --rot: -200deg; }
+.confetti-piece:nth-child(3) { --tx: -50px; --ty: 60px; --rot: 150deg; }
+.confetti-piece:nth-child(4) { --tx: 60px; --ty: 50px; --rot: -180deg; }
+.confetti-piece:nth-child(5) { --tx: -30px; --ty: -60px; --rot: 220deg; }
+.confetti-piece:nth-child(6) { --tx: 40px; --ty: 70px; --rot: -150deg; }
+
+.success-title {
+  color: #10b981;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  letter-spacing: -0.5px;
+}
+
+.success-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.success-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 36px;
+  font-weight: 800;
+  color: #059669;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+.success-arrow {
+  color: #10b981;
+  font-size: 20px;
+  animation: arrowPulse 1s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(5px); opacity: 0.7; }
+}
+
+.success-destination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.success-destination i {
+  font-size: 24px;
+  color: #059669;
+}
+
+.success-destination span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.success-message {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0 0 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.success-message i {
+  color: #3b82f6;
+}
+
+.btn-success-close {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+.btn-success-close:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.btn-success-close:active {
+  transform: translateY(0);
+}
+</style>
+
 <!-- Bulk Send JavaScript (MUST be after HTML elements) -->
 <script>
     // ===== BULK SEND FUNCTIONALITY =====
@@ -6000,8 +6294,7 @@
             if (bulkLoadingOverlay) bulkLoadingOverlay.classList.remove('show');
             
             if (result.success) {
-                alert(`✅ Berhasil!\n\n${result.processed} dokumen berhasil dikirim ke inbox Team Pembayaran.\n\nDokumen akan muncul di inbox Team Pembayaran menunggu persetujuan.`);
-                window.location.reload();
+                showSuccessModal(result.processed, 'Team Pembayaran');
             } else {
                 alert(`❌ Gagal!\n\n${result.message}`);
             }
@@ -6010,6 +6303,29 @@
             console.error('Bulk send error:', error);
             alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
         }
+    }
+
+    // Show success modal
+    function showSuccessModal(count, destination) {
+        const successModal = document.getElementById('bulkSuccessModal');
+        const successDocCount = document.getElementById('successDocCount');
+        const successDestination = document.getElementById('successDestination');
+        
+        if (successDocCount) successDocCount.textContent = count;
+        if (successDestination) successDestination.textContent = destination;
+        
+        if (successModal) {
+            successModal.classList.add('show');
+        }
+    }
+
+    // Close success modal and reload page
+    function closeSuccessAndReload() {
+        const successModal = document.getElementById('bulkSuccessModal');
+        if (successModal) {
+            successModal.classList.remove('show');
+        }
+        window.location.reload();
     }
 
     // Close modal on overlay click
