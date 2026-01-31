@@ -267,34 +267,35 @@ final class BulkOperationController extends Controller
                     }
 
                     // Mark current role data as processed
-                    if ($dokumen->latestRoleData) {
-                        $dokumen->latestRoleData->update([
-                            'processed_at' => now(),
-                        ]);
+                    $roleData = $dokumen->getDataForRole('team_verifikasi');
+                    if ($roleData) {
+                        $roleData->processed_at = now();
+                        $roleData->save();
                     }
 
-                    // Determine status based on target role - should be "waiting approval" not "sent to"
-                    $newStatus = match ($targetRole) {
-                        'perpajakan' => 'waiting_approval_perpajakan',
-                        'akuntansi' => 'waiting_approval_akuntansi',
-                        'pembayaran' => 'waiting_approval_pembayaran',
-                        default => 'waiting_approval_perpajakan',
-                    };
+                    // Map handler to inbox role format (consistent with single send)
+                    $inboxRoleMap = [
+                        'perpajakan' => 'Perpajakan',
+                        'akuntansi' => 'Akutansi',
+                        'pembayaran' => 'Pembayaran',
+                    ];
+                    $inboxRole = $inboxRoleMap[$targetRole] ?? $targetRole;
 
-                    // Update document
-                    $dokumen->update([
-                        'status' => $newStatus,
-                        'current_handler' => $targetRole,
-                    ]);
+                    // Use sendToInbox method - this properly routes document through inbox
+                    // and sets status to pending_approval_* WITHOUT changing current_handler
+                    $dokumen->sendToInbox($inboxRole);
 
-                    // Create role data for target role (inbox entry)
-                    DokumenRoleData::create([
-                        'dokumen_id' => $dokumen->id,
-                        'role_code' => $targetRole,
-                        'received_at' => now(),
-                        'processed_at' => null,
-                        'deadline_at' => null,
-                    ]);
+                    // For perpajakan, reset deadline so they must set it after approval
+                    if ($targetRole === 'perpajakan') {
+                        $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+                        if ($perpajakanRoleData) {
+                            $perpajakanRoleData->deadline_at = null;
+                            $perpajakanRoleData->deadline_days = null;
+                            $perpajakanRoleData->deadline_note = null;
+                            $perpajakanRoleData->processed_at = null;
+                            $perpajakanRoleData->save();
+                        }
+                    }
 
                     $processed++;
 
