@@ -689,8 +689,9 @@ class OwnerDashboardController extends Controller
         }
 
         if ($status == 'sedang diproses') {
-            // Add 10% if being processed
-            return min($baseProgress + 10, 100);
+            // Don't add bonus when processing to prevent step jumping
+            // 40 + 10 = 50 would make step 3 active instead of step 2
+            return $baseProgress;
         }
 
         if (strpos($status, 'sent_to_') === 0) {
