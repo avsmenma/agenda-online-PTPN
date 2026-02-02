@@ -1425,7 +1425,7 @@ class OwnerDashboardController extends Controller
         $reviewerDeadlineInfo = null;
         $reviewerDeadlineLevel = null;
 
-        // Only calculate for documents still being processed (not yet processed_at)
+        // Only calculate for documents received but not yet processed at this role
         if ($reviewerRoleData && $reviewerRoleData->received_at && !$reviewerRoleData->processed_at) {
             $hoursElapsed = $reviewerRoleData->received_at->diffInHours(now());
             $daysElapsed = floor($hoursElapsed / 24);

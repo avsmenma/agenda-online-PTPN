@@ -1212,9 +1212,10 @@
           }
 
           // Determine deadline class for color-coded border
+          // Show deadline indicator if deadlineLevel exists (controller already checks !processed_at)
           $deadlineClass = '';
           $deadlineLevel = $stage['deadlineLevel'] ?? null;
-          if ($deadlineLevel && !$isCompleted && !$isReturned) {
+          if ($deadlineLevel) {
             $deadlineClass = 'deadline-' . $deadlineLevel;
           }
         @endphp
@@ -1231,7 +1232,7 @@
               <div>
                 <div class="stage-label">
                   {{ $stage['label'] ?? 'STAGE' }}
-                  @if($deadlineLevel && !$isCompleted && !$isReturned)
+                  @if($deadlineLevel)
                     @php
                       $deadlineIcon = '';
                       $deadlineText = '';
