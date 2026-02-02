@@ -345,6 +345,11 @@
       box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15), 0 4px 20px rgba(8, 62, 64, 0.08);
     }
 
+    .timeline-content.deadline-aman::before {
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+      opacity: 1 !important;
+    }
+
     .timeline-content.deadline-aman::after {
       content: '';
       position: absolute;
@@ -359,6 +364,11 @@
     .timeline-content.deadline-peringatan {
       border-color: #f59e0b !important;
       box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), 0 4px 20px rgba(8, 62, 64, 0.08);
+    }
+
+    .timeline-content.deadline-peringatan::before {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
+      opacity: 1 !important;
     }
 
     .timeline-content.deadline-peringatan::after {
@@ -376,6 +386,11 @@
       border-color: #ef4444 !important;
       box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2), 0 4px 20px rgba(239, 68, 68, 0.15);
       animation: pulse-deadline-warning 2s ease-in-out infinite;
+    }
+
+    .timeline-content.deadline-terlambat::before {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+      opacity: 1 !important;
     }
 
     .timeline-content.deadline-terlambat::after {
