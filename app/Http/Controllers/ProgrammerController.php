@@ -398,37 +398,64 @@ final class ProgrammerController extends Controller
             'role_code' => $role,
         ]);
 
-        // Update timestamps
+        // Update timestamps - use has() to check if field is submitted (even if empty)
         $receivedAt = $request->get('received_at');
         $processedAt = $request->get('processed_at');
         $deadlineAt = $request->get('deadline_at');
 
-        if ($receivedAt) {
-            $roleData->received_at = \Carbon\Carbon::parse($receivedAt);
-        }
-        if ($processedAt) {
-            $roleData->processed_at = \Carbon\Carbon::parse($processedAt);
-        }
-        if ($deadlineAt) {
-            $roleData->deadline_at = \Carbon\Carbon::parse($deadlineAt);
+        // Log input values for debugging
+        Log::info("Programmer updating timestamps - Input values", [
+            'dokumen_id' => $dokumen->id,
+            'role' => $role,
+            'received_at_input' => $receivedAt,
+            'processed_at_input' => $processedAt,
+            'deadline_at_input' => $deadlineAt,
+        ]);
+
+        // Update received_at if provided
+        if (!empty($receivedAt)) {
+            $parsedReceivedAt = \Carbon\Carbon::parse($receivedAt);
+            $roleData->received_at = $parsedReceivedAt;
+            Log::info("Parsed received_at: " . $parsedReceivedAt->toDateTimeString());
         }
 
-        $roleData->save();
+        // Update processed_at if provided
+        if (!empty($processedAt)) {
+            $parsedProcessedAt = \Carbon\Carbon::parse($processedAt);
+            $roleData->processed_at = $parsedProcessedAt;
+            Log::info("Parsed processed_at: " . $parsedProcessedAt->toDateTimeString());
+        }
 
-        // Log the change
-        Log::info("Programmer updated timestamps", [
+        // Update deadline_at if provided
+        if (!empty($deadlineAt)) {
+            $parsedDeadlineAt = \Carbon\Carbon::parse($deadlineAt);
+            $roleData->deadline_at = $parsedDeadlineAt;
+            Log::info("Parsed deadline_at: " . $parsedDeadlineAt->toDateTimeString());
+        }
+
+        // Save changes
+        $saved = $roleData->save();
+
+        // Log the final result
+        Log::info("Programmer updated timestamps - Result", [
             'dokumen_id' => $dokumen->id,
             'nomor_agenda' => $dokumen->nomor_agenda,
             'role' => $role,
-            'received_at' => $receivedAt,
-            'processed_at' => $processedAt,
-            'deadline_at' => $deadlineAt,
+            'saved' => $saved,
+            'final_received_at' => $roleData->received_at,
+            'final_processed_at' => $roleData->processed_at,
+            'final_deadline_at' => $roleData->deadline_at,
             'updated_by' => Auth::user()->name ?? 'Programmer',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Timestamps berhasil diupdate',
+            'data' => [
+                'received_at' => $roleData->received_at?->format('Y-m-d H:i:s'),
+                'processed_at' => $roleData->processed_at?->format('Y-m-d H:i:s'),
+                'deadline_at' => $roleData->deadline_at?->format('Y-m-d H:i:s'),
+            ],
         ]);
     }
 
