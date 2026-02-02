@@ -1388,25 +1388,29 @@ class OwnerDashboardController extends Controller
         $reviewerReturnInfo = $this->getReturnInfoForStage($dokumen, 'reviewer', $returnEvents);
         $reviewerCycleInfo = $this->getCycleInfo($dokumen, 'reviewer');
 
-        if ($dokumen->getDataForRole('team_verifikasi')?->received_at) {
-            $reviewerStatus = 'completed';
-            $reviewerTimestamp = $dokumen->getDataForRole('team_verifikasi')->received_at;
-            $reviewerDescription = 'Dikirim ke Ibu Yuni';
+        // Get role data for Team Verifikasi
+        $reviewerRoleData = $dokumen->getDataForRole('team_verifikasi');
+
+        // Check if document was sent to next role (perpajakan or akutansi)
+        $sentToNextRole = ($dokumen->getDataForRole('perpajakan')?->received_at || $dokumen->getDataForRole('akutansi')?->received_at);
+
+        if ($reviewerRoleData?->received_at) {
+            // Document is received at Team Verifikasi
+            if ($sentToNextRole || $reviewerRoleData->processed_at) {
+                // Document has been processed and sent to next role
+                $reviewerStatus = 'completed';
+                $reviewerTimestamp = $reviewerRoleData->processed_at ?? $reviewerRoleData->received_at;
+                $reviewerDescription = 'Diproses Ibu Yuni';
+            } else {
+                // Document is still being processed at Team Verifikasi
+                $reviewerStatus = 'processing';
+                $reviewerTimestamp = $reviewerRoleData->received_at;
+                $reviewerDescription = 'Sedang diproses Ibu Yuni';
+            }
 
             // Check if this is a re-send after return
             if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
-                $reviewerDescription = 'Dikirim kembali ke Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
-            }
-        }
-
-        if ($dokumen->processed_at) {
-            $reviewerStatus = 'completed';
-            $reviewerTimestamp = $dokumen->processed_at;
-            $reviewerDescription = 'Diproses Ibu Yuni';
-
-            // Check if processed after return
-            if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
-                $reviewerDescription = 'Diproses Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
+                $reviewerDescription .= ' (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
             }
         }
 
@@ -1414,7 +1418,7 @@ class OwnerDashboardController extends Controller
         if ($reviewerReturnInfo && !$reviewerCycleInfo['isResend']) {
             $reviewerStatus = 'returned';
             if (!$reviewerTimestamp) {
-                $reviewerTimestamp = $dokumen->getDataForRole('team_verifikasi')?->received_at ?? $dokumen->created_at;
+                $reviewerTimestamp = $reviewerRoleData?->received_at ?? $dokumen->created_at;
             }
         }
 
