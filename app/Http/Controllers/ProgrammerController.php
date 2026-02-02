@@ -270,6 +270,169 @@ final class ProgrammerController extends Controller
     }
 
     /**
+     * Document Tools page - view document IDs and edit role timestamps
+     */
+    public function documentTools(Request $request): View
+    {
+        $documents = Dokumen::select('id', 'nomor_agenda', 'nomor_spp', 'current_handler')
+            ->orderBy('id', 'desc')
+            ->paginate(20);
+
+        return view('programmer.document-tools', compact('documents'));
+    }
+
+    /**
+     * Search documents by nomor_agenda or nomor_spp
+     */
+    public function searchDocuments(Request $request): JsonResponse
+    {
+        $search = $request->get('search', '');
+        $role = $request->get('role', '');
+
+        $query = Dokumen::select('id', 'nomor_agenda', 'nomor_spp', 'current_handler');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('id', $search);
+            });
+        }
+
+        if (!empty($role)) {
+            $query->where('current_handler', $role);
+        }
+
+        $documents = $query->orderBy('id', 'desc')->limit(50)->get();
+
+        return response()->json([
+            'success' => true,
+            'documents' => $documents,
+        ]);
+    }
+
+    /**
+     * Get role data for a specific document and role
+     */
+    public function getRoleData(Request $request): JsonResponse
+    {
+        $docId = $request->get('doc_id');
+        $role = $request->get('role');
+
+        if (!$docId || !$role) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen ID dan Role required',
+            ], 400);
+        }
+
+        // Try to find by ID first, then by nomor_agenda
+        $dokumen = Dokumen::find($docId);
+        if (!$dokumen) {
+            $dokumen = Dokumen::where('nomor_agenda', $docId)->first();
+        }
+
+        if (!$dokumen) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen tidak ditemukan',
+            ], 404);
+        }
+
+        // Get role data
+        $roleData = DokumenRoleData::where('dokumen_id', $dokumen->id)
+            ->where('role_code', $role)
+            ->first();
+
+        if (!$roleData) {
+            // Create empty role data if not exists
+            $roleData = DokumenRoleData::create([
+                'dokumen_id' => $dokumen->id,
+                'role_code' => $role,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'dokumen_id' => $dokumen->id,
+            'nomor_agenda' => $dokumen->nomor_agenda,
+            'data' => [
+                'received_at' => $roleData->received_at?->format('Y-m-d H:i:s'),
+                'processed_at' => $roleData->processed_at?->format('Y-m-d H:i:s'),
+                'deadline_at' => $roleData->deadline_at?->format('Y-m-d H:i:s'),
+            ],
+        ]);
+    }
+
+    /**
+     * Update role timestamps
+     */
+    public function updateTimestamps(Request $request): JsonResponse
+    {
+        $docId = $request->get('doc_id');
+        $role = $request->get('role');
+
+        if (!$docId || !$role) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen ID dan Role required',
+            ], 400);
+        }
+
+        // Find dokumen
+        $dokumen = Dokumen::find($docId);
+        if (!$dokumen) {
+            $dokumen = Dokumen::where('nomor_agenda', $docId)->first();
+        }
+
+        if (!$dokumen) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen tidak ditemukan',
+            ], 404);
+        }
+
+        // Get or create role data
+        $roleData = DokumenRoleData::firstOrCreate([
+            'dokumen_id' => $dokumen->id,
+            'role_code' => $role,
+        ]);
+
+        // Update timestamps
+        $receivedAt = $request->get('received_at');
+        $processedAt = $request->get('processed_at');
+        $deadlineAt = $request->get('deadline_at');
+
+        if ($receivedAt) {
+            $roleData->received_at = \Carbon\Carbon::parse($receivedAt);
+        }
+        if ($processedAt) {
+            $roleData->processed_at = \Carbon\Carbon::parse($processedAt);
+        }
+        if ($deadlineAt) {
+            $roleData->deadline_at = \Carbon\Carbon::parse($deadlineAt);
+        }
+
+        $roleData->save();
+
+        // Log the change
+        Log::info("Programmer updated timestamps", [
+            'dokumen_id' => $dokumen->id,
+            'nomor_agenda' => $dokumen->nomor_agenda,
+            'role' => $role,
+            'received_at' => $receivedAt,
+            'processed_at' => $processedAt,
+            'deadline_at' => $deadlineAt,
+            'updated_by' => Auth::user()->name ?? 'Programmer',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Timestamps berhasil diupdate',
+        ]);
+    }
+
+    /**
      * Check if user is programmer
      */
     public function isProgrammer(): bool

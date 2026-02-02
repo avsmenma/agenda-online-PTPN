@@ -83,6 +83,17 @@
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>
+                            <a href="{{ route('programmer.document-tools') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-tools fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Document Tools</h6>
+                                    <small class="text-muted">Lihat ID dokumen dan edit timestamp role</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

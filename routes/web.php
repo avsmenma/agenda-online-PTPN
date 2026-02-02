@@ -988,5 +988,15 @@ Route::middleware(['auth', 'role:programmer'])
             ->name('bulk-to-payment.preview');
         Route::post('/bulk-to-payment', [\App\Http\Controllers\ProgrammerController::class, 'bulkDirectToPayment'])
             ->name('bulk-to-payment.execute');
+
+        // Document Tools - View document IDs and edit role timestamps
+        Route::get('/document-tools', [\App\Http\Controllers\ProgrammerController::class, 'documentTools'])
+            ->name('document-tools');
+        Route::get('/document-tools/search', [\App\Http\Controllers\ProgrammerController::class, 'searchDocuments'])
+            ->name('document-tools.search');
+        Route::post('/document-tools/get-role-data', [\App\Http\Controllers\ProgrammerController::class, 'getRoleData'])
+            ->name('document-tools.get-role-data');
+        Route::post('/document-tools/update-timestamps', [\App\Http\Controllers\ProgrammerController::class, 'updateTimestamps'])
+            ->name('document-tools.update-timestamps');
     });
 
