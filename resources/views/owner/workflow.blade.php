@@ -415,7 +415,30 @@
       border-top: 1px solid #e2e8f0;
     }
 
+    /* Stage Duration */
+    .stage-duration {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #6366f1;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      border-radius: 8px;
+      border: 1px solid #c7d2fe;
+    }
+
+    .stage-duration i {
+      font-size: 14px;
+    }
+
+    .stage-duration strong {
+      color: #4f46e5;
+    }
+
     /* Return/Cycle Info */
+
     .stage-overdue-info {
       margin-top: 16px;
       padding: 16px;
@@ -1188,6 +1211,14 @@
               <div class="stage-timestamp">
                 <i class="far fa-clock"></i>
                 <span>{{ \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') }}</span>
+              </div>
+            @endif
+
+            {{-- Duration Info --}}
+            @if(!empty($stage['duration']) && !empty($stage['duration']['display']))
+              <div class="stage-duration">
+                <i class="fas fa-stopwatch"></i>
+                <span>Durasi: <strong>{{ $stage['duration']['display'] }}</strong></span>
               </div>
             @endif
 

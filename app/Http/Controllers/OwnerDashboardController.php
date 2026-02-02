@@ -933,27 +933,44 @@ class OwnerDashboardController extends Controller
 
     /**
      * Calculate duration between two dates
+     * Returns an array with minutes and display keys for workflow stages
      */
     private function calculateDuration($from, $to)
     {
-        $from = Carbon::parse($from);
-        $to = Carbon::parse($to);
-        $diff = $from->diff($to);
+        if (!$from || !$to) {
+            return null;
+        }
 
-        $parts = [];
-        if ($diff->y > 0)
-            $parts[] = $diff->y . ' tahun';
-        if ($diff->m > 0)
-            $parts[] = $diff->m . ' bulan';
-        if ($diff->d > 0)
-            $parts[] = $diff->d . ' hari';
-        if ($diff->h > 0)
-            $parts[] = $diff->h . ' jam';
-        if ($diff->i > 0)
-            $parts[] = $diff->i . ' menit';
+        try {
+            $from = Carbon::parse($from);
+            $to = Carbon::parse($to);
+            $diffMinutes = abs($from->diffInMinutes($to));
 
-        return empty($parts) ? 'kurang dari 1 menit' : implode(' ', $parts);
+            // Format display string
+            $diff = $from->diff($to);
+            $parts = [];
+            if ($diff->y > 0)
+                $parts[] = $diff->y . ' tahun';
+            if ($diff->m > 0)
+                $parts[] = $diff->m . ' bulan';
+            if ($diff->d > 0)
+                $parts[] = $diff->d . ' hari';
+            if ($diff->h > 0)
+                $parts[] = $diff->h . ' jam';
+            if ($diff->i > 0)
+                $parts[] = $diff->i . ' menit';
+
+            $display = empty($parts) ? '< 1 menit' : implode(' ', $parts);
+
+            return [
+                'minutes' => $diffMinutes,
+                'display' => $display,
+            ];
+        } catch (\Exception $e) {
+            return null;
+        }
     }
+
 
     /**
      * Get display name for role
