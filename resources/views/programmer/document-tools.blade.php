@@ -411,11 +411,17 @@
                         if (response.success) {
                             const data = response.data;
 
-                            // Format datetime for input
+                            // Format datetime for input (using local timezone)
                             function formatDatetimeLocal(dateStr) {
                                 if (!dateStr) return '';
                                 const d = new Date(dateStr);
-                                return d.toISOString().slice(0, 16);
+                                // Use local timezone format
+                                const year = d.getFullYear();
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const day = String(d.getDate()).padStart(2, '0');
+                                const hours = String(d.getHours()).padStart(2, '0');
+                                const minutes = String(d.getMinutes()).padStart(2, '0');
+                                return `${year}-${month}-${day}T${hours}:${minutes}`;
                             }
 
                             $('#input-received-at').val(formatDatetimeLocal(data.received_at));
