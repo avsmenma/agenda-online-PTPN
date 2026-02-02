@@ -1437,10 +1437,19 @@ class OwnerDashboardController extends Controller
             if ($hoursElapsed >= 72) {
                 $reviewerIsOverdue = true;
                 $reviewerDeadlineLevel = 'terlambat';
+
+                // Calculate overdue time: hours beyond the 72-hour threshold
+                $hoursOverdue = $hoursElapsed - 72;
+                $daysOverdue = floor($hoursOverdue / 24);
+                $remainingHours = $hoursOverdue % 24;
+
                 $reviewerDeadlineInfo = [
                     'received_at' => $reviewerRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'days_overdue' => $daysOverdue,
+                    'hours_overdue' => $remainingHours,
+                    'deadline_at' => $reviewerRoleData->received_at->addHours(72), // 3 days deadline
                 ];
             } elseif ($hoursElapsed >= 24) {
                 $reviewerDeadlineLevel = 'peringatan';
@@ -1448,13 +1457,36 @@ class OwnerDashboardController extends Controller
                     'received_at' => $reviewerRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'days_overdue' => 0,
+                    'hours_overdue' => 0,
+                    'deadline_at' => $reviewerRoleData->received_at->addHours(72),
                 ];
             } else {
                 $reviewerDeadlineLevel = 'aman';
                 $reviewerDeadlineInfo = [
                     'received_at' => $reviewerRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
+                    'days_overdue' => 0,
+                    'hours_overdue' => 0,
                 ];
+            }
+        }
+
+        // Calculate duration for Team Verifikasi
+        $reviewerDuration = null;
+        if ($reviewerRoleData && $reviewerRoleData->received_at) {
+            // If still processing, calculate from received_at to now
+            // If completed, calculate from received_at to processed_at
+            if ($reviewerStatus === 'processing') {
+                $reviewerDuration = $this->calculateDuration($reviewerRoleData->received_at, now());
+            } elseif ($reviewerStatus === 'completed' && $reviewerRoleData->processed_at) {
+                $reviewerDuration = $this->calculateDuration($reviewerRoleData->received_at, $reviewerRoleData->processed_at);
+            } elseif ($sentToNextRole) {
+                // If sent to next role but no processed_at, use received_at of next role
+                $nextRoleReceivedAt = $dokumen->getDataForRole('perpajakan')?->received_at ?? $dokumen->getDataForRole('akutansi')?->received_at;
+                if ($nextRoleReceivedAt) {
+                    $reviewerDuration = $this->calculateDuration($reviewerRoleData->received_at, $nextRoleReceivedAt);
+                }
             }
         }
 
@@ -1467,6 +1499,7 @@ class OwnerDashboardController extends Controller
             'icon' => 'fa-user-check',
             'color' => $reviewerStatus === 'completed' ? '#10b981' : ($reviewerStatus === 'processing' ? '#3b82f6' : ($reviewerStatus === 'returned' ? '#ef4444' : '#9ca3af')),
             'description' => $reviewerDescription,
+            'duration' => $reviewerDuration,
             'details' => $reviewerTimestamp ? [
                 'Dikirim pada' => $dokumen->getDataForRole('team_verifikasi')?->received_at ? $dokumen->getDataForRole('team_verifikasi')->received_at->format('d M Y H:i') : '-',
                 'Diproses pada' => $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-',

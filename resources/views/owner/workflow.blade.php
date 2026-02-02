@@ -1301,7 +1301,7 @@
               <div class="stage-overdue-info">
                 <p>
                   <i class="fas fa-exclamation-circle mr-2"></i>
-                  <strong>⚠️ Terlambat: {{ $stage['deadlineInfo']['days_overdue'] ?? 0 }} hari</strong>
+                  <strong>⚠️ Terlambat: {{ $stage['deadlineInfo']['days_overdue'] ?? 0 }} hari {{ $stage['deadlineInfo']['hours_overdue'] ?? 0 }} jam</strong>
                   @if($stage['deadlineInfo']['deadline_at'] ?? null)
                     <span class="overdue-deadline">(Deadline:
                       {{ \Carbon\Carbon::parse($stage['deadlineInfo']['deadline_at'])->format('d M Y, H:i') }})</span>
