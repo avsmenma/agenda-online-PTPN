@@ -1419,34 +1419,37 @@ class OwnerDashboardController extends Controller
             }
         }
 
-        // Check if reviewer stage is overdue and calculate deadline level
+        // Calculate deadline level based on received_at (count up from when document was received)
         $reviewerRoleData = $dokumen->getDataForRole('team_verifikasi');
         $reviewerIsOverdue = false;
         $reviewerDeadlineInfo = null;
         $reviewerDeadlineLevel = null;
-        if ($reviewerRoleData && $reviewerRoleData->deadline_at && !$reviewerRoleData->processed_at) {
-            $daysUntil = now()->diffInDays($reviewerRoleData->deadline_at, false);
-            if ($daysUntil < 0) {
+
+        // Only calculate for documents still being processed (not yet processed_at)
+        if ($reviewerRoleData && $reviewerRoleData->received_at && !$reviewerRoleData->processed_at) {
+            $hoursElapsed = $reviewerRoleData->received_at->diffInHours(now());
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
                 $reviewerIsOverdue = true;
                 $reviewerDeadlineLevel = 'terlambat';
                 $reviewerDeadlineInfo = [
-                    'deadline_at' => $reviewerRoleData->deadline_at,
-                    'days_overdue' => abs($daysUntil),
-                    'deadline_note' => $reviewerRoleData->deadline_note,
+                    'received_at' => $reviewerRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
                 ];
-            } elseif ($daysUntil < 3) {
+            } elseif ($hoursElapsed >= 24) {
                 $reviewerDeadlineLevel = 'peringatan';
                 $reviewerDeadlineInfo = [
-                    'deadline_at' => $reviewerRoleData->deadline_at,
-                    'days_remaining' => $daysUntil,
-                    'deadline_note' => $reviewerRoleData->deadline_note,
+                    'received_at' => $reviewerRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
                 ];
             } else {
                 $reviewerDeadlineLevel = 'aman';
                 $reviewerDeadlineInfo = [
-                    'deadline_at' => $reviewerRoleData->deadline_at,
-                    'days_remaining' => $daysUntil,
-                    'deadline_note' => $reviewerRoleData->deadline_note,
+                    'received_at' => $reviewerRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
                 ];
             }
         }
@@ -1518,34 +1521,37 @@ class OwnerDashboardController extends Controller
             }
         }
 
-        // Check if tax stage is overdue and calculate deadline level
+        // Calculate deadline level based on received_at (count up from when document was received)
         $taxRoleData = $dokumen->getDataForRole('perpajakan');
         $taxIsOverdue = false;
         $taxDeadlineInfo = null;
         $taxDeadlineLevel = null;
-        if ($taxRoleData && $taxRoleData->deadline_at && !$taxRoleData->processed_at) {
-            $daysUntil = now()->diffInDays($taxRoleData->deadline_at, false);
-            if ($daysUntil < 0) {
+
+        // Only calculate for documents still being processed
+        if ($taxRoleData && $taxRoleData->received_at && !$taxRoleData->processed_at) {
+            $hoursElapsed = $taxRoleData->received_at->diffInHours(now());
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
                 $taxIsOverdue = true;
                 $taxDeadlineLevel = 'terlambat';
                 $taxDeadlineInfo = [
-                    'deadline_at' => $taxRoleData->deadline_at,
-                    'days_overdue' => abs($daysUntil),
-                    'deadline_note' => $taxRoleData->deadline_note,
+                    'received_at' => $taxRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
                 ];
-            } elseif ($daysUntil < 3) {
+            } elseif ($hoursElapsed >= 24) {
                 $taxDeadlineLevel = 'peringatan';
                 $taxDeadlineInfo = [
-                    'deadline_at' => $taxRoleData->deadline_at,
-                    'days_remaining' => $daysUntil,
-                    'deadline_note' => $taxRoleData->deadline_note,
+                    'received_at' => $taxRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
                 ];
             } else {
                 $taxDeadlineLevel = 'aman';
                 $taxDeadlineInfo = [
-                    'deadline_at' => $taxRoleData->deadline_at,
-                    'days_remaining' => $daysUntil,
-                    'deadline_note' => $taxRoleData->deadline_note,
+                    'received_at' => $taxRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
                 ];
             }
         }
@@ -1615,34 +1621,37 @@ class OwnerDashboardController extends Controller
             }
         }
 
-        // Check if accounting stage is overdue and calculate deadline level
+        // Calculate deadline level based on received_at (count up from when document was received)
         $accountingRoleData = $dokumen->getDataForRole('akutansi');
         $accountingIsOverdue = false;
         $accountingDeadlineInfo = null;
         $accountingDeadlineLevel = null;
-        if ($accountingRoleData && $accountingRoleData->deadline_at && !$accountingRoleData->processed_at) {
-            $daysUntil = now()->diffInDays($accountingRoleData->deadline_at, false);
-            if ($daysUntil < 0) {
+
+        // Only calculate for documents still being processed
+        if ($accountingRoleData && $accountingRoleData->received_at && !$accountingRoleData->processed_at) {
+            $hoursElapsed = $accountingRoleData->received_at->diffInHours(now());
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
                 $accountingIsOverdue = true;
                 $accountingDeadlineLevel = 'terlambat';
                 $accountingDeadlineInfo = [
-                    'deadline_at' => $accountingRoleData->deadline_at,
-                    'days_overdue' => abs($daysUntil),
-                    'deadline_note' => $accountingRoleData->deadline_note,
+                    'received_at' => $accountingRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
                 ];
-            } elseif ($daysUntil < 3) {
+            } elseif ($hoursElapsed >= 24) {
                 $accountingDeadlineLevel = 'peringatan';
                 $accountingDeadlineInfo = [
-                    'deadline_at' => $accountingRoleData->deadline_at,
-                    'days_remaining' => $daysUntil,
-                    'deadline_note' => $accountingRoleData->deadline_note,
+                    'received_at' => $accountingRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
                 ];
             } else {
                 $accountingDeadlineLevel = 'aman';
                 $accountingDeadlineInfo = [
-                    'deadline_at' => $accountingRoleData->deadline_at,
-                    'days_remaining' => $daysUntil,
-                    'deadline_note' => $accountingRoleData->deadline_note,
+                    'received_at' => $accountingRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
                 ];
             }
         }
@@ -1715,6 +1724,41 @@ class OwnerDashboardController extends Controller
             $paymentDescription = 'Selesai Dibayar';
         }
 
+        // Calculate deadline level for pembayaran based on received_at (count up)
+        $paymentRoleData = $dokumen->getDataForRole('pembayaran');
+        $paymentIsOverdue = false;
+        $paymentDeadlineInfo = null;
+        $paymentDeadlineLevel = null;
+
+        // Only calculate for documents still being processed
+        if ($paymentRoleData && $paymentRoleData->received_at && !$paymentRoleData->processed_at && $paymentStatus !== 'completed') {
+            $hoursElapsed = $paymentRoleData->received_at->diffInHours(now());
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
+                $paymentIsOverdue = true;
+                $paymentDeadlineLevel = 'terlambat';
+                $paymentDeadlineInfo = [
+                    'received_at' => $paymentRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                ];
+            } elseif ($hoursElapsed >= 24) {
+                $paymentDeadlineLevel = 'peringatan';
+                $paymentDeadlineInfo = [
+                    'received_at' => $paymentRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                ];
+            } else {
+                $paymentDeadlineLevel = 'aman';
+                $paymentDeadlineInfo = [
+                    'received_at' => $paymentRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'payment',
             'name' => 'Pembayaran',
@@ -1729,7 +1773,10 @@ class OwnerDashboardController extends Controller
                 'Status' => $dokumen->status,
             ] : [],
             'hasReturn' => false,
-            'returnInfo' => null
+            'returnInfo' => null,
+            'isOverdue' => $paymentIsOverdue,
+            'deadlineInfo' => $paymentDeadlineInfo,
+            'deadlineLevel' => $paymentDeadlineLevel
         ];
 
         // Calculate durations between stages

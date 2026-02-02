@@ -339,6 +339,65 @@
       background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
     }
 
+    /* Deadline Status Colored Outlines - Based on received_at count up */
+    .timeline-content.deadline-aman {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15), 0 4px 20px rgba(8, 62, 64, 0.08);
+    }
+
+    .timeline-content.deadline-aman::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 8px;
+      height: 100%;
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      border-radius: 0 18px 18px 0;
+    }
+
+    .timeline-content.deadline-peringatan {
+      border-color: #f59e0b !important;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), 0 4px 20px rgba(8, 62, 64, 0.08);
+    }
+
+    .timeline-content.deadline-peringatan::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 8px;
+      height: 100%;
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+      border-radius: 0 18px 18px 0;
+    }
+
+    .timeline-content.deadline-terlambat {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2), 0 4px 20px rgba(239, 68, 68, 0.15);
+      animation: pulse-deadline-warning 2s ease-in-out infinite;
+    }
+
+    .timeline-content.deadline-terlambat::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 8px;
+      height: 100%;
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+      border-radius: 0 18px 18px 0;
+    }
+
+    @keyframes pulse-deadline-warning {
+      0%, 100% {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2), 0 4px 20px rgba(239, 68, 68, 0.15);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15), 0 4px 20px rgba(239, 68, 68, 0.25);
+      }
+    }
+
     /* Stage Header */
     .stage-header {
       display: flex;
