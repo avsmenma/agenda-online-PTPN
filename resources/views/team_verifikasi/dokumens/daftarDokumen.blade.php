@@ -4091,42 +4091,11 @@
                       </button>
                     </div>
                   @elseif(in_array($dokumen->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'menunggu_di_approve', 'waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_team_verifikasi', 'waiting_approval_perpajakan', 'waiting_approval_akuntansi', 'waiting_approval_pembayaran', 'completed', 'selesai']) || $isPending || $isPendingPerpajakan || $isPendingAkuntansi || $dokumen->status_pembayaran === 'sudah_dibayar')
-                    {{-- Document already sent, waiting approval, or completed - hide all action buttons --}}
-                    @if($isApprovedByOtherRole || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar')
-                      {{-- Document has been approved/completed - show approved status --}}
-                      <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah selesai diproses">
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>Terkirim</span>
-                      </button>
-                    @elseif($isPendingPerpajakan || $dokumen->status === 'waiting_approval_perpajakan')
-                      {{-- Document waiting approval from Perpajakan - show waiting status ONLY --}}
-                      <button class="btn-action btn-edit locked btn-full-width" disabled
-                        title="Dokumen sedang menunggu approval dari Team Perpajakan">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>Menunggu Approve</span>
-                      </button>
-                    @elseif($isPendingAkuntansi || $dokumen->status === 'waiting_approval_akuntansi')
-                      {{-- Document waiting approval from Akuntansi - show waiting status ONLY --}}
-                      <button class="btn-action btn-edit locked btn-full-width" disabled
-                        title="Dokumen sedang menunggu approval dari Team Akutansi">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>Menunggu Approve</span>
-                      </button>
-                    @elseif($dokumen->status === 'waiting_approval_pembayaran')
-                      {{-- Document waiting approval from Pembayaran - show waiting status ONLY --}}
-                      <button class="btn-action btn-edit locked btn-full-width" disabled
-                        title="Dokumen sedang menunggu approval dari Team Pembayaran">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>Menunggu Approve</span>
-                      </button>
-                    @else
-                      {{-- Document waiting approval - show waiting status --}}
-                      <button class="btn-action btn-edit locked btn-full-width" disabled
-                        title="Dokumen sedang menunggu approval, tidak dapat diedit">
-                        <i class="fa-solid fa-clock"></i>
-                        <span>{{ $dokumen->getDetailedApprovalText() }}</span>
-                      </button>
-                    @endif
+                    {{-- Document already sent, waiting approval, or completed - show single 'Terkirim' button --}}
+                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim">
+                      <i class="fa-solid fa-check-circle"></i>
+                      <span>Terkirim</span>
+                    </button>
                   @else
                           <!-- Unlocked state - buttons enabled -->
                           @if(in_array($dokumen->status, ['sent_to_team_verifikasi', 'approved_Team Verifikasi', 'sedang diproses', 'returned_to_department', 'returned_from_akutansi']) && !$isApprovedByOtherRole)

@@ -3154,6 +3154,15 @@
                           </div>
                         @endif
                       </div>
+                    @elseif($isBypassedToPembayaran)
+                      {{-- Document bypassed Perpajakan - show bypass indicator --}}
+                      <div class="deadline-card" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white;">
+                        <i class="fa-solid fa-forward me-1"></i>
+                        <span>Bypass</span>
+                        <div class="deadline-label" style="font-size: 8px; color: #e5e7eb; margin-top: 4px; font-weight: 600;">
+                          <i class="fa-solid fa-check-circle"></i> ke Pembayaran
+                        </div>
+                      </div>
                     @else
                       <div class="no-deadline">
                         <i class="fa-solid fa-clock"></i>
@@ -3195,21 +3204,12 @@
                   </td>
                   <td class="col-action" onclick="event.stopPropagation()">
                     <div class="action-buttons-hybrid">
-                      @if($sentToTeamFromPerpajakan)
-                        {{-- Document has been approved by downstream - FINAL state for Perpajakan --}}
-                        {{-- This should NOT change when Akutansi sends to Pembayaran --}}
+                      @elseif($sentToTeamFromPerpajakan || $isPendingDownstream)
+                        {{-- Document has been sent/approved by downstream - FINAL state for Perpajakan --}}
                         <button class="btn-action btn-edit locked btn-full-width" disabled
-                          title="Dokumen sudah terkirim ke {{ $sentToTeamFromPerpajakan }}, tidak dapat diedit">
+                          title="Dokumen sudah terkirim">
                           <i class="fa-solid fa-check-circle"></i>
-                          <span>Sudah terkirim ke {{ $sentToTeamFromPerpajakan }}</span>
-                        </button>
-                      @elseif($isPendingDownstream)
-                        {{-- Document is in downstream inbox waiting approval --}}
-                        {{-- Perpajakan sent it, but Akutansi/Pembayaran hasn't approved yet --}}
-                        <button class="btn-action btn-edit locked btn-full-width" disabled
-                          title="Menunggu persetujuan dari {{ $pendingDownstreamTeam }}">
-                          <i class="fa-solid fa-hourglass-half"></i>
-                          <span>Menunggu Approval dari {{ $pendingDownstreamTeam }}</span>
+                          <span>Terkirim</span>
                         </button>
                       @elseif($isRejected)
                         {{-- Document was rejected --}}
