@@ -1260,23 +1260,28 @@
                     // Green: < 1 week (168h), Yellow: 1-3 weeks (168-504h), Red: >= 3 weeks (504h)
                     $totalHours = ($diff->days * 24) + $diff->h;
 
-                    if ($isCompleted) {
-                      // For completed/paid documents, use grey color with SELESAI label
-                      $ageLabel = 'SELESAI';
-                      $ageColor = 'gray';
-                      $ageIcon = 'fa-stop-circle';
-                    } elseif ($totalHours >= 504) { // >= 3 minggu
+                    // Calculate label based on actual processing time (always)
+                    if ($totalHours >= 504) { // >= 3 minggu
                       $ageLabel = 'TERLAMBAT';
-                      $ageColor = 'red';
                       $ageIcon = 'fa-times-circle';
                     } elseif ($totalHours >= 168) { // >= 1 minggu dan < 3 minggu
                       $ageLabel = 'PERINGATAN';
-                      $ageColor = 'yellow';
                       $ageIcon = 'fa-exclamation-triangle';
                     } else { // < 1 minggu
                       $ageLabel = 'AMAN';
-                      $ageColor = 'green';
                       $ageIcon = 'fa-check-circle';
+                    }
+                    
+                    // For completed/paid documents, use grey color
+                    // For active documents, use color based on time
+                    if ($isCompleted) {
+                      $ageColor = 'gray';
+                    } elseif ($totalHours >= 504) {
+                      $ageColor = 'red';
+                    } elseif ($totalHours >= 168) {
+                      $ageColor = 'yellow';
+                    } else {
+                      $ageColor = 'green';
                     }
                   }
 
