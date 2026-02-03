@@ -894,10 +894,10 @@
         <p class="page-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
       </div>
       <div style="display: flex; gap: 0.75rem;">
-        <a href="{{ route('pembayaran.dokumens.export', ['format' => 'excel']) }}" class="btn-secondary-agenda btn-sm">
+        <a href="{{ route('reports.pembayaran.export', ['format' => 'excel']) }}" class="btn-secondary-agenda btn-sm">
           <i class="fas fa-file-excel"></i> Export Excel
         </a>
-        <a href="{{ route('pembayaran.dokumens.export', ['format' => 'pdf']) }}" class="btn-secondary-agenda btn-sm">
+        <a href="{{ route('reports.pembayaran.export', ['format' => 'pdf']) }}" class="btn-secondary-agenda btn-sm">
           <i class="fas fa-file-pdf"></i> Export PDF
         </a>
       </div>
