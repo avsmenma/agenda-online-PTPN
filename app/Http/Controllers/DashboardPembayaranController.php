@@ -260,11 +260,9 @@ class DashboardPembayaranController extends Controller
         $allDokumens->each(function ($doc) use ($getComputedStatus) {
             $doc->computed_status = $getComputedStatus($doc);
         });
-        $allDokumens = $allDokumens->filter(function ($doc) {
-            return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
-        })->values();
 
-        if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
+        // Only filter by status if a specific status is selected
+        if ($statusPembayaran && in_array($statusPembayaran, ['belum_siap_dibayar', 'siap_dibayar', 'sudah_dibayar'])) {
             $allDokumens = $allDokumens->filter(function ($doc) use ($statusPembayaran) {
                 return $doc->computed_status === $statusPembayaran;
             })->values();
