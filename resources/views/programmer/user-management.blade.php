@@ -273,7 +273,7 @@
             $('#btn-save-user').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
 
             $.ajax({
-                url: '{{ route('programmer.user-management.get', '') }}/' + userId,
+                url: '{{ url('programmer/user-management') }}/' + userId,
                 method: 'GET',
                 success: function (response) {
                     if (response.success) {
