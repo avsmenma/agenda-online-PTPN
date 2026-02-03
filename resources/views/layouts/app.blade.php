@@ -1863,9 +1863,6 @@
           class="{{ request()->routeIs('csv.import.*') || request()->is('*csv-import*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-import me-2"></i> Import Data
         </a>
-        <a href="{{ route('reports.pembayaran.index') }}" class="{{ $isRekapanActive ? 'active' : '' }}">
-          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Dokumen
-        </a>
         <a href="{{ url($pengembalianUrl) }}" class="{{ $isKeterlambatanActive ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>

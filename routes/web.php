@@ -639,7 +639,8 @@ Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('documen
 
 // Professional Reports Routes - Pembayaran
 Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
-    Route::get('/', [DashboardPembayaranController::class, 'rekapan'])->name('index');
+    // Redirect to dashboard - content is now on home page
+    Route::get('/', fn() => redirect()->route('dashboard.pembayaran'))->name('index');
     Route::get('/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('export');
     Route::get('/delays', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('delays');
     Route::get('/analytics', [DashboardPembayaranController::class, 'analytics'])->name('analytics');

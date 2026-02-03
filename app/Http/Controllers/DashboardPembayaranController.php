@@ -28,40 +28,75 @@ class DashboardPembayaranController extends Controller
     {
         $now = Carbon::now();
 
-        // Get statistics for top row - use same query criteria as dokumens() method
-        $baseQuery = function () {
-            return Dokumen::whereNotNull('nomor_agenda')
-                ->where(function ($q) {
-                    $q->where('current_handler', 'pembayaran')
-                        ->orWhere('status', 'sent_to_pembayaran')
-                        ->orWhere(function ($csvQ) {
-                            $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                                $query->where('imported_from_csv', true);
-                            });
-                        });
-                });
+        // Get filter parameters
+        $statusPembayaran = request('status_pembayaran');
+        $year = request('year');
+        $month = request('month');
+        $search = request('search');
+        $mode = request('mode', 'normal'); // normal or rekapan_table
+        $selectedColumns = request('columns', []); // Array of selected columns in order
+
+        // Handler yang dianggap "belum siap dibayar"
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];
+
+        // ============================================
+        // STATISTICS CARDS (with Rupiah values)
+        // ============================================
+
+        // Base query for statistics - with same year/month filter
+        $statsQuery = Dokumen::whereNotNull('nomor_agenda');
+        if ($year) {
+            $statsQuery->whereYear('created_at', $year);
+        }
+        if ($month) {
+            $statsQuery->whereMonth('created_at', $month);
+        }
+        $allDokumensData = $statsQuery->get();
+
+        // Helper function to calculate computed status
+        $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
+            if (
+                $doc->tanggal_dibayar ||
+                $doc->link_bukti_pembayaran ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
+                $doc->status_pembayaran === 'sudah_dibayar'
+            ) {
+                return 'sudah_dibayar';
+            }
+            if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
+                return 'siap_dibayar';
+            }
+            return 'belum_siap_dibayar';
         };
 
-        $totalDokumen = $baseQuery()
-            ->where(function ($q) {
-                $q->whereNull('status_pembayaran')
-                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-            })
-            ->count();
-        $totalSiapBayar = $baseQuery()
-            ->where('status_pembayaran', 'siap_dibayar')
-            ->count();
-        $totalSudahDibayar = Dokumen::where('status_pembayaran', 'sudah_dibayar')->count();
+        // Add computed status to all documents
+        $allDokumensData->each(function ($doc) use ($getComputedStatus) {
+            $doc->computed_status = $getComputedStatus($doc);
+        });
 
-        // Get statistics for bottom row (Aman/Peringatan/Terlambat)
-        // Pembayaran uses weekly thresholds: <1 week = green, 1-3 weeks = yellow, >3 weeks = red
-        // Count ALL documents (including completed ones) based on processing time
+        $statistics = [
+            'total_documents' => $allDokumensData->count(),
+            'total_nilai' => $allDokumensData->sum('nilai_rupiah'),
+            'by_status' => [
+                'belum_dibayar' => $allDokumensData->where('computed_status', 'belum_siap_dibayar')->count(),
+                'siap_dibayar' => $allDokumensData->where('computed_status', 'siap_dibayar')->count(),
+                'sudah_dibayar' => $allDokumensData->where('computed_status', 'sudah_dibayar')->count(),
+            ],
+            'total_nilai_by_status' => [
+                'belum_dibayar' => $allDokumensData->where('computed_status', 'belum_siap_dibayar')->sum('nilai_rupiah'),
+                'siap_dibayar' => $allDokumensData->where('computed_status', 'siap_dibayar')->sum('nilai_rupiah'),
+                'sudah_dibayar' => $allDokumensData->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
+            ],
+        ];
+
+        // ============================================
+        // DEADLINE CARDS (Aman/Peringatan/Terlambat)
+        // ============================================
         $totalAman = 0;
         $totalPeringatan = 0;
         $totalTerlambat = 0;
 
-        // Get ALL documents shown in pembayaran view (including completed ones)
-        // Use the same criteria as dokumens() method to ensure consistency
         $allDokumensPembayaran = Dokumen::with(['roleData'])
             ->whereNotNull('nomor_agenda')
             ->where(function ($q) {
@@ -69,7 +104,6 @@ class DashboardPembayaranController extends Controller
                     ->orWhere('status', 'sent_to_pembayaran')
                     ->orWhere('status_pembayaran', 'sudah_dibayar')
                     ->orWhere(function ($csvQ) {
-                        // Include CSV imported documents (exclusive to Pembayaran)
                         $csvQ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
                             $query->where('imported_from_csv', true);
                         });
@@ -78,14 +112,10 @@ class DashboardPembayaranController extends Controller
             ->get();
 
         foreach ($allDokumensPembayaran as $dok) {
-            // Get received_at and processed_at from roleData for pembayaran
             $roleData = $dok->roleData->where('role_code', 'pembayaran')->first();
             $receivedAt = $roleData ? $roleData->received_at : null;
             $processedAt = $roleData ? $roleData->processed_at : null;
 
-            // Determine the end time for calculation
-            // For completed docs: use processed_at or tanggal_dibayar
-            // For pending docs: use now
             $isCompleted = $dok->status_pembayaran === 'sudah_dibayar';
             if ($isCompleted) {
                 $endTime = $processedAt ?? $dok->tanggal_dibayar ?? $now;
@@ -95,16 +125,14 @@ class DashboardPembayaranController extends Controller
 
             if ($receivedAt) {
                 $hoursDiff = Carbon::parse($receivedAt)->diffInHours(Carbon::parse($endTime));
-
-                if ($hoursDiff < 168) { // < 1 week
+                if ($hoursDiff < 168) {
                     $totalAman++;
-                } elseif ($hoursDiff < 504) { // 1-3 weeks
+                } elseif ($hoursDiff < 504) {
                     $totalPeringatan++;
-                } else { // > 3 weeks
+                } else {
                     $totalTerlambat++;
                 }
             } else {
-                // If no received_at, check tanggal_masuk or created_at
                 $baseDate = $dok->tanggal_masuk ?? $dok->created_at;
                 if ($baseDate) {
                     $hoursDiff = Carbon::parse($baseDate)->diffInHours(Carbon::parse($endTime));
@@ -116,33 +144,276 @@ class DashboardPembayaranController extends Controller
                         $totalTerlambat++;
                     }
                 } else {
-                    // If no date at all, count as aman (baru masuk)
                     $totalAman++;
                 }
             }
         }
 
-        // Get latest documents (5 most recent)
-        $dokumenTerbaru = Dokumen::with(['roleData'])
-            ->where('current_handler', 'pembayaran')
-            ->orWhere('status_pembayaran', 'sudah_dibayar')
-            ->latest('tanggal_masuk')
-            ->take(5)
-            ->get();
+        // ============================================
+        // DOKUMEN LIST WITH PAGINATION
+        // ============================================
+        $query = Dokumen::whereNotNull('nomor_agenda');
 
-        $data = array(
-            "title" => "Dashboard Pembayaran",
-            "module" => "pembayaran",
-            "menuDashboard" => "Active",
+        // Apply status filter
+        if ($statusPembayaran) {
+            if ($statusPembayaran === 'belum_siap_dibayar') {
+                $query->whereIn('current_handler', $belumSiapHandlers);
+            } elseif ($statusPembayaran === 'siap_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('current_handler', 'pembayaran')
+                        ->orWhere('status', 'sent_to_pembayaran');
+                })->where(function ($q) {
+                    $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
+                });
+            } elseif ($statusPembayaran === 'sudah_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                });
+            }
+        }
+
+        if ($year) {
+            $query->whereYear('created_at', $year);
+        }
+        if ($month) {
+            $query->whereMonth('created_at', $month);
+        }
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply rekapan detail filters
+        if ($mode === 'rekapan_table') {
+            $filterDibayarKepada = request('filter_dibayar_kepada_column');
+            if ($filterDibayarKepada) {
+                $query->where('dibayar_kepada', $filterDibayarKepada);
+            }
+            $filterKategori = request('filter_kategori_column');
+            if ($filterKategori) {
+                $query->where('kategori', $filterKategori);
+            }
+            $filterJenisDokumen = request('filter_jenis_dokumen_column');
+            if ($filterJenisDokumen) {
+                $query->where('jenis_dokumen', $filterJenisDokumen);
+            }
+            $filterJenisSubPekerjaan = request('filter_jenis_sub_pekerjaan_column');
+            if ($filterJenisSubPekerjaan) {
+                $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
+            }
+            $filterJenisPembayaran = request('filter_jenis_pembayaran_column');
+            if ($filterJenisPembayaran) {
+                $query->where('jenis_pembayaran', $filterJenisPembayaran);
+            }
+            $filterKebun = request('filter_jenis_kebuns_column');
+            if ($filterKebun) {
+                $query->where(function ($q) use ($filterKebun) {
+                    $q->where('kebun', $filterKebun)
+                        ->orWhere('nama_kebuns', $filterKebun);
+                });
+            }
+        }
+
+        // For rekapan table mode - group by vendor
+        $rekapanByVendor = null;
+        if ($mode === 'rekapan_table' && !empty($selectedColumns)) {
+            $allDocsForRekapan = $query->orderBy('dibayar_kepada')->get();
+            $allDocsForRekapan->each(function ($doc) use ($getComputedStatus) {
+                $doc->computed_status = $getComputedStatus($doc);
+            });
+            $allDocsForRekapan = $allDocsForRekapan->filter(function ($doc) {
+                return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
+            })->values();
+
+            if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
+                $allDocsForRekapan = $allDocsForRekapan->filter(function ($doc) use ($statusPembayaran) {
+                    return $doc->computed_status === $statusPembayaran;
+                })->values();
+            }
+
+            $rekapanByVendor = $allDocsForRekapan->groupBy(function ($doc) {
+                return $doc->dibayar_kepada ?: null;
+            })->map(function ($docs, $vendor) {
+                return [
+                    'vendor' => $vendor ?: 'Tidak Diketahui',
+                    'documents' => $docs,
+                    'total_nilai' => $docs->sum('nilai_rupiah'),
+                    'total_belum_dibayar' => $docs->where('computed_status', 'belum_siap_dibayar')->sum('nilai_rupiah'),
+                    'total_siap_dibayar' => $docs->where('computed_status', 'siap_dibayar')->sum('nilai_rupiah'),
+                    'total_sudah_dibayar' => $docs->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
+                    'count' => $docs->count(),
+                ];
+            });
+        }
+
+        // Get all results first (before pagination) to apply computed_status filter
+        $allDokumens = $query->orderBy('created_at', 'desc')->get();
+        $allDokumens->each(function ($doc) use ($getComputedStatus) {
+            $doc->computed_status = $getComputedStatus($doc);
+        });
+        $allDokumens = $allDokumens->filter(function ($doc) {
+            return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
+        })->values();
+
+        if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
+            $allDokumens = $allDokumens->filter(function ($doc) use ($statusPembayaran) {
+                return $doc->computed_status === $statusPembayaran;
+            })->values();
+        }
+
+        // Paginate manually
+        $currentPage = request()->get('page', 1);
+        $perPage = 15;
+        $total = $allDokumens->count();
+        $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        $dokumens = new LengthAwarePaginator(
+            $currentItems,
+            $total,
+            $perPage,
+            $currentPage,
+            [
+                'path' => request()->url(),
+                'query' => request()->except('page')
+            ]
+        );
+
+        // ============================================
+        // DROPDOWN DATA FOR FILTERS
+        // ============================================
+        $availableYears = Dokumen::whereNotNull('nomor_agenda')
+            ->selectRaw('YEAR(created_at) as year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year');
+
+        $createFilteredQuery = function () use ($year, $month) {
+            $q = Dokumen::whereNotNull('nomor_agenda');
+            if ($year) {
+                $q->whereYear('created_at', $year);
+            }
+            if ($month) {
+                $q->whereMonth('created_at', $month);
+            }
+            return $q;
+        };
+
+        $availableDibayarKepada = $createFilteredQuery()
+            ->whereNotNull('dibayar_kepada')
+            ->where('dibayar_kepada', '!=', '')
+            ->selectRaw('DISTINCT dibayar_kepada')
+            ->orderBy('dibayar_kepada')
+            ->pluck('dibayar_kepada', 'dibayar_kepada');
+
+        $availableKategori = $createFilteredQuery()
+            ->whereNotNull('kategori')
+            ->where('kategori', '!=', '')
+            ->selectRaw('DISTINCT kategori')
+            ->orderBy('kategori')
+            ->pluck('kategori', 'kategori');
+
+        $availableJenisDokumen = $createFilteredQuery()
+            ->whereNotNull('jenis_dokumen')
+            ->where('jenis_dokumen', '!=', '')
+            ->selectRaw('DISTINCT jenis_dokumen')
+            ->orderBy('jenis_dokumen')
+            ->pluck('jenis_dokumen', 'jenis_dokumen');
+
+        $availableJenisSubPekerjaan = $createFilteredQuery()
+            ->whereNotNull('jenis_sub_pekerjaan')
+            ->where('jenis_sub_pekerjaan', '!=', '')
+            ->selectRaw('DISTINCT jenis_sub_pekerjaan')
+            ->orderBy('jenis_sub_pekerjaan')
+            ->pluck('jenis_sub_pekerjaan', 'jenis_sub_pekerjaan');
+
+        $availableJenisPembayaran = $createFilteredQuery()
+            ->whereNotNull('jenis_pembayaran')
+            ->where('jenis_pembayaran', '!=', '')
+            ->selectRaw('DISTINCT jenis_pembayaran')
+            ->orderBy('jenis_pembayaran')
+            ->pluck('jenis_pembayaran', 'jenis_pembayaran');
+
+        $kebunFromKebun = $createFilteredQuery()
+            ->whereNotNull('kebun')
+            ->where('kebun', '!=', '')
+            ->distinct()
+            ->pluck('kebun', 'kebun');
+
+        $kebunFromNamaKebuns = $createFilteredQuery()
+            ->whereNotNull('nama_kebuns')
+            ->where('nama_kebuns', '!=', '')
+            ->distinct()
+            ->pluck('nama_kebuns', 'nama_kebuns');
+
+        $availableKebuns = $kebunFromKebun->merge($kebunFromNamaKebuns)->unique()->sortKeys();
+
+        // Available columns for rekapan table
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'dibayar_kepada' => 'Nama Vendor/Dibayar Kepada',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
+            'nomor_mirror' => 'Nomor Miro',
+            'nomor_spp' => 'No SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'tanggal_spp' => 'TGL SPP',
+            'tanggal_berita_acara' => 'TGL BA',
+            'no_berita_acara' => 'Nomor BA',
+            'tanggal_berakhir_ba' => 'TGL Akhir BA',
+            'no_spk' => 'Nomor SPK',
+            'tanggal_spk' => 'TGL SPK',
+            'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
+            'kebun' => 'Kebun',
+            'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
+            'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
+            'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'nilai_belum_siap_bayar' => 'Belum siap bayar',
+            'nilai_siap_bayar' => 'sudah siap bayar',
+            'nilai_sudah_dibayar' => 'sudah dibayar',
+        ];
+
+        $data = [
+            'title' => 'Dashboard Pembayaran',
+            'module' => 'pembayaran',
+            'menuDashboard' => 'Active',
             'menuDokumen' => '',
-            'totalDokumen' => $totalDokumen,
-            'totalSiapBayar' => $totalSiapBayar,
-            'totalSudahDibayar' => $totalSudahDibayar,
+            // Statistics
+            'statistics' => $statistics,
+            // Deadline cards
             'totalAman' => $totalAman,
             'totalPeringatan' => $totalPeringatan,
             'totalTerlambat' => $totalTerlambat,
-            'dokumenTerbaru' => $dokumenTerbaru,
-        );
+            // Dokumen list
+            'dokumens' => $dokumens,
+            // Filters
+            'selectedStatus' => $statusPembayaran,
+            'selectedYear' => $year,
+            'selectedMonth' => $month,
+            'search' => $search,
+            'availableYears' => $availableYears,
+            'mode' => $mode,
+            'selectedColumns' => $selectedColumns,
+            'availableColumns' => $availableColumns,
+            'rekapanByVendor' => $rekapanByVendor,
+            // Dropdown data
+            'availableDibayarKepada' => $availableDibayarKepada,
+            'availableKategori' => $availableKategori,
+            'availableJenisDokumen' => $availableJenisDokumen,
+            'availableJenisSubPekerjaan' => $availableJenisSubPekerjaan,
+            'availableJenisPembayaran' => $availableJenisPembayaran,
+            'availableKebuns' => $availableKebuns,
+        ];
+
         return view('pembayaranNEW.dashboardPembayaran', $data);
     }
 
