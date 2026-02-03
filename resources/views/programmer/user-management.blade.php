@@ -266,14 +266,18 @@
     </div>
 
     <script>
-        const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        let editModal;
+        
+        $(document).ready(function() {
+            editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        });
 
         function editUser(userId) {
             // Show loading
             $('#btn-save-user').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
 
             $.ajax({
-                url: '{{ url('programmer/user-management') }}/' + userId,
+                url: '{{ url("programmer/user-management") }}/' + userId,
                 method: 'GET',
                 success: function (response) {
                     if (response.success) {
@@ -322,7 +326,7 @@
             $('#btn-save-user').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...');
 
             $.ajax({
-                url: '{{ route('programmer.user-management.update') }}',
+                url: '{{ route("programmer.user-management.update") }}',
                 method: 'POST',
                 data: formData,
                 success: function (response) {
