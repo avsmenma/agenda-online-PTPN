@@ -969,7 +969,8 @@
         Status Keterlambatan
       </h2>
       <div class="deadline-grid">
-        <a href="{{ route('pembayaran.dokumens.index', ['status_keterlambatan' => 'aman']) }}" class="deadline-card aman">
+        <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'aman']) }}"
+          class="deadline-card aman">
           <div class="deadline-icon">
             <i class="fas fa-shield-alt"></i>
           </div>
@@ -980,7 +981,7 @@
           </div>
         </a>
 
-        <a href="{{ route('pembayaran.dokumens.index', ['status_keterlambatan' => 'peringatan']) }}"
+        <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'peringatan']) }}"
           class="deadline-card peringatan">
           <div class="deadline-icon">
             <i class="fas fa-exclamation-triangle"></i>
@@ -992,7 +993,7 @@
           </div>
         </a>
 
-        <a href="{{ route('pembayaran.dokumens.index', ['status_keterlambatan' => 'terlambat']) }}"
+        <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'terlambat']) }}"
           class="deadline-card terlambat">
           <div class="deadline-icon">
             <i class="fas fa-times-circle"></i>
@@ -1072,7 +1073,7 @@
             <i class="fas fa-search"></i>
             Cari
           </button>
-          <a href="{{ route('pembayaran.dashboard') }}" class="btn-secondary-agenda">
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-secondary-agenda">
             <i class="fas fa-redo"></i>
             Reset
           </a>
@@ -1139,7 +1140,7 @@
                             </span>
                           </td>
                           <td>
-                            <a href="{{ route('pembayaran.dokumens.show', $doc->id) }}" class="btn-primary-agenda btn-sm"
+                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-primary-agenda btn-sm"
                               data-tooltip="Lihat Detail">
                               <i class="fas fa-eye"></i>
                             </a>
@@ -1187,7 +1188,7 @@
                       </span>
                     </td>
                     <td>
-                      <a href="{{ route('pembayaran.dokumens.show', $dok->id) }}" class="btn-primary-agenda btn-sm"
+                      <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-primary-agenda btn-sm"
                         data-tooltip="Lihat Detail">
                         <i class="fas fa-eye"></i>
                       </a>
@@ -1218,7 +1219,7 @@
           </div>
           <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
           <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('pembayaran.dashboard') }}" class="btn-primary-agenda" style="margin-top: 1rem;">
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-primary-agenda" style="margin-top: 1rem;">
             <i class="fas fa-redo"></i>
             Reset Filter
           </a>
@@ -1227,43 +1228,9 @@
     </div>
   </div>
 
-  <script>
-    // Mode Toggle Handler
-    document.getElementById('modeToggle')?.addEventListener('change', function () {
-      const modeInput = document.getElementById('modeInput');
-      modeInput.value = this.checked ? 'rekapan_table' : 'normal';
-      document.getElementById('filterForm').submit();
-    });
-
-    // Vendor Group Toggle
-    function toggleVendorGroup(header) {
-      const body = header.nextElementSibling;
-      const chevron = header.querySelector('.vendor-chevron');
-
-      if (body.style.display === 'none') {
-        body.style.display = 'block';
-        chevron.style.transform = 'rotate(180deg)';
-      } else {
-        body.style.display = 'none';
-        chevron.style.transform = 'rotate(0deg)';
-      }
-    }
-
-    // Number formatting with animation
-    document.querySelectorAll('.stat-card-value').forEach(el => {
-      const value = parseInt(el.textContent.replace(/\D/g, '')) || 0;
-      if (value > 0) {
-        let current = 0;
-        const increment = Math.ceil(value / 30);
-        const interval = setInterval(() => {
-          current += increment;
-          if (current >= value) {
-            current = value;
-            clearInterval(interval);
-          }
-          el.textContent = current.toLocaleString('id-ID');
-        }, 20);
-      }
-    });
+  <script>   // Mode Toggle Handler   document.getElementById('modeToggle')?.addEventListener('change', function () {     const modeInput = document.getElementById('modeInput');     modeInput.value = this.checked ? 'rekapan_table' : 'normal';     document.getElementById('filterForm').submit();   });
+     // Vendor Group Toggle   function toggleVendorGroup(header) {     const body = header.nextElementSibling;     const chevron = header.querySelector('.vendor-chevron');
+       if (body.style.display === 'none') {       body.style.display = 'block';       chevron.style.transform = 'rotate(180deg)';     } else {       body.style.display = 'none';       chevron.style.transform = 'rotate(0deg)';     }   }
+     // Number formatting with animation   document.querySelectorAll('.stat-card-value').forEach(el => {     const value = parseInt(el.textContent.replace(/\D/g, '')) || 0;     if (value > 0) {       let current = 0;       const increment = Math.ceil(value / 30);       const interval = setInterval(() => {         current += increment;         if (current >= value) {           current = value;           clearInterval(interval);         }         el.textContent = current.toLocaleString('id-ID');       }, 20);     }   });
   </script>
 @endsection
