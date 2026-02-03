@@ -179,7 +179,9 @@
       text-decoration: none;
       color: inherit;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
       cursor: pointer;
     }
 
@@ -199,26 +201,60 @@
     .stat-card--ready { grid-column: span 3; }
     .stat-card--paid { grid-column: span 3; }
 
-    .stat-card-header {
+    /* Total Card - Solid Green Gradient */
+    .stat-card--total {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .stat-card--total:hover {
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+      transform: translateY(-3px);
+    }
+
+    .stat-card--total.active {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), 0 8px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .stat-card--total .stat-label,
+    .stat-card--total .stat-value,
+    .stat-card--total .stat-subvalue {
+      color: white;
+    }
+
+    .stat-card--total .stat-label {
+      opacity: 0.9;
+    }
+
+    .stat-card--total .stat-subvalue {
+      opacity: 0.85;
+    }
+
+    .stat-card--total .stat-icon {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .stat-card-content {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
+      flex-direction: column;
     }
 
     .stat-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-md);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.125rem;
+      font-size: 1.25rem;
+      flex-shrink: 0;
     }
 
     .stat-icon--total {
-      background: var(--status-blue-soft);
-      color: var(--status-blue);
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
     }
 
     .stat-icon--pending {
@@ -227,8 +263,8 @@
     }
 
     .stat-icon--ready {
-      background: var(--status-violet-soft);
-      color: var(--status-violet);
+      background: var(--status-blue-soft);
+      color: var(--status-blue);
     }
 
     .stat-icon--paid {
@@ -236,39 +272,42 @@
       color: var(--status-emerald);
     }
 
-    .stat-trend {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0.25rem 0.5rem;
-      border-radius: 999px;
-      background: var(--status-emerald-soft);
-      color: var(--status-emerald);
-    }
-
     .stat-label {
-      font-size: 0.8125rem;
-      font-weight: 500;
+      font-size: 0.75rem;
+      font-weight: 600;
       color: var(--text-tertiary);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.375rem;
     }
 
     .stat-value {
-      font-size: 1.75rem;
+      font-size: 1.875rem;
       font-weight: 700;
       color: var(--text-primary);
       letter-spacing: -0.025em;
+      line-height: 1.2;
       margin-bottom: 0.25rem;
     }
 
     .stat-subvalue {
       font-size: 0.8125rem;
-      color: var(--text-secondary);
+      color: var(--status-emerald);
+      font-weight: 600;
+    }
+
+    .stat-subvalue-link {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
       font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .stat-subvalue-link:hover {
+      color: var(--brand-primary);
     }
 
     /* Deadline Cards */
@@ -1056,56 +1095,64 @@
         </a>
       </div>
     </header>
-
     <!-- Bento Grid Stats -->
     <div class="bento-grid">
       <!-- Main Stats Row -->
       <a href="?status_pembayaran=&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
         class="stat-card stat-card--total animate-fade-in animate-delay-1 {{ !$selectedStatus ? 'active' : '' }}">
-        <div class="stat-card-header">
-          <div class="stat-icon stat-icon--total">
-            <i class="fas fa-layer-group"></i>
-          </div>
+        <div class="stat-card-content">
+          <div class="stat-label">Total Dokumen</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['total_documents']) }}</div>
+          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
         </div>
-        <div class="stat-label">Total Dokumen</div>
-        <div class="stat-value count-animate">{{ number_format($statistics['total_documents']) }}</div>
-        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
+        <div class="stat-icon stat-icon--total">
+          <i class="fas fa-layer-group"></i>
+        </div>
       </a>
 
       <a href="?status_pembayaran=belum_siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
         class="stat-card stat-card--pending animate-fade-in animate-delay-2 {{ $selectedStatus == 'belum_siap_dibayar' ? 'active' : '' }}">
-        <div class="stat-card-header">
-          <div class="stat-icon stat-icon--pending">
-            <i class="fas fa-hourglass-half"></i>
+        <div class="stat-card-content">
+          <div class="stat-label">Belum Siap Bayar</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
+          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-subvalue-link">
+            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
         </div>
-        <div class="stat-label">Belum Siap</div>
-        <div class="stat-value count-animate">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
-        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
+        <div class="stat-icon stat-icon--pending">
+          <i class="fas fa-hourglass-half"></i>
+        </div>
       </a>
 
       <a href="?status_pembayaran=siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
         class="stat-card stat-card--ready animate-fade-in animate-delay-3 {{ $selectedStatus == 'siap_dibayar' ? 'active' : '' }}">
-        <div class="stat-card-header">
-          <div class="stat-icon stat-icon--ready">
-            <i class="fas fa-check-circle"></i>
+        <div class="stat-card-content">
+          <div class="stat-label">Siap Dibayar</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
+          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-subvalue-link">
+            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
         </div>
-        <div class="stat-label">Siap Dibayar</div>
-        <div class="stat-value count-animate">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
-        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
+        <div class="stat-icon stat-icon--ready">
+          <i class="fas fa-check-circle"></i>
+        </div>
       </a>
 
       <a href="?status_pembayaran=sudah_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
         class="stat-card stat-card--paid animate-fade-in animate-delay-4 {{ $selectedStatus == 'sudah_dibayar' ? 'active' : '' }}">
-        <div class="stat-card-header">
-          <div class="stat-icon stat-icon--paid">
-            <i class="fas fa-money-check-alt"></i>
+        <div class="stat-card-content">
+          <div class="stat-label">Sudah Dibayar</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
+          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-subvalue-link">
+            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
         </div>
-        <div class="stat-label">Sudah Dibayar</div>
-        <div class="stat-value count-animate">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
-        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+        <div class="stat-icon stat-icon--paid">
+          <i class="fas fa-check-double"></i>
+        </div>
       </a>
 
       <!-- Deadline Cards -->
