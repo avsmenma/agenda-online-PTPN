@@ -666,25 +666,35 @@
     animation: danger-pulse 2s infinite;
   }
 
-  /* Completed State - Green with check */
+  /* Completed State - Grey (timer stopped, document paid) */
   .deadline-card.deadline-completed {
-    --deadline-color: #10b981;
-    --deadline-color-light: #34d399;
-    --deadline-bg: #ecfdf5;
-    --deadline-text: #065f46;
+    --deadline-color: #6b7280;
+    --deadline-color-light: #9ca3af;
+    --deadline-bg: #f3f4f6;
+    --deadline-text: #4b5563;
     background: var(--deadline-bg) !important;
-    border-color: rgba(16, 185, 129, 0.3) !important;
-    opacity: 0.9;
+    border-color: rgba(107, 114, 128, 0.3) !important;
+    opacity: 0.85;
   }
 
   .deadline-card.deadline-completed .deadline-time {
     color: var(--deadline-text) !important;
+    text-decoration: line-through;
+    opacity: 0.7;
   }
 
   .deadline-indicator.deadline-completed {
     background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
     color: white;
-    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 3px 10px rgba(107, 114, 128, 0.3);
+  }
+
+  .deadline-card.deadline-completed .deadline-age {
+    color: #9ca3af !important;
+  }
+
+  .deadline-card.deadline-completed .deadline-label {
+    color: #6b7280 !important;
   }
 
   /* Age-based deadline colors (count up from received_at) */
@@ -1250,8 +1260,8 @@
                       <span>{{ $ageText }}</span>
                     </div>
                     @if($isCompleted)
-                      <div class="deadline-label" style="font-size: 8px; color: #10b981; margin-top: 4px; font-weight: 600;">
-                        <i class="fa-solid fa-check-circle"></i> Selesai
+                      <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-stop-circle"></i> Timer Berhenti - Selesai
                       </div>
                     @endif
                   </div>
