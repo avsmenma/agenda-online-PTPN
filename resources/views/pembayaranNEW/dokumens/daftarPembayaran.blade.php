@@ -1215,14 +1215,21 @@
                   if ($receivedAt) {
                     $receivedAt = \Carbon\Carbon::parse($receivedAt);
                     
-                    // For completed documents, use processed_at as end time if available
-                    // For active documents, use current time
+                    // For completed documents, freeze the timer
+                    // Use processed_at if available, otherwise fallback to dokumen->updated_at
                     $processedAt = $roleData?->processed_at;
+                    $timeFrozen = false;
                     
-                    if ($isCompleted && $processedAt) {
-                      // Document is completed - calculate time taken (frozen, not counting)
-                      $endTime = \Carbon\Carbon::parse($processedAt);
+                    if ($isCompleted) {
+                      // Document is completed - freeze the timer
+                      if ($processedAt) {
+                        $endTime = \Carbon\Carbon::parse($processedAt);
+                      } else {
+                        // Fallback to dokumen updated_at for completed documents without processed_at
+                        $endTime = \Carbon\Carbon::parse($dokumen->updated_at);
+                      }
                       $diff = $receivedAt->diff($endTime);
+                      $timeFrozen = true;
                     } else {
                       // Document still active - count up from received_at to now
                       $now = \Carbon\Carbon::now();
@@ -1243,6 +1250,11 @@
                       $elapsedParts[] = $diff->i . ' menit';
                     }
                     $ageText = implode(' ', $elapsedParts);
+                    
+                    // Add frozen indicator for completed documents
+                    if ($timeFrozen) {
+                      $ageText .= ' ⏸️';
+                    }
 
                     // Determine label and color based on elapsed time (in hours)
                     // Green: < 1 week (168h), Yellow: 1-3 weeks (168-504h), Red: >= 3 weeks (504h)
