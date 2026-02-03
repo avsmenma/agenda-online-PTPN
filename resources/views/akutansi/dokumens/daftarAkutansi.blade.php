@@ -2916,18 +2916,28 @@
                               // Green: < 24 hours, Yellow: 24-72 hours, Red: > 72 hours
                               $totalHours = ($diff->days * 24) + $diff->h;
 
+                              // Calculate label based on actual processing time
                               if ($totalHours >= 72) {
                                 $ageLabel = 'TERLAMBAT';
-                                $ageColor = 'red';
                                 $ageIcon = 'fa-times-circle';
                               } elseif ($totalHours >= 24) {
                                 $ageLabel = 'PERINGATAN';
-                                $ageColor = 'yellow';
                                 $ageIcon = 'fa-exclamation-triangle';
                               } else {
                                 $ageLabel = 'AMAN';
-                                $ageColor = 'green';
                                 $ageIcon = 'fa-check-circle';
+                              }
+                              
+                              // For sent/completed documents, use grey color
+                              // For active documents, use color based on time
+                              if ($isSent || $isCompleted) {
+                                $ageColor = 'gray';
+                              } elseif ($totalHours >= 72) {
+                                $ageColor = 'red';
+                              } elseif ($totalHours >= 24) {
+                                $ageColor = 'yellow';
+                              } else {
+                                $ageColor = 'green';
                               }
                             }
 
@@ -2999,9 +3009,21 @@
                               ->where('role_code', 'pembayaran')
                               ->where('status', 'pending')
                               ->exists();
+                            
+                            // Check if document BYPASSED Akutansi (Bulk Direct to Payment)
+                            // These documents went: Operator -> Team Verifikasi -> Pembayaran
+                            // They never entered Akutansi workflow
+                            $isBypassedToPayment = (
+                              $dokumen->current_handler === 'pembayaran' ||
+                              $dokumen->status === 'completed' ||
+                              $dokumen->status_pembayaran === 'sudah_dibayar' ||
+                              ($pembayaranRoleData && $pembayaranRoleData->received_at)
+                            ) && !$akutansiRoleData?->received_at; // Akutansi never received this document
 
                             // Document is truly sent from akutansi if pembayaran has APPROVED (not just pending)
-                            $sentFromAkutansi = ($pembayaranHasApproved ||
+                            $sentFromAkutansi = (
+                              $isBypassedToPayment ||
+                              $pembayaranHasApproved ||
                               ($pembayaranRoleData && $pembayaranRoleData->received_at && !$pembayaranIsPending)
                             ) && !$isRejected;
                           @endphp
@@ -3055,7 +3077,7 @@
                                 'menunggu_di_approve', // Status setelah dikirim ke pembayaran via sendToInbox
                                 'completed',
                                 'selesai',
-                              ]) || $dokumen->status_pembayaran === 'sudah_dibayar';
+                              ]) || $dokumen->status_pembayaran === 'sudah_dibayar' || $isBypassedToPayment;
                             @endphp
                               <!-- Unlocked state - buttons enabled -->
                               @unless($isSentToPembayaran)
@@ -3092,7 +3114,12 @@
                                     <i class="fa-solid fa-clock"></i>
                                     <span>Menunggu Approve</span>
                                   </button>
-                                @elseif($dokumen->status == 'sent_to_pembayaran')
+                                @elseif($dokumen->status == 'sent_to_pembayaran' || $isBypassedToPayment)
+                                  <button type="button" class="btn-action btn-sent btn-full-width" disabled>
+                                    <i class="fa-solid fa-check-circle"></i>
+                                    <span>Terkirim ke Pembayaran</span>
+                                  </button>
+                                @else
                                   <button type="button" class="btn-action btn-sent btn-full-width" disabled>
                                     <i class="fa-solid fa-check-circle"></i>
                                     <span>Terkirim</span>

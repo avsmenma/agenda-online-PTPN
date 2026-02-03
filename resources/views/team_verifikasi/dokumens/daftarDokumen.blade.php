@@ -3868,18 +3868,28 @@
                     // Green: < 24 hours, Yellow: 24-72 hours, Red: > 72 hours
                     $totalHours = ($diff->days * 24) + $diff->h;
 
+                    // Calculate label based on actual processing time
                     if ($totalHours >= 72) {
                       $ageLabel = 'TERLAMBAT';
-                      $ageColor = 'red';
                       $ageIcon = 'fa-times-circle';
                     } elseif ($totalHours >= 24) {
                       $ageLabel = 'PERINGATAN';
-                      $ageColor = 'yellow';
                       $ageIcon = 'fa-exclamation-triangle';
                     } else {
                       $ageLabel = 'AMAN';
-                      $ageColor = 'green';
                       $ageIcon = 'fa-check-circle';
+                    }
+                    
+                    // For sent/completed documents, use grey color
+                    // For active documents, use color based on time
+                    if ($isSent || $isCompleted) {
+                      $ageColor = 'gray';
+                    } elseif ($totalHours >= 72) {
+                      $ageColor = 'red';
+                    } elseif ($totalHours >= 24) {
+                      $ageColor = 'yellow';
+                    } else {
+                      $ageColor = 'green';
                     }
                   }
 
