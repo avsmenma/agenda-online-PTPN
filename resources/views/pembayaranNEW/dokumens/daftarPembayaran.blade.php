@@ -760,6 +760,33 @@
     animation: danger-pulse 2s infinite;
   }
 
+  /* Gray - Selesai/Sudah Dibayar (timer stopped) */
+  .deadline-card.deadline-gray {
+    --deadline-color: #6b7280;
+    --deadline-color-light: #9ca3af;
+    --deadline-bg: #f3f4f6;
+    --deadline-text: #4b5563;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(107, 114, 128, 0.3) !important;
+    opacity: 0.85;
+  }
+
+  .deadline-card.deadline-gray .deadline-time {
+    color: var(--deadline-text) !important;
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .deadline-indicator.deadline-gray {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(107, 114, 128, 0.3);
+  }
+
+  .deadline-card.deadline-gray .deadline-age {
+    color: #9ca3af !important;
+  }
+
   /* No deadline state */
   .no-deadline {
     display: inline-flex;
@@ -1223,8 +1250,8 @@
 
                     if ($isCompleted) {
                       $ageLabel = 'SELESAI';
-                      $ageColor = 'green';
-                      $ageIcon = 'fa-check-circle';
+                      $ageColor = 'gray';
+                      $ageIcon = 'fa-stop-circle';
                     } elseif ($totalHours >= 504) { // >= 3 minggu
                       $ageLabel = 'TERLAMBAT';
                       $ageColor = 'red';
