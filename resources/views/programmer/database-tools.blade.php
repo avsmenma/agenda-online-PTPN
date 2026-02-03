@@ -1,0 +1,266 @@
+@extends('layouts.app')
+
+@section('title', 'Database Tools')
+
+@section('content')
+    <style>
+        .db-tools-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .db-tools-header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .table-count {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .table-count.has-data {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .table-count.empty {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .danger-zone {
+            border: 2px dashed #ef4444;
+            border-radius: 12px;
+            padding: 24px;
+            background: #fef2f2;
+        }
+
+        .btn-danger-action {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+
+        .btn-danger-action:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .confirmation-input {
+            border: 2px solid #ef4444;
+            font-size: 16px;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .confirmation-input:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+    </style>
+
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('programmer.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Database Tools</li>
+                    </ol>
+                </nav>
+                <h2><i class="fas fa-database text-danger me-2"></i>Database Tools</h2>
+                <p class="text-muted">Kelola dan bersihkan database dokumen</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Preview Section -->
+            <div class="col-lg-6">
+                <div class="card db-tools-card mb-4">
+                    <div class="card-header db-tools-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Database Preview</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Jumlah records di setiap tabel dokumen:</p>
+
+                        <div id="preview-loading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Memuat data...</p>
+                        </div>
+
+                        <div id="preview-result" style="display: none;">
+                            <table class="table table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Tabel</th>
+                                        <th class="text-end">Jumlah Records</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-body">
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-secondary">
+                                        <th>Total</th>
+                                        <th class="text-end" id="total-count">0</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <button class="btn btn-outline-primary w-100 mt-3" onclick="loadPreview()">
+                                <i class="fas fa-sync me-2"></i>Refresh Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cleanup Section -->
+            <div class="col-lg-6">
+                <div class="card db-tools-card">
+                    <div class="card-header db-tools-header">
+                        <h5 class="mb-0"><i class="fas fa-trash-alt me-2"></i>Database Cleanup</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="danger-zone">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-exclamation-triangle fa-4x text-danger"></i>
+                                <h4 class="text-danger mt-3">DANGER ZONE</h4>
+                                <p class="text-muted">Operasi ini akan menghapus <strong>SEMUA</strong> data dokumen secara
+                                    permanen!</p>
+                            </div>
+
+                            <div class="alert alert-danger">
+                                <strong>Data yang akan dihapus:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Semua dokumen (dokumens)</li>
+                                    <li>Data PO dan PR (dokumen_pos, dokumen_prs)</li>
+                                    <li>Data role dan status (dokumen_role_data, dokumen_statuses)</li>
+                                    <li>Activity logs (dokumen_activity_logs)</li>
+                                    <li>Data penerima pembayaran (dibayar_kepadas)</li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <strong>Konfirmasi:</strong> Ketik <code>HAPUS SEMUA</code> untuk melanjutkan
+                                </label>
+                                <input type="text" class="form-control confirmation-input" id="confirmation-input"
+                                    placeholder="HAPUS SEMUA" autocomplete="off">
+                            </div>
+
+                            <button class="btn btn-danger btn-danger-action w-100" id="btn-cleanup"
+                                onclick="performCleanup()" disabled>
+                                <i class="fas fa-trash-alt me-2"></i>HAPUS SEMUA DATA DOKUMEN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            loadPreview();
+
+            // Enable/disable cleanup button based on confirmation input
+            $('#confirmation-input').on('input', function () {
+                const value = $(this).val().trim();
+                $('#btn-cleanup').prop('disabled', value !== 'HAPUS SEMUA');
+            });
+        });
+
+        function loadPreview() {
+            $('#preview-loading').show();
+            $('#preview-result').hide();
+
+            $.ajax({
+                url: '{{ route('programmer.database-tools.preview') }}',
+                method: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        let html = '';
+                        const counts = response.counts;
+                        const tableNames = {
+                            'dokumens': 'Dokumens',
+                            'dokumen_pos': 'Dokumen POs',
+                            'dokumen_prs': 'Dokumen PRs',
+                            'dokumen_role_data': 'Dokumen Role Data',
+                            'dokumen_statuses': 'Dokumen Statuses',
+                            'dokumen_activity_logs': 'Activity Logs',
+                            'dibayar_kepadas': 'Dibayar Kepada'
+                        };
+
+                        for (const [key, count] of Object.entries(counts)) {
+                            const className = count > 0 ? 'has-data' : 'empty';
+                            html += `<tr>
+                                    <td>${tableNames[key] || key}</td>
+                                    <td class="text-end">
+                                        <span class="table-count ${className}">${count.toLocaleString()}</span>
+                                    </td>
+                                </tr>`;
+                        }
+
+                        $('#preview-body').html(html);
+                        $('#total-count').text(response.total.toLocaleString());
+                    }
+
+                    $('#preview-loading').hide();
+                    $('#preview-result').show();
+                },
+                error: function () {
+                    $('#preview-loading').hide();
+                    $('#preview-result').html(
+                        '<div class="alert alert-danger">Gagal memuat preview</div>').show();
+                }
+            });
+        }
+
+        function performCleanup() {
+            const confirmation = $('#confirmation-input').val().trim();
+
+            if (confirmation !== 'HAPUS SEMUA') {
+                alert('Konfirmasi tidak valid!');
+                return;
+            }
+
+            if (!confirm('PERINGATAN TERAKHIR!\n\nAnda akan menghapus SEMUA data dokumen.\nOperasi ini TIDAK BISA dibatalkan!\n\nYakin ingin melanjutkan?')) {
+                return;
+            }
+
+            $('#btn-cleanup').prop('disabled', true).html(
+                '<i class="fas fa-spinner fa-spin me-2"></i>Menghapus...');
+
+            $.ajax({
+                url: '{{ route('programmer.database-tools.cleanup') }}',
+                method: 'POST',
+                data: {
+                    confirmation: confirmation,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert('SUCCESS!\n\n' + response.message);
+                        $('#confirmation-input').val('');
+                        loadPreview();
+                    } else {
+                        alert('GAGAL: ' + response.message);
+                    }
+                    $('#btn-cleanup').prop('disabled', true).html(
+                        '<i class="fas fa-trash-alt me-2"></i>HAPUS SEMUA DATA DOKUMEN');
+                },
+                error: function (xhr) {
+                    alert('ERROR: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
+                    $('#btn-cleanup').prop('disabled', true).html(
+                        '<i class="fas fa-trash-alt me-2"></i>HAPUS SEMUA DATA DOKUMEN');
+                }
+            });
+        }
+    </script>
+@endsection

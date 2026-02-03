@@ -998,5 +998,21 @@ Route::middleware(['auth', 'role:programmer'])
             ->name('document-tools.get-role-data');
         Route::post('/document-tools/update-timestamps', [\App\Http\Controllers\ProgrammerController::class, 'updateTimestamps'])
             ->name('document-tools.update-timestamps');
+
+        // User Management - View and edit all users
+        Route::get('/user-management', [\App\Http\Controllers\ProgrammerController::class, 'userManagement'])
+            ->name('user-management');
+        Route::get('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'getUserData'])
+            ->name('user-management.get');
+        Route::post('/user-management/update', [\App\Http\Controllers\ProgrammerController::class, 'updateUser'])
+            ->name('user-management.update');
+
+        // Database Tools - Cleanup database
+        Route::get('/database-tools', [\App\Http\Controllers\ProgrammerController::class, 'databaseTools'])
+            ->name('database-tools');
+        Route::get('/database-tools/preview', [\App\Http\Controllers\ProgrammerController::class, 'previewCleanup'])
+            ->name('database-tools.preview');
+        Route::post('/database-tools/cleanup', [\App\Http\Controllers\ProgrammerController::class, 'performCleanup'])
+            ->name('database-tools.cleanup');
     });
 

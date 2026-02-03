@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\DibayarKepada;
 use App\Models\Dokumen;
+use App\Models\DokumenActivityLog;
+use App\Models\DokumenPO;
+use App\Models\DokumenPR;
 use App\Models\DokumenRoleData;
 use App\Models\DokumenStatus;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 final class ProgrammerController extends Controller
@@ -466,4 +473,225 @@ final class ProgrammerController extends Controller
     {
         return Auth::user()?->role === 'programmer';
     }
+
+    // ============================================
+    // USER MANAGEMENT METHODS
+    // ============================================
+
+    /**
+     * User Management page - view and edit all users
+     */
+    public function userManagement(Request $request): View
+    {
+        $roleFilter = $request->get('role', '');
+
+        $query = User::orderBy('name');
+
+        if (!empty($roleFilter)) {
+            $query->where('role', $roleFilter);
+        }
+
+        $users = $query->paginate(20);
+
+        // Get all available roles for filter dropdown
+        $roles = User::select('role')->distinct()->pluck('role')->filter()->values();
+
+        return view('programmer.user-management', compact('users', 'roles', 'roleFilter'));
+    }
+
+    /**
+     * Get user data for editing
+     */
+    public function getUserData(int $id): JsonResponse
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'bagian_code' => $user->bagian_code,
+                'phone_number' => $user->phone_number,
+            ],
+        ]);
+    }
+
+    /**
+     * Update user data
+     */
+    public function updateUser(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:users,id',
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'role' => 'required|string',
+            'bagian_code' => 'nullable|string|max:50',
+            'phone_number' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        $user = User::find($validated['id']);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        // Check for unique username (excluding current user)
+        $existingUsername = User::where('username', $validated['username'])
+            ->where('id', '!=', $user->id)
+            ->first();
+        if ($existingUsername) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Username sudah digunakan',
+            ], 422);
+        }
+
+        // Check for unique email (excluding current user)
+        $existingEmail = User::where('email', $validated['email'])
+            ->where('id', '!=', $user->id)
+            ->first();
+        if ($existingEmail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email sudah digunakan',
+            ], 422);
+        }
+
+        // Update user data
+        $user->name = $validated['name'];
+        $user->username = $validated['username'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'];
+        $user->bagian_code = $validated['bagian_code'] ?? null;
+        $user->phone_number = $validated['phone_number'] ?? null;
+
+        // Update password if provided
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        Log::info("Programmer updated user", [
+            'user_id' => $user->id,
+            'updated_by' => Auth::user()->name ?? 'Programmer',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User berhasil diupdate',
+        ]);
+    }
+
+    // ============================================
+    // DATABASE CLEANUP METHODS
+    // ============================================
+
+    /**
+     * Database Tools page - cleanup database
+     */
+    public function databaseTools(): View
+    {
+        return view('programmer.database-tools');
+    }
+
+    /**
+     * Preview cleanup - count records in each table
+     */
+    public function previewCleanup(): JsonResponse
+    {
+        $counts = [
+            'dokumens' => Dokumen::count(),
+            'dokumen_pos' => DokumenPO::count(),
+            'dokumen_prs' => DokumenPR::count(),
+            'dokumen_role_data' => DokumenRoleData::count(),
+            'dokumen_statuses' => DokumenStatus::count(),
+            'dokumen_activity_logs' => DokumenActivityLog::count(),
+            'dibayar_kepadas' => DibayarKepada::count(),
+        ];
+
+        $total = array_sum($counts);
+
+        return response()->json([
+            'success' => true,
+            'counts' => $counts,
+            'total' => $total,
+        ]);
+    }
+
+    /**
+     * Perform database cleanup with transaction
+     */
+    public function performCleanup(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation' => 'required|string',
+        ]);
+
+        // Security check - require exact confirmation text
+        if ($validated['confirmation'] !== 'HAPUS SEMUA') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Konfirmasi tidak valid. Ketik "HAPUS SEMUA" untuk melanjutkan.',
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () {
+                // Disable foreign key checks
+                Schema::disableForeignKeyConstraints();
+
+                // Truncate all document-related tables in correct order
+                DokumenActivityLog::truncate();
+                DokumenRoleData::truncate();
+                DokumenStatus::truncate();
+                DibayarKepada::truncate();
+                DokumenPR::truncate();
+                DokumenPO::truncate();
+                Dokumen::truncate();
+
+                // Re-enable foreign key checks
+                Schema::enableForeignKeyConstraints();
+            });
+
+            Log::warning("Database cleanup performed", [
+                'performed_by' => Auth::user()->name ?? 'Programmer',
+                'performed_at' => now()->toDateTimeString(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Database berhasil dibersihkan. Semua dokumen telah dihapus.',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Database cleanup failed", [
+                'error' => $e->getMessage(),
+                'performed_by' => Auth::user()->name ?? 'Programmer',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membersihkan database: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
+

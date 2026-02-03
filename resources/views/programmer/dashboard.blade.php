@@ -94,6 +94,28 @@
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>
+                            <a href="{{ route('programmer.user-management') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-users-cog fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">User Management</h6>
+                                    <small class="text-muted">Kelola user, username, password, dan role</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
+                            <a href="{{ route('programmer.database-tools') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-database fa-2x text-danger"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Database Tools</h6>
+                                    <small class="text-muted">Cleanup dan reset data dokumen</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
