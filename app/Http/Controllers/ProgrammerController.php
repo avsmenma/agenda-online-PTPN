@@ -654,22 +654,21 @@ final class ProgrammerController extends Controller
         }
 
         try {
-            DB::transaction(function () {
-                // Disable foreign key checks
-                Schema::disableForeignKeyConstraints();
+            // Disable foreign key checks
+            Schema::disableForeignKeyConstraints();
 
-                // Truncate all document-related tables in correct order
-                DokumenActivityLog::truncate();
-                DokumenRoleData::truncate();
-                DokumenStatus::truncate();
-                DibayarKepada::truncate();
-                DokumenPR::truncate();
-                DokumenPO::truncate();
-                Dokumen::truncate();
+            // Truncate all document-related tables in correct order
+            // Note: TRUNCATE is DDL in MySQL (auto-commit), so we don't wrap in transaction
+            DokumenActivityLog::truncate();
+            DokumenRoleData::truncate();
+            DokumenStatus::truncate();
+            DibayarKepada::truncate();
+            DokumenPR::truncate();
+            DokumenPO::truncate();
+            Dokumen::truncate();
 
-                // Re-enable foreign key checks
-                Schema::enableForeignKeyConstraints();
-            });
+            // Re-enable foreign key checks
+            Schema::enableForeignKeyConstraints();
 
             Log::warning("Database cleanup performed", [
                 'performed_by' => Auth::user()->name ?? 'Programmer',
@@ -682,6 +681,9 @@ final class ProgrammerController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            // Make sure FK constraints are re-enabled even on error
+            Schema::enableForeignKeyConstraints();
+
             Log::error("Database cleanup failed", [
                 'error' => $e->getMessage(),
                 'performed_by' => Auth::user()->name ?? 'Programmer',
