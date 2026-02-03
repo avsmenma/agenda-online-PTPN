@@ -2,112 +2,202 @@
 
 @section('content')
   <style>
-    /* ===== AGENDA GREEN THEME ===== */
+    /* ===== IMPORT GOOGLE FONTS ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    /* ===== PREMIUM SAAS DESIGN SYSTEM ===== */
     :root {
-      --agenda-primary: #1a5d1a;
-      --agenda-primary-light: #2e8b2e;
-      --agenda-primary-dark: #0d3d0d;
-      --agenda-accent: #4ade80;
-      --agenda-accent-light: #86efac;
-      --agenda-gradient-start: #166534;
-      --agenda-gradient-end: #15803d;
-      --glass-bg: rgba(255, 255, 255, 0.1);
-      --glass-border: rgba(255, 255, 255, 0.2);
-      --shadow-glass: 0 8px 32px rgba(26, 93, 26, 0.15);
-      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
-      --shadow-card-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
+      /* Core Colors */
+      --bg-primary: #fafbfc;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #ffffff;
+      
+      /* Text Colors */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-muted: #cbd5e1;
+      
+      /* Brand Colors - Soft Pastels */
+      --brand-primary: #10b981;
+      --brand-primary-soft: rgba(16, 185, 129, 0.1);
+      --brand-primary-glow: rgba(16, 185, 129, 0.2);
+      
+      /* Status Colors - Refined */
+      --status-emerald: #10b981;
+      --status-emerald-soft: rgba(16, 185, 129, 0.12);
+      --status-emerald-glow: 0 0 20px rgba(16, 185, 129, 0.3);
+      
+      --status-amber: #f59e0b;
+      --status-amber-soft: rgba(245, 158, 11, 0.12);
+      --status-amber-glow: 0 0 20px rgba(245, 158, 11, 0.3);
+      
+      --status-rose: #f43f5e;
+      --status-rose-soft: rgba(244, 63, 94, 0.12);
+      --status-rose-glow: 0 0 20px rgba(244, 63, 94, 0.3);
+      
+      --status-blue: #3b82f6;
+      --status-blue-soft: rgba(59, 130, 246, 0.12);
+      --status-blue-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+      
+      --status-violet: #8b5cf6;
+      --status-violet-soft: rgba(139, 92, 246, 0.12);
+      
+      /* Shadows & Effects */
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+      
+      /* Glass Effect */
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-blur: blur(20px);
+      
+      /* Border */
+      --border-light: #e2e8f0;
+      --border-lighter: #f1f5f9;
+      
+      /* Radius */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-2xl: 24px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ===== DASHBOARD CONTAINER ===== */
-    .dashboard-container {
-      padding: 1.5rem;
-      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+    /* ===== BASE STYLES ===== */
+    .premium-dashboard {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
       min-height: 100vh;
+      padding: 2rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ===== PAGE HEADER ===== */
-    .page-header {
-      margin-bottom: 2rem;
+    /* ===== HEADER SECTION ===== */
+    .dashboard-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 1.5rem;
     }
 
-    .page-title {
-      font-size: 1.75rem;
+    .header-content {
+      flex: 1;
+    }
+
+    .header-title {
+      font-size: 1.875rem;
       font-weight: 700;
-      color: var(--agenda-primary-dark);
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      margin: 0 0 0.5rem 0;
       display: flex;
       align-items: center;
       gap: 0.75rem;
     }
 
-    .page-title i {
-      color: var(--agenda-primary);
+    .header-title-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--brand-primary) 0%, #059669 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.125rem;
     }
 
-    .page-subtitle {
-      color: #6b7280;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
+    .header-subtitle {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin: 0;
     }
 
-    /* ===== STATISTICS CARDS ===== */
-    .stats-grid {
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-export {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-base);
+      text-decoration: none;
+    }
+
+    .btn-export:hover {
+      background: var(--bg-secondary);
+      color: var(--brand-primary);
+      border-color: var(--brand-primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-export i {
+      font-size: 1rem;
+    }
+
+    /* ===== BENTO GRID ===== */
+    .bento-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.25rem;
       margin-bottom: 2rem;
     }
 
-    @media (max-width: 1200px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 576px) {
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
+    /* Main Stats Row */
     .stat-card {
-      background: white;
-      border-radius: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
       padding: 1.5rem;
-      box-shadow: var(--shadow-card);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-base);
       position: relative;
       overflow: hidden;
-      cursor: pointer;
       text-decoration: none;
       color: inherit;
-      border: 1px solid transparent;
-    }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--card-accent, var(--agenda-primary)) 0%, var(--card-accent-light, var(--agenda-accent)) 100%);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
     }
 
     .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-card-hover);
-      border-color: var(--agenda-accent-light);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+      border-color: var(--border-light);
     }
 
     .stat-card.active {
-      border: 2px solid var(--agenda-primary);
-      background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
     }
+
+    .stat-card--total { grid-column: span 3; }
+    .stat-card--pending { grid-column: span 3; }
+    .stat-card--ready { grid-column: span 3; }
+    .stat-card--paid { grid-column: span 3; }
 
     .stat-card-header {
       display: flex;
@@ -116,491 +206,622 @@
       margin-bottom: 1rem;
     }
 
-    .stat-card-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, var(--card-accent, var(--agenda-primary)) 0%, var(--card-accent-light, var(--agenda-accent)) 100%);
-      color: white;
-      font-size: 1.25rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      font-size: 1.125rem;
     }
 
-    .stat-card-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
+    .stat-icon--total {
+      background: var(--status-blue-soft);
+      color: var(--status-blue);
+    }
+
+    .stat-icon--pending {
+      background: var(--status-amber-soft);
+      color: var(--status-amber);
+    }
+
+    .stat-icon--ready {
+      background: var(--status-violet-soft);
+      color: var(--status-violet);
+    }
+
+    .stat-icon--paid {
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
+    }
+
+    .stat-trend {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
       font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 999px;
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
     }
 
-    .stat-card-title {
-      font-size: 0.875rem;
-      color: #6b7280;
+    .stat-label {
+      font-size: 0.8125rem;
       font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       margin-bottom: 0.5rem;
     }
 
-    .stat-card-value {
+    .stat-value {
       font-size: 1.75rem;
       font-weight: 700;
-      color: var(--agenda-primary-dark);
-      line-height: 1.2;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      margin-bottom: 0.25rem;
     }
 
-    .stat-card-subtitle {
-      font-size: 0.8rem;
-      color: #9ca3af;
-      margin-top: 0.5rem;
+    .stat-subvalue {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
       font-weight: 500;
     }
 
-    /* Color variants for stat cards */
-    .stat-card.total {
-      --card-accent: #1d4ed8;
-      --card-accent-light: #60a5fa;
-    }
-
-    .stat-card.total .stat-card-icon {
-      background: linear-gradient(135deg, #1d4ed8, #60a5fa);
-    }
-
-    .stat-card.total .stat-card-value {
-      color: #1d4ed8;
-    }
-
-    .stat-card.belum {
-      --card-accent: #f59e0b;
-      --card-accent-light: #fcd34d;
-    }
-
-    .stat-card.belum .stat-card-icon {
-      background: linear-gradient(135deg, #f59e0b, #fcd34d);
-    }
-
-    .stat-card.belum .stat-card-value {
-      color: #d97706;
-    }
-
-    .stat-card.siap {
-      --card-accent: #10b981;
-      --card-accent-light: #34d399;
-    }
-
-    .stat-card.siap .stat-card-icon {
-      background: linear-gradient(135deg, #10b981, #34d399);
-    }
-
-    .stat-card.siap .stat-card-value {
-      color: #059669;
-    }
-
-    .stat-card.sudah {
-      --card-accent: #8b5cf6;
-      --card-accent-light: #a78bfa;
-    }
-
-    .stat-card.sudah .stat-card-icon {
-      background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-    }
-
-    .stat-card.sudah .stat-card-value {
-      color: #7c3aed;
-    }
-
-    /* ===== DEADLINE CARDS ===== */
-    .deadline-section {
-      margin-bottom: 2rem;
-    }
-
-    .deadline-section-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--agenda-primary-dark);
-      margin-bottom: 1rem;
+    /* Deadline Cards */
+    .deadline-card {
+      grid-column: span 4;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-base);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-    }
-
-    .deadline-section-title i {
-      color: var(--agenda-primary);
-    }
-
-    .deadline-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
       gap: 1rem;
-    }
-
-    @media (max-width: 768px) {
-      .deadline-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .deadline-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.25rem;
-      box-shadow: var(--shadow-card);
-      transition: all 0.3s ease;
-      border-left: 4px solid;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .deadline-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      transition: var(--transition-base);
     }
 
     .deadline-card:hover {
-      transform: translateX(4px);
-      box-shadow: var(--shadow-card-hover);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
     }
 
-    .deadline-card.aman {
-      border-left-color: #22c55e;
-    }
+    .deadline-card--aman::before { background: var(--status-emerald); }
+    .deadline-card--peringatan::before { background: var(--status-amber); }
+    .deadline-card--terlambat::before { background: var(--status-rose); }
 
-    .deadline-card.aman .deadline-icon {
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-    }
-
-    .deadline-card.peringatan {
-      border-left-color: #f59e0b;
-    }
-
-    .deadline-card.peringatan .deadline-icon {
-      background: linear-gradient(135deg, #f59e0b, #fbbf24);
-    }
-
-    .deadline-card.terlambat {
-      border-left-color: #ef4444;
-    }
-
-    .deadline-card.terlambat .deadline-icon {
-      background: linear-gradient(135deg, #ef4444, #f87171);
-    }
+    .deadline-card--aman:hover { box-shadow: var(--status-emerald-glow), var(--shadow-lg); }
+    .deadline-card--peringatan:hover { box-shadow: var(--status-amber-glow), var(--shadow-lg); }
+    .deadline-card--terlambat:hover { box-shadow: var(--status-rose-glow), var(--shadow-lg); }
 
     .deadline-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 1.125rem;
+      font-size: 1.25rem;
       flex-shrink: 0;
     }
 
-    .deadline-info {
+    .deadline-card--aman .deadline-icon {
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
+    }
+
+    .deadline-card--peringatan .deadline-icon {
+      background: var(--status-amber-soft);
+      color: var(--status-amber);
+    }
+
+    .deadline-card--terlambat .deadline-icon {
+      background: var(--status-rose-soft);
+      color: var(--status-rose);
+    }
+
+    .deadline-content {
       flex: 1;
     }
 
     .deadline-label {
-      font-size: 0.8rem;
-      color: #6b7280;
+      font-size: 0.8125rem;
       font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 0.25rem;
     }
 
-    .deadline-count {
+    .deadline-value {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #1f2937;
+      color: var(--text-primary);
     }
 
     .deadline-desc {
       font-size: 0.75rem;
-      color: #9ca3af;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
     }
 
-    /* ===== FILTER SECTION ===== */
+    /* ===== FILTER SECTION - FLOATING BAR ===== */
     .filter-section {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: var(--shadow-card);
-      margin-bottom: 2rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
     }
 
-    .filter-header {
+    .filter-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
       gap: 1rem;
+      flex-wrap: wrap;
     }
 
-    .filter-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--agenda-primary-dark);
+    .filter-search {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+
+    .filter-search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    .filter-search input {
+      width: 100%;
+      height: 44px;
+      padding: 0 1rem 0 2.75rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: var(--transition-fast);
+    }
+
+    .filter-search input:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+      background: var(--bg-tertiary);
+    }
+
+    .filter-search input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 28px;
+      background: var(--border-light);
+    }
+
+    .filter-select-group {
       display: flex;
+      gap: 0.75rem;
       align-items: center;
-      gap: 0.5rem;
     }
 
-    .filter-title i {
-      color: var(--agenda-primary);
+    .filter-select {
+      height: 44px;
+      padding: 0 2.5rem 0 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      font-family: inherit;
+      font-weight: 500;
+      background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: var(--transition-fast);
+      appearance: none;
+      min-width: 130px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+      background-color: var(--bg-tertiary);
     }
 
     .filter-actions {
       display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-left: auto;
     }
 
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-    }
-
-    @media (max-width: 992px) {
-      .filter-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 576px) {
-      .filter-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .filter-group {
+    .btn-filter {
+      height: 44px;
+      padding: 0 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition-base);
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 0.5rem;
-    }
-
-    .filter-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .filter-input {
-      padding: 0.625rem 1rem;
-      border: 1.5px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-      background: #f9fafb;
-    }
-
-    .filter-input:focus {
-      outline: none;
-      border-color: var(--agenda-primary);
-      background: white;
-      box-shadow: 0 0 0 3px rgba(26, 93, 26, 0.1);
-    }
-
-    .filter-input::placeholder {
-      color: #9ca3af;
-    }
-
-    /* ===== BUTTONS ===== */
-    .btn-primary-agenda {
-      background: linear-gradient(135deg, var(--agenda-primary) 0%, var(--agenda-primary-light) 100%);
-      color: white;
       border: none;
-      padding: 0.625rem 1.25rem;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-decoration: none;
     }
 
-    .btn-primary-agenda:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(26, 93, 26, 0.3);
+    .btn-filter--primary {
+      background: var(--brand-primary);
       color: white;
     }
 
-    .btn-secondary-agenda {
-      background: white;
-      color: var(--agenda-primary);
-      border: 1.5px solid var(--agenda-primary);
-      padding: 0.625rem 1.25rem;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-decoration: none;
+    .btn-filter--primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
     }
 
-    .btn-secondary-agenda:hover {
-      background: var(--agenda-primary);
-      color: white;
+    .btn-filter--secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
     }
 
-    .btn-sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.8rem;
+    .btn-filter--secondary:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
     }
 
     /* ===== TABLE SECTION ===== */
     .table-section {
-      background: white;
-      border-radius: 16px;
-      box-shadow: var(--shadow-card);
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
       overflow: hidden;
     }
 
     .table-header {
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid #e5e7eb;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-lighter);
     }
 
     .table-title {
       font-size: 1rem;
       font-weight: 600;
-      color: var(--agenda-primary-dark);
+      color: var(--text-primary);
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
     .table-title i {
-      color: var(--agenda-primary);
+      color: var(--text-tertiary);
     }
 
     .table-count {
-      font-size: 0.8rem;
-      color: #6b7280;
-      font-weight: normal;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: var(--bg-secondary);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      margin-left: 0.5rem;
     }
 
-    .table-responsive-custom {
+    .table-toggle {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 0.25rem;
+    }
+
+    .table-toggle-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .table-toggle-btn.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-toggle-btn:hover:not(.active) {
+      color: var(--text-primary);
+    }
+
+    /* Data Table */
+    .data-table-wrapper {
       overflow-x: auto;
     }
 
     .data-table {
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
+      border-collapse: collapse;
     }
 
-    .data-table thead th {
-      background: linear-gradient(135deg, var(--agenda-primary) 0%, var(--agenda-primary-light) 100%);
-      color: white;
-      padding: 1rem 1.25rem;
+    .data-table th {
+      padding: 0.875rem 1rem;
+      text-align: left;
       font-size: 0.75rem;
       font-weight: 600;
+      color: var(--text-tertiary);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-align: left;
+      letter-spacing: 0.05em;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-lighter);
       white-space: nowrap;
-      border: none;
     }
 
-    .data-table thead th:first-child {
-      border-radius: 0;
+    .data-table th:first-child { padding-left: 1.5rem; }
+    .data-table th:last-child { padding-right: 1.5rem; }
+
+    .data-table td {
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-lighter);
+      vertical-align: middle;
     }
 
-    .data-table thead th:last-child {
-      border-radius: 0;
-    }
+    .data-table td:first-child { padding-left: 1.5rem; }
+    .data-table td:last-child { padding-right: 1.5rem; }
 
     .data-table tbody tr {
-      transition: all 0.2s ease;
+      transition: var(--transition-fast);
     }
 
     .data-table tbody tr:hover {
-      background: #f0fdf4;
-    }
-
-    .data-table tbody td {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid #f3f4f6;
-      font-size: 0.875rem;
-      color: #374151;
-      vertical-align: middle;
+      background: var(--bg-secondary);
     }
 
     .data-table tbody tr:last-child td {
       border-bottom: none;
     }
 
-    /* Status badges */
-    .status-badge {
+    /* Cell Styles */
+    .cell-primary {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .cell-mono {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8125rem;
+    }
+
+    .cell-rupiah {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cell-vendor {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cell-uraian {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Status Pills */
+    .status-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
-      padding: 0.375rem 0.875rem;
-      border-radius: 20px;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
       font-size: 0.75rem;
       font-weight: 600;
-      text-transform: capitalize;
+      white-space: nowrap;
     }
 
-    .status-badge.siap_dibayar {
-      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-      color: #166534;
+    .status-pill--ready {
+      background: var(--status-violet-soft);
+      color: var(--status-violet);
     }
 
-    .status-badge.sudah_dibayar {
-      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-      color: #5b21b6;
+    .status-pill--paid {
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
     }
 
-    .status-badge.belum_siap_dibayar {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      color: #92400e;
+    .status-pill--pending {
+      background: var(--status-amber-soft);
+      color: var(--status-amber);
     }
 
-    /* Rupiah values */
-    .rupiah-value {
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    .status-pill i {
+      font-size: 0.625rem;
+    }
+
+    /* Action Button */
+    .btn-action {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .btn-action i {
+      font-size: 0.875rem;
+    }
+
+    /* ===== VENDOR GROUP VIEW ===== */
+    .vendor-groups {
+      padding: 1rem 1.5rem;
+    }
+
+    .vendor-group {
+      margin-bottom: 0.75rem;
+      border: 1px solid var(--border-lighter);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: var(--transition-base);
+    }
+
+    .vendor-group:hover {
+      border-color: var(--border-light);
+    }
+
+    .vendor-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .vendor-group-header:hover {
+      background: var(--bg-primary);
+    }
+
+    .vendor-group-header.expanded {
+      background: var(--brand-primary-soft);
+    }
+
+    .vendor-group-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .vendor-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--brand-primary-soft);
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vendor-name {
       font-weight: 600;
-      color: var(--agenda-primary-dark);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
     }
 
-    .rupiah-value.large {
-      font-size: 1.125rem;
+    .vendor-count {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+      margin-left: 0.5rem;
+    }
+
+    .vendor-group-stats {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .vendor-stat {
+      text-align: right;
+    }
+
+    .vendor-stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .vendor-stat-value {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .vendor-chevron {
+      color: var(--text-tertiary);
+      transition: var(--transition-fast);
+    }
+
+    .vendor-group-header.expanded .vendor-chevron {
+      transform: rotate(180deg);
+      color: var(--brand-primary);
+    }
+
+    .vendor-group-body {
+      display: none;
+      border-top: 1px solid var(--border-lighter);
+    }
+
+    .vendor-group-body.show {
+      display: block;
     }
 
     /* ===== PAGINATION ===== */
     .pagination-wrapper {
-      padding: 1.25rem 1.5rem;
-      border-top: 1px solid #e5e7eb;
       display: flex;
-      justify-content: between;
+      justify-content: space-between;
       align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-lighter);
     }
 
     .pagination-info {
-      font-size: 0.875rem;
-      color: #6b7280;
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
     }
 
     .pagination {
@@ -611,33 +832,37 @@
       list-style: none;
     }
 
-    .page-item .page-link {
-      padding: 0.5rem 0.875rem;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      color: #374151;
-      background: white;
-      transition: all 0.2s ease;
+    .pagination .page-item .page-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
       text-decoration: none;
+      transition: var(--transition-fast);
     }
 
-    .page-item .page-link:hover {
-      background: #f0fdf4;
-      border-color: var(--agenda-primary);
-      color: var(--agenda-primary);
+    .pagination .page-item .page-link:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
     }
 
-    .page-item.active .page-link {
-      background: var(--agenda-primary);
-      border-color: var(--agenda-primary);
+    .pagination .page-item.active .page-link {
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
       color: white;
     }
 
-    .page-item.disabled .page-link {
-      color: #9ca3af;
-      background: #f9fafb;
-      cursor: not-allowed;
+    .pagination .page-item.disabled .page-link {
+      opacity: 0.5;
+      pointer-events: none;
     }
 
     /* ===== EMPTY STATE ===== */
@@ -649,437 +874,326 @@
     .empty-state-icon {
       width: 80px;
       height: 80px;
+      margin: 0 auto 1.5rem;
       border-radius: 50%;
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      background: var(--bg-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1.5rem;
     }
 
     .empty-state-icon i {
       font-size: 2rem;
-      color: var(--agenda-primary);
+      color: var(--text-tertiary);
     }
 
     .empty-state-title {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      margin: 0 0 0.5rem 0;
     }
 
     .empty-state-desc {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-tertiary);
+      max-width: 360px;
+      margin: 0 auto 1.5rem;
     }
 
-    /* ===== VENDOR GROUP TABLE ===== */
-    .vendor-group {
-      margin-bottom: 1rem;
-    }
-
-    .vendor-group-header {
-      background: linear-gradient(135deg, var(--agenda-primary) 0%, var(--agenda-primary-light) 100%);
-      color: white;
-      padding: 1rem 1.25rem;
-      border-radius: 10px 10px 0 0;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s ease;
-    }
-
-    .vendor-group-header:hover {
-      filter: brightness(1.1);
-    }
-
-    .vendor-group-header h4 {
-      margin: 0;
-      font-size: 0.95rem;
-      font-weight: 600;
-      display: flex;
+    .btn-empty {
+      display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-    }
-
-    .vendor-group-header .stats {
-      display: flex;
-      gap: 1.5rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .vendor-group-body {
-      border: 1px solid #e5e7eb;
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      overflow: hidden;
-    }
-
-    /* ===== ANIMATIONS ===== */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .animate-fade-in {
-      animation: fadeInUp 0.4s ease-out forwards;
-    }
-
-    .animate-delay-1 {
-      animation-delay: 0.1s;
-    }
-
-    .animate-delay-2 {
-      animation-delay: 0.2s;
-    }
-
-    .animate-delay-3 {
-      animation-delay: 0.3s;
-    }
-
-    .animate-delay-4 {
-      animation-delay: 0.4s;
-    }
-
-    /* ===== MODE TOGGLE ===== */
-    .mode-toggle {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 1rem;
-      background: #f3f4f6;
-      border-radius: 10px;
-    }
-
-    .mode-toggle-label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 48px;
-      height: 26px;
-    }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #cbd5e1;
-      transition: 0.3s;
-      border-radius: 26px;
-    }
-
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 20px;
-      width: 20px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: 0.3s;
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    input:checked+.toggle-slider {
-      background: linear-gradient(135deg, var(--agenda-primary) 0%, var(--agenda-primary-light) 100%);
-    }
-
-    input:checked+.toggle-slider:before {
-      transform: translateX(22px);
-    }
-
-    /* ===== TOOLTIP ===== */
-    [data-tooltip] {
-      position: relative;
-    }
-
-    [data-tooltip]:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 0.5rem 0.75rem;
-      background: #1f2937;
+      padding: 0.75rem 1.5rem;
+      background: var(--brand-primary);
       color: white;
-      font-size: 0.75rem;
-      border-radius: 6px;
-      white-space: nowrap;
-      z-index: 100;
-      margin-bottom: 0.5rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: var(--transition-base);
+    }
+
+    .btn-empty:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      color: white;
     }
 
     /* ===== RESPONSIVE ===== */
+    @media (max-width: 1280px) {
+      .stat-card--total,
+      .stat-card--pending,
+      .stat-card--ready,
+      .stat-card--paid {
+        grid-column: span 6;
+      }
+      
+      .deadline-card {
+        grid-column: span 4;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .deadline-card {
+        grid-column: span 6;
+      }
+    }
+
     @media (max-width: 768px) {
-      .dashboard-container {
+      .premium-dashboard {
         padding: 1rem;
       }
 
-      .page-header {
-        flex-direction: column;
-        align-items: flex-start;
+      .bento-grid {
+        gap: 0.75rem;
       }
 
-      .page-title {
-        font-size: 1.5rem;
+      .stat-card--total,
+      .stat-card--pending,
+      .stat-card--ready,
+      .stat-card--paid,
+      .deadline-card {
+        grid-column: span 12;
       }
 
-      .filter-header {
+      .filter-row {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+      }
+
+      .filter-search {
+        min-width: 100%;
+      }
+
+      .filter-divider {
+        display: none;
+      }
+
+      .filter-select-group {
+        flex-wrap: wrap;
+      }
+
+      .filter-select {
+        flex: 1;
+        min-width: 120px;
       }
 
       .filter-actions {
-        width: 100%;
+        margin-left: 0;
+        justify-content: stretch;
       }
 
-      .filter-actions .btn-primary-agenda,
-      .filter-actions .btn-secondary-agenda {
+      .filter-actions .btn-filter {
         flex: 1;
         justify-content: center;
       }
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
     }
 
-    /* Print styles */
-    @media print {
-      .dashboard-container {
-        background: white !important;
-        padding: 0 !important;
-      }
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-      .filter-section,
-      .page-header,
-      .deadline-section {
-        display: none !important;
-      }
+    @keyframes countUp {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
 
-      .table-section {
-        box-shadow: none !important;
-      }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .animate-delay-2 { animation-delay: 0.15s; opacity: 0; }
+    .animate-delay-3 { animation-delay: 0.2s; opacity: 0; }
+    .animate-delay-4 { animation-delay: 0.25s; opacity: 0; }
+    .animate-delay-5 { animation-delay: 0.3s; opacity: 0; }
+    .animate-delay-6 { animation-delay: 0.35s; opacity: 0; }
+    .animate-delay-7 { animation-delay: 0.4s; opacity: 0; }
+
+    .count-animate {
+      animation: countUp 0.6s ease-out forwards;
+    }
+
+    /* Lucide-style icons (thin stroke) */
+    .premium-dashboard i.fas,
+    .premium-dashboard i.far {
+      font-weight: 400;
     }
   </style>
 
-  <div class="dashboard-container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          <i class="fas fa-wallet"></i>
-          Dashboard Pembayaran
+  <div class="premium-dashboard">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          <div class="header-title-icon">
+            <i class="fas fa-wallet"></i>
+          </div>
+          Payment Dashboard
         </h1>
-        <p class="page-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
+        <p class="header-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
       </div>
-      <div style="display: flex; gap: 0.75rem;">
-        <a href="{{ route('reports.pembayaran.export', ['format' => 'excel']) }}" class="btn-secondary-agenda btn-sm">
-          <i class="fas fa-file-excel"></i> Export Excel
+      <div class="header-actions">
+        <a href="{{ route('reports.pembayaran.export', ['format' => 'excel']) }}" class="btn-export" title="Export Excel">
+          <i class="fas fa-file-excel"></i>
         </a>
-        <a href="{{ route('reports.pembayaran.export', ['format' => 'pdf']) }}" class="btn-secondary-agenda btn-sm">
-          <i class="fas fa-file-pdf"></i> Export PDF
+        <a href="{{ route('reports.pembayaran.export', ['format' => 'pdf']) }}" class="btn-export" title="Export PDF">
+          <i class="fas fa-file-pdf"></i>
         </a>
       </div>
-    </div>
+    </header>
 
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
+    <!-- Bento Grid Stats -->
+    <div class="bento-grid">
+      <!-- Main Stats Row -->
       <a href="?status_pembayaran=&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
-        class="stat-card total animate-fade-in animate-delay-1 {{ !$selectedStatus ? 'active' : '' }}">
+        class="stat-card stat-card--total animate-fade-in animate-delay-1 {{ !$selectedStatus ? 'active' : '' }}">
         <div class="stat-card-header">
-          <div class="stat-card-icon">
-            <i class="fas fa-file-invoice"></i>
+          <div class="stat-icon stat-icon--total">
+            <i class="fas fa-layer-group"></i>
           </div>
         </div>
-        <div class="stat-card-title">Total Dokumen</div>
-        <div class="stat-card-value">{{ number_format($statistics['total_documents']) }}</div>
-        <div class="stat-card-subtitle">
-          Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}
-        </div>
+        <div class="stat-label">Total Dokumen</div>
+        <div class="stat-value count-animate">{{ number_format($statistics['total_documents']) }}</div>
+        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
       </a>
 
       <a href="?status_pembayaran=belum_siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
-        class="stat-card belum animate-fade-in animate-delay-2 {{ $selectedStatus == 'belum_siap_dibayar' ? 'active' : '' }}">
+        class="stat-card stat-card--pending animate-fade-in animate-delay-2 {{ $selectedStatus == 'belum_siap_dibayar' ? 'active' : '' }}">
         <div class="stat-card-header">
-          <div class="stat-card-icon">
+          <div class="stat-icon stat-icon--pending">
             <i class="fas fa-hourglass-half"></i>
           </div>
         </div>
-        <div class="stat-card-title">Belum Siap Bayar</div>
-        <div class="stat-card-value">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
-        <div class="stat-card-subtitle">
-          Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}
-        </div>
+        <div class="stat-label">Belum Siap</div>
+        <div class="stat-value count-animate">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
+        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
       </a>
 
       <a href="?status_pembayaran=siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
-        class="stat-card siap animate-fade-in animate-delay-3 {{ $selectedStatus == 'siap_dibayar' ? 'active' : '' }}">
+        class="stat-card stat-card--ready animate-fade-in animate-delay-3 {{ $selectedStatus == 'siap_dibayar' ? 'active' : '' }}">
         <div class="stat-card-header">
-          <div class="stat-card-icon">
+          <div class="stat-icon stat-icon--ready">
             <i class="fas fa-check-circle"></i>
           </div>
         </div>
-        <div class="stat-card-title">Siap Dibayar</div>
-        <div class="stat-card-value">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
-        <div class="stat-card-subtitle">
-          Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}
-        </div>
+        <div class="stat-label">Siap Dibayar</div>
+        <div class="stat-value count-animate">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
+        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
       </a>
 
       <a href="?status_pembayaran=sudah_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
-        class="stat-card sudah animate-fade-in animate-delay-4 {{ $selectedStatus == 'sudah_dibayar' ? 'active' : '' }}">
+        class="stat-card stat-card--paid animate-fade-in animate-delay-4 {{ $selectedStatus == 'sudah_dibayar' ? 'active' : '' }}">
         <div class="stat-card-header">
-          <div class="stat-card-icon">
+          <div class="stat-icon stat-icon--paid">
             <i class="fas fa-money-check-alt"></i>
           </div>
         </div>
-        <div class="stat-card-title">Sudah Dibayar</div>
-        <div class="stat-card-value">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
-        <div class="stat-card-subtitle">
-          Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}
+        <div class="stat-label">Sudah Dibayar</div>
+        <div class="stat-value count-animate">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
+        <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+      </a>
+
+      <!-- Deadline Cards -->
+      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'aman']) }}"
+        class="deadline-card deadline-card--aman animate-fade-in animate-delay-5">
+        <div class="deadline-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-label">Aman</div>
+          <div class="deadline-value">{{ number_format($totalAman) }}</div>
+          <div class="deadline-desc">&lt; 1 Minggu</div>
+        </div>
+      </a>
+
+      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'peringatan']) }}"
+        class="deadline-card deadline-card--peringatan animate-fade-in animate-delay-6">
+        <div class="deadline-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-label">Peringatan</div>
+          <div class="deadline-value">{{ number_format($totalPeringatan) }}</div>
+          <div class="deadline-desc">1 - 3 Minggu</div>
+        </div>
+      </a>
+
+      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'terlambat']) }}"
+        class="deadline-card deadline-card--terlambat animate-fade-in animate-delay-7">
+        <div class="deadline-icon">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-label">Terlambat</div>
+          <div class="deadline-value">{{ number_format($totalTerlambat) }}</div>
+          <div class="deadline-desc">&gt; 3 Minggu</div>
         </div>
       </a>
     </div>
 
-    <!-- Deadline Cards -->
-    <div class="deadline-section">
-      <h2 class="deadline-section-title">
-        <i class="fas fa-clock"></i>
-        Status Keterlambatan
-      </h2>
-      <div class="deadline-grid">
-        <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'aman']) }}"
-          class="deadline-card aman">
-          <div class="deadline-icon">
-            <i class="fas fa-shield-alt"></i>
-          </div>
-          <div class="deadline-info">
-            <div class="deadline-label">Aman</div>
-            <div class="deadline-count">{{ number_format($totalAman) }}</div>
-            <div class="deadline-desc">&lt; 1 Minggu</div>
-          </div>
-        </a>
-
-        <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'peringatan']) }}"
-          class="deadline-card peringatan">
-          <div class="deadline-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <div class="deadline-info">
-            <div class="deadline-label">Peringatan</div>
-            <div class="deadline-count">{{ number_format($totalPeringatan) }}</div>
-            <div class="deadline-desc">1 - 3 Minggu</div>
-          </div>
-        </a>
-
-        <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'terlambat']) }}"
-          class="deadline-card terlambat">
-          <div class="deadline-icon">
-            <i class="fas fa-times-circle"></i>
-          </div>
-          <div class="deadline-info">
-            <div class="deadline-label">Terlambat</div>
-            <div class="deadline-count">{{ number_format($totalTerlambat) }}</div>
-            <div class="deadline-desc">&gt; 3 Minggu</div>
-          </div>
-        </a>
-      </div>
-    </div>
-
     <!-- Filter Section -->
-    <div class="filter-section">
-      <div class="filter-header">
-        <div class="filter-title">
-          <i class="fas fa-filter"></i>
-          Filter Dokumen
+    <form action="{{ route('dashboard.pembayaran') }}" method="GET" class="filter-section">
+      <div class="filter-row">
+        <div class="filter-search">
+          <i class="fas fa-search filter-search-icon"></i>
+          <input type="text" name="search" placeholder="Cari no agenda, SPP, vendor..." value="{{ $search ?? '' }}">
         </div>
+
+        <div class="filter-divider"></div>
+
+        <div class="filter-select-group">
+          <select name="status_pembayaran" class="filter-select">
+            <option value="">Semua Status</option>
+            <option value="belum_siap_dibayar" {{ ($selectedStatus ?? '') == 'belum_siap_dibayar' ? 'selected' : '' }}>Belum Siap</option>
+            <option value="siap_dibayar" {{ ($selectedStatus ?? '') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
+            <option value="sudah_dibayar" {{ ($selectedStatus ?? '') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
+          </select>
+
+          <select name="year" class="filter-select">
+            <option value="">Semua Tahun</option>
+            @foreach($years ?? [] as $yr)
+              <option value="{{ $yr }}" {{ ($selectedYear ?? '') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+            @endforeach
+          </select>
+
+          <select name="month" class="filter-select">
+            <option value="">Semua Bulan</option>
+            @php
+              $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            @endphp
+            @foreach($months as $i => $m)
+              <option value="{{ $i + 1 }}" {{ ($selectedMonth ?? '') == ($i + 1) ? 'selected' : '' }}>{{ $m }}</option>
+            @endforeach
+          </select>
+        </div>
+
         <div class="filter-actions">
-          <div class="mode-toggle">
-            <span class="mode-toggle-label">Group by Vendor</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="modeToggle" {{ $mode == 'rekapan_table' ? 'checked' : '' }}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <form method="GET" action="" id="filterForm">
-        <input type="hidden" name="mode" id="modeInput" value="{{ $mode }}">
-
-        <div class="filter-grid">
-          <div class="filter-group">
-            <label class="filter-label">Status</label>
-            <select name="status_pembayaran" class="filter-input" onchange="this.form.submit()">
-              <option value="">Semua Status</option>
-              <option value="siap_dibayar" {{ $selectedStatus == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
-              <option value="sudah_dibayar" {{ $selectedStatus == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar
-              </option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label class="filter-label">Tahun</label>
-            <select name="year" class="filter-input" onchange="this.form.submit()">
-              <option value="">Semua Tahun</option>
-              @foreach($availableYears as $year)
-                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
-              @endforeach
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label class="filter-label">Bulan</label>
-            <select name="month" class="filter-input" onchange="this.form.submit()">
-              <option value="">Semua Bulan</option>
-              @for($i = 1; $i <= 12; $i++)
-                <option value="{{ $i }}" {{ $selectedMonth == $i ? 'selected' : '' }}>
-                  {{ DateTime::createFromFormat('!m', $i)->format('F') }}
-                </option>
-              @endfor
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label class="filter-label">Pencarian</label>
-            <input type="text" name="search" class="filter-input" placeholder="Cari no agenda, SPP, vendor..."
-              value="{{ $search ?? '' }}">
-          </div>
-        </div>
-
-        <div style="margin-top: 1rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
-          <button type="submit" class="btn-primary-agenda">
+          <button type="submit" class="btn-filter btn-filter--primary">
             <i class="fas fa-search"></i>
             Cari
           </button>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-secondary-agenda">
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary">
             <i class="fas fa-redo"></i>
             Reset
           </a>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
 
     <!-- Table Section -->
     <div class="table-section">
@@ -1087,29 +1201,41 @@
         <div class="table-title">
           <i class="fas fa-list-alt"></i>
           Daftar Dokumen
-          <span class="table-count">({{ $dokumens->total() }} dokumen)</span>
+          <span class="table-count">{{ $dokumens->total() }}</span>
+        </div>
+        <div class="table-toggle">
+          <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}" onclick="setViewMode('normal')">
+            <i class="fas fa-th-list"></i> Normal
+          </button>
+          <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}" onclick="setViewMode('rekapan_table')">
+            <i class="fas fa-object-group"></i> Group Vendor
+          </button>
         </div>
       </div>
 
       @if($dokumens->count() > 0)
         @if($mode == 'rekapan_table' && $rekapanByVendor)
           <!-- Vendor Grouped View -->
-          <div style="padding: 1rem;">
+          <div class="vendor-groups">
             @foreach($rekapanByVendor as $vendorData)
               <div class="vendor-group">
                 <div class="vendor-group-header" onclick="toggleVendorGroup(this)">
-                  <h4>
-                    <i class="fas fa-building"></i>
-                    {{ $vendorData['vendor'] }}
-                    <span style="font-weight: 400; font-size: 0.8rem; opacity: 0.9;">({{ $vendorData['count'] }} dok)</span>
-                  </h4>
-                  <div class="stats">
-                    <span><i class="fas fa-money-bill-wave"></i> Rp
-                      {{ number_format($vendorData['total_nilai'], 0, ',', '.') }}</span>
+                  <div class="vendor-group-info">
+                    <div class="vendor-icon">
+                      <i class="fas fa-building"></i>
+                    </div>
+                    <span class="vendor-name">{{ $vendorData['vendor'] }}</span>
+                    <span class="vendor-count">{{ $vendorData['count'] }} dokumen</span>
+                  </div>
+                  <div class="vendor-group-stats">
+                    <div class="vendor-stat">
+                      <div class="vendor-stat-label">Total Nilai</div>
+                      <div class="vendor-stat-value">Rp {{ number_format($vendorData['total_nilai'], 0, ',', '.') }}</div>
+                    </div>
                     <i class="fas fa-chevron-down vendor-chevron"></i>
                   </div>
                 </div>
-                <div class="vendor-group-body" style="display: none;">
+                <div class="vendor-group-body">
                   <table class="data-table">
                     <thead>
                       <tr>
@@ -1124,24 +1250,27 @@
                     <tbody>
                       @foreach($vendorData['documents'] as $doc)
                         <tr>
-                          <td><strong>{{ $doc->nomor_agenda }}</strong></td>
-                          <td>{{ $doc->nomor_spp ?? '-' }}</td>
-                          <td>{{ Str::limit($doc->uraian_spp, 50) }}</td>
-                          <td class="rupiah-value">{{ number_format($doc->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
+                          <td class="cell-primary cell-mono">{{ $doc->nomor_agenda }}</td>
+                          <td class="cell-mono">{{ $doc->nomor_spp ?? '-' }}</td>
+                          <td class="cell-uraian">{{ Str::limit($doc->uraian_spp, 50) }}</td>
+                          <td class="cell-rupiah">{{ number_format($doc->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
                           <td>
-                            <span class="status-badge {{ $doc->computed_status }}">
-                              @if($doc->computed_status == 'siap_dibayar')
-                                <i class="fas fa-check-circle"></i> Siap Dibayar
-                              @elseif($doc->computed_status == 'sudah_dibayar')
-                                <i class="fas fa-money-check-alt"></i> Sudah Dibayar
-                              @else
-                                <i class="fas fa-hourglass-half"></i> Belum Siap
-                              @endif
-                            </span>
+                            @if($doc->computed_status == 'siap_dibayar')
+                              <span class="status-pill status-pill--ready">
+                                <i class="fas fa-circle"></i> Siap Dibayar
+                              </span>
+                            @elseif($doc->computed_status == 'sudah_dibayar')
+                              <span class="status-pill status-pill--paid">
+                                <i class="fas fa-circle"></i> Sudah Dibayar
+                              </span>
+                            @else
+                              <span class="status-pill status-pill--pending">
+                                <i class="fas fa-circle"></i> Belum Siap
+                              </span>
+                            @endif
                           </td>
                           <td>
-                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-primary-agenda btn-sm"
-                              data-tooltip="Lihat Detail">
+                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-action" title="Lihat Detail">
                               <i class="fas fa-eye"></i>
                             </a>
                           </td>
@@ -1155,7 +1284,7 @@
           </div>
         @else
           <!-- Normal Table View -->
-          <div class="table-responsive-custom">
+          <div class="data-table-wrapper">
             <table class="data-table">
               <thead>
                 <tr>
@@ -1171,25 +1300,28 @@
               <tbody>
                 @foreach($dokumens as $dok)
                   <tr>
-                    <td><strong>{{ $dok->nomor_agenda }}</strong></td>
-                    <td>{{ $dok->nomor_spp ?? '-' }}</td>
-                    <td>{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
-                    <td>{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
-                    <td class="rupiah-value">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
+                    <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
+                    <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
+                    <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
+                    <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
+                    <td class="cell-rupiah">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
                     <td>
-                      <span class="status-badge {{ $dok->computed_status }}">
-                        @if($dok->computed_status == 'siap_dibayar')
-                          <i class="fas fa-check-circle"></i> Siap Dibayar
-                        @elseif($dok->computed_status == 'sudah_dibayar')
-                          <i class="fas fa-money-check-alt"></i> Sudah Dibayar
-                        @else
-                          <i class="fas fa-hourglass-half"></i> Belum Siap
-                        @endif
-                      </span>
+                      @if($dok->computed_status == 'siap_dibayar')
+                        <span class="status-pill status-pill--ready">
+                          <i class="fas fa-circle"></i> Siap Dibayar
+                        </span>
+                      @elseif($dok->computed_status == 'sudah_dibayar')
+                        <span class="status-pill status-pill--paid">
+                          <i class="fas fa-circle"></i> Sudah Dibayar
+                        </span>
+                      @else
+                        <span class="status-pill status-pill--pending">
+                          <i class="fas fa-circle"></i> Belum Siap
+                        </span>
+                      @endif
                     </td>
                     <td>
-                      <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-primary-agenda btn-sm"
-                        data-tooltip="Lihat Detail">
+                      <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-action" title="Lihat Detail">
                         <i class="fas fa-eye"></i>
                       </a>
                     </td>
@@ -1204,7 +1336,7 @@
         @if($dokumens->hasPages())
           <div class="pagination-wrapper">
             <div class="pagination-info">
-              Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }} dokumen
+              Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
             </div>
             <div>
               {{ $dokumens->links('pagination::bootstrap-4') }}
@@ -1219,7 +1351,7 @@
           </div>
           <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
           <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-primary-agenda" style="margin-top: 1rem;">
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty">
             <i class="fas fa-redo"></i>
             Reset Filter
           </a>
@@ -1228,9 +1360,63 @@
     </div>
   </div>
 
-  <script>   // Mode Toggle Handler   document.getElementById('modeToggle')?.addEventListener('change', function () {     const modeInput = document.getElementById('modeInput');     modeInput.value = this.checked ? 'rekapan_table' : 'normal';     document.getElementById('filterForm').submit();   });
-     // Vendor Group Toggle   function toggleVendorGroup(header) {     const body = header.nextElementSibling;     const chevron = header.querySelector('.vendor-chevron');
-       if (body.style.display === 'none') {       body.style.display = 'block';       chevron.style.transform = 'rotate(180deg)';     } else {       body.style.display = 'none';       chevron.style.transform = 'rotate(0deg)';     }   }
-     // Number formatting with animation   document.querySelectorAll('.stat-card-value').forEach(el => {     const value = parseInt(el.textContent.replace(/\D/g, '')) || 0;     if (value > 0) {       let current = 0;       const increment = Math.ceil(value / 30);       const interval = setInterval(() => {         current += increment;         if (current >= value) {           current = value;           clearInterval(interval);         }         el.textContent = current.toLocaleString('id-ID');       }, 20);     }   });
+  <script>
+    // View Mode Toggle
+    function setViewMode(mode) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', mode);
+      window.location.href = url.toString();
+    }
+
+    // Vendor Group Toggle
+    function toggleVendorGroup(header) {
+      const body = header.nextElementSibling;
+      const isExpanded = header.classList.contains('expanded');
+
+      if (isExpanded) {
+        header.classList.remove('expanded');
+        body.classList.remove('show');
+      } else {
+        header.classList.add('expanded');
+        body.classList.add('show');
+      }
+    }
+
+    // Number Counter Animation
+    document.addEventListener('DOMContentLoaded', function() {
+      const counters = document.querySelectorAll('.stat-value');
+      
+      counters.forEach(counter => {
+        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+        if (isNaN(target) || target === 0) return;
+        
+        let current = 0;
+        const increment = target / 30;
+        const duration = 800;
+        const stepTime = duration / 30;
+
+        const updateCounter = () => {
+          current += increment;
+          if (current < target) {
+            counter.textContent = Math.floor(current).toLocaleString('id-ID');
+            setTimeout(updateCounter, stepTime);
+          } else {
+            counter.textContent = target.toLocaleString('id-ID');
+          }
+        };
+
+        setTimeout(updateCounter, 300);
+      });
+    });
+
+    // Add subtle hover feedback
+    document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-4px)';
+      });
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+      });
+    });
   </script>
 @endsection
