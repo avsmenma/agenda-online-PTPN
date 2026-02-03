@@ -1261,20 +1261,10 @@
                     $totalHours = ($diff->days * 24) + $diff->h;
 
                     if ($isCompleted) {
-                      // For completed docs, still calculate the original status based on time
-                      if ($totalHours >= 504) { // >= 3 minggu
-                        $ageLabel = 'TERLAMBAT';
-                        $ageColor = 'red';
-                        $ageIcon = 'fa-times-circle';
-                      } elseif ($totalHours >= 168) { // >= 1 minggu dan < 3 minggu
-                        $ageLabel = 'PERINGATAN';
-                        $ageColor = 'yellow';
-                        $ageIcon = 'fa-exclamation-triangle';
-                      } else { // < 1 minggu
-                        $ageLabel = 'AMAN';
-                        $ageColor = 'green';
-                        $ageIcon = 'fa-check-circle';
-                      }
+                      // For completed/paid documents, use grey color with SELESAI label
+                      $ageLabel = 'SELESAI';
+                      $ageColor = 'gray';
+                      $ageIcon = 'fa-stop-circle';
                     } elseif ($totalHours >= 504) { // >= 3 minggu
                       $ageLabel = 'TERLAMBAT';
                       $ageColor = 'red';
