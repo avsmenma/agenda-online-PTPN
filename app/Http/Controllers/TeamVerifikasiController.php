@@ -1074,7 +1074,7 @@ class TeamVerifikasiController extends Controller
             'No SPK' => $dokumen->no_spk ?? '-',
             'Tanggal SPK' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
-            'No Mirror' => $dokumen->nomor_miro ?? '-',
+            'Nomor Miro' => $dokumen->nomor_miro ?? ($dokumen->nomor_mirror ?? ($dokumen->NO_MIRO_SES ?? '-')),
             'Current Handler' => ucfirst($dokumen->current_handler),
         ];
 
@@ -1089,13 +1089,13 @@ class TeamVerifikasiController extends Controller
             );
         }
 
-        // No PO
+        // Nomor PO
         $poHtml = $dokumen->dokumenPos->count() > 0
             ? $this->escapeHtml($dokumen->dokumenPos->pluck('nomor_po')->join(', '))
-            : '-';
+            : ($dokumen->NO_PO ?? '-');
         $html .= sprintf('
             <div class="detail-item">
-                <span class="detail-label">No PO</span>
+                <span class="detail-label">Nomor PO</span>
                 <span class="detail-value">%s</span>
             </div>', htmlspecialchars($poHtml, ENT_QUOTES, 'UTF-8'));
 
