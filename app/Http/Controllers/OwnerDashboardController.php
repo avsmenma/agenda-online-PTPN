@@ -3673,10 +3673,11 @@ class OwnerDashboardController extends Controller
             // Calculate age based on completion status
             // - Active documents: compare received_at to NOW (time keeps running)
             // - Completed documents: compare received_at to processed_at (PERMANENT time)
-            $endTime = $isCompleted ? $processedAt : $now;
+            // Note: For pembayaran with sudah_dibayar status, processedAt may be null - use now()
+            $endTime = ($isCompleted && $processedAt) ? $processedAt : $now;
 
             $ageHours = $receivedAt ? $receivedAt->diffInHours($endTime) : 0;
-            $ageDays = $receivedAt ? $endTime->diffInDays($receivedAt, false) : 0;
+            $ageDays = ($receivedAt && $endTime) ? $endTime->diffInDays($receivedAt, false) : 0;
             $ageDays = max(0, $ageDays);
 
             $dokumen->is_completed = $isCompleted;
