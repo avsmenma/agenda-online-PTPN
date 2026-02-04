@@ -4379,7 +4379,7 @@
                   document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
                   document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
                   document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+                  document.getElementById('view-nomor-miro').textContent = dok.NO_MIRO_SES || '-';
                   document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
                   document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
 
@@ -4388,9 +4388,9 @@
                   document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? formatDate(dok.tanggal_miro) : '-';
 
                   // Nomor PO & PR
-                  const poList = dok.dokumen_pos && dok.dokumen_pos.length > 0 
+                  const poList = dok.NO_PO || (dok.dokumen_pos && dok.dokumen_pos.length > 0 
                     ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
-                    : '-';
+                    : '-');
                   const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
                     ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
                     : '-';
@@ -4717,7 +4717,7 @@
                       </div>
                       <div class="col-md-3">
                         <div class="detail-item">
-                          <label class="detail-label">Nomor Miro</label>
+                          <label class="detail-label">Nomor Miro/SES</label>
                           <div class="detail-value" id="view-nomor-miro">-</div>
                         </div>
                       </div>
