@@ -3651,10 +3651,8 @@ class OwnerDashboardController extends Controller
             }
 
             // IMPORTANT: Determine completion status correctly
-            // A document is COMPLETED for this role if:
-            // 1. processed_at is set (document was processed)
-            // 2. AND current_handler has moved to a different role (document is no longer here)
-            // If current_handler is still this role, document is ACTIVE even if processed_at is set
+            // For pembayaran role: a document is completed if status_pembayaran = 'sudah_dibayar'
+            // For other roles: document is completed if processed_at is set AND current_handler has moved
             $roleHandlerMapping = [
                 'team_verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'perpajakan',
@@ -3663,8 +3661,14 @@ class OwnerDashboardController extends Controller
             $expectedHandler = $roleHandlerMapping[$roleCode] ?? $roleCode;
             $currentHandler = $dokumen->current_handler ?? '';
 
-            // Document is completed if processed_at exists AND current_handler has moved on
-            $isCompleted = ($processedAt !== null) && (strtolower($currentHandler) !== strtolower($expectedHandler));
+            // Special handling for pembayaran role
+            if ($roleCode === 'pembayaran') {
+                // Document is completed if payment status is 'sudah_dibayar'
+                $isCompleted = ($dokumen->status_pembayaran === 'sudah_dibayar');
+            } else {
+                // Document is completed if processed_at exists AND current_handler has moved on
+                $isCompleted = ($processedAt !== null) && (strtolower($currentHandler) !== strtolower($expectedHandler));
+            }
 
             // Calculate age based on completion status
             // - Active documents: compare received_at to NOW (time keeps running)

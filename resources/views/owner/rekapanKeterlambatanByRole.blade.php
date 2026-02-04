@@ -1254,7 +1254,11 @@
                 @if(isset($dokumen->is_completed) && $dokumen->is_completed)
                   <span class="badge"
                     style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
-                    <i class="fas fa-paper-plane"></i> Sudah Dikirim
+                    @if($roleCode === 'pembayaran')
+                      <i class="fas fa-check-circle"></i> Sudah Dibayar
+                    @else
+                      <i class="fas fa-paper-plane"></i> Sudah Dikirim
+                    @endif
                   </span>
                 @else
                   <span class="badge"
