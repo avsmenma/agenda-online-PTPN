@@ -524,7 +524,8 @@
           <option value="">Semua Status</option>
           <option value="belum dikirim" {{ request('status') == 'belum dikirim' ? 'selected' : '' }}>Belum Dikirim
           </option>
-          <option value="sent_to_team_verifikasi" {{ request('status') == 'sent_to_team_verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi
+          <option value="sent_to_team_verifikasi" {{ request('status') == 'sent_to_team_verifikasi' ? 'selected' : '' }}>
+            Menunggu Verifikasi
           </option>
           <option value="sudah dibayar" {{ request('status') == 'sudah dibayar' ? 'selected' : '' }}>Sudah Dibayar
           </option>
@@ -576,6 +577,8 @@
                   'tanggal_berakhir_spk' => $doc->tanggal_berakhir_spk ? $doc->tanggal_berakhir_spk->format('d/m/Y') : '-',
                   'no_berita_acara' => $doc->no_berita_acara ?? '-',
                   'tanggal_berita_acara' => $doc->tanggal_berita_acara ? $doc->tanggal_berita_acara->format('d/m/Y') : '-',
+                  'no_po' => $doc->NO_PO ?? '-',
+                  'no_miro' => $doc->NO_MIRO_SES ?? '-',
                   'kriteria_cf' => $doc->kategori ?? '-',
                   'sub_kriteria' => $doc->jenis_dokumen ?? '-',
                   'item_sub_kriteria' => $doc->jenis_sub_pekerjaan ?? '-',
@@ -689,114 +692,731 @@
     </div>
   </div>
 
-  <!-- Document Detail Modal -->
+  <!-- Document Detail Modal - Modern Redesign -->
   <div class="modal-overlay" id="documentDetailModal">
     <div class="modal-content-custom">
+      <!-- Hero Header with Status -->
       <div class="modal-header-custom">
-        <h4><i class="fa-solid fa-file-alt me-2"></i>Detail Dokumen</h4>
-        <button class="modal-close" onclick="closeModal()">
-          <i class="fa-solid fa-times"></i>
+        <div class="header-content">
+          <div class="header-icon">
+            <i class="fa-solid fa-file-invoice"></i>
+          </div>
+          <div class="header-text">
+            <h4>Detail Dokumen Lengkap</h4>
+            <span class="doc-id" id="modal-header-agenda">-</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="status-pill" id="modal-header-status">-</span>
+          <button class="modal-close" onclick="closeModal()">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="modal-tabs">
+        <button class="tab-btn active" onclick="switchTab('info')" data-tab="info">
+          <i class="fa-solid fa-info-circle"></i>
+          <span>Info Utama</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('keuangan')" data-tab="keuangan">
+          <i class="fa-solid fa-wallet"></i>
+          <span>Keuangan & Vendor</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('spk')" data-tab="spk">
+          <i class="fa-solid fa-file-contract"></i>
+          <span>SPK & Berita Acara</span>
         </button>
       </div>
+
       <div class="modal-body-custom">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <div class="detail-label">Nomor Agenda</div>
-            <div class="detail-value" id="modal-nomor-agenda">-</div>
+        <!-- Tab: Info Utama -->
+        <div class="tab-content active" id="tab-info">
+          <!-- Quick Stats Cards -->
+          <div class="stats-row">
+            <div class="stat-card primary">
+              <div class="stat-icon"><i class="fa-solid fa-hashtag"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Nomor Agenda</span>
+                <span class="stat-value" id="modal-nomor-agenda">-</span>
+              </div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Nilai Rupiah</span>
+                <span class="stat-value" id="modal-nilai-rupiah">-</span>
+              </div>
+            </div>
+            <div class="stat-card info">
+              <div class="stat-icon"><i class="fa-solid fa-calendar"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Periode</span>
+                <span class="stat-value" id="modal-periode">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Status</div>
-            <div class="detail-value" id="modal-status">-</div>
+
+          <!-- Detail Sections -->
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-file-alt"></i>
+              <h5>Informasi SPP</h5>
+            </div>
+            <div class="section-grid">
+              <div class="info-card">
+                <span class="info-label">Nomor SPP</span>
+                <span class="info-value" id="modal-nomor-spp">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Tanggal SPP</span>
+                <span class="info-value" id="modal-tanggal-spp">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Tanggal Masuk</span>
+                <span class="info-value" id="modal-tanggal-masuk">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Status</span>
+                <span class="info-value status-badge" id="modal-status">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Nomor SPP</div>
-            <div class="detail-value" id="modal-nomor-spp">-</div>
+
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-building"></i>
+              <h5>Informasi Bagian</h5>
+            </div>
+            <div class="section-grid cols-3">
+              <div class="info-card">
+                <span class="info-label">Bagian</span>
+                <span class="info-value" id="modal-bagian">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Nama Pengirim</span>
+                <span class="info-value" id="modal-nama-pengirim">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Kebun/Unit Kerja</span>
+                <span class="info-value" id="modal-kebun">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Tanggal SPP</div>
-            <div class="detail-value" id="modal-tanggal-spp">-</div>
+
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-align-left"></i>
+              <h5>Uraian SPP</h5>
+            </div>
+            <div class="uraian-box" id="modal-uraian-spp">-</div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Periode</div>
-            <div class="detail-value" id="modal-periode">-</div>
+        </div>
+
+        <!-- Tab: Keuangan & Vendor -->
+        <div class="tab-content" id="tab-keuangan">
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-coins"></i>
+              <h5>Detail Nilai</h5>
+            </div>
+            <div class="money-display">
+              <div class="money-amount" id="modal-nilai-rupiah-2">-</div>
+              <div class="money-words" id="modal-ejaan-nilai-rupiah">-</div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Tanggal Masuk</div>
-            <div class="detail-value" id="modal-tanggal-masuk">-</div>
+
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-store"></i>
+              <h5>Informasi Vendor</h5>
+            </div>
+            <div class="vendor-card">
+              <div class="vendor-icon">
+                <i class="fa-solid fa-building"></i>
+              </div>
+              <div class="vendor-info">
+                <span class="vendor-label">Dibayarkan Kepada</span>
+                <span class="vendor-name" id="modal-dibayar-kepada">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Nilai Rupiah</div>
-            <div class="detail-value highlight" id="modal-nilai-rupiah">-</div>
+
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-tags"></i>
+              <h5>Kategori & Klasifikasi</h5>
+            </div>
+            <div class="section-grid cols-2">
+              <div class="info-card highlight">
+                <span class="info-label">Kriteria CF</span>
+                <span class="info-value tag" id="modal-kriteria-cf">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Sub Kriteria</span>
+                <span class="info-value" id="modal-sub-kriteria">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Item Sub Kriteria</span>
+                <span class="info-value" id="modal-item-sub-kriteria">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Jenis Pembayaran</span>
+                <span class="info-value" id="modal-jenis-pembayaran">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Ejaan Nilai Rupiah</div>
-            <div class="detail-value" id="modal-ejaan-nilai-rupiah">-</div>
+        </div>
+
+        <!-- Tab: SPK & Berita Acara -->
+        <div class="tab-content" id="tab-spk">
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-file-signature"></i>
+              <h5>Data SPK (Surat Perintah Kerja)</h5>
+            </div>
+            <div class="section-grid cols-3">
+              <div class="info-card">
+                <span class="info-label">No SPK</span>
+                <span class="info-value mono" id="modal-no-spk">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Tanggal SPK</span>
+                <span class="info-value" id="modal-tanggal-spk">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Tanggal Berakhir SPK</span>
+                <span class="info-value" id="modal-tanggal-berakhir-spk">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Bagian</div>
-            <div class="detail-value" id="modal-bagian">-</div>
+
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-clipboard-check"></i>
+              <h5>Data Berita Acara</h5>
+            </div>
+            <div class="section-grid cols-2">
+              <div class="info-card">
+                <span class="info-label">No Berita Acara</span>
+                <span class="info-value mono" id="modal-no-berita-acara">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">Tanggal Berita Acara</span>
+                <span class="info-value" id="modal-tanggal-berita-acara">-</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Nama Pengirim</div>
-            <div class="detail-value" id="modal-nama-pengirim">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Kebun</div>
-            <div class="detail-value" id="modal-kebun">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Dibayar Kepada (Vendor)</div>
-            <div class="detail-value" id="modal-dibayar-kepada">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Kriteria CF</div>
-            <div class="detail-value" id="modal-kriteria-cf">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Sub Kriteria</div>
-            <div class="detail-value" id="modal-sub-kriteria">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Item Sub Kriteria</div>
-            <div class="detail-value" id="modal-item-sub-kriteria">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Jenis Pembayaran</div>
-            <div class="detail-value" id="modal-jenis-pembayaran">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">No SPK</div>
-            <div class="detail-value" id="modal-no-spk">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Tanggal SPK</div>
-            <div class="detail-value" id="modal-tanggal-spk">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Tanggal Berakhir SPK</div>
-            <div class="detail-value" id="modal-tanggal-berakhir-spk">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">No Berita Acara</div>
-            <div class="detail-value" id="modal-no-berita-acara">-</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Tanggal Berita Acara</div>
-            <div class="detail-value" id="modal-tanggal-berita-acara">-</div>
-          </div>
-          <div class="detail-item full-width">
-            <div class="detail-label">Uraian SPP</div>
-            <div class="detail-value" id="modal-uraian-spp">-</div>
+
+          <div class="detail-section">
+            <div class="section-header">
+              <i class="fa-solid fa-receipt"></i>
+              <h5>Data PO & MIRO</h5>
+            </div>
+            <div class="section-grid cols-2">
+              <div class="info-card">
+                <span class="info-label">No. PO</span>
+                <span class="info-value mono" id="modal-no-po">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">No. Miro/SES</span>
+                <span class="info-value mono" id="modal-no-miro">-</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
       <div class="modal-footer-custom">
-        <button class="btn btn-secondary" onclick="closeModal()">
-          <i class="fa-solid fa-times me-1"></i>Tutup
+        <button class="btn-footer secondary" onclick="closeModal()">
+          <i class="fa-solid fa-times"></i>
+          <span>Tutup</span>
         </button>
       </div>
     </div>
   </div>
+
+  <style>
+    /* Modern Modal Styles */
+    .modal-content-custom {
+      background: #ffffff;
+      border-radius: 24px;
+      max-width: 900px;
+      width: 95%;
+      max-height: 90vh;
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header-custom {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      color: white;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .header-text h4 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .doc-id {
+      font-size: 14px;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    /* Tabs */
+    .modal-tabs {
+      display: flex;
+      background: #f8f9fa;
+      padding: 12px 28px;
+      gap: 8px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6c757d;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn:hover {
+      background: rgba(8, 62, 64, 0.08);
+      color: #083E40;
+    }
+
+    .tab-btn.active {
+      background: #083E40;
+      color: white;
+      box-shadow: 0 4px 15px rgba(8, 62, 64, 0.3);
+    }
+
+    .tab-btn i {
+      font-size: 16px;
+    }
+
+    /* Modal Body */
+    .modal-body-custom {
+      padding: 28px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+      border: 1px solid #e9ecef;
+    }
+
+    .stat-card.primary {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+      border-color: #bbdefb;
+    }
+
+    .stat-card.success {
+      background: linear-gradient(135deg, #e8f5e9 0%, #f8f9fa 100%);
+      border-color: #c8e6c9;
+    }
+
+    .stat-card.info {
+      background: linear-gradient(135deg, #fff3e0 0%, #f8f9fa 100%);
+      border-color: #ffe0b2;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .stat-card.primary .stat-icon {
+      background: #1976d2;
+      color: white;
+    }
+
+    .stat-card.success .stat-icon {
+      background: #388e3c;
+      color: white;
+    }
+
+    .stat-card.info .stat-icon {
+      background: #f57c00;
+      color: white;
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #6c757d;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #212529;
+    }
+
+    /* Detail Sections */
+    .detail-section {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-header i {
+      width: 32px;
+      height: 32px;
+      background: #083E40;
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .section-header h5 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: #212529;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .section-grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .section-grid.cols-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-card {
+      background: #f8f9fa;
+      padding: 16px;
+      border-radius: 12px;
+      border-left: 4px solid #083E40;
+    }
+
+    .info-card.highlight {
+      background: linear-gradient(135deg, #e8f5e9 0%, #f8f9fa 100%);
+      border-left-color: #28a745;
+    }
+
+    .info-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .info-value {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #212529;
+    }
+
+    .info-value.mono {
+      font-family: 'Consolas', 'Monaco', monospace;
+      background: #e9ecef;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .info-value.tag {
+      background: #083E40;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    .info-value.status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: linear-gradient(135deg, #28a745 0%, #34c759 100%);
+      color: white;
+    }
+
+    /* Uraian Box */
+    .uraian-box {
+      background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #495057;
+      min-height: 80px;
+    }
+
+    /* Money Display */
+    .money-display {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      color: white;
+    }
+
+    .money-amount {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .money-words {
+      font-size: 14px;
+      opacity: 0.9;
+      font-style: italic;
+    }
+
+    /* Vendor Card */
+    .vendor-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #e9ecef;
+    }
+
+    .vendor-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+    }
+
+    .vendor-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .vendor-label {
+      font-size: 12px;
+      color: #6c757d;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .vendor-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #212529;
+    }
+
+    /* Footer */
+    .modal-footer-custom {
+      padding: 20px 28px;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: flex-end;
+      background: #f8f9fa;
+    }
+
+    .btn-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-footer.secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-footer.secondary:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+
+      .section-grid,
+      .section-grid.cols-2,
+      .section-grid.cols-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-tabs {
+        overflow-x: auto;
+        padding: 12px 16px;
+      }
+
+      .tab-btn span {
+        display: none;
+      }
+
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .modal-header-custom {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .stat-card {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
 
   <script>
     function changePerPage(value) {
@@ -807,6 +1427,11 @@
     }
 
     function showDocumentDetail(doc) {
+      // Header fields
+      document.getElementById('modal-header-agenda').textContent = doc.nomor_agenda || '-';
+      document.getElementById('modal-header-status').textContent = doc.status || '-';
+      
+      // Tab Info Utama
       document.getElementById('modal-nomor-agenda').textContent = doc.nomor_agenda || '-';
       document.getElementById('modal-status').textContent = doc.status || '-';
       document.getElementById('modal-nomor-spp').textContent = doc.nomor_spp || '-';
@@ -814,24 +1439,44 @@
       document.getElementById('modal-periode').textContent = (doc.bulan || '-') + ' ' + (doc.tahun || '');
       document.getElementById('modal-tanggal-masuk').textContent = doc.tanggal_masuk || '-';
       document.getElementById('modal-nilai-rupiah').textContent = doc.nilai_rupiah || '-';
-      document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
       document.getElementById('modal-bagian').textContent = doc.bagian || '-';
       document.getElementById('modal-nama-pengirim').textContent = doc.nama_pengirim || '-';
       document.getElementById('modal-kebun').textContent = doc.kebun || '-';
-      document.getElementById('modal-dibayar-kepada').textContent = doc.dibayar_kepada || '-';
       document.getElementById('modal-uraian-spp').textContent = doc.uraian_spp || '-';
+      
+      // Tab Keuangan & Vendor
+      document.getElementById('modal-nilai-rupiah-2').textContent = doc.nilai_rupiah || '-';
+      document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
+      document.getElementById('modal-dibayar-kepada').textContent = doc.dibayar_kepada || '-';
       document.getElementById('modal-kriteria-cf').textContent = doc.kriteria_cf || '-';
       document.getElementById('modal-sub-kriteria').textContent = doc.sub_kriteria || '-';
       document.getElementById('modal-item-sub-kriteria').textContent = doc.item_sub_kriteria || '-';
       document.getElementById('modal-jenis-pembayaran').textContent = doc.jenis_pembayaran || '-';
+      
+      // Tab SPK & Berita Acara
       document.getElementById('modal-no-spk').textContent = doc.no_spk || '-';
       document.getElementById('modal-tanggal-spk').textContent = doc.tanggal_spk || '-';
       document.getElementById('modal-tanggal-berakhir-spk').textContent = doc.tanggal_berakhir_spk || '-';
       document.getElementById('modal-no-berita-acara').textContent = doc.no_berita_acara || '-';
       document.getElementById('modal-tanggal-berita-acara').textContent = doc.tanggal_berita_acara || '-';
+      document.getElementById('modal-no-po').textContent = doc.no_po || '-';
+      document.getElementById('modal-no-miro').textContent = doc.no_miro || '-';
 
+      // Reset to first tab
+      switchTab('info');
+      
       document.getElementById('documentDetailModal').classList.add('show');
       document.body.style.overflow = 'hidden';
+    }
+    
+    function switchTab(tabName) {
+      // Remove active from all tabs and contents
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      // Add active to selected
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
     }
 
     function closeModal() {
@@ -855,7 +1500,3 @@
   </script>
 
 @endsection
-
-
-
-
