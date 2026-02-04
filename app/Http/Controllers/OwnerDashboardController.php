@@ -3459,18 +3459,8 @@ class OwnerDashboardController extends Controller
                     $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
                         ->where('dokumen_role_data.role_code', '=', $roleCode);
                 })
-                ->where(function ($q) {
-                    $q->whereNotNull('dokumen_role_data.received_at')
-                        ->where(function ($statusQ) {
-                            $statusQ->whereNull('dokumens.status_pembayaran')
-                                ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
-                        });
-                })
-                ->where(function ($q) {
-                    $q->where('dokumens.current_handler', 'pembayaran')
-                        ->orWhere('dokumens.status', 'sent_to_pembayaran')
-                        ->orWhere('dokumens.status', 'proses_pembayaran');
-                })
+                // Show ALL documents that have been received by pembayaran (including sudah_dibayar)
+                ->whereNotNull('dokumen_role_data.received_at')
                 ->select(
                     'dokumens.*',
                     'dokumen_role_data.role_code as delay_role_code',
