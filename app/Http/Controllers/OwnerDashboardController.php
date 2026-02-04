@@ -3804,7 +3804,7 @@ class OwnerDashboardController extends Controller
                 $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
             }
 
-            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*', 'dokumens.status_pembayaran', 'dokumens.tanggal_pembayaran')->get();
+            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*', 'dokumens.status_pembayaran')->get();
 
             // Card 1: < 1 minggu (< 168 jam) - AMAN
             $card1Count = 0;
@@ -3816,13 +3816,11 @@ class OwnerDashboardController extends Controller
             foreach ($allRoleDocs as $doc) {
                 $receivedAt = Carbon::parse($doc->received_at);
 
-                // For paid documents, use tanggal_pembayaran or processed_at as end time (PERMANENT)
+                // For paid documents, use processed_at as end time (PERMANENT) if available
                 // For active documents, use now (time keeps running)
-                if ($doc->status_pembayaran === 'sudah_dibayar') {
-                    // Document is paid - use payment date if available, otherwise processed_at, otherwise now
-                    $endTime = $doc->tanggal_pembayaran
-                        ? Carbon::parse($doc->tanggal_pembayaran)
-                        : ($doc->processed_at ? Carbon::parse($doc->processed_at) : $now);
+                if ($doc->status_pembayaran === 'sudah_dibayar' && $doc->processed_at) {
+                    // Document is paid with processed_at - use permanent time
+                    $endTime = Carbon::parse($doc->processed_at);
                 } else {
                     $endTime = $now;
                 }
