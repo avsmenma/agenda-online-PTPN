@@ -3789,13 +3789,10 @@ class OwnerDashboardController extends Controller
             }
         } elseif ($roleCode === 'pembayaran') {
             // Pembayaran: weekly thresholds (1 week = 168 hours, 3 weeks = 504 hours)
+            // Include ALL documents that have been received by pembayaran (including sudah_dibayar)
             $allRoleDocsQuery = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
                 ->whereNotNull('dokumen_role_data.received_at')
-                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id')
-                ->where(function ($q) {
-                    $q->whereNull('dokumens.status_pembayaran')
-                        ->orWhere('dokumens.status_pembayaran', '!=', 'sudah_dibayar');
-                });
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id');
 
             // Apply year filter to card stats if present
             if ($request->has('year') && $request->year) {
@@ -3807,7 +3804,7 @@ class OwnerDashboardController extends Controller
                 $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
             }
 
-            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*')->get();
+            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*', 'dokumens.status_pembayaran', 'dokumens.tanggal_pembayaran')->get();
 
             // Card 1: < 1 minggu (< 168 jam) - AMAN
             $card1Count = 0;
@@ -3818,7 +3815,18 @@ class OwnerDashboardController extends Controller
 
             foreach ($allRoleDocs as $doc) {
                 $receivedAt = Carbon::parse($doc->received_at);
-                $endTime = $doc->processed_at ? Carbon::parse($doc->processed_at) : $now;
+
+                // For paid documents, use tanggal_pembayaran or processed_at as end time (PERMANENT)
+                // For active documents, use now (time keeps running)
+                if ($doc->status_pembayaran === 'sudah_dibayar') {
+                    // Document is paid - use payment date if available, otherwise processed_at, otherwise now
+                    $endTime = $doc->tanggal_pembayaran
+                        ? Carbon::parse($doc->tanggal_pembayaran)
+                        : ($doc->processed_at ? Carbon::parse($doc->processed_at) : $now);
+                } else {
+                    $endTime = $now;
+                }
+
                 $hoursDiff = $receivedAt->diffInHours($endTime);
 
                 if ($hoursDiff < 168) {
