@@ -4721,9 +4721,6 @@
                           <div class="detail-value" id="view-nomor-miro">-</div>
                         </div>
                       </div>
-                          <div class="detail-value" id="view-nomor-miro">-</div>
-                        </div>
-                      </div>
                       <div class="col-md-6">
                         <div class="detail-item">
                           <label class="detail-label">No. Berita Acara</label>
