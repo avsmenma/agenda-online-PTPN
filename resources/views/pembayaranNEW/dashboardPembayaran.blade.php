@@ -11,61 +11,61 @@
       --bg-primary: #fafbfc;
       --bg-secondary: #f8fafc;
       --bg-tertiary: #ffffff;
-      
+
       /* Text Colors */
       --text-primary: #0f172a;
       --text-secondary: #475569;
       --text-tertiary: #94a3b8;
       --text-muted: #cbd5e1;
-      
+
       /* Brand Colors - Soft Pastels */
       --brand-primary: #10b981;
       --brand-primary-soft: rgba(16, 185, 129, 0.1);
       --brand-primary-glow: rgba(16, 185, 129, 0.2);
-      
+
       /* Status Colors - Refined */
       --status-emerald: #10b981;
       --status-emerald-soft: rgba(16, 185, 129, 0.12);
       --status-emerald-glow: 0 0 20px rgba(16, 185, 129, 0.3);
-      
+
       --status-amber: #f59e0b;
       --status-amber-soft: rgba(245, 158, 11, 0.12);
       --status-amber-glow: 0 0 20px rgba(245, 158, 11, 0.3);
-      
+
       --status-rose: #f43f5e;
       --status-rose-soft: rgba(244, 63, 94, 0.12);
       --status-rose-glow: 0 0 20px rgba(244, 63, 94, 0.3);
-      
+
       --status-blue: #3b82f6;
       --status-blue-soft: rgba(59, 130, 246, 0.12);
       --status-blue-glow: 0 0 20px rgba(59, 130, 246, 0.3);
-      
+
       --status-violet: #8b5cf6;
       --status-violet-soft: rgba(139, 92, 246, 0.12);
-      
+
       /* Shadows & Effects */
       --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
       --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
-      
+
       /* Glass Effect */
       --glass-bg: rgba(255, 255, 255, 0.7);
       --glass-border: rgba(255, 255, 255, 0.5);
       --glass-blur: blur(20px);
-      
+
       /* Border */
       --border-light: #e2e8f0;
       --border-lighter: #f1f5f9;
-      
+
       /* Radius */
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-xl: 20px;
       --radius-2xl: 24px;
-      
+
       /* Transitions */
       --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
       --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -196,10 +196,21 @@
       box-shadow: 0 0 0 3px var(--brand-primary-glow);
     }
 
-    .stat-card--total { grid-column: span 3; }
-    .stat-card--pending { grid-column: span 3; }
-    .stat-card--ready { grid-column: span 3; }
-    .stat-card--paid { grid-column: span 3; }
+    .stat-card--total {
+      grid-column: span 3;
+    }
+
+    .stat-card--pending {
+      grid-column: span 3;
+    }
+
+    .stat-card--ready {
+      grid-column: span 3;
+    }
+
+    .stat-card--paid {
+      grid-column: span 3;
+    }
 
     /* Total Card - Solid Green Gradient */
     .stat-card--total {
@@ -344,13 +355,29 @@
       transform: translateY(-2px);
     }
 
-    .deadline-card--aman::before { background: var(--status-emerald); }
-    .deadline-card--peringatan::before { background: var(--status-amber); }
-    .deadline-card--terlambat::before { background: var(--status-rose); }
+    .deadline-card--aman::before {
+      background: var(--status-emerald);
+    }
 
-    .deadline-card--aman:hover { box-shadow: var(--status-emerald-glow), var(--shadow-lg); }
-    .deadline-card--peringatan:hover { box-shadow: var(--status-amber-glow), var(--shadow-lg); }
-    .deadline-card--terlambat:hover { box-shadow: var(--status-rose-glow), var(--shadow-lg); }
+    .deadline-card--peringatan::before {
+      background: var(--status-amber);
+    }
+
+    .deadline-card--terlambat::before {
+      background: var(--status-rose);
+    }
+
+    .deadline-card--aman:hover {
+      box-shadow: var(--status-emerald-glow), var(--shadow-lg);
+    }
+
+    .deadline-card--peringatan:hover {
+      box-shadow: var(--status-amber-glow), var(--shadow-lg);
+    }
+
+    .deadline-card--terlambat:hover {
+      box-shadow: var(--status-rose-glow), var(--shadow-lg);
+    }
 
     .deadline-icon {
       width: 48px;
@@ -628,8 +655,13 @@
       white-space: nowrap;
     }
 
-    .data-table th:first-child { padding-left: 1.5rem; }
-    .data-table th:last-child { padding-right: 1.5rem; }
+    .data-table th:first-child {
+      padding-left: 1.5rem;
+    }
+
+    .data-table th:last-child {
+      padding-right: 1.5rem;
+    }
 
     .data-table td {
       padding: 1rem;
@@ -639,8 +671,13 @@
       vertical-align: middle;
     }
 
-    .data-table td:first-child { padding-left: 1.5rem; }
-    .data-table td:last-child { padding-right: 1.5rem; }
+    .data-table td:first-child {
+      padding-left: 1.5rem;
+    }
+
+    .data-table td:last-child {
+      padding-right: 1.5rem;
+    }
 
     .data-table tbody tr {
       transition: var(--transition-fast);
@@ -962,13 +999,14 @@
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 1280px) {
+
       .stat-card--total,
       .stat-card--pending,
       .stat-card--ready,
       .stat-card--paid {
         grid-column: span 6;
       }
-      
+
       .deadline-card {
         grid-column: span 4;
       }
@@ -1037,31 +1075,79 @@
 
     /* ===== ANIMATIONS ===== */
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @keyframes countUp {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.6;
+      }
     }
 
     .animate-fade-in {
       animation: fadeIn 0.5s ease-out forwards;
     }
 
-    .animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
-    .animate-delay-2 { animation-delay: 0.15s; opacity: 0; }
-    .animate-delay-3 { animation-delay: 0.2s; opacity: 0; }
-    .animate-delay-4 { animation-delay: 0.25s; opacity: 0; }
-    .animate-delay-5 { animation-delay: 0.3s; opacity: 0; }
-    .animate-delay-6 { animation-delay: 0.35s; opacity: 0; }
-    .animate-delay-7 { animation-delay: 0.4s; opacity: 0; }
+    .animate-delay-1 {
+      animation-delay: 0.1s;
+      opacity: 0;
+    }
+
+    .animate-delay-2 {
+      animation-delay: 0.15s;
+      opacity: 0;
+    }
+
+    .animate-delay-3 {
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+
+    .animate-delay-4 {
+      animation-delay: 0.25s;
+      opacity: 0;
+    }
+
+    .animate-delay-5 {
+      animation-delay: 0.3s;
+      opacity: 0;
+    }
+
+    .animate-delay-6 {
+      animation-delay: 0.35s;
+      opacity: 0;
+    }
+
+    .animate-delay-7 {
+      animation-delay: 0.4s;
+      opacity: 0;
+    }
 
     .count-animate {
       animation: countUp 0.6s ease-out forwards;
@@ -1082,7 +1168,7 @@
           <div class="header-title-icon">
             <i class="fas fa-wallet"></i>
           </div>
-          Payment Dashboard
+          Dashboard Pembayaran
         </h1>
         <p class="header-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
       </div>
@@ -1115,7 +1201,8 @@
         <div class="stat-card-content">
           <div class="stat-label">Belum Siap Bayar</div>
           <div class="stat-value count-animate">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
-          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-subvalue">Rp
+            {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
           <div class="stat-subvalue-link">
             <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
@@ -1130,7 +1217,8 @@
         <div class="stat-card-content">
           <div class="stat-label">Siap Dibayar</div>
           <div class="stat-value count-animate">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
-          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-subvalue">Rp
+            {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
           <div class="stat-subvalue-link">
             <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
@@ -1145,7 +1233,8 @@
         <div class="stat-card-content">
           <div class="stat-label">Sudah Dibayar</div>
           <div class="stat-value count-animate">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
-          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+          <div class="stat-subvalue">Rp
+            {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
           <div class="stat-subvalue-link">
             <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
@@ -1206,9 +1295,12 @@
         <div class="filter-select-group">
           <select name="status_pembayaran" class="filter-select">
             <option value="">Semua Status</option>
-            <option value="belum_siap_dibayar" {{ ($selectedStatus ?? '') == 'belum_siap_dibayar' ? 'selected' : '' }}>Belum Siap</option>
-            <option value="siap_dibayar" {{ ($selectedStatus ?? '') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
-            <option value="sudah_dibayar" {{ ($selectedStatus ?? '') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
+            <option value="belum_siap_dibayar" {{ ($selectedStatus ?? '') == 'belum_siap_dibayar' ? 'selected' : '' }}>Belum
+              Siap</option>
+            <option value="siap_dibayar" {{ ($selectedStatus ?? '') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar
+            </option>
+            <option value="sudah_dibayar" {{ ($selectedStatus ?? '') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar
+            </option>
           </select>
 
           <select name="year" class="filter-select">
@@ -1251,10 +1343,12 @@
           <span class="table-count">{{ $dokumens->total() }}</span>
         </div>
         <div class="table-toggle">
-          <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}" onclick="setViewMode('normal')">
+          <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
+            onclick="setViewMode('normal')">
             <i class="fas fa-th-list"></i> Normal
           </button>
-          <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}" onclick="setViewMode('rekapan_table')">
+          <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}"
+            onclick="setViewMode('rekapan_table')">
             <i class="fas fa-object-group"></i> Group Vendor
           </button>
         </div>
@@ -1317,7 +1411,8 @@
                             @endif
                           </td>
                           <td>
-                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-action" title="Lihat Detail">
+                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-action"
+                              title="Lihat Detail">
                               <i class="fas fa-eye"></i>
                             </a>
                           </td>
@@ -1430,13 +1525,13 @@
     }
 
     // Number Counter Animation
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const counters = document.querySelectorAll('.stat-value');
-      
+
       counters.forEach(counter => {
         const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
         if (isNaN(target) || target === 0) return;
-        
+
         let current = 0;
         const increment = target / 30;
         const duration = 800;
@@ -1458,10 +1553,10 @@
 
     // Add subtle hover feedback
     document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
-      card.addEventListener('mouseenter', function() {
+      card.addEventListener('mouseenter', function () {
         this.style.transform = 'translateY(-4px)';
       });
-      card.addEventListener('mouseleave', function() {
+      card.addEventListener('mouseleave', function () {
         this.style.transform = 'translateY(0)';
       });
     });

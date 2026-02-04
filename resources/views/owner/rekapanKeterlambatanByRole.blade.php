@@ -962,26 +962,27 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                              {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                  {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                              {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                  {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                              {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                  {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
     @endif
 
     <!-- Show Entries Bar -->
-    <div class="entries-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+    <div class="entries-bar"
+      style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <span style="font-size: 0.875rem; color: #555;">Show</span>
         <select id="entriesPerPage" onchange="changeEntriesPerPage(this.value)"
@@ -993,14 +994,13 @@
         </select>
         <span style="font-size: 0.875rem; color: #555;">entries</span>
       </div>
-      
+
       <!-- Export Excel Button -->
-      <a href="{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}" 
-         class="btn-export-excel"
-         style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 16px; background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(33, 115, 70, 0.25);">
+      <button type="button" onclick="showExportModal()" class="btn-export-excel"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 16px; background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(33, 115, 70, 0.25); border: none; cursor: pointer;">
         <i class="fas fa-file-excel"></i>
         <span>Export Excel</span>
-      </a>
+      </button>
     </div>
 
     <!-- Modern Filter Panel -->
@@ -1224,7 +1224,7 @@
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
                     style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                                                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                                                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1412,6 +1412,61 @@
     </div>
   </div>
 
+  <!-- Export Confirmation Modal -->
+  <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        <div class="modal-header"
+          style="background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 16px 16px 0 0; border-bottom: none;">
+          <h5 class="modal-title" id="exportModalLabel" style="font-weight: 700;">
+            <i class="fas fa-file-excel me-2"></i> Export Rekapan Keterlambatan
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="padding: 24px;">
+          <p style="color: #666; margin-bottom: 20px;">Pilih periode data yang ingin di-export:</p>
+
+          <div class="mb-3">
+            <label for="exportYear" class="form-label" style="font-weight: 600; color: var(--primary-color);">
+              <i class="fas fa-calendar me-1"></i> Tahun
+            </label>
+            <select id="exportYear" class="form-select"
+              style="border-radius: 8px; border: 2px solid #e5e7eb; padding: 10px 16px;">
+              <option value="">Semua Tahun</option>
+              @foreach($availableYears as $year)
+                <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="exportMonth" class="form-label" style="font-weight: 600; color: var(--primary-color);">
+              <i class="fas fa-calendar-alt me-1"></i> Bulan
+            </label>
+            <select id="exportMonth" class="form-select"
+              style="border-radius: 8px; border: 2px solid #e5e7eb; padding: 10px 16px;">
+              <option value="">Semua Bulan</option>
+              @foreach($availableMonths as $monthNum => $monthName)
+                <option value="{{ $monthNum }}" {{ request('month') == $monthNum ? 'selected' : '' }}>{{ $monthName }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 16px 24px;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+            style="border-radius: 8px; padding: 10px 20px;">
+            <i class="fas fa-times me-1"></i> Batal
+          </button>
+          <button type="button" class="btn" onclick="confirmExport()"
+            style="background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 8px; padding: 10px 20px; font-weight: 600;">
+            <i class="fas fa-download me-1"></i> Download Excel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Filter Panel Functionality
     let filterPanelExpanded = false;
@@ -1518,11 +1573,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                          <span>${label}: ${displayValue}</span>
-                          <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                            <i class="fas fa-times"></i>
-                          </button>
-                        `;
+                            <span>${label}: ${displayValue}</span>
+                            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          `;
           badgesContainer.appendChild(badge);
         }
       }
@@ -1738,6 +1793,41 @@
       params.delete('page');
 
       window.location.href = currentUrl.toString();
+    }
+
+    // Export Modal Functions
+    function showExportModal() {
+      const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+      exportModal.show();
+    }
+
+    function confirmExport() {
+      const year = document.getElementById('exportYear').value;
+      const month = document.getElementById('exportMonth').value;
+
+      let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
+      const params = new URLSearchParams();
+
+      if (year) {
+        params.set('year', year);
+      }
+      if (month) {
+        params.set('month', month);
+      }
+
+      if (params.toString()) {
+        exportUrl += '?' + params.toString();
+      }
+
+      // Close Modal
+      const modalEl = document.getElementById('exportModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) {
+        modal.hide();
+      }
+
+      // Redirect to download
+      window.location.href = exportUrl;
     }
   </script>
 
