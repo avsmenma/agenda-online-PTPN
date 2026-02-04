@@ -165,6 +165,16 @@ class OperatorCsvImportController extends Controller
             'Dibayarkan Kepada',
             'Uraian SPP',
             'Nilai',  // Will match "Nilai (Rp)" after cleaning
+            // SPK fields
+            'No SPK',
+            'Tanggal SPK',
+            'Tgl. Akhir SPK',
+            // BA fields
+            'No Berita Acara',  // Will match "No Berita Acara (BA)" after cleaning
+            'Tanggal Berita Acara',  // Will match "Tanggal Berita Acara (BA)" after cleaning
+            // PO and MIRO
+            'No. PO',
+            'No. Miro/SES',
         ];
 
         // Clean headers and track which indices to keep
@@ -174,7 +184,7 @@ class OperatorCsvImportController extends Controller
         foreach ($headers as $index => $header) {
             // Clean the header
             $header = preg_replace('/\s+/', ' ', trim($header));
-            $header = str_replace(['(Rp)', '(RP)'], '', $header);
+            $header = str_replace(['(Rp)', '(RP)', '(BA)'], '', $header);
             $header = trim($header);
 
             // Check if this is an allowed column
@@ -529,6 +539,16 @@ class OperatorCsvImportController extends Controller
             'kategori' => 'CAPEX', // Default kategori
             'jenis_dokumen' => 'Lainnya', // Default jenis
             'bagian' => $bagian, // Auto-extracted from No SPP
+            // SPK fields
+            'no_spk' => trim($row['No SPK'] ?? '') ?: null,
+            'tanggal_spk' => $this->parseDate($row['Tanggal SPK'] ?? null),
+            'tanggal_berakhir_spk' => $this->parseDate($row['Tgl. Akhir SPK'] ?? null),
+            // BA fields
+            'no_berita_acara' => trim($row['No Berita Acara'] ?? '') ?: null,
+            'tanggal_berita_acara' => $this->parseDate($row['Tanggal Berita Acara'] ?? null),
+            // PO and MIRO
+            'NO_PO' => trim($row['No. PO'] ?? '') ?: null,
+            'NO_MIRO_SES' => trim($row['No. Miro/SES'] ?? '') ?: null,
         ];
     }
 
