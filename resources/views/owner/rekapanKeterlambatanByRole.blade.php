@@ -1194,12 +1194,22 @@
               // Determine card color based on age in hours (matching dashboard)
               $ageColor = 'green';
               if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
+                // Daily thresholds: 24 hours peringatan, 72 hours terlambat
                 if ($ageHours >= 72) {
                   $ageColor = 'red';  // TERLAMBAT
                 } elseif ($ageHours >= 24) {
                   $ageColor = 'yellow';  // PERINGATAN
                 } else {
                   $ageColor = 'green';  // AMAN
+                }
+              } elseif ($roleCode === 'pembayaran') {
+                // Weekly thresholds: 1 week (168 hours) peringatan, 3 weeks (504 hours) terlambat
+                if ($ageHours >= 504) {
+                  $ageColor = 'red';  // TERLAMBAT (> 3 minggu)
+                } elseif ($ageHours >= 168) {
+                  $ageColor = 'yellow';  // PERINGATAN (1-3 minggu)
+                } else {
+                  $ageColor = 'green';  // AMAN (< 1 minggu)
                 }
               }
 
@@ -1334,12 +1344,22 @@
                     // Determine row color based on age in hours (matching dashboard)
                     $ageColor = 'green';
                     if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
+                      // Daily thresholds
                       if ($ageHours >= 72) {
                         $ageColor = 'red';  // TERLAMBAT
                       } elseif ($ageHours >= 24) {
                         $ageColor = 'yellow';  // PERINGATAN
                       } else {
                         $ageColor = 'green';  // AMAN
+                      }
+                    } elseif ($roleCode === 'pembayaran') {
+                      // Weekly thresholds: 1 week (168 hours) peringatan, 3 weeks (504 hours) terlambat
+                      if ($ageHours >= 504) {
+                        $ageColor = 'red';  // TERLAMBAT (> 3 minggu)
+                      } elseif ($ageHours >= 168) {
+                        $ageColor = 'yellow';  // PERINGATAN (1-3 minggu)
+                      } else {
+                        $ageColor = 'green';  // AMAN (< 1 minggu)
                       }
                     }
 
