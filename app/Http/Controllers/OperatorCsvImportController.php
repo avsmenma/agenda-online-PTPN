@@ -512,11 +512,15 @@ class OperatorCsvImportController extends Controller
             $nomorAgenda .= '_2026';
         }
 
+        // Extract bagian from No SPP
+        $nomorSpp = trim($row['No SPP'] ?? $kriteria);
+        $bagian = $this->extractBagianFromSpp($nomorSpp);
+
         return [
             'nomor_agenda' => $nomorAgenda,
             'bulan' => $bulan,
             'tahun' => $tahun,
-            'nomor_spp' => trim($row['No SPP'] ?? $kriteria), // Use Kriteria as No SPP if not provided
+            'nomor_spp' => $nomorSpp,
             'tanggal_spp' => $tanggalSpp,
             'tanggal_masuk' => $tanggalMasuk,
             'dibayar_kepada' => trim($row['Dibayarkan Kepada'] ?? ''),
@@ -524,7 +528,64 @@ class OperatorCsvImportController extends Controller
             'nilai_rupiah' => $this->cleanNumeric($row['Nilai'] ?? 0),
             'kategori' => 'CAPEX', // Default kategori
             'jenis_dokumen' => 'Lainnya', // Default jenis
+            'bagian' => $bagian, // Auto-extracted from No SPP
         ];
+    }
+
+    /**
+     * Extract bagian code from No SPP
+     * Format: {nomor}{BAGIAN}/SPP/{nomor}/{bulan_romawi}/{tahun}
+     * Example: 5TAN/SPP/131/I/2026 -> "Tanaman"
+     *          5SKH/SPP/01/I/2026 -> "Sekretariat & Hukum"
+     *          5DPM/5AKN/SPP/... -> "Distrik Petani Mitra"
+     */
+    private function extractBagianFromSpp($nomorSpp)
+    {
+        if (empty($nomorSpp)) {
+            return null;
+        }
+
+        // Get the first part before "/" (e.g., "5TAN", "5DPM/5AKN")
+        $parts = explode('/', $nomorSpp);
+        if (empty($parts)) {
+            return null;
+        }
+
+        $firstPart = strtoupper(trim($parts[0]));
+
+        // Extract bagian code (letters after leading digits)
+        // e.g., "5TAN" -> "TAN", "5SKH" -> "SKH"
+        preg_match('/^\d*([A-Za-z]+)/', $firstPart, $matches);
+        $bagianCode = $matches[1] ?? '';
+
+        // Map bagian codes to full bagian names
+        $bagianMap = [
+            'TAN' => 'Tanaman',
+            'SKH' => 'Sekretariat & Hukum',
+            'SDM' => 'SDM & Sistem Manajemen',
+            'TEP' => 'Teknik dan Pengolahan',
+            'AKN' => 'Akuntansi dan keuangan',
+            'PTI' => 'Pengadaan & TI',
+            'DPM' => 'Distrik Petani Mitra',
+            // Unit kebun codes
+            'KGM' => 'Kebun Gunung Meliau',
+            'KRB' => 'Kebun Rimba Belian',
+            'KNG' => 'Kebun Ngabang',
+            'KBY' => 'Kebun Kembayan',
+            'KPR' => 'Kebun Parindu',
+            'KGS' => 'Kebun Gunung Emas',
+            'KDS' => 'Kebun Danau Salak',
+            'KPL' => 'Kebun Pelaihari',
+            'KBL' => 'Kebun Batulicin',
+            'KPM' => 'Kebun Pamukan',
+            'KLK' => 'Kebun Longkali',
+            'KPD' => 'Kebun Pandawa',
+            'KTB' => 'Kebun Tabara',
+            'KTJ' => 'Kebun Tajati',
+            'KSD' => 'Kebun Sungai Dekan',
+        ];
+
+        return $bagianMap[$bagianCode] ?? null;
     }
 
     /**
