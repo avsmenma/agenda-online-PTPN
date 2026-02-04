@@ -558,34 +558,37 @@ class OperatorCsvImportController extends Controller
         preg_match('/^\d*([A-Za-z]+)/', $firstPart, $matches);
         $bagianCode = $matches[1] ?? '';
 
-        // Map bagian codes to full bagian names
-        $bagianMap = [
-            'TAN' => 'Tanaman',
-            'SKH' => 'Sekretariat & Hukum',
-            'SDM' => 'SDM & Sistem Manajemen',
-            'TEP' => 'Teknik dan Pengolahan',
-            'AKN' => 'Akuntansi dan keuangan',
-            'PTI' => 'Pengadaan & TI',
-            'DPM' => 'Distrik Petani Mitra',
+        // Map bagian codes - return the code itself (matches dropdown values)
+        // Short codes like SDM, TAN, TEP are used in the system
+        $bagianCodes = [
+            'TAN',
+            'SKH',
+            'SDM',
+            'TEP',
+            'AKN',
+            'PTI',
+            'DPM',
+            'PMO',
+            'KPL',
             // Unit kebun codes
-            'KGM' => 'Kebun Gunung Meliau',
-            'KRB' => 'Kebun Rimba Belian',
-            'KNG' => 'Kebun Ngabang',
-            'KBY' => 'Kebun Kembayan',
-            'KPR' => 'Kebun Parindu',
-            'KGS' => 'Kebun Gunung Emas',
-            'KDS' => 'Kebun Danau Salak',
-            'KPL' => 'Kebun Pelaihari',
-            'KBL' => 'Kebun Batulicin',
-            'KPM' => 'Kebun Pamukan',
-            'KLK' => 'Kebun Longkali',
-            'KPD' => 'Kebun Pandawa',
-            'KTB' => 'Kebun Tabara',
-            'KTJ' => 'Kebun Tajati',
-            'KSD' => 'Kebun Sungai Dekan',
+            'KGM',
+            'KRB',
+            'KNG',
+            'KBY',
+            'KPR',
+            'KGS',
+            'KDS',
+            'KBL',
+            'KPM',
+            'KLK',
+            'KPD',
+            'KTB',
+            'KTJ',
+            'KSD',
         ];
 
-        return $bagianMap[$bagianCode] ?? null;
+        // Return the code if it's a valid bagian code
+        return in_array($bagianCode, $bagianCodes) ? $bagianCode : null;
     }
 
     /**
