@@ -2567,9 +2567,8 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Export rekapan keterlambatan per role ke Excel (HTML format)
-     * Using HTML table with inline CSS - no external dependencies needed
-     * Excel can open HTML files with proper formatting
+     * Export rekapan keterlambatan per role ke Excel (XML Spreadsheet format)
+     * Supports multiple worksheets - one per month when "Semua Bulan" is selected
      */
     public function exportRekapanKeterlambatan(Request $request, $roleCode)
     {
@@ -2589,6 +2588,21 @@ class OwnerDashboardController extends Controller
             'pembayaran' => 'Pembayaran',
         ];
 
+        $monthNames = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
         $roleName = $roleNames[$roleCode] ?? $roleCode;
         $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . '_' . now()->format('Y-m-d_H-i') . '.xls';
 
@@ -2602,8 +2616,269 @@ class OwnerDashboardController extends Controller
 
         $thresholds = $deadlineThresholds[$roleCode] ?? [1, 3];
         $isWeekly = $roleCode === 'pembayaran';
+        $now = \Carbon\Carbon::now();
 
-        // Get data
+        // If specific month is selected, export single sheet (old behavior)
+        if ($month) {
+            return $this->exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename);
+        }
+
+        // Multi-sheet export: one sheet per month
+        $displayYear = $year ?? now()->year;
+
+        // Get all data for the year first, then group by month
+        $query = DokumenRoleData::where('role_code', $roleCode)
+            ->whereNotNull('received_at')
+            ->with(['dokumen']);
+
+        if ($year) {
+            $query->whereYear('received_at', $year);
+        }
+
+        $allRoleData = $query->orderBy('received_at', 'asc')->get();
+
+        // Group data by month
+        $dataByMonth = [];
+        foreach ($allRoleData as $roleData) {
+            $receivedMonth = \Carbon\Carbon::parse($roleData->received_at)->month;
+            if (!isset($dataByMonth[$receivedMonth])) {
+                $dataByMonth[$receivedMonth] = [];
+            }
+            $dataByMonth[$receivedMonth][] = $roleData;
+        }
+
+        // Build Excel XML with multiple worksheets
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10"/>
+  </Style>
+  <Style ss:ID="Title">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="14" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#2E7D32" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="Header">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#1976D2" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Cell">
+   <Alignment ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CellCenter">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CellRight">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusAman">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#4CAF50" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusPeringatan">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#000000"/>
+   <Interior ss:Color="#FFC107" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusTerlambat">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#F44336" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Summary">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1"/>
+   <Interior ss:Color="#E3F2FD" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+';
+
+        // Create a worksheet for each month (1-12)
+        for ($m = 1; $m <= 12; $m++) {
+            $sheetName = $monthNames[$m] . ' ' . $displayYear;
+            $monthData = $dataByMonth[$m] ?? [];
+
+            $xml .= ' <Worksheet ss:Name="' . htmlspecialchars($sheetName) . '">
+  <Table ss:DefaultColumnWidth="100">
+   <Column ss:Width="40"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="150"/>
+   <Column ss:Width="250"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="130"/>
+   <Row ss:Height="30">
+    <Cell ss:StyleID="Title" ss:MergeAcross="9"><Data ss:Type="String">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . ' (' . strtoupper($sheetName) . ')</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">No</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">No. Agenda</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">No. SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Uraian</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nilai (Rupiah)</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal Terima</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Durasi</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Status Deadline</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Status Proses</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal Selesai</Data></Cell>
+   </Row>
+';
+
+            if (count($monthData) > 0) {
+                $no = 1;
+                foreach ($monthData as $roleData) {
+                    $dokumen = $roleData->dokumen;
+                    if (!$dokumen)
+                        continue;
+
+                    $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
+                    $diffInMinutes = $receivedAt->diffInMinutes($now);
+                    $daysDiff = floor($diffInMinutes / (60 * 24));
+
+                    // Calculate duration
+                    $days = floor($diffInMinutes / (60 * 24));
+                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+                    $minutes = $diffInMinutes % 60;
+                    $durationParts = [];
+                    if ($days > 0)
+                        $durationParts[] = $days . ' hari';
+                    if ($hours > 0)
+                        $durationParts[] = $hours . ' jam';
+                    if ($minutes > 0 || empty($durationParts))
+                        $durationParts[] = $minutes . ' menit';
+                    $duration = implode(' ', $durationParts);
+
+                    // Determine status
+                    if ($isWeekly) {
+                        if ($daysDiff < $thresholds[0]) {
+                            $status = 'AMAN';
+                            $statusStyle = 'StatusAman';
+                        } elseif ($daysDiff <= $thresholds[1]) {
+                            $status = 'PERINGATAN';
+                            $statusStyle = 'StatusPeringatan';
+                        } else {
+                            $status = 'TERLAMBAT';
+                            $statusStyle = 'StatusTerlambat';
+                        }
+                    } else {
+                        if ($daysDiff < $thresholds[0]) {
+                            $status = 'AMAN';
+                            $statusStyle = 'StatusAman';
+                        } elseif ($daysDiff <= $thresholds[1]) {
+                            $status = 'PERINGATAN';
+                            $statusStyle = 'StatusPeringatan';
+                        } else {
+                            $status = 'TERLAMBAT';
+                            $statusStyle = 'StatusTerlambat';
+                        }
+                    }
+
+                    $completedAt = $roleData->processed_at;
+                    $isCompleted = !is_null($completedAt);
+                    $prosesStatus = $isCompleted ? 'Selesai' : 'Sedang Diproses';
+                    $completedDate = $isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-';
+
+                    $xml .= '   <Row>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="Number">' . $no++ . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->nomor_agenda ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->nomor_spp ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars(\Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 60)) . '</Data></Cell>
+    <Cell ss:StyleID="CellRight"><Data ss:Type="String">' . ($dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-') . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $receivedAt->format('d/m/Y H:i') . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $duration . '</Data></Cell>
+    <Cell ss:StyleID="' . $statusStyle . '"><Data ss:Type="String">' . $status . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $prosesStatus . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $completedDate . '</Data></Cell>
+   </Row>
+';
+                }
+
+                // Summary row
+                $xml .= '   <Row>
+    <Cell ss:StyleID="Summary" ss:MergeAcross="3"><Data ss:Type="String">Total Dokumen: ' . ($no - 1) . '</Data></Cell>
+    <Cell ss:StyleID="Summary" ss:MergeAcross="5"><Data ss:Type="String"></Data></Cell>
+   </Row>
+';
+            } else {
+                // No data message
+                $xml .= '   <Row>
+    <Cell ss:StyleID="Cell" ss:MergeAcross="9"><Data ss:Type="String">Tidak ada data untuk bulan ini</Data></Cell>
+   </Row>
+';
+            }
+
+            $xml .= '  </Table>
+ </Worksheet>
+';
+        }
+
+        $xml .= '</Workbook>';
+
+        return response($xml)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    /**
+     * Helper: Export single sheet rekapan (when specific month is selected)
+     */
+    private function exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename)
+    {
         $query = DokumenRoleData::where('role_code', $roleCode)
             ->whereNotNull('received_at')
             ->with(['dokumen']);
@@ -2616,7 +2891,6 @@ class OwnerDashboardController extends Controller
         }
 
         $roleDataList = $query->orderBy('received_at', 'asc')->get();
-        $now = \Carbon\Carbon::now();
 
         // Build HTML table that Excel can read
         $html = '<!DOCTYPE html>
@@ -2646,7 +2920,7 @@ class OwnerDashboardController extends Controller
         <td colspan="10" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . '</td>
     </tr>
     <tr>
-        <td colspan="10" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . $month : '') . '</td>
+        <td colspan="10" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . ($monthNames[$month] ?? $month) : '') . '</td>
     </tr>
     <tr><td colspan="10"></td></tr>
     <tr class="header">
@@ -2668,33 +2942,23 @@ class OwnerDashboardController extends Controller
             if (!$dokumen)
                 continue;
 
-            // Calculate time difference with full precision
             $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
             $diffInMinutes = $receivedAt->diffInMinutes($now);
             $daysDiff = floor($diffInMinutes / (60 * 24));
 
-            // Calculate readable duration
-            $totalMinutes = $diffInMinutes;
-            $days = floor($totalMinutes / (60 * 24));
-            $hours = floor(($totalMinutes % (60 * 24)) / 60);
-            $minutes = $totalMinutes % 60;
-
-            // Build human-readable duration string
+            $days = floor($diffInMinutes / (60 * 24));
+            $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+            $minutes = $diffInMinutes % 60;
             $durationParts = [];
-            if ($days > 0) {
+            if ($days > 0)
                 $durationParts[] = $days . ' hari';
-            }
-            if ($hours > 0) {
+            if ($hours > 0)
                 $durationParts[] = $hours . ' jam';
-            }
-            if ($minutes > 0 || empty($durationParts)) {
+            if ($minutes > 0 || empty($durationParts))
                 $durationParts[] = $minutes . ' menit';
-            }
             $duration = implode(' ', $durationParts);
 
-            // Determine status based on days for threshold comparison
             if ($isWeekly) {
-                $weeksCount = floor($daysDiff / 7);
                 if ($daysDiff < $thresholds[0]) {
                     $status = 'AMAN';
                     $statusClass = 'status-aman';
@@ -2718,11 +2982,9 @@ class OwnerDashboardController extends Controller
                 }
             }
 
-            // Check if completed
             $completedAt = $roleData->processed_at;
             $isCompleted = !is_null($completedAt);
             $prosesClass = $isCompleted ? 'proses-selesai' : 'proses-pending';
-
             $rowClass = ($no % 2 == 0) ? 'row-even' : '';
 
             $html .= '
