@@ -460,6 +460,14 @@ Route::get('owner/rekapan-keterlambatan-export/{roleCode}', [OwnerDashboardContr
     ->where('roleCode', 'team_verifikasi|perpajakan|akutansi|pembayaran')
     ->name('owner.rekapan-keterlambatan.export');
 
+// Analytics Dashboard - Performance analysis for all roles
+Route::get('owner/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('analytics.index');
+Route::get('owner/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getAnalyticsData'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('analytics.data');
+
 // Admin shortcut to Owner Dashboard
 Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin')

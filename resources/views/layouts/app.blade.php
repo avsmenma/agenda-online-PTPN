@@ -1539,6 +1539,12 @@
           data-submenu="rekapan-keterlambatan" aria-expanded="{{ $isRekapanKeterlambatanActive ? 'true' : 'false' }}">
           <i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan
         </a>
+        @php
+          $isAnalyticsActive = request()->is('*owner/analytics*') || request()->routeIs('analytics.*');
+        @endphp
+        <a href="{{ url('/owner/analytics') }}" class="{{ $isAnalyticsActive ? 'active' : '' }}">
+          <i class="fa-solid fa-chart-line"></i> Analisis Kinerja
+        </a>
       </div>
       <div style="margin-top: auto; padding-bottom: 20px;">
         <a href="{{ url('/logout') }}"
