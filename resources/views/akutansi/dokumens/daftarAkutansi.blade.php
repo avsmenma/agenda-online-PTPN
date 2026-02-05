@@ -5411,12 +5411,12 @@
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 1px solid #dee2e6; flex-shrink: 0;">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 2px solid #e0e0e0; padding: 16px 24px; flex-shrink: 0;">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
                     <i class="fa-solid fa-times me-2"></i>Tutup
                   </button>
-                  <a id="view-edit-btn" href="#" class="btn btn-primary">
-                    <i class="fa-solid fa-edit me-2"></i>Edit Dokumen
+                  <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
+                    <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
                   </a>
                 </div>
               </div>
@@ -5424,22 +5424,32 @@
           </div>
 
           <style>
+            /* Detail Item Styles for View Modal - Matched with Perpajakan */
+            .detail-item {
+              margin-bottom: 8px;
+            }
+
             .detail-label {
-              font-weight: 600;
-              font-size: 12px;
-              color: #6c757d;
-              margin-bottom: 4px;
               display: block;
+              font-size: 10px;
+              font-weight: 700;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 4px;
             }
 
             .detail-value {
               font-size: 14px;
-              color: #083E40;
+              color: #1f2937;
+              padding: 8px 12px;
+              background: white;
+              border-radius: 6px;
+              border: 1px solid #e5e7eb;
+              min-height: 38px;
+              display: flex;
+              align-items: center;
               word-wrap: break-word;
-            }
-
-            .detail-item {
-              margin-bottom: 16px;
             }
           </style>
 
