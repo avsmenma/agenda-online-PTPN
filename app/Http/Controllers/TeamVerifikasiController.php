@@ -993,7 +993,7 @@ class TeamVerifikasiController extends Controller
                         'no_spk' => $dokumen->no_spk,
                         'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
                         'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
-                        'nomor_miro' => $dokumen->nomor_miro ?? '-',
+                        'nomor_miro' => $dokumen->nomor_miro ?? ($dokumen->nomor_mirror ?? ($dokumen->NO_MIRO_SES ?? '-')),
                         'tanggal_miro' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('d/m/Y') : '-',
                         'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
                         'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
@@ -1003,6 +1003,9 @@ class TeamVerifikasiController extends Controller
                         'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function ($pr) {
                             return ['nomor_pr' => $pr->nomor_pr ?? ''];
                         })->values() : [],
+                        // Fallback fields for imported CSV data
+                        'NO_PO' => $dokumen->NO_PO ?? null,
+                        'NO_MIRO_SES' => $dokumen->NO_MIRO_SES ?? null,
                     ]
                 ]);
             }
