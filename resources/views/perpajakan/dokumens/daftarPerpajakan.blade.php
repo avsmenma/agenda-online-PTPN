@@ -3204,6 +3204,12 @@
                   </td>
                   <td class="col-action" onclick="event.stopPropagation()">
                     <div class="action-buttons-hybrid">
+                      @if($isLocked)
+                        {{-- Locked state - buttons disabled --}}
+                        <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen terkunci">
+                          <i class="fa-solid fa-lock"></i>
+                          <span>Terkunci</span>
+                        </button>
                       @elseif($sentToTeamFromPerpajakan || $isPendingDownstream)
                         {{-- Document has been sent/approved by downstream - FINAL state for Perpajakan --}}
                         <button class="btn-action btn-edit locked btn-full-width" disabled
