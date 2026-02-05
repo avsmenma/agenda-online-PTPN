@@ -369,9 +369,27 @@ class TeamVerifikasiController extends Controller
             $statusFilter = $request->status;
             switch ($statusFilter) {
                 case 'menunggu_approve':
-                    // Dokumen yang menunggu approval dari siapapun (pending status di dokumen_statuses)
-                    $query->whereHas('roleStatuses', function ($q) {
-                        $q->where('status', DokumenStatus::STATUS_PENDING);
+                    // Dokumen yang sudah dikirim dari Team Verifikasi dan menunggu approval di role lain
+                    // Filter: pending di Perpajakan, Akutansi, atau Pembayaran (BUKAN di Team Verifikasi/inbox)
+                    $query->where(function ($q) {
+                        // Status dokumen menunjukkan sudah dikirim atau pending approval di role lain
+                        $q->whereIn('status', [
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'sent_to_pembayaran',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                            'pending_approval_pembayaran',
+                            'waiting_approval_perpajakan',
+                            'waiting_approval_akuntansi',
+                            'waiting_approval_pembayaran',
+                            'menunggu_di_approve'
+                        ])
+                            // DAN ada pending status di role selanjutnya
+                            ->whereHas('roleStatuses', function ($rq) {
+                                $rq->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
+                                    ->where('status', DokumenStatus::STATUS_PENDING);
+                            });
                     });
                     break;
                 case 'sedang_proses':
