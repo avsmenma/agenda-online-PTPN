@@ -1158,6 +1158,215 @@
     .premium-dashboard i.far {
       font-weight: 400;
     }
+
+    /* ============================================ */
+    /* ADVANCED FILTER PANEL STYLES */
+    /* ============================================ */
+    .advanced-filter-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      font-family: inherit;
+    }
+
+    .advanced-filter-toggle:hover {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+      transform: translateY(-1px);
+    }
+
+    .advanced-filter-toggle.active {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+    }
+
+    .advanced-filter-toggle i {
+      transition: transform 0.3s ease;
+    }
+
+    .advanced-filter-toggle.active i.fa-chevron-down {
+      transform: rotate(180deg);
+    }
+
+    .active-filters-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      background: #dc3545;
+      color: white;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      border-radius: 50%;
+      margin-left: 0.25rem;
+    }
+
+    .advanced-filter-toggle.active .active-filters-badge {
+      background: white;
+      color: var(--brand-primary);
+    }
+
+    .advanced-filter-panel {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: all 0.4s ease;
+      margin-top: 0;
+    }
+
+    .advanced-filter-panel.show {
+      max-height: 500px;
+      opacity: 1;
+      margin-top: 1rem;
+    }
+
+    .advanced-filter-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-lighter);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+    }
+
+    .advanced-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .filter-group label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .filter-group label i {
+      color: var(--text-tertiary);
+    }
+
+    .filter-group select {
+      width: 100%;
+      height: 40px;
+      padding: 0 2rem 0 0.75rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-tertiary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      appearance: none;
+    }
+
+    .filter-group select:hover {
+      border-color: var(--brand-primary);
+    }
+
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+    }
+
+    .advanced-filter-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-advanced-reset {
+      padding: 0.625rem 1.25rem;
+      background: var(--bg-tertiary);
+      color: var(--status-rose);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: inherit;
+    }
+
+    .btn-advanced-reset:hover {
+      background: var(--status-rose);
+      color: white;
+      border-color: var(--status-rose);
+    }
+
+    @media (max-width: 768px) {
+      .advanced-filter-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .advanced-filter-actions {
+        flex-direction: column;
+      }
+
+      .btn-advanced-reset {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .advanced-filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-customize {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: transparent;
+        border: 1px solid var(--border-light);
+        color: var(--text-secondary);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--transition-base);
+      }
+
+      .btn-customize:hover {
+        background: var(--bg-surface);
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .column-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        padding: 1rem 0;
+      }
+    }
   </style>
 
   <div class="premium-dashboard">
@@ -1202,7 +1411,8 @@
           <div class="stat-label">Belum Siap Bayar</div>
           <div class="stat-value count-animate">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
           <div class="stat-subvalue">Rp
-            {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}</div>
+            {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}
+          </div>
           <div class="stat-subvalue-link">
             <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
@@ -1218,7 +1428,8 @@
           <div class="stat-label">Siap Dibayar</div>
           <div class="stat-value count-animate">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
           <div class="stat-subvalue">Rp
-            {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}</div>
+            {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}
+          </div>
           <div class="stat-subvalue-link">
             <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
@@ -1234,7 +1445,8 @@
           <div class="stat-label">Sudah Dibayar</div>
           <div class="stat-value count-animate">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
           <div class="stat-subvalue">Rp
-            {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}</div>
+            {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}
+          </div>
           <div class="stat-subvalue-link">
             <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
           </div>
@@ -1330,6 +1542,116 @@
             <i class="fas fa-redo"></i>
             Reset
           </a>
+
+          @php
+            $activeAdvancedFilterCount = 0;
+            if (request('filter_vendor'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_kategori'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_jenis_dokumen'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_jenis_sub_pekerjaan'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_kebun'))
+              $activeAdvancedFilterCount++;
+          @endphp
+
+          <button type="button" class="advanced-filter-toggle {{ $activeAdvancedFilterCount > 0 ? 'active' : '' }}"
+            id="advancedFilterToggle">
+            <i class="fas fa-sliders-h"></i>
+            Filter Lanjutan
+            <i class="fas fa-chevron-down"></i>
+            @if($activeAdvancedFilterCount > 0)
+              <span class="active-filters-badge">{{ $activeAdvancedFilterCount }}</span>
+            @endif
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Filter Panel -->
+      <div class="advanced-filter-panel {{ $activeAdvancedFilterCount > 0 ? 'show' : '' }}" id="advancedFilterPanel">
+        <div class="advanced-filter-content">
+          <div class="advanced-filter-grid">
+            <!-- Vendor Filter -->
+            <div class="filter-group">
+              <label for="filterVendor"><i class="fas fa-store"></i> Vendor</label>
+              <select id="filterVendor" name="filter_vendor">
+                <option value="">Semua Vendor</option>
+                @foreach($availableDibayarKepada ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_vendor') == $key ? 'selected' : '' }}>
+                    {{ Str::limit($value, 30) }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Kriteria Filter -->
+            <div class="filter-group">
+              <label for="filterKategori"><i class="fas fa-tags"></i> Kriteria CF</label>
+              <select id="filterKategori" name="filter_kategori">
+                <option value="">Semua Kriteria</option>
+                @foreach($availableKategori ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_kategori') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Sub Kriteria Filter -->
+            <div class="filter-group">
+              <label for="filterJenisDokumen"><i class="fas fa-tag"></i> Sub Kriteria</label>
+              <select id="filterJenisDokumen" name="filter_jenis_dokumen">
+                <option value="">Semua Sub Kriteria</option>
+                @foreach($availableJenisDokumen ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_jenis_dokumen') == $key ? 'selected' : '' }}>{{ $value }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Item Sub Kriteria Filter -->
+            <div class="filter-group">
+              <label for="filterJenisSubPekerjaan"><i class="fas fa-th-list"></i> Item Sub Kriteria</label>
+              <select id="filterJenisSubPekerjaan" name="filter_jenis_sub_pekerjaan">
+                <option value="">Semua Item</option>
+                @foreach($availableJenisSubPekerjaan ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_jenis_sub_pekerjaan') == $key ? 'selected' : '' }}>
+                    {{ Str::limit($value, 30) }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Kebun Filter -->
+            <div class="filter-group">
+              <label for="filterKebun"><i class="fas fa-seedling"></i> Kebun</label>
+              <select id="filterKebun" name="filter_kebun">
+                <option value="">Semua Kebun</option>
+                @foreach($availableKebuns ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Jenis Pembayaran Filter -->
+            <div class="filter-group">
+              <label for="filterJenisPembayaran"><i class="fas fa-money-bill-wave"></i> Jenis Pembayaran</label>
+              <select id="filterJenisPembayaran" name="filter_jenis_pembayaran">
+                <option value="">Semua Jenis</option>
+                @foreach($availableJenisPembayaran ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_jenis_pembayaran') == $key ? 'selected' : '' }}>{{ $value }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+          </div>
+
+          <div class="advanced-filter-actions">
+            <button type="button" class="btn-advanced-reset" onclick="resetAdvancedFilters()">
+              <i class="fas fa-times"></i>
+              Reset Filter Lanjutan
+            </button>
+          </div>
         </div>
       </div>
     </form>
@@ -1343,6 +1665,9 @@
           <span class="table-count">{{ $dokumens->total() }}</span>
         </div>
         <div class="table-toggle">
+          <button type="button" class="btn-customize" data-bs-toggle="modal" data-bs-target="#columnModal">
+            <i class="fas fa-columns"></i> Atur Kolom
+          </button>
           <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
             onclick="setViewMode('normal')">
             <i class="fas fa-th-list"></i> Normal
@@ -1430,135 +1755,210 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>No. Agenda</th>
-                  <th>No. SPP</th>
-                  <th>Dibayar Kepada</th>
-                  <th>Uraian SPP</th>
-                  <th>Nilai (Rp)</th>
-                  <th>Status</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach($dokumens as $dok)
-                  <tr>
-                    <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
-                    <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
-                    <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
-                    <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
-                    <td class="cell-rupiah">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
-                    <td>
-                      @if($dok->computed_status == 'siap_dibayar')
-                        <span class="status-pill status-pill--ready">
-                          <i class="fas fa-circle"></i> Siap Dibayar
-                        </span>
-                      @elseif($dok->computed_status == 'sudah_dibayar')
-                        <span class="status-pill status-pill--paid">
-                          <i class="fas fa-circle"></i> Sudah Dibayar
-                        </span>
-                      @else
-                        <span class="status-pill status-pill--pending">
-                          <i class="fas fa-circle"></i> Belum Siap
-                        </span>
-                      @endif
-                    </td>
-                    <td>
-                      <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-action" title="Lihat Detail">
-                        <i class="fas fa-eye"></i>
-                      </a>
-                    </td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
+                  @foreach($selectedColumns as $colKey)
+                    <th>{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
+                  @endforeach
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach($dokumens as $dok)
+                        <tr>
+                          @foreach($selectedColumns as $colKey)
+                            @if($colKey == 'nomor_agenda')
+                              <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
+                            @elseif($colKey == 'nomor_spp')
+                              <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
+                            @elseif($colKey == 'dibayar_kepada')
+                              <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
+                            @elseif($colKey == 'uraian_spp')
+                              <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
+                            @elseif($colKey == 'nilai_rupiah')
+                              <td class="cell-rupiah text-end">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
+                            @elseif($colKey == 'status_pembayaran')
+                              <td>
+                                @if($dok->computed_status == 'siap_dibayar')
+                                  <span class="status-pill status-pill--ready">
+                                    <i class="fas fa-circle"></i> Siap Dibayar
+                                  </span>
+                                @elseif($dok->computed_status == 'sudah_dibayar')
+                                  <span class="status-pill status-pill--paid">
+                                    <i class="fas fa-circle"></i> Sudah Dibayar
+                                  </span>
+                                @else
+                                  <span class="status-pill status-pill--pending">
+                                    <i class="fas fa-circle"></i> Belum Siap
+                                  </span>
+                                @endif
+                              </td>
+                            @elseif($colKey == 'tgl_jatuhtempo')
+                              <td>{{ $dok->tgl_jatuhtempo ? \Carbon\Carbon::parse($dok->tgl_jatuhtempo)->format('d/m/Y') : '-' }}</td>
+                            @elseif(in_array($colKey, ['dokumen_po', 'dokumen_pr', 'dokumen_gr']))
+                              <td class="cell-mono">{{ $dok->$colKey ?? '-' }}</td>
+                            @else
+                              <td>{{ $dok->$colKey ?? '-' }}</td>
+                            @endif
+                          @endforeach
+                          <td>
+                            <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-action" title="Lihat Detail">
+                              <i class="fas fa-eye"></i>
+                            </a>
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
         @endif
 
-        <!-- Pagination -->
-        @if($dokumens->hasPages())
-          <div class="pagination-wrapper">
-            <div class="pagination-info">
-              Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
-            </div>
-            <div>
-              {{ $dokumens->links('pagination::bootstrap-4') }}
-            </div>
-          </div>
-        @endif
+            <!-- Pagination -->
+            @if($dokumens->hasPages())
+              <div class="pagination-wrapper">
+                <div class="pagination-info">
+                  Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
+                </div>
+                <div>
+                  {{ $dokumens->links('pagination::bootstrap-4') }}
+                </div>
+              </div>
+            @endif
       @else
-        <!-- Empty State -->
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="fas fa-inbox"></i>
+          <!-- Empty State -->
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <i class="fas fa-inbox"></i>
+            </div>
+            <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+            <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+            <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty">
+              <i class="fas fa-redo"></i>
+              Reset Filter
+            </a>
           </div>
-          <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-          <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty">
-            <i class="fas fa-redo"></i>
-            Reset Filter
-          </a>
-        </div>
-      @endif
+        @endif
+      </div>
     </div>
-  </div>
 
-  <script>
-    // View Mode Toggle
-    function setViewMode(mode) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('mode', mode);
-      window.location.href = url.toString();
-    }
+    <!-- Column Customization Modal -->
+    <div class="modal fade" id="columnModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-columns"></i> Kustomisasi Kolom</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form action="{{ url()->current() }}" method="GET">
+            <div class="modal-body">
+              <!-- Keep existing filters -->
+              <input type="hidden" name="status_pembayaran" value="{{ request('status_pembayaran') }}">
+              <input type="hidden" name="year" value="{{ request('year') }}">
+              <input type="hidden" name="month" value="{{ request('month') }}">
+              <input type="hidden" name="search" value="{{ request('search') }}">
+              <!-- Advanced filters -->
+              <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor') }}">
+              <input type="hidden" name="filter_kategori" value="{{ request('filter_kategori') }}">
+              <input type="hidden" name="filter_jenis_dokumen" value="{{ request('filter_jenis_dokumen') }}">
+              <input type="hidden" name="filter_jenis_sub_pekerjaan" value="{{ request('filter_jenis_sub_pekerjaan') }}">
+              <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') }}">
+              <input type="hidden" name="filter_jenis_pembayaran" value="{{ request('filter_jenis_pembayaran') }}">
+              <input type="hidden" name="mode" value="{{ $mode }}">
 
-    // Vendor Group Toggle
-    function toggleVendorGroup(header) {
-      const body = header.nextElementSibling;
-      const isExpanded = header.classList.contains('expanded');
+              <div class="column-grid">
+                @foreach($availableColumns as $key => $label)
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}" {{ in_array($key, $selectedColumns) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="col_{{ $key }}">
+                      {{ $label }}
+                    </label>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-primary">Simpan Tampilan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
-      if (isExpanded) {
-        header.classList.remove('expanded');
-        body.classList.remove('show');
-      } else {
-        header.classList.add('expanded');
-        body.classList.add('show');
+    <script>
+      // View Mode Toggle
+      function setViewMode(mode) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('mode', mode);
+        window.location.href = url.toString();
       }
-    }
 
-    // Number Counter Animation
-    document.addEventListener('DOMContentLoaded', function () {
-      const counters = document.querySelectorAll('.stat-value');
+      // Vendor Group Toggle
+      function toggleVendorGroup(header) {
+        const body = header.nextElementSibling;
+        const isExpanded = header.classList.contains('expanded');
 
-      counters.forEach(counter => {
-        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
-        if (isNaN(target) || target === 0) return;
+        if (isExpanded) {
+          header.classList.remove('expanded');
+          body.classList.remove('show');
+        } else {
+          header.classList.add('expanded');
+          body.classList.add('show');
+        }
+      }
 
-        let current = 0;
-        const increment = target / 30;
-        const duration = 800;
-        const stepTime = duration / 30;
+      // Number Counter Animation
+      document.addEventListener('DOMContentLoaded', function () {
+        const counters = document.querySelectorAll('.stat-value');
 
-        const updateCounter = () => {
-          current += increment;
-          if (current < target) {
-            counter.textContent = Math.floor(current).toLocaleString('id-ID');
-            setTimeout(updateCounter, stepTime);
-          } else {
-            counter.textContent = target.toLocaleString('id-ID');
-          }
-        };
+        counters.forEach(counter => {
+          const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+          if (isNaN(target) || target === 0) return;
 
-        setTimeout(updateCounter, 300);
+          let current = 0;
+          const increment = target / 30;
+          const duration = 800;
+          const stepTime = duration / 30;
+
+          const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+              counter.textContent = Math.floor(current).toLocaleString('id-ID');
+              setTimeout(updateCounter, stepTime);
+            } else {
+              counter.textContent = target.toLocaleString('id-ID');
+            }
+          };
+
+          setTimeout(updateCounter, 300);
+        });
       });
-    });
 
-    // Add subtle hover feedback
-    document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
-      card.addEventListener('mouseenter', function () {
-        this.style.transform = 'translateY(-4px)';
+      // Add subtle hover feedback
+      document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
+        card.addEventListener('mouseenter', function () {
+          this.style.transform = 'translateY(-4px)';
+        });
+        card.addEventListener('mouseleave', function () {
+          this.style.transform = 'translateY(0)';
+        });
       });
-      card.addEventListener('mouseleave', function () {
-        this.style.transform = 'translateY(0)';
+
+      // Advanced Filter Panel Toggle
+      document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
+        const panel = document.getElementById('advancedFilterPanel');
+        const toggle = this;
+
+        panel.classList.toggle('show');
+        toggle.classList.toggle('active');
       });
-    });
-  </script>
+
+      // Reset Advanced Filters
+      function resetAdvancedFilters() {
+        document.getElementById('filterVendor').value = '';
+        document.getElementById('filterKategori').value = '';
+        document.getElementById('filterJenisDokumen').value = '';
+        document.getElementById('filterJenisSubPekerjaan').value = '';
+        document.getElementById('filterKebun').value = '';
+        document.getElementById('filterJenisPembayaran').value = '';
+      }
+    </script>
 @endsection

@@ -192,6 +192,38 @@ class DashboardPembayaranController extends Controller
             });
         }
 
+        // ============================================
+        // ADVANCED FILTER SECTION
+        // ============================================
+        $filterVendor = request('filter_vendor');
+        $filterKategori = request('filter_kategori');
+        $filterJenisDokumen = request('filter_jenis_dokumen');
+        $filterJenisSubPekerjaan = request('filter_jenis_sub_pekerjaan');
+        $filterKebun = request('filter_kebun');
+        $filterJenisPembayaran = request('filter_jenis_pembayaran');
+
+        if ($filterVendor) {
+            $query->where('dibayar_kepada', $filterVendor);
+        }
+        if ($filterKategori) {
+            $query->where('kategori', $filterKategori);
+        }
+        if ($filterJenisDokumen) {
+            $query->where('jenis_dokumen', $filterJenisDokumen);
+        }
+        if ($filterJenisSubPekerjaan) {
+            $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
+        }
+        if ($filterKebun) {
+            $query->where(function ($q) use ($filterKebun) {
+                $q->where('kebun', $filterKebun)
+                    ->orWhere('nama_kebuns', $filterKebun);
+            });
+        }
+        if ($filterJenisPembayaran) {
+            $query->where('jenis_pembayaran', $filterJenisPembayaran);
+        }
+
         // Apply rekapan detail filters
         if ($mode === 'rekapan_table') {
             $filterDibayarKepada = request('filter_dibayar_kepada_column');
