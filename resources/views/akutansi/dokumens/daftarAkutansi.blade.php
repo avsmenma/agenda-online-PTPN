@@ -4925,7 +4925,8 @@
                   document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
                   document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
                   document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+                  // Nomor MIRO with fallback to NO_MIRO_SES
+                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro && dok.nomor_miro !== '-' ? dok.nomor_miro : (dok.NO_MIRO_SES || '-');
                   document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
                   document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
 

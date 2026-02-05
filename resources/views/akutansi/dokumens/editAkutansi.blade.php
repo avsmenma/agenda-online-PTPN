@@ -680,7 +680,7 @@
               <div class="form-group">
                 <label>Nomor MIRO <span class="text-danger">*</span></label>
                 <input type="text" name="nomor_miro" id="nomor_miro" placeholder="Masukkan nomor MIRO"
-                  value="{{ old('nomor_miro', $dokumen->nomor_miro ?? '') }}">
+                  value="{{ old('nomor_miro', $dokumen->nomor_miro ?? $dokumen->NO_MIRO_SES ?? '') }}">
                 @error('nomor_miro')
                   <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
                 @enderror
