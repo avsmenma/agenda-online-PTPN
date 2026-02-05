@@ -3263,7 +3263,7 @@
       </div>
     </div>
 
-    @if(isset($dokumens) && $dokumens->hasPages())
+    @if(isset($dokumens) && $dokumens->total() > 0)
       @include('partials.pagination-enhanced', ['paginator' => $dokumens])
     @endif
 
