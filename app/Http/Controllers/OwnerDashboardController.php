@@ -2609,15 +2609,17 @@ class OwnerDashboardController extends Controller
         $statusSuffix = $statusFilter ? '_' . strtoupper($statusFilter) : '';
         $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . $statusSuffix . '_' . now()->format('Y-m-d_H-i') . '.xls';
 
-        // Deadline thresholds per role (in days)
+        // Deadline thresholds per role (in HOURS - must match rekapan page logic)
+        // Non-pembayaran: AMAN < 24h, PERINGATAN 24-72h, TERLAMBAT >= 72h
+        // Pembayaran: AMAN < 168h (1 week), PERINGATAN 168-504h (1-3 weeks), TERLAMBAT >= 504h
         $deadlineThresholds = [
-            'team_verifikasi' => [1, 3],
-            'perpajakan' => [1, 3],
-            'akutansi' => [1, 3],
-            'pembayaran' => [7, 21],
+            'team_verifikasi' => [24, 72],    // hours
+            'perpajakan' => [24, 72],         // hours
+            'akutansi' => [24, 72],           // hours
+            'pembayaran' => [168, 504],       // hours (weekly)
         ];
 
-        $thresholds = $deadlineThresholds[$roleCode] ?? [1, 3];
+        $thresholds = $deadlineThresholds[$roleCode] ?? [24, 72];
         $isWeekly = $roleCode === 'pembayaran';
         $now = \Carbon\Carbon::now();
 
@@ -2790,9 +2792,9 @@ class OwnerDashboardController extends Controller
 
                     $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
                     $diffInMinutes = $receivedAt->diffInMinutes($now);
-                    $daysDiff = floor($diffInMinutes / (60 * 24));
+                    $ageHours = $diffInMinutes / 60; // Convert to hours for threshold comparison
 
-                    // Calculate duration
+                    // Calculate duration for display
                     $days = floor($diffInMinutes / (60 * 24));
                     $hours = floor(($diffInMinutes % (60 * 24)) / 60);
                     $minutes = $diffInMinutes % 60;
@@ -2805,29 +2807,16 @@ class OwnerDashboardController extends Controller
                         $durationParts[] = $minutes . ' menit';
                     $duration = implode(' ', $durationParts);
 
-                    // Determine status
-                    if ($isWeekly) {
-                        if ($daysDiff < $thresholds[0]) {
-                            $status = 'AMAN';
-                            $statusStyle = 'StatusAman';
-                        } elseif ($daysDiff <= $thresholds[1]) {
-                            $status = 'PERINGATAN';
-                            $statusStyle = 'StatusPeringatan';
-                        } else {
-                            $status = 'TERLAMBAT';
-                            $statusStyle = 'StatusTerlambat';
-                        }
+                    // Determine status using hours (thresholds are in hours)
+                    if ($ageHours < $thresholds[0]) {
+                        $status = 'AMAN';
+                        $statusStyle = 'StatusAman';
+                    } elseif ($ageHours < $thresholds[1]) {
+                        $status = 'PERINGATAN';
+                        $statusStyle = 'StatusPeringatan';
                     } else {
-                        if ($daysDiff < $thresholds[0]) {
-                            $status = 'AMAN';
-                            $statusStyle = 'StatusAman';
-                        } elseif ($daysDiff <= $thresholds[1]) {
-                            $status = 'PERINGATAN';
-                            $statusStyle = 'StatusPeringatan';
-                        } else {
-                            $status = 'TERLAMBAT';
-                            $statusStyle = 'StatusTerlambat';
-                        }
+                        $status = 'TERLAMBAT';
+                        $statusStyle = 'StatusTerlambat';
                     }
 
                     // Filter by status if specified
@@ -2956,8 +2945,9 @@ class OwnerDashboardController extends Controller
 
             $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
             $diffInMinutes = $receivedAt->diffInMinutes($now);
-            $daysDiff = floor($diffInMinutes / (60 * 24));
+            $ageHours = $diffInMinutes / 60; // Convert to hours for threshold comparison
 
+            // Calculate duration for display
             $days = floor($diffInMinutes / (60 * 24));
             $hours = floor(($diffInMinutes % (60 * 24)) / 60);
             $minutes = $diffInMinutes % 60;
@@ -2970,28 +2960,16 @@ class OwnerDashboardController extends Controller
                 $durationParts[] = $minutes . ' menit';
             $duration = implode(' ', $durationParts);
 
-            if ($isWeekly) {
-                if ($daysDiff < $thresholds[0]) {
-                    $status = 'AMAN';
-                    $statusClass = 'status-aman';
-                } elseif ($daysDiff <= $thresholds[1]) {
-                    $status = 'PERINGATAN';
-                    $statusClass = 'status-peringatan';
-                } else {
-                    $status = 'TERLAMBAT';
-                    $statusClass = 'status-terlambat';
-                }
+            // Determine status using hours (thresholds are in hours)
+            if ($ageHours < $thresholds[0]) {
+                $status = 'AMAN';
+                $statusClass = 'status-aman';
+            } elseif ($ageHours < $thresholds[1]) {
+                $status = 'PERINGATAN';
+                $statusClass = 'status-peringatan';
             } else {
-                if ($daysDiff < $thresholds[0]) {
-                    $status = 'AMAN';
-                    $statusClass = 'status-aman';
-                } elseif ($daysDiff <= $thresholds[1]) {
-                    $status = 'PERINGATAN';
-                    $statusClass = 'status-peringatan';
-                } else {
-                    $status = 'TERLAMBAT';
-                    $statusClass = 'status-terlambat';
-                }
+                $status = 'TERLAMBAT';
+                $statusClass = 'status-terlambat';
             }
 
             // Filter by status if specified
