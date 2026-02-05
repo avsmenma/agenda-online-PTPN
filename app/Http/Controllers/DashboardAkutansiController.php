@@ -1524,6 +1524,7 @@ class DashboardAkutansiController extends Controller
 
         $akutansiFields = [
             'Nomor MIRO' => $dokumen->nomor_miro ?: '<span class="empty-field">Belum diisi</span>',
+            'Tanggal MIRO' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('d/m/Y') : '<span class="empty-field">Belum diisi</span>',
         ];
 
         foreach ($akutansiFields as $label => $value) {
