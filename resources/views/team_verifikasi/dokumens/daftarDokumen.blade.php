@@ -6093,7 +6093,15 @@
                               document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
                               document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
                               document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
-                              document.getElementById('view-bulan').textContent = dok.bulan || '-';
+                              // Helper function to convert month number to Indonesian month name
+                              const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                                                  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                              const formatBulan = (bulan) => {
+                                if (!bulan) return '-';
+                                const num = parseInt(bulan);
+                                return (num >= 1 && num <= 12) ? monthNames[num] : bulan;
+                              };
+                              document.getElementById('view-bulan').textContent = formatBulan(dok.bulan);
                               document.getElementById('view-tahun').textContent = dok.tahun || '-';
                               document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
                               document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';

@@ -503,6 +503,8 @@ class OperatorCsvImportController extends Controller
             'desember' => 12,
         ];
         $bulanText = strtolower(trim($row['Bulan'] ?? ''));
+        // Clean prefix like "a. ", "b. ", etc. from format like "a. Januari", "b. Februari"
+        $bulanText = preg_replace('/^[a-z]\.\s*/i', '', $bulanText);
         $bulan = $bulanMap[$bulanText] ?? (int) $bulanText ?: (int) date('n');
 
         // Parse tahun

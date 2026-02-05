@@ -2900,7 +2900,15 @@ function populateDocumentDetail(data) {
     document.getElementById('view-nomor-agenda').textContent = data.nomor_agenda || '-';
     document.getElementById('view-nomor-spp').textContent = data.nomor_spp || '-';
     document.getElementById('view-tanggal-spp').textContent = formatDate(data.tanggal_spp);
-    document.getElementById('view-bulan').textContent = data.bulan || '-';
+    // Helper function to convert month number to Indonesian month name
+    const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const formatBulan = (bulan) => {
+      if (!bulan) return '-';
+      const num = parseInt(bulan);
+      return (num >= 1 && num <= 12) ? monthNames[num] : bulan;
+    };
+    document.getElementById('view-bulan').textContent = formatBulan(data.bulan);
     document.getElementById('view-tahun').textContent = data.tahun || '-';
     document.getElementById('view-tanggal-masuk').textContent = formatDateTime(data.tanggal_masuk);
     
