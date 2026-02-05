@@ -4967,7 +4967,8 @@
                   }
 
                   // Informasi Akutansi
-                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
+                  // Use fallback to NO_MIRO_SES if nomor_miro is empty (from CSV import)
+                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro && dok.nomor_miro !== '-' ? dok.nomor_miro : (dok.NO_MIRO_SES || '-');
                   document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? new Date(dok.tanggal_miro).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
                 }
               })
