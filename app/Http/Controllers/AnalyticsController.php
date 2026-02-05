@@ -148,11 +148,14 @@ class AnalyticsController extends Controller
     /**
      * Calculate performance score and grade
      * 
-     * Formula:
-     * - efficiency = (aman / total) * 100
-     * - penalty = (terlambat / total) * 50 (heavy penalty for late documents)
-     * - score = efficiency - penalty
-     * - grade = A (>=90), B (>=75), C (>=60), D (<60)
+     * Formula (Weighted Value System):
+     * Score = ((Aman × 100) + (Peringatan × 50) + (Terlambat × 0)) / Total
+     * 
+     * - Aman: Nilai 100 (Sempurna - dokumen selesai tepat waktu)
+     * - Peringatan: Nilai 50 (Setengah bagus - masih diterima tapi hampir tenggat)
+     * - Terlambat: Nilai 0 (Gagal memenuhi standar)
+     * 
+     * Grade: A (>=90), B (>=75), C (>=60), D (<60)
      */
     private function calculatePerformanceScore($total, $aman, $peringatan, $terlambat)
     {
@@ -160,15 +163,14 @@ class AnalyticsController extends Controller
             return [
                 'score' => 0,
                 'grade' => '-',
-                'efficiency' => 0,
-                'penalty' => 0,
                 'color' => '#6c757d', // gray for no data
             ];
         }
 
-        $efficiency = ($aman / $total) * 100;
-        $penalty = ($terlambat / $total) * 50;
-        $score = max(0, $efficiency - $penalty); // Don't go below 0
+        // Weighted Value System
+        // Aman = 100 points, Peringatan = 50 points, Terlambat = 0 points
+        $totalPoints = ($aman * 100) + ($peringatan * 50) + ($terlambat * 0);
+        $score = $totalPoints / $total;
 
         // Determine grade
         if ($score >= 90) {
@@ -188,8 +190,6 @@ class AnalyticsController extends Controller
         return [
             'score' => round($score, 1),
             'grade' => $grade,
-            'efficiency' => round($efficiency, 1),
-            'penalty' => round($penalty, 1),
             'color' => $color,
         ];
     }
