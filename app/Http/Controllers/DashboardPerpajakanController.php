@@ -1172,6 +1172,9 @@ class DashboardPerpajakanController extends Controller
                     // Akutansi fields
                     'nomor_miro' => $dokumen->nomor_miro,
                     'tanggal_miro' => $dokumen->tanggal_miro,
+                    // Fallback fields from CSV import
+                    'NO_PO' => $dokumen->NO_PO ?? null,
+                    'NO_MIRO_SES' => $dokumen->NO_MIRO_SES ?? null,
                 ]
             ]);
         }
