@@ -675,6 +675,25 @@
                 @enderror
               </div>
             </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nomor MIRO <span class="text-danger">*</span></label>
+                <input type="text" name="nomor_miro" id="nomor_miro" placeholder="Masukkan nomor MIRO"
+                  value="{{ old('nomor_miro', $dokumen->nomor_miro ?? '') }}">
+                @error('nomor_miro')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="form-group">
+                <label>Tanggal MIRO</label>
+                <input type="date" name="tanggal_miro"
+                  value="{{ old('tanggal_miro', $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('Y-m-d') : '') }}">
+                @error('tanggal_miro')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1045,59 +1064,7 @@
         </div>
       @endif
 
-      <!-- Section 6: Informasi Akutansi (Khusus Akutansi) -->
-      <div class="accordion-section akutansi-section">
-        <div class="accordion-header active" onclick="toggleAccordion(this)">
-          <div class="accordion-title">
-            <i class="fa-solid fa-calculator"></i>
-            <span>Informasi Akutansi</span>
-            <span class="akutansi-badge">KHUSUS AKUTANSI</span>
-          </div>
-          <i class="fa-solid fa-chevron-down accordion-icon"></i>
-        </div>
-        <div class="accordion-content active">
-          <div class="accordion-body">
-            <div
-              style="background: #e3f2fd; border-left: 4px solid #007bff; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px;">
-              <strong><i class="fa-solid fa-info-circle me-1"></i>Panduan Pengisian:</strong>
-              <ul style="margin: 8px 0 0 20px; font-size: 13px;">
-                <li>Nomor MIRO wajib diisi untuk proses pembayaran</li>
-                <li>Tanggal MIRO akan diisi otomatis setelah nomor MIRO tersedia</li>
-              </ul>
-            </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label style="color: #083E40; font-weight: 700;">
-                  <i class="fa-solid fa-file-invoice-dollar me-2" style="color: #007bff;"></i>
-                  Nomor MIRO
-                </label>
-                <input type="text" name="nomor_miro" id="nomor_miro" placeholder="Masukkan nomor MIRO"
-                  value="{{ old('nomor_miro', $dokumen->nomor_miro ?? '') }}"
-                  style="border: 2px solid #007bff; background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);">
-                @error('nomor_miro')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-                <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 11px;">
-                  <i class="fa-solid fa-info-circle"></i> Nomor MIRO wajib diisi untuk proses pembayaran
-                </small>
-              </div>
-              <div class="form-group">
-                <label>
-                  <i class="fa-solid fa-calendar me-2" style="color: #007bff;"></i>
-                  Tanggal MIRO
-                </label>
-                <input type="date" name="tanggal_miro"
-                  value="{{ old('tanggal_miro', $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('Y-m-d') : '') }}"
-                  style="border: 2px solid #007bff; background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);">
-                @error('tanggal_miro')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Form Actions -->
       <div class="form-actions">

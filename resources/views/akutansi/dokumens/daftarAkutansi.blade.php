@@ -5298,6 +5298,20 @@
                           <div class="detail-value" id="view-tanggal-berita-acara">-</div>
                         </div>
                       </div>
+
+                      <!-- Miro Details -->
+                      <div class="col-md-6">
+                        <div class="detail-item">
+                          <label class="detail-label">Nomor MIRO</label>
+                          <div class="detail-value" id="view-nomor-miro" style="font-weight: 700; color: #083E40;">-</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="detail-item">
+                          <label class="detail-label">Tanggal MIRO</label>
+                          <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -5384,30 +5398,7 @@
                     </div>
                   </div>
 
-                  <!-- Section 6: Informasi Akutansi -->
-                  <div class="form-section mb-4" style="background: linear-gradient(135deg, #f0f4f0 0%, #e8ede8 100%); border-radius: 12px; padding: 20px; border: 2px solid #889717;">
-                    <div class="section-header mb-3">
-                      <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-calculator"></i>
-                        INFORMASI AKUTANSI
-                        <span style="background: #889717; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">KHUSUS AKUTANSI</span>
-                      </h6>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Nomor MIRO</label>
-                          <div class="detail-value" id="view-nomor-miro" style="font-weight: 700; color: #083E40;">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Tanggal MIRO</label>
-                          <div class="detail-value" id="view-tanggal-miro" style="font-weight: 700; color: #083E40;">-</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
 
                 <!-- Modal Footer -->
