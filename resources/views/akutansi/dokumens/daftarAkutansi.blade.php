@@ -4504,7 +4504,7 @@
                 <div class="selected-count">
                   <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
                   @if(count($selectedColumns) > 0)
-                                                                                <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
+                                                                                                  <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
                       return $availableColumns[$col] ?? $col;
                     }, $selectedColumns)) }}</small>
                   @endif
@@ -4868,13 +4868,10 @@
               'view-jenis-pembayaran', 'view-uraian-spp', 'view-nilai-rupiah', 'view-ejaan-nilai-rupiah',
               'view-dibayar-kepada', 'view-kebun', 'view-no-spk', 'view-tanggal-spk', 'view-tanggal-berakhir-spk',
               'view-nomor-miro', 'view-no-berita-acara', 'view-tanggal-berita-acara', 'view-nomor-po', 'view-nomor-pr',
-              'view-tanggal-miro', 'view-komoditi-perpajakan', 'view-status-perpajakan', 'view-npwp',
-              'view-alamat-pembeli', 'view-no-kontrak', 'view-no-invoice', 'view-tanggal-invoice',
-              'view-dpp-invoice', 'view-ppn-invoice', 'view-dpp-ppn-invoice', 'view-tanggal-pengajuan-pajak',
-              'view-no-faktur', 'view-tanggal-faktur', 'view-dpp-faktur', 'view-ppn-faktur', 'view-selisih-pajak',
-              'view-keterangan-pajak', 'view-penggantian-pajak', 'view-dpp-penggantian', 'view-ppn-penggantian',
-              'view-selisih-ppn', 'view-tanggal-selesai-verifikasi-pajak', 'view-jenis-pph', 'view-dpp-pph',
-              'view-ppn-terhutang', 'view-link-dokumen-pajak'
+              'view-tanggal-miro',
+              // Perpajakan (Simplified - 6 Essential Fields)
+              'view-no-faktur', 'view-tanggal-faktur', 'view-tanggal-selesai-verifikasi-pajak',
+              'view-jenis-pph', 'view-dpp-pph', 'view-ppn-terhutang'
             ];
 
             fieldsToReset.forEach(fieldId => {
@@ -4938,49 +4935,28 @@
                   document.getElementById('view-nomor-po').textContent = poNumbers || '-';
                   document.getElementById('view-nomor-pr').textContent = prNumbers || '-';
 
-                  // Informasi Perpajakan (jika ada)
-                  if (dok.npwp || dok.no_faktur || dok.status_perpajakan) {
-                    document.getElementById('view-komoditi-perpajakan').textContent = dok.komoditi_perpajakan || '-';
-                    document.getElementById('view-status-perpajakan').textContent = formatStatusPerpajakan(dok.status_perpajakan);
-                    document.getElementById('view-npwp').textContent = dok.npwp || '-';
-                    document.getElementById('view-alamat-pembeli').textContent = dok.alamat_pembeli || '-';
-                    document.getElementById('view-no-kontrak').textContent = dok.no_kontrak || '-';
-                    document.getElementById('view-no-invoice').textContent = dok.no_invoice || '-';
+                  // Informasi Perpajakan (Simplified - 6 Essential Fields)
+                  if (dok.no_faktur || dok.tanggal_faktur || dok.jenis_pph || dok.dpp_pph || dok.ppn_terhutang || dok.tanggal_selesai_verifikasi_pajak) {
+                    // Row 1: No Faktur & Tanggal Faktur
+                    const noFakturEl = document.getElementById('view-no-faktur');
+                    if (noFakturEl) noFakturEl.textContent = dok.no_faktur || '-';
 
-                    // Data Invoice
-                    document.getElementById('view-tanggal-invoice').textContent = dok.tanggal_invoice ? formatDate(dok.tanggal_invoice) : '-';
-                    document.getElementById('view-dpp-invoice').textContent = dok.dpp_invoice ? formatNumber(dok.dpp_invoice) : '-';
-                    document.getElementById('view-ppn-invoice').textContent = dok.ppn_invoice ? formatNumber(dok.ppn_invoice) : '-';
-                    document.getElementById('view-dpp-ppn-invoice').textContent = dok.dpp_ppn_invoice ? formatNumber(dok.dpp_ppn_invoice) : '-';
-                    document.getElementById('view-tanggal-pengajuan-pajak').textContent = dok.tanggal_pengajuan_pajak ? formatDate(dok.tanggal_pengajuan_pajak) : '-';
+                    const tanggalFakturEl = document.getElementById('view-tanggal-faktur');
+                    if (tanggalFakturEl) tanggalFakturEl.textContent = dok.tanggal_faktur ? formatDate(dok.tanggal_faktur) : '-';
 
-                    // Data Faktur
-                    document.getElementById('view-no-faktur').textContent = dok.no_faktur || '-';
-                    document.getElementById('view-tanggal-faktur').textContent = dok.tanggal_faktur ? formatDate(dok.tanggal_faktur) : '-';
-                    document.getElementById('view-dpp-faktur').textContent = dok.dpp_faktur ? formatNumber(dok.dpp_faktur) : '-';
-                    document.getElementById('view-ppn-faktur').textContent = dok.ppn_faktur ? formatNumber(dok.ppn_faktur) : '-';
-                    document.getElementById('view-selisih-pajak').textContent = dok.selisih_pajak ? formatNumber(dok.selisih_pajak) : '-';
-                    document.getElementById('view-keterangan-pajak').textContent = dok.keterangan_pajak || '-';
+                    // Row 2: Tgl Selesai Verifikasi & Jenis PPh
+                    const tglVerifEl = document.getElementById('view-tanggal-selesai-verifikasi-pajak');
+                    if (tglVerifEl) tglVerifEl.textContent = dok.tanggal_selesai_verifikasi_pajak ? formatDate(dok.tanggal_selesai_verifikasi_pajak) : '-';
 
-                    // Data Penggantian
-                    document.getElementById('view-penggantian-pajak').textContent = dok.penggantian_pajak ? formatNumber(dok.penggantian_pajak) : '-';
-                    document.getElementById('view-dpp-penggantian').textContent = dok.dpp_penggantian ? formatNumber(dok.dpp_penggantian) : '-';
-                    document.getElementById('view-ppn-penggantian').textContent = dok.ppn_penggantian ? formatNumber(dok.ppn_penggantian) : '-';
-                    document.getElementById('view-selisih-ppn').textContent = dok.selisih_ppn ? formatNumber(dok.selisih_ppn) : '-';
+                    const jenisPphEl = document.getElementById('view-jenis-pph');
+                    if (jenisPphEl) jenisPphEl.textContent = dok.jenis_pph || '-';
 
-                    // Data Lainnya
-                    document.getElementById('view-tanggal-selesai-verifikasi-pajak').textContent = dok.tanggal_selesai_verifikasi_pajak ? formatDate(dok.tanggal_selesai_verifikasi_pajak) : '-';
-                    document.getElementById('view-jenis-pph').textContent = dok.jenis_pph || '-';
-                    document.getElementById('view-dpp-pph').textContent = dok.dpp_pph ? formatNumber(dok.dpp_pph) : '-';
-                    document.getElementById('view-ppn-terhutang').textContent = dok.ppn_terhutang ? formatNumber(dok.ppn_terhutang) : '-';
+                    // Row 3: DPP PPh & PPh Terhutang
+                    const dppPphEl = document.getElementById('view-dpp-pph');
+                    if (dppPphEl) dppPphEl.textContent = dok.dpp_pph ? formatNumber(dok.dpp_pph) : '-';
 
-                    // Link Dokumen Pajak
-                    const linkEl = document.getElementById('view-link-dokumen-pajak');
-                    if (dok.link_dokumen_pajak) {
-                      linkEl.innerHTML = `<a href="${dok.link_dokumen_pajak}" target="_blank" style="color: #0d6efd; text-decoration: none;"><i class="fa-solid fa-external-link me-1"></i>${dok.link_dokumen_pajak}</a>`;
-                    } else {
-                      linkEl.textContent = '-';
-                    }
+                    const ppnTerhutangEl = document.getElementById('view-ppn-terhutang');
+                    if (ppnTerhutangEl) ppnTerhutangEl.textContent = dok.ppn_terhutang ? formatNumber(dok.ppn_terhutang) : '-';
 
                     // Show perpajakan section
                     document.getElementById('perpajakan-section').style.display = 'block';
@@ -5349,220 +5325,60 @@
                     </div>
                   </div>
 
-                  <!-- Section 5: Informasi Perpajakan (Jika ada) -->
+                  <!-- Section 5: Informasi Perpajakan (Simplified - 6 Essential Fields) -->
                   <div class="form-section mb-4" id="perpajakan-section" style="display: none; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 20px; border: 2px solid #ffc107;">
                     <div class="section-header mb-3">
                       <h6 class="section-title" style="color: #92400e; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-file-invoice-dollar"></i>
                         INFORMASI PERPAJAKAN
-                        <span style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">DATA DARI PERPAJAKAN</span>
+                        <span style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">KHUSUS PERPAJAKAN</span>
                       </h6>
                     </div>
 
-                    <!-- Row 1: Komoditi & Status -->
+                    <!-- Row 1: No Faktur & Tanggal Faktur -->
                     <div class="row g-3 mb-3">
                       <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Komoditi</label>
-                          <div class="detail-value" id="view-komoditi-perpajakan">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Status Team Perpajakan</label>
-                          <div class="detail-value" id="view-status-perpajakan">-</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Row 2: NPWP & Alamat -->
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">NPWP Pembeli</label>
-                          <div class="detail-value" id="view-npwp">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Alamat</label>
-                          <div class="detail-value" id="view-alamat-pembeli">-</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Row 3: No Kontrak & No Invoice -->
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">No Kontrak</label>
-                          <div class="detail-value" id="view-no-kontrak">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">No Invoice</label>
-                          <div class="detail-value" id="view-no-invoice">-</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Data Invoice Section -->
-                    <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
-                      <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
-                        <i class="fa-solid fa-file-invoice me-2"></i>Data Invoice
-                      </h6>
-                    </div>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">Tanggal Invoice</label>
-                          <div class="detail-value" id="view-tanggal-invoice">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">DPP Invoice</label>
-                          <div class="detail-value" id="view-dpp-invoice">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">PPN Invoice</label>
-                          <div class="detail-value" id="view-ppn-invoice">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">DPP + PPN Invoice</label>
-                          <div class="detail-value" id="view-dpp-ppn-invoice">-</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Tanggal Pengajuan</label>
-                          <div class="detail-value" id="view-tanggal-pengajuan-pajak">-</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Data Faktur Section -->
-                    <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
-                      <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
-                        <i class="fa-solid fa-receipt me-2"></i>Data Faktur
-                      </h6>
-                    </div>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-3">
                         <div class="detail-item">
                           <label class="detail-label">No Faktur</label>
                           <div class="detail-value" id="view-no-faktur">-</div>
                         </div>
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-6">
                         <div class="detail-item">
                           <label class="detail-label">Tanggal Faktur</label>
                           <div class="detail-value" id="view-tanggal-faktur">-</div>
                         </div>
                       </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">DPP Faktur</label>
-                          <div class="detail-value" id="view-dpp-faktur">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">PPN Faktur</label>
-                          <div class="detail-value" id="view-ppn-faktur">-</div>
-                        </div>
-                      </div>
                     </div>
+
+                    <!-- Row 2: Tgl Selesai Verifikasi & Jenis PPh -->
                     <div class="row g-3 mb-3">
                       <div class="col-md-6">
                         <div class="detail-item">
-                          <label class="detail-label">Selisih Pajak</label>
-                          <div class="detail-value" id="view-selisih-pajak">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="detail-item">
-                          <label class="detail-label">Keterangan Pajak</label>
-                          <div class="detail-value" id="view-keterangan-pajak">-</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Data Penggantian Section -->
-                    <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
-                      <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
-                        <i class="fa-solid fa-exchange-alt me-2"></i>Data Penggantian
-                      </h6>
-                    </div>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">Penggantian Pajak</label>
-                          <div class="detail-value" id="view-penggantian-pajak">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">DPP Penggantian</label>
-                          <div class="detail-value" id="view-dpp-penggantian">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">PPN Penggantian</label>
-                          <div class="detail-value" id="view-ppn-penggantian">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="detail-item">
-                          <label class="detail-label">Selisih PPN</label>
-                          <div class="detail-value" id="view-selisih-ppn">-</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Data Lainnya -->
-                    <div style="border-top: 2px dashed #ffc107; margin: 16px 0; padding-top: 12px;">
-                      <h6 style="color: #92400e; font-weight: 600; font-size: 12px; margin-bottom: 12px;">
-                        <i class="fa-solid fa-info-circle me-2"></i>Data Lainnya
-                      </h6>
-                    </div>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-4">
-                        <div class="detail-item">
-                          <label class="detail-label">Tanggal Selesai Verifikasi Pajak</label>
+                          <label class="detail-label">Tgl. Selesai Verifikasi Pajak</label>
                           <div class="detail-value" id="view-tanggal-selesai-verifikasi-pajak">-</div>
                         </div>
                       </div>
-                      <div class="col-md-4">
+                      <div class="col-md-6">
                         <div class="detail-item">
                           <label class="detail-label">Jenis PPh</label>
                           <div class="detail-value" id="view-jenis-pph">-</div>
                         </div>
                       </div>
-                      <div class="col-md-4">
+                    </div>
+
+                    <!-- Row 3: DPP PPh & PPh Terhutang -->
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
                         <div class="detail-item">
                           <label class="detail-label">DPP PPh</label>
                           <div class="detail-value" id="view-dpp-pph">-</div>
                         </div>
                       </div>
-                      <div class="col-md-4">
+                      <div class="col-md-6">
                         <div class="detail-item">
-                          <label class="detail-label">PPN Terhutang</label>
+                          <label class="detail-label">PPh Terhutang</label>
                           <div class="detail-value" id="view-ppn-terhutang">-</div>
-                        </div>
-                      </div>
-                      <div class="col-md-8">
-                        <div class="detail-item">
-                          <label class="detail-label">Link Dokumen Pajak</label>
-                          <div class="detail-value" id="view-link-dokumen-pajak">-</div>
                         </div>
                       </div>
                     </div>
