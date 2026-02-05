@@ -493,6 +493,40 @@ class DashboardPembayaranController extends Controller
             }
         }
 
+        // ============================================
+        // ADVANCED FILTER SECTION
+        // ============================================
+        $filterBagian = $request->get('filter_bagian');
+        $filterVendor = $request->get('filter_vendor');
+        $filterKriteriaCf = $request->get('filter_kriteria_cf');
+        $filterSubKriteria = $request->get('filter_sub_kriteria');
+        $filterItemSubKriteria = $request->get('filter_item_sub_kriteria');
+        $filterKebun = $request->get('filter_kebun');
+        $filterStatusPembayaran = $request->get('filter_status_pembayaran');
+
+        // Apply advanced filters
+        if ($filterBagian && $filterBagian !== '') {
+            $query->where('nama_pengirim', $filterBagian);
+        }
+        if ($filterVendor && $filterVendor !== '') {
+            $query->where('dibayar_kepada', $filterVendor);
+        }
+        if ($filterKriteriaCf && $filterKriteriaCf !== '') {
+            $query->where('kategori', $filterKriteriaCf);
+        }
+        if ($filterSubKriteria && $filterSubKriteria !== '') {
+            $query->where('jenis_dokumen', $filterSubKriteria);
+        }
+        if ($filterItemSubKriteria && $filterItemSubKriteria !== '') {
+            $query->where('jenis_sub_pekerjaan', $filterItemSubKriteria);
+        }
+        if ($filterKebun && $filterKebun !== '') {
+            $query->where(function ($q) use ($filterKebun) {
+                $q->where('kebun', $filterKebun)
+                    ->orWhere('nama_kebuns', $filterKebun);
+            });
+        }
+
         // Helper function to calculate computed status for pembayaran role
         // Status khusus role pembayaran: "belum_siap_bayar" atau "siap_bayar" atau "sudah_dibayar"
         $getComputedStatus = function ($doc) {
@@ -662,6 +696,71 @@ class DashboardPembayaranController extends Controller
             session(['pembayaran_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // ============================================
+        // DROPDOWN DATA FOR ADVANCED FILTERS
+        // ============================================
+
+        // Get available years from documents
+        $availableYears = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->selectRaw('DISTINCT YEAR(tanggal_spp) as year')
+            ->whereNotNull('tanggal_spp')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter();
+
+        // Get available bagian (nama_pengirim)
+        $availableBagian = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('nama_pengirim')
+            ->where('nama_pengirim', '!=', '')
+            ->selectRaw('DISTINCT nama_pengirim')
+            ->orderBy('nama_pengirim')
+            ->pluck('nama_pengirim', 'nama_pengirim');
+
+        // Get available vendor (dibayar_kepada)
+        $availableVendor = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('dibayar_kepada')
+            ->where('dibayar_kepada', '!=', '')
+            ->selectRaw('DISTINCT dibayar_kepada')
+            ->orderBy('dibayar_kepada')
+            ->pluck('dibayar_kepada', 'dibayar_kepada');
+
+        // Get available kriteria CF (kategori)
+        $availableKriteriaCf = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('kategori')
+            ->where('kategori', '!=', '')
+            ->selectRaw('DISTINCT kategori')
+            ->orderBy('kategori')
+            ->pluck('kategori', 'kategori');
+
+        // Get available sub kriteria (jenis_dokumen)
+        $availableSubKriteria = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('jenis_dokumen')
+            ->where('jenis_dokumen', '!=', '')
+            ->selectRaw('DISTINCT jenis_dokumen')
+            ->orderBy('jenis_dokumen')
+            ->pluck('jenis_dokumen', 'jenis_dokumen');
+
+        // Get available item sub kriteria (jenis_sub_pekerjaan)
+        $availableItemSubKriteria = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('jenis_sub_pekerjaan')
+            ->where('jenis_sub_pekerjaan', '!=', '')
+            ->selectRaw('DISTINCT jenis_sub_pekerjaan')
+            ->orderBy('jenis_sub_pekerjaan')
+            ->pluck('jenis_sub_pekerjaan', 'jenis_sub_pekerjaan');
+
+        // Get available kebun
+        $kebunFromKebun = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('kebun')
+            ->where('kebun', '!=', '')
+            ->distinct()
+            ->pluck('kebun', 'kebun');
+        $kebunFromNamaKebuns = \App\Models\Dokumen::whereNotNull('nomor_agenda')
+            ->whereNotNull('nama_kebuns')
+            ->where('nama_kebuns', '!=', '')
+            ->distinct()
+            ->pluck('nama_kebuns', 'nama_kebuns');
+        $availableKebun = $kebunFromKebun->merge($kebunFromNamaKebuns)->unique()->sort();
+
         $data = array(
             "title" => "Daftar Pembayaran",
             "module" => "pembayaran",
@@ -674,6 +773,25 @@ class DashboardPembayaranController extends Controller
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
             'perPage' => $perPage,
+            // Year filter data
+            'availableYears' => $availableYears,
+            'selectedYear' => $year,
+            'yearFilterType' => $yearFilterType,
+            // Advanced filter dropdown data
+            'availableBagian' => $availableBagian,
+            'availableVendor' => $availableVendor,
+            'availableKriteriaCf' => $availableKriteriaCf,
+            'availableSubKriteria' => $availableSubKriteria,
+            'availableItemSubKriteria' => $availableItemSubKriteria,
+            'availableKebun' => $availableKebun,
+            // Selected advanced filters (for maintaining state)
+            'filterBagian' => $filterBagian,
+            'filterVendor' => $filterVendor,
+            'filterKriteriaCf' => $filterKriteriaCf,
+            'filterSubKriteria' => $filterSubKriteria,
+            'filterItemSubKriteria' => $filterItemSubKriteria,
+            'filterKebun' => $filterKebun,
+            'filterStatusPembayaran' => $filterStatusPembayaran,
         );
         return view('pembayaranNEW.dokumens.daftarPembayaran', $data);
     }

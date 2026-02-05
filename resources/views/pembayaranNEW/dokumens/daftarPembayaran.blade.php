@@ -1069,6 +1069,192 @@
       flex-wrap: wrap;
     }
   }
+
+  /* ============================================ */
+  /* ADVANCED FILTER PANEL STYLES */
+  /* ============================================ */
+  .advanced-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+    border: 2px solid rgba(136, 151, 23, 0.3);
+    color: #889717;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+  }
+
+  .advanced-filter-toggle:hover {
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.2);
+  }
+
+  .advanced-filter-toggle.active {
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+  }
+
+  .advanced-filter-toggle i {
+    transition: transform 0.3s ease;
+  }
+
+  .advanced-filter-toggle.active i.fa-chevron-down {
+    transform: rotate(180deg);
+  }
+
+  .advanced-filter-panel {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.4s ease;
+    margin-top: 0;
+  }
+
+  .advanced-filter-panel.show {
+    max-height: 600px;
+    opacity: 1;
+    margin-top: 16px;
+  }
+
+  .advanced-filter-content {
+    background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.08);
+  }
+
+  .advanced-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .filter-group label {
+    font-weight: 600;
+    color: #083E40;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .filter-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid rgba(8, 62, 64, 0.15);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #083E40;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23083E40'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+    padding-right: 35px;
+  }
+
+  .filter-group select:hover {
+    border-color: #889717;
+  }
+
+  .filter-group select:focus {
+    outline: none;
+    border-color: #889717;
+    box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn-apply-filter {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-apply-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+  }
+
+  .btn-reset-filter {
+    padding: 10px 24px;
+    background: white;
+    color: #dc3545;
+    font-weight: 600;
+    font-size: 13px;
+    border: 2px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-reset-filter:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+  }
+
+  .active-filters-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    background: #dc3545;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+    margin-left: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .advanced-filter-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .filter-actions {
+      flex-direction: column;
+    }
+    
+    .btn-apply-filter, .btn-reset-filter {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 
 <h2>{{ $title }}</h2>
@@ -1122,6 +1308,134 @@
       <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
         <i class="fa-solid fa-table-columns me-2"></i>Kustomisasi Kolom Tabel
       </button>
+    </div>
+  </div>
+  
+  <!-- Advanced Filter Toggle Button -->
+  @php
+    $activeFilterCount = 0;
+    if($filterBagian ?? null) $activeFilterCount++;
+    if($filterVendor ?? null) $activeFilterCount++;
+    if($filterKriteriaCf ?? null) $activeFilterCount++;
+    if($filterSubKriteria ?? null) $activeFilterCount++;
+    if($filterItemSubKriteria ?? null) $activeFilterCount++;
+    if($filterKebun ?? null) $activeFilterCount++;
+    if($filterStatusPembayaran ?? null) $activeFilterCount++;
+    if($selectedYear ?? null) $activeFilterCount++;
+  @endphp
+  <button type="button" class="advanced-filter-toggle {{ $activeFilterCount > 0 ? 'active' : '' }}" id="advancedFilterToggle">
+    <i class="fa-solid fa-sliders"></i>
+    <span>Filter Lanjutan</span>
+    <i class="fa-solid fa-chevron-down"></i>
+    @if($activeFilterCount > 0)
+      <span class="active-filters-badge">{{ $activeFilterCount }}</span>
+    @endif
+  </button>
+  
+  <!-- Advanced Filter Panel -->
+  <div class="advanced-filter-panel {{ $activeFilterCount > 0 ? 'show' : '' }}" id="advancedFilterPanel">
+    <div class="advanced-filter-content">
+      <div class="advanced-filter-grid">
+        <!-- Tahun Filter -->
+        <div class="filter-group">
+          <label for="filterYear"><i class="fa-solid fa-calendar-days me-2"></i>Tahun</label>
+          <select id="filterYear" name="year">
+            <option value="">Semua Tahun</option>
+            @foreach($availableYears ?? [] as $year)
+              <option value="{{ $year }}" {{ ($selectedYear ?? null) == $year ? 'selected' : '' }}>{{ $year }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Bagian Filter -->
+        <div class="filter-group">
+          <label for="filterBagian"><i class="fa-solid fa-building me-2"></i>Bagian</label>
+          <select id="filterBagian" name="filter_bagian">
+            <option value="">Semua Bagian</option>
+            @foreach($availableBagian ?? [] as $key => $value)
+              <option value="{{ $key }}" {{ ($filterBagian ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Vendor Filter -->
+        <div class="filter-group">
+          <label for="filterVendor"><i class="fa-solid fa-store me-2"></i>Vendor</label>
+          <select id="filterVendor" name="filter_vendor">
+            <option value="">Semua Vendor</option>
+            @foreach($availableVendor ?? [] as $key => $value)
+              <option value="{{ $key }}" {{ ($filterVendor ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Kriteria CF Filter -->
+        <div class="filter-group">
+          <label for="filterKriteriaCf"><i class="fa-solid fa-tags me-2"></i>Kriteria CF</label>
+          <select id="filterKriteriaCf" name="filter_kriteria_cf">
+            <option value="">Semua Kriteria</option>
+            @foreach($availableKriteriaCf ?? [] as $key => $value)
+              <option value="{{ $key }}" {{ ($filterKriteriaCf ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Sub Kriteria Filter -->
+        <div class="filter-group">
+          <label for="filterSubKriteria"><i class="fa-solid fa-tag me-2"></i>Sub Kriteria</label>
+          <select id="filterSubKriteria" name="filter_sub_kriteria">
+            <option value="">Semua Sub Kriteria</option>
+            @foreach($availableSubKriteria ?? [] as $key => $value)
+              <option value="{{ $key }}" {{ ($filterSubKriteria ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Item Sub Kriteria Filter -->
+        <div class="filter-group">
+          <label for="filterItemSubKriteria"><i class="fa-solid fa-tag me-2"></i>Item Sub Kriteria</label>
+          <select id="filterItemSubKriteria" name="filter_item_sub_kriteria">
+            <option value="">Semua Item</option>
+            @foreach($availableItemSubKriteria ?? [] as $key => $value)
+              <option value="{{ $key }}" {{ ($filterItemSubKriteria ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Kebun Filter -->
+        <div class="filter-group">
+          <label for="filterKebun"><i class="fa-solid fa-seedling me-2"></i>Kebun</label>
+          <select id="filterKebun" name="filter_kebun">
+            <option value="">Semua Kebun</option>
+            @foreach($availableKebun ?? [] as $key => $value)
+              <option value="{{ $key }}" {{ ($filterKebun ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
+            @endforeach
+          </select>
+        </div>
+        
+        <!-- Status Pembayaran Filter -->
+        <div class="filter-group">
+          <label for="filterStatusPembayaran"><i class="fa-solid fa-money-check-dollar me-2"></i>Status Pembayaran</label>
+          <select id="filterStatusPembayaran" name="filter_status_pembayaran">
+            <option value="">Semua Status</option>
+            <option value="belum_siap_bayar" {{ ($filterStatusPembayaran ?? null) == 'belum_siap_bayar' ? 'selected' : '' }}>Belum Siap Bayar</option>
+            <option value="siap_bayar" {{ ($filterStatusPembayaran ?? null) == 'siap_bayar' ? 'selected' : '' }}>Siap Bayar</option>
+            <option value="sudah_dibayar" {{ ($filterStatusPembayaran ?? null) == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Filter Actions -->
+      <div class="filter-actions">
+        <button type="button" class="btn-reset-filter" onclick="resetAdvancedFilters()">
+          <i class="fa-solid fa-rotate-left"></i>
+          Reset Filter
+        </button>
+        <button type="button" class="btn-apply-filter" onclick="applyAdvancedFilters()">
+          <i class="fa-solid fa-check"></i>
+          Terapkan Filter
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -3447,6 +3761,108 @@ function editDocumentFromModal() {
 }
 </style>
 
+<!-- Modal: Column Customization -->
+<div class="modal fade" id="columnCustomizationModal" tabindex="-1" aria-labelledby="columnCustomizationLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(8, 62, 64, 0.3); overflow: hidden;">
+      <!-- Modal Header -->
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%); border: none; padding: 20px 24px;">
+        <h5 class="modal-title" id="columnCustomizationLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-table-columns me-2"></i>Kustomisasi Kolom Tabel
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Modal Body -->
+      <div class="modal-body" style="padding: 24px;">
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+          <i class="fa-solid fa-info-circle me-2"></i>Pilih kolom yang ingin ditampilkan di tabel. Kolom "Status" dan "Aksi" selalu ditampilkan.
+        </p>
+        
+        <div class="column-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+          @foreach($availableColumns ?? [] as $key => $label)
+            @if($key !== 'status' && $key !== 'aksi')
+            <label class="column-checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f8faf8; border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+              <input type="checkbox" name="columns[]" value="{{ $key }}" 
+                {{ in_array($key, $selectedColumns ?? []) ? 'checked' : '' }}
+                style="width: 18px; height: 18px; accent-color: #889717;">
+              <span style="font-size: 13px; font-weight: 500; color: #083E40;">{{ $label }}</span>
+            </label>
+            @endif
+          @endforeach
+        </div>
+      </div>
+      
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6; padding: 16px 24px;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn" onclick="resetColumnSelection()" style="background: white; border: 2px solid rgba(220, 53, 69, 0.3); color: #dc3545; border-radius: 8px;">
+          <i class="fa-solid fa-rotate-left me-2"></i>Reset Default
+        </button>
+        <button type="button" class="btn btn-primary" onclick="saveColumnSelection()" style="background: linear-gradient(135deg, #889717 0%, #9ab01f 100%); border: none; border-radius: 8px;">
+          <i class="fa-solid fa-check me-2"></i>Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.column-checkbox-item:hover {
+  border-color: #889717;
+  background: white;
+}
+
+.column-checkbox-item:has(input:checked) {
+  border-color: #889717;
+  background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, rgba(154, 176, 31, 0.1) 100%);
+}
+</style>
+
+<script>
+// Column Customization Modal Functions
+function openColumnCustomizationModal() {
+  const modal = new bootstrap.Modal(document.getElementById('columnCustomizationModal'));
+  modal.show();
+}
+
+function saveColumnSelection() {
+  const checkboxes = document.querySelectorAll('#columnCustomizationModal input[name="columns[]"]:checked');
+  const columns = Array.from(checkboxes).map(cb => cb.value);
+  
+  if (columns.length === 0) {
+    alert('Pilih minimal satu kolom untuk ditampilkan.');
+    return;
+  }
+  
+  // Build URL with column parameters
+  const params = new URLSearchParams(window.location.search);
+  
+  // Clear existing columns
+  params.delete('columns[]');
+  
+  // Add selected columns
+  columns.forEach(col => {
+    params.append('columns[]', col);
+  });
+  
+  // Navigate with new params
+  window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+function resetColumnSelection() {
+  // Default columns
+  const defaultColumns = ['nomor_agenda', 'nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'dibayar_kepada', 'deadline'];
+  
+  // Uncheck all
+  document.querySelectorAll('#columnCustomizationModal input[name="columns[]"]').forEach(cb => {
+    cb.checked = defaultColumns.includes(cb.value);
+  });
+}
+</script>
+
 <!-- Modal: Success Notification (Modern & Professional) -->
 <div class="modal fade" id="successNotificationModal" tabindex="-1" aria-labelledby="successNotificationLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -3488,6 +3904,159 @@ function closeSuccessModal() {
   if (modal) modal.hide();
   location.reload();
 }
+
+// ============================================
+// ADVANCED FILTER PANEL FUNCTIONS
+// ============================================
+
+// Toggle advanced filter panel
+document.getElementById('advancedFilterToggle')?.addEventListener('click', function() {
+  const panel = document.getElementById('advancedFilterPanel');
+  const toggle = this;
+  
+  panel.classList.toggle('show');
+  toggle.classList.toggle('active');
+  
+  // Save state to localStorage
+  localStorage.setItem('pembayaranAdvancedFilterOpen', panel.classList.contains('show'));
+});
+
+// Apply advanced filters
+function applyAdvancedFilters() {
+  const params = new URLSearchParams(window.location.search);
+  
+  // Get all filter values
+  const filterYear = document.getElementById('filterYear')?.value || '';
+  const filterBagian = document.getElementById('filterBagian')?.value || '';
+  const filterVendor = document.getElementById('filterVendor')?.value || '';
+  const filterKriteriaCf = document.getElementById('filterKriteriaCf')?.value || '';
+  const filterSubKriteria = document.getElementById('filterSubKriteria')?.value || '';
+  const filterItemSubKriteria = document.getElementById('filterItemSubKriteria')?.value || '';
+  const filterKebun = document.getElementById('filterKebun')?.value || '';
+  const filterStatusPembayaran = document.getElementById('filterStatusPembayaran')?.value || '';
+  
+  // Clear existing filter params
+  params.delete('year');
+  params.delete('filter_bagian');
+  params.delete('filter_vendor');
+  params.delete('filter_kriteria_cf');
+  params.delete('filter_sub_kriteria');
+  params.delete('filter_item_sub_kriteria');
+  params.delete('filter_kebun');
+  params.delete('filter_status_pembayaran');
+  params.delete('page'); // Reset to first page when applying filters
+  
+  // Add new filter params
+  if (filterYear) params.set('year', filterYear);
+  if (filterBagian) params.set('filter_bagian', filterBagian);
+  if (filterVendor) params.set('filter_vendor', filterVendor);
+  if (filterKriteriaCf) params.set('filter_kriteria_cf', filterKriteriaCf);
+  if (filterSubKriteria) params.set('filter_sub_kriteria', filterSubKriteria);
+  if (filterItemSubKriteria) params.set('filter_item_sub_kriteria', filterItemSubKriteria);
+  if (filterKebun) params.set('filter_kebun', filterKebun);
+  if (filterStatusPembayaran) params.set('filter_status_pembayaran', filterStatusPembayaran);
+  
+  // Navigate with new params
+  const newUrl = window.location.pathname + '?' + params.toString();
+  window.location.href = newUrl;
+}
+
+// Reset advanced filters
+function resetAdvancedFilters() {
+  const params = new URLSearchParams(window.location.search);
+  
+  // Remove all advanced filter params
+  params.delete('year');
+  params.delete('filter_bagian');
+  params.delete('filter_vendor');
+  params.delete('filter_kriteria_cf');
+  params.delete('filter_sub_kriteria');
+  params.delete('filter_item_sub_kriteria');
+  params.delete('filter_kebun');
+  params.delete('filter_status_pembayaran');
+  params.delete('page');
+  
+  // Navigate without filter params
+  const remainingParams = params.toString();
+  const newUrl = window.location.pathname + (remainingParams ? '?' + remainingParams : '');
+  window.location.href = newUrl;
+}
+
+// Status filter dropdown functionality
+document.querySelectorAll('#statusFilterMenu .dropdown-item-modern').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    const filter = this.dataset.filter;
+    const params = new URLSearchParams(window.location.search);
+    
+    if (filter) {
+      params.set('status_filter', filter);
+    } else {
+      params.delete('status_filter');
+    }
+    params.delete('page'); // Reset to first page
+    
+    window.location.href = window.location.pathname + '?' + params.toString();
+  });
+});
+
+// Status filter dropdown toggle
+document.getElementById('statusFilterDropdown')?.addEventListener('click', function() {
+  const menu = document.getElementById('statusFilterMenu');
+  this.classList.toggle('show');
+  menu.classList.toggle('show');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const dropdown = document.querySelector('.dropdown-filter-modern');
+  const toggle = document.getElementById('statusFilterDropdown');
+  const menu = document.getElementById('statusFilterMenu');
+  
+  if (dropdown && !dropdown.contains(e.target)) {
+    toggle?.classList.remove('show');
+    menu?.classList.remove('show');
+  }
+});
+
+// Search functionality
+function performSearch() {
+  const searchInput = document.getElementById('pembayaranSearchInput');
+  const searchValue = searchInput?.value.trim() || '';
+  const params = new URLSearchParams(window.location.search);
+  
+  if (searchValue) {
+    params.set('search', searchValue);
+  } else {
+    params.delete('search');
+  }
+  params.delete('page'); // Reset to first page
+  
+  window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+function clearSearch() {
+  const params = new URLSearchParams(window.location.search);
+  params.delete('search');
+  params.delete('page');
+  window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+// Search on Enter key
+document.getElementById('pembayaranSearchInput')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    performSearch();
+  }
+});
+
+// Update filter text based on current selection
+document.addEventListener('DOMContentLoaded', function() {
+  const activeFilter = document.querySelector('#statusFilterMenu .dropdown-item-modern.active span');
+  const filterText = document.getElementById('filterText');
+  if (activeFilter && filterText) {
+    filterText.textContent = activeFilter.textContent;
+  }
+});
 </script>
 
 @endsection
