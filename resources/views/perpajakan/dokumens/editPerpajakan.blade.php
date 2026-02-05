@@ -800,6 +800,11 @@
           <div class="accordion-body">
             <!-- Nomor PO -->
             <div id="po-container">
+              @php
+                // Check if we have data from dokumenPos relationship or from NO_PO field
+                $hasPOData = $dokumen->dokumenPos->count() > 0 || !empty($dokumen->NO_PO);
+              @endphp
+
               @if($dokumen->dokumenPos->count() > 0)
                 @foreach($dokumen->dokumenPos as $index => $po)
                   <div class="form-group dynamic-field" data-field-type="po">
@@ -811,6 +816,15 @@
                       style="{{ $loop->first ? 'display: none;' : 'display: flex;' }}">−</button>
                   </div>
                 @endforeach
+              @elseif(!empty($dokumen->NO_PO))
+                {{-- Fallback: Use NO_PO field if dokumenPos is empty --}}
+                <div class="form-group dynamic-field" data-field-type="po">
+                  <label>Nomor PO</label>
+                  <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]"
+                    value="{{ old('nomor_po.0', $dokumen->NO_PO) }}">
+                  <button type="button" class="add-field-btn">+</button>
+                  <button type="button" class="remove-field-btn" style="display: none;">−</button>
+                </div>
               @else
                 <div class="form-group dynamic-field" data-field-type="po">
                   <label>Nomor PO</label>
@@ -1554,7 +1568,3 @@
   </script>
 
 @endsection
-
-
-
-
