@@ -343,6 +343,7 @@
             <div class="filter-group">
                 <label class="filter-label"><i class="fa-solid fa-calendar me-2"></i>Bulan</label>
                 <select class="filter-select" id="filterBulan">
+                    <option value="0" {{ $bulan == 0 ? 'selected' : '' }}>Semua Bulan</option>
                     @foreach(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $index => $namaBulan)
                         <option value="{{ $index + 1 }}" {{ $bulan == $index + 1 ? 'selected' : '' }}>{{ $namaBulan }}</option>
                     @endforeach

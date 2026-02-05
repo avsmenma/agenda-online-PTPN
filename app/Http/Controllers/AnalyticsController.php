@@ -25,7 +25,8 @@ class AnalyticsController extends Controller
      */
     public function index(Request $request)
     {
-        $bulan = $request->get('bulan', Carbon::now()->month);
+        // Default: 0 = Semua Bulan (All months)
+        $bulan = $request->get('bulan', 0);
         $tahun = $request->get('tahun', Carbon::now()->year);
 
         // Get available years for filter
@@ -103,11 +104,16 @@ class AnalyticsController extends Controller
     {
         $now = Carbon::now();
 
-        // Query documents received by this role in the specified month/year
+        // Query documents received by this role in the specified year
+        // If bulan = 0, show all months (no month filter)
         $query = DokumenRoleData::where('role_code', $roleCode)
             ->whereNotNull('received_at')
-            ->whereYear('received_at', $tahun)
-            ->whereMonth('received_at', $bulan);
+            ->whereYear('received_at', $tahun);
+
+        // Apply month filter only if specific month is selected (bulan > 0)
+        if ($bulan > 0) {
+            $query->whereMonth('received_at', $bulan);
+        }
 
         $documents = $query->get();
 
