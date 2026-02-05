@@ -962,19 +962,19 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                  {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                      {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                  {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                      {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                  {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                      {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
@@ -1234,7 +1234,7 @@
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
                     style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                                                                                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1476,6 +1476,19 @@
               @endforeach
             </select>
           </div>
+
+          <div class="mb-3">
+            <label for="exportStatus" class="form-label" style="font-weight: 600; color: var(--primary-color);">
+              <i class="fas fa-filter me-1"></i> Status Dokumen
+            </label>
+            <select id="exportStatus" class="form-select"
+              style="border-radius: 8px; border: 2px solid #e5e7eb; padding: 10px 16px;">
+              <option value="">Semua Status</option>
+              <option value="aman">Aman (< 24 jam)</option>
+              <option value="peringatan">Peringatan (24-72 jam)</option>
+              <option value="terlambat">Terlambat (≥ 72 jam)</option>
+            </select>
+          </div>
         </div>
         <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 16px 24px;">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
@@ -1597,11 +1610,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                            <span>${label}: ${displayValue}</span>
-                            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                              <i class="fas fa-times"></i>
-                            </button>
-                          `;
+                              <span>${label}: ${displayValue}</span>
+                              <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                                <i class="fas fa-times"></i>
+                              </button>
+                            `;
           badgesContainer.appendChild(badge);
         }
       }
@@ -1828,6 +1841,7 @@
     function confirmExport() {
       const year = document.getElementById('exportYear').value;
       const month = document.getElementById('exportMonth').value;
+      const status = document.getElementById('exportStatus').value;
 
       let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
       const params = new URLSearchParams();
@@ -1837,6 +1851,9 @@
       }
       if (month) {
         params.set('month', month);
+      }
+      if (status) {
+        params.set('status', status);
       }
 
       if (params.toString()) {

@@ -2569,6 +2569,7 @@ class OwnerDashboardController extends Controller
     /**
      * Export rekapan keterlambatan per role ke Excel (XML Spreadsheet format)
      * Supports multiple worksheets - one per month when "Semua Bulan" is selected
+     * Supports status filter: aman, peringatan, terlambat, or all (empty)
      */
     public function exportRekapanKeterlambatan(Request $request, $roleCode)
     {
@@ -2580,6 +2581,7 @@ class OwnerDashboardController extends Controller
 
         $year = $request->get('year');
         $month = $request->get('month');
+        $statusFilter = $request->get('status'); // aman, peringatan, terlambat, or empty for all
 
         $roleNames = [
             'team_verifikasi' => 'Team Verifikasi',
@@ -2604,7 +2606,8 @@ class OwnerDashboardController extends Controller
         ];
 
         $roleName = $roleNames[$roleCode] ?? $roleCode;
-        $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . '_' . now()->format('Y-m-d_H-i') . '.xls';
+        $statusSuffix = $statusFilter ? '_' . strtoupper($statusFilter) : '';
+        $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . $statusSuffix . '_' . now()->format('Y-m-d_H-i') . '.xls';
 
         // Deadline thresholds per role (in days)
         $deadlineThresholds = [
@@ -2620,7 +2623,7 @@ class OwnerDashboardController extends Controller
 
         // If specific month is selected, export single sheet (old behavior)
         if ($month) {
-            return $this->exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename);
+            return $this->exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename, $statusFilter);
         }
 
         // Multi-sheet export: one sheet per month
@@ -2827,6 +2830,14 @@ class OwnerDashboardController extends Controller
                         }
                     }
 
+                    // Filter by status if specified
+                    if ($statusFilter) {
+                        $statusLower = strtolower($status);
+                        if ($statusLower !== strtolower($statusFilter)) {
+                            continue; // Skip this document
+                        }
+                    }
+
                     $completedAt = $roleData->processed_at;
                     $isCompleted = !is_null($completedAt);
                     $prosesStatus = $isCompleted ? 'Selesai' : 'Sedang Diproses';
@@ -2877,7 +2888,7 @@ class OwnerDashboardController extends Controller
     /**
      * Helper: Export single sheet rekapan (when specific month is selected)
      */
-    private function exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename)
+    private function exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename, $statusFilter = null)
     {
         $query = DokumenRoleData::where('role_code', $roleCode)
             ->whereNotNull('received_at')
@@ -2893,6 +2904,7 @@ class OwnerDashboardController extends Controller
         $roleDataList = $query->orderBy('received_at', 'asc')->get();
 
         // Build HTML table that Excel can read
+        $statusLabel = $statusFilter ? ' - ' . strtoupper($statusFilter) : '';
         $html = '<!DOCTYPE html>
 <html>
 <head>
@@ -2917,10 +2929,10 @@ class OwnerDashboardController extends Controller
 <body>
 <table>
     <tr>
-        <td colspan="10" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . '</td>
+        <td colspan="10" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . $statusLabel . '</td>
     </tr>
     <tr>
-        <td colspan="10" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . ($monthNames[$month] ?? $month) : '') . '</td>
+        <td colspan="10" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . ($monthNames[$month] ?? $month) : '') . ($statusFilter ? ' | Status: ' . strtoupper($statusFilter) : '') . '</td>
     </tr>
     <tr><td colspan="10"></td></tr>
     <tr class="header">
@@ -2979,6 +2991,14 @@ class OwnerDashboardController extends Controller
                 } else {
                     $status = 'TERLAMBAT';
                     $statusClass = 'status-terlambat';
+                }
+            }
+
+            // Filter by status if specified
+            if ($statusFilter) {
+                $statusLower = strtolower($status);
+                if ($statusLower !== strtolower($statusFilter)) {
+                    continue; // Skip this document
                 }
             }
 
