@@ -201,7 +201,7 @@ class BagianDokumenController extends Controller
         }
 
         $validated = $request->validate([
-            'nomor_agenda' => 'required|string|max:255',
+            'nomor_agenda' => 'nullable|string|max:255',
             'nomor_spp' => 'required|string|max:255',
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
@@ -432,7 +432,7 @@ class BagianDokumenController extends Controller
         }
 
         $validated = $request->validate([
-            'nomor_agenda' => 'required|string|max:255',
+            'nomor_agenda' => 'nullable|string|max:255',
             'nomor_spp' => 'required|string|max:255',
             'tanggal_spp' => 'required|date',
             'uraian_spp' => 'required|string',
