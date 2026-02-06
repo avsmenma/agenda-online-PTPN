@@ -4122,8 +4122,8 @@
                           </button>
                         </a>
                         <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                          onclick="alert('Fitur kembalikan untuk Team Verifikasi akan segera tersedia')"
-                          title="Kembalikan Dokumen">
+                          onclick="openReturnToBidangModal({{ $dokumen->id }}, '{{ $dokumen->bagian ?? 'Unknown' }}')"
+                          title="Kembalikan Dokumen ke Bidang">
                           <i class="fa-solid fa-undo"></i>
                           <span>Balik</span>
                         </button>
@@ -4159,6 +4159,151 @@
           @include('partials.pagination-enhanced', ['paginator' => $dokumens])
         @endif
 
+        <!-- Modal Pengembalian ke Bidang -->
+        <div id="returnToBidangModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+          <div class="modal-content" style="background: white; border-radius: 12px; padding: 24px; max-width: 450px; width: 90%; margin: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+              <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #1f2937;">
+                <i class="fa-solid fa-undo me-2" style="color: #f59e0b;"></i>
+                Kembalikan Dokumen ke Bidang
+              </h3>
+              <button type="button" onclick="closeReturnToBidangModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 0; line-height: 1;">&times;</button>
+            </div>
+            <form id="returnToBidangForm" onsubmit="submitReturnToBidang(event)">
+              <input type="hidden" id="returnToBidangDocId" name="dokumen_id">
+              <input type="hidden" id="returnToBidangTarget" name="target_bidang">
+              
+              <div class="modal-body">
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #f59e0b;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-building" style="font-size: 24px; color: #b45309;"></i>
+                    <div>
+                      <div style="font-size: 12px; color: #92400e; font-weight: 500; margin-bottom: 2px;">Dokumen akan dikembalikan ke:</div>
+                      <div id="returnToBidangName" style="font-size: 16px; font-weight: 700; color: #78350f;">Loading...</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label for="returnToBidangReason" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">
+                    <i class="fa-solid fa-comment-dots me-1"></i> Alasan Pengembalian (Opsional)
+                  </label>
+                  <textarea id="returnToBidangReason" name="reason" rows="3" 
+                    style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; resize: vertical; box-sizing: border-box;" 
+                    placeholder="Masukkan alasan pengembalian dokumen..."></textarea>
+                </div>
+                
+                <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 13px; color: #6b7280;">
+                  <i class="fa-solid fa-info-circle me-2" style="color: #3b82f6;"></i>
+                  Dokumen yang dikembalikan akan dipindahkan ke halaman <strong>Pengembalian ke Bidang</strong> dan tidak lagi tampil di daftar utama.
+                </div>
+              </div>
+              
+              <div class="modal-footer" style="display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                <button type="button" onclick="closeReturnToBidangModal()" 
+                  style="flex: 1; padding: 12px 16px; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                  Batal
+                </button>
+                <button type="submit" id="returnToBidangSubmitBtn"
+                  style="flex: 1; padding: 12px 16px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  <span>Kembalikan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <script>
+          // ===== Return to Bidang Modal Functions =====
+          window.openReturnToBidangModal = function(docId, bagian) {
+            console.log('Opening return to bidang modal for doc:', docId, 'bagian:', bagian);
+            
+            document.getElementById('returnToBidangDocId').value = docId;
+            document.getElementById('returnToBidangTarget').value = bagian;
+            document.getElementById('returnToBidangName').textContent = bagian || 'Tidak diketahui';
+            document.getElementById('returnToBidangReason').value = '';
+            
+            const modal = document.getElementById('returnToBidangModal');
+            modal.style.display = 'flex';
+            
+            // Close modal on overlay click
+            modal.onclick = function(e) {
+              if (e.target === modal) {
+                closeReturnToBidangModal();
+              }
+            };
+          };
+          
+          window.closeReturnToBidangModal = function() {
+            document.getElementById('returnToBidangModal').style.display = 'none';
+          };
+          
+          window.submitReturnToBidang = function(event) {
+            event.preventDefault();
+            
+            const docId = document.getElementById('returnToBidangDocId').value;
+            const reason = document.getElementById('returnToBidangReason').value;
+            const submitBtn = document.getElementById('returnToBidangSubmitBtn');
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Memproses...</span>';
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            fetch(`/returns/verifikasi/${docId}/to-bidang`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+              },
+              body: JSON.stringify({
+                reason: reason
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Show success message
+                alert('Dokumen berhasil dikembalikan ke ' + (data.target_bidang || 'Bidang'));
+                closeReturnToBidangModal();
+                
+                // Remove row from table
+                const row = document.querySelector(`tr[data-id="${docId}"], tr.main-row[onclick*="${docId}"]`);
+                if (row) {
+                  row.style.transition = 'opacity 0.3s, background-color 0.3s';
+                  row.style.backgroundColor = '#fef3c7';
+                  setTimeout(() => {
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                  }, 500);
+                  
+                  // Also remove detail row if exists
+                  const detailRow = document.getElementById(`detail-${docId}`);
+                  if (detailRow) detailRow.remove();
+                }
+                
+                // Optionally reload the page
+                // window.location.reload();
+              } else {
+                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Terjadi kesalahan saat mengembalikan dokumen');
+            })
+            .finally(() => {
+              // Re-enable button
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Kembalikan</span>';
+            });
+          };
+        </script>
+        
         <!-- Modal Alasan Pengembalian -->
 
         <script>

@@ -2074,7 +2074,7 @@ class TeamVerifikasiController extends Controller
     }
 
     /**
-     * Return document to bidang
+     * Return document to bidang (auto-detect from bagian field)
      */
     public function returnToBidang(Dokumen $dokumen, Request $request)
     {
@@ -2087,15 +2087,78 @@ class TeamVerifikasiController extends Controller
                 ], 403);
             }
 
-            // Validate input
+            // Auto-detect bidang from document's bagian field
+            $bagian = $dokumen->bagian;
+
+            // Map bagian names to bidang codes (handle various naming conventions)
+            $bagianToBidangMap = [
+                // DPM
+                'DPM' => 'DPM',
+                'Divisi Produksi dan Manufaktur' => 'DPM',
+                'Produksi' => 'DPM',
+                // SKH
+                'SKH' => 'SKH',
+                'Sub Kontrak Hutan' => 'SKH',
+                // SDM
+                'SDM' => 'SDM',
+                'Sumber Daya Manusia' => 'SDM',
+                'HR' => 'SDM',
+                // TEP
+                'TEP' => 'TEP',
+                'Teknik dan Perencanaan' => 'TEP',
+                'Teknik' => 'TEP',
+                // KPL
+                'KPL' => 'KPL',
+                'Keuangan dan Pelaporan' => 'KPL',
+                'Keuangan' => 'KPL',
+                // AKN
+                'AKN' => 'AKN',
+                'Akuntansi' => 'AKN',
+                // TAN
+                'TAN' => 'TAN',
+                'Tanaman dan Perkebunan' => 'TAN',
+                'Tanaman' => 'TAN',
+                // PMO
+                'PMO' => 'PMO',
+                'Project Management Office' => 'PMO',
+            ];
+
+            // Try to find matching bidang code
+            $targetBidang = null;
+            if ($bagian) {
+                // Direct match
+                if (isset($bagianToBidangMap[$bagian])) {
+                    $targetBidang = $bagianToBidangMap[$bagian];
+                } else {
+                    // Case-insensitive partial match
+                    foreach ($bagianToBidangMap as $name => $code) {
+                        if (stripos($bagian, $name) !== false || stripos($name, $bagian) !== false) {
+                            $targetBidang = $code;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // If still no match, check if bagian itself is a valid code
+            $validCodes = ['DPM', 'SKH', 'SDM', 'TEP', 'KPL', 'AKN', 'TAN', 'PMO'];
+            if (!$targetBidang && $bagian && in_array(strtoupper($bagian), $validCodes)) {
+                $targetBidang = strtoupper($bagian);
+            }
+
+            // If no bidang detected, return error
+            if (!$targetBidang) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat mendeteksi bidang asal dokumen. Field bagian kosong atau tidak valid.',
+                    'bagian_value' => $bagian
+                ], 422);
+            }
+
+            // Validate optional reason (only if provided)
             $request->validate([
-                'target_bidang' => 'required|string|in:DPM,SKH,SDM,TEP,KPL,AKN,TAN,PMO',
-                'bidang_return_reason' => 'required|string|min:5|max:1000'
+                'bidang_return_reason' => 'nullable|string|max:1000'
             ], [
-                'target_bidang.required' => 'Bidang tujuan wajib dipilih.',
-                'target_bidang.in' => 'Bidang tujuan tidak valid. Pilih salah satu: DPM, SKH, SDM, TEP, KPL, AKN, TAN, PMO.',
-                'bidang_return_reason.required' => 'Alasan pengembalian ke bidang wajib diisi.',
-                'bidang_return_reason.min' => 'Alasan pengembalian minimal 5 karakter.',
                 'bidang_return_reason.max' => 'Alasan pengembalian maksimal 1000 karakter.'
             ]);
 
@@ -2105,9 +2168,9 @@ class TeamVerifikasiController extends Controller
             $dokumen->update([
                 'status' => 'returned_to_bidang',
                 'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
-                'target_bidang' => $request->target_bidang,
+                'target_bidang' => $targetBidang,
                 'bidang_returned_at' => now(),
-                'bidang_return_reason' => $request->bidang_return_reason,
+                'bidang_return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
             ]);
 
             \DB::commit();
@@ -2115,8 +2178,9 @@ class TeamVerifikasiController extends Controller
             \Log::info('Document returned to bidang', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
-                'target_bidang' => $request->target_bidang,
-                'reason' => $request->bidang_return_reason
+                'original_bagian' => $bagian,
+                'target_bidang' => $targetBidang,
+                'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
             ]);
 
             // Map bidang codes to names
@@ -2128,16 +2192,17 @@ class TeamVerifikasiController extends Controller
                 'KPL' => 'Keuangan dan Pelaporan',
                 'AKN' => 'Akuntansi',
                 'TAN' => 'Tanaman dan Perkebunan',
-                'PMO' => 'PMO'
+                'PMO' => 'Project Management Office'
             ];
 
-            $bidangName = $bidangNames[$request->target_bidang] ?? $request->target_bidang;
+            $bidangName = $bidangNames[$targetBidang] ?? $targetBidang;
 
             return response()->json([
                 'success' => true,
                 'message' => "Dokumen berhasil dikembalikan ke bidang {$bidangName}.",
-                'target_bidang' => $request->target_bidang,
-                'reason' => $request->bidang_return_reason
+                'target_bidang' => $targetBidang,
+                'bidang_name' => $bidangName,
+                'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -2155,6 +2220,7 @@ class TeamVerifikasiController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Send document back to main list from bidang returns
