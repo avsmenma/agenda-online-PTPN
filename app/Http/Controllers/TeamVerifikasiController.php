@@ -2068,7 +2068,7 @@ class TeamVerifikasiController extends Controller
             'selectedBidang' => $request->bidang
         );
 
-        return view('team_verifikasi.dokumens.pengembalianKeBidangB', $data);
+        return view('team_verifikasi.dokumens.pengembalianKeBidang', $data);
     }
 
     /**
