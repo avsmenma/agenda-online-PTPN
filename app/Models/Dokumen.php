@@ -524,6 +524,11 @@ class Dokumen extends Model
         $this->current_handler = $handlerMap[$roleCode] ?? $roleCode;
 
         switch ($normalizedRoleCode) {
+            case 'operator':
+                $this->status = 'sent_to_team_verifikasi'; // Document approved by operator, ready in operator list
+                // Mark as approved by operator so bagian shows "Terkirim"
+                break;
+
             case 'team_verifikasi':
                 $this->status = 'sedang diproses'; // Status expected by DashboardB (with space, not underscore)
                 // Note: processed_at column was removed in cleanup migration, timestamp is now in dokumen_role_data

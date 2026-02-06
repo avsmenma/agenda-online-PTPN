@@ -602,18 +602,20 @@
                               <a href="{{ route('bagian.documents.edit', $doc) }}" class="btn-action btn-edit" title="Edit">
                                 <i class="fa-solid fa-pen"></i>
                               </a>
-                              <form action="{{ route('bagian.documents.send-to-Operator', $doc) }}" method="POST" class="d-inline"
-                                onsubmit="return confirm('Apakah anda yakin dokumen ini dikirim ke Bidang Keuangan dan Akutansi?')">
+                              <form id="sendForm-{{ $doc->id }}" action="{{ route('bagian.documents.send-to-Operator', $doc) }}"
+                                method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn-action btn-send" title="Kirim">
+                                <button type="button" class="btn-action btn-send" title="Kirim"
+                                  onclick="showSendModal({{ $doc->id }})">
                                   <i class="fa-solid fa-paper-plane"></i>
                                 </button>
                               </form>
-                              <form action="{{ route('bagian.documents.destroy', $doc) }}" method="POST" class="d-inline"
-                                onsubmit="return confirm('Hapus dokumen ini?')">
+                              <form id="deleteForm-{{ $doc->id }}" action="{{ route('bagian.documents.destroy', $doc) }}"
+                                method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn-action btn-delete" title="Hapus">
+                                <button type="button" class="btn-action btn-delete" title="Hapus"
+                                  onclick="showDeleteModal({{ $doc->id }})">
                                   <i class="fa-solid fa-trash"></i>
                                 </button>
                               </form>
@@ -659,6 +661,87 @@
           </a>
         </div>
       @endif
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteConfirmModal" class="confirm-modal-overlay">
+    <div class="confirm-modal">
+      <div class="confirm-icon delete-icon">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <h3 class="confirm-title">Hapus Dokumen?</h3>
+      <p class="confirm-message">Apakah anda yakin ingin menghapus dokumen ini? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-confirm-cancel" onclick="closeDeleteModal()">
+          <i class="fa-solid fa-times"></i> Batal
+        </button>
+        <button type="button" class="btn-confirm-delete" id="confirmDeleteBtn">
+          <i class="fa-solid fa-trash"></i> Ya, Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Confirmation Modal -->
+  <div id="sendConfirmModal" class="confirm-modal-overlay">
+    <div class="confirm-modal send-modal">
+      <div class="confirm-icon send-icon">
+        <i class="fa-solid fa-paper-plane"></i>
+      </div>
+      <h3 class="confirm-title">Kirim Dokumen?</h3>
+      <p class="confirm-message">Apakah anda yakin dokumen ini dikirim ke Bidang Keuangan dan Akutansi?</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-confirm-cancel" onclick="closeSendModal()">
+          <i class="fa-solid fa-times"></i> Batal
+        </button>
+        <button type="button" class="btn-confirm-send" id="confirmSendBtn">
+          <i class="fa-solid fa-paper-plane"></i> Ya, Kirim
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Success Modal -->
+  <div id="sendSuccessModal" class="success-modal-overlay">
+    <div class="success-modal">
+      <div class="success-icon-container">
+        <div class="success-circle">
+          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
+        </div>
+        <div class="confetti">
+          <div class="confetti-piece"></div>
+          <div class="confetti-piece"></div>
+          <div class="confetti-piece"></div>
+          <div class="confetti-piece"></div>
+          <div class="confetti-piece"></div>
+          <div class="confetti-piece"></div>
+        </div>
+      </div>
+      <h2 class="success-title">Berhasil Terkirim!</h2>
+      <div class="success-details">
+        <div class="success-stat">
+          <span class="stat-number">1</span>
+          <span class="stat-label">Dokumen</span>
+        </div>
+        <div class="success-arrow">
+          <i class="fa-solid fa-arrow-right"></i>
+        </div>
+        <div class="success-destination">
+          <i class="fa-solid fa-inbox"></i>
+          <span>Bidang Keuangan</span>
+        </div>
+      </div>
+      <p class="success-message">
+        <i class="fa-solid fa-info-circle"></i>
+        Dokumen telah masuk ke <strong>inbox</strong> dan menunggu persetujuan
+      </p>
+      <button type="button" class="btn-success-close" onclick="closeSuccessAndReload()">
+        <i class="fa-solid fa-check"></i> Mengerti
+      </button>
     </div>
   </div>
 
@@ -1386,6 +1469,441 @@
         text-align: center;
       }
     }
+
+    /* Confirmation Modal Styles */
+    .confirm-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .confirm-modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .confirm-modal {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        transform: scale(0.9) translateY(-20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .confirm-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+
+    .delete-icon {
+      background: linear-gradient(135deg, #fce4ec 0%, #ffcdd2 100%);
+      color: #e53935;
+    }
+
+    .send-icon {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      color: #1976d2;
+    }
+
+    .confirm-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 12px 0;
+    }
+
+    .confirm-message {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0 0 24px 0;
+      line-height: 1.5;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-confirm-cancel {
+      padding: 12px 24px;
+      border: 1px solid #e5e7eb;
+      background: white;
+      color: #374151;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-confirm-cancel:hover {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+    }
+
+    .btn-confirm-delete {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-confirm-delete:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-confirm-send {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(8, 62, 64, 0.3);
+    }
+
+    .btn-confirm-send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(8, 62, 64, 0.4);
+    }
+
+    /* Success Modal Styles */
+    .success-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .success-modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .success-modal {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .success-icon-container {
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .success-circle {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto;
+    }
+
+    .checkmark {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: block;
+      stroke-width: 2;
+      stroke: #10b981;
+      stroke-miterlimit: 10;
+      box-shadow: inset 0px 0px 0px #10b981;
+      animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+    }
+
+    .checkmark-circle {
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      stroke-width: 2;
+      stroke-miterlimit: 10;
+      stroke: #10b981;
+      fill: none;
+      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+
+    .checkmark-check {
+      transform-origin: 50% 50%;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+    }
+
+    @keyframes stroke {
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes fill {
+      100% {
+        box-shadow: inset 0px 0px 0px 30px rgba(16, 185, 129, 0.1);
+      }
+    }
+
+    @keyframes scale {
+
+      0%,
+      100% {
+        transform: none;
+      }
+
+      50% {
+        transform: scale3d(1.1, 1.1, 1);
+      }
+    }
+
+    .confetti {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: confetti-fall 1s ease-out forwards;
+      opacity: 0;
+    }
+
+    .confetti-piece:nth-child(1) {
+      background: #f59e0b;
+      animation-delay: 0.2s;
+      --tx: -60px;
+      --ty: -40px;
+      --rot: 180deg;
+    }
+
+    .confetti-piece:nth-child(2) {
+      background: #10b981;
+      animation-delay: 0.3s;
+      --tx: 70px;
+      --ty: -50px;
+      --rot: -200deg;
+    }
+
+    .confetti-piece:nth-child(3) {
+      background: #3b82f6;
+      animation-delay: 0.4s;
+      --tx: -50px;
+      --ty: 60px;
+      --rot: 150deg;
+    }
+
+    .confetti-piece:nth-child(4) {
+      background: #ec4899;
+      animation-delay: 0.5s;
+      --tx: 60px;
+      --ty: 50px;
+      --rot: -180deg;
+    }
+
+    .confetti-piece:nth-child(5) {
+      background: #8b5cf6;
+      animation-delay: 0.6s;
+      --tx: -30px;
+      --ty: -60px;
+      --rot: 220deg;
+    }
+
+    .confetti-piece:nth-child(6) {
+      background: #ef4444;
+      animation-delay: 0.7s;
+      --tx: 40px;
+      --ty: 70px;
+      --rot: -150deg;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg) scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx, 50px), var(--ty, 80px)) rotate(var(--rot, 360deg)) scale(0.5);
+      }
+    }
+
+    .success-title {
+      color: #10b981;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 24px 0;
+    }
+
+    .success-details {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .success-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-number {
+      font-size: 36px;
+      font-weight: 800;
+      color: #059669;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    .success-arrow {
+      color: #10b981;
+      font-size: 20px;
+      animation: arrowPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes arrowPulse {
+
+      0%,
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      50% {
+        transform: translateX(5px);
+        opacity: 0.7;
+      }
+    }
+
+    .success-destination {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .success-destination i {
+      font-size: 24px;
+      color: #059669;
+    }
+
+    .success-destination span {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .success-message {
+      color: #6b7280;
+      font-size: 14px;
+      margin: 0 0 28px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .success-message i {
+      color: #3b82f6;
+    }
+
+    .btn-success-close {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-success-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
   </style>
 
   <script>
@@ -1465,7 +1983,102 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         closeModal();
+        closeDeleteModal();
+        closeSendModal();
       }
+    });
+
+    // ============ DELETE MODAL FUNCTIONS ============
+    let deleteFormId = null;
+
+    function showDeleteModal(docId) {
+      deleteFormId = docId;
+      document.getElementById('deleteConfirmModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteConfirmModal').classList.remove('show');
+      document.body.style.overflow = '';
+      deleteFormId = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+      if (deleteFormId) {
+        document.getElementById('deleteForm-' + deleteFormId).submit();
+      }
+    });
+
+    // Close on overlay click
+    document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
+
+    // ============ SEND MODAL FUNCTIONS ============
+    let sendFormId = null;
+
+    function showSendModal(docId) {
+      sendFormId = docId;
+      document.getElementById('sendConfirmModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSendModal() {
+      document.getElementById('sendConfirmModal').classList.remove('show');
+      document.body.style.overflow = '';
+      sendFormId = null;
+    }
+
+    document.getElementById('confirmSendBtn').addEventListener('click', function() {
+      if (sendFormId) {
+        const form = document.getElementById('sendForm-' + sendFormId);
+        const formData = new FormData(form);
+        
+        // Show loading state
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+        this.disabled = true;
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => {
+          closeSendModal();
+          // Reset button
+          this.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ya, Kirim';
+          this.disabled = false;
+          
+          // Show success modal
+          document.getElementById('sendSuccessModal').classList.add('show');
+          document.body.style.overflow = 'hidden';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          closeSendModal();
+          // Fallback to form submit on error
+          form.submit();
+        });
+      }
+    });
+
+    // Close on overlay click
+    document.getElementById('sendConfirmModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSendModal();
+    });
+
+    // ============ SUCCESS MODAL FUNCTIONS ============
+    function closeSuccessAndReload() {
+      document.getElementById('sendSuccessModal').classList.remove('show');
+      document.body.style.overflow = '';
+      window.location.reload();
+    }
+
+    // Close on overlay click
+    document.getElementById('sendSuccessModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSuccessAndReload();
     });
   </script>
 
