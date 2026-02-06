@@ -1129,27 +1129,6 @@
             <i class="fas fa-arrow-left"></i>
             Kembali
           </a>
-        </div>
-      </div>
-
-      {{-- Progress Bar --}}
-      @php
-        // Calculate progress from workflow stages
-        $completedCount = 0;
-        $totalCount = count($workflowStages);
-        foreach ($workflowStages as $stage) {
-          $stageStatus = $stage['status'] ?? 'pending';
-          if ($stageStatus === 'completed' || $stageStatus === 'selesai') {
-            $completedCount++;
-          }
-        }
-        $progress = $totalCount > 0 ? ($completedCount / $totalCount) * 100 : 0;
-      @endphp
-      <div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" style="width: {{ $progress }}%"></div>
-        </div>
-        <div class="progress-percentage">{{ number_format($progress, 1) }}% Selesai</div>
       </div>
     </div>
 
