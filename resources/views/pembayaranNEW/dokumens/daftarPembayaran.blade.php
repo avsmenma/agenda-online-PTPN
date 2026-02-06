@@ -22,8 +22,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    flex-wrap: nowrap;
   }
 
   .search-input-wrapper {
@@ -1312,134 +1311,6 @@
       <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
         <i class="fa-solid fa-table-columns me-2"></i>Kustomisasi Kolom Tabel
       </button>
-    </div>
-  </div>
-  
-  <!-- Advanced Filter Toggle Button -->
-  @php
-    $activeFilterCount = 0;
-    if($filterBagian ?? null) $activeFilterCount++;
-    if($filterVendor ?? null) $activeFilterCount++;
-    if($filterKriteriaCf ?? null) $activeFilterCount++;
-    if($filterSubKriteria ?? null) $activeFilterCount++;
-    if($filterItemSubKriteria ?? null) $activeFilterCount++;
-    if($filterKebun ?? null) $activeFilterCount++;
-    if($filterStatusPembayaran ?? null) $activeFilterCount++;
-    if($selectedYear ?? null) $activeFilterCount++;
-  @endphp
-  <button type="button" class="advanced-filter-toggle {{ $activeFilterCount > 0 ? 'active' : '' }}" id="advancedFilterToggle">
-    <i class="fa-solid fa-sliders"></i>
-    <span>Filter Lanjutan</span>
-    <i class="fa-solid fa-chevron-down"></i>
-    @if($activeFilterCount > 0)
-      <span class="active-filters-badge">{{ $activeFilterCount }}</span>
-    @endif
-  </button>
-  
-  <!-- Advanced Filter Panel -->
-  <div class="advanced-filter-panel {{ $activeFilterCount > 0 ? 'show' : '' }}" id="advancedFilterPanel">
-    <div class="advanced-filter-content">
-      <div class="advanced-filter-grid">
-        <!-- Tahun Filter -->
-        <div class="filter-group">
-          <label for="filterYear"><i class="fa-solid fa-calendar-days me-2"></i>Tahun</label>
-          <select id="filterYear" name="year">
-            <option value="">Semua Tahun</option>
-            @foreach($availableYears ?? [] as $year)
-              <option value="{{ $year }}" {{ ($selectedYear ?? null) == $year ? 'selected' : '' }}>{{ $year }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Bagian Filter -->
-        <div class="filter-group">
-          <label for="filterBagian"><i class="fa-solid fa-building me-2"></i>Bagian</label>
-          <select id="filterBagian" name="filter_bagian">
-            <option value="">Semua Bagian</option>
-            @foreach($availableBagian ?? [] as $key => $value)
-              <option value="{{ $key }}" {{ ($filterBagian ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Vendor Filter -->
-        <div class="filter-group">
-          <label for="filterVendor"><i class="fa-solid fa-store me-2"></i>Vendor</label>
-          <select id="filterVendor" name="filter_vendor">
-            <option value="">Semua Vendor</option>
-            @foreach($availableVendor ?? [] as $key => $value)
-              <option value="{{ $key }}" {{ ($filterVendor ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Kriteria CF Filter -->
-        <div class="filter-group">
-          <label for="filterKriteriaCf"><i class="fa-solid fa-tags me-2"></i>Kriteria CF</label>
-          <select id="filterKriteriaCf" name="filter_kriteria_cf">
-            <option value="">Semua Kriteria</option>
-            @foreach($availableKriteriaCf ?? [] as $key => $value)
-              <option value="{{ $key }}" {{ ($filterKriteriaCf ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Sub Kriteria Filter -->
-        <div class="filter-group">
-          <label for="filterSubKriteria"><i class="fa-solid fa-tag me-2"></i>Sub Kriteria</label>
-          <select id="filterSubKriteria" name="filter_sub_kriteria">
-            <option value="">Semua Sub Kriteria</option>
-            @foreach($availableSubKriteria ?? [] as $key => $value)
-              <option value="{{ $key }}" {{ ($filterSubKriteria ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Item Sub Kriteria Filter -->
-        <div class="filter-group">
-          <label for="filterItemSubKriteria"><i class="fa-solid fa-tag me-2"></i>Item Sub Kriteria</label>
-          <select id="filterItemSubKriteria" name="filter_item_sub_kriteria">
-            <option value="">Semua Item</option>
-            @foreach($availableItemSubKriteria ?? [] as $key => $value)
-              <option value="{{ $key }}" {{ ($filterItemSubKriteria ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Kebun Filter -->
-        <div class="filter-group">
-          <label for="filterKebun"><i class="fa-solid fa-seedling me-2"></i>Kebun</label>
-          <select id="filterKebun" name="filter_kebun">
-            <option value="">Semua Kebun</option>
-            @foreach($availableKebun ?? [] as $key => $value)
-              <option value="{{ $key }}" {{ ($filterKebun ?? null) == $key ? 'selected' : '' }}>{{ $value }}</option>
-            @endforeach
-          </select>
-        </div>
-        
-        <!-- Status Pembayaran Filter -->
-        <div class="filter-group">
-          <label for="filterStatusPembayaran"><i class="fa-solid fa-money-check-dollar me-2"></i>Status Pembayaran</label>
-          <select id="filterStatusPembayaran" name="filter_status_pembayaran">
-            <option value="">Semua Status</option>
-            <option value="belum_siap_bayar" {{ ($filterStatusPembayaran ?? null) == 'belum_siap_bayar' ? 'selected' : '' }}>Belum Siap Bayar</option>
-            <option value="siap_bayar" {{ ($filterStatusPembayaran ?? null) == 'siap_bayar' ? 'selected' : '' }}>Siap Bayar</option>
-            <option value="sudah_dibayar" {{ ($filterStatusPembayaran ?? null) == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
-          </select>
-        </div>
-      </div>
-      
-      <!-- Filter Actions -->
-      <div class="filter-actions">
-        <button type="button" class="btn-reset-filter" onclick="resetAdvancedFilters()">
-          <i class="fa-solid fa-rotate-left"></i>
-          Reset Filter
-        </button>
-        <button type="button" class="btn-apply-filter" onclick="applyAdvancedFilters()">
-          <i class="fa-solid fa-check"></i>
-          Terapkan Filter
-        </button>
-      </div>
     </div>
   </div>
 </div>
@@ -3273,10 +3144,9 @@ function populateDocumentDetail(data) {
     document.getElementById('view-nomor-pr').textContent = data.no_pr || '-';
     
     // Informasi Perpajakan
-    document.getElementById('view-npwp').textContent = data.npwp || '-';
-    document.getElementById('view-status-perpajakan').textContent = data.status_perpajakan || '-';
     document.getElementById('view-no-faktur').textContent = data.no_faktur || '-';
     document.getElementById('view-tanggal-faktur').textContent = formatDate(data.tanggal_faktur);
+    document.getElementById('view-tanggal-selesai-verifikasi-pajak').textContent = formatDate(data.tanggal_selesai_verifikasi_pajak);
     document.getElementById('view-jenis-pph').textContent = data.jenis_pph || '-';
     
     // Format DPP PPH - gunakan raw value jika ada, atau yang sudah diformat
@@ -3289,23 +3159,14 @@ function populateDocumentDetail(data) {
         document.getElementById('view-dpp-pph').textContent = '-';
     }
     
-    // Format PPN Terhutang - gunakan raw value jika ada, atau yang sudah diformat
-    if (data.ppn_terhutang_raw && data.ppn_terhutang_raw > 0) {
-        document.getElementById('view-ppn-terhutang').textContent = 'Rp. ' + formatNumber(data.ppn_terhutang_raw);
-    } else if (data.ppn_terhutang && data.ppn_terhutang !== '-') {
+    // Format PPh Terhutang - gunakan raw value jika ada, atau yang sudah diformat
+    if (data.pph_terhutang_raw && data.pph_terhutang_raw > 0) {
+        document.getElementById('view-pph-terhutang').textContent = 'Rp. ' + formatNumber(data.pph_terhutang_raw);
+    } else if (data.pph_terhutang && data.pph_terhutang !== '-') {
         // Jika sudah diformat dari controller, langsung gunakan
-        document.getElementById('view-ppn-terhutang').textContent = 'Rp. ' + data.ppn_terhutang;
+        document.getElementById('view-pph-terhutang').textContent = 'Rp. ' + data.pph_terhutang;
     } else {
-        document.getElementById('view-ppn-terhutang').textContent = '-';
-    }
-    
-    // Link Dokumen Pajak
-    const linkDokumenPajak = data.link_dokumen_pajak || '-';
-    if (linkDokumenPajak !== '-' && linkDokumenPajak) {
-        const linkEl = document.getElementById('view-link-dokumen-pajak');
-        linkEl.innerHTML = `<a href="${linkDokumenPajak}" target="_blank" style="color: #0d6efd; text-decoration: underline;">${linkDokumenPajak}</a>`;
-    } else {
-        document.getElementById('view-link-dokumen-pajak').textContent = '-';
+        document.getElementById('view-pph-terhutang').textContent = '-';
     }
     
     // Set document ID for edit button
@@ -3661,18 +3522,6 @@ function terbilangSatuan(number, angka) {
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">NPWP</label>
-                  <div class="detail-value" id="view-npwp">-</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="detail-item">
-                  <label class="detail-label">Status Perpajakan</label>
-                  <div class="detail-value" id="view-status-perpajakan">-</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="detail-item">
                   <label class="detail-label">No. Faktur</label>
                   <div class="detail-value" id="view-no-faktur">-</div>
                 </div>
@@ -3685,26 +3534,26 @@ function terbilangSatuan(number, angka) {
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">Jenis PPH</label>
+                  <label class="detail-label">Tgl. Selesai Verifikasi Pajak</label>
+                  <div class="detail-value" id="view-tanggal-selesai-verifikasi-pajak">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Jenis PPh</label>
                   <div class="detail-value" id="view-jenis-pph">-</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">DPP PPH</label>
+                  <label class="detail-label">DPP PPh</label>
                   <div class="detail-value" id="view-dpp-pph" style="font-weight: 600; color: #92400e;">-</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">PPN Terhutang</label>
-                  <div class="detail-value" id="view-ppn-terhutang" style="font-weight: 600; color: #92400e;">-</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="detail-item">
-                  <label class="detail-label">Link Dokumen Pajak</label>
-                  <div class="detail-value" id="view-link-dokumen-pajak">-</div>
+                  <label class="detail-label">PPh Terhutang</label>
+                  <div class="detail-value" id="view-pph-terhutang" style="font-weight: 600; color: #92400e;">-</div>
                 </div>
               </div>
             </div>
