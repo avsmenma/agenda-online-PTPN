@@ -3263,7 +3263,7 @@ class DashboardPembayaranController extends Controller
         // Write headers (row 1)
         $colIndex = 1;
         foreach ($headers as $header) {
-            $sheet->setCellValueByColumnAndRow($colIndex, 1, $header);
+            $sheet->setCellValue([$colIndex, 1], $header);
             $colIndex++;
         }
 
@@ -3298,8 +3298,8 @@ class DashboardPembayaranController extends Controller
             $colIndex = 1;
             foreach ($columns as $col) {
                 $value = $this->getColumnValue($dokumen, $col);
-                $sheet->setCellValueByColumnAndRow($colIndex, $rowIndex, $value);
-                
+                $sheet->setCellValue([$colIndex, $rowIndex], $value);
+
                 // Format currency columns
                 if (in_array($col, ['nilai_rupiah', 'nilai_belum_siap_bayar', 'nilai_siap_bayar', 'nilai_sudah_dibayar'])) {
                     $cellCoord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex) . $rowIndex;
@@ -3307,7 +3307,7 @@ class DashboardPembayaranController extends Controller
                 }
                 $colIndex++;
             }
-            
+
             // Zebra stripe - alternate row colors
             if ($rowIndex % 2 == 0) {
                 $rowStyle = [
@@ -3318,7 +3318,7 @@ class DashboardPembayaranController extends Controller
                 ];
                 $sheet->getStyle("A{$rowIndex}:{$lastColumn}{$rowIndex}")->applyFromArray($rowStyle);
             }
-            
+
             $rowIndex++;
         }
 
