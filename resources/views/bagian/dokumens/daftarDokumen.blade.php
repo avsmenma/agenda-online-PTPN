@@ -465,36 +465,6 @@
       </a>
     </div>
 
-    <!-- Single Alert Message (fix duplicate notification) -->
-    @if(session('success'))
-      <div class="alert alert-success alert-dismissible fade show" role="alert" id="autoCloseAlert">
-        <i class="fa-solid fa-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-      <script>
-        setTimeout(function () {
-          var alert = document.getElementById('autoCloseAlert');
-          if (alert) {
-            alert.classList.remove('show');
-            setTimeout(function () { alert.remove(); }, 150);
-          }
-        }, 5000);
-      </script>
-    @elseif(session('error'))
-      <div class="alert alert-danger alert-dismissible fade show" role="alert" id="autoCloseAlertError">
-        <i class="fa-solid fa-exclamation-circle me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-      <script>
-        setTimeout(function () {
-          var alert = document.getElementById('autoCloseAlertError');
-          if (alert) {
-            alert.classList.remove('show');
-            setTimeout(function () { alert.remove(); }, 150);
-          }
-        }, 5000);
-      </script>
-    @endif
 
     <!-- Search & Filter -->
     <div class="search-box">
@@ -1430,7 +1400,7 @@
       // Header fields
       document.getElementById('modal-header-agenda').textContent = doc.nomor_agenda || '-';
       document.getElementById('modal-header-status').textContent = doc.status || '-';
-      
+
       // Tab Info Utama
       document.getElementById('modal-nomor-agenda').textContent = doc.nomor_agenda || '-';
       document.getElementById('modal-status').textContent = doc.status || '-';
@@ -1443,7 +1413,7 @@
       document.getElementById('modal-nama-pengirim').textContent = doc.nama_pengirim || '-';
       document.getElementById('modal-kebun').textContent = doc.kebun || '-';
       document.getElementById('modal-uraian-spp').textContent = doc.uraian_spp || '-';
-      
+
       // Tab Keuangan & Vendor
       document.getElementById('modal-nilai-rupiah-2').textContent = doc.nilai_rupiah || '-';
       document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
@@ -1452,7 +1422,7 @@
       document.getElementById('modal-sub-kriteria').textContent = doc.sub_kriteria || '-';
       document.getElementById('modal-item-sub-kriteria').textContent = doc.item_sub_kriteria || '-';
       document.getElementById('modal-jenis-pembayaran').textContent = doc.jenis_pembayaran || '-';
-      
+
       // Tab SPK & Berita Acara
       document.getElementById('modal-no-spk').textContent = doc.no_spk || '-';
       document.getElementById('modal-tanggal-spk').textContent = doc.tanggal_spk || '-';
@@ -1464,16 +1434,16 @@
 
       // Reset to first tab
       switchTab('info');
-      
+
       document.getElementById('documentDetailModal').classList.add('show');
       document.body.style.overflow = 'hidden';
     }
-    
+
     function switchTab(tabName) {
       // Remove active from all tabs and contents
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      
+
       // Add active to selected
       document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
       document.getElementById(`tab-${tabName}`).classList.add('active');

@@ -329,7 +329,7 @@ class BagianDokumenController extends Controller
             DB::commit();
 
             return redirect()->route('bagian.documents.index')
-                ->with('success', 'Dokumen berhasil dOperatort.');
+                ->with('success', 'Dokumen berhasil dibuat.');
 
         } catch (Exception $e) {
             DB::rollback();
