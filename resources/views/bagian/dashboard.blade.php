@@ -161,16 +161,25 @@
                                         </td>
                                         <td style="padding: 16px; vertical-align: middle;">
                                             @php
-                                                $statusColor = match ($doc->status) {
-                                                    'belum dikirim' => '#ffc107',
-                                                    'sent_to_team_verifikasi' => '#17a2b8',
-                                                    'sudah dibayar' => '#28a745',
-                                                    default => '#6c757d'
-                                                };
+                                                // Simplified status for Bagian view
+                                                // Only 3 statuses: Belum Dikirim, Menunggu Approve, Terkirim
+                                                $statusLower = strtolower($doc->status ?? '');
+
+                                                if ($statusLower == 'belum dikirim') {
+                                                    $statusText = 'Belum Dikirim';
+                                                    $statusColor = '#ffc107';
+                                                } elseif ($statusLower == 'menunggu_approval_keuangan') {
+                                                    $statusText = 'Menunggu Approve';
+                                                    $statusColor = '#e0a800';
+                                                } else {
+                                                    // All other statuses = Terkirim
+                                                    $statusText = 'Terkirim';
+                                                    $statusColor = '#28a745';
+                                                }
                                             @endphp
                                             <span class="badge"
                                                 style="background: {{ $statusColor }}; padding: 6px 12px; border-radius: 20px;">
-                                                {{ ucwords(str_replace('_', ' ', $doc->status)) }}
+                                                {{ $statusText }}
                                             </span>
                                         </td>
                                     </tr>
@@ -188,7 +197,3 @@
         </div>
     </div>
 @endsection
-
-
-
-
