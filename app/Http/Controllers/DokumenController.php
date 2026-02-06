@@ -1511,7 +1511,6 @@ class DokumenController extends Controller
             'jenis_dokumen',
             'no_berita_acara',
             'no_spk',
-            'nomor_mirror',
             'nomor_miro',
             'keterangan',
             'dibayar_kepada'
