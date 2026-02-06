@@ -1914,9 +1914,11 @@
       modalBody.innerHTML = `
         ${taxData.npwp || taxData.no_faktur || taxData.jenis_pph ? `
         <div class="modal-section">
-          <div class="modal-section-title">
-            <i class="fas fa-id-card"></i>
-            Identitas Perpajakan
+          <div class="modal-section-title" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 12px 16px; border-radius: 10px; margin: -24px -24px 20px -24px; border-bottom: none;">
+            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-id-card" style="font-size: 16px;"></i>
+            </div>
+            <span>Identitas Perpajakan</span>
           </div>
           <div class="modal-grid">
             ${formatField('NPWP', taxData.npwp) ? `
@@ -2152,9 +2154,11 @@
 
         ${taxData.nomor_miro ? `
         <div class="modal-section">
-          <div class="modal-section-title" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);">
-            <i class="fas fa-file-invoice-dollar"></i>
-            Data Akutansi
+          <div class="modal-section-title" style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; padding: 12px 16px; border-radius: 10px; margin: -24px -24px 20px -24px; border-bottom: none;">
+            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-file-invoice-dollar" style="font-size: 16px;"></i>
+            </div>
+            <span>Data Akutansi</span>
           </div>
           <div class="modal-grid">
             ${formatField('Nomor MIRO', taxData.nomor_miro) ? `
@@ -2169,9 +2173,11 @@
 
         ${taxData.tanggal_dibayar || taxData.link_bukti_pembayaran || taxData.status_pembayaran ? `
         <div class="modal-section">
-          <div class="modal-section-title" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
-            <i class="fas fa-money-bill-wave"></i>
-            Data Pembayaran
+          <div class="modal-section-title" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 12px 16px; border-radius: 10px; margin: -24px -24px 20px -24px; border-bottom: none;">
+            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-money-bill-wave" style="font-size: 16px;"></i>
+            </div>
+            <span>Data Pembayaran</span>
           </div>
           <div class="modal-grid">
             ${formatField('Tanggal Pembayaran', taxData.tanggal_dibayar) ? `
