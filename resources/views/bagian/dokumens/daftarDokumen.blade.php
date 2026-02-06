@@ -567,45 +567,46 @@
                         <td>
                           <strong style="color: #28a745;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
                         </td>
-                        @php
-                          // Simplified status for Bagian view
-                          // Only 3 statuses: Belum Dikirim, Menunggu Approve, Terkirim
-                          $displayStatus = 'terkirim'; // Default to Terkirim
-                          $statusClass = 'badge-terkirim';
-                          $statusIcon = 'fa-check';
-                          $statusText = 'Terkirim';
+                        <td>
+                          @php
+                            // Simplified status for Bagian view
+                            // Only 3 statuses: Belum Dikirim, Menunggu Approve, Terkirim
+                            $displayStatus = 'terkirim'; // Default to Terkirim
+                            $statusClass = 'badge-terkirim';
+                            $statusIcon = 'fa-check';
+                            $statusText = 'Terkirim';
 
-                          if ($statusLower == 'belum dikirim') {
-                            $displayStatus = 'belum_dikirim';
-                            $statusClass = 'badge-draft';
-                            $statusIcon = 'fa-file-lines';
-                            $statusText = 'Belum Dikirim';
-                          } elseif ($statusLower == 'menunggu_approval_keuangan') {
-                            $displayStatus = 'menunggu_approve';
-                            $statusClass = 'badge-warning';
-                            $statusIcon = 'fa-clock';
-                            $statusText = 'Menunggu Approve';
-                          }
-                          // All other statuses = Terkirim (document has been processed by Operator)
-                        @endphp
+                            if ($statusLower == 'belum dikirim') {
+                              $displayStatus = 'belum_dikirim';
+                              $statusClass = 'badge-draft';
+                              $statusIcon = 'fa-file-lines';
+                              $statusText = 'Belum Dikirim';
+                            } elseif ($statusLower == 'menunggu_approval_keuangan') {
+                              $displayStatus = 'menunggu_approve';
+                              $statusClass = 'badge-warning';
+                              $statusIcon = 'fa-clock';
+                              $statusText = 'Menunggu Approve';
+                            }
+                            // All other statuses = Terkirim (document has been processed by Operator)
+                          @endphp
 
-                        @if($displayStatus == 'belum_dikirim')
-                          <span class="badge-status {{ $statusClass }}">
-                            <i class="fa-solid {{ $statusIcon }}"></i>
-                            <span>{{ $statusText }}</span>
-                          </span>
-                        @elseif($displayStatus == 'menunggu_approve')
-                          <span class="badge-status {{ $statusClass }}"
-                            style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
-                            <i class="fa-solid {{ $statusIcon }}"></i>
-                            <span>{{ $statusText }}</span>
-                          </span>
-                        @else
-                          <span class="badge-status {{ $statusClass }}">
-                            <i class="fa-solid {{ $statusIcon }}"></i>
-                            <span>{{ $statusText }}</span>
-                          </span>
-                        @endif
+                          @if($displayStatus == 'belum_dikirim')
+                            <span class="badge-status {{ $statusClass }}">
+                              <i class="fa-solid {{ $statusIcon }}"></i>
+                              <span>{{ $statusText }}</span>
+                            </span>
+                          @elseif($displayStatus == 'menunggu_approve')
+                            <span class="badge-status {{ $statusClass }}"
+                              style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
+                              <i class="fa-solid {{ $statusIcon }}"></i>
+                              <span>{{ $statusText }}</span>
+                            </span>
+                          @else
+                            <span class="badge-status {{ $statusClass }}">
+                              <i class="fa-solid {{ $statusIcon }}"></i>
+                              <span>{{ $statusText }}</span>
+                            </span>
+                          @endif
                         </td>
                         <td onclick="event.stopPropagation()">
                           <div class="action-buttons">
