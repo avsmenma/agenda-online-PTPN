@@ -567,34 +567,45 @@
                         <td>
                           <strong style="color: #28a745;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
                         </td>
-                        <td>
-                          @if($statusLower == 'belum dikirim')
-                            <span class="badge-status badge-draft">
-                              <i class="fa-solid fa-file-lines"></i>
-                              <span>Belum Dikirim</span>
-                            </span>
-                          @elseif($statusLower == 'menunggu_approval_keuangan')
-                            <span class="badge-status badge-warning"
-                              style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
-                              <i class="fa-solid fa-clock"></i>
-                              <span>Menunggu Approval Keuangan</span>
-                            </span>
-                          @elseif(in_array($statusLower, ['sent_to_team_verifikasi', 'pending_approval_team_verifikasi', 'terkirim']))
-                            <span class="badge-status badge-terkirim">
-                              <i class="fa-solid fa-check"></i>
-                              <span>Terkirim</span>
-                            </span>
-                          @elseif($statusLower == 'sudah dibayar')
-                            <span class="badge-status badge-selesai">
-                              <i class="fa-solid fa-check-double"></i>
-                              <span>Selesai</span>
-                            </span>
-                          @else
-                            <span class="badge-status badge-terkirim">
-                              <i class="fa-solid fa-spinner"></i>
-                              <span>{{ ucwords(str_replace('_', ' ', $doc->status)) }}</span>
-                            </span>
-                          @endif
+                        @php
+                          // Simplified status for Bagian view
+                          // Only 3 statuses: Belum Dikirim, Menunggu Approve, Terkirim
+                          $displayStatus = 'terkirim'; // Default to Terkirim
+                          $statusClass = 'badge-terkirim';
+                          $statusIcon = 'fa-check';
+                          $statusText = 'Terkirim';
+
+                          if ($statusLower == 'belum dikirim') {
+                            $displayStatus = 'belum_dikirim';
+                            $statusClass = 'badge-draft';
+                            $statusIcon = 'fa-file-lines';
+                            $statusText = 'Belum Dikirim';
+                          } elseif ($statusLower == 'menunggu_approval_keuangan') {
+                            $displayStatus = 'menunggu_approve';
+                            $statusClass = 'badge-warning';
+                            $statusIcon = 'fa-clock';
+                            $statusText = 'Menunggu Approve';
+                          }
+                          // All other statuses = Terkirim (document has been processed by Operator)
+                        @endphp
+
+                        @if($displayStatus == 'belum_dikirim')
+                          <span class="badge-status {{ $statusClass }}">
+                            <i class="fa-solid {{ $statusIcon }}"></i>
+                            <span>{{ $statusText }}</span>
+                          </span>
+                        @elseif($displayStatus == 'menunggu_approve')
+                          <span class="badge-status {{ $statusClass }}"
+                            style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
+                            <i class="fa-solid {{ $statusIcon }}"></i>
+                            <span>{{ $statusText }}</span>
+                          </span>
+                        @else
+                          <span class="badge-status {{ $statusClass }}">
+                            <i class="fa-solid {{ $statusIcon }}"></i>
+                            <span>{{ $statusText }}</span>
+                          </span>
+                        @endif
                         </td>
                         <td onclick="event.stopPropagation()">
                           <div class="action-buttons">
@@ -1915,13 +1926,27 @@
     }
 
     function showDocumentDetail(doc) {
+      // Simplified status mapping for Bagian view
+      function getSimplifiedStatus(status) {
+        const statusLower = (status || '').toLowerCase();
+        if (statusLower === 'belum dikirim') {
+          return 'Belum Dikirim';
+        } else if (statusLower === 'menunggu_approval_keuangan') {
+          return 'Menunggu Approve';
+        } else {
+          return 'Terkirim';
+        }
+      }
+
+      const simplifiedStatus = getSimplifiedStatus(doc.status);
+
       // Header fields
       document.getElementById('modal-header-agenda').textContent = doc.nomor_agenda || '-';
-      document.getElementById('modal-header-status').textContent = doc.status || '-';
+      document.getElementById('modal-header-status').textContent = simplifiedStatus;
 
       // Tab Info Utama
       document.getElementById('modal-nomor-agenda').textContent = doc.nomor_agenda || '-';
-      document.getElementById('modal-status').textContent = doc.status || '-';
+      document.getElementById('modal-status').textContent = simplifiedStatus;
       document.getElementById('modal-nomor-spp').textContent = doc.nomor_spp || '-';
       document.getElementById('modal-tanggal-spp').textContent = doc.tanggal_spp || '-';
       document.getElementById('modal-periode').textContent = (doc.bulan || '-') + ' ' + (doc.tahun || '');
