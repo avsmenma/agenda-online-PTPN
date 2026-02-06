@@ -1665,7 +1665,7 @@
           <span class="table-count">{{ $dokumens->total() }}</span>
         </div>
         <div class="table-toggle">
-          <button type="button" class="btn-customize" data-bs-toggle="modal" data-bs-target="#columnModal">
+          <button type="button" class="btn-customize" onclick="openColumnModal()">
             <i class="fas fa-columns"></i> Atur Kolom
           </button>
           <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
@@ -1751,11 +1751,6 @@
           </div>
         @else
           <!-- Normal Table View -->
-          <div class="mb-3 text-end">
-            <button type="button" class="btn btn-outline-primary btn-sm" onclick="openColumnModal()">
-              <i class="fa-solid fa-table-columns me-1"></i> Atur Kolom
-            </button>
-          </div>
           <div class="data-table-wrapper">
             <table class="data-table">
               <thead>
@@ -1911,14 +1906,9 @@
         flex: 1;
       }
       .customization-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-      }
-      @media (max-width: 900px) {
-        .customization-grid {
-          grid-template-columns: 1fr;
-        }
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
       }
       .selection-panel, .preview-panel {
         background: #f9fafb;
@@ -1944,12 +1934,23 @@
       }
       .column-selection-list {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 0.5rem;
-        max-height: 400px;
+        max-height: 300px;
         overflow-y: auto;
+        padding: 0.5rem;
       }
-      @media (max-width: 600px) {
+      @media (max-width: 1000px) {
+        .column-selection-list {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (max-width: 768px) {
+        .column-selection-list {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 500px) {
         .column-selection-list {
           grid-template-columns: 1fr;
         }
