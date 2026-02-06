@@ -1341,7 +1341,7 @@ class TeamVerifikasiController extends Controller
             'departments' => $departments,
             'selectedDepartment' => $selectedDepartment,
         );
-        return view('team_verifikasi.dokumens.pengembalianKeBagianB', $data);
+        return view('team_verifikasi.dokumens.pengembalianKeBagian', $data);
     }
 
 
