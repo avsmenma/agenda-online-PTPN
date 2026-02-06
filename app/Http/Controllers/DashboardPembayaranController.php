@@ -611,6 +611,7 @@ class DashboardPembayaranController extends Controller
             ->orderBy('updated_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->orderByRaw("CASE 
+                WHEN nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN nomor_agenda REGEXP '^[0-9]+$' THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC")

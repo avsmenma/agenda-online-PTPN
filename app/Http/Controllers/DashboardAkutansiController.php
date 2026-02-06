@@ -382,6 +382,7 @@ class DashboardAkutansiController extends Controller
             ) DESC")
             ->orderBy('dokumens.id', 'DESC') // Secondary sort by ID untuk konsistensi
             ->orderByRaw("CASE 
+                WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC")
