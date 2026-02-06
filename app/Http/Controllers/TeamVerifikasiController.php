@@ -302,15 +302,15 @@ class TeamVerifikasiController extends Controller
                 // 'dokumens.inbox_approval_status', // REMOVED
                 'dokumens.created_by'
             ])
+            ->orderByRaw("
+                COALESCE(team_verifikasi_data.received_at, dokumens.created_at) DESC,
+                dokumens.id DESC
+            ")
             ->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC")
-            ->orderBy('dokumens.nomor_agenda', 'DESC') // Secondary sort for non-numeric or same numeric values
-            ->orderByRaw("
-                COALESCE(team_verifikasi_data.received_at, dokumens.created_at) DESC,
-                dokumens.id DESC
-            ");
+            ->orderBy('dokumens.nomor_agenda', 'DESC');
 
         // Enhanced search functionality - search across all relevant fields
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {

@@ -372,10 +372,16 @@ class DashboardAkutansiController extends Controller
             }
         ]);
 
-        // Order by nomor_agenda descending (numerically) first, then by deadline status, then by received_at
-        // This ensures documents are sorted by nomor_agenda (2010, 2009, 2006, 2005, etc.)
-        // Priority: 1 = locked (no deadline), 2 = has deadline or sent to pembayaran, 3 = others
-        $dokumens = $query->orderByRaw("CASE 
+        // Order by received_at descending first, then by nomor_agenda, then by deadline status
+        // This ensures newly received documents appear at the top
+        $dokumens = $query->orderByRaw("COALESCE(
+                (SELECT received_at FROM dokumen_role_data 
+                 WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
+                 LIMIT 1),
+                dokumens.created_at
+            ) DESC")
+            ->orderBy('dokumens.id', 'DESC') // Secondary sort by ID untuk konsistensi
+            ->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC")
@@ -398,13 +404,6 @@ class DashboardAkutansiController extends Controller
                 -- Kategori 3: Lainnya
                 ELSE 3
             END")
-            ->orderByRaw("COALESCE(
-                (SELECT received_at FROM dokumen_role_data 
-                 WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
-                 LIMIT 1),
-                dokumens.created_at
-            ) DESC")
-            ->orderBy('dokumens.id', 'DESC') // Secondary sort by ID untuk konsistensi
             ->paginate($request->get('per_page', 10))
             ->appends($request->query());
 
