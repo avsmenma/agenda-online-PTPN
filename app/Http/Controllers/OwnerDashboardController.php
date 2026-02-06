@@ -3647,7 +3647,13 @@ class OwnerDashboardController extends Controller
         }
 
         // Order by received_at
-        $query->orderBy('dokumen_role_data.received_at', 'asc');
+        // Sort by nomor_agenda descending (highest first), then by received_at descending
+        $query->orderByRaw("CASE 
+            WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
+            ELSE 0
+        END DESC")
+            ->orderBy('dokumens.nomor_agenda', 'DESC')
+            ->orderBy('dokumen_role_data.received_at', 'desc');
 
         // Debug: Log SQL query and count before get()
         \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, SQL Query: " . $query->toSql());

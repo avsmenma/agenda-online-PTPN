@@ -962,19 +962,19 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                      {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                          {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                      {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                          {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                      {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                          {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
@@ -1001,6 +1001,78 @@
         <i class="fas fa-file-excel"></i>
         <span>Export Excel</span>
       </button>
+    </div>
+
+    <!-- Quick Search Box (Prominent) -->
+    <div class="quick-search-container" style="margin-bottom: 1rem;">
+      <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="quickSearchForm"
+        style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <!-- Preserve existing filter parameters -->
+        @if(request('year'))
+          <input type="hidden" name="year" value="{{ request('year') }}">
+        @endif
+        @if(request('month'))
+          <input type="hidden" name="month" value="{{ request('month') }}">
+        @endif
+        @if(request('filter_age'))
+          <input type="hidden" name="filter_age" value="{{ request('filter_age') }}">
+        @endif
+        @if(request('status_filter'))
+          <input type="hidden" name="status_filter" value="{{ request('status_filter') }}">
+        @endif
+        @if(request('filter_bagian'))
+          <input type="hidden" name="filter_bagian" value="{{ request('filter_bagian') }}">
+        @endif
+        @if(request('filter_vendor'))
+          <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor') }}">
+        @endif
+        @if(request('filter_kebun'))
+          <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') }}">
+        @endif
+        @if(request('filter_kriteria_cf'))
+          <input type="hidden" name="filter_kriteria_cf" value="{{ request('filter_kriteria_cf') }}">
+        @endif
+        @if(request('per_page'))
+          <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+        @endif
+
+        <div style="flex: 1; min-width: 300px; position: relative;">
+          <i class="fas fa-search"
+            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
+          <input type="text" name="search" id="quickSearchInput" value="{{ request('search') }}"
+            placeholder="Cari nomor agenda, nilai rupiah, kebun, vendor, uraian..."
+            style="width: 100%; padding: 12px 16px 12px 42px; border: 2px solid var(--primary-border); border-radius: 10px; font-size: 0.95rem; transition: all 0.3s ease; background: white;"
+            onkeypress="if(event.key === 'Enter') { document.getElementById('quickSearchForm').submit(); }"
+            onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 3px var(--primary-rgba)';"
+            onblur="this.style.borderColor='var(--primary-border)'; this.style.boxShadow='none';">
+        </div>
+
+        <button type="submit"
+          style="padding: 12px 24px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;"
+          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px var(--primary-rgba-dark)';"
+          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <i class="fas fa-search"></i>
+          <span>Cari</span>
+        </button>
+
+        @if(request('search'))
+          <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], request()->except(['search', 'page']))) }}"
+            style="padding: 12px 18px; background: #f1f5f9; color: #64748b; border: none; border-radius: 10px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;"
+            onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f1f5f9';">
+            <i class="fas fa-times"></i>
+            <span>Reset</span>
+          </a>
+        @endif
+      </form>
+
+      @if(request('search'))
+        <div
+          style="margin-top: 0.75rem; padding: 8px 14px; background: var(--primary-rgba); border-radius: 8px; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+          <span style="font-size: 0.875rem; color: #333;">Menampilkan hasil pencarian:
+            <strong>"{{ request('search') }}"</strong></span>
+        </div>
+      @endif
     </div>
 
     <!-- Modern Filter Panel -->
@@ -1234,7 +1306,7 @@
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
                     style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                                                                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                                                                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1610,11 +1682,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                              <span>${label}: ${displayValue}</span>
-                              <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                                <i class="fas fa-times"></i>
-                              </button>
-                            `;
+                                <span>${label}: ${displayValue}</span>
+                                <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                                  <i class="fas fa-times"></i>
+                                </button>
+                              `;
           badgesContainer.appendChild(badge);
         }
       }
