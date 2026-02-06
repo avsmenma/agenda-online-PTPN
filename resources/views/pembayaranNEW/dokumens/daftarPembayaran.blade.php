@@ -23,19 +23,23 @@
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .search-input-wrapper {
-    flex: 1;
-    min-width: 250px;
+    flex: 1 1 300px;
+    min-width: 200px;
+    max-width: 500px;
   }
 
   .filter-wrapper {
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: fit-content;
   }
 
   .customize-button-wrapper {
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: fit-content;
   }
 
   .search-box .input-group {
@@ -2005,17 +2009,22 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   z-index: 9999;
   animation: fadeIn 0.3s ease;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .customization-modal.show {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
 }
 
 .modal-content-custom {
