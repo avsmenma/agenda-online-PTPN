@@ -680,7 +680,7 @@ class DashboardPembayaranController extends Controller
             'nomor_spp' => 'No SPP',
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_mirror' => 'Nomor Miro',
+            'nomor_miro' => 'Nomor Miro',
             'tanggal_spp' => 'TGL SPP',
             'kategori' => 'Kriteria CF',
             'kebun' => 'Kebun',
