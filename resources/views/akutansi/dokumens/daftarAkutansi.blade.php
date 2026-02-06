@@ -4933,8 +4933,8 @@
                   document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
                   document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
                   document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-                  // Nomor MIRO with fallback to NO_MIRO_SES
-                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro && dok.nomor_miro !== '-' ? dok.nomor_miro : (dok.NO_MIRO_SES || '-');
+                  // Nomor MIRO (consolidated via accessor in controller)
+                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
                   document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
                   document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
 
@@ -4975,8 +4975,7 @@
                   }
 
                   // Informasi Akutansi
-                  // Use fallback to NO_MIRO_SES if nomor_miro is empty (from CSV import)
-                  document.getElementById('view-nomor-miro').textContent = dok.nomor_miro && dok.nomor_miro !== '-' ? dok.nomor_miro : (dok.NO_MIRO_SES || '-');
+                  // Note: Nomor MIRO already set above, removed duplicate
                   document.getElementById('view-tanggal-miro').textContent = dok.tanggal_miro ? new Date(dok.tanggal_miro).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
                 }
               })

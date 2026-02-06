@@ -548,7 +548,7 @@
                   'no_berita_acara' => $doc->no_berita_acara ?? '-',
                   'tanggal_berita_acara' => $doc->tanggal_berita_acara ? $doc->tanggal_berita_acara->format('d/m/Y') : '-',
                   'no_po' => $doc->NO_PO ?? '-',
-                  'no_miro' => $doc->NO_MIRO_SES ?? '-',
+                  'no_miro' => $doc->nomor_miro_display ?? '-',
                   'kriteria_cf' => $doc->kategori ?? '-',
                   'sub_kriteria' => $doc->jenis_dokumen ?? '-',
                   'item_sub_kriteria' => $doc->jenis_sub_pekerjaan ?? '-',
@@ -2003,14 +2003,14 @@
       deleteFormId = null;
     }
 
-    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
       if (deleteFormId) {
         document.getElementById('deleteForm-' + deleteFormId).submit();
       }
     });
 
     // Close on overlay click
-    document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+    document.getElementById('deleteConfirmModal').addEventListener('click', function (e) {
       if (e.target === this) closeDeleteModal();
     });
 
@@ -2029,11 +2029,11 @@
       sendFormId = null;
     }
 
-    document.getElementById('confirmSendBtn').addEventListener('click', function() {
+    document.getElementById('confirmSendBtn').addEventListener('click', function () {
       if (sendFormId) {
         const form = document.getElementById('sendForm-' + sendFormId);
         const formData = new FormData(form);
-        
+
         // Show loading state
         this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
         this.disabled = true;
@@ -2045,27 +2045,27 @@
             'X-Requested-With': 'XMLHttpRequest'
           }
         })
-        .then(response => {
-          closeSendModal();
-          // Reset button
-          this.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ya, Kirim';
-          this.disabled = false;
-          
-          // Show success modal
-          document.getElementById('sendSuccessModal').classList.add('show');
-          document.body.style.overflow = 'hidden';
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          closeSendModal();
-          // Fallback to form submit on error
-          form.submit();
-        });
+          .then(response => {
+            closeSendModal();
+            // Reset button
+            this.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ya, Kirim';
+            this.disabled = false;
+
+            // Show success modal
+            document.getElementById('sendSuccessModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            closeSendModal();
+            // Fallback to form submit on error
+            form.submit();
+          });
       }
     });
 
     // Close on overlay click
-    document.getElementById('sendConfirmModal').addEventListener('click', function(e) {
+    document.getElementById('sendConfirmModal').addEventListener('click', function (e) {
       if (e.target === this) closeSendModal();
     });
 
@@ -2077,7 +2077,7 @@
     }
 
     // Close on overlay click
-    document.getElementById('sendSuccessModal').addEventListener('click', function(e) {
+    document.getElementById('sendSuccessModal').addEventListener('click', function (e) {
       if (e.target === this) closeSuccessAndReload();
     });
   </script>

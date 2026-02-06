@@ -318,13 +318,12 @@ class DokumenController extends Controller
                 'no_spk' => $dokumen->no_spk,
                 'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : null,
                 'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : null,
-                'nomor_miro' => $dokumen->nomor_miro,
+                'nomor_miro' => $dokumen->nomor_miro_display,
                 'tanggal_miro' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('Y-m-d') : null,
                 'no_berita_acara' => $dokumen->no_berita_acara,
                 'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
                 'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : null,
                 'NO_PO' => $dokumen->NO_PO,
-                'NO_MIRO_SES' => $dokumen->NO_MIRO_SES,
                 'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {
                     return ['nomor_po' => $po->nomor_po ?? ''];
                 })->values() : [],

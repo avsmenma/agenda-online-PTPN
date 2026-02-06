@@ -35,7 +35,6 @@ class Dokumen extends Model
         'no_spk',
         'tanggal_spk',
         'tanggal_berakhir_spk',
-        'nomor_mirror',
         'nomor_miro',
         'tanggal_miro',
         'status',
@@ -155,6 +154,23 @@ class Dokumen extends Model
     public function getFormattedNomorAgendaAttribute()
     {
         return $this->nomor_agenda;
+    }
+
+    /**
+     * Accessor for nomor_miro with fallback to NO_MIRO_SES
+     * This consolidates MIRO number from multiple sources into one
+     */
+    public function getNomorMiroDisplayAttribute(): ?string
+    {
+        // First check nomor_miro (user-entered by Akutansi)
+        if (!empty($this->attributes['nomor_miro'])) {
+            return $this->attributes['nomor_miro'];
+        }
+        // Fallback to NO_MIRO_SES (from CSV import)
+        if (!empty($this->attributes['NO_MIRO_SES'])) {
+            return $this->attributes['NO_MIRO_SES'];
+        }
+        return null;
     }
 
     public function dibayarKepadas(): HasMany

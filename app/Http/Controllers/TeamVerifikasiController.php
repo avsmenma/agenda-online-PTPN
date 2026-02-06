@@ -1011,7 +1011,7 @@ class TeamVerifikasiController extends Controller
                         'no_spk' => $dokumen->no_spk,
                         'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
                         'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
-                        'nomor_miro' => $dokumen->nomor_miro ?? ($dokumen->nomor_mirror ?? ($dokumen->NO_MIRO_SES ?? '-')),
+                        'nomor_miro' => $dokumen->nomor_miro_display ?? '-',
                         'tanggal_miro' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('d/m/Y') : '-',
                         'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
                         'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
@@ -1095,7 +1095,7 @@ class TeamVerifikasiController extends Controller
             'No SPK' => $dokumen->no_spk ?? '-',
             'Tanggal SPK' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
-            'Nomor Miro' => $dokumen->nomor_miro ?? ($dokumen->nomor_mirror ?? ($dokumen->NO_MIRO_SES ?? '-')),
+            'Nomor Miro' => $dokumen->nomor_miro_display ?? '-',
             'Current Handler' => ucfirst($dokumen->current_handler),
         ];
 
