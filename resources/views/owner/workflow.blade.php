@@ -42,11 +42,11 @@
     }
 
     .info-grid {
-      order: 3;
+      order: 2;
     }
 
     .workflow-timeline {
-      order: 2;
+      order: 3;
     }
 
     /* Header Section */
