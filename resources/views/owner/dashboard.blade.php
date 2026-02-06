@@ -19,7 +19,7 @@
 
     {{-- ===== Statistics Cards ===== --}}
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card clickable" onclick="filterByCard('all')" title="Klik untuk melihat semua dokumen">
         <div class="stat-content">
           <div class="stat-label">Total Dokumen</div>
           <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
@@ -29,19 +29,32 @@
         </div>
       </div>
 
-      <div class="stat-card">
+      <div class="stat-card clickable" onclick="filterByCard('belum_siap')"
+        title="Klik untuk filter dokumen belum siap bayar">
         <div class="stat-content">
-          <div class="stat-label">Dokumen Proses</div>
-          <div class="stat-value">{{ number_format($dokumenProses ?? 0, 0, ',', '.') }}</div>
+          <div class="stat-label">Dokumen Belum Siap Bayar</div>
+          <div class="stat-value">{{ number_format($dokumenBelumSiapBayar ?? 0, 0, ',', '.') }}</div>
         </div>
         <div class="stat-icon proses">
           <i class="fas fa-clock"></i>
         </div>
       </div>
 
-      <div class="stat-card">
+      <div class="stat-card clickable" onclick="filterByCard('siap_dibayar')"
+        title="Klik untuk filter dokumen siap bayar">
         <div class="stat-content">
-          <div class="stat-label">Dokumen Selesai</div>
+          <div class="stat-label">Dokumen Siap Bayar</div>
+          <div class="stat-value">{{ number_format($dokumenSiapBayar ?? 0, 0, ',', '.') }}</div>
+        </div>
+        <div class="stat-icon siap">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+      </div>
+
+      <div class="stat-card clickable" onclick="filterByCard('sudah_dibayar')"
+        title="Klik untuk filter dokumen sudah dibayar">
+        <div class="stat-content">
+          <div class="stat-label">Dokumen Sudah Dibayar</div>
           <div class="stat-value">{{ number_format($dokumenSelesai ?? 0, 0, ',', '.') }}</div>
         </div>
         <div class="stat-icon selesai">
@@ -71,13 +84,16 @@
 
       {{-- Quick Filter Chips --}}
       <div class="filter-chips">
-        <button class="chip {{ request('status') == '' || request('status') == 'belum_siap' ? 'active' : '' }}" onclick="setStatus('belum_siap')">
+        <button class="chip {{ request('status') == '' || request('status') == 'belum_siap' ? 'active' : '' }}"
+          onclick="setStatus('belum_siap')">
           🔄 Belum Siap Dibayar
         </button>
-        <button class="chip {{ request('status') == 'siap_dibayar' ? 'active' : '' }}" onclick="setStatus('siap_dibayar')">
+        <button class="chip {{ request('status') == 'siap_dibayar' ? 'active' : '' }}"
+          onclick="setStatus('siap_dibayar')">
           📋 Siap Dibayar
         </button>
-        <button class="chip {{ request('status') == 'sudah_dibayar' ? 'active' : '' }}" onclick="setStatus('sudah_dibayar')">
+        <button class="chip {{ request('status') == 'sudah_dibayar' ? 'active' : '' }}"
+          onclick="setStatus('sudah_dibayar')">
           ✅ Sudah Dibayar
         </button>
       </div>
@@ -399,6 +415,25 @@
       window.location.href = '{{ url("/owner/workflow") }}/' + id;
     }
 
+    // ===== Filter by Card Click =====
+    function filterByCard(status) {
+      if (status === 'all') {
+        // Clear all status filters and reload
+        window.location.href = '{{ url("/owner/dokumen") }}';
+      } else {
+        document.getElementById('statusInput').value = status;
+        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+        // Find and activate the correct chip
+        const chips = document.querySelectorAll('.chip');
+        chips.forEach(chip => {
+          if (chip.textContent.includes('Belum Siap') && status === 'belum_siap') chip.classList.add('active');
+          if (chip.textContent.includes('Siap Dibayar') && !chip.textContent.includes('Belum') && status === 'siap_dibayar') chip.classList.add('active');
+          if (chip.textContent.includes('Sudah Dibayar') && status === 'sudah_dibayar') chip.classList.add('active');
+        });
+        applyFilter();
+      }
+    }
+
     // ===== View Switcher =====
     function switchView(view) {
       document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
@@ -486,11 +521,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                <span>${labels[key] || key}: ${displayValue}</span>
-                <button type="button" class="remove" onclick="removeFilter('${key}')">
-                  <i class="fas fa-times"></i>
-                </button>
-              `;
+                    <span>${labels[key] || key}: ${displayValue}</span>
+                    <button type="button" class="remove" onclick="removeFilter('${key}')">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  `;
           container.appendChild(tag);
         }
       }

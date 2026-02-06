@@ -36,14 +36,17 @@ class OwnerDashboardController extends Controller
                 ->orWhere('status_pembayaran', 'sudah_dibayar');
         })->count();
 
-        // Dokumen Proses: dokumen yang belum selesai (tidak termasuk status selesai)
-        $dokumenProses = Dokumen::where(function ($q) {
+        // Dokumen Belum Siap Bayar: dokumen yang belum selesai dan belum siap dibayar
+        $dokumenBelumSiapBayar = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                        ->orWhere('status_pembayaran', 'belum_dibayar');
                 });
         })->count();
+
+        // Dokumen Siap Bayar: dokumen dengan status_pembayaran = siap_dibayar
+        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')->count();
 
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
@@ -72,8 +75,8 @@ class OwnerDashboardController extends Controller
                 });
         })->where('created_at', '<=', $oneWeekAgo)->count();
         $dokumenProsesTrend = $dokumenProsesLastWeek > 0
-            ? round((($dokumenProses - $dokumenProsesLastWeek) / $dokumenProsesLastWeek) * 100, 1)
-            : ($dokumenProses > 0 ? 100 : 0);
+            ? round((($dokumenBelumSiapBayar - $dokumenProsesLastWeek) / $dokumenProsesLastWeek) * 100, 1)
+            : ($dokumenBelumSiapBayar > 0 ? 100 : 0);
 
         $totalNilaiLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->sum('nilai_rupiah') ?? 0;
         $totalNilaiTrend = $totalNilaiLastWeek > 0
@@ -83,7 +86,8 @@ class OwnerDashboardController extends Controller
         return view('owner.dashboard', compact(
             'documents',
             'totalDokumen',
-            'dokumenProses',
+            'dokumenBelumSiapBayar',
+            'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
             'totalDokumenTrend',

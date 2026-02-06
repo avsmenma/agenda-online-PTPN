@@ -75,9 +75,15 @@ html.dark {
 /* ===== Statistics Cards ===== */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1400px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 1200px) {
@@ -154,6 +160,26 @@ html.dark {
 
 .stat-icon.nilai {
   background: linear-gradient(135deg, #6366f1, #818cf8);
+}
+
+.stat-icon.siap {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+/* Clickable Stat Cards */
+.stat-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(8, 62, 64, 0.15);
+  border-color: var(--primary-color);
+}
+
+.stat-card.clickable:active {
+  transform: translateY(0);
 }
 
 /* ===== Filter Bar ===== */
