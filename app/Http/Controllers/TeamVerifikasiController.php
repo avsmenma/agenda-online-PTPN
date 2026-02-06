@@ -302,11 +302,13 @@ class TeamVerifikasiController extends Controller
                 // 'dokumens.inbox_approval_status', // REMOVED
                 'dokumens.created_by'
             ])
-            ->orderByRaw("CASE 
-                WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
-                ELSE 0
-            END DESC")
-            ->orderBy('dokumens.nomor_agenda', 'DESC')
+            ->orderByRaw("CAST(
+                CASE 
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+_[0-9]+$' THEN SUBSTRING_INDEX(dokumens.nomor_agenda, '_', 1)
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN dokumens.nomor_agenda
+                    ELSE '0'
+                END AS UNSIGNED
+            ) DESC")
             ->orderByRaw("
                 COALESCE(team_verifikasi_data.received_at, dokumens.created_at) DESC,
                 dokumens.id DESC
