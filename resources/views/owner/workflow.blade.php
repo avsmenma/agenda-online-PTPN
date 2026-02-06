@@ -38,15 +38,15 @@
 
     /* Order: Header first, then Info Grid, then Timeline */
     .workflow-header {
-      order: 1;
+      order: 1 !important;
     }
 
     .info-grid {
-      order: 2;
+      order: 2 !important;
     }
 
     .workflow-timeline {
-      order: 3;
+      order: 99 !important;
     }
 
     /* Header Section */
