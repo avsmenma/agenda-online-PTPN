@@ -232,20 +232,78 @@ class OwnerDashboardController extends Controller
         // Apply status filter if provided
         if ($request && $request->has('status') && !empty($request->status)) {
             $status = $request->status;
-            if ($status === 'proses') {
+
+            // Belum Siap Dibayar: dokumen dari operator sampai akutansi (belum di pembayaran)
+            if ($status === 'belum_siap' || $status === '') {
                 $query->where(function ($q) {
-                    $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                        ->where(function ($subQ) {
-                            $subQ->whereNull('status_pembayaran')
-                                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                        });
-                });
-            } elseif ($status === 'selesai') {
+                    $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
+                        ->orWhereIn('status', [
+                            'draft',
+                            'sedang diproses',
+                            'menunggu_verifikasi',
+                            'pending_approval_team_verifikasi',
+                            'sent_to_team_verifikasi',
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                        ]);
+                })
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    })
+                    ->where(function ($subQ) {
+                        $subQ->where('current_handler', '!=', 'pembayaran')
+                            ->orWhereNull('current_handler');
+                    });
+            }
+            // Siap Dibayar: dokumen yang sudah di role pembayaran tapi belum dibayar
+            elseif ($status === 'siap_dibayar') {
                 $query->where(function ($q) {
-                    $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                        ->orWhere('status_pembayaran', 'sudah_dibayar');
+                    $q->where('current_handler', 'pembayaran')
+                        ->orWhere('status', 'sent_to_pembayaran')
+                        ->orWhere('status_pembayaran', 'siap_dibayar')
+                        ->orWhere('status_pembayaran', 'siap_bayar');
+                })
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    })
+                    ->whereNull('tanggal_dibayar');
+            }
+            // Sudah Dibayar: dokumen yang sudah dibayar
+            elseif ($status === 'sudah_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhereNotNull('tanggal_dibayar')
+                        ->orWhereNotNull('link_bukti_pembayaran');
                 });
             }
+        } else {
+            // Default: show Belum Siap Dibayar (operator to akutansi)
+            $query->where(function ($q) {
+                $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
+                    ->orWhereIn('status', [
+                        'draft',
+                        'sedang diproses',
+                        'menunggu_verifikasi',
+                        'pending_approval_team_verifikasi',
+                        'sent_to_team_verifikasi',
+                        'sent_to_perpajakan',
+                        'sent_to_akutansi',
+                        'pending_approval_perpajakan',
+                        'pending_approval_akutansi',
+                    ]);
+            })
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->where(function ($subQ) {
+                    $subQ->where('current_handler', '!=', 'pembayaran')
+                        ->orWhereNull('current_handler');
+                });
         }
 
         // Apply advanced filters

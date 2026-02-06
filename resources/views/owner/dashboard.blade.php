@@ -71,14 +71,14 @@
 
       {{-- Quick Filter Chips --}}
       <div class="filter-chips">
-        <button class="chip {{ request('status') == '' ? 'active' : '' }}" onclick="setStatus('')">
-          📋 Semua
+        <button class="chip {{ request('status') == '' || request('status') == 'belum_siap' ? 'active' : '' }}" onclick="setStatus('belum_siap')">
+          🔄 Belum Siap Dibayar
         </button>
-        <button class="chip {{ request('status') == 'proses' ? 'active' : '' }}" onclick="setStatus('proses')">
-          🔄 Proses
+        <button class="chip {{ request('status') == 'siap_dibayar' ? 'active' : '' }}" onclick="setStatus('siap_dibayar')">
+          📋 Siap Dibayar
         </button>
-        <button class="chip {{ request('status') == 'selesai' ? 'active' : '' }}" onclick="setStatus('selesai')">
-          ✅ Selesai
+        <button class="chip {{ request('status') == 'sudah_dibayar' ? 'active' : '' }}" onclick="setStatus('sudah_dibayar')">
+          ✅ Sudah Dibayar
         </button>
       </div>
 
