@@ -827,7 +827,7 @@ class DokumenController extends Controller
         }
 
         // Check if status allows editing
-        $allowedStatuses = ['draft', 'returned_to_Operator', 'belum_dikirim', 'belum dikirim'];
+        $allowedStatuses = ['draft', 'returned_to_Operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'];
         $isAllowedStatus = in_array($status, $allowedStatuses);
 
         // Allow editing if:
@@ -1180,7 +1180,7 @@ class DokumenController extends Controller
 
             // Check if document status is allowed (case-insensitive)
             $statusLower = strtolower($dokumen->status ?? '');
-            $allowedStatuses = ['draft', 'returned_to_Operator', 'sedang diproses'];
+            $allowedStatuses = ['draft', 'returned_to_Operator', 'sedang diproses', 'menunggu_approval_keuangan'];
             $isAllowedStatus = in_array($statusLower, $allowedStatuses);
 
             // Allow sending if:
@@ -1190,8 +1190,9 @@ class DokumenController extends Controller
                 return back()->with('error', 'Dokumen tidak dapat dikirim. Status dokumen harus draft, returned, atau sedang diproses.');
             }
 
-            // Only allow if created by Operator and current_handler is Operator (case-insensitive)
-            if (!$createdByOperator || !$currentHandlerOperator) {
+            // Only allow if current_handler is Operator (case-insensitive)
+            // Documents from Bagian (created_by != 'operator') should also be able to be sent
+            if (!$currentHandlerOperator) {
                 return back()->with('error', 'Anda tidak memiliki izin untuk mengirim dokumen ini.');
             }
 
@@ -1415,8 +1416,9 @@ class DokumenController extends Controller
         $createdByOperator = in_array($createdBy, $operatorAliases);
         $currentHandlerOperator = in_array($currentHandler, $operatorAliases);
 
-        // Permission check
-        if (!$createdByOperator || !$currentHandlerOperator) {
+        // Permission check - only require current handler to be Operator
+        // Documents from Bagian (created_by != 'operator') should also be able to be sent
+        if (!$currentHandlerOperator) {
             return [
                 'canSend' => false,
                 'reason' => 'Dokumen tidak sedang di-handle oleh Operator'
@@ -1443,7 +1445,7 @@ class DokumenController extends Controller
 
         // Check status for non-rejected documents
         $statusLower = strtolower($dokumen->status ?? '');
-        $allowedStatuses = ['draft', 'returned_to_operator', 'sedang diproses'];
+        $allowedStatuses = ['draft', 'returned_to_operator', 'sedang diproses', 'menunggu_approval_keuangan'];
 
         if (!in_array($statusLower, $allowedStatuses)) {
             return [
