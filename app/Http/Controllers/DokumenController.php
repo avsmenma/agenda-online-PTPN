@@ -270,8 +270,12 @@ class DokumenController extends Controller
      */
     public function getDocumentDetailForOperator(Dokumen $dokumen)
     {
-        // Only allow if created by Operator
-        if ($dokumen->created_by !== 'operator') {
+        // Allow if created by Operator OR if current_handler is Operator (documents from Bagian)
+        $createdByLower = strtolower($dokumen->created_by ?? '');
+        $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
+        $isOperatorDocument = $createdByLower === 'operator' || $currentHandlerLower === 'operator';
+
+        if (!$isOperatorDocument) {
             return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
         }
 
@@ -289,11 +293,12 @@ class DokumenController extends Controller
      */
     public function getDocumentDetail(Dokumen $dokumen)
     {
-        // Only allow if created by Operator variants - case-insensitive check
-        $allowedCreators = ['operator', 'Operator', 'operator', 'Operator'];
+        // Allow if created by Operator OR if current_handler is Operator (documents from Bagian)
         $createdByLower = strtolower($dokumen->created_by ?? '');
+        $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
+        $isOperatorDocument = $createdByLower === 'operator' || $currentHandlerLower === 'operator';
 
-        if (!in_array($createdByLower, $allowedCreators)) {
+        if (!$isOperatorDocument) {
             return response()->json(['success' => false, 'message' => 'Access denied'], 403);
         }
 
@@ -348,8 +353,12 @@ class DokumenController extends Controller
      */
     public function getDocumentProgressForOperator(Dokumen $dokumen)
     {
-        // Only allow if created by Operator
-        if ($dokumen->created_by !== 'operator') {
+        // Allow if created by Operator OR if current_handler is Operator (documents from Bagian)
+        $createdByLower = strtolower($dokumen->created_by ?? '');
+        $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
+        $isOperatorDocument = $createdByLower === 'operator' || $currentHandlerLower === 'operator';
+
+        if (!$isOperatorDocument) {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied'
