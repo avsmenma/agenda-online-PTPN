@@ -24,17 +24,23 @@ class DokumenController extends Controller
 {
     public function index(Request $request)
     {
-        // Operator only sees documents created by Operator
+        // Operator sees:
+        // 1. Documents created by Operator
+        // 2. Documents sent from Bagian where current_handler is 'operator'
+        // 3. Documents with pending/approved status for operator role in dokumen_statuses
         // Order by nomor_agenda descending (numerically) - so new documents with lower numbers appear in correct position
         // Example: 2010, 2009, 2006 (new), 2005, 2004, 2003
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs'])
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs', 'roleStatuses'])
             ->where(function ($q) {
+                // Documents created by Operator
                 $q->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['operator', 'Operator', 'operator'])
                     ->orWhere('created_by', 'operator')
-                    ->orWhere('created_by', 'operator')
-                    ->orWhere('created_by', 'operator')
-                    ->orWhere('created_by', 'operator')
-                    ->orWhere('created_by', 'operator');
+                    // Documents sent from Bagian with current_handler = 'operator'
+                    ->orWhere('current_handler', 'operator')
+                    // Documents with status record for operator role
+                    ->orWhereHas('roleStatuses', function ($subQ) {
+                    $subQ->where('role_code', 'operator');
+                });
             })
             ->orderByRaw('CASE 
                 WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
