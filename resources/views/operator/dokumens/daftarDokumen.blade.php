@@ -2768,8 +2768,16 @@
                     // Check if document is returned (case-insensitive)
                     $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_operator';
 
-                    // Check if document is from Bagian (menunggu_approval_keuangan)
-                    $isFromBagian = strtolower($dokumen->status ?? '') === 'menunggu_approval_keuangan' && $currentHandlerOperator;
+                    // Check if document is from Bagian
+                    // Documents from Bagian: current_handler = operator BUT created_by != operator
+                    // They can have status 'menunggu_approval_keuangan' OR 'sent_to_team_verifikasi' (if re-sent)
+                    $isFromBagian = $currentHandlerOperator && !$createdByOperator;
+                    
+                    // Override $isSent for Bagian documents that are still with Operator
+                    // These documents should be editable even if status is sent_to_team_verifikasi
+                    if ($isFromBagian) {
+                        $isSent = false;
+                    }
 
                     // Initialize canSend
                     $canSend = false;
