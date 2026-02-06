@@ -1382,13 +1382,24 @@
         <p class="header-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
       </div>
       <div class="header-actions">
-        <a href="{{ route('reports.pembayaran.export', ['format' => 'excel']) }}" class="btn-export" title="Export Excel">
+        <button type="button" class="btn-export" onclick="exportDocument('excel')" title="Export Excel">
           <i class="fas fa-file-excel"></i>
-        </a>
-        <a href="{{ route('reports.pembayaran.export', ['format' => 'pdf']) }}" class="btn-export" title="Export PDF">
+        </button>
+        <button type="button" class="btn-export" onclick="exportDocument('pdf')" title="Export PDF">
           <i class="fas fa-file-pdf"></i>
-        </a>
+        </button>
       </div>
+      <!-- Hidden export form -->
+      <form id="exportForm" method="POST" action="{{ route('reports.pembayaran.export') }}" style="display: none;">
+        @csrf
+        <input type="hidden" name="format" id="exportFormat">
+        <input type="hidden" name="status_pembayaran" value="{{ $selectedStatus ?? '' }}">
+        <input type="hidden" name="year" value="{{ $selectedYear ?? '' }}">
+        <input type="hidden" name="month" value="{{ $selectedMonth ?? '' }}">
+        <input type="hidden" name="search" value="{{ $search ?? '' }}">
+        <input type="hidden" name="mode" value="{{ $mode ?? 'normal' }}">
+        <div id="exportColumnsContainer"></div>
+      </form>
     </header>
     <!-- Bento Grid Stats -->
     <div class="bento-grid">
@@ -2541,6 +2552,47 @@
       document.getElementById('filterJenisSubPekerjaan').value = '';
       document.getElementById('filterKebun').value = '';
       document.getElementById('filterJenisPembayaran').value = '';
+    }
+
+    // Export Document Function
+    function exportDocument(format) {
+      const form = document.getElementById('exportForm');
+      const formatInput = document.getElementById('exportFormat');
+      const columnsContainer = document.getElementById('exportColumnsContainer');
+      
+      // Set format
+      formatInput.value = format;
+      
+      // Clear previous columns
+      columnsContainer.innerHTML = '';
+      
+      // Get selected columns from the page or use defaults
+      // Check if there are checkboxes in column modal that are checked
+      const columnCheckboxes = document.querySelectorAll('.column-item input[type="checkbox"]:checked');
+      
+      if (columnCheckboxes.length > 0) {
+        // Use selected columns from modal
+        columnCheckboxes.forEach(function(checkbox) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'columns[]';
+          input.value = checkbox.value;
+          columnsContainer.appendChild(input);
+        });
+      } else {
+        // Use default columns based on what's visible in table
+        const defaultColumns = ['nomor_agenda', 'dibayar_kepada', 'jenis_pembayaran', 'nomor_spp', 'uraian_spp', 'nilai_rupiah'];
+        defaultColumns.forEach(function(col) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'columns[]';
+          input.value = col;
+          columnsContainer.appendChild(input);
+        });
+      }
+      
+      // Submit form
+      form.submit();
     }
   </script>
 @endsection

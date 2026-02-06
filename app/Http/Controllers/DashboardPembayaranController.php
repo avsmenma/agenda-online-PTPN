@@ -3238,13 +3238,15 @@ class DashboardPembayaranController extends Controller
     }
 
     /**
-     * Export to Excel (using CSV format that Excel can open)
+     * Export to Excel with PhpSpreadsheet (styled XLSX)
      */
     private function exportToExcel($dokumens, $columns, $availableColumns, $mode, $statusFilter, $year, $month, $search)
     {
-        $filename = 'Rekapan_Pembayaran_' . date('Y-m-d_His') . '.csv';
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Rekapan Pembayaran');
 
-        // Header row
+        // Header row mapping
         $headers = [];
         foreach ($columns as $col) {
             if ($col === 'sent_to_pembayaran_at') {
@@ -3258,29 +3260,102 @@ class DashboardPembayaranController extends Controller
             }
         }
 
-        // Build CSV content
-        $csvContent = '';
-        // Add BOM for UTF-8 (so Excel opens it correctly)
-        $csvContent .= chr(0xEF) . chr(0xBB) . chr(0xBF);
-
-        // Add header row
-        $csvContent .= $this->arrayToCsv($headers) . "\n";
-
-        // Add data rows
-        foreach ($dokumens as $dokumen) {
-            $row = [];
-            foreach ($columns as $col) {
-                $value = $this->getColumnValue($dokumen, $col);
-                $row[] = $value;
-            }
-            $csvContent .= $this->arrayToCsv($row) . "\n";
+        // Write headers (row 1)
+        $colIndex = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($colIndex, 1, $header);
+            $colIndex++;
         }
 
-        return Response::make($csvContent, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Cache-Control' => 'max-age=0',
-        ]);
+        // Style headers - green background with white bold text
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0d6efd'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
+            ],
+        ];
+        $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->getStyle("A1:{$lastColumn}1")->applyFromArray($headerStyle);
+        $sheet->getRowDimension(1)->setRowHeight(25);
+
+        // Write data rows
+        $rowIndex = 2;
+        foreach ($dokumens as $dokumen) {
+            $colIndex = 1;
+            foreach ($columns as $col) {
+                $value = $this->getColumnValue($dokumen, $col);
+                $sheet->setCellValueByColumnAndRow($colIndex, $rowIndex, $value);
+                
+                // Format currency columns
+                if (in_array($col, ['nilai_rupiah', 'nilai_belum_siap_bayar', 'nilai_siap_bayar', 'nilai_sudah_dibayar'])) {
+                    $cellCoord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex) . $rowIndex;
+                    $sheet->getStyle($cellCoord)->getNumberFormat()->setFormatCode('#,##0');
+                }
+                $colIndex++;
+            }
+            
+            // Zebra stripe - alternate row colors
+            if ($rowIndex % 2 == 0) {
+                $rowStyle = [
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8F9FA'],
+                    ],
+                ];
+                $sheet->getStyle("A{$rowIndex}:{$lastColumn}{$rowIndex}")->applyFromArray($rowStyle);
+            }
+            
+            $rowIndex++;
+        }
+
+        // Apply borders to all data cells
+        $lastRow = $rowIndex - 1;
+        if ($lastRow >= 2) {
+            $dataBorderStyle = [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['rgb' => 'DDDDDD'],
+                    ],
+                ],
+            ];
+            $sheet->getStyle("A2:{$lastColumn}{$lastRow}")->applyFromArray($dataBorderStyle);
+        }
+
+        // Auto-size columns
+        foreach (range(1, count($headers)) as $colNum) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colNum);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        // Freeze header row
+        $sheet->freezePane('A2');
+
+        // Generate output
+        $filename = 'Rekapan_Pembayaran_' . date('Y-m-d_His') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        // Use temp file
+        $tempFile = tempnam(sys_get_temp_dir(), 'export_');
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**
