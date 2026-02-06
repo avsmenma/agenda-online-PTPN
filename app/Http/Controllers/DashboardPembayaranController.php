@@ -419,9 +419,6 @@ class DashboardPembayaranController extends Controller
             'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
             'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'nilai_belum_siap_bayar' => 'Belum siap bayar',
-            'nilai_siap_bayar' => 'sudah siap bayar',
-            'nilai_sudah_dibayar' => 'sudah dibayar',
         ];
 
         $data = [

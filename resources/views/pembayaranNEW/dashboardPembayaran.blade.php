@@ -1665,7 +1665,7 @@
           <span class="table-count">{{ $dokumens->total() }}</span>
         </div>
         <div class="table-toggle">
-          <button type="button" class="btn-customize" onclick="openColumnModal()">
+          <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
             <i class="fas fa-columns"></i> Atur Kolom
           </button>
           <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
@@ -1758,7 +1758,6 @@
                   @foreach($selectedColumns as $colKey)
                     <th>{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
                   @endforeach
-                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -1799,11 +1798,6 @@
                         <td>{{ $dok->$colKey ?? '-' }}</td>
                       @endif
                     @endforeach
-                    <td>
-                      <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-action" title="Lihat Detail">
-                        <i class="fas fa-eye"></i>
-                      </a>
-                    </td>
                   </tr>
                 @endforeach
               </tbody>
@@ -2350,203 +2344,203 @@
 
       updateOrderNumbers();
       updateSelectedCount();
-    updatePreview();
+      updatePreview();
+    }
+
+    function updateOrderNumbers() {
+      document.querySelectorAll('.column-item').forEach(item => {
+        const key = item.dataset.column;
+        const orderSpan = item.querySelector('.column-item-order');
+        const idx = selectedColumnsOrder.indexOf(key);
+        if (idx !== -1) {
+          orderSpan.textContent = idx + 1;
+        } else {
+          orderSpan.textContent = '';
         }
+      });
+    }
 
-        function updateOrderNumbers() {
-          document.querySelectorAll('.column-item').forEach(item => {
-            const key = item.dataset.column;
-            const orderSpan = item.querySelector('.column-item-order');
-            const idx = selectedColumnsOrder.indexOf(key);
-            if (idx !== -1) {
-              orderSpan.textContent = idx + 1;
-            } else {
-              orderSpan.textContent = '';
-            }
-          });
-        }
+    function updateSelectedCount() {
+      document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
+      // Update column list text
+      const columnLabels = selectedColumnsOrder.map(col => availableColumnsData[col] || col);
+      const countContainer = document.querySelector('.selected-count');
+      if (countContainer) {
+        countContainer.innerHTML = `<strong id="selectedColumnCount">${selectedColumnsOrder.length}</strong> kolom dipilih` +
+          (selectedColumnsOrder.length > 0 ? `<br><small>Kolom: ${columnLabels.join(', ')}</small>` : '');
+      }
+    }
 
-        function updateSelectedCount() {
-          document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
-          // Update column list text
-          const columnLabels = selectedColumnsOrder.map(col => availableColumnsData[col] || col);
-          const countContainer = document.querySelector('.selected-count');
-          if (countContainer) {
-            countContainer.innerHTML = `<strong id="selectedColumnCount">${selectedColumnsOrder.length}</strong> kolom dipilih` +
-              (selectedColumnsOrder.length > 0 ? `<br><small>Kolom: ${columnLabels.join(', ')}</small>` : '');
-          }
-        }
+    function updatePreview() {
+      const previewContainer = document.getElementById('tablePreview');
+      if (!previewContainer) return;
 
-        function updatePreview() {
-          const previewContainer = document.getElementById('tablePreview');
-          if (!previewContainer) return;
+      if (selectedColumnsOrder.length === 0) {
+        previewContainer.innerHTML = `
+                <div class="empty-preview">
+                  <i class="fa-solid fa-table"></i>
+                  <p>Belum ada kolom yang dipilih</p>
+                  <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                </div>`;
+        return;
+      }
 
-          if (selectedColumnsOrder.length === 0) {
-            previewContainer.innerHTML = `
-              <div class="empty-preview">
-                <i class="fa-solid fa-table"></i>
-                <p>Belum ada kolom yang dipilih</p>
-                <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-              </div>`;
-            return;
-          }
+      let tableHtml = '<table class="preview-table"><thead><tr><th>No</th>';
+      selectedColumnsOrder.forEach(col => {
+        tableHtml += `<th>${availableColumnsData[col] || col}</th>`;
+      });
+      tableHtml += '<th>Aksi</th></tr></thead><tbody>';
 
-          let tableHtml = '<table class="preview-table"><thead><tr><th>No</th>';
-          selectedColumnsOrder.forEach(col => {
-            tableHtml += `<th>${availableColumnsData[col] || col}</th>`;
-          });
-          tableHtml += '<th>Aksi</th></tr></thead><tbody>';
-
-          for (let i = 1; i <= 4; i++) {
-            tableHtml += `<tr><td>${i}</td>`;
-            selectedColumnsOrder.forEach(col => {
-              let cellValue = `Contoh Data ${i}`;
-              if (col === 'nomor_agenda') cellValue = `AGD/10${i}/XII/2024`;
-              else if (col === 'nomor_spp') cellValue = `SPP-0010${i}/XII/2024`;
-              else if (col === 'nilai_rupiah') cellValue = `Rp. ${(1000000 * i).toLocaleString('id-ID')}`;
-              else if (col === 'dibayar_kepada') cellValue = `CV. Contoh Vendor ${i}`;
-              else if (col === 'status_pembayaran') cellValue = i % 2 === 0 ? 'Siap Bayar' : 'Belum Siap';
-              tableHtml += `<td>${cellValue}</td>`;
-            });
-            tableHtml += '<td>Edit, Kirim</td></tr>';
-          }
-
-          tableHtml += '</tbody></table>';
-          previewContainer.innerHTML = tableHtml;
-        }
-
-        function selectAllColumns() {
-          selectedColumnsOrder = Object.keys(availableColumnsData);
-          document.querySelectorAll('.column-item').forEach(item => {
-            item.classList.add('selected');
-            item.querySelector('.column-item-checkbox').checked = true;
-          });
-          updateOrderNumbers();
-          updateSelectedCount();
-          updatePreview();
-        }
-
-        function removeAllColumns() {
-          selectedColumnsOrder = [];
-          document.querySelectorAll('.column-item').forEach(item => {
-            item.classList.remove('selected');
-            item.querySelector('.column-item-checkbox').checked = false;
-          });
-          updateOrderNumbers();
-          updateSelectedCount();
-          updatePreview();
-        }
-
-        function saveColumnCustomization() {
-          if (selectedColumnsOrder.length === 0) {
-            alert('Pilih minimal satu kolom!');
-            return;
-          }
-
-          const url = new URL(window.location.href);
-          // Clear existing columns params
-          url.searchParams.delete('columns[]');
-          url.searchParams.delete('columns');
-
-          // Add selected columns
-          selectedColumnsOrder.forEach(col => {
-            url.searchParams.append('columns[]', col);
-          });
-
-          window.location.href = url.toString();
-        }
-
-        // Close modal on escape key
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape') {
-            closeColumnModal();
-          }
+      for (let i = 1; i <= 4; i++) {
+        tableHtml += `<tr><td>${i}</td>`;
+        selectedColumnsOrder.forEach(col => {
+          let cellValue = `Contoh Data ${i}`;
+          if (col === 'nomor_agenda') cellValue = `AGD/10${i}/XII/2024`;
+          else if (col === 'nomor_spp') cellValue = `SPP-0010${i}/XII/2024`;
+          else if (col === 'nilai_rupiah') cellValue = `Rp. ${(1000000 * i).toLocaleString('id-ID')}`;
+          else if (col === 'dibayar_kepada') cellValue = `CV. Contoh Vendor ${i}`;
+          else if (col === 'status_pembayaran') cellValue = i % 2 === 0 ? 'Siap Bayar' : 'Belum Siap';
+          tableHtml += `<td>${cellValue}</td>`;
         });
+        tableHtml += '<td>Edit, Kirim</td></tr>';
+      }
 
-        // Close modal on backdrop click
-        document.getElementById('columnCustomizationModal')?.addEventListener('click', function(e) {
-          if (e.target === this) {
-            closeColumnModal();
-          }
-        });
-      </script>
+      tableHtml += '</tbody></table>';
+      previewContainer.innerHTML = tableHtml;
+    }
 
-      <script>
-        // View Mode Toggle
-        function setViewMode(mode) {
-          const url = new URL(window.location.href);
-          url.searchParams.set('mode', mode);
-          window.location.href = url.toString();
-        }
+    function selectAllColumns() {
+      selectedColumnsOrder = Object.keys(availableColumnsData);
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.classList.add('selected');
+        item.querySelector('.column-item-checkbox').checked = true;
+      });
+      updateOrderNumbers();
+      updateSelectedCount();
+      updatePreview();
+    }
 
-        // Vendor Group Toggle
-        function toggleVendorGroup(header) {
-          const body = header.nextElementSibling;
-          const isExpanded = header.classList.contains('expanded');
+    function removeAllColumns() {
+      selectedColumnsOrder = [];
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.classList.remove('selected');
+        item.querySelector('.column-item-checkbox').checked = false;
+      });
+      updateOrderNumbers();
+      updateSelectedCount();
+      updatePreview();
+    }
 
-          if (isExpanded) {
-            header.classList.remove('expanded');
-            body.classList.remove('show');
+    function saveColumnCustomization() {
+      if (selectedColumnsOrder.length === 0) {
+        alert('Pilih minimal satu kolom!');
+        return;
+      }
+
+      const url = new URL(window.location.href);
+      // Clear existing columns params
+      url.searchParams.delete('columns[]');
+      url.searchParams.delete('columns');
+
+      // Add selected columns
+      selectedColumnsOrder.forEach(col => {
+        url.searchParams.append('columns[]', col);
+      });
+
+      window.location.href = url.toString();
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeColumnModal();
+      }
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('columnCustomizationModal')?.addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeColumnModal();
+      }
+    });
+  </script>
+
+  <script>
+    // View Mode Toggle
+    function setViewMode(mode) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', mode);
+      window.location.href = url.toString();
+    }
+
+    // Vendor Group Toggle
+    function toggleVendorGroup(header) {
+      const body = header.nextElementSibling;
+      const isExpanded = header.classList.contains('expanded');
+
+      if (isExpanded) {
+        header.classList.remove('expanded');
+        body.classList.remove('show');
+      } else {
+        header.classList.add('expanded');
+        body.classList.add('show');
+      }
+    }
+
+    // Number Counter Animation
+    document.addEventListener('DOMContentLoaded', function () {
+      const counters = document.querySelectorAll('.stat-value');
+
+      counters.forEach(counter => {
+        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+        if (isNaN(target) || target === 0) return;
+
+        let current = 0;
+        const increment = target / 30;
+        const duration = 800;
+        const stepTime = duration / 30;
+
+        const updateCounter = () => {
+          current += increment;
+          if (current < target) {
+            counter.textContent = Math.floor(current).toLocaleString('id-ID');
+            setTimeout(updateCounter, stepTime);
           } else {
-            header.classList.add('expanded');
-            body.classList.add('show');
+            counter.textContent = target.toLocaleString('id-ID');
           }
-        }
+        };
 
-        // Number Counter Animation
-        document.addEventListener('DOMContentLoaded', function () {
-          const counters = document.querySelectorAll('.stat-value');
+        setTimeout(updateCounter, 300);
+      });
+    });
 
-          counters.forEach(counter => {
-            const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
-            if (isNaN(target) || target === 0) return;
+    // Add subtle hover feedback
+    document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
+      card.addEventListener('mouseenter', function () {
+        this.style.transform = 'translateY(-4px)';
+      });
+      card.addEventListener('mouseleave', function () {
+        this.style.transform = 'translateY(0)';
+      });
+    });
 
-            let current = 0;
-            const increment = target / 30;
-            const duration = 800;
-            const stepTime = duration / 30;
+    // Advanced Filter Panel Toggle
+    document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
+      const panel = document.getElementById('advancedFilterPanel');
+      const toggle = this;
 
-            const updateCounter = () => {
-              current += increment;
-              if (current < target) {
-                counter.textContent = Math.floor(current).toLocaleString('id-ID');
-                setTimeout(updateCounter, stepTime);
-              } else {
-                counter.textContent = target.toLocaleString('id-ID');
-              }
-            };
+      panel.classList.toggle('show');
+      toggle.classList.toggle('active');
+    });
 
-            setTimeout(updateCounter, 300);
-          });
-        });
-
-        // Add subtle hover feedback
-        document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
-          card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-4px)';
-          });
-          card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-          });
-        });
-
-        // Advanced Filter Panel Toggle
-        document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
-          const panel = document.getElementById('advancedFilterPanel');
-          const toggle = this;
-
-          panel.classList.toggle('show');
-          toggle.classList.toggle('active');
-        });
-
-        // Reset Advanced Filters
-        function resetAdvancedFilters() {
-          document.getElementById('filterVendor').value = '';
-          document.getElementById('filterKategori').value = '';
-          document.getElementById('filterJenisDokumen').value = '';
-          document.getElementById('filterJenisSubPekerjaan').value = '';
-          document.getElementById('filterKebun').value = '';
-          document.getElementById('filterJenisPembayaran').value = '';
-        }
-      </script>
+    // Reset Advanced Filters
+    function resetAdvancedFilters() {
+      document.getElementById('filterVendor').value = '';
+      document.getElementById('filterKategori').value = '';
+      document.getElementById('filterJenisDokumen').value = '';
+      document.getElementById('filterJenisSubPekerjaan').value = '';
+      document.getElementById('filterKebun').value = '';
+      document.getElementById('filterJenisPembayaran').value = '';
+    }
+  </script>
 @endsection
