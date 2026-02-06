@@ -34,7 +34,19 @@ class DashboardPembayaranController extends Controller
         $month = request('month');
         $search = request('search');
         $mode = request('mode', 'normal'); // normal or rekapan_table
-        $selectedColumns = request('columns', []); // Array of selected columns in order
+        $selectedColumns = request('columns', null); // Array of selected columns in order
+
+        // Default columns if none selected
+        if (empty($selectedColumns)) {
+            $selectedColumns = [
+                'nomor_agenda',
+                'nomor_spp',
+                'dibayar_kepada',
+                'uraian_spp',
+                'nilai_rupiah',
+                'status_pembayaran'
+            ];
+        }
 
         // Handler yang dianggap "belum siap dibayar"
         $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];

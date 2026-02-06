@@ -1751,6 +1751,11 @@
           </div>
         @else
           <!-- Normal Table View -->
+          <div class="mb-3 text-end">
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="openColumnModal()">
+              <i class="fa-solid fa-table-columns me-1"></i> Atur Kolom
+            </button>
+          </div>
           <div class="data-table-wrapper">
             <table class="data-table">
               <thead>
@@ -1840,48 +1845,469 @@
     </div>
 
     <!-- Column Customization Modal -->
-    <div class="modal fade" id="columnModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title"><i class="fas fa-columns"></i> Kustomisasi Kolom</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <form action="{{ url()->current() }}" method="GET">
-            <div class="modal-body">
-              <!-- Keep existing filters -->
-              <input type="hidden" name="status_pembayaran" value="{{ request('status_pembayaran') }}">
-              <input type="hidden" name="year" value="{{ request('year') }}">
-              <input type="hidden" name="month" value="{{ request('month') }}">
-              <input type="hidden" name="search" value="{{ request('search') }}">
-              <!-- Advanced filters -->
-              <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor') }}">
-              <input type="hidden" name="filter_kategori" value="{{ request('filter_kategori') }}">
-              <input type="hidden" name="filter_jenis_dokumen" value="{{ request('filter_jenis_dokumen') }}">
-              <input type="hidden" name="filter_jenis_sub_pekerjaan" value="{{ request('filter_jenis_sub_pekerjaan') }}">
-              <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') }}">
-              <input type="hidden" name="filter_jenis_pembayaran" value="{{ request('filter_jenis_pembayaran') }}">
-              <input type="hidden" name="mode" value="{{ $mode }}">
+    <style>
+      .customization-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        padding: 2rem;
+        overflow-y: auto;
+      }
+      .customization-modal.show {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .modal-content-custom {
+        background: #fff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 1100px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+      .modal-header-custom {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .modal-header-custom h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .modal-header-custom h3 i {
+        color: #083E40;
+      }
+      .modal-close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0.5rem;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+      .modal-close-btn:hover {
+        color: #1f2937;
+      }
+      .modal-body-custom {
+        padding: 1.5rem 2rem;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .customization-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+      }
+      @media (max-width: 900px) {
+        .customization-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .selection-panel, .preview-panel {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+      .panel-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .panel-title i {
+        color: #083E40;
+      }
+      .panel-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+      }
+      .column-selection-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      @media (max-width: 600px) {
+        .column-selection-list {
+          grid-template-columns: 1fr;
+        }
+      }
+      .column-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: #fff;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+      }
+      .column-item:hover {
+        border-color: #083E40;
+        background: rgba(8, 62, 64, 0.02);
+      }
+      .column-item.selected {
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.08);
+      }
+      .column-item .drag-handle {
+        color: #9ca3af;
+        cursor: grab;
+      }
+      .column-item.selected .drag-handle {
+        color: #083E40;
+      }
+      .column-item-checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: #22c55e;
+        cursor: pointer;
+      }
+      .column-item-label {
+        flex: 1;
+        font-size: 0.875rem;
+        color: #374151;
+        cursor: pointer;
+      }
+      .column-item-order {
+        display: none;
+        width: 24px;
+        height: 24px;
+        background: #22c55e;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 0.75rem;
+        font-weight: 600;
+        align-items: center;
+        justify-content: center;
+      }
+      .column-item.selected .column-item-order {
+        display: flex;
+      }
+      .preview-container {
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .preview-table {
+        width: 100%;
+        font-size: 0.8rem;
+        border-collapse: collapse;
+      }
+      .preview-table th {
+        background: #083E40;
+        color: #fff;
+        padding: 0.75rem 0.5rem;
+        text-align: left;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+      }
+      .preview-table td {
+        padding: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        color: #374151;
+      }
+      .preview-table tr:hover td {
+        background: #f9fafb;
+      }
+      .empty-preview {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: #9ca3af;
+      }
+      .empty-preview i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .modal-footer-custom {
+        padding: 1rem 2rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .selected-count {
+        font-size: 0.875rem;
+        color: #374151;
+      }
+      .selected-count strong {
+        color: #22c55e;
+        font-weight: 700;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+      }
+      .btn-modal {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+      }
+      .btn-cancel {
+        background: #ef4444;
+        color: #fff;
+      }
+      .btn-cancel:hover {
+        background: #dc2626;
+      }
+      .btn-save {
+        background: #22c55e;
+        color: #fff;
+      }
+      .btn-save:hover {
+        background: #16a34a;
+      }
+    </style>
 
-              <div class="column-grid">
+    <div class="customization-modal" id="columnCustomizationModal">
+      <div class="modal-content-custom">
+        <div class="modal-header-custom">
+          <h3>
+            <i class="fa-solid fa-table-columns"></i>
+            Kustomisasi Kolom Tabel
+          </h3>
+          <button type="button" class="modal-close-btn" onclick="closeColumnModal()">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body-custom">
+          <div class="customization-grid">
+            <!-- Selection Panel -->
+            <div class="selection-panel">
+              <div class="panel-title">
+                <i class="fa-solid fa-check-square"></i>
+                Pilih Kolom
+              </div>
+              <div class="panel-description">
+                Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+              </div>
+              <div class="column-selection-list" id="columnSelectionList">
                 @foreach($availableColumns as $key => $label)
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}" {{ in_array($key, $selectedColumns) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="col_{{ $key }}">
-                      {{ $label }}
-                    </label>
+                  <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
+                       data-column="{{ $key }}"
+                       onclick="toggleColumnSelection(this)">
+                    <div class="drag-handle">
+                      <i class="fa-solid fa-grip-vertical"></i>
+                    </div>
+                    <input type="checkbox"
+                           class="column-item-checkbox"
+                           value="{{ $key }}"
+                           {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
+                           onclick="event.stopPropagation()">
+                    <label class="column-item-label">{{ $label }}</label>
+                    <span class="column-item-order">
+                      {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
+                    </span>
                   </div>
                 @endforeach
               </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-              <button type="submit" class="btn btn-primary">Simpan Tampilan</button>
+
+            <!-- Preview Panel -->
+            <div class="preview-panel">
+              <div class="panel-title">
+                <i class="fa-solid fa-eye"></i>
+                Preview Hasil
+              </div>
+              <div class="panel-description">
+                Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
+              </div>
+              <div class="preview-container">
+                <div id="tablePreview">
+                  @if(count($selectedColumns) > 0)
+                    <table class="preview-table">
+                      <thead>
+                        <tr>
+                          <th>No</th>
+                          @foreach($selectedColumns as $col)
+                            <th>{{ $availableColumns[$col] ?? $col }}</th>
+                          @endforeach
+                          <th>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for($i = 1; $i <= 4; $i++)
+                          <tr>
+                            <td>{{ $i }}</td>
+                            @foreach($selectedColumns as $col)
+                              <td>
+                                @if($col == 'nomor_agenda')
+                                  AGD/10{{ $i }}/XII/2024
+                                @elseif($col == 'nomor_spp')
+                                  SPP-0010{{ $i }}/XII/2024
+                                @elseif($col == 'nilai_rupiah')
+                                  Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
+                                @elseif($col == 'dibayar_kepada')
+                                  CV. Contoh Vendor {{ $i }}
+                                @else
+                                  Contoh Data {{ $i }}
+                                @endif
+                              </td>
+                            @endforeach
+                            <td>Edit, Kirim</td>
+                          </tr>
+                        @endfor
+                      </tbody>
+                    </table>
+                  @else
+                    <div class="empty-preview">
+                      <i class="fa-solid fa-table"></i>
+                      <p>Belum ada kolom yang dipilih</p>
+                      <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                    </div>
+                  @endif
+                </div>
+              </div>
             </div>
-          </form>
+          </div>
+        </div>
+
+        <div class="modal-footer-custom">
+          <div class="selected-count">
+            <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
+            @if(count($selectedColumns) > 0)
+              <br><small>Kolom: {{ implode(', ', array_map(function($col) use ($availableColumns) {
+                return $availableColumns[$col] ?? $col;
+              }, $selectedColumns)) }}</small>
+            @endif
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-modal btn-cancel" onclick="closeColumnModal()">
+              <i class="fa-solid fa-times"></i>
+              Batal
+            </button>
+            <button type="button" class="btn-modal btn-save" onclick="saveColumnCustomization()">
+              <i class="fa-solid fa-save"></i>
+              Simpan Perubahan
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <script>
+      // Column customization variables
+      let selectedColumnsOrder = @json($selectedColumns);
+      const availableColumnsData = @json($availableColumns);
+
+      function openColumnModal() {
+        document.getElementById('columnCustomizationModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeColumnModal() {
+        document.getElementById('columnCustomizationModal').classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      function toggleColumnSelection(element) {
+        const checkbox = element.querySelector('.column-item-checkbox');
+        const columnKey = element.dataset.column;
+
+        checkbox.checked = !checkbox.checked;
+
+        if (checkbox.checked) {
+          element.classList.add('selected');
+          if (!selectedColumnsOrder.includes(columnKey)) {
+            selectedColumnsOrder.push(columnKey);
+          }
+        } else {
+          element.classList.remove('selected');
+          selectedColumnsOrder = selectedColumnsOrder.filter(c => c !== columnKey);
+        }
+
+        updateOrderNumbers();
+        updateSelectedCount();
+      }
+
+      function updateOrderNumbers() {
+        document.querySelectorAll('.column-item').forEach(item => {
+          const key = item.dataset.column;
+          const orderSpan = item.querySelector('.column-item-order');
+          const idx = selectedColumnsOrder.indexOf(key);
+          if (idx !== -1) {
+            orderSpan.textContent = idx + 1;
+          } else {
+            orderSpan.textContent = '';
+          }
+        });
+      }
+
+      function updateSelectedCount() {
+        document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
+      }
+
+      function saveColumnCustomization() {
+        if (selectedColumnsOrder.length === 0) {
+          alert('Pilih minimal satu kolom!');
+          return;
+        }
+
+        const url = new URL(window.location.href);
+        // Clear existing columns params
+        url.searchParams.delete('columns[]');
+        url.searchParams.delete('columns');
+        
+        // Add selected columns
+        selectedColumnsOrder.forEach(col => {
+          url.searchParams.append('columns[]', col);
+        });
+
+        window.location.href = url.toString();
+      }
+
+      // Close modal on escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeColumnModal();
+        }
+      });
+
+      // Close modal on backdrop click
+      document.getElementById('columnCustomizationModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeColumnModal();
+        }
+      });
+    </script>
 
     <script>
       // View Mode Toggle
