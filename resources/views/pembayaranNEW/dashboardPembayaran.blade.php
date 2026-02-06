@@ -1758,634 +1758,795 @@
                   @foreach($selectedColumns as $colKey)
                     <th>{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
                   @endforeach
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @foreach($dokumens as $dok)
-                        <tr>
-                          @foreach($selectedColumns as $colKey)
-                            @if($colKey == 'nomor_agenda')
-                              <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
-                            @elseif($colKey == 'nomor_spp')
-                              <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
-                            @elseif($colKey == 'dibayar_kepada')
-                              <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
-                            @elseif($colKey == 'uraian_spp')
-                              <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
-                            @elseif($colKey == 'nilai_rupiah')
-                              <td class="cell-rupiah text-end">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
-                            @elseif($colKey == 'status_pembayaran')
-                              <td>
-                                @if($dok->computed_status == 'siap_dibayar')
-                                  <span class="status-pill status-pill--ready">
-                                    <i class="fas fa-circle"></i> Siap Dibayar
-                                  </span>
-                                @elseif($dok->computed_status == 'sudah_dibayar')
-                                  <span class="status-pill status-pill--paid">
-                                    <i class="fas fa-circle"></i> Sudah Dibayar
-                                  </span>
-                                @else
-                                  <span class="status-pill status-pill--pending">
-                                    <i class="fas fa-circle"></i> Belum Siap
-                                  </span>
-                                @endif
-                              </td>
-                            @elseif($colKey == 'tgl_jatuhtempo')
-                              <td>{{ $dok->tgl_jatuhtempo ? \Carbon\Carbon::parse($dok->tgl_jatuhtempo)->format('d/m/Y') : '-' }}</td>
-                            @elseif(in_array($colKey, ['dokumen_po', 'dokumen_pr', 'dokumen_gr']))
-                              <td class="cell-mono">{{ $dok->$colKey ?? '-' }}</td>
-                            @else
-                              <td>{{ $dok->$colKey ?? '-' }}</td>
-                            @endif
-                          @endforeach
-                          <td>
-                            <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-action" title="Lihat Detail">
-                              <i class="fas fa-eye"></i>
-                            </a>
-                          </td>
-                        </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-                </div>
-        @endif
-
-            <!-- Pagination -->
-            @if($dokumens->hasPages())
-              <div class="pagination-wrapper">
-                <div class="pagination-info">
-                  Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
-                </div>
-                <div>
-                  {{ $dokumens->links('pagination::bootstrap-4') }}
-                </div>
-              </div>
-            @endif
-      @else
-          <!-- Empty State -->
-          <div class="empty-state">
-            <div class="empty-state-icon">
-              <i class="fas fa-inbox"></i>
-            </div>
-            <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-            <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-            <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty">
-              <i class="fas fa-redo"></i>
-              Reset Filter
-            </a>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach($dokumens as $dok)
+                  <tr>
+                    @foreach($selectedColumns as $colKey)
+                      @if($colKey == 'nomor_agenda')
+                        <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
+                      @elseif($colKey == 'nomor_spp')
+                        <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
+                      @elseif($colKey == 'dibayar_kepada')
+                        <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
+                      @elseif($colKey == 'uraian_spp')
+                        <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
+                      @elseif($colKey == 'nilai_rupiah')
+                        <td class="cell-rupiah text-end">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
+                      @elseif($colKey == 'status_pembayaran')
+                        <td>
+                          @if($dok->computed_status == 'siap_dibayar')
+                            <span class="status-pill status-pill--ready">
+                              <i class="fas fa-circle"></i> Siap Dibayar
+                            </span>
+                          @elseif($dok->computed_status == 'sudah_dibayar')
+                            <span class="status-pill status-pill--paid">
+                              <i class="fas fa-circle"></i> Sudah Dibayar
+                            </span>
+                          @else
+                            <span class="status-pill status-pill--pending">
+                              <i class="fas fa-circle"></i> Belum Siap
+                            </span>
+                          @endif
+                        </td>
+                      @elseif($colKey == 'tgl_jatuhtempo')
+                        <td>{{ $dok->tgl_jatuhtempo ? \Carbon\Carbon::parse($dok->tgl_jatuhtempo)->format('d/m/Y') : '-' }}</td>
+                      @elseif(in_array($colKey, ['dokumen_po', 'dokumen_pr', 'dokumen_gr']))
+                        <td class="cell-mono">{{ $dok->$colKey ?? '-' }}</td>
+                      @else
+                        <td>{{ $dok->$colKey ?? '-' }}</td>
+                      @endif
+                    @endforeach
+                    <td>
+                      <a href="{{ route('documents.pembayaran.detail', $dok->id) }}" class="btn-action" title="Lihat Detail">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
           </div>
         @endif
-      </div>
-    </div>
 
-    <!-- Column Customization Modal -->
-    <style>
-      .customization-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        padding: 2rem;
-        overflow-y: auto;
-      }
-      .customization-modal.show {
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-      }
-      .modal-content-custom {
-        background: #fff;
-        border-radius: 16px;
-        width: 100%;
-        max-width: 1100px;
-        max-height: 90vh;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      }
-      .modal-header-custom {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .modal-header-custom h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .modal-header-custom h3 i {
-        color: #083E40;
-      }
-      .modal-close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        color: #6b7280;
-        cursor: pointer;
-        padding: 0.5rem;
-        line-height: 1;
-        transition: color 0.2s;
-      }
-      .modal-close-btn:hover {
-        color: #1f2937;
-      }
-      .modal-body-custom {
-        padding: 1.5rem 2rem;
-        overflow-y: auto;
-        flex: 1;
-      }
-      .customization-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-      .selection-panel, .preview-panel {
-        background: #f9fafb;
-        border-radius: 12px;
-        padding: 1.25rem;
-      }
-      .panel-title {
-        font-weight: 600;
-        font-size: 1rem;
-        color: #1f2937;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .panel-title i {
-        color: #083E40;
-      }
-      .panel-description {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 1rem;
-      }
-      .column-selection-list {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.5rem;
-        max-height: 300px;
-        overflow-y: auto;
-        padding: 0.5rem;
-      }
-      @media (max-width: 1000px) {
-        .column-selection-list {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
-      @media (max-width: 768px) {
-        .column-selection-list {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-      @media (max-width: 500px) {
-        .column-selection-list {
-          grid-template-columns: 1fr;
-        }
-      }
-      .column-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1rem;
-        background: #fff;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-        user-select: none;
-      }
-      .column-item:hover {
-        border-color: #083E40;
-        background: rgba(8, 62, 64, 0.02);
-      }
-      .column-item.selected {
-        border-color: #22c55e;
-        background: rgba(34, 197, 94, 0.08);
-      }
-      .column-item .drag-handle {
-        color: #9ca3af;
-        cursor: grab;
-      }
-      .column-item.selected .drag-handle {
-        color: #083E40;
-      }
-      .column-item-checkbox {
-        width: 18px;
-        height: 18px;
-        accent-color: #22c55e;
-        cursor: pointer;
-      }
-      .column-item-label {
-        flex: 1;
-        font-size: 0.875rem;
-        color: #374151;
-        cursor: pointer;
-      }
-      .column-item-order {
-        display: none;
-        width: 24px;
-        height: 24px;
-        background: #22c55e;
-        color: #fff;
-        border-radius: 50%;
-        font-size: 0.75rem;
-        font-weight: 600;
-        align-items: center;
-        justify-content: center;
-      }
-      .column-item.selected .column-item-order {
-        display: flex;
-      }
-      .preview-container {
-        background: #fff;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-        max-height: 300px;
-        overflow-y: auto;
-      }
-      .preview-table {
-        width: 100%;
-        font-size: 0.8rem;
-        border-collapse: collapse;
-      }
-      .preview-table th {
-        background: #083E40;
-        color: #fff;
-        padding: 0.75rem 0.5rem;
-        text-align: left;
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-      }
-      .preview-table td {
-        padding: 0.5rem;
-        border-bottom: 1px solid #e5e7eb;
-        color: #374151;
-      }
-      .preview-table tr:hover td {
-        background: #f9fafb;
-      }
-      .empty-preview {
-        padding: 3rem 1.5rem;
-        text-align: center;
-        color: #9ca3af;
-      }
-      .empty-preview i {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-      }
-      .modal-footer-custom {
-        padding: 1rem 2rem;
-        border-top: 1px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-      .selected-count {
-        font-size: 0.875rem;
-        color: #374151;
-      }
-      .selected-count strong {
-        color: #22c55e;
-        font-weight: 700;
-      }
-      .modal-actions {
-        display: flex;
-        gap: 0.75rem;
-      }
-      .btn-modal {
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.875rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: none;
-      }
-      .btn-cancel {
-        background: #ef4444;
-        color: #fff;
-      }
-      .btn-cancel:hover {
-        background: #dc2626;
-      }
-      .btn-save {
-        background: #22c55e;
-        color: #fff;
-      }
-      .btn-save:hover {
-        background: #16a34a;
-      }
-    </style>
-
-    <div class="customization-modal" id="columnCustomizationModal">
-      <div class="modal-content-custom">
-        <div class="modal-header-custom">
-          <h3>
-            <i class="fa-solid fa-table-columns"></i>
-            Kustomisasi Kolom Tabel
-          </h3>
-          <button type="button" class="modal-close-btn" onclick="closeColumnModal()">
-            <i class="fa-solid fa-times"></i>
-          </button>
+        <!-- Pagination -->
+        @if($dokumens->hasPages())
+          <div class="pagination-wrapper">
+            <div class="pagination-info">
+              Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
+            </div>
+            <div>
+              {{ $dokumens->links('pagination::bootstrap-4') }}
+            </div>
+          </div>
+        @endif
+      @else
+        <!-- Empty State -->
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+          <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty">
+            <i class="fas fa-redo"></i>
+            Reset Filter
+          </a>
         </div>
+      @endif
+    </div>
+  </div>
 
-        <div class="modal-body-custom">
-          <div class="customization-grid">
-            <!-- Selection Panel -->
-            <div class="selection-panel">
+  <!-- Column Customization Modal -->
+  <style>
+    .customization-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .customization-modal.show {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .modal-content-custom {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 95%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      margin: 1rem;
+    }
+
+    .modal-header-custom {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header-custom h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .modal-header-custom h3 i {
+      color: #083E40;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0.5rem;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      color: #1f2937;
+    }
+
+    .modal-body-custom {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .customization-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .selection-panel,
+    .preview-panel {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-title i {
+      color: #083E40;
+    }
+
+    .panel-description {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .column-selection-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    @media (max-width: 1000px) {
+      .column-selection-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .column-selection-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .column-selection-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .column-item:hover {
+      border-color: #083E40;
+      background: rgba(8, 62, 64, 0.02);
+    }
+
+    .column-item.selected {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .column-item .drag-handle {
+      color: #9ca3af;
+      cursor: grab;
+    }
+
+    .column-item.selected .drag-handle {
+      color: #083E40;
+    }
+
+    .column-item-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #22c55e;
+      cursor: pointer;
+    }
+
+    .column-item-label {
+      flex: 1;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .column-item-order {
+      display: none;
+      width: 24px;
+      height: 24px;
+      background: #22c55e;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 600;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .column-item.selected .column-item-order {
+      display: flex;
+    }
+
+    .preview-container {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .preview-table {
+      width: 100%;
+      font-size: 0.8rem;
+      border-collapse: collapse;
+    }
+
+    .preview-table th {
+      background: #083E40;
+      color: #fff;
+      padding: 0.75rem 0.5rem;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .preview-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+    }
+
+    .preview-table tr:hover td {
+      background: #f9fafb;
+    }
+
+    .empty-preview {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    .empty-preview i {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-footer-custom {
+      padding: 1rem 2rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .selected-count {
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    .selected-count strong {
+      color: #22c55e;
+      font-weight: 700;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-modal {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-cancel {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .btn-cancel:hover {
+      background: #dc2626;
+    }
+
+    .btn-save {
+      background: #22c55e;
+      color: #fff;
+    }
+
+    .btn-save:hover {
+      background: #16a34a;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-select-action {
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-select-action:hover {
+      border-color: #083E40;
+      color: #083E40;
+    }
+
+    .btn-select-action.btn-select-all:hover {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .btn-select-action.btn-remove-all:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+  </style>
+
+  <div class="customization-modal" id="columnCustomizationModal">
+    <div class="modal-content-custom">
+      <div class="modal-header-custom">
+        <h3>
+          <i class="fa-solid fa-table-columns"></i>
+          Kustomisasi Kolom Tabel
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeColumnModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-custom">
+        <div class="customization-grid">
+          <!-- Selection Panel -->
+          <div class="selection-panel">
+            <div class="panel-header">
               <div class="panel-title">
                 <i class="fa-solid fa-check-square"></i>
                 Pilih Kolom
               </div>
-              <div class="panel-description">
-                Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+              <div class="panel-actions">
+                <button type="button" class="btn-select-action btn-select-all" onclick="selectAllColumns()">
+                  <i class="fa-solid fa-check-double"></i> Pilih Semua
+                </button>
+                <button type="button" class="btn-select-action btn-remove-all" onclick="removeAllColumns()">
+                  <i class="fa-solid fa-times"></i> Hapus Semua
+                </button>
               </div>
-              <div class="column-selection-list" id="columnSelectionList">
-                @foreach($availableColumns as $key => $label)
-                  <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
-                       data-column="{{ $key }}"
-                       onclick="toggleColumnSelection(this)">
-                    <div class="drag-handle">
-                      <i class="fa-solid fa-grip-vertical"></i>
-                    </div>
-                    <input type="checkbox"
-                           class="column-item-checkbox"
-                           value="{{ $key }}"
-                           {{ in_array($key, $selectedColumns) ? 'checked' : '' }}
-                           onclick="event.stopPropagation()">
-                    <label class="column-item-label">{{ $label }}</label>
-                    <span class="column-item-order">
-                      {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
-                    </span>
+            </div>
+            <div class="panel-description">
+              Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+            </div>
+            <div class="column-selection-list" id="columnSelectionList">
+              @foreach($availableColumns as $key => $label)
+                <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}" data-column="{{ $key }}"
+                  onclick="toggleColumnSelection(this)">
+                  <div class="drag-handle">
+                    <i class="fa-solid fa-grip-vertical"></i>
                   </div>
-                @endforeach
-              </div>
-            </div>
-
-            <!-- Preview Panel -->
-            <div class="preview-panel">
-              <div class="panel-title">
-                <i class="fa-solid fa-eye"></i>
-                Preview Hasil
-              </div>
-              <div class="panel-description">
-                Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
-              </div>
-              <div class="preview-container">
-                <div id="tablePreview">
-                  @if(count($selectedColumns) > 0)
-                    <table class="preview-table">
-                      <thead>
-                        <tr>
-                          <th>No</th>
-                          @foreach($selectedColumns as $col)
-                            <th>{{ $availableColumns[$col] ?? $col }}</th>
-                          @endforeach
-                          <th>Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for($i = 1; $i <= 4; $i++)
-                          <tr>
-                            <td>{{ $i }}</td>
-                            @foreach($selectedColumns as $col)
-                              <td>
-                                @if($col == 'nomor_agenda')
-                                  AGD/10{{ $i }}/XII/2024
-                                @elseif($col == 'nomor_spp')
-                                  SPP-0010{{ $i }}/XII/2024
-                                @elseif($col == 'nilai_rupiah')
-                                  Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
-                                @elseif($col == 'dibayar_kepada')
-                                  CV. Contoh Vendor {{ $i }}
-                                @else
-                                  Contoh Data {{ $i }}
-                                @endif
-                              </td>
-                            @endforeach
-                            <td>Edit, Kirim</td>
-                          </tr>
-                        @endfor
-                      </tbody>
-                    </table>
-                  @else
-                    <div class="empty-preview">
-                      <i class="fa-solid fa-table"></i>
-                      <p>Belum ada kolom yang dipilih</p>
-                      <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                    </div>
-                  @endif
+                  <input type="checkbox" class="column-item-checkbox" value="{{ $key }}" {{ in_array($key, $selectedColumns) ? 'checked' : '' }} onclick="event.stopPropagation()">
+                  <label class="column-item-label">{{ $label }}</label>
+                  <span class="column-item-order">
+                    {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
+                  </span>
                 </div>
-              </div>
+              @endforeach
             </div>
           </div>
-        </div>
 
-        <div class="modal-footer-custom">
-          <div class="selected-count">
-            <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
-            @if(count($selectedColumns) > 0)
-              <br><small>Kolom: {{ implode(', ', array_map(function($col) use ($availableColumns) {
-                return $availableColumns[$col] ?? $col;
-              }, $selectedColumns)) }}</small>
-            @endif
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn-modal btn-cancel" onclick="closeColumnModal()">
-              <i class="fa-solid fa-times"></i>
-              Batal
-            </button>
-            <button type="button" class="btn-modal btn-save" onclick="saveColumnCustomization()">
-              <i class="fa-solid fa-save"></i>
-              Simpan Perubahan
-            </button>
+          <!-- Preview Panel -->
+          <div class="preview-panel">
+            <div class="panel-title">
+              <i class="fa-solid fa-eye"></i>
+              Preview Hasil
+            </div>
+            <div class="panel-description">
+              Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
+            </div>
+            <div class="preview-container">
+              <div id="tablePreview">
+                @if(count($selectedColumns) > 0)
+                  <table class="preview-table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        @foreach($selectedColumns as $col)
+                          <th>{{ $availableColumns[$col] ?? $col }}</th>
+                        @endforeach
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for($i = 1; $i <= 4; $i++)
+                        <tr>
+                          <td>{{ $i }}</td>
+                          @foreach($selectedColumns as $col)
+                            <td>
+                              @if($col == 'nomor_agenda')
+                                AGD/10{{ $i }}/XII/2024
+                              @elseif($col == 'nomor_spp')
+                                SPP-0010{{ $i }}/XII/2024
+                              @elseif($col == 'nilai_rupiah')
+                                Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
+                              @elseif($col == 'dibayar_kepada')
+                                CV. Contoh Vendor {{ $i }}
+                              @else
+                                Contoh Data {{ $i }}
+                              @endif
+                            </td>
+                          @endforeach
+                          <td>Edit, Kirim</td>
+                        </tr>
+                      @endfor
+                    </tbody>
+                  </table>
+                @else
+                  <div class="empty-preview">
+                    <i class="fa-solid fa-table"></i>
+                    <p>Belum ada kolom yang dipilih</p>
+                    <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                  </div>
+                @endif
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <div class="modal-footer-custom">
+        <div class="selected-count">
+          <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
+          @if(count($selectedColumns) > 0)
+                  <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
+              return $availableColumns[$col] ?? $col;
+            }, $selectedColumns)) }}</small>
+          @endif
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-modal btn-cancel" onclick="closeColumnModal()">
+            <i class="fa-solid fa-times"></i>
+            Batal
+          </button>
+          <button type="button" class="btn-modal btn-save" onclick="saveColumnCustomization()">
+            <i class="fa-solid fa-save"></i>
+            Simpan Perubahan
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-      // Column customization variables
-      let selectedColumnsOrder = @json($selectedColumns);
-      const availableColumnsData = @json($availableColumns);
+  <script>
+    // Column customization variables
+    let selectedColumnsOrder = @json($selectedColumns);
+    const availableColumnsData = @json($availableColumns);
 
-      function openColumnModal() {
-        document.getElementById('columnCustomizationModal').classList.add('show');
-        document.body.style.overflow = 'hidden';
+    function openColumnModal() {
+      document.getElementById('columnCustomizationModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeColumnModal() {
+      document.getElementById('columnCustomizationModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function toggleColumnSelection(element) {
+      const checkbox = element.querySelector('.column-item-checkbox');
+      const columnKey = element.dataset.column;
+
+      checkbox.checked = !checkbox.checked;
+
+      if (checkbox.checked) {
+        element.classList.add('selected');
+        if (!selectedColumnsOrder.includes(columnKey)) {
+          selectedColumnsOrder.push(columnKey);
+        }
+      } else {
+        element.classList.remove('selected');
+        selectedColumnsOrder = selectedColumnsOrder.filter(c => c !== columnKey);
       }
 
-      function closeColumnModal() {
-        document.getElementById('columnCustomizationModal').classList.remove('show');
-        document.body.style.overflow = '';
-      }
-
-      function toggleColumnSelection(element) {
-        const checkbox = element.querySelector('.column-item-checkbox');
-        const columnKey = element.dataset.column;
-
-        checkbox.checked = !checkbox.checked;
-
-        if (checkbox.checked) {
-          element.classList.add('selected');
-          if (!selectedColumnsOrder.includes(columnKey)) {
-            selectedColumnsOrder.push(columnKey);
-          }
-        } else {
-          element.classList.remove('selected');
-          selectedColumnsOrder = selectedColumnsOrder.filter(c => c !== columnKey);
+      updateOrderNumbers();
+      updateSelectedCount();
+    updatePreview();
         }
 
-        updateOrderNumbers();
-        updateSelectedCount();
-      }
-
-      function updateOrderNumbers() {
-        document.querySelectorAll('.column-item').forEach(item => {
-          const key = item.dataset.column;
-          const orderSpan = item.querySelector('.column-item-order');
-          const idx = selectedColumnsOrder.indexOf(key);
-          if (idx !== -1) {
-            orderSpan.textContent = idx + 1;
-          } else {
-            orderSpan.textContent = '';
-          }
-        });
-      }
-
-      function updateSelectedCount() {
-        document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
-      }
-
-      function saveColumnCustomization() {
-        if (selectedColumnsOrder.length === 0) {
-          alert('Pilih minimal satu kolom!');
-          return;
-        }
-
-        const url = new URL(window.location.href);
-        // Clear existing columns params
-        url.searchParams.delete('columns[]');
-        url.searchParams.delete('columns');
-        
-        // Add selected columns
-        selectedColumnsOrder.forEach(col => {
-          url.searchParams.append('columns[]', col);
-        });
-
-        window.location.href = url.toString();
-      }
-
-      // Close modal on escape key
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeColumnModal();
-        }
-      });
-
-      // Close modal on backdrop click
-      document.getElementById('columnCustomizationModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-          closeColumnModal();
-        }
-      });
-    </script>
-
-    <script>
-      // View Mode Toggle
-      function setViewMode(mode) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('mode', mode);
-        window.location.href = url.toString();
-      }
-
-      // Vendor Group Toggle
-      function toggleVendorGroup(header) {
-        const body = header.nextElementSibling;
-        const isExpanded = header.classList.contains('expanded');
-
-        if (isExpanded) {
-          header.classList.remove('expanded');
-          body.classList.remove('show');
-        } else {
-          header.classList.add('expanded');
-          body.classList.add('show');
-        }
-      }
-
-      // Number Counter Animation
-      document.addEventListener('DOMContentLoaded', function () {
-        const counters = document.querySelectorAll('.stat-value');
-
-        counters.forEach(counter => {
-          const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
-          if (isNaN(target) || target === 0) return;
-
-          let current = 0;
-          const increment = target / 30;
-          const duration = 800;
-          const stepTime = duration / 30;
-
-          const updateCounter = () => {
-            current += increment;
-            if (current < target) {
-              counter.textContent = Math.floor(current).toLocaleString('id-ID');
-              setTimeout(updateCounter, stepTime);
+        function updateOrderNumbers() {
+          document.querySelectorAll('.column-item').forEach(item => {
+            const key = item.dataset.column;
+            const orderSpan = item.querySelector('.column-item-order');
+            const idx = selectedColumnsOrder.indexOf(key);
+            if (idx !== -1) {
+              orderSpan.textContent = idx + 1;
             } else {
-              counter.textContent = target.toLocaleString('id-ID');
+              orderSpan.textContent = '';
             }
-          };
+          });
+        }
 
-          setTimeout(updateCounter, 300);
+        function updateSelectedCount() {
+          document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
+          // Update column list text
+          const columnLabels = selectedColumnsOrder.map(col => availableColumnsData[col] || col);
+          const countContainer = document.querySelector('.selected-count');
+          if (countContainer) {
+            countContainer.innerHTML = `<strong id="selectedColumnCount">${selectedColumnsOrder.length}</strong> kolom dipilih` +
+              (selectedColumnsOrder.length > 0 ? `<br><small>Kolom: ${columnLabels.join(', ')}</small>` : '');
+          }
+        }
+
+        function updatePreview() {
+          const previewContainer = document.getElementById('tablePreview');
+          if (!previewContainer) return;
+
+          if (selectedColumnsOrder.length === 0) {
+            previewContainer.innerHTML = `
+              <div class="empty-preview">
+                <i class="fa-solid fa-table"></i>
+                <p>Belum ada kolom yang dipilih</p>
+                <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+              </div>`;
+            return;
+          }
+
+          let tableHtml = '<table class="preview-table"><thead><tr><th>No</th>';
+          selectedColumnsOrder.forEach(col => {
+            tableHtml += `<th>${availableColumnsData[col] || col}</th>`;
+          });
+          tableHtml += '<th>Aksi</th></tr></thead><tbody>';
+
+          for (let i = 1; i <= 4; i++) {
+            tableHtml += `<tr><td>${i}</td>`;
+            selectedColumnsOrder.forEach(col => {
+              let cellValue = `Contoh Data ${i}`;
+              if (col === 'nomor_agenda') cellValue = `AGD/10${i}/XII/2024`;
+              else if (col === 'nomor_spp') cellValue = `SPP-0010${i}/XII/2024`;
+              else if (col === 'nilai_rupiah') cellValue = `Rp. ${(1000000 * i).toLocaleString('id-ID')}`;
+              else if (col === 'dibayar_kepada') cellValue = `CV. Contoh Vendor ${i}`;
+              else if (col === 'status_pembayaran') cellValue = i % 2 === 0 ? 'Siap Bayar' : 'Belum Siap';
+              tableHtml += `<td>${cellValue}</td>`;
+            });
+            tableHtml += '<td>Edit, Kirim</td></tr>';
+          }
+
+          tableHtml += '</tbody></table>';
+          previewContainer.innerHTML = tableHtml;
+        }
+
+        function selectAllColumns() {
+          selectedColumnsOrder = Object.keys(availableColumnsData);
+          document.querySelectorAll('.column-item').forEach(item => {
+            item.classList.add('selected');
+            item.querySelector('.column-item-checkbox').checked = true;
+          });
+          updateOrderNumbers();
+          updateSelectedCount();
+          updatePreview();
+        }
+
+        function removeAllColumns() {
+          selectedColumnsOrder = [];
+          document.querySelectorAll('.column-item').forEach(item => {
+            item.classList.remove('selected');
+            item.querySelector('.column-item-checkbox').checked = false;
+          });
+          updateOrderNumbers();
+          updateSelectedCount();
+          updatePreview();
+        }
+
+        function saveColumnCustomization() {
+          if (selectedColumnsOrder.length === 0) {
+            alert('Pilih minimal satu kolom!');
+            return;
+          }
+
+          const url = new URL(window.location.href);
+          // Clear existing columns params
+          url.searchParams.delete('columns[]');
+          url.searchParams.delete('columns');
+
+          // Add selected columns
+          selectedColumnsOrder.forEach(col => {
+            url.searchParams.append('columns[]', col);
+          });
+
+          window.location.href = url.toString();
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            closeColumnModal();
+          }
         });
-      });
 
-      // Add subtle hover feedback
-      document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
-        card.addEventListener('mouseenter', function () {
-          this.style.transform = 'translateY(-4px)';
+        // Close modal on backdrop click
+        document.getElementById('columnCustomizationModal')?.addEventListener('click', function(e) {
+          if (e.target === this) {
+            closeColumnModal();
+          }
         });
-        card.addEventListener('mouseleave', function () {
-          this.style.transform = 'translateY(0)';
+      </script>
+
+      <script>
+        // View Mode Toggle
+        function setViewMode(mode) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('mode', mode);
+          window.location.href = url.toString();
+        }
+
+        // Vendor Group Toggle
+        function toggleVendorGroup(header) {
+          const body = header.nextElementSibling;
+          const isExpanded = header.classList.contains('expanded');
+
+          if (isExpanded) {
+            header.classList.remove('expanded');
+            body.classList.remove('show');
+          } else {
+            header.classList.add('expanded');
+            body.classList.add('show');
+          }
+        }
+
+        // Number Counter Animation
+        document.addEventListener('DOMContentLoaded', function () {
+          const counters = document.querySelectorAll('.stat-value');
+
+          counters.forEach(counter => {
+            const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+            if (isNaN(target) || target === 0) return;
+
+            let current = 0;
+            const increment = target / 30;
+            const duration = 800;
+            const stepTime = duration / 30;
+
+            const updateCounter = () => {
+              current += increment;
+              if (current < target) {
+                counter.textContent = Math.floor(current).toLocaleString('id-ID');
+                setTimeout(updateCounter, stepTime);
+              } else {
+                counter.textContent = target.toLocaleString('id-ID');
+              }
+            };
+
+            setTimeout(updateCounter, 300);
+          });
         });
-      });
 
-      // Advanced Filter Panel Toggle
-      document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
-        const panel = document.getElementById('advancedFilterPanel');
-        const toggle = this;
+        // Add subtle hover feedback
+        document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
+          card.addEventListener('mouseenter', function () {
+            this.style.transform = 'translateY(-4px)';
+          });
+          card.addEventListener('mouseleave', function () {
+            this.style.transform = 'translateY(0)';
+          });
+        });
 
-        panel.classList.toggle('show');
-        toggle.classList.toggle('active');
-      });
+        // Advanced Filter Panel Toggle
+        document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
+          const panel = document.getElementById('advancedFilterPanel');
+          const toggle = this;
 
-      // Reset Advanced Filters
-      function resetAdvancedFilters() {
-        document.getElementById('filterVendor').value = '';
-        document.getElementById('filterKategori').value = '';
-        document.getElementById('filterJenisDokumen').value = '';
-        document.getElementById('filterJenisSubPekerjaan').value = '';
-        document.getElementById('filterKebun').value = '';
-        document.getElementById('filterJenisPembayaran').value = '';
-      }
-    </script>
+          panel.classList.toggle('show');
+          toggle.classList.toggle('active');
+        });
+
+        // Reset Advanced Filters
+        function resetAdvancedFilters() {
+          document.getElementById('filterVendor').value = '';
+          document.getElementById('filterKategori').value = '';
+          document.getElementById('filterJenisDokumen').value = '';
+          document.getElementById('filterJenisSubPekerjaan').value = '';
+          document.getElementById('filterKebun').value = '';
+          document.getElementById('filterJenisPembayaran').value = '';
+        }
+      </script>
 @endsection
