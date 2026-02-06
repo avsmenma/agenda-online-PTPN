@@ -1397,7 +1397,7 @@ class OwnerDashboardController extends Controller
             $dashboardUrl = '/dashboardPerpajakan';
         } elseif (in_array($userRole, ['admin', 'owner'])) {
             $module = 'owner';
-            $dashboardUrl = '/owner/dashboard';
+            $dashboardUrl = '/owner/dokumen';
         }
 
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))
