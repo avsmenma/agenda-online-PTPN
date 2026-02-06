@@ -239,6 +239,10 @@
                 <span class="overdue-badge">TERLAMBAT</span>
               @endif
 
+              @if($dokumen['is_paid'])
+                <span class="paid-stamp">SUDAH DIBAYAR</span>
+              @endif
+
               <div class="doc-card-header">
                 <div>
                   <div class="doc-card-title">{{ $dokumen['nomor_agenda'] }}</div>
@@ -482,11 +486,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-              <span>${labels[key] || key}: ${displayValue}</span>
-              <button type="button" class="remove" onclick="removeFilter('${key}')">
-                <i class="fas fa-times"></i>
-              </button>
-            `;
+                <span>${labels[key] || key}: ${displayValue}</span>
+                <button type="button" class="remove" onclick="removeFilter('${key}')">
+                  <i class="fas fa-times"></i>
+                </button>
+              `;
           container.appendChild(tag);
         }
       }
