@@ -1134,8 +1134,16 @@
 
       {{-- Progress Bar --}}
       @php
-        $currentProgress = $dokumen->progress_percentage ?? 0;
-        $progress = is_numeric($currentProgress) ? $currentProgress : 0;
+        // Calculate progress from workflow stages
+        $completedCount = 0;
+        $totalCount = count($workflowStages);
+        foreach ($workflowStages as $stage) {
+          $stageStatus = $stage['status'] ?? 'pending';
+          if ($stageStatus === 'completed' || $stageStatus === 'selesai') {
+            $completedCount++;
+          }
+        }
+        $progress = $totalCount > 0 ? ($completedCount / $totalCount) * 100 : 0;
       @endphp
       <div>
         <div class="progress-bar-container">
