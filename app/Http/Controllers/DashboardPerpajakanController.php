@@ -345,13 +345,13 @@ class DashboardPerpajakanController extends Controller
                     ->where('perpajakan_data.role_code', '=', 'perpajakan');
             })
             ->select('dokumens.*')
-            ->orderByDesc('perpajakan_data.received_at')
-            ->orderByDesc('updated_at')
             ->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC")
             ->orderBy('dokumens.nomor_agenda', 'DESC')
+            ->orderByDesc('perpajakan_data.received_at')
+            ->orderByDesc('updated_at')
             ->orderByRaw("CASE
                 WHEN current_handler = 'perpajakan' AND status NOT IN ('sent_to_akutansi', 'sent_to_pembayaran') THEN 1
                 WHEN status = 'sent_to_akutansi' THEN 2
