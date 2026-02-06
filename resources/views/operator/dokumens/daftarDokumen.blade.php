@@ -2526,13 +2526,24 @@
               $createdByOperatorForCheck = in_array(strtolower($dokumen->created_by ?? ''), ['operator']);
               $currentHandlerOperatorForCheck = in_array(strtolower($dokumen->current_handler ?? ''), ['operator']);
               $isReturnedForCheck = strtolower($dokumen->status ?? '') === 'returned_to_operator';
+              // Check if document is from Bagian (menunggu_approval_keuangan)
+              $isFromBagianForCheck = strtolower($dokumen->status ?? '') === 'menunggu_approval_keuangan' && $currentHandlerOperatorForCheck;
               
               $canSendForBulk = false;
-              if ($isRejectedForCheck && $currentHandlerOperatorForCheck && $createdByOperatorForCheck) {
+              // PRIORITY 0: Documents from Bagian waiting for approval can be sent
+              if ($isFromBagianForCheck && !$isSentForCheck) {
                 $canSendForBulk = true;
-              } elseif ($isReturnedForCheck && $currentHandlerOperatorForCheck && $createdByOperatorForCheck && !$isSentForCheck) {
+              }
+              // PRIORITY 1: Rejected documents with Operator
+              elseif ($isRejectedForCheck && $currentHandlerOperatorForCheck && !$isSentForCheck) {
                 $canSendForBulk = true;
-              } elseif (in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses']) && $currentHandlerOperatorForCheck && $createdByOperatorForCheck && !$isSentForCheck) {
+              }
+              // PRIORITY 2: Returned documents
+              elseif ($isReturnedForCheck && $currentHandlerOperatorForCheck && !$isSentForCheck) {
+                $canSendForBulk = true;
+              }
+              // PRIORITY 3: Normal documents (draft, sedang diproses)
+              elseif (in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses']) && $currentHandlerOperatorForCheck && !$isSentForCheck) {
                 $canSendForBulk = true;
               }
             @endphp
@@ -2757,60 +2768,52 @@
                     // Check if document is returned (case-insensitive)
                     $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_operator';
 
+                    // Check if document is from Bagian (menunggu_approval_keuangan)
+                    $isFromBagian = strtolower($dokumen->status ?? '') === 'menunggu_approval_keuangan' && $currentHandlerOperator;
+
                     // Initialize canSend
                     $canSend = false;
 
+                    // PRIORITY 0: Documents from Bagian waiting for approval can be sent
+                    if ($isFromBagian && !$isSent) {
+                      $canSend = true;
+                    }
                     // PRIORITY 1: Rejected documents can ALWAYS be sent again if they're with Operator
-                    // This is the most important case - rejected documents must be able to be resent
-                    if ($isRejected && $currentHandlerOperator && $createdByOperator) {
+                    elseif ($isRejected && $currentHandlerOperator && !$isSent) {
                       $canSend = true;
                     }
                     // PRIORITY 2: Returned documents (returned_to_operator) can be sent
-                    // This includes rejected documents that have status returned_to_operator
-                    elseif ($isReturned && $currentHandlerOperator && $createdByOperator && !$isSent) {
+                    elseif ($isReturned && $currentHandlerOperator && !$isSent) {
                       $canSend = true;
                     }
                     // PRIORITY 3: Normal documents (draft, sedang diproses)
                     elseif (
                       in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses'])
                       && $currentHandlerOperator
-                      && $createdByOperator
                       && !$isSent
                     ) {
                       $canSend = true;
                     }
 
-                    // DEBUG: Log untuk membantu troubleshooting (hapus setelah fix)
-                    // \Log::info('Document send permission check', [
-                    //   'doc_id' => $dokumen->id,
-                    //   'isRejected' => $isRejected,
-                    //   'isReturned' => $isReturned,
-                    //   'current_handler' => $dokumen->current_handler,
-                    //   'created_by' => $dokumen->created_by,
-                    //   'status' => $dokumen->status,
-                    //   'currentHandlerOperator' => $currentHandlerOperator,
-                    //   'createdByOperator' => $createdByOperator,
-                    //   'isSent' => $isSent,
-                    //   'canSend' => $canSend,
-                    // ]);
-
                     // Can edit only if document is not sent and can be edited
-                    // IMPORTANT: Rejected documents should always be able to be edited
                     $canEdit = false;
 
+                    // PRIORITY 0: Documents from Bagian can be edited by Operator
+                    if ($isFromBagian && !$isSent) {
+                      $canEdit = true;
+                    }
                     // PRIORITY 1: Rejected documents can ALWAYS be edited if they're with Operator
-                    if ($isRejected && $currentHandlerOperator && $createdByOperator) {
+                    elseif ($isRejected && $currentHandlerOperator && !$isSent) {
                       $canEdit = true;
                     }
                     // PRIORITY 2: Returned documents (returned_to_operator) can be edited
-                    elseif ($isReturned && $currentHandlerOperator && $createdByOperator && !$isSent) {
+                    elseif ($isReturned && $currentHandlerOperator && !$isSent) {
                       $canEdit = true;
                     }
                     // PRIORITY 3: Draft documents can be edited
                     elseif (
                       strtolower($dokumen->status ?? '') === 'draft'
                       && $currentHandlerOperator
-                      && $createdByOperator
                       && !$isSent
                     ) {
                       $canEdit = true;

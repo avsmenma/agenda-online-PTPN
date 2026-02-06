@@ -43,7 +43,10 @@ class DokumenController extends Controller
                 });
             })
             ->orderByRaw('CASE 
-                WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
+                WHEN nomor_agenda REGEXP "^[0-9]+(_[0-9]+)?$" THEN 
+                    CAST(SUBSTRING_INDEX(nomor_agenda, "_", 1) AS UNSIGNED)
+                WHEN nomor_agenda REGEXP "^[0-9]+" THEN 
+                    CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC')
             ->orderBy('nomor_agenda', 'DESC'); // Secondary sort for non-numeric or same numeric values
