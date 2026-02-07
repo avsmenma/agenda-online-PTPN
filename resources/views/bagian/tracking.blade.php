@@ -213,46 +213,12 @@
             <form method="GET" action="{{ route('bagian.tracking') }}" id="searchForm">
                 <div class="row g-3 mb-3">
                     <!-- General Search -->
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-12">
                         <label class="form-label small text-muted mb-1">
                             <i class="fa-solid fa-search me-1"></i>Cari Dokumen
                         </label>
                         <input type="text" name="search" class="form-control"
                             placeholder="Cari nomor agenda, SPP, uraian, kebun..." value="{{ request('search') }}">
-                    </div>
-
-                    <!-- Nomor SPP Specific -->
-                    <div class="col-md-6 col-lg-2">
-                        <label class="form-label small text-muted mb-1">
-                            <i class="fa-solid fa-file-invoice me-1"></i>Nomor SPP
-                        </label>
-                        <input type="text" name="nomor_spp" class="form-control" placeholder="Contoh: 825/M/SPP..."
-                            value="{{ request('nomor_spp') }}">
-                    </div>
-
-                    <!-- Nilai Range -->
-                    <div class="col-md-6 col-lg-2">
-                        <label class="form-label small text-muted mb-1">
-                            <i class="fa-solid fa-coins me-1"></i>Nilai Min
-                        </label>
-                        <input type="text" name="nilai_min" class="form-control" placeholder="0"
-                            value="{{ request('nilai_min') }}">
-                    </div>
-                    <div class="col-md-6 col-lg-2">
-                        <label class="form-label small text-muted mb-1">
-                            <i class="fa-solid fa-coins me-1"></i>Nilai Max
-                        </label>
-                        <input type="text" name="nilai_max" class="form-control" placeholder="∞"
-                            value="{{ request('nilai_max') }}">
-                    </div>
-
-                    <!-- Kebun -->
-                    <div class="col-md-6 col-lg-2">
-                        <label class="form-label small text-muted mb-1">
-                            <i class="fa-solid fa-tree me-1"></i>Kebun/Unit
-                        </label>
-                        <input type="text" name="kebun" class="form-control" placeholder="Nama kebun..."
-                            value="{{ request('kebun') }}">
                     </div>
                 </div>
 
