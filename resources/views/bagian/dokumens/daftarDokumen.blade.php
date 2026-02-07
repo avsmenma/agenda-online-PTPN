@@ -837,7 +837,7 @@
           <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve
           </option>
           <option value="terkirim" {{ request('status') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
-          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
+          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Siap Dibayar</option>
           <option value="siap_dibayar" {{ request('status') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
@@ -1003,9 +1003,9 @@
                                 // Check if already paid
                                 $isPaid = $doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar);
 
-                                // Check if in pembayaran role
-                                $posisiLower = strtolower($doc->posisi ?? '');
-                                $isInPembayaran = str_contains($posisiLower, 'pembayaran');
+                                // Check if in pembayaran role using current_handler
+                                $currentHandlerLower = strtolower($doc->current_handler ?? '');
+                                $isInPembayaran = str_contains($currentHandlerLower, 'pembayaran');
 
                                 if ($isPaid) {
                                   $paymentStatusClass = 'sudah-dibayar';
@@ -1017,7 +1017,7 @@
                                   $paymentStatusIcon = 'fa-money-bill-wave';
                                 } else {
                                   $paymentStatusClass = 'belum-dibayar';
-                                  $paymentStatusText = 'Belum Dibayar';
+                                  $paymentStatusText = 'Belum Siap Dibayar';
                                   $paymentStatusIcon = 'fa-clock';
                                 }
                               @endphp
