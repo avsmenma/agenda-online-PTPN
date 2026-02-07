@@ -782,11 +782,51 @@
       }
     }
 
-    /* Terkirim - Solid agenda green like Operator */
-    .badge-status.badge-success {
-      background: #17a589;
+    /* Terkirim - Premium dark green with hover shimmer animation */
+    .badge-status.badge-success,
+    .badge-status.badge-terkirim {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
       color: white;
-      box-shadow: 0 2px 8px rgba(23, 165, 137, 0.3);
+      box-shadow: 0 2px 8px rgba(8, 62, 64, 0.3);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .badge-status.badge-success::before,
+    .badge-status.badge-terkirim::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent);
+      transition: left 0.5s ease;
+    }
+
+    .badge-status.badge-success:hover::before,
+    .badge-status.badge-terkirim:hover::before {
+      animation: shimmer-hover 1s ease-in-out;
+    }
+
+    .badge-status.badge-success:hover,
+    .badge-status.badge-terkirim:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(8, 62, 64, 0.4);
+      background: linear-gradient(135deg, #0a5f52 0%, #0c7066 100%);
+    }
+
+    @keyframes shimmer-hover {
+      0% {
+        left: -100%;
+      }
+      100% {
+        left: 100%;
+      }
     }
   </style>
 
