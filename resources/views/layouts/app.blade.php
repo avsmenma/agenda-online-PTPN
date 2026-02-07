@@ -2143,7 +2143,8 @@
     .dark .secondary-sidebar a.active i {
       color: #4ade80 !important;
     }
-  /* Primary Sidebar Menu Items - White Text */
+
+    /* Primary Sidebar Menu Items - White Text */
     .dark .sidebar .nav-link,
     .dark .sidebar a,
     .dark .sidebar .menu-item,
@@ -2649,16 +2650,22 @@
       border-bottom-color: #334155 !important;
     }
 
+    /* All text in doc-card should be white/light */
+    .dark .doc-card,
+    .dark .doc-card * {
+      color: #ffffff !important;
+    }
+
     .dark .doc-agenda {
-      color: #4ade80 !important;
+      color: #ffffff !important;
     }
 
     .dark .doc-spp {
-      color: #94a3b8 !important;
+      color: #cbd5e1 !important;
     }
 
     .dark .doc-nilai {
-      color: #4ade80 !important;
+      color: #ffffff !important;
     }
 
     .dark .doc-card-body {
@@ -2666,16 +2673,18 @@
     }
 
     .dark .doc-position {
-      color: #e2e8f0 !important;
+      color: #ffffff !important;
     }
 
     .dark .doc-position i {
       color: #4ade80 !important;
     }
 
+    .dark .doc-position span,
     .dark .doc-position strong {
-      color: #f1f5f9 !important;
+      color: #ffffff !important;
     }
+
 
     /* Paid Card Styling */
     .dark .doc-card.paid {
