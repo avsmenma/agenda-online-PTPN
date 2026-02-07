@@ -2143,7 +2143,64 @@
     .dark .secondary-sidebar a.active i {
       color: #4ade80 !important;
     }
+  /* Primary Sidebar Menu Items - White Text */
+    .dark .sidebar .nav-link,
+    .dark .sidebar a,
+    .dark .sidebar .menu-item,
+    .dark .sidebar .sidebar-menu a,
+    .dark .sidebar span,
+    .dark .sidebar-text,
+    .dark .menu-text {
+      color: #ffffff !important;
+    }
+
+    .dark .sidebar .nav-link i,
+    .dark .sidebar a i,
+    .dark .sidebar .menu-icon,
+    .dark .sidebar-icon {
+      color: #ffffff !important;
+    }
+
+    .dark .sidebar .nav-link:hover,
+    .dark .sidebar a:hover {
+      color: #4ade80 !important;
+    }
+
+    .dark .sidebar .nav-link:hover i,
+    .dark .sidebar a:hover i {
+      color: #4ade80 !important;
+    }
+
+    .dark .sidebar .nav-link.active,
+    .dark .sidebar a.active {
+      background: rgba(74, 222, 128, 0.15) !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .sidebar .nav-link.active i,
+    .dark .sidebar a.active i {
+      color: #4ade80 !important;
+    }
+
+    /* App Logo/Title in Sidebar */
+    .dark .sidebar .logo-text,
+    .dark .sidebar-brand,
+    .dark .sidebar h6,
+    .dark .sidebar .app-name {
+      color: #ffffff !important;
+    }
+
+    /* Logout link */
+    .dark .sidebar .logout-link,
+    .dark .sidebar a[href*="logout"] {
+      color: #ffffff !important;
+    }
+
+    .dark .sidebar a[href*="logout"]:hover {
+      color: #f87171 !important;
+    }
   </style>
+
 
 
 
