@@ -837,7 +837,8 @@
           <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve
           </option>
           <option value="terkirim" {{ request('status') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
-          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Siap Dibayar</option>
+          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Siap Dibayar
+          </option>
           <option value="siap_dibayar" {{ request('status') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
@@ -1007,24 +1008,42 @@
                                 $currentHandlerLower = strtolower($doc->current_handler ?? '');
                                 $isInPembayaran = str_contains($currentHandlerLower, 'pembayaran');
 
+                                // Determine payment status change date
+                                $statusChangeDate = null;
+
                                 if ($isPaid) {
                                   $paymentStatusClass = 'sudah-dibayar';
                                   $paymentStatusText = 'Sudah Dibayar';
                                   $paymentStatusIcon = 'fa-check-circle';
+                                  // Use tanggal_dibayar for paid status
+                                  $statusChangeDate = $doc->tanggal_dibayar;
                                 } elseif ($isInPembayaran) {
                                   $paymentStatusClass = 'siap-dibayar';
                                   $paymentStatusText = 'Siap Dibayar';
                                   $paymentStatusIcon = 'fa-money-bill-wave';
+                                  // Get pembayaran role data for received_at date
+                                  $pembayaranRoleData = $doc->getDataForRole('pembayaran');
+                                  $statusChangeDate = $pembayaranRoleData?->received_at;
                                 } else {
                                   $paymentStatusClass = 'belum-dibayar';
                                   $paymentStatusText = 'Belum Siap Dibayar';
                                   $paymentStatusIcon = 'fa-clock';
+                                  // Use sent_at or created_at for initial status
+                                  $statusChangeDate = $doc->sent_at ?? $doc->created_at;
                                 }
                               @endphp
-                              <span class="payment-status-badge {{ $paymentStatusClass }}">
-                                <i class="fa-solid {{ $paymentStatusIcon }}"></i>
-                                {{ $paymentStatusText }}
-                              </span>
+                              <div class="payment-status-container"
+                                style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <span class="payment-status-badge {{ $paymentStatusClass }}">
+                                  <i class="fa-solid {{ $paymentStatusIcon }}"></i>
+                                  {{ $paymentStatusText }}
+                                </span>
+                                @if($statusChangeDate)
+                                  <small style="font-size: 10px; color: #6c757d; text-align: center;">
+                                    {{ \Carbon\Carbon::parse($statusChangeDate)->format('d M Y, H:i') }}
+                                  </small>
+                                @endif
+                              </div>
                             @else
                               -
                             @endif
