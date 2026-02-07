@@ -81,6 +81,45 @@
       border-left: 4px solid #dc3545;
     }
 
+    /* Paid stamp styles */
+    .smart-document-card.paid {
+      border-left: 4px solid #198754;
+    }
+
+    .paid-stamp {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 3px double #198754;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(-15deg);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 8px rgba(25, 135, 84, 0.2);
+      z-index: 10;
+    }
+
+    .paid-stamp-text {
+      color: #198754;
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      text-align: center;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .paid-stamp-icon {
+      color: #198754;
+      font-size: 0.85rem;
+      margin-bottom: 2px;
+    }
+
     .smart-card-header {
       display: flex;
       justify-content: space-between;
@@ -953,18 +992,6 @@
                 <option value="sudah_dibayar" {{ request('filter_status_pembayaran') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
               </select>
             </div>
-
-            <!-- Status Dokumen -->
-            <div class="filter-group">
-              <label class="filter-label">
-                <i class="fas fa-info-circle"></i> Status Dokumen
-              </label>
-              <select name="status" class="filter-select" onchange="applyFilter()">
-                <option value="">Semua Status</option>
-                <option value="proses" {{ request('status') == 'proses' ? 'selected' : '' }}>Proses</option>
-                <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
-              </select>
-            </div>
           </div>
 
           <!-- Filter Actions -->
@@ -1004,9 +1031,20 @@
       @else
         <div class="card-view-container">
           @foreach($documents as $dokumen)
-            <div class="smart-document-card {{ $dokumen['is_overdue'] ?? false ? 'overdue' : '' }}"
+            @php
+              $isPaid = ($dokumen['is_paid'] ?? false) || !empty($dokumen['tanggal_dibayar']);
+            @endphp
+            <div
+              class="smart-document-card {{ $dokumen['is_overdue'] ?? false ? 'overdue' : '' }} {{ $isPaid ? 'paid' : '' }}"
               data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
               onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')">
+
+              @if($isPaid)
+                <div class="paid-stamp">
+                  <i class="fas fa-check-circle paid-stamp-icon"></i>
+                  <span class="paid-stamp-text">Sudah<br>Dibayar</span>
+                </div>
+              @endif
 
               <div class="smart-card-header">
                 <div>
@@ -1168,7 +1206,8 @@
                     </span>
                   </td>
                   <td>
-                    <span class="table-status-badge {{ $dokumen['progress_percentage'] >= 100 ? 'status-selesai' : 'status-proses' }}">
+                    <span
+                      class="table-status-badge {{ $dokumen['progress_percentage'] >= 100 ? 'status-selesai' : 'status-proses' }}">
                       @if($dokumen['progress_percentage'] >= 100)
                         <i class="fas fa-check-circle"></i> Selesai
                       @else
@@ -1179,7 +1218,8 @@
                   <td>
                     <div class="table-progress-container">
                       <div class="table-progress-bar">
-                        <div class="table-progress-fill" style="width: {{ min(100, $dokumen['progress_percentage'] ?? 0) }}%"></div>
+                        <div class="table-progress-fill" style="width: {{ min(100, $dokumen['progress_percentage'] ?? 0) }}%">
+                        </div>
                       </div>
                       <span class="table-progress-text">{{ $dokumen['progress_percentage'] ?? 0 }}%</span>
                     </div>
@@ -1326,11 +1366,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                  <span>${label}: ${getFilterDisplayValue(key, value)}</span>
-                  <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                    <i class="fas fa-times"></i>
-                  </button>
-                `;
+                      <span>${label}: ${getFilterDisplayValue(key, value)}</span>
+                      <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    `;
           badgesContainer.appendChild(badge);
         }
       }
@@ -1477,7 +1517,3 @@
     });
   </script>
 @endsection
-
-
-
-
