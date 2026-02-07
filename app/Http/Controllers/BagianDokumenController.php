@@ -134,10 +134,57 @@ class BagianDokumenController extends Controller
         $perPage = $request->get('per_page', 10);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
+        // Available columns for customization
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'status' => 'Status',
+            'tanggal_spp' => 'Tanggal SPP',
+            'uraian_spp' => 'Uraian SPP',
+            'kebun' => 'Kebun',
+            'nama_pengirim' => 'Nama Pengirim',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'no_berita_acara' => 'No Berita Acara',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+        ];
+
+        // Get selected columns from request or session
+        $selectedColumns = $request->get('columns', []);
+
+        // Default columns
+        $defaultColumns = [
+            'nomor_agenda',
+            'nomor_spp',
+            'tanggal_masuk',
+            'nilai_rupiah',
+            'status',
+        ];
+
+        // If columns are provided in request, save to session
+        if ($request->has('columns') && !empty($selectedColumns)) {
+            session(['bagian_dokumens_table_columns' => $selectedColumns]);
+        } else {
+            // Load from session or use default
+            $selectedColumns = session('bagian_dokumens_table_columns', $defaultColumns);
+
+            // If empty after filtering, use default
+            if (empty($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
+
+            // Update session to keep it in sync
+            session(['bagian_dokumens_table_columns' => $selectedColumns]);
+        }
+
         return view('bagian.dokumens.daftarDokumen', compact(
             'dokumens',
             'bagianCode',
-            'bagianName'
+            'bagianName',
+            'availableColumns',
+            'selectedColumns'
         ));
     }
 
