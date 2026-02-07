@@ -1022,3 +1022,142 @@ html.dark .data-table tbody tr.overdue {
     text-align: center;
   }
 }
+
+/* ===== Dark Mode Comprehensive Styles ===== */
+html.dark .stats-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+html.dark .stats-card .stat-value {
+  color: #ffffff;
+}
+
+html.dark .stats-card .stat-label {
+  color: var(--text-muted);
+}
+
+html.dark .filter-bar {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+html.dark .search-wrapper input {
+  background: var(--bg-light);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+html.dark .search-wrapper input::placeholder {
+  color: var(--text-muted);
+}
+
+html.dark .filter-chip {
+  background: var(--bg-light);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+html.dark .filter-chip.active,
+html.dark .filter-chip:hover {
+  border-color: var(--primary-color);
+  color: var(--text-primary);
+}
+
+/* Status Badges Dark Mode */
+html.dark .status-badge.proses {
+  background: #92400e;
+  color: #fef3c7;
+}
+
+html.dark .status-badge.selesai {
+  background: #166534;
+  color: #dcfce7;
+}
+
+html.dark .status-badge.pending {
+  background: #1e40af;
+  color: #dbeafe;
+}
+
+html.dark .status-badge.tertunda {
+  background: #7c2d12;
+  color: #fed7aa;
+}
+
+/* Document Cards Dark Mode */
+html.dark .doc-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+html.dark .doc-card-header {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .doc-card-title {
+  color: var(--text-primary);
+}
+
+html.dark .doc-card-value {
+  color: #4ade80 !important;
+}
+
+html.dark .doc-card-label {
+  color: var(--text-muted);
+}
+
+/* Table Dark Mode */
+html.dark .data-table-container {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+html.dark .data-table th {
+  background: #0f172a;
+  border-color: var(--border-color);
+  color: #f1f5f9;
+}
+
+html.dark .data-table td {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+html.dark .data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .data-table td strong {
+  color: #ffffff;
+}
+
+/* Pagination Dark Mode */
+html.dark .page-btn {
+  background: var(--bg-light);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+html.dark .page-btn:hover:not(:disabled) {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+html.dark .page-btn.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Empty State Dark Mode */
+html.dark .empty-state i {
+  color: #4b5563;
+}
+
+html.dark .empty-state h4 {
+  color: var(--text-primary);
+}
+
+html.dark .empty-state p {
+  color: var(--text-muted);
+}

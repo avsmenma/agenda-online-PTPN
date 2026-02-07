@@ -1758,7 +1758,307 @@
       -ms-user-select: text;
       cursor: text;
     }
+
+    /* ========================================
+       DARK MODE FIX - HIGH CONTRAST ELEMENTS
+       For Daftar Dokumen tables and badges
+       ======================================== */
+
+    /* Currency/Value Display - HIGH CONTRAST */
+    .dark .table tbody td strong,
+    .dark .data-table td strong,
+    .dark .detail-value,
+    .dark .detail-value.highlight,
+    .dark .doc-value,
+    .dark .stat-value,
+    .dark .doc-card-value {
+      color: #ffffff !important;
+    }
+
+    /* Money/Rupiah values - make them pop */
+    .dark .formatted-rupiah,
+    .dark .nilai-rupiah {
+      color: #4ade80 !important;
+      font-weight: 600;
+    }
+
+    /* Payment Status Badges - Dark Mode */
+    .dark .payment-status-badge.belum-dibayar {
+      background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+      color: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .dark .payment-status-badge.siap-dibayar {
+      background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+      color: #dbeafe;
+      border-color: #60a5fa;
+    }
+
+    .dark .payment-status-badge.sudah-dibayar {
+      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+      color: #dcfce7;
+      border-color: #4ade80;
+    }
+
+    .dark .payment-status-badge small {
+      color: #cbd5e1 !important;
+    }
+
+    /* Document Age Badges - Dark Mode */
+    .dark .document-age-badge.active {
+      background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+      border-left-color: #4ade80;
+    }
+
+    .dark .document-age-badge.active .age-date,
+    .dark .document-age-badge.active .age-duration {
+      color: #bbf7d0 !important;
+    }
+
+    .dark .document-age-badge.active .age-dot {
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+    }
+
+    .dark .document-age-badge.completed {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%);
+      border-left-color: #94a3b8;
+    }
+
+    .dark .document-age-badge.completed .age-date,
+    .dark .document-age-badge.completed .age-duration {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .document-age-badge.completed .age-dot {
+      background: #94a3b8;
+    }
+
+    /* Table Data Cells - Ensure Readability */
+    .dark .data-table td {
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+
+    .dark .data-table td .text-muted,
+    .dark .data-table small.text-muted,
+    .dark .table td .text-muted,
+    .dark .table td small.text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Detail Items in Modals */
+    .dark .detail-item {
+      background: #334155;
+      border-left-color: #4ade80;
+    }
+
+    .dark .detail-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .detail-value {
+      color: #f8fafc !important;
+    }
+
+    /* Search Box & Filters */
+    .dark .search-box {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .search-box .input-group-text {
+      background: #334155;
+      border-color: #475569;
+      color: #94a3b8;
+    }
+
+    .dark .search-box .form-control {
+      background: #1e293b;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .search-box .form-control::placeholder {
+      color: #64748b;
+    }
+
+    .dark .btn-year-select,
+    .dark .btn-status-select {
+      background: #334155;
+      color: #e2e8f0;
+      border-color: #475569;
+    }
+
+    .dark .btn-year-select:hover,
+    .dark .btn-status-select:hover {
+      background: #475569;
+      border-color: #64748b;
+    }
+
+    /* Table Container */
+    .dark .table-container,
+    .dark .table-wrapper {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    /* Empty State */
+    .dark .empty-state {
+      background: #1e293b;
+    }
+
+    .dark .empty-state i {
+      color: #475569;
+    }
+
+    .dark .empty-state h4 {
+      color: #e2e8f0;
+    }
+
+    .dark .empty-state p {
+      color: #94a3b8;
+    }
+
+    /* Modal Custom Styles */
+    .dark .modal-content-custom {
+      background: #1e293b;
+    }
+
+    .dark .modal-body-custom {
+      background: #1e293b;
+    }
+
+    .dark .modal-footer-custom {
+      background: #1e293b;
+      border-top-color: #334155;
+    }
+
+    /* Column Customization Modal */
+    .dark .customization-modal .modal-content-custom {
+      background: #1e293b;
+    }
+
+    .dark .column-selection-list {
+      background: #0f172a;
+    }
+
+    .dark .column-item {
+      background: #1e293b;
+      border-color: #475569;
+    }
+
+    .dark .column-item:hover {
+      border-color: #60a5fa;
+      background: #334155;
+    }
+
+    .dark .column-item.selected {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.1);
+    }
+
+    .dark .column-item-label {
+      color: #e2e8f0;
+    }
+
+    /* Per Page Select */
+    .dark .per-page-select label {
+      color: #cbd5e1;
+    }
+
+    .dark .per-page-select select {
+      background: #334155;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    /* Stat Cards Additional */
+    .dark .stat-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .stat-title,
+    .dark .stat-label {
+      color: #94a3b8;
+    }
+
+    .dark .stat-description {
+      color: #64748b;
+    }
+
+    /* Form Containers */
+    .dark .form-container {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      border-color: #475569;
+    }
+
+    .dark .section-title {
+      color: #e2e8f0;
+      background: linear-gradient(90deg, rgba(74, 222, 128, 0.1) 0%, transparent 100%);
+      border-left-color: #4ade80;
+    }
+
+    .dark .info-box {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%);
+      border-color: rgba(74, 222, 128, 0.3);
+      color: #e2e8f0;
+    }
+
+    /* Status Badges Additional */
+    .dark .status-badge.proses {
+      background: #92400e !important;
+      color: #fef3c7 !important;
+    }
+
+    .dark .status-badge.selesai {
+      background: #166534 !important;
+      color: #dcfce7 !important;
+    }
+
+    /* Badge Status Text Colors */
+    .dark .badge-status {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Gradient Text Fix for Dark Mode */
+    .dark h2 {
+      background: linear-gradient(135deg, #4ade80 0%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Pagination Container Dark Mode */
+    .dark .pagination-container {
+      background: #1e293b;
+      border-top-color: #334155;
+    }
+
+    /* Action Buttons visibility */
+    .dark .btn-action {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Detail Grid Dark Mode */
+    .dark .detail-grid .detail-item {
+      background: #334155;
+      border-left-color: #4ade80;
+    }
+
+    /* Form group labels */
+    .dark .form-group label {
+      color: #e2e8f0;
+    }
+
+    /* Optional labels */
+    .dark .optional-label {
+      color: #4ade80;
+    }
   </style>
+
 
   <!-- Smart Autocomplete CSS -->
   <link href="{{ asset('css/smart-autocomplete.css') }}" rel="stylesheet">
