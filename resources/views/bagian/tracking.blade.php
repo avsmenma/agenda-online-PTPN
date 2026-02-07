@@ -189,6 +189,42 @@
             transition: width 0.3s;
         }
 
+        /* Paid Stamp */
+        .paid-stamp-container {
+            position: relative;
+        }
+
+        .paid-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            border: 3px solid white;
+            z-index: 10;
+        }
+
+        .paid-stamp i {
+            margin-right: 8px;
+        }
+
+        .doc-card.paid {
+            border: 3px solid #28a745;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(32, 201, 151, 0.05));
+        }
+
+        .doc-card.paid .doc-card-header {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));
+        }
+
         /* Table View */
         .table-container {
             display: none;
@@ -273,9 +309,14 @@
                     $statusLower = strtolower($doc->status ?? '');
                     $currentHandler = strtolower($doc->current_handler ?? '');
 
+                    // Check if document is paid
+                    $isPaid = !empty($doc->tanggal_dibayar);
+
                     // Workflow stages: 1=Bagian, 2=Operator, 3=Verif, 4=Perpajakan/Akutansi, 5=Pembayaran
                     $step = 1;
-                    if ($statusLower == 'belum dikirim') {
+                    if ($isPaid) {
+                        $step = 6; // All completed
+                    } elseif ($statusLower == 'belum dikirim') {
                         $step = 1;
                     } elseif (in_array($currentHandler, ['operator']) || $statusLower == 'menunggu_approval_keuangan') {
                         $step = 1; // Still at Bagian level from Bagian's perspective
@@ -297,13 +338,20 @@
                         'akutansi' => 'Akutansi',
                         'pembayaran' => 'Pembayaran',
                     ];
-                    $position = $positionMap[$currentHandler] ?? ucwords(str_replace('_', ' ', $currentHandler));
+                    $position = $isPaid ? 'Selesai' : ($positionMap[$currentHandler] ?? ucwords(str_replace('_', ' ', $currentHandler)));
 
-                    // Progress percentage
-                    $progressPercent = (($step - 1) / 4) * 100;
+                    // Progress percentage (100% if paid)
+                    $progressPercent = $isPaid ? 100 : ((($step - 1) / 4) * 100);
                 @endphp
-                <div class="doc-card" onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'"
-                    style="cursor: pointer;">
+                <div class="doc-card {{ $isPaid ? 'paid' : '' }}"
+                    onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'" style="cursor: pointer;">
+                    @if($isPaid)
+                        <div class="paid-stamp-container">
+                            <div class="paid-stamp">
+                                <i class="fa-solid fa-check-circle"></i>SUDAH DIBAYAR
+                            </div>
+                        </div>
+                    @endif
                     <div class="doc-card-header">
                         <div class="doc-agenda">{{ $doc->nomor_agenda }}</div>
                         <div class="doc-spp">SPP: {{ $doc->nomor_spp }}</div>
