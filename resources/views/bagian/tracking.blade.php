@@ -261,6 +261,205 @@
         .tracking-grid.hidden {
             display: none;
         }
+
+        /* Enhanced Table Styling */
+        .tracking-table-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .tracking-table {
+            margin-bottom: 0;
+        }
+
+        .tracking-table thead {
+            background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+        }
+
+        .tracking-table thead th {
+            padding: 16px 20px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .tracking-table tbody tr {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .tracking-table tbody tr:hover {
+            background: linear-gradient(135deg, rgba(8, 62, 64, 0.03) 0%, rgba(10, 95, 82, 0.03) 100%);
+            transform: scale(1.005);
+        }
+
+        .tracking-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .tracking-table tbody td {
+            padding: 16px 20px;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+
+        .tracking-table .doc-agenda-cell {
+            font-weight: 700;
+            color: #083E40;
+            font-size: 15px;
+        }
+
+        .tracking-table .doc-spp-cell {
+            color: #495057;
+        }
+
+        .tracking-table .doc-nilai-cell {
+            font-weight: 700;
+            color: #28a745;
+            font-size: 15px;
+        }
+
+        /* Status Badges for Table */
+        .table-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .table-status-badge.badge-belum-dikirim {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+
+        .table-status-badge.badge-belum-dikirim::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: table-shimmer 2s infinite;
+        }
+
+        .table-status-badge.badge-terkirim {
+            background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(8, 62, 64, 0.3);
+        }
+
+        .table-status-badge.badge-terkirim::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: table-shimmer 2.5s infinite;
+        }
+
+        .table-status-badge.badge-menunggu {
+            background: linear-gradient(135deg, #e0a800 0%, #ffc107 100%);
+            color: #212529;
+            box-shadow: 0 2px 8px rgba(224, 168, 0, 0.3);
+        }
+
+        .table-status-badge.badge-menunggu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: table-shimmer 2s infinite;
+        }
+
+        .table-status-badge.badge-dibayar {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .table-status-badge.badge-dibayar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: table-shimmer 2s infinite;
+        }
+
+        @keyframes table-shimmer {
+            0% {
+                left: -100%;
+            }
+
+            50% {
+                left: 100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* Position Badge */
+        .table-position-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+
+        .table-position-badge i {
+            color: #083E40;
+        }
+
+        /* Action Button */
+        .table-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .table-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+            color: white;
+        }
     </style>
 
     <div class="tracking-container">
@@ -434,34 +633,44 @@
 
         <!-- Table View -->
         <div class="table-container" id="table-view">
-            <div class="card" style="border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <div class="card tracking-table-card">
                 <div class="card-body p-0">
                     @if($dokumens->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead style="background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);">
+                            <table class="table tracking-table">
+                                <thead>
                                     <tr>
-                                        <th style="padding: 16px; color: white; font-size: 12px; font-weight: 600;">NO. AGENDA
-                                        </th>
-                                        <th style="padding: 16px; color: white; font-size: 12px; font-weight: 600;">NO. SPP</th>
-                                        <th style="padding: 16px; color: white; font-size: 12px; font-weight: 600;">NILAI</th>
-                                        <th style="padding: 16px; color: white; font-size: 12px; font-weight: 600;">STATUS</th>
-                                        <th style="padding: 16px; color: white; font-size: 12px; font-weight: 600;">POSISI</th>
+                                        <th>No. Agenda</th>
+                                        <th>No. SPP</th>
+                                        <th>Nilai Rupiah</th>
+                                        <th>Status</th>
+                                        <th>Posisi Saat Ini</th>
+                                        <th style="text-align: center;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($dokumens as $doc)
                                         @php
                                             $statusLower = strtolower($doc->status ?? '');
-                                            if ($statusLower == 'belum dikirim') {
+                                            $isPaid = !empty($doc->tanggal_dibayar);
+                                            
+                                            // Determine status badge class and text
+                                            if ($isPaid) {
+                                                $statusText = 'Sudah Dibayar';
+                                                $statusClass = 'badge-dibayar';
+                                                $statusIcon = 'fa-check-circle';
+                                            } elseif ($statusLower == 'belum dikirim') {
                                                 $statusText = 'Belum Dikirim';
-                                                $statusColor = '#ffc107';
-                                            } elseif ($statusLower == 'menunggu_approval_keuangan') {
+                                                $statusClass = 'badge-belum-dikirim';
+                                                $statusIcon = 'fa-clock';
+                                            } elseif ($statusLower == 'menunggu_approval_keuangan' || str_contains($statusLower, 'menunggu')) {
                                                 $statusText = 'Menunggu Approve';
-                                                $statusColor = '#e0a800';
+                                                $statusClass = 'badge-menunggu';
+                                                $statusIcon = 'fa-hourglass-half';
                                             } else {
                                                 $statusText = 'Terkirim';
-                                                $statusColor = '#28a745';
+                                                $statusClass = 'badge-terkirim';
+                                                $statusIcon = 'fa-check';
                                             }
 
                                             $positionMap = [
@@ -471,27 +680,39 @@
                                                 'akutansi' => 'Akutansi',
                                                 'pembayaran' => 'Pembayaran',
                                             ];
-                                            $position = $positionMap[$doc->current_handler] ?? ucwords(str_replace('_', ' ', $doc->current_handler));
+                                            $currentHandler = strtolower($doc->current_handler ?? '');
+                                            $position = $isPaid ? 'Selesai' : ($positionMap[$currentHandler] ?? ucwords(str_replace('_', ' ', $currentHandler)));
+                                            
+                                            if ($statusLower == 'belum dikirim') {
+                                                $position = 'Bagian ' . $bagianCode;
+                                            }
                                         @endphp
-                                        <tr>
-                                            <td style="padding: 16px; vertical-align: middle;">
-                                                <strong style="color: #083E40;">{{ $doc->nomor_agenda }}</strong>
+                                        <tr onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'">
+                                            <td>
+                                                <span class="doc-agenda-cell">{{ $doc->nomor_agenda }}</span>
                                             </td>
-                                            <td style="padding: 16px; vertical-align: middle;">{{ $doc->nomor_spp }}</td>
-                                            <td style="padding: 16px; vertical-align: middle;">
-                                                <strong style="color: #28a745;">Rp.
-                                                    {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
+                                            <td>
+                                                <span class="doc-spp-cell">{{ $doc->nomor_spp }}</span>
                                             </td>
-                                            <td style="padding: 16px; vertical-align: middle;">
-                                                <span class="badge"
-                                                    style="background: {{ $statusColor }}; padding: 6px 12px; border-radius: 20px;">
+                                            <td>
+                                                <span class="doc-nilai-cell">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="table-status-badge {{ $statusClass }}">
+                                                    <i class="fa-solid {{ $statusIcon }}"></i>
                                                     {{ $statusText }}
                                                 </span>
                                             </td>
-                                            <td style="padding: 16px; vertical-align: middle;">
-                                                <span style="color: #6c757d;">
-                                                    <i class="fa-solid fa-location-dot me-1"></i>{{ $position }}
+                                            <td>
+                                                <span class="table-position-badge">
+                                                    <i class="fa-solid fa-location-dot"></i>
+                                                    {{ $position }}
                                                 </span>
+                                            </td>
+                                            <td style="text-align: center;" onclick="event.stopPropagation()">
+                                                <a href="{{ route('owner.workflow', $doc->id) }}" class="table-action-btn" title="Lihat Detail Alur">
+                                                    <i class="fa-solid fa-route"></i>
+                                                </a>
                                             </td>
                                         </tr>
                                     @endforeach
