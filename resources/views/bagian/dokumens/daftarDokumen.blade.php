@@ -558,14 +558,14 @@
                 ]) }})">
                         <td>{{ $dokumens->firstItem() + $index }}</td>
                         <td>
-                          <strong style="color: #083E40;">{{ $doc->nomor_agenda }}</strong>
+                          <strong style="color: #000000;">{{ $doc->nomor_agenda }}</strong>
                           <br>
                           <small class="text-muted">{{ $doc->bulan ?? '' }} {{ $doc->tahun ?? '' }}</small>
                         </td>
                         <td>{{ $doc->nomor_spp }}</td>
                         <td>{{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}</td>
                         <td>
-                          <strong style="color: #28a745;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
+                          <strong style="color: #000000;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
                         </td>
                         <td>
                           @php
