@@ -781,9 +781,10 @@ class BagianDokumenController extends Controller
             if ($statusFilter === 'belum_dikirim') {
                 $query->where('status', 'belum dikirim');
             } elseif ($statusFilter === 'terkirim') {
-                $query->whereNotIn('status', ['belum dikirim', 'sudah dibayar']);
-            } elseif ($statusFilter === 'selesai') {
-                $query->where('status', 'sudah dibayar');
+                $query->where('status', '!=', 'belum dikirim')
+                    ->whereNull('tanggal_dibayar');
+            } elseif ($statusFilter === 'sudah_dibayar') {
+                $query->whereNotNull('tanggal_dibayar');
             }
         }
 

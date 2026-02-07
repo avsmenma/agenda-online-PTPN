@@ -293,9 +293,9 @@
                             class="btn btn-sm {{ request('status') == 'terkirim' ? 'btn-info' : 'btn-outline-info' }}">
                             <i class="fa-solid fa-paper-plane me-1"></i>Terkirim
                         </a>
-                        <a href="{{ route('bagian.tracking', array_merge(request()->except('status'), ['status' => 'selesai'])) }}"
-                            class="btn btn-sm {{ request('status') == 'selesai' ? 'btn-success' : 'btn-outline-success' }}">
-                            <i class="fa-solid fa-check-circle me-1"></i>Selesai
+                        <a href="{{ route('bagian.tracking', array_merge(request()->except('status'), ['status' => 'sudah_dibayar'])) }}"
+                            class="btn btn-sm {{ request('status') == 'sudah_dibayar' ? 'btn-success' : 'btn-outline-success' }}">
+                            <i class="fa-solid fa-check-circle me-1"></i>Sudah Dibayar
                         </a>
                     </div>
 
