@@ -782,7 +782,7 @@
       }
     }
 
-    /* Terkirim - Premium dark green with hover shimmer animation */
+    /* Terkirim - Premium dark green with auto shimmer animation */
     .badge-status.badge-success,
     .badge-status.badge-terkirim {
       background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
@@ -805,12 +805,7 @@
           transparent,
           rgba(255, 255, 255, 0.4),
           transparent);
-      transition: left 0.5s ease;
-    }
-
-    .badge-status.badge-success:hover::before,
-    .badge-status.badge-terkirim:hover::before {
-      animation: shimmer-hover 1s ease-in-out;
+      animation: shimmer-terkirim 2.5s infinite;
     }
 
     .badge-status.badge-success:hover,
@@ -820,9 +815,12 @@
       background: linear-gradient(135deg, #0a5f52 0%, #0c7066 100%);
     }
 
-    @keyframes shimmer-hover {
+    @keyframes shimmer-terkirim {
       0% {
         left: -100%;
+      }
+      50% {
+        left: 100%;
       }
       100% {
         left: 100%;
