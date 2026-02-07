@@ -91,6 +91,180 @@
 
     .btn-filter:hover {
       transform: translateY(-1px);
+    }
+
+    .btn-customize-columns-inline {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      white-space: nowrap;
+    }
+
+    .btn-customize-columns-inline:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+      background: linear-gradient(135deg, #9ab01f 0%, #a8bf23 100%);
+      color: white;
+    }
+
+    .btn-customize-columns-inline:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+    }
+
+    /* Column Customization Modal */
+    .customization-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .customization-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .customization-modal .modal-content-custom {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .customization-modal .modal-header-custom {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      color: white;
+      padding: 20px 24px;
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .customization-modal .modal-header-custom h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .customization-modal .modal-body-custom {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .column-selection-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+      transition: all 0.2s ease;
+      gap: 12px;
+    }
+
+    .column-item:hover {
+      border-color: #889717;
+      background: #f8f9ff;
+    }
+
+    .column-item.selected {
+      border-color: #28a745;
+      background: #f0f9f4;
+    }
+
+    .column-item-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .column-item-label {
+      font-size: 14px;
+      color: #212529;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .customization-modal .modal-footer-custom {
+      padding: 16px 24px;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-modal {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background: #5a6268;
+    }
+
+    .btn-save {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #218838;
       box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
     }
 
@@ -504,6 +678,10 @@
         <button type="submit" class="btn-filter">
           <i class="fa-solid fa-filter me-1"></i>Filter
         </button>
+        <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
+          <i class="fa-solid fa-table-columns me-2"></i>
+          Kustomisasi Kolom Tabel
+        </button>
       </form>
     </div>
 
@@ -754,6 +932,76 @@
       <button type="button" class="btn-success-close" onclick="closeSuccessAndReload()">
         <i class="fa-solid fa-check"></i> Mengerti
       </button>
+    </div>
+  </div>
+
+  <!-- Column Customization Modal -->
+  <div class="customization-modal" id="columnCustomizationModal">
+    <div class="modal-content-custom">
+      <div class="modal-header-custom">
+        <h3>
+          <i class="fa-solid fa-table-columns"></i>
+          Kustomisasi Kolom Tabel
+        </h3>
+        <button class="modal-close" onclick="closeColumnCustomizationModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-custom">
+        <p style="color: #6c757d; margin-bottom: 16px;">Centang kolom yang ingin ditampilkan pada tabel:</p>
+        <div class="column-selection-list" id="columnSelectionList">
+          <div class="column-item selected" data-column="nomor_agenda">
+            <input type="checkbox" class="column-item-checkbox" value="nomor_agenda" checked>
+            <label class="column-item-label">Nomor Agenda</label>
+          </div>
+          <div class="column-item selected" data-column="nomor_spp">
+            <input type="checkbox" class="column-item-checkbox" value="nomor_spp" checked>
+            <label class="column-item-label">Nomor SPP</label>
+          </div>
+          <div class="column-item selected" data-column="tanggal_masuk">
+            <input type="checkbox" class="column-item-checkbox" value="tanggal_masuk" checked>
+            <label class="column-item-label">Tanggal Masuk</label>
+          </div>
+          <div class="column-item selected" data-column="nilai_rupiah">
+            <input type="checkbox" class="column-item-checkbox" value="nilai_rupiah" checked>
+            <label class="column-item-label">Nilai Rupiah</label>
+          </div>
+          <div class="column-item selected" data-column="status">
+            <input type="checkbox" class="column-item-checkbox" value="status" checked>
+            <label class="column-item-label">Status</label>
+          </div>
+          <div class="column-item" data-column="uraian_spp">
+            <input type="checkbox" class="column-item-checkbox" value="uraian_spp">
+            <label class="column-item-label">Uraian SPP</label>
+          </div>
+          <div class="column-item" data-column="tanggal_spp">
+            <input type="checkbox" class="column-item-checkbox" value="tanggal_spp">
+            <label class="column-item-label">Tanggal SPP</label>
+          </div>
+          <div class="column-item" data-column="kebun">
+            <input type="checkbox" class="column-item-checkbox" value="kebun">
+            <label class="column-item-label">Kebun</label>
+          </div>
+          <div class="column-item" data-column="nama_pengirim">
+            <input type="checkbox" class="column-item-checkbox" value="nama_pengirim">
+            <label class="column-item-label">Nama Pengirim</label>
+          </div>
+          <div class="column-item" data-column="jenis_pembayaran">
+            <input type="checkbox" class="column-item-checkbox" value="jenis_pembayaran">
+            <label class="column-item-label">Jenis Pembayaran</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button type="button" class="btn-modal btn-cancel" onclick="closeColumnCustomizationModal()">
+          <i class="fa-solid fa-times"></i> Batal
+        </button>
+        <button type="button" class="btn-modal btn-save" onclick="saveColumnCustomization()">
+          <i class="fa-solid fa-save"></i> Simpan Perubahan
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2105,6 +2353,68 @@
     // Close on overlay click
     document.getElementById('sendSuccessModal').addEventListener('click', function (e) {
       if (e.target === this) closeSuccessAndReload();
+    });
+
+    // ============ COLUMN CUSTOMIZATION MODAL FUNCTIONS ============
+    function openColumnCustomizationModal() {
+      document.getElementById('columnCustomizationModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      
+      // Add click event to column items
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.onclick = function() {
+          toggleColumnItem(this);
+        };
+      });
+    }
+
+    function closeColumnCustomizationModal() {
+      document.getElementById('columnCustomizationModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function toggleColumnItem(item) {
+      const checkbox = item.querySelector('.column-item-checkbox');
+      checkbox.checked = !checkbox.checked;
+      
+      if (checkbox.checked) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+    }
+
+    function saveColumnCustomization() {
+      const selectedColumns = [];
+      document.querySelectorAll('.column-item-checkbox:checked').forEach(checkbox => {
+        selectedColumns.push(checkbox.value);
+      });
+      
+      if (selectedColumns.length === 0) {
+        alert('Pilih minimal satu kolom untuk ditampilkan.');
+        return;
+      }
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('bagian_selected_columns', JSON.stringify(selectedColumns));
+      
+      // Close modal and reload page to apply changes
+      closeColumnCustomizationModal();
+      
+      // Show notification
+      alert('Kustomisasi kolom berhasil disimpan!\n\nCatatan: Fitur kustomisasi kolom tabel ini dalam tahap pengembangan. Perubahan kolom akan diterapkan sepenuhnya setelah sistem diupdate.');
+    }
+
+    // Close column customization modal on overlay click
+    document.getElementById('columnCustomizationModal').addEventListener('click', function (e) {
+      if (e.target === this) closeColumnCustomizationModal();
+    });
+
+    // Close modals on Escape key (add column customization)
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeColumnCustomizationModal();
+      }
     });
   </script>
 
