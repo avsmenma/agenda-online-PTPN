@@ -95,7 +95,7 @@
 
     .btn-customize-columns-inline {
       padding: 10px 20px;
-      background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
       color: white;
       border: none;
       border-radius: 8px;
@@ -103,7 +103,7 @@
       font-size: 14px;
       font-weight: 600;
       transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+      box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
@@ -113,14 +113,14 @@
 
     .btn-customize-columns-inline:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
-      background: linear-gradient(135deg, #9ab01f 0%, #a8bf23 100%);
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+      background: linear-gradient(135deg, #0a4f52 0%, #0c6065 100%);
       color: white;
     }
 
     .btn-customize-columns-inline:active {
       transform: translateY(0);
-      box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
+      box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
     }
 
     /* Column Customization Modal */
