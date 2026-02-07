@@ -2385,7 +2385,214 @@
     .dark .tab-btn:hover {
       color: #f1f5f9 !important;
     }
+
+    /* ========================================
+       FORM PAGE DARK MODE (Tambah Dokumen)
+       ======================================== */
+
+    /* Form Container */
+    .dark .form-container {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+      border-color: #334155 !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Form Title */
+    .dark .form-title {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    /* Section Title */
+    .dark .section-title {
+      color: #f1f5f9 !important;
+      background: linear-gradient(90deg, rgba(74, 222, 128, 0.1) 0%, transparent 100%) !important;
+      border-left-color: #4ade80 !important;
+    }
+
+    /* Form Group Labels */
+    .dark .form-group label {
+      color: #e2e8f0 !important;
+    }
+
+    /* Form Inputs, Textareas, Selects */
+    .dark .form-group input,
+    .dark .form-group textarea,
+    .dark .form-group select,
+    .dark .form-control,
+    .dark input.form-control,
+    .dark textarea.form-control,
+    .dark select.form-control {
+      background-color: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .form-group input::placeholder,
+    .dark .form-group textarea::placeholder,
+    .dark .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    .dark .form-group input:focus,
+    .dark .form-group textarea:focus,
+    .dark .form-group select:focus,
+    .dark .form-control:focus {
+      background-color: #3b4d63 !important;
+      border-color: #4ade80 !important;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.15) !important;
+    }
+
+    .dark .form-group input:hover,
+    .dark .form-group textarea:hover,
+    .dark .form-group select:hover {
+      border-color: #64748b !important;
+    }
+
+    /* Vendor/Recipient Field Container */
+    .dark .vendor-field-container,
+    .dark .dynamic-field {
+      background: #1e293b !important;
+    }
+
+    /* Add/Remove Field Buttons */
+    .dark .add-field-btn {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+      border-color: #4ade80 !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .add-field-btn:hover {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .remove-field-btn {
+      background: linear-gradient(135deg, #1e293b 0%, #3d2222 100%) !important;
+      border-color: #f87171 !important;
+      color: #f87171 !important;
+    }
+
+    .dark .remove-field-btn:hover {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Info Boxes */
+    .dark .info-box,
+    .dark .alert-info {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%) !important;
+      border-color: rgba(74, 222, 128, 0.3) !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* Submit Button */
+    .dark .btn-submit,
+    .dark .btn-primary {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+      border: none !important;
+    }
+
+    .dark .btn-submit:hover,
+    .dark .btn-primary:hover {
+      background: linear-gradient(135deg, #0a5f52 0%, #083E40 100%) !important;
+    }
+
+    /* Cancel Button */
+    .dark .btn-cancel,
+    .dark .btn-secondary {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Required Field Asterisk */
+    .dark .form-group label .required,
+    .dark .form-group label span.text-danger {
+      color: #f87171 !important;
+    }
+
+    /* Optional Label */
+    .dark .optional-label,
+    .dark .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Card Headers in Forms */
+    .dark .card-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Card Body */
+    .dark .card-body {
+      background: #1e293b !important;
+    }
+
+    /* Card Footer */
+    .dark .card-footer {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    /* Autocomplete Dropdown */
+    .dark .autocomplete-dropdown,
+    .dark .ui-autocomplete,
+    .dark .dropdown-menu {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .autocomplete-dropdown li,
+    .dark .ui-autocomplete li,
+    .dark .dropdown-item {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .autocomplete-dropdown li:hover,
+    .dark .ui-autocomplete li:hover,
+    .dark .dropdown-item:hover {
+      background: #334155 !important;
+      color: #4ade80 !important;
+    }
+
+    /* Flatpickr Calendar Dark Mode */
+    .dark .flatpickr-calendar {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .flatpickr-day {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .flatpickr-day:hover {
+      background: #334155 !important;
+    }
+
+    .dark .flatpickr-day.selected {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .flatpickr-months {
+      background: #0f172a !important;
+    }
+
+    .dark .flatpickr-month,
+    .dark .flatpickr-current-month {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .flatpickr-weekday {
+      color: #94a3b8 !important;
+    }
   </style>
+
 
 
 
