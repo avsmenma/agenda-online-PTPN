@@ -1399,6 +1399,10 @@ class OwnerDashboardController extends Controller
         } elseif (in_array($userRole, ['perpajakan', 'team perpajakan'])) {
             $module = 'perpajakan';
             $dashboardUrl = '/dashboardPerpajakan';
+        } elseif (str_starts_with($userRole, 'bagian') || preg_match('/^[A-Z]{3}$/', $user->role ?? '')) {
+            // Bagian users have role codes like SDM, KEU, etc or starts with 'bagian'
+            $module = 'bagian';
+            $dashboardUrl = '/bagian/tracking';
         } elseif (in_array($userRole, ['admin', 'owner'])) {
             $module = 'owner';
             $dashboardUrl = '/owner/dokumen';

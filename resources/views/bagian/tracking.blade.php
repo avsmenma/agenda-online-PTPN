@@ -302,7 +302,8 @@
                     // Progress percentage
                     $progressPercent = (($step - 1) / 4) * 100;
                 @endphp
-                <div class="doc-card">
+                <div class="doc-card" onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'"
+                    style="cursor: pointer;">
                     <div class="doc-card-header">
                         <div class="doc-agenda">{{ $doc->nomor_agenda }}</div>
                         <div class="doc-spp">SPP: {{ $doc->nomor_spp }}</div>
