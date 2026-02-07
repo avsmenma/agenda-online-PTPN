@@ -1708,15 +1708,7 @@
         @endunless
 
         <!-- Tracking Dokumen Menu - Untuk semua role -->
-        @if($isBagianUser)
-          {{-- Bagian-specific tracking menu --}}
-          @php
-            $isBagianTrackingActive = request()->is('*bagian/tracking*') || request()->routeIs('bagian.tracking');
-          @endphp
-          <a href="{{ route('bagian.tracking') }}" class="{{ $isBagianTrackingActive ? 'active' : '' }}">
-            <i class="fa-solid fa-route"></i> Tracking Dokumen
-          </a>
-        @else
+        @unless($isBagianUser)
           @php
             $trackingUrl = match ($module) {
               'operator', 'operator' => '/tracking-dokumen',
@@ -1945,7 +1937,7 @@
           <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
         </a>
         <a href="{{ route('bagian.tracking') }}" class="{{ request()->routeIs('bagian.tracking') ? 'active' : '' }}">
-          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+          <i class="fa-solid fa-route me-2"></i> Tracking Dokumen
         </a>
       @else
         <!-- Operator -->

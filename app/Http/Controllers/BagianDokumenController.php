@@ -663,13 +663,52 @@ class BagianDokumenController extends Controller
             ->where('created_by', $createdByValue)
             ->orderBy('updated_at', 'desc');
 
-        // Search
+        // General search - searches across multiple fields
         if ($request->has('search') && $request->search) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', "%{$search}%")
-                    ->orWhere('nomor_spp', 'like', "%{$search}%");
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('kebun', 'like', "%{$search}%")
+                    ->orWhere('bagian', 'like', "%{$search}%")
+                    ->orWhere('nama_pengirim', 'like', "%{$search}%")
+                    ->orWhereHas('dibayarKepadas', function ($subQ) use ($search) {
+                        $subQ->where('nama_penerima', 'like', "%{$search}%");
+                    });
             });
+        }
+
+        // Specific filter: Nomor SPP
+        if ($request->has('nomor_spp') && $request->nomor_spp) {
+            $query->where('nomor_spp', 'like', "%{$request->nomor_spp}%");
+        }
+
+        // Specific filter: Nilai (with range support)
+        if ($request->has('nilai_min') && $request->nilai_min) {
+            $nilaiMin = floatval(str_replace(['.', ','], ['', '.'], $request->nilai_min));
+            $query->where('nilai_rupiah', '>=', $nilaiMin);
+        }
+        if ($request->has('nilai_max') && $request->nilai_max) {
+            $nilaiMax = floatval(str_replace(['.', ','], ['', '.'], $request->nilai_max));
+            $query->where('nilai_rupiah', '<=', $nilaiMax);
+        }
+
+        // Specific filter: Kebun
+        if ($request->has('kebun') && $request->kebun) {
+            $query->where('kebun', 'like', "%{$request->kebun}%");
+        }
+
+        // Status filter
+        if ($request->has('status') && $request->status) {
+            $statusFilter = $request->status;
+            if ($statusFilter === 'belum_dikirim') {
+                $query->where('status', 'belum dikirim');
+            } elseif ($statusFilter === 'terkirim') {
+                $query->whereNotIn('status', ['belum dikirim', 'sudah dibayar']);
+            } elseif ($statusFilter === 'selesai') {
+                $query->where('status', 'sudah dibayar');
+            }
         }
 
         $perPage = $request->get('per_page', 10);

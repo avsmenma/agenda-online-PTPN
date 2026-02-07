@@ -208,32 +208,95 @@
     </style>
 
     <div class="tracking-container">
-        <!-- Header with Filters -->
-        <div class="filter-card d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fa-solid fa-filter me-2"></i>Filter Lanjutan
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ route('bagian.tracking') }}">Semua</a></li>
-                        <li><a class="dropdown-item"
-                                href="{{ route('bagian.tracking', ['status' => 'belum_dikirim']) }}">Belum Dikirim</a></li>
-                        <li><a class="dropdown-item"
-                                href="{{ route('bagian.tracking', ['status' => 'terkirim']) }}">Terkirim</a></li>
-                        <li><a class="dropdown-item"
-                                href="{{ route('bagian.tracking', ['status' => 'selesai']) }}">Selesai</a></li>
-                    </ul>
+        <!-- Header with Search & Filters -->
+        <div class="filter-card">
+            <form method="GET" action="{{ route('bagian.tracking') }}" id="searchForm">
+                <div class="row g-3 mb-3">
+                    <!-- General Search -->
+                    <div class="col-md-6 col-lg-4">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fa-solid fa-search me-1"></i>Cari Dokumen
+                        </label>
+                        <input type="text" name="search" class="form-control"
+                            placeholder="Cari nomor agenda, SPP, uraian, kebun..." value="{{ request('search') }}">
+                    </div>
+
+                    <!-- Nomor SPP Specific -->
+                    <div class="col-md-6 col-lg-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fa-solid fa-file-invoice me-1"></i>Nomor SPP
+                        </label>
+                        <input type="text" name="nomor_spp" class="form-control" placeholder="Contoh: 825/M/SPP..."
+                            value="{{ request('nomor_spp') }}">
+                    </div>
+
+                    <!-- Nilai Range -->
+                    <div class="col-md-6 col-lg-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fa-solid fa-coins me-1"></i>Nilai Min
+                        </label>
+                        <input type="text" name="nilai_min" class="form-control" placeholder="0"
+                            value="{{ request('nilai_min') }}">
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fa-solid fa-coins me-1"></i>Nilai Max
+                        </label>
+                        <input type="text" name="nilai_max" class="form-control" placeholder="∞"
+                            value="{{ request('nilai_max') }}">
+                    </div>
+
+                    <!-- Kebun -->
+                    <div class="col-md-6 col-lg-2">
+                        <label class="form-label small text-muted mb-1">
+                            <i class="fa-solid fa-tree me-1"></i>Kebun/Unit
+                        </label>
+                        <input type="text" name="kebun" class="form-control" placeholder="Nama kebun..."
+                            value="{{ request('kebun') }}">
+                    </div>
                 </div>
-            </div>
-            <div class="view-toggle">
-                <button class="btn btn-active" id="btn-card-view" onclick="switchView('card')">
-                    <i class="fa-solid fa-th-large me-1"></i>Kartu
-                </button>
-                <button class="btn btn-inactive" id="btn-table-view" onclick="switchView('table')">
-                    <i class="fa-solid fa-table me-1"></i>Tabel
-                </button>
-            </div>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <!-- Status Filter Buttons -->
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ route('bagian.tracking') }}"
+                            class="btn btn-sm {{ !request('status') ? 'btn-dark' : 'btn-outline-secondary' }}">
+                            <i class="fa-solid fa-list me-1"></i>Semua
+                        </a>
+                        <a href="{{ route('bagian.tracking', array_merge(request()->except('status'), ['status' => 'belum_dikirim'])) }}"
+                            class="btn btn-sm {{ request('status') == 'belum_dikirim' ? 'btn-warning' : 'btn-outline-warning' }}">
+                            <i class="fa-solid fa-clock me-1"></i>Belum Dikirim
+                        </a>
+                        <a href="{{ route('bagian.tracking', array_merge(request()->except('status'), ['status' => 'terkirim'])) }}"
+                            class="btn btn-sm {{ request('status') == 'terkirim' ? 'btn-info' : 'btn-outline-info' }}">
+                            <i class="fa-solid fa-paper-plane me-1"></i>Terkirim
+                        </a>
+                        <a href="{{ route('bagian.tracking', array_merge(request()->except('status'), ['status' => 'selesai'])) }}"
+                            class="btn btn-sm {{ request('status') == 'selesai' ? 'btn-success' : 'btn-outline-success' }}">
+                            <i class="fa-solid fa-check-circle me-1"></i>Selesai
+                        </a>
+                    </div>
+
+                    <!-- Search & View Buttons -->
+                    <div class="d-flex gap-2 align-items-center">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-search me-1"></i>Cari
+                        </button>
+                        <a href="{{ route('bagian.tracking') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fa-solid fa-rotate-left me-1"></i>Reset
+                        </a>
+                        <div class="view-toggle ms-2">
+                            <button type="button" class="btn btn-active" id="btn-card-view" onclick="switchView('card')">
+                                <i class="fa-solid fa-th-large me-1"></i>Kartu
+                            </button>
+                            <button type="button" class="btn btn-inactive" id="btn-table-view"
+                                onclick="switchView('table')">
+                                <i class="fa-solid fa-table me-1"></i>Tabel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
 
         <!-- Card View -->
