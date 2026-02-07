@@ -121,9 +121,36 @@ class BagianDokumenController extends Controller
             });
         }
 
-        // Status filter
+        // Status filter with expanded options
         if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
+            $statusFilter = $request->status;
+
+            if ($statusFilter === 'belum_dikirim') {
+                // Documents not yet sent
+                $query->where('status', 'belum dikirim');
+            } elseif ($statusFilter === 'menunggu_approve') {
+                // Documents waiting for approval (sent to verifikasi but not yet approved)
+                $query->where('status', 'menunggu_approval_keuangan');
+            } elseif ($statusFilter === 'terkirim') {
+                // Documents that have been sent (not 'belum dikirim' and not 'menunggu_approval_keuangan')
+                $query->whereNotIn('status', ['belum dikirim', 'menunggu_approval_keuangan']);
+            } elseif ($statusFilter === 'belum_dibayar') {
+                // Documents with payment status: not yet paid (posisi is not pembayaran and no tanggal_dibayar)
+                $query->where(function ($q) {
+                    $q->whereNotIn('posisi', ['pembayaran'])
+                        ->whereNull('tanggal_dibayar');
+                });
+            } elseif ($statusFilter === 'siap_dibayar') {
+                // Documents ready to be paid (posisi is pembayaran)
+                $query->where('posisi', 'pembayaran')
+                    ->whereNull('tanggal_dibayar');
+            } elseif ($statusFilter === 'sudah_dibayar') {
+                // Documents that have been paid
+                $query->whereNotNull('tanggal_dibayar');
+            } else {
+                // Fallback: try exact match
+                $query->where('status', $statusFilter);
+            }
         }
 
         // Year filter

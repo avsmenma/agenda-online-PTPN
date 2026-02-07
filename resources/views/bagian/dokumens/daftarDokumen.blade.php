@@ -833,13 +833,13 @@
 
         <select name="status" class="btn-status-select">
           <option value="">Semua Status</option>
-          <option value="belum dikirim" {{ request('status') == 'belum dikirim' ? 'selected' : '' }}>Belum Dikirim
+          <option value="belum_dikirim" {{ request('status') == 'belum_dikirim' ? 'selected' : '' }}>Belum Dikirim</option>
+          <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve
           </option>
-          <option value="sent_to_team_verifikasi" {{ request('status') == 'sent_to_team_verifikasi' ? 'selected' : '' }}>
-            Menunggu Verifikasi
-          </option>
-          <option value="sudah dibayar" {{ request('status') == 'sudah dibayar' ? 'selected' : '' }}>Sudah Dibayar
-          </option>
+          <option value="terkirim" {{ request('status') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
+          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
+          <option value="siap_dibayar" {{ request('status') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
+          <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
 
         <button type="submit" class="btn-filter">
