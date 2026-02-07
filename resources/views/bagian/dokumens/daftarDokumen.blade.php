@@ -1054,7 +1054,7 @@
                                 </button>
                               </form>
                             @else
-                              <a href="{{ route('owner.workflow', $doc->id) }}" class="btn-action btn-tracking" title="Tracking">
+                              <a href="{{ route('bagian.tracking') }}" class="btn-action btn-tracking" title="Tracking">
                                 <i class="fa-solid fa-route"></i>
                               </a>
                             @endif
