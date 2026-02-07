@@ -2779,27 +2779,46 @@
     }
 
     .dark .doc-agenda-cell {
-      color: #4ade80 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .doc-agenda-cell a {
+      color: #ffffff !important;
     }
 
     .dark .doc-spp-cell {
-      color: #e2e8f0 !important;
+      color: #ffffff !important;
     }
 
     .dark .doc-nilai-cell {
-      color: #4ade80 !important;
+      color: #ffffff !important;
     }
 
     /* Table Position Badge */
     .dark .table-position-badge {
       background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
-      color: #e2e8f0 !important;
+      color: #ffffff !important;
       border-color: #64748b !important;
     }
 
     .dark .table-position-badge i {
-      color: #4ade80 !important;
+      color: #ffffff !important;
     }
+
+    /* Table Action Buttons */
+    .dark .tracking-table .btn-outline-primary,
+    .dark .tracking-table .btn-primary {
+      color: #ffffff !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .tracking-table .btn-outline-primary i,
+    .dark .tracking-table .btn-primary i,
+    .dark .tracking-table td a i,
+    .dark .tracking-table td button i {
+      color: #ffffff !important;
+    }
+
 
     /* Outline Buttons in Dark Mode */
     .dark .btn-outline-secondary {
