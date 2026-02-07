@@ -1955,10 +1955,6 @@
         <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'operator') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/Operator*') ? 'active' : '' }}">
-          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-        </a>
       @endif
     </div>
   </div>
