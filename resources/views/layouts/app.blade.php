@@ -2850,7 +2850,97 @@
     .dark .tracking-container h5.text-muted {
       color: #e2e8f0 !important;
     }
+
+    /* ========================================
+       DASHBOARD PAGE DARK MODE
+       ======================================== */
+
+    /* Dashboard Header */
+    .dark .container-fluid h2 {
+      color: #ffffff !important;
+    }
+
+    .dark .container-fluid h2 i {
+      color: #4ade80 !important;
+    }
+
+    .dark .container-fluid .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Stats Cards */
+    .dark .container-fluid .card {
+      background: #1e293b !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .container-fluid .card-body {
+      background: #1e293b !important;
+    }
+
+    .dark .container-fluid .card h3,
+    .dark .container-fluid .card h5 {
+      color: #ffffff !important;
+    }
+
+    .dark .container-fluid .card .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Action Cards Icons */
+    .dark .container-fluid .card i {
+      color: #4ade80 !important;
+    }
+
+    /* Card Header for Recent Documents */
+    .dark .container-fluid .card-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .container-fluid .card-header h5 {
+      color: #ffffff !important;
+    }
+
+    /* Table in Dashboard */
+    .dark .container-fluid .table {
+      background: #1e293b !important;
+    }
+
+    .dark .container-fluid .table thead {
+      background: #0f172a !important;
+    }
+
+    .dark .container-fluid .table thead th {
+      background: #0f172a !important;
+      color: #94a3b8 !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .container-fluid .table tbody tr {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .container-fluid .table tbody tr:hover {
+      background: rgba(74, 222, 128, 0.08) !important;
+    }
+
+    .dark .container-fluid .table tbody td {
+      color: #ffffff !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .container-fluid .table tbody td strong {
+      color: #ffffff !important;
+    }
+
+    /* Fix table hover border */
+    .dark .table-hover>tbody>tr:hover>* {
+      background: rgba(74, 222, 128, 0.08) !important;
+    }
   </style>
+
 
 
 
