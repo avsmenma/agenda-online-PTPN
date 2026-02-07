@@ -2591,7 +2591,258 @@
     .dark .flatpickr-weekday {
       color: #94a3b8 !important;
     }
+
+    /* ========================================
+       TRACKING PAGE DARK MODE
+       ======================================== */
+
+    /* Filter Card */
+    .dark .filter-card {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .filter-card .form-label {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .filter-card .form-control {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .filter-card .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    /* View Toggle Buttons */
+    .dark .view-toggle .btn-active {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .view-toggle .btn-inactive {
+      background: #334155 !important;
+      color: #94a3b8 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .view-toggle .btn-inactive:hover {
+      background: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Document Cards */
+    .dark .doc-card {
+      background: #1e293b !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .doc-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .dark .doc-card-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .doc-agenda {
+      color: #4ade80 !important;
+    }
+
+    .dark .doc-spp {
+      color: #94a3b8 !important;
+    }
+
+    .dark .doc-nilai {
+      color: #4ade80 !important;
+    }
+
+    .dark .doc-card-body {
+      background: #1e293b !important;
+    }
+
+    .dark .doc-position {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .doc-position i {
+      color: #4ade80 !important;
+    }
+
+    .dark .doc-position strong {
+      color: #f1f5f9 !important;
+    }
+
+    /* Paid Card Styling */
+    .dark .doc-card.paid {
+      border-color: #4ade80 !important;
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.08), rgba(34, 197, 94, 0.08)) !important;
+    }
+
+    .dark .doc-card.paid .doc-card-header {
+      background: rgba(74, 222, 128, 0.15) !important;
+    }
+
+    .dark .paid-stamp {
+      background: #0f172a !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .paid-stamp::before {
+      border-color: #4ade80 !important;
+    }
+
+    .dark .paid-stamp i,
+    .dark .paid-stamp-text {
+      color: #4ade80 !important;
+    }
+
+    /* Progress Section */
+    .dark .progress-section {
+      background: transparent !important;
+    }
+
+    .dark .progress-title {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .progress-title i {
+      color: #4ade80 !important;
+    }
+
+    /* Step Circles */
+    .dark .step-circle.pending {
+      background: #475569 !important;
+      color: #94a3b8 !important;
+    }
+
+    .dark .step-circle.completed {
+      background: linear-gradient(135deg, #4ade80, #22c55e) !important;
+      color: #0f172a !important;
+    }
+
+    .dark .step-circle.current {
+      background: linear-gradient(135deg, #083E40, #0a5f52) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.3) !important;
+    }
+
+    /* Step Labels */
+    .dark .step-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .step-label.current {
+      color: #4ade80 !important;
+    }
+
+    /* Progress Line */
+    .dark .progress-line {
+      background: #475569 !important;
+    }
+
+    .dark .progress-line-fill {
+      background: linear-gradient(90deg, #4ade80, #22c55e) !important;
+    }
+
+    /* Tracking Table */
+    .dark .tracking-table-card {
+      background: #1e293b !important;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .tracking-table tbody tr {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .tracking-table tbody tr:hover {
+      background: rgba(74, 222, 128, 0.08) !important;
+    }
+
+    .dark .tracking-table tbody td {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-right-color: #334155 !important;
+    }
+
+    .dark .doc-agenda-cell {
+      color: #4ade80 !important;
+    }
+
+    .dark .doc-spp-cell {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .doc-nilai-cell {
+      color: #4ade80 !important;
+    }
+
+    /* Table Position Badge */
+    .dark .table-position-badge {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
+      color: #e2e8f0 !important;
+      border-color: #64748b !important;
+    }
+
+    .dark .table-position-badge i {
+      color: #4ade80 !important;
+    }
+
+    /* Outline Buttons in Dark Mode */
+    .dark .btn-outline-secondary {
+      color: #e2e8f0 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .btn-outline-secondary:hover {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .btn-outline-warning {
+      color: #fbbf24 !important;
+      border-color: #fbbf24 !important;
+    }
+
+    .dark .btn-outline-warning:hover {
+      background: #fbbf24 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .btn-outline-info {
+      color: #38bdf8 !important;
+      border-color: #38bdf8 !important;
+    }
+
+    .dark .btn-outline-info:hover {
+      background: #38bdf8 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .btn-outline-success {
+      color: #4ade80 !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .btn-outline-success:hover {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    /* Empty State Styling */
+    .dark .tracking-container .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    .dark .tracking-container h5.text-muted {
+      color: #e2e8f0 !important;
+    }
   </style>
+
 
 
 
