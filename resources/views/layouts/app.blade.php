@@ -2199,7 +2199,194 @@
     .dark .sidebar a[href*="logout"]:hover {
       color: #f87171 !important;
     }
+
+    /* ========================================
+       COLUMN CUSTOMIZATION MODAL DARK MODE
+       ======================================== */
+
+    /* Modal Background */
+    .dark .customization-modal,
+    .dark .modal-overlay {
+      background: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    /* Modal Content Container */
+    .dark .customization-modal .modal-content-custom,
+    .dark .modal-content-custom {
+      background: #1e293b !important;
+      border: 1px solid #334155 !important;
+    }
+
+    /* Modal Header */
+    .dark .customization-modal .modal-header-custom,
+    .dark .modal-header-custom {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .modal-header-custom h3,
+    .dark .modal-header-custom h3,
+    .dark .modal-header-custom h4 {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .modal-header-custom .modal-close,
+    .dark .modal-header-custom .modal-close {
+      color: #94a3b8 !important;
+    }
+
+    .dark .customization-modal .modal-header-custom .modal-close:hover,
+    .dark .modal-header-custom .modal-close:hover {
+      color: #f87171 !important;
+    }
+
+    /* Modal Body */
+    .dark .customization-modal .modal-body-custom,
+    .dark .modal-body-custom {
+      background: #1e293b !important;
+    }
+
+    /* Selection Panel */
+    .dark .customization-modal .selection-panel {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .customization-modal .panel-title {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .panel-description {
+      color: #94a3b8 !important;
+    }
+
+    /* Column Selection List */
+    .dark .customization-modal .column-selection-list,
+    .dark #columnSelectionList {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    /* Column Items */
+    .dark .customization-modal .column-item,
+    .dark .column-item {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .column-item.selected,
+    .dark .column-item.selected {
+      background: rgba(74, 222, 128, 0.15) !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .customization-modal .column-item-label,
+    .dark .column-item-label {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .column-item-checkbox {
+      accent-color: #4ade80;
+    }
+
+    /* Preview Panel */
+    .dark .customization-modal .preview-panel {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .customization-modal .preview-container {
+      background: #1e293b !important;
+    }
+
+    /* Preview Table */
+    .dark .customization-modal .preview-table,
+    .dark .preview-table {
+      background: #1e293b !important;
+    }
+
+    .dark .customization-modal .preview-table thead th,
+    .dark .preview-table thead th {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .preview-table tbody td,
+    .dark .preview-table tbody td {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .preview-table tbody tr,
+    .dark .preview-table tbody tr {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .preview-table tbody tr:hover,
+    .dark .preview-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Empty Preview */
+    .dark .customization-modal .empty-preview {
+      color: #94a3b8 !important;
+    }
+
+    /* Modal Footer */
+    .dark .customization-modal .modal-footer-custom,
+    .dark .modal-footer-custom {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    .dark .customization-modal .selected-count,
+    .dark .selected-count {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .customization-modal .selected-count small,
+    .dark .selected-count small {
+      color: #94a3b8 !important;
+    }
+
+    /* Modal Action Buttons */
+    .dark .btn-modal.btn-cancel {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .btn-modal.btn-cancel:hover {
+      background: #475569 !important;
+    }
+
+    .dark .btn-modal.btn-save {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Document Detail Modal Specific */
+    .dark .modal-tabs {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .tab-btn {
+      color: #94a3b8 !important;
+    }
+
+    .dark .tab-btn.active {
+      color: #4ade80 !important;
+      border-bottom-color: #4ade80 !important;
+    }
+
+    .dark .tab-btn:hover {
+      color: #f1f5f9 !important;
+    }
   </style>
+
 
 
 
