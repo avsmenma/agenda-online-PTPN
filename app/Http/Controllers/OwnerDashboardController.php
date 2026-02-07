@@ -286,28 +286,33 @@ class OwnerDashboardController extends Controller
             }
         } else {
             // Default: show Belum Siap Dibayar (operator to akutansi)
-            $query->where(function ($q) {
-                $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
-                    ->orWhereIn('status', [
-                        'draft',
-                        'sedang diproses',
-                        'menunggu_verifikasi',
-                        'pending_approval_team_verifikasi',
-                        'sent_to_team_verifikasi',
-                        'sent_to_perpajakan',
-                        'sent_to_akutansi',
-                        'pending_approval_perpajakan',
-                        'pending_approval_akutansi',
-                    ]);
-            })
-                ->where(function ($subQ) {
-                    $subQ->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            // BUT skip this filter if user is searching, so search can find all documents
+            $hasSearch = $request && $request->has('search') && !empty($request->search) && trim((string) $request->search) !== '';
+
+            if (!$hasSearch) {
+                $query->where(function ($q) {
+                    $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
+                        ->orWhereIn('status', [
+                            'draft',
+                            'sedang diproses',
+                            'menunggu_verifikasi',
+                            'pending_approval_team_verifikasi',
+                            'sent_to_team_verifikasi',
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                        ]);
                 })
-                ->where(function ($subQ) {
-                    $subQ->where('current_handler', '!=', 'pembayaran')
-                        ->orWhereNull('current_handler');
-                });
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    })
+                    ->where(function ($subQ) {
+                        $subQ->where('current_handler', '!=', 'pembayaran')
+                            ->orWhereNull('current_handler');
+                    });
+            }
         }
 
         // Apply advanced filters
@@ -435,16 +440,18 @@ class OwnerDashboardController extends Controller
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
-            })
-                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
-                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+
+                // Search in related tables
+                $q->orWhereHas('dibayarKepadas', function ($subQ) use ($search) {
+                    $subQ->where('nama_penerima', 'like', '%' . $search . '%');
                 })
-                ->orWhereHas('dokumenPos', function ($q) use ($search) {
-                    $q->where('nomor_po', 'like', '%' . $search . '%');
-                })
-                ->orWhereHas('dokumenPrs', function ($q) use ($search) {
-                    $q->where('nomor_pr', 'like', '%' . $search . '%');
-                });
+                    ->orWhereHas('dokumenPos', function ($subQ) use ($search) {
+                        $subQ->where('nomor_po', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('dokumenPrs', function ($subQ) use ($search) {
+                        $subQ->where('nomor_pr', 'like', '%' . $search . '%');
+                    });
+            });
         }
 
         // Paginate the query
