@@ -2034,14 +2034,15 @@ class TeamVerifikasiController extends Controller
 
         // Map bidang codes to names (hardcoded)
         $bidangList = [
-            'DPM' => 'Divisi Produksi dan Manufaktur',
-            'SKH' => 'Sub Kontrak Hutan',
-            'SDM' => 'Sumber Daya Manusia',
-            'TEP' => 'Teknik dan Perencanaan',
-            'KPL' => 'Keuangan dan Pelaporan',
             'AKN' => 'Akuntansi',
+            'DPM' => 'Divisi Produksi dan Manufaktur',
+            'KPL' => 'Keuangan dan Pelaporan',
+            'PMO' => 'Project Management Office',
+            'PTI' => 'Pengadaan dan Teknologi Informasi',
+            'SDM' => 'Sumber Daya Manusia',
+            'SKH' => 'Sub Kontrak Hutan',
             'TAN' => 'Tanaman dan Perkebunan',
-            'PMO' => 'Project Management Office'
+            'TEP' => 'Teknik dan Perencanaan',
         ];
 
         $bidangStats = [];
@@ -2092,35 +2093,41 @@ class TeamVerifikasiController extends Controller
 
             // Map bagian names to bidang codes (handle various naming conventions)
             $bagianToBidangMap = [
+                // AKN
+                'AKN' => 'AKN',
+                'Akuntansi' => 'AKN',
                 // DPM
                 'DPM' => 'DPM',
                 'Divisi Produksi dan Manufaktur' => 'DPM',
                 'Produksi' => 'DPM',
-                // SKH
-                'SKH' => 'SKH',
-                'Sub Kontrak Hutan' => 'SKH',
-                // SDM
-                'SDM' => 'SDM',
-                'Sumber Daya Manusia' => 'SDM',
-                'HR' => 'SDM',
-                // TEP
-                'TEP' => 'TEP',
-                'Teknik dan Perencanaan' => 'TEP',
-                'Teknik' => 'TEP',
                 // KPL
                 'KPL' => 'KPL',
                 'Keuangan dan Pelaporan' => 'KPL',
                 'Keuangan' => 'KPL',
-                // AKN
-                'AKN' => 'AKN',
-                'Akuntansi' => 'AKN',
+                // PMO
+                'PMO' => 'PMO',
+                'Project Management Office' => 'PMO',
+                // PTI
+                'PTI' => 'PTI',
+                'Pengadaan dan Teknologi Informasi' => 'PTI',
+                'Pengadaan' => 'PTI',
+                'Teknologi Informasi' => 'PTI',
+                'IT' => 'PTI',
+                // SDM
+                'SDM' => 'SDM',
+                'Sumber Daya Manusia' => 'SDM',
+                'HR' => 'SDM',
+                // SKH
+                'SKH' => 'SKH',
+                'Sub Kontrak Hutan' => 'SKH',
                 // TAN
                 'TAN' => 'TAN',
                 'Tanaman dan Perkebunan' => 'TAN',
                 'Tanaman' => 'TAN',
-                // PMO
-                'PMO' => 'PMO',
-                'Project Management Office' => 'PMO',
+                // TEP
+                'TEP' => 'TEP',
+                'Teknik dan Perencanaan' => 'TEP',
+                'Teknik' => 'TEP',
             ];
 
             // Try to find matching bidang code
@@ -2141,7 +2148,7 @@ class TeamVerifikasiController extends Controller
             }
 
             // If still no match, check if bagian itself is a valid code
-            $validCodes = ['DPM', 'SKH', 'SDM', 'TEP', 'KPL', 'AKN', 'TAN', 'PMO'];
+            $validCodes = ['AKN', 'DPM', 'KPL', 'PMO', 'PTI', 'SDM', 'SKH', 'TAN', 'TEP'];
             if (!$targetBidang && $bagian && in_array(strtoupper($bagian), $validCodes)) {
                 $targetBidang = strtoupper($bagian);
             }
@@ -2185,14 +2192,15 @@ class TeamVerifikasiController extends Controller
 
             // Map bidang codes to names
             $bidangNames = [
-                'DPM' => 'Divisi Produksi dan Manufaktur',
-                'SKH' => 'Sub Kontrak Hutan',
-                'SDM' => 'Sumber Daya Manusia',
-                'TEP' => 'Teknik dan Perencanaan',
-                'KPL' => 'Keuangan dan Pelaporan',
                 'AKN' => 'Akuntansi',
+                'DPM' => 'Divisi Produksi dan Manufaktur',
+                'KPL' => 'Keuangan dan Pelaporan',
+                'PMO' => 'Project Management Office',
+                'PTI' => 'Pengadaan dan Teknologi Informasi',
+                'SDM' => 'Sumber Daya Manusia',
+                'SKH' => 'Sub Kontrak Hutan',
                 'TAN' => 'Tanaman dan Perkebunan',
-                'PMO' => 'Project Management Office'
+                'TEP' => 'Teknik dan Perencanaan',
             ];
 
             $bidangName = $bidangNames[$targetBidang] ?? $targetBidang;
