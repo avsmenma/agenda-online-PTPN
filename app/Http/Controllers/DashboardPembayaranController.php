@@ -3265,7 +3265,14 @@ class DashboardPembayaranController extends Controller
             $columnsToExport = $defaultColumns;
         }
 
+        // Get vendor export mode (multi_sheet, single_sheet, single_vendor, or empty)
+        $vendorExportMode = $request->get('vendor_export_mode', '');
+
         if ($exportType === 'excel') {
+            // If vendor export mode is specified and in rekapan_table mode, use vendor-grouped export
+            if ($mode === 'rekapan_table' && in_array($vendorExportMode, ['multi_sheet', 'single_sheet', 'single_vendor'])) {
+                return $this->exportToExcelByVendor($dokumens, $columnsToExport, $availableColumns, $vendorExportMode);
+            }
             return $this->exportToExcel($dokumens, $columnsToExport, $availableColumns, $mode, $statusPembayaran, $year, $month, $search);
         } else {
             return $this->exportToPDF($dokumens, $columnsToExport, $availableColumns, $mode, $statusPembayaran, $year, $month, $search);
@@ -3441,6 +3448,246 @@ class DashboardPembayaranController extends Controller
         return response()->download($tempFile, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Export to Excel grouped by vendor
+     * Supports multi_sheet (each vendor on separate sheet) and single_sheet (all in one sheet with vendor separation)
+     */
+    private function exportToExcelByVendor($dokumens, $columns, $availableColumns, $exportMode)
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        // Group documents by vendor
+        $groupedByVendor = [];
+        foreach ($dokumens as $dokumen) {
+            $vendor = $dokumen->dibayar_kepada ?? 'Tidak Diketahui';
+            $groupedByVendor[$vendor][] = $dokumen;
+        }
+
+        // Define column headers for vendor export
+        $vendorColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'No. SPP',
+            'sent_to_pembayaran_at' => 'Tgl Diterima',
+            'dibayar_kepada' => 'Nama Vendor',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'computed_status' => 'Status',
+            'tanggal_dibayar' => 'Tgl Dibayar',
+        ];
+
+        // Style arrays
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '083E40']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
+        ];
+
+        $totalRowStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '22C55E']
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
+        ];
+
+        $vendorHeaderStyle = [
+            'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '083E40']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E0F2F1']
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
+        ];
+
+        if ($exportMode === 'multi_sheet') {
+            // Multi-sheet mode: each vendor on a separate sheet
+            $sheetIndex = 0;
+            foreach ($groupedByVendor as $vendor => $documents) {
+                if ($sheetIndex === 0) {
+                    $sheet = $spreadsheet->getActiveSheet();
+                } else {
+                    $sheet = $spreadsheet->createSheet();
+                }
+
+                // Sanitize sheet name (max 31 chars, no special chars)
+                $sheetName = substr(preg_replace('/[\/\\\?\*\[\]:]/', '', $vendor), 0, 31);
+                $sheet->setTitle($sheetName ?: 'Vendor ' . ($sheetIndex + 1));
+
+                // Write header row
+                $colIndex = 1;
+                foreach ($vendorColumns as $key => $label) {
+                    $sheet->setCellValue([$colIndex, 1], $label);
+                    $colIndex++;
+                }
+
+                // Apply header style
+                $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($vendorColumns));
+                $sheet->getStyle("A1:{$lastCol}1")->applyFromArray($headerStyle);
+
+                // Write data rows
+                $rowIndex = 2;
+                $vendorTotal = 0;
+                foreach ($documents as $dokumen) {
+                    $colIndex = 1;
+                    foreach ($vendorColumns as $key => $label) {
+                        $value = $this->getExportCellValue($dokumen, $key);
+                        $sheet->setCellValue([$colIndex, $rowIndex], $value);
+
+                        if ($key === 'nilai_rupiah') {
+                            $vendorTotal += floatval($dokumen->nilai_rupiah ?? 0);
+                        }
+                        $colIndex++;
+                    }
+                    $rowIndex++;
+                }
+
+                // Add TOTAL row for this vendor
+                $totalRow = $rowIndex;
+                $sheet->setCellValue([1, $totalRow], 'TOTAL');
+                $sheet->mergeCells([1, $totalRow, 4, $totalRow]); // Merge first 4 columns
+                $sheet->setCellValue([5, $totalRow], 'Rp ' . number_format($vendorTotal, 0, ',', '.'));
+                $sheet->getStyle("A{$totalRow}:{$lastCol}{$totalRow}")->applyFromArray($totalRowStyle);
+
+                // Auto-size columns
+                foreach (range(1, count($vendorColumns)) as $col) {
+                    $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                    $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                }
+
+                $sheetIndex++;
+            }
+        } else {
+            // Single-sheet mode: all vendors in one sheet with separation
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Rekapan Per Vendor');
+
+            $rowIndex = 1;
+            $grandTotal = 0;
+
+            foreach ($groupedByVendor as $vendor => $documents) {
+                // Vendor header row
+                $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($vendorColumns));
+                $sheet->setCellValue([1, $rowIndex], $vendor);
+                $sheet->mergeCells([1, $rowIndex, count($vendorColumns), $rowIndex]);
+                $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->applyFromArray($vendorHeaderStyle);
+                $rowIndex++;
+
+                // Column headers
+                $colIndex = 1;
+                foreach ($vendorColumns as $key => $label) {
+                    $sheet->setCellValue([$colIndex, $rowIndex], $label);
+                    $colIndex++;
+                }
+                $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->applyFromArray($headerStyle);
+                $rowIndex++;
+
+                // Data rows
+                $vendorTotal = 0;
+                $vendorCount = 0;
+                foreach ($documents as $dokumen) {
+                    $colIndex = 1;
+                    foreach ($vendorColumns as $key => $label) {
+                        $value = $this->getExportCellValue($dokumen, $key);
+                        $sheet->setCellValue([$colIndex, $rowIndex], $value);
+
+                        if ($key === 'nilai_rupiah') {
+                            $vendorTotal += floatval($dokumen->nilai_rupiah ?? 0);
+                        }
+                        $colIndex++;
+                    }
+                    $vendorCount++;
+                    $rowIndex++;
+                }
+
+                // Vendor summary rows
+                $sheet->setCellValue([1, $rowIndex], "Total Dokumen: {$vendorCount}");
+                $sheet->mergeCells([1, $rowIndex, 4, $rowIndex]);
+                $sheet->setCellValue([5, $rowIndex], 'Rp ' . number_format($vendorTotal, 0, ',', '.'));
+                $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->applyFromArray($totalRowStyle);
+                $grandTotal += $vendorTotal;
+                $rowIndex++;
+
+                // Empty row for separation
+                $rowIndex++;
+            }
+
+            // Grand total row at the end
+            $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($vendorColumns));
+            $sheet->setCellValue([1, $rowIndex], 'GRAND TOTAL');
+            $sheet->mergeCells([1, $rowIndex, 4, $rowIndex]);
+            $sheet->setCellValue([5, $rowIndex], 'Rp ' . number_format($grandTotal, 0, ',', '.'));
+            $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->applyFromArray([
+                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '0F766E']
+                ],
+                'borders' => [
+                    'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+                ]
+            ]);
+
+            // Auto-size columns
+            foreach (range(1, count($vendorColumns)) as $col) {
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            }
+        }
+
+        // Generate output
+        $filename = 'Rekapan_Pembayaran_Per_Vendor_' . date('Y-m-d_His') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'export_vendor_');
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Get cell value for export based on column key
+     */
+    private function getExportCellValue($dokumen, $key)
+    {
+        switch ($key) {
+            case 'nomor_agenda':
+                return $dokumen->nomor_agenda ?? '-';
+            case 'nomor_spp':
+                return $dokumen->nomor_spp ?? '-';
+            case 'sent_to_pembayaran_at':
+                return $dokumen->sent_to_pembayaran_at
+                    ? \Carbon\Carbon::parse($dokumen->sent_to_pembayaran_at)->format('d/m/Y')
+                    : '-';
+            case 'dibayar_kepada':
+                return $dokumen->dibayar_kepada ?? '-';
+            case 'nilai_rupiah':
+                return 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.');
+            case 'computed_status':
+                return $dokumen->computed_status ?? $dokumen->status_pembayaran ?? '-';
+            case 'tanggal_dibayar':
+                return $dokumen->tanggal_dibayar
+                    ? \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d/m/Y')
+                    : '-';
+            default:
+                return $dokumen->$key ?? '-';
+        }
     }
 
     /**
