@@ -750,9 +750,9 @@
       white-space: nowrap;
     }
 
-    /* Belum Dikirim - Dark with shimmer animation */
+    /* Belum Dikirim - Grey with shimmer animation */
     .badge-status.badge-draft {
-      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
       color: white;
       position: relative;
       overflow: hidden;
@@ -782,11 +782,11 @@
       }
     }
 
-    /* Terkirim - Blue/Teal style like Operator */
+    /* Terkirim - Solid agenda green like Operator */
     .badge-status.badge-success {
-      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      background: #17a589;
       color: white;
-      box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+      box-shadow: 0 2px 8px rgba(23, 165, 137, 0.3);
     }
   </style>
 
