@@ -2887,10 +2887,16 @@
       color: #94a3b8 !important;
     }
 
-    /* Action Cards Icons */
-    .dark .container-fluid .card i {
+    /* Action Cards Icons - keep green for action cards */
+    .dark .container-fluid .card .card-body.text-center i {
       color: #4ade80 !important;
     }
+
+    /* Stats Cards Icons - keep white as they have colored backgrounds */
+    .dark .container-fluid .card .card-body .d-flex i.text-white {
+      color: #0f172a !important; /* Dark/black color for icons with colored bg */
+    }
+
 
     /* Card Header for Recent Documents */
     .dark .container-fluid .card-header {
