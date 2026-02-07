@@ -272,6 +272,8 @@
 
         .tracking-table {
             margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
         .tracking-table thead {
@@ -287,12 +289,17 @@
             letter-spacing: 0.5px;
             border: none;
             white-space: nowrap;
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .tracking-table thead th:last-child {
+            border-right: none;
         }
 
         .tracking-table tbody tr {
             transition: all 0.2s ease;
             cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #e9ecef;
         }
 
         .tracking-table tbody tr:hover {
@@ -308,6 +315,11 @@
             padding: 16px 20px;
             vertical-align: middle;
             font-size: 14px;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .tracking-table tbody td:last-child {
+            border-right: none;
         }
 
         .tracking-table .doc-agenda-cell {
@@ -653,7 +665,7 @@
                                         @php
                                             $statusLower = strtolower($doc->status ?? '');
                                             $isPaid = !empty($doc->tanggal_dibayar);
-                                            
+
                                             // Determine status badge class and text
                                             if ($isPaid) {
                                                 $statusText = 'Sudah Dibayar';
@@ -682,7 +694,7 @@
                                             ];
                                             $currentHandler = strtolower($doc->current_handler ?? '');
                                             $position = $isPaid ? 'Selesai' : ($positionMap[$currentHandler] ?? ucwords(str_replace('_', ' ', $currentHandler)));
-                                            
+
                                             if ($statusLower == 'belum dikirim') {
                                                 $position = 'Bagian ' . $bagianCode;
                                             }
@@ -695,7 +707,8 @@
                                                 <span class="doc-spp-cell">{{ $doc->nomor_spp }}</span>
                                             </td>
                                             <td>
-                                                <span class="doc-nilai-cell">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</span>
+                                                <span class="doc-nilai-cell">Rp.
+                                                    {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</span>
                                             </td>
                                             <td>
                                                 <span class="table-status-badge {{ $statusClass }}">
@@ -710,7 +723,8 @@
                                                 </span>
                                             </td>
                                             <td style="text-align: center;" onclick="event.stopPropagation()">
-                                                <a href="{{ route('owner.workflow', $doc->id) }}" class="table-action-btn" title="Lihat Detail Alur">
+                                                <a href="{{ route('owner.workflow', $doc->id) }}" class="table-action-btn"
+                                                    title="Lihat Detail Alur">
                                                     <i class="fa-solid fa-route"></i>
                                                 </a>
                                             </td>
