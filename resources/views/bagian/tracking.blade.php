@@ -325,7 +325,7 @@
 
         .tracking-table .doc-agenda-cell {
             font-weight: 700;
-            color: #083E40;
+            color: #212529;
             font-size: 15px;
         }
 
@@ -335,7 +335,7 @@
 
         .tracking-table .doc-nilai-cell {
             font-weight: 700;
-            color: #28a745;
+            color: #212529;
             font-size: 15px;
         }
 
