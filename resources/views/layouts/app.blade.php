@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!-- Flatpickr Indonesian Locale -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
-  
+
   <!-- Mobile Responsive CSS -->
   <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 
@@ -1237,15 +1237,22 @@
       color: #e2e8f0 !important;
     }
 
-    .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    .dark h1,
+    .dark h2,
+    .dark h3,
+    .dark h4,
+    .dark h5,
+    .dark h6 {
       color: #f1f5f9;
     }
 
-    .dark p, .dark span:not(.badge) {
+    .dark p,
+    .dark span:not(.badge) {
       color: #e2e8f0;
     }
 
-    .dark strong, .dark b {
+    .dark strong,
+    .dark b {
       color: #f8fafc;
     }
 
@@ -2057,7 +2064,87 @@
     .dark .optional-label {
       color: #4ade80;
     }
+
+    /* ========================================
+       ADDITIONAL DARK MODE FIXES
+       For sidebar, buttons, and action icons
+       ======================================== */
+
+    /* Secondary Sidebar Menu Items - White Text */
+    .dark .secondary-sidebar .nav-link,
+    .dark .secondary-sidebar a,
+    .dark .secondary-sidebar .menu-item,
+    .dark .secondary-sidebar .sidebar-menu a,
+    .dark .secondary-sidebar .submenu-item {
+      color: #ffffff !important;
+    }
+
+    .dark .secondary-sidebar .nav-link:hover,
+    .dark .secondary-sidebar a:hover {
+      color: #4ade80 !important;
+    }
+
+    .dark .secondary-sidebar .nav-link i,
+    .dark .secondary-sidebar a i,
+    .dark .secondary-sidebar .menu-icon {
+      color: #ffffff !important;
+    }
+
+    /* Buat Dokumen Button - White Text */
+    .dark .btn-create,
+    .dark .btn-add-document,
+    .dark a.btn-create,
+    .dark a[href*="tambahDokumen"],
+    .dark .btn-primary-action {
+      color: #ffffff !important;
+    }
+
+    .dark .btn-create i,
+    .dark .btn-add-document i,
+    .dark a.btn-create i {
+      color: #ffffff !important;
+    }
+
+    /* Action Icons/Buttons - White Icons */
+    .dark .action-buttons .btn-action i,
+    .dark .btn-action i,
+    .dark .btn-edit i,
+    .dark .btn-send i,
+    .dark .btn-tracking i,
+    .dark .btn-delete i,
+    .dark .btn-view i,
+    .dark td .btn i,
+    .dark .action-buttons a i,
+    .dark .action-buttons button i {
+      color: #ffffff !important;
+    }
+
+    /* Ensure action button backgrounds stay visible */
+    .dark .btn-edit,
+    .dark .btn-send,
+    .dark .btn-tracking {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .btn-delete {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Secondary sidebar active state */
+    .dark .secondary-sidebar .nav-link.active,
+    .dark .secondary-sidebar a.active {
+      background: rgba(74, 222, 128, 0.15) !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .secondary-sidebar .nav-link.active i,
+    .dark .secondary-sidebar a.active i {
+      color: #4ade80 !important;
+    }
   </style>
+
 
 
   <!-- Smart Autocomplete CSS -->
