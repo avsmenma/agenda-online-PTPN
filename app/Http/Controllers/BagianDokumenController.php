@@ -190,6 +190,8 @@ class BagianDokumenController extends Controller
             'tanggal_masuk',
             'nilai_rupiah',
             'status',
+            'umur_dokumen',
+            'status_pembayaran',
         ];
 
         // If columns are provided in request, save to session
