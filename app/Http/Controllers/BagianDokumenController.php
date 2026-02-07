@@ -135,14 +135,14 @@ class BagianDokumenController extends Controller
                 // Documents that have been sent (not 'belum dikirim' and not 'menunggu_approval_keuangan')
                 $query->whereNotIn('status', ['belum dikirim', 'menunggu_approval_keuangan']);
             } elseif ($statusFilter === 'belum_dibayar') {
-                // Documents with payment status: not yet paid (posisi is not pembayaran and no tanggal_dibayar)
+                // Documents not yet at payment stage and not paid
                 $query->where(function ($q) {
-                    $q->whereNotIn('posisi', ['pembayaran'])
+                    $q->where('current_handler', '!=', 'pembayaran')
                         ->whereNull('tanggal_dibayar');
                 });
             } elseif ($statusFilter === 'siap_dibayar') {
-                // Documents ready to be paid (posisi is pembayaran)
-                $query->where('posisi', 'pembayaran')
+                // Documents at payment stage but not yet paid
+                $query->where('current_handler', 'pembayaran')
                     ->whereNull('tanggal_dibayar');
             } elseif ($statusFilter === 'sudah_dibayar') {
                 // Documents that have been paid
