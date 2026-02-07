@@ -3371,6 +3371,56 @@ class DashboardPembayaranController extends Controller
             $sheet->getStyle("A2:{$lastColumn}{$lastRow}")->applyFromArray($dataBorderStyle);
         }
 
+        // =============================================
+        // Add TOTAL row at the bottom
+        // =============================================
+        $totalRow = $rowIndex;
+        $totalNilai = 0;
+        $nilaiColumnIndex = null;
+
+        // Find the nilai_rupiah column index and calculate total
+        foreach ($columns as $idx => $col) {
+            if ($col === 'nilai_rupiah') {
+                $nilaiColumnIndex = $idx + 1; // 1-indexed
+                break;
+            }
+        }
+
+        // Calculate total from dokumens
+        foreach ($dokumens as $dokumen) {
+            $totalNilai += floatval($dokumen->nilai_rupiah ?? 0);
+        }
+
+        // Write TOTAL label in first column
+        $sheet->setCellValue([1, $totalRow], 'TOTAL');
+
+        // Write total nilai in the nilai_rupiah column if it exists
+        if ($nilaiColumnIndex !== null) {
+            $sheet->setCellValue([$nilaiColumnIndex, $totalRow], $totalNilai);
+            // Format as currency
+            $totalNilaiCell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($nilaiColumnIndex) . $totalRow;
+            $sheet->getStyle($totalNilaiCell)->getNumberFormat()->setFormatCode('#,##0');
+        }
+
+        // Style the TOTAL row - green background with bold white text
+        $totalRowStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '198754'], // Green color
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
+            ],
+        ];
+        $sheet->getStyle("A{$totalRow}:{$lastColumn}{$totalRow}")->applyFromArray($totalRowStyle);
+
         // Auto-size columns
         foreach (range(1, count($headers)) as $colNum) {
             $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colNum);
