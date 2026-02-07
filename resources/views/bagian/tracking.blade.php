@@ -277,12 +277,12 @@
         }
 
         .tracking-table thead {
-            background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+            background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
         }
 
         .tracking-table thead th {
             padding: 16px 20px;
-            color: white;
+            color: white !important;
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
@@ -290,6 +290,7 @@
             border: none;
             white-space: nowrap;
             border-right: 1px solid rgba(255, 255, 255, 0.15);
+            background: #083E40 !important;
         }
 
         .tracking-table thead th:last-child {
