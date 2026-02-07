@@ -189,40 +189,60 @@
             transition: width 0.3s;
         }
 
-        /* Paid Stamp */
-        .paid-stamp-container {
+        /* Paid Stamp - Circular Design */
+        .doc-card.paid {
             position: relative;
+            border: 2px solid #28a745;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.03), rgba(32, 201, 151, 0.03));
+        }
+
+        .doc-card.paid .doc-card-header {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.08), rgba(32, 201, 151, 0.08));
         }
 
         .paid-stamp {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-15deg);
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-            border: 3px solid white;
+            top: 12px;
+            right: 12px;
+            width: 70px;
+            height: 70px;
+            border: 3px solid #28a745;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.95);
+            transform: rotate(-15deg);
             z-index: 10;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .paid-stamp::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            border: 2px solid #28a745;
+            border-radius: 50%;
         }
 
         .paid-stamp i {
-            margin-right: 8px;
+            font-size: 16px;
+            color: #28a745;
+            margin-bottom: 2px;
         }
 
-        .doc-card.paid {
-            border: 3px solid #28a745;
-            background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(32, 201, 151, 0.05));
-        }
-
-        .doc-card.paid .doc-card-header {
-            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));
+        .paid-stamp-text {
+            font-size: 8px;
+            font-weight: 700;
+            color: #28a745;
+            text-transform: uppercase;
+            text-align: center;
+            line-height: 1.1;
+            letter-spacing: 0.5px;
         }
 
         /* Table View */
@@ -346,10 +366,9 @@
                 <div class="doc-card {{ $isPaid ? 'paid' : '' }}"
                     onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'" style="cursor: pointer;">
                     @if($isPaid)
-                        <div class="paid-stamp-container">
-                            <div class="paid-stamp">
-                                <i class="fa-solid fa-check-circle"></i>SUDAH DIBAYAR
-                            </div>
+                        <div class="paid-stamp">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span class="paid-stamp-text">SUDAH<br>DIBAYAR</span>
                         </div>
                     @endif
                     <div class="doc-card-header">
