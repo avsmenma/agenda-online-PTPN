@@ -3117,6 +3117,39 @@ class DashboardPembayaranController extends Controller
             });
         }
 
+        // ============================================
+        // ADVANCED FILTER SECTION (from /dashboard/pembayaran page)
+        // These filters are applied regardless of mode
+        // ============================================
+        $filterVendor = $request->get('filter_vendor');
+        $filterKategori = $request->get('filter_kategori');
+        $filterJenisDokumen = $request->get('filter_jenis_dokumen');
+        $filterJenisSubPekerjaan = $request->get('filter_jenis_sub_pekerjaan');
+        $filterKebun = $request->get('filter_kebun');
+        $filterJenisPembayaran = $request->get('filter_jenis_pembayaran');
+
+        if ($filterVendor && $filterVendor !== '') {
+            $query->where('dibayar_kepada', $filterVendor);
+        }
+        if ($filterKategori && $filterKategori !== '') {
+            $query->where('kategori', $filterKategori);
+        }
+        if ($filterJenisDokumen && $filterJenisDokumen !== '') {
+            $query->where('jenis_dokumen', $filterJenisDokumen);
+        }
+        if ($filterJenisSubPekerjaan && $filterJenisSubPekerjaan !== '') {
+            $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
+        }
+        if ($filterKebun && $filterKebun !== '') {
+            $query->where(function ($q) use ($filterKebun) {
+                $q->where('kebun', $filterKebun)
+                    ->orWhere('nama_kebuns', $filterKebun);
+            });
+        }
+        if ($filterJenisPembayaran && $filterJenisPembayaran !== '') {
+            $query->where('jenis_pembayaran', $filterJenisPembayaran);
+        }
+
         // Apply rekapan detail filters (only for rekapan_table mode)
         if ($mode === 'rekapan_table') {
             // Filter by Dibayar Kepada (Vendor)

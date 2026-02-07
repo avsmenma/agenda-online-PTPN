@@ -1398,6 +1398,13 @@
         <input type="hidden" name="month" value="{{ $selectedMonth ?? '' }}">
         <input type="hidden" name="search" value="{{ $search ?? '' }}">
         <input type="hidden" name="mode" value="{{ $mode ?? 'normal' }}">
+        <!-- Advanced filters for export -->
+        <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor') ?? '' }}">
+        <input type="hidden" name="filter_kategori" value="{{ request('filter_kategori') ?? '' }}">
+        <input type="hidden" name="filter_jenis_dokumen" value="{{ request('filter_jenis_dokumen') ?? '' }}">
+        <input type="hidden" name="filter_jenis_sub_pekerjaan" value="{{ request('filter_jenis_sub_pekerjaan') ?? '' }}">
+        <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') ?? '' }}">
+        <input type="hidden" name="filter_jenis_pembayaran" value="{{ request('filter_jenis_pembayaran') ?? '' }}">
         <div id="exportColumnsContainer"></div>
       </form>
     </header>
@@ -2388,11 +2395,11 @@
 
       if (selectedColumnsOrder.length === 0) {
         previewContainer.innerHTML = `
-                <div class="empty-preview">
-                  <i class="fa-solid fa-table"></i>
-                  <p>Belum ada kolom yang dipilih</p>
-                  <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                </div>`;
+                  <div class="empty-preview">
+                    <i class="fa-solid fa-table"></i>
+                    <p>Belum ada kolom yang dipilih</p>
+                    <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                  </div>`;
         return;
       }
 
@@ -2559,20 +2566,20 @@
       const form = document.getElementById('exportForm');
       const formatInput = document.getElementById('exportFormat');
       const columnsContainer = document.getElementById('exportColumnsContainer');
-      
+
       // Set format
       formatInput.value = format;
-      
+
       // Clear previous columns
       columnsContainer.innerHTML = '';
-      
+
       // Get selected columns from the page or use defaults
       // Check if there are checkboxes in column modal that are checked
       const columnCheckboxes = document.querySelectorAll('.column-item input[type="checkbox"]:checked');
-      
+
       if (columnCheckboxes.length > 0) {
         // Use selected columns from modal
-        columnCheckboxes.forEach(function(checkbox) {
+        columnCheckboxes.forEach(function (checkbox) {
           const input = document.createElement('input');
           input.type = 'hidden';
           input.name = 'columns[]';
@@ -2582,7 +2589,7 @@
       } else {
         // Use default columns based on what's visible in table
         const defaultColumns = ['nomor_agenda', 'dibayar_kepada', 'jenis_pembayaran', 'nomor_spp', 'uraian_spp', 'nilai_rupiah'];
-        defaultColumns.forEach(function(col) {
+        defaultColumns.forEach(function (col) {
           const input = document.createElement('input');
           input.type = 'hidden';
           input.name = 'columns[]';
@@ -2590,7 +2597,7 @@
           columnsContainer.appendChild(input);
         });
       }
-      
+
       // Submit form
       form.submit();
     }
