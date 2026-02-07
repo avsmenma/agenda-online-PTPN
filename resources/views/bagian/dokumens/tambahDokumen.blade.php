@@ -349,19 +349,10 @@
         </div>
       </div>
 
-      <!-- 1. Nomor Agenda -->
+      <!-- Nomor SPP -->
       <div class="form-group">
-        <label>Nomor Agenda</label>
-        <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda') }}">
-        @error('nomor_agenda')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <!-- 2. Nomor SPP -->
-      <div class="form-group">
-        <label>Nomor SPP</label>
-        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}">
+        <label>Nomor SPP <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}" required>
         @error('nomor_spp')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
@@ -1552,47 +1543,47 @@
       // Create notification element
       const notification = document.createElement('div');
       notification.style.cssText = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-          color: white;
-          padding: 16px 24px;
-          border-radius: 8px;
-          box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
-          z-index: 10000;
-          font-weight: 600;
-          max-width: 300px;
-          animation: slideIn 0.3s ease;
-        `;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+            z-index: 10000;
+            font-weight: 600;
+            max-width: 300px;
+            animation: slideIn 0.3s ease;
+          `;
       notification.innerHTML = `
-          <i class="fa-solid fa-check-circle me-2"></i>${message}
-        `;
+            <i class="fa-solid fa-check-circle me-2"></i>${message}
+          `;
 
       // Add animation
       const style = document.createElement('style');
       style.textContent = `
-          @keyframes slideIn {
-            from {
-              transform: translateX(100%);
-              opacity: 0;
+            @keyframes slideIn {
+              from {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
             }
-            to {
-              transform: translateX(0);
-              opacity: 1;
+            @keyframes slideOut {
+              from {
+                transform: translateX(0);
+                opacity: 1;
+              }
+              to {
+                transform: translateX(100%);
+                opacity: 0;
+              }
             }
-          }
-          @keyframes slideOut {
-            from {
-              transform: translateX(0);
-              opacity: 1;
-            }
-            to {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-          }
-        `;
+          `;
       document.head.appendChild(style);
 
       document.body.appendChild(notification);
@@ -1688,7 +1679,3 @@
   </style>
 
 @endsection
-
-
-
-
