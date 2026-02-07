@@ -282,14 +282,6 @@
     <h2 class="form-title">Edit <span>Dokumen</span></h2>
   </div>
 
-  <!-- Dokumen Information -->
-  <div class="dokumen-info">
-    <strong>Informasi Dokumen:</strong><br>
-    Nomor Agenda: {{ $dokumen->nomor_agenda }} |
-    Status: {{ $dokumen->status }} |
-    DOperatort: {{ $dokumen->tanggal_masuk->format('d/m/Y H:i') }}
-  </div>
-
   <div class="form-container">
     <form action="{{ route('documents.update', $dokumen->id) }}" method="POST">
       @csrf
@@ -319,7 +311,8 @@
             <option value="">Pilih Bagian</option>
             @foreach($bagianList as $bagian)
               <option value="{{ $bagian->kode }}" {{ old('bagian', $dokumen->bagian) == $bagian->kode ? 'selected' : '' }}>
-                {{ $bagian->nama }}</option>
+                {{ $bagian->nama }}
+              </option>
             @endforeach
           </select>
           @error('bagian')
@@ -552,7 +545,8 @@
             @endphp
             @foreach($kebunOptions as $kebun)
               <option value="{{ $kebun }}" {{ ($currentKebun == $kebun || $currentKebunClean == $kebun) ? 'selected' : '' }}>
-                {{ $kebun }}</option>
+                {{ $kebun }}
+              </option>
             @endforeach
           </select>
           @error('kebun')
