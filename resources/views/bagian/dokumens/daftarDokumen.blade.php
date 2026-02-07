@@ -737,6 +737,57 @@
       color: #155724;
       border: 1px solid #28a745;
     }
+
+    /* Document Status Badge */
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Belum Dikirim - Dark with shimmer animation */
+    .badge-status.badge-draft {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-status.badge-draft::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        left: -100%;
+      }
+
+      100% {
+        left: 100%;
+      }
+    }
+
+    /* Terkirim - Blue/Teal style like Operator */
+    .badge-status.badge-success {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+    }
   </style>
 
   <div class="container-fluid py-4">
