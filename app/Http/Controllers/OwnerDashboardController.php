@@ -951,10 +951,17 @@ class OwnerDashboardController extends Controller
             ];
         }
 
-        $now = Carbon::now();
+        // For paid documents, use tanggal_dibayar as end time (freeze the timer)
+        // Otherwise use current time
+        $endTime = Carbon::now();
+        $isPaid = !empty($dokumen->tanggal_dibayar) || $dokumen->status_pembayaran === 'sudah_dibayar' || $dokumen->status === 'completed';
+
+        if ($isPaid && !empty($dokumen->tanggal_dibayar)) {
+            $endTime = Carbon::parse($dokumen->tanggal_dibayar);
+        }
 
         // Calculate elapsed time since approval
-        $diff = $startTime->diff($now);
+        $diff = $startTime->diff($endTime);
         $totalHours = ($diff->days * 24) + $diff->h;
         $totalMinutes = $totalHours * 60 + $diff->i;
 
