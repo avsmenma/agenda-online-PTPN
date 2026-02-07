@@ -142,6 +142,7 @@ class BagianDokumenController extends Controller
             'nilai_rupiah' => 'Nilai Rupiah',
             'status' => 'Status',
             'umur_dokumen' => 'Umur Dokumen',
+            'status_pembayaran' => 'Status Pembayaran',
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kebun' => 'Kebun',
