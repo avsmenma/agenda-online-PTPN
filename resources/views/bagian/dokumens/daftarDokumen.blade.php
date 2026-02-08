@@ -9,6 +9,20 @@
       background-clip: text;
     }
 
+    /* Dark mode override for h2 */
+    .dark h2 {
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      background-clip: unset !important;
+      color: #ffffff !important;
+    }
+
+    .dark h2 i {
+      color: #ffffff !important;
+    }
+
+
     .search-box {
       background: #ffffff;
       padding: 20px;
@@ -819,9 +833,11 @@
       0% {
         left: -100%;
       }
+
       50% {
         left: 100%;
       }
+
       100% {
         left: 100%;
       }
