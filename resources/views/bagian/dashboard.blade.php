@@ -3,6 +3,39 @@
 @section('title', 'Dashboard Bagian ' . $bagianCode)
 
 @section('content')
+    <style>
+        /* Dark Mode Overrides for Dashboard */
+        .dark .container-fluid h2,
+        .dark .container-fluid h2 i {
+            color: #ffffff !important;
+        }
+
+        /* Stats Cards - Make numbers white */
+        .dark .container-fluid .card .card-body h3 {
+            color: #ffffff !important;
+        }
+
+        /* Action Cards - Make icons and titles white */
+        .dark .container-fluid .card .card-body.text-center i {
+            color: #ffffff !important;
+        }
+
+        .dark .container-fluid .card .card-body.text-center h5 {
+            color: #ffffff !important;
+        }
+
+        /* Card Header Title - Dokumen Terbaru */
+        .dark .container-fluid .card-header h5,
+        .dark .container-fluid .card-header h5 i {
+            color: #ffffff !important;
+        }
+
+        /* All text-muted in dark mode */
+        .dark .container-fluid .text-muted {
+            color: #94a3b8 !important;
+        }
+    </style>
+
     <div class="container-fluid">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
