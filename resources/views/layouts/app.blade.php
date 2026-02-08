@@ -3602,7 +3602,123 @@
     .dark h3 {
       color: #ffffff !important;
     }
+
+    /* ========================================
+       SWEETALERT2 DARK MODE
+       ======================================== */
+
+    /* SweetAlert2 popup container */
+    .dark .swal2-popup {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 title */
+    .dark .swal2-title {
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 content/html content */
+    .dark .swal2-html-container,
+    .dark .swal2-content {
+      color: #94a3b8 !important;
+    }
+
+    /* SweetAlert2 close button */
+    .dark .swal2-close {
+      color: #94a3b8 !important;
+    }
+
+    .dark .swal2-close:hover {
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 icon colors - keep the original colors but adjust background */
+    .dark .swal2-icon.swal2-info {
+      border-color: #4299e1 !important;
+      color: #4299e1 !important;
+    }
+
+    .dark .swal2-icon.swal2-warning {
+      border-color: #f6ad55 !important;
+      color: #f6ad55 !important;
+    }
+
+    .dark .swal2-icon.swal2-error {
+      border-color: #f56565 !important;
+    }
+
+    .dark .swal2-icon.swal2-success {
+      border-color: #48bb78 !important;
+    }
+
+    .dark .swal2-icon.swal2-success .swal2-success-ring {
+      border-color: rgba(72, 187, 120, 0.3) !important;
+    }
+
+    .dark .swal2-icon.swal2-success [class^='swal2-success-line'] {
+      background-color: #48bb78 !important;
+    }
+
+    /* SweetAlert2 confirm button */
+    .dark .swal2-confirm {
+      background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .swal2-confirm:hover {
+      background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%) !important;
+    }
+
+    /* SweetAlert2 cancel button */
+    .dark .swal2-cancel {
+      background: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .swal2-cancel:hover {
+      background: #334155 !important;
+    }
+
+    /* SweetAlert2 deny button */
+    .dark .swal2-deny {
+      background: #f56565 !important;
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 input fields */
+    .dark .swal2-input,
+    .dark .swal2-textarea,
+    .dark .swal2-select {
+      background: #0f172a !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .swal2-input:focus,
+    .dark .swal2-textarea:focus,
+    .dark .swal2-select:focus {
+      border-color: #4299e1 !important;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3) !important;
+    }
+
+    /* SweetAlert2 footer */
+    .dark .swal2-footer {
+      border-top-color: #334155 !important;
+      color: #94a3b8 !important;
+    }
+
+    /* SweetAlert2 timer progress bar */
+    .dark .swal2-timer-progress-bar {
+      background: #4299e1 !important;
+    }
+
+    /* SweetAlert2 backdrop - slightly darker */
+    .dark .swal2-backdrop-show {
+      background: rgba(0, 0, 0, 0.7) !important;
+    }
   </style>
+
 
 
 
