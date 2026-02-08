@@ -3486,7 +3486,8 @@
     .dark .nilai-terbilang {
       color: #94a3b8 !important;
     }
-  /* ========================================
+
+    /* ========================================
        VENDOR CARD SPECIFIC DARK MODE
        ======================================== */
 
@@ -3558,7 +3559,51 @@
       color: #ffffff !important;
       font-family: monospace;
     }
+
+    /* ========================================
+       PAGE HEADER DARK MODE
+       ======================================== */
+
+    /* Page Header Title and Icon */
+    .dark .container-fluid h2,
+    .dark .container-fluid h1,
+    .dark .container-fluid h3,
+    .dark .content-header h2,
+    .dark .content-header h1 {
+      color: #ffffff !important;
+    }
+
+    .dark .container-fluid h2 i,
+    .dark .container-fluid h1 i,
+    .dark .container-fluid h3 i,
+    .dark .content-header h2 i,
+    .dark .content-header h1 i {
+      color: #ffffff !important;
+    }
+
+    /* Subtitle/Description under header */
+    .dark .container-fluid h2+p,
+    .dark .container-fluid h2~small,
+    .dark .container-fluid .text-muted,
+    .dark .content-header .text-muted,
+    .dark .content-header p {
+      color: #94a3b8 !important;
+    }
+
+    /* Any page title with icon */
+    .dark h2 i,
+    .dark h1 i,
+    .dark h3 i {
+      color: #ffffff !important;
+    }
+
+    .dark h2,
+    .dark h1,
+    .dark h3 {
+      color: #ffffff !important;
+    }
   </style>
+
 
 
 
