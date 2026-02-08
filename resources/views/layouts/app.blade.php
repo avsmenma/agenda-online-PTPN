@@ -2913,7 +2913,8 @@
 
     /* Stats Cards Icons - keep white for icons with colored backgrounds */
     .dark .container-fluid .card .card-body .d-flex i.text-white {
-      color: #ffffff !important; /* White color for icons with colored bg */
+      color: #ffffff !important;
+      /* White color for icons with colored bg */
     }
 
 
@@ -2965,7 +2966,196 @@
     .dark .table-hover>tbody>tr:hover>* {
       background: rgba(74, 222, 128, 0.08) !important;
     }
+
+    /* ========================================
+       MODAL POPUP DARK MODE
+       ======================================== */
+
+    /* Modal Content */
+    .dark .modal-content {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      color: #ffffff !important;
+    }
+
+    /* Modal Header */
+    .dark .modal-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal-header .modal-title,
+    .dark .modal-header h5 {
+      color: #ffffff !important;
+    }
+
+    .dark .modal-header .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Modal Body */
+    .dark .modal-body {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal-body * {
+      color: #ffffff !important;
+    }
+
+    /* Modal Footer */
+    .dark .modal-footer {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    /* Tabs in Modal */
+    .dark .modal .nav-tabs {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal .nav-tabs .nav-link {
+      color: #94a3b8 !important;
+      border-color: transparent !important;
+    }
+
+    .dark .modal .nav-tabs .nav-link:hover {
+      color: #ffffff !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .modal .nav-tabs .nav-link.active {
+      background: #334155 !important;
+      color: #4ade80 !important;
+      border-color: #334155 !important;
+    }
+
+    /* Tab Content */
+    .dark .modal .tab-content {
+      background: #1e293b !important;
+    }
+
+    /* Cards inside Modal */
+    .dark .modal .card {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .modal .card-body {
+      background: #334155 !important;
+    }
+
+    /* Form Controls in Modal */
+    .dark .modal .form-control,
+    .dark .modal .form-select {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    .dark .modal .form-control:disabled,
+    .dark .modal .form-control[readonly] {
+      background: #1e293b !important;
+      color: #94a3b8 !important;
+    }
+
+    /* Labels in Modal */
+    .dark .modal label,
+    .dark .modal .form-label {
+      color: #e2e8f0 !important;
+    }
+
+    /* Info Boxes/Cards in Modal */
+    .dark .modal .info-box,
+    .dark .modal .detail-box,
+    .dark .modal .bg-light {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Badge in Modal */
+    .dark .modal .badge {
+      color: #ffffff !important;
+    }
+
+    .dark .modal .badge.bg-warning {
+      background: #f59e0b !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal .badge.bg-success {
+      background: #22c55e !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal .badge.bg-danger {
+      background: #ef4444 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal .badge.bg-info {
+      background: #06b6d4 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal .badge.bg-primary {
+      background: #3b82f6 !important;
+      color: #ffffff !important;
+    }
+
+    /* Text colors in Modal */
+    .dark .modal .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    .dark .modal .text-dark {
+      color: #ffffff !important;
+    }
+
+    .dark .modal h6,
+    .dark .modal h5,
+    .dark .modal h4 {
+      color: #ffffff !important;
+    }
+
+    /* Borders in Modal */
+    .dark .modal .border,
+    .dark .modal .border-bottom,
+    .dark .modal .border-top {
+      border-color: #475569 !important;
+    }
+
+    /* Icons in Modal */
+    .dark .modal i {
+      color: #4ade80 !important;
+    }
+
+    /* Rounded boxes in Modal */
+    .dark .modal .rounded,
+    .dark .modal .rounded-3 {
+      background: #334155 !important;
+    }
+
+    /* Small text in Modal */
+    .dark .modal small,
+    .dark .modal .small {
+      color: #94a3b8 !important;
+    }
+
+    /* Links in Modal */
+    .dark .modal a {
+      color: #4ade80 !important;
+    }
+
+    .dark .modal a:hover {
+      color: #22c55e !important;
+    }
   </style>
+
 
 
 
@@ -3013,7 +3203,7 @@
         }
       }
 
-      // Run immediately if DOM is already loaded
+      // Run immediately if DOM is alrea dy loaded
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initThemeToggle);
       } else {
