@@ -3154,7 +3154,233 @@
     .dark .modal a:hover {
       color: #22c55e !important;
     }
+  /* ========================================
+       CUSTOM MODAL (Document Detail Popup) DARK MODE
+       ======================================== */
+
+    /* Modal Overlay */
+    .dark .modal-overlay {
+      background: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    /* Custom Modal Content */
+    .dark .modal-content-custom {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      color: #ffffff !important;
+    }
+
+    /* Custom Modal Header */
+    .dark .modal-header-custom {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal-header-custom h4,
+    .dark .modal-header-custom .header-text h4 {
+      color: #ffffff !important;
+    }
+
+    .dark .modal-header-custom .header-icon {
+      background: rgba(74, 222, 128, 0.2) !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .modal-header-custom .header-icon i {
+      color: #4ade80 !important;
+    }
+
+    .dark .modal-header-custom .doc-id,
+    .dark .modal-header-custom span {
+      color: #94a3b8 !important;
+    }
+
+    .dark .modal-header-custom .modal-close {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #ffffff !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .modal-header-custom .modal-close:hover {
+      background: rgba(239, 68, 68, 0.2) !important;
+      color: #ef4444 !important;
+    }
+
+    /* Status Pill */
+    .dark .status-pill {
+      background: #334155 !important;
+      color: #ffffff !important;
+    }
+
+    /* Modal Tabs */
+    .dark .modal-tabs {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal-tabs .tab-btn {
+      background: transparent !important;
+      color: #94a3b8 !important;
+      border-color: transparent !important;
+    }
+
+    .dark .modal-tabs .tab-btn:hover {
+      background: rgba(74, 222, 128, 0.1) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal-tabs .tab-btn.active {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal-tabs .tab-btn i {
+      color: inherit !important;
+    }
+
+    /* Custom Modal Body */
+    .dark .modal-body-custom {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    /* Tab Content */
+    .dark .tab-content {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    /* Stats Row and Stat Cards */
+    .dark .stats-row {
+      background: transparent !important;
+    }
+
+    .dark .stat-card {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .stat-card .stat-icon {
+      background: rgba(74, 222, 128, 0.2) !important;
+    }
+
+    .dark .stat-card .stat-icon i {
+      color: #4ade80 !important;
+    }
+
+    .dark .stat-card .stat-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .stat-card .stat-value {
+      color: #ffffff !important;
+    }
+
+    .dark .stat-card.primary {
+      border-left-color: #3b82f6 !important;
+    }
+
+    .dark .stat-card.primary .stat-icon {
+      background: rgba(59, 130, 246, 0.2) !important;
+    }
+
+    .dark .stat-card.primary .stat-icon i {
+      color: #3b82f6 !important;
+    }
+
+    .dark .stat-card.success {
+      border-left-color: #22c55e !important;
+    }
+
+    .dark .stat-card.success .stat-icon {
+      background: rgba(34, 197, 94, 0.2) !important;
+    }
+
+    .dark .stat-card.success .stat-icon i {
+      color: #22c55e !important;
+    }
+
+    .dark .stat-card.info {
+      border-left-color: #f59e0b !important;
+    }
+
+    .dark .stat-card.info .stat-icon {
+      background: rgba(245, 158, 11, 0.2) !important;
+    }
+
+    .dark .stat-card.info .stat-icon i {
+      color: #f59e0b !important;
+    }
+
+    /* Detail Sections */
+    .dark .detail-section {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .dark .section-header {
+      background: transparent !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .section-header h5 {
+      color: #ffffff !important;
+    }
+
+    .dark .section-header i {
+      color: #4ade80 !important;
+    }
+
+    /* Section Grid */
+    .dark .section-grid {
+      background: transparent !important;
+    }
+
+    /* Info Cards */
+    .dark .info-card {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      border-radius: 8px;
+    }
+
+    .dark .info-card .info-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .info-card .info-value {
+      color: #ffffff !important;
+    }
+
+    /* Modal Footer */
+    .dark .modal-footer-custom {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    /* Uraian Box */
+    .dark .uraian-box,
+    .dark .description-box {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* All text in custom modal should be visible */
+    .dark .modal-content-custom *,
+    .dark .modal-body-custom * {
+      color: #ffffff;
+    }
+
+    .dark .modal-content-custom .info-label,
+    .dark .modal-body-custom .info-label,
+    .dark .modal-content-custom .stat-label,
+    .dark .modal-body-custom .stat-label {
+      color: #94a3b8 !important;
+    }
   </style>
+
 
 
 
