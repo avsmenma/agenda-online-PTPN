@@ -106,7 +106,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             object-position: center;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -679,7 +679,7 @@
     <script>
         // Image URL to preload
         const imageUrl = "{{ asset('images/landing-bg.png') }}";
-        
+
         // Elements
         const loadingScreen = document.getElementById('loadingScreen');
         const landingBgImage = document.getElementById('landingBgImage');
@@ -689,13 +689,13 @@
         function showContent() {
             // Set the preloaded image to the visible img element
             landingBgImage.src = imageUrl;
-            
+
             // Force browser to complete rendering
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     landingBgImage.classList.add('loaded');
                     loadingScreen.classList.add('loaded');
-                    
+
                     setTimeout(() => {
                         landingContent.classList.add('visible');
                     }, 100);
@@ -705,15 +705,15 @@
 
         // Preload image in memory (hidden) before displaying
         const preloadImage = new Image();
-        preloadImage.onload = function() {
+        preloadImage.onload = function () {
             // Image is fully downloaded in memory, now show it
             showContent();
         };
-        preloadImage.onerror = function() {
+        preloadImage.onerror = function () {
             // Show content even if image fails to load
             showContent();
         };
-        
+
         // Start preloading
         preloadImage.src = imageUrl;
 
