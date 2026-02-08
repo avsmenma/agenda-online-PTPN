@@ -3154,7 +3154,8 @@
     .dark .modal a:hover {
       color: #22c55e !important;
     }
-  /* ========================================
+
+    /* ========================================
        CUSTOM MODAL (Document Detail Popup) DARK MODE
        ======================================== */
 
@@ -3379,7 +3380,187 @@
     .dark .modal-body-custom .stat-label {
       color: #94a3b8 !important;
     }
+
+    /* Section Header Icons - Make them white */
+    .dark .section-header i,
+    .dark .detail-section .section-header i,
+    .dark .modal-content-custom .section-header i,
+    .dark .modal-body-custom .section-header i {
+      color: #ffffff !important;
+    }
+
+    /* Vendor Info Card - Fix white background */
+    .dark .vendor-card,
+    .dark .vendor-info-card,
+    .dark .vendor-box,
+    .dark .info-vendor,
+    .dark [class*="vendor"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .vendor-card *,
+    .dark .vendor-info-card *,
+    .dark .vendor-box *,
+    .dark .info-vendor *,
+    .dark [class*="vendor"] * {
+      color: #ffffff !important;
+    }
+
+    .dark .vendor-card .vendor-icon,
+    .dark .vendor-info-card .vendor-icon,
+    .dark [class*="vendor"] .vendor-icon {
+      background: rgba(74, 222, 128, 0.2) !important;
+    }
+
+    .dark .vendor-card .vendor-icon i,
+    .dark .vendor-info-card .vendor-icon i,
+    .dark [class*="vendor"] i {
+      color: #4ade80 !important;
+    }
+
+    /* Any remaining white backgrounds in modal */
+    .dark .modal-content-custom .bg-white,
+    .dark .modal-body-custom .bg-white,
+    .dark .modal-content-custom .bg-light,
+    .dark .modal-body-custom .bg-light {
+      background: #334155 !important;
+    }
+
+    /* Kategori & Klasifikasi section */
+    .dark .kategori-card,
+    .dark .klasifikasi-card,
+    .dark [class*="kategori"],
+    .dark [class*="klasifikasi"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Data SPK, Berita Acara, PO & MIRO sections */
+    .dark .spk-card,
+    .dark .berita-acara-card,
+    .dark .po-miro-card,
+    .dark [class*="spk-"],
+    .dark [class*="acara"],
+    .dark [class*="miro"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* All input boxes in modal */
+    .dark .modal-content-custom input,
+    .dark .modal-body-custom input,
+    .dark .modal-content-custom textarea,
+    .dark .modal-body-custom textarea,
+    .dark .modal-content-custom select,
+    .dark .modal-body-custom select {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    /* Fix any cards that still have white background - catch all */
+    .dark .modal-content-custom .card,
+    .dark .modal-body-custom .card,
+    .dark .modal-content-custom [style*="background: white"],
+    .dark .modal-body-custom [style*="background: white"],
+    .dark .modal-content-custom [style*="background:#fff"],
+    .dark .modal-body-custom [style*="background:#fff"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Fix inline styles that might override */
+    .dark .modal-content-custom .rounded,
+    .dark .modal-body-custom .rounded,
+    .dark .modal-content-custom .rounded-lg,
+    .dark .modal-body-custom .rounded-lg,
+    .dark .modal-content-custom .rounded-3,
+    .dark .modal-body-custom .rounded-3 {
+      background: #334155 !important;
+    }
+
+    /* Terbilang/Description text */
+    .dark .terbilang,
+    .dark .nilai-terbilang {
+      color: #94a3b8 !important;
+    }
+  /* ========================================
+       VENDOR CARD SPECIFIC DARK MODE
+       ======================================== */
+
+    /* Vendor Card - more specific */
+    .dark .vendor-card {
+      background: #334155 !important;
+      border: 1px solid #475569 !important;
+    }
+
+    .dark .vendor-card .vendor-icon {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+    }
+
+    .dark .vendor-card .vendor-icon i {
+      color: #0f172a !important;
+    }
+
+    .dark .vendor-card .vendor-info {
+      color: #ffffff !important;
+    }
+
+    .dark .vendor-card .vendor-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .vendor-card .vendor-name {
+      color: #ffffff !important;
+    }
+
+    /* Section Header Icons - ensure white bg with icon */
+    .dark .section-header i {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    /* Info Card Highlight */
+    .dark .info-card.highlight {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .info-card.highlight .info-value.tag {
+      background: rgba(74, 222, 128, 0.2) !important;
+      color: #4ade80 !important;
+    }
+
+    /* Uraian Box Dark Mode */
+    .dark .uraian-box {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* Money Display - keep gradient but adjust for dark */
+    .dark .money-display {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    }
+
+    .dark .money-display .money-amount {
+      color: #ffffff !important;
+    }
+
+    .dark .money-display .money-words {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    /* Mono text in info-value */
+    .dark .info-value.mono {
+      color: #ffffff !important;
+      font-family: monospace;
+    }
   </style>
+
+
 
 
 
