@@ -5,8 +5,8 @@
 @push('styles')
     <style>
         /* ============================================
-                                               MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
-                                               ============================================ */
+                                                   MODERN INBOX DESIGN - CLEAN & PROFESSIONAL
+                                                   ============================================ */
 
         :root {
             --primary-color: #083E40;
@@ -36,8 +36,8 @@
         }
 
         /* ============================================
-                                               HEADER SECTION - Clean & Professional
-                                               ============================================ */
+                                                   HEADER SECTION - Clean & Professional
+                                                   ============================================ */
         .inbox-header {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             border-radius: 16px;
@@ -159,8 +159,8 @@
         }
 
         /* ============================================
-                                               STATS CARDS - Clean & Organized
-                                               ============================================ */
+                                                   STATS CARDS - Clean & Organized
+                                                   ============================================ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -261,8 +261,8 @@
         }
 
         /* ============================================
-                                               DOCUMENT SECTION - Clean Card Design
-                                               ============================================ */
+                                                   DOCUMENT SECTION - Clean Card Design
+                                                   ============================================ */
         .documents-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -312,8 +312,8 @@
         }
 
         /* ============================================
-                                               SEARCH & FILTER - Clean Input Design
-                                               ============================================ */
+                                                   SEARCH & FILTER - Clean Input Design
+                                                   ============================================ */
         .search-filter-section {
             padding: 1.5rem 2rem;
             background: var(--bg-light);
@@ -382,8 +382,8 @@
         }
 
         /* ============================================
-                                               DOCUMENT CARDS - Clean Card Layout
-                                               ============================================ */
+                                                   DOCUMENT CARDS - Clean Card Layout
+                                                   ============================================ */
         .documents-list {
             padding: 1.5rem 2rem;
         }
@@ -573,8 +573,8 @@
         }
 
         /* ============================================
-                                               EMPTY STATE - Clean & Encouraging
-                                               ============================================ */
+                                                   EMPTY STATE - Clean & Encouraging
+                                                   ============================================ */
         .empty-state {
             padding: 3.5rem 2rem;
             text-align: center;
@@ -642,8 +642,8 @@
         }
 
         /* ============================================
-                                               PAGINATION - Clean Design
-                                               ============================================ */
+                                                   PAGINATION - Clean Design
+                                                   ============================================ */
         .pagination-wrapper {
             padding: 1.5rem 2rem;
             border-top: 1px solid var(--border-color);
@@ -875,8 +875,8 @@
         }
 
         /* ============================================
-                                               RESPONSIVE DESIGN
-                                               ============================================ */
+                                                   RESPONSIVE DESIGN
+                                                   ============================================ */
         @media (max-width: 768px) {
             .inbox-container {
                 padding: 1rem;
@@ -937,8 +937,8 @@
         }
 
         /* ============================================
-                                               UTILITY CLASSES
-                                               ============================================ */
+                                                   UTILITY CLASSES
+                                                   ============================================ */
         .text-truncate-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -947,8 +947,8 @@
         }
 
         /* ============================================
-                                               NOTIFICATION BADGE
-                                               ============================================ */
+                                                   NOTIFICATION BADGE
+                                                   ============================================ */
         .new-documents-badge {
             background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
             color: white;
@@ -1432,7 +1432,189 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* ============================================
+               DARK MODE OVERRIDES
+               ============================================ */
+
+        /* Container backgrounds */
+        .dark .inbox-container {
+            background: #0f172a !important;
+        }
+
+        .dark .stats-grid .stat-card {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        /* Stats card values - white */
+        .dark .stat-value {
+            color: #ffffff !important;
+        }
+
+        /* Stats card labels - lighter */
+        .dark .stat-label {
+            color: #94a3b8 !important;
+        }
+
+        /* Documents section */
+        .dark .documents-section {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        .dark .documents-header {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        .dark .documents-title {
+            color: #ffffff !important;
+        }
+
+        .dark .documents-title i {
+            color: #4ade80 !important;
+        }
+
+        .dark .documents-subtitle {
+            color: #94a3b8 !important;
+        }
+
+        /* Search filter section */
+        .dark .search-filter-section {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .dark .search-input {
+            background: #1e293b !important;
+            border-color: #475569 !important;
+            color: #ffffff !important;
+        }
+
+        .dark .search-input::placeholder {
+            color: #64748b !important;
+        }
+
+        .dark .filter-select {
+            background: #1e293b !important;
+            border-color: #475569 !important;
+            color: #ffffff !important;
+        }
+
+        /* Documents list */
+        .dark .documents-list {
+            background: #1e293b !important;
+        }
+
+        /* Document cards */
+        .dark .document-card {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .dark .document-card:hover {
+            border-color: #4ade80 !important;
+        }
+
+        .dark .document-agenda {
+            color: #4ade80 !important;
+        }
+
+        .dark .document-spp {
+            color: #94a3b8 !important;
+        }
+
+        .dark .document-info-label {
+            color: #64748b !important;
+        }
+
+        .dark .document-info-value {
+            color: #ffffff !important;
+        }
+
+        .dark .document-info-value i {
+            color: #4ade80 !important;
+        }
+
+        .dark .document-footer {
+            border-color: #334155 !important;
+        }
+
+        .dark .document-time {
+            color: #94a3b8 !important;
+        }
+
+        /* Empty state */
+        .dark .empty-state-icon {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+        }
+
+        .dark .empty-state-title {
+            color: #ffffff !important;
+        }
+
+        .dark .empty-state-subtitle {
+            color: #94a3b8 !important;
+        }
+
+        /* Pagination */
+        .dark .pagination-wrapper {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        .dark .pagination-wrapper nav span,
+        .dark .pagination-wrapper nav a {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #ffffff !important;
+        }
+
+        .dark .pagination-wrapper p {
+            color: #94a3b8 !important;
+        }
+
+        .dark .pagination-wrapper p span {
+            color: #ffffff !important;
+        }
+
+        /* History modal */
+        .dark .history-modal {
+            background: #1e293b !important;
+        }
+
+        .dark .history-modal-header {
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
+        }
+
+        .dark .history-modal-body {
+            background: #1e293b !important;
+        }
+
+        .dark .history-doc-card {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .dark .history-doc-agenda {
+            color: #4ade80 !important;
+        }
+
+        .dark .history-doc-spp,
+        .dark .history-doc-uraian {
+            color: #94a3b8 !important;
+        }
+
+        .dark .history-doc-footer {
+            border-color: #334155 !important;
+        }
+
+        .dark .history-empty-state {
+            color: #94a3b8 !important;
+        }
     </style>
+
 @endpush
 
 @section('content')
@@ -1731,1064 +1913,110 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-                // Handle flash messages from server
-                @if(session('success'))
-                    showNotification('success', 'Berhasil!', '{{ session('success') }}');
-                @endif
+            // Handle flash messages from server
+            @if(session('success'))
+                showNotification('success', 'Berhasil!', '{{ session('success') }}');
+            @endif
 
-                @if(session('error'))
-                    showNotification('error', 'Error!', '{{ session('error') }}');
-                @endif
+            @if(session('error'))
+                showNotification('error', 'Error!', '{{ session('error') }}');
+            @endif
 
-                @if(session('info'))
-                    showNotification('info', 'Informasi', '{{ session('info') }}');
-                @endif
+            @if(session('info'))
+                showNotification('info', 'Informasi', '{{ session('info') }}');
+            @endif
 
-                // Initialize notification polling
-                initNotificationPolling();
+            // Initialize notification polling
+            initNotificationPolling();
 
-                const searchInput = document.getElementById('searchInput');
-                const filterSelect = document.getElementById('filterSelect');
-                const documentCards = document.querySelectorAll('.document-card');
+            const searchInput = document.getElementById('searchInput');
+            const filterSelect = document.getElementById('filterSelect');
+            const documentCards = document.querySelectorAll('.document-card');
 
-                // Search functionality
-                if (searchInput) {
-                    searchInput.addEventListener('input', function () {
-                        const searchTerm = this.value.toLowerCase().trim();
-                        filterDocuments(searchTerm, filterSelect?.value || '');
-                    });
-                }
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    filterDocuments(searchTerm, filterSelect?.value || '');
+                });
+            }
 
-                // Filter functionality
-                if (filterSelect) {
-                    filterSelect.addEventListener('change', function () {
-                        const filterValue = this.value;
-                        filterDocuments(searchInput?.value.toLowerCase().trim() || '', filterValue);
-                    });
-                }
+            // Filter functionality
+            if (filterSelect) {
+                filterSelect.addEventListener('change', function () {
+                    const filterValue = this.value;
+                    filterDocuments(searchInput?.value.toLowerCase().trim() || '', filterValue);
+                });
+            }
 
-                function filterDocuments(searchTerm, filterValue) {
-                    let visibleCount = 0;
+            function filterDocuments(searchTerm, filterValue) {
+                let visibleCount = 0;
 
-                    documentCards.forEach(card => {
-                        const agenda = card.getAttribute('data-agenda') || '';
-                        const spp = card.getAttribute('data-spp') || '';
-                        const uraian = card.getAttribute('data-uraian') || '';
+                documentCards.forEach(card => {
+                    const agenda = card.getAttribute('data-agenda') || '';
+                    const spp = card.getAttribute('data-spp') || '';
+                    const uraian = card.getAttribute('data-uraian') || '';
 
-                        const matchesSearch = !searchTerm ||
-                            agenda.includes(searchTerm) ||
-                            spp.includes(searchTerm) ||
-                            uraian.includes(searchTerm);
+                    const matchesSearch = !searchTerm ||
+                        agenda.includes(searchTerm) ||
+                        spp.includes(searchTerm) ||
+                        uraian.includes(searchTerm);
 
-                        // For now, all cards are pending, so filter only affects search
-                        const matchesFilter = !filterValue || filterValue === 'pending';
+                    // For now, all cards are pending, so filter only affects search
+                    const matchesFilter = !filterValue || filterValue === 'pending';
 
-                        if (matchesSearch && matchesFilter) {
-                            card.style.display = 'block';
-                            visibleCount++;
-                        } else {
-                            card.style.display = 'none';
+                    if (matchesSearch && matchesFilter) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Show message if no results
+                const documentsList = document.getElementById('documentsList');
+                if (documentsList) {
+                    let noResultsMsg = documentsList.querySelector('.no-results-message');
+                    if (visibleCount === 0 && documentCards.length > 0) {
+                        if (!noResultsMsg) {
+                            noResultsMsg = document.createElement('div');
+                            noResultsMsg.className = 'empty-state';
+                            noResultsMsg.innerHTML = `
+                                                                    <div class="empty-state-icon">
+                                                                        <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                                                                    </div>
+                                                                    <h3 class="empty-state-title">Tidak Ada Hasil</h3>
+                                                                    <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
+                                                                                           `;
+                            documentsList.appendChild(noResultsMsg);
                         }
-                    });
-
-                    // Show message if no results
-                    const documentsList = document.getElementById('documentsList');
-                    if (documentsList) {
-                        let noResultsMsg = documentsList.querySelector('.no-results-message');
-                        if (visibleCount === 0 && documentCards.length > 0) {
-                            if (!noResultsMsg) {
-                                noResultsMsg = document.createElement('div');
-                                noResultsMsg.className = 'empty-state';
-                                noResultsMsg.innerHTML = `
-                                                                <div class="empty-state-icon">
-                                                                    <i class="fas fa-search" style="color: var(--text-muted);"></i>
-                                                                </div>
-                                                                <h3 class="empty-state-title">Tidak Ada Hasil</h3>
-                                                                <p class="empty-state-subtitle">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
-                                                                                       `;
-                                documentsList.appendChild(noResultsMsg);
-                            }
-                        } else if (noResultsMsg) {
-                            noResultsMsg.remove();
-                        }
+                    } else if (noResultsMsg) {
+                        noResultsMsg.remove();
                     }
                 }
+            }
 
-                // Add smooth scroll to top when clicking pagination
-                document.querySelectorAll('.pagination a').forEach(link => {
-                    link.addEventListener('click', function () {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    });
+            // Add smooth scroll to top when clicking pagination
+            document.querySelectorAll('.pagination a').forEach(link => {
+                link.addEventListener('click', function () {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             });
-
-            // Notification Polling System
-            function initNotificationPolling() {
-                // Get last check time from localStorage
-                let lastCheckTime = localStorage.getItem('inbox_last_check_time');
-                if (!lastCheckTime) {
-                    // Set initial check time to now
-                    lastCheckTime = new Date().toISOString();
-                    localStorage.setItem('inbox_last_check_time', lastCheckTime);
-                }
-
-                // Function to check for new documents
-                function checkNewDocuments() {
-                    fetch('{{ route("inbox.checkNew") }}?last_check_time=' + encodeURIComponent(lastCheckTime), {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                        },
-                        credentials: 'same-origin'
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Update last check time
-                                if (data.current_time) {
-                                    lastCheckTime = data.current_time;
-                                    localStorage.setItem('inbox_last_check_time', lastCheckTime);
-                                }
-
-                                // If there are new documents
-                                if (data.new_documents_count > 0) {
-                                    // Update badge counter
-                                    updateNewDocumentsBadge(data.new_documents_count, data.pending_count);
-
-                                    // Track shown notifications to prevent duplicates
-                                    let shownNotificationIds = new Set(JSON.parse(localStorage.getItem('inbox_shown_notifications') || '[]'));
-
-                                    // Filter out already shown notifications
-                                    const newDocsToShow = data.new_documents.filter(doc => {
-                                        if (shownNotificationIds.has(doc.id)) {
-                                            return false;
-                                        }
-                                        shownNotificationIds.add(doc.id);
-                                        return true;
-                                    });
-
-                                    // Save shown notification IDs to localStorage
-                                    localStorage.setItem('inbox_shown_notifications', JSON.stringify(Array.from(shownNotificationIds)));
-
-                                    // Show notification only for truly new documents
-                                    if (newDocsToShow.length > 0) {
-                                        // Show notification for each new document (only show one at a time)
-                                        if (newDocsToShow.length === 1) {
-                                            showNewDocumentNotification(newDocsToShow[0]);
-                                        } else {
-                                            // If multiple new documents, show notification for the latest one
-                                            showNewDocumentNotification(newDocsToShow[0]);
-                                        }
-
-                                        // Play notification sound only once
-                                        playNotificationSound();
-                                    }
-                                } else {
-                                    // Update badge even if no new documents (to sync count)
-                                    updateNewDocumentsBadge(0, data.pending_count);
-                                }
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error checking new documents:', error);
-                        });
-                }
-
-                // Check immediately on page load
-                checkNewDocuments();
-
-                // Poll every 30 seconds
-                setInterval(checkNewDocuments, 30000);
-            }
-
-            // Update new documents badge
-            function updateNewDocumentsBadge(newCount, pendingCount) {
-                const badge = document.getElementById('newDocumentsBadge');
-                const countElement = document.getElementById('newDocumentsCount');
-
-                if (newCount > 0) {
-                    if (!badge) {
-                        // Create badge if it doesn't exist
-                        const documentsHeader = document.querySelector('.documents-header .col-md-4');
-                        if (documentsHeader) {
-                            const badgeHtml = `
-                                                            <span class="new-documents-badge" id="newDocumentsBadge">
-                                                                <i class="fas fa-bell"></i>
-                                                                <span id="newDocumentsCount">${newCount}</span> Baru
-                                                            </span>
-                                                        `;
-                            documentsHeader.querySelector('.d-flex').insertAdjacentHTML('afterbegin', badgeHtml);
-                        }
-                    } else {
-                        // Update existing badge
-                        if (countElement) {
-                            countElement.textContent = newCount;
-                        }
-                        badge.style.display = 'inline-flex';
-                    }
-                } else {
-                    // Hide badge if no new documents
-                    if (badge) {
-                        badge.style.display = 'none';
-                    }
-                }
-            }
-
-            // Show notification for new document
-            function showNewDocumentNotification(doc) {
-                const message = `Dokumen baru: ${doc.nomor_agenda} - ${doc.uraian_spp}`;
-                showNotificationWithAction('info', 'Dokumen Baru Masuk!', message, doc.url, 'Lihat Dokumen');
-            }
-
-            // Play notification sound
-            function playNotificationSound() {
-                // Create a simple beep sound using Web Audio API
-                try {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-
-                    oscillator.frequency.value = 800;
-                    oscillator.type = 'sine';
-
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.2);
-                } catch (e) {
-                    // Fallback: browser notification if available
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('Dokumen Baru Masuk', {
-                            body: 'Ada dokumen baru yang masuk ke inbox Anda',
-                            icon: '/favicon.ico'
-                        });
-                    }
-                }
-            }
-
-            // Request notification permission on page load
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-
-            // Notification Toast Function
-            function showNotification(type, title, message) {
-                const container = document.getElementById('notificationContainer');
-                if (!container) {
-                    // Create container if it doesn't exist
-                    const newContainer = document.createElement('div');
-                    newContainer.id = 'notificationContainer';
-                    document.body.appendChild(newContainer);
-                    container = newContainer;
-                }
-
-                const toast = document.createElement('div');
-                toast.className = `notification-toast ${type}`;
-
-                const icons = {
-                    success: '<i class="fas fa-check-circle"></i>',
-                    error: '<i class="fas fa-times-circle"></i>',
-                    warning: '<i class="fas fa-exclamation-triangle"></i>',
-                    info: '<i class="fas fa-info-circle"></i>'
-                };
-
-                toast.innerHTML = `
-                                                <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-                                                <div class="notification-content">
-                                                    <div class="notification-icon">
-                                                        ${icons[type] || icons.success}
-                                                    </div>
-                                                    <div class="notification-body">
-                                                        <div class="notification-title">${title}</div>
-                                                        <div class="notification-message">${message}</div>
-                                                    </div>
-                                                </div>
-                                            `;
-
-                container.appendChild(toast);
-
-                // Trigger animation
-                setTimeout(() => {
-                    toast.classList.add('show');
-                }, 10);
-
-                // Auto-remove untuk notifikasi success/error biasa (dari session) setelah 4 detik
-                // Notifikasi dokumen masuk/reject tetap permanen (dipanggil dengan showNotificationWithAction)
-                if (type === 'success' || type === 'error') {
-                    setTimeout(() => {
-                        toast.classList.add('hide');
-                        setTimeout(() => {
-                            if (toast.parentElement) {
-                                toast.remove();
-                            }
-                        }, 300);
-                    }, 4000); // 4 detik untuk notifikasi success/error biasa
-                }
-                // Jika type info/warning atau dokumen masuk/reject, tetap permanen
-            }
-
-            // Notification Toast Function with Action Button
-            function showNotificationWithAction(type, title, message, actionUrl, actionText) {
-                const container = document.getElementById('notificationContainer');
-                if (!container) {
-                    // Create container if it doesn't exist
-                    const newContainer = document.createElement('div');
-                    newContainer.id = 'notificationContainer';
-                    document.body.appendChild(newContainer);
-                    container = newContainer;
-                }
-
-                const toast = document.createElement('div');
-                toast.className = `notification-toast ${type}`;
-
-                const icons = {
-                    success: '<i class="fas fa-check-circle"></i>',
-                    error: '<i class="fas fa-times-circle"></i>',
-                    warning: '<i class="fas fa-exclamation-triangle"></i>',
-                    info: '<i class="fas fa-bell"></i>'
-                };
-
-                toast.innerHTML = `
-                                                <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
-                                                <div class="notification-content">
-                                                    <div class="notification-icon">
-                                                        ${icons[type] || icons.info}
-                                                    </div>
-                                                    <div class="notification-body">
-                                                        <div class="notification-title">${title}</div>
-                                                        <div class="notification-message">${message}</div>
-                                                        ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
-                                                    </div>
-                                                </div>
-                                            `;
-
-                container.appendChild(toast);
-
-                // Trigger animation
-                setTimeout(() => {
-                    toast.classList.add('show');
-                }, 10);
-
-                // Notifikasi permanen - hanya hilang ketika user klik tombol X
-                // Auto-remove dihapus agar notifikasi tetap muncul sampai user menutupnya
-            }
-        </script>
-
-        <style>
-            /* Modern Notification Toast Styles */
-            #notificationContainer {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                pointer-events: none;
-            }
-
-            .notification-toast {
-                min-width: 350px;
-                max-width: 500px;
-                background: white;
-                border-radius: 16px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-                padding: 0;
-                overflow: hidden;
-                animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-                transform: translateX(400px);
-                opacity: 0;
-                margin-bottom: 16px;
-                pointer-events: auto;
-            }
-
-            .notification-toast.show {
-                transform: translateX(0);
-                opacity: 1;
-            }
-
-            .notification-toast.hide {
-                animation: slideOutRight 0.3s ease-in forwards;
-            }
-
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-
-            @keyframes slideOutRight {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-
-                to {
-                    transform: translateX(400px);
-                    opacity: 0;
-                }
-            }
-
-            .notification-toast.success {
-                border-left: 5px solid #48bb78;
-            }
-
-            .notification-toast.error {
-                border-left: 5px solid #f56565;
-            }
-
-            .notification-toast.warning {
-                border-left: 5px solid #f6ad55;
-            }
-
-            .notification-toast.info {
-                border-left: 5px solid #4299e1;
-            }
-
-            .notification-content {
-                padding: 20px;
-                display: flex;
-                align-items: flex-start;
-                gap: 16px;
-            }
-
-            .notification-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                flex-shrink: 0;
-            }
-
-            .notification-toast.success .notification-icon {
-                background: linear-gradient(135deg, #48bb78 0%, #9ae6b4 100%);
-                color: white;
-            }
-
-            .notification-toast.error .notification-icon {
-                background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
-                color: white;
-            }
-
-            .notification-toast.warning .notification-icon {
-                background: linear-gradient(135deg, #f6ad55 0%, #fed7aa 100%);
-                color: white;
-            }
-
-            .notification-toast.info .notification-icon {
-                background: linear-gradient(135deg, #4299e1 0%, #90cdf4 100%);
-                color: white;
-            }
-
-            .notification-body {
-                flex: 1;
-            }
-
-            .notification-title {
-                font-weight: 700;
-                font-size: 16px;
-                margin-bottom: 4px;
-                color: #1a202c;
-            }
-
-            .notification-message {
-                font-size: 14px;
-                color: #4a5568;
-                line-height: 1.5;
-                margin-bottom: 8px;
-            }
-
-            .notification-action-btn {
-                display: inline-block;
-                margin-top: 8px;
-                padding: 8px 16px;
-                background: linear-gradient(135deg, #4299e1 0%, #63b3ed 100%);
-                color: white;
-                text-decoration: none;
-                border-radius: 8px;
-                font-size: 13px;
-                font-weight: 600;
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 6px rgba(66, 153, 225, 0.25);
-            }
-
-            .notification-action-btn:hover {
-                background: linear-gradient(135deg, #3182ce 0%, #4299e1 100%);
-                transform: translateY(-1px);
-                box-shadow: 0 4px 10px rgba(66, 153, 225, 0.35);
-                color: white;
-                text-decoration: none;
-            }
-
-            .notification-close {
-                position: absolute;
-                top: 12px;
-                right: 12px;
-                background: none;
-                border: none;
-                color: #718096;
-                font-size: 18px;
-                cursor: pointer;
-                padding: 4px;
-                line-height: 1;
-                transition: color 0.2s;
-                z-index: 10;
-            }
-
-            .notification-close:hover {
-                color: #2d3748;
-            }
-
-            /* ============================================
-                                   MULTI-SELECT BULK APPROVE STYLES
-                                   ============================================ */
-
-            /* Select All Header */
-            .select-all-container {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                padding: 0.75rem 1rem;
-                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-                border-bottom: 1px solid var(--border-color);
-                border-radius: 8px 8px 0 0;
-                margin-bottom: 0;
-            }
-
-            /* Custom Checkbox Styling */
-            .bulk-checkbox {
-                position: relative;
-                width: 22px;
-                height: 22px;
-                cursor: pointer;
-                flex-shrink: 0;
-            }
-
-            .bulk-checkbox input[type="checkbox"] {
-                position: absolute;
-                opacity: 0;
-                width: 100%;
-                height: 100%;
-                cursor: pointer;
-                z-index: 2;
-                margin: 0;
-            }
-
-            .bulk-checkbox .checkmark {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 22px;
-                height: 22px;
-                background: white;
-                border: 2px solid #cbd5e0;
-                border-radius: 6px;
-                transition: all 0.2s ease;
-            }
-
-            .bulk-checkbox:hover .checkmark {
-                border-color: var(--accent-blue);
-                background: #ebf8ff;
-            }
-
-            .bulk-checkbox input[type="checkbox"]:checked+.checkmark {
-                background: linear-gradient(135deg, var(--accent-blue) 0%, #63b3ed 100%);
-                border-color: var(--accent-blue);
-            }
-
-            .bulk-checkbox .checkmark::after {
-                content: '';
-                position: absolute;
-                display: none;
-                left: 7px;
-                top: 3px;
-                width: 5px;
-                height: 10px;
-                border: solid white;
-                border-width: 0 2px 2px 0;
-                transform: rotate(45deg);
-            }
-
-            .bulk-checkbox input[type="checkbox"]:checked+.checkmark::after {
-                display: block;
-            }
-
-            .select-all-label {
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: var(--text-secondary);
-                cursor: pointer;
-                user-select: none;
-            }
-
-            .selected-count-badge {
-                background: linear-gradient(135deg, var(--accent-blue) 0%, #63b3ed 100%);
-                color: white;
-                padding: 0.25rem 0.75rem;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                font-weight: 600;
-                display: none;
-            }
-
-            .selected-count-badge.show {
-                display: inline-flex;
-            }
-
-            /* Document card checkbox positioning */
-            .document-card-with-checkbox {
-                display: flex;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-
-            .document-checkbox-wrapper {
-                padding-top: 0.25rem;
-            }
-
-            .document-card-content {
-                flex: 1;
-                min-width: 0;
-            }
-
-            /* Selected state for document card */
-            .document-card.selected {
-                border-color: var(--accent-blue);
-                background: linear-gradient(135deg, #ebf8ff 0%, #f7fafc 100%);
-                box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
-            }
-
-            .document-card.selected::before {
-                transform: scaleY(1);
-                background: var(--accent-blue);
-            }
-
-            /* ============================================
-                                   FLOATING ACTION BAR
-                                   ============================================ */
-            .bulk-action-bar {
-                position: fixed;
-                bottom: -100px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-                padding: 1rem 2rem;
-                border-radius: 16px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                display: flex;
-                align-items: center;
-                gap: 1.5rem;
-                z-index: 1000;
-                transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
-
-            .bulk-action-bar.show {
-                bottom: 30px;
-            }
-
-            .bulk-action-info {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                color: white;
-            }
-
-            .bulk-action-icon {
-                width: 40px;
-                height: 40px;
-                background: rgba(66, 153, 225, 0.2);
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #63b3ed;
-                font-size: 1.125rem;
-            }
-
-            .bulk-action-text {
-                font-size: 0.9375rem;
-                font-weight: 600;
-            }
-
-            .bulk-action-text span {
-                color: #63b3ed;
-            }
-
-            .bulk-action-buttons {
-                display: flex;
-                gap: 0.75rem;
-            }
-
-            .btn-bulk-approve {
-                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-                color: white;
-                padding: 0.75rem 1.5rem;
-                border-radius: 10px;
-                font-weight: 600;
-                font-size: 0.875rem;
-                border: none;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                transition: all 0.2s ease;
-                box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-            }
-
-            .btn-bulk-approve:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
-            }
-
-            .btn-bulk-approve:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none;
-            }
-
-            .btn-bulk-cancel {
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
-                padding: 0.75rem 1.25rem;
-                border-radius: 10px;
-                font-weight: 500;
-                font-size: 0.875rem;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .btn-bulk-cancel:hover {
-                background: rgba(255, 255, 255, 0.15);
-            }
-
-            /* ============================================
-                                   BULK APPROVE CONFIRMATION MODAL
-                                   ============================================ */
-            .bulk-modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(4px);
-                z-index: 2000;
-                display: none;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-            }
-
-            .bulk-modal-overlay.active {
-                display: flex;
-                animation: fadeIn 0.2s ease;
-            }
-
-            .bulk-modal {
-                background: white;
-                border-radius: 16px;
-                width: 100%;
-                max-width: 600px;
-                max-height: 85vh;
-                overflow: hidden;
-                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-                animation: slideUp 0.3s ease;
-            }
-
-            .bulk-modal-header {
-                padding: 1.5rem 1.75rem;
-                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            .bulk-modal-title {
-                font-size: 1.25rem;
-                font-weight: 700;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                margin: 0;
-            }
-
-            .bulk-modal-close {
-                background: rgba(255, 255, 255, 0.2);
-                border: none;
-                color: white;
-                width: 36px;
-                height: 36px;
-                border-radius: 10px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s ease;
-            }
-
-            .bulk-modal-close:hover {
-                background: rgba(255, 255, 255, 0.3);
-            }
-
-            .bulk-modal-body {
-                padding: 1.5rem 1.75rem;
-                max-height: 400px;
-                overflow-y: auto;
-            }
-
-            .bulk-modal-summary {
-                background: #f7fafc;
-                border-radius: 10px;
-                padding: 1rem 1.25rem;
-                margin-bottom: 1rem;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-            }
-
-            .bulk-modal-summary-icon {
-                width: 44px;
-                height: 44px;
-                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 1.25rem;
-            }
-
-            .bulk-modal-summary-text {
-                flex: 1;
-            }
-
-            .bulk-modal-summary-count {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #2d3748;
-            }
-
-            .bulk-modal-summary-label {
-                font-size: 0.8125rem;
-                color: #718096;
-            }
-
-            .bulk-modal-doc-list {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .bulk-modal-doc-item {
-                background: #f7fafc;
-                border: 1px solid var(--border-color);
-                border-radius: 8px;
-                padding: 0.75rem 1rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .bulk-modal-doc-info {
-                display: flex;
-                flex-direction: column;
-                gap: 0.125rem;
-            }
-
-            .bulk-modal-doc-agenda {
-                font-weight: 600;
-                color: var(--accent-blue);
-                font-size: 0.875rem;
-            }
-
-            .bulk-modal-doc-spp {
-                font-size: 0.75rem;
-                color: #718096;
-            }
-
-            .bulk-modal-doc-value {
-                font-weight: 600;
-                color: #2d3748;
-                font-size: 0.875rem;
-            }
-
-            .bulk-modal-footer {
-                padding: 1.25rem 1.75rem;
-                background: #f7fafc;
-                border-top: 1px solid var(--border-color);
-                display: flex;
-                justify-content: flex-end;
-                gap: 0.75rem;
-            }
-
-            .btn-modal-cancel {
-                background: white;
-                color: #4a5568;
-                padding: 0.75rem 1.5rem;
-                border-radius: 10px;
-                font-weight: 600;
-                font-size: 0.875rem;
-                border: 1.5px solid var(--border-color);
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .btn-modal-cancel:hover {
-                background: #f7fafc;
-                border-color: #cbd5e0;
-            }
-
-            .btn-modal-confirm {
-                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-                color: white;
-                padding: 0.75rem 1.5rem;
-                border-radius: 10px;
-                font-weight: 600;
-                font-size: 0.875rem;
-                border: none;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                transition: all 0.2s ease;
-                box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-            }
-
-            .btn-modal-confirm:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
-            }
-
-            .btn-modal-confirm:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none;
-            }
-
-            .btn-modal-confirm .spinner {
-                display: none;
-                animation: spin 1s linear infinite;
-            }
-
-            .btn-modal-confirm.loading .spinner {
-                display: inline-block;
-            }
-
-            .btn-modal-confirm.loading .btn-text {
-                display: none;
-            }
-        </style>
-
-        <!-- History Modal -->
-        <div class="history-modal-overlay" id="historyModalOverlay" onclick="closeHistoryModalOnOverlay(event)">
-            <div class="history-modal">
-                <div class="history-modal-header">
-                    <h3 class="history-modal-title">
-                        <i class="fas fa-history"></i>
-                        Riwayat Inbox
-                    </h3>
-                    <button class="history-modal-close" onclick="closeHistoryModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="history-modal-filters">
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="today" onclick="loadHistoryByFilter('today', this)">Hari
-                            Ini</button>
-                        <button class="filter-btn" data-filter="yesterday"
-                            onclick="loadHistoryByFilter('yesterday', this)">Kemarin</button>
-                        <button class="filter-btn" data-filter="3days" onclick="loadHistoryByFilter('3days', this)">3
-                            Hari
-                            Lalu</button>
-                        <button class="filter-btn" data-filter="7days" onclick="loadHistoryByFilter('7days', this)">7
-                            Hari
-                            Lalu</button>
-                    </div>
-                    <div class="custom-date-wrapper">
-                        <label for="historyCustomDate">Atau pilih tanggal:</label>
-                        <input type="date" id="historyCustomDate" onchange="loadHistoryByCustomDate(this.value)">
-                    </div>
-                </div>
-                <div class="history-modal-body" id="historyModalBody">
-                    <div class="history-loading">
-                        <i class="fas fa-spinner"></i>
-                        <p>Memuat data...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            // History Modal Functions
-            function openHistoryModal() {
-                const overlay = document.getElementById('historyModalOverlay');
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-
-                // Reset filters
-                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                document.querySelector('.filter-btn[data-filter="today"]').classList.add('active');
-                document.getElementById('historyCustomDate').value = '';
-
-                // Load today's data
-                loadHistoryByFilter('today');
-            }
-
-            function closeHistoryModal() {
-                const overlay = document.getElementById('historyModalOverlay');
-                overlay.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            function closeHistoryModalOnOverlay(event) {
-                if (event.target === event.currentTarget) {
-                    closeHistoryModal();
-                }
-            }
-
-            function loadHistoryByFilter(filter, button = null) {
-                // Update active state
-                if (button) {
-                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                }
-                document.getElementById('historyCustomDate').value = '';
-
-                loadHistoryData(filter);
-            }
-
-            function loadHistoryByCustomDate(date) {
-                if (!date) return;
-
-                // Remove active from filter buttons
-                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-
-                loadHistoryData(date);
-            }
-
-            function loadHistoryData(dateFilter) {
-                const body = document.getElementById('historyModalBody');
-                body.innerHTML = `
-                                                    <div class="history-loading">
-                                                        <i class="fas fa-spinner"></i>
-                                                        <p>Memuat data...</p>
-                                                    </div>
-                                                `;
-
-                fetch(`{{ route('inbox.history') }}?date=${encodeURIComponent(dateFilter)}`, {
+        });
+
+        // Notification Polling System
+        function initNotificationPolling() {
+            // Get last check time from localStorage
+            let lastCheckTime = localStorage.getItem('inbox_last_check_time');
+            if (!lastCheckTime) {
+                // Set initial check time to now
+                lastCheckTime = new Date().toISOString();
+                localStorage.setItem('inbox_last_check_time', lastCheckTime);
+            }
+
+            // Function to check for new documents
+            function checkNewDocuments() {
+                fetch('{{ route("inbox.checkNew") }}?last_check_time=' + encodeURIComponent(lastCheckTime), {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -2799,191 +2027,1123 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            renderHistoryDocuments(data);
-                        } else {
-                            body.innerHTML = `
-                                                            <div class="history-empty-state">
-                                                                <i class="fas fa-exclamation-circle"></i>
-                                                                <p>${data.message || 'Gagal memuat data'}</p>
-                                                            </div>
-                                                        `;
+                            // Update last check time
+                            if (data.current_time) {
+                                lastCheckTime = data.current_time;
+                                localStorage.setItem('inbox_last_check_time', lastCheckTime);
+                            }
+
+                            // If there are new documents
+                            if (data.new_documents_count > 0) {
+                                // Update badge counter
+                                updateNewDocumentsBadge(data.new_documents_count, data.pending_count);
+
+                                // Track shown notifications to prevent duplicates
+                                let shownNotificationIds = new Set(JSON.parse(localStorage.getItem('inbox_shown_notifications') || '[]'));
+
+                                // Filter out already shown notifications
+                                const newDocsToShow = data.new_documents.filter(doc => {
+                                    if (shownNotificationIds.has(doc.id)) {
+                                        return false;
+                                    }
+                                    shownNotificationIds.add(doc.id);
+                                    return true;
+                                });
+
+                                // Save shown notification IDs to localStorage
+                                localStorage.setItem('inbox_shown_notifications', JSON.stringify(Array.from(shownNotificationIds)));
+
+                                // Show notification only for truly new documents
+                                if (newDocsToShow.length > 0) {
+                                    // Show notification for each new document (only show one at a time)
+                                    if (newDocsToShow.length === 1) {
+                                        showNewDocumentNotification(newDocsToShow[0]);
+                                    } else {
+                                        // If multiple new documents, show notification for the latest one
+                                        showNewDocumentNotification(newDocsToShow[0]);
+                                    }
+
+                                    // Play notification sound only once
+                                    playNotificationSound();
+                                }
+                            } else {
+                                // Update badge even if no new documents (to sync count)
+                                updateNewDocumentsBadge(0, data.pending_count);
+                            }
                         }
                     })
                     .catch(error => {
-                        console.error('Error loading history:', error);
-                        body.innerHTML = `
-                                                        <div class="history-empty-state">
-                                                            <i class="fas fa-exclamation-triangle"></i>
-                                                            <p>Terjadi kesalahan saat memuat data</p>
-                                                        </div>
-                                                    `;
+                        console.error('Error checking new documents:', error);
                     });
             }
 
-            function renderHistoryDocuments(data) {
-                const body = document.getElementById('historyModalBody');
+            // Check immediately on page load
+            checkNewDocuments();
 
-                if (data.documents_count === 0) {
-                    body.innerHTML = `
-                                                        <div class="history-date-label">
-                                                            ${data.date_label}
-                                                            <span class="count-badge">0 dokumen</span>
-                                                        </div>
-                                                        <div class="history-empty-state">
-                                                            <i class="fas fa-inbox"></i>
-                                                            <p>Tidak ada dokumen yang masuk pada periode ini</p>
-                                                        </div>
-                                                    `;
-                    return;
+            // Poll every 30 seconds
+            setInterval(checkNewDocuments, 30000);
+        }
+
+        // Update new documents badge
+        function updateNewDocumentsBadge(newCount, pendingCount) {
+            const badge = document.getElementById('newDocumentsBadge');
+            const countElement = document.getElementById('newDocumentsCount');
+
+            if (newCount > 0) {
+                if (!badge) {
+                    // Create badge if it doesn't exist
+                    const documentsHeader = document.querySelector('.documents-header .col-md-4');
+                    if (documentsHeader) {
+                        const badgeHtml = `
+                                                                <span class="new-documents-badge" id="newDocumentsBadge">
+                                                                    <i class="fas fa-bell"></i>
+                                                                    <span id="newDocumentsCount">${newCount}</span> Baru
+                                                                </span>
+                                                            `;
+                        documentsHeader.querySelector('.d-flex').insertAdjacentHTML('afterbegin', badgeHtml);
+                    }
+                } else {
+                    // Update existing badge
+                    if (countElement) {
+                        countElement.textContent = newCount;
+                    }
+                    badge.style.display = 'inline-flex';
                 }
+            } else {
+                // Hide badge if no new documents
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+            }
+        }
 
-                let html = `
-                                                    <div class="history-date-label">
-                                                        ${data.date_label}
-                                                        <span class="count-badge">${data.documents_count} dokumen</span>
+        // Show notification for new document
+        function showNewDocumentNotification(doc) {
+            const message = `Dokumen baru: ${doc.nomor_agenda} - ${doc.uraian_spp}`;
+            showNotificationWithAction('info', 'Dokumen Baru Masuk!', message, doc.url, 'Lihat Dokumen');
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            // Create a simple beep sound using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                // Fallback: browser notification if available
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Dokumen Baru Masuk', {
+                        body: 'Ada dokumen baru yang masuk ke inbox Anda',
+                        icon: '/favicon.ico'
+                    });
+                }
+            }
+        }
+
+        // Request notification permission on page load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Notification Toast Function
+        function showNotification(type, title, message) {
+            const container = document.getElementById('notificationContainer');
+            if (!container) {
+                // Create container if it doesn't exist
+                const newContainer = document.createElement('div');
+                newContainer.id = 'notificationContainer';
+                document.body.appendChild(newContainer);
+                container = newContainer;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `notification-toast ${type}`;
+
+            const icons = {
+                success: '<i class="fas fa-check-circle"></i>',
+                error: '<i class="fas fa-times-circle"></i>',
+                warning: '<i class="fas fa-exclamation-triangle"></i>',
+                info: '<i class="fas fa-info-circle"></i>'
+            };
+
+            toast.innerHTML = `
+                                                    <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                                                    <div class="notification-content">
+                                                        <div class="notification-icon">
+                                                            ${icons[type] || icons.success}
+                                                        </div>
+                                                        <div class="notification-body">
+                                                            <div class="notification-title">${title}</div>
+                                                            <div class="notification-message">${message}</div>
+                                                        </div>
                                                     </div>
-                                                    <div class="history-doc-list">
                                                 `;
 
-                data.documents.forEach(doc => {
-                    const statusClass = doc.status || 'pending';
-                    html += `
-                                                        <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
-                                                            <div class="history-doc-header">
-                                                                <span class="history-doc-agenda">${doc.nomor_agenda}</span>
-                                                                <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
-                                                            </div>
-                                                            <div class="history-doc-spp">${doc.nomor_spp}</div>
-                                                            <div class="history-doc-uraian">${doc.uraian_spp}</div>
-                                                            <div class="history-doc-footer">
-                                                                <span class="history-doc-time">
-                                                                    <i class="fas fa-clock"></i>
-                                                                    Masuk: ${doc.received_at}
-                                                                </span>
-                                                                <span class="history-doc-value">${doc.nilai_rupiah}</span>
-                                                            </div>
+            container.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Auto-remove untuk notifikasi success/error biasa (dari session) setelah 4 detik
+            // Notifikasi dokumen masuk/reject tetap permanen (dipanggil dengan showNotificationWithAction)
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }, 4000); // 4 detik untuk notifikasi success/error biasa
+            }
+            // Jika type info/warning atau dokumen masuk/reject, tetap permanen
+        }
+
+        // Notification Toast Function with Action Button
+        function showNotificationWithAction(type, title, message, actionUrl, actionText) {
+            const container = document.getElementById('notificationContainer');
+            if (!container) {
+                // Create container if it doesn't exist
+                const newContainer = document.createElement('div');
+                newContainer.id = 'notificationContainer';
+                document.body.appendChild(newContainer);
+                container = newContainer;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `notification-toast ${type}`;
+
+            const icons = {
+                success: '<i class="fas fa-check-circle"></i>',
+                error: '<i class="fas fa-times-circle"></i>',
+                warning: '<i class="fas fa-exclamation-triangle"></i>',
+                info: '<i class="fas fa-bell"></i>'
+            };
+
+            toast.innerHTML = `
+                                                    <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+                                                    <div class="notification-content">
+                                                        <div class="notification-icon">
+                                                            ${icons[type] || icons.info}
+                                                        </div>
+                                                        <div class="notification-body">
+                                                            <div class="notification-title">${title}</div>
+                                                            <div class="notification-message">${message}</div>
+                                                            ${actionUrl ? `<a href="${actionUrl}" class="notification-action-btn">${actionText || 'Lihat'}</a>` : ''}
+                                                        </div>
+                                                    </div>
+                                                `;
+
+            container.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Notifikasi permanen - hanya hilang ketika user klik tombol X
+            // Auto-remove dihapus agar notifikasi tetap muncul sampai user menutupnya
+        }
+    </script>
+
+    <style>
+        /* Modern Notification Toast Styles */
+        #notificationContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .notification-toast {
+            min-width: 350px;
+            max-width: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            padding: 0;
+            overflow: hidden;
+            animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: translateX(400px);
+            opacity: 0;
+            margin-bottom: 16px;
+            pointer-events: auto;
+        }
+
+        .notification-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification-toast.hide {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .notification-toast.success {
+            border-left: 5px solid #48bb78;
+        }
+
+        .notification-toast.error {
+            border-left: 5px solid #f56565;
+        }
+
+        .notification-toast.warning {
+            border-left: 5px solid #f6ad55;
+        }
+
+        .notification-toast.info {
+            border-left: 5px solid #4299e1;
+        }
+
+        .notification-content {
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .notification-toast.success .notification-icon {
+            background: linear-gradient(135deg, #48bb78 0%, #9ae6b4 100%);
+            color: white;
+        }
+
+        .notification-toast.error .notification-icon {
+            background: linear-gradient(135deg, #f56565 0%, #fc8181 100%);
+            color: white;
+        }
+
+        .notification-toast.warning .notification-icon {
+            background: linear-gradient(135deg, #f6ad55 0%, #fed7aa 100%);
+            color: white;
+        }
+
+        .notification-toast.info .notification-icon {
+            background: linear-gradient(135deg, #4299e1 0%, #90cdf4 100%);
+            color: white;
+        }
+
+        .notification-body {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 4px;
+            color: #1a202c;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            color: #4a5568;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .notification-action-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #4299e1 0%, #63b3ed 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(66, 153, 225, 0.25);
+        }
+
+        .notification-action-btn:hover {
+            background: linear-gradient(135deg, #3182ce 0%, #4299e1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(66, 153, 225, 0.35);
+            color: white;
+            text-decoration: none;
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #718096;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+
+        .notification-close:hover {
+            color: #2d3748;
+        }
+
+        /* ============================================
+                                       MULTI-SELECT BULK APPROVE STYLES
+                                       ============================================ */
+
+        /* Select All Header */
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 0;
+        }
+
+        /* Custom Checkbox Styling */
+        .bulk-checkbox {
+            position: relative;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .bulk-checkbox input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+            margin: 0;
+        }
+
+        .bulk-checkbox .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .bulk-checkbox:hover .checkmark {
+            border-color: var(--accent-blue);
+            background: #ebf8ff;
+        }
+
+        .bulk-checkbox input[type="checkbox"]:checked+.checkmark {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #63b3ed 100%);
+            border-color: var(--accent-blue);
+        }
+
+        .bulk-checkbox .checkmark::after {
+            content: '';
+            position: absolute;
+            display: none;
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .bulk-checkbox input[type="checkbox"]:checked+.checkmark::after {
+            display: block;
+        }
+
+        .select-all-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .selected-count-badge {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #63b3ed 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .selected-count-badge.show {
+            display: inline-flex;
+        }
+
+        /* Document card checkbox positioning */
+        .document-card-with-checkbox {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .document-checkbox-wrapper {
+            padding-top: 0.25rem;
+        }
+
+        .document-card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Selected state for document card */
+        .document-card.selected {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, #ebf8ff 0%, #f7fafc 100%);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        }
+
+        .document-card.selected::before {
+            transform: scaleY(1);
+            background: var(--accent-blue);
+        }
+
+        /* ============================================
+                                       FLOATING ACTION BAR
+                                       ============================================ */
+        .bulk-action-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            z-index: 1000;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .bulk-action-bar.show {
+            bottom: 30px;
+        }
+
+        .bulk-action-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+        }
+
+        .bulk-action-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(66, 153, 225, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #63b3ed;
+            font-size: 1.125rem;
+        }
+
+        .bulk-action-text {
+            font-size: 0.9375rem;
+            font-weight: 600;
+        }
+
+        .bulk-action-text span {
+            color: #63b3ed;
+        }
+
+        .bulk-action-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-bulk-approve {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-bulk-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-bulk-approve:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-bulk-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-bulk-cancel:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* ============================================
+                                       BULK APPROVE CONFIRMATION MODAL
+                                       ============================================ */
+        .bulk-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .bulk-modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .bulk-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease;
+        }
+
+        .bulk-modal-header {
+            padding: 1.5rem 1.75rem;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bulk-modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .bulk-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .bulk-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .bulk-modal-body {
+            padding: 1.5rem 1.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bulk-modal-summary {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .bulk-modal-summary-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .bulk-modal-summary-text {
+            flex: 1;
+        }
+
+        .bulk-modal-summary-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .bulk-modal-summary-label {
+            font-size: 0.8125rem;
+            color: #718096;
+        }
+
+        .bulk-modal-doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .bulk-modal-doc-item {
+            background: #f7fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bulk-modal-doc-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .bulk-modal-doc-agenda {
+            font-weight: 600;
+            color: var(--accent-blue);
+            font-size: 0.875rem;
+        }
+
+        .bulk-modal-doc-spp {
+            font-size: 0.75rem;
+            color: #718096;
+        }
+
+        .bulk-modal-doc-value {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.875rem;
+        }
+
+        .bulk-modal-footer {
+            padding: 1.25rem 1.75rem;
+            background: #f7fafc;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .btn-modal-cancel {
+            background: white;
+            color: #4a5568;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-modal-cancel:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .btn-modal-confirm {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-modal-confirm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-modal-confirm:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-modal-confirm .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-modal-confirm.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-modal-confirm.loading .btn-text {
+            display: none;
+        }
+    </style>
+
+    <!-- History Modal -->
+    <div class="history-modal-overlay" id="historyModalOverlay" onclick="closeHistoryModalOnOverlay(event)">
+        <div class="history-modal">
+            <div class="history-modal-header">
+                <h3 class="history-modal-title">
+                    <i class="fas fa-history"></i>
+                    Riwayat Inbox
+                </h3>
+                <button class="history-modal-close" onclick="closeHistoryModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="history-modal-filters">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="today" onclick="loadHistoryByFilter('today', this)">Hari
+                        Ini</button>
+                    <button class="filter-btn" data-filter="yesterday"
+                        onclick="loadHistoryByFilter('yesterday', this)">Kemarin</button>
+                    <button class="filter-btn" data-filter="3days" onclick="loadHistoryByFilter('3days', this)">3
+                        Hari
+                        Lalu</button>
+                    <button class="filter-btn" data-filter="7days" onclick="loadHistoryByFilter('7days', this)">7
+                        Hari
+                        Lalu</button>
+                </div>
+                <div class="custom-date-wrapper">
+                    <label for="historyCustomDate">Atau pilih tanggal:</label>
+                    <input type="date" id="historyCustomDate" onchange="loadHistoryByCustomDate(this.value)">
+                </div>
+            </div>
+            <div class="history-modal-body" id="historyModalBody">
+                <div class="history-loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Memuat data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // History Modal Functions
+        function openHistoryModal() {
+            const overlay = document.getElementById('historyModalOverlay');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Reset filters
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="today"]').classList.add('active');
+            document.getElementById('historyCustomDate').value = '';
+
+            // Load today's data
+            loadHistoryByFilter('today');
+        }
+
+        function closeHistoryModal() {
+            const overlay = document.getElementById('historyModalOverlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function closeHistoryModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeHistoryModal();
+            }
+        }
+
+        function loadHistoryByFilter(filter, button = null) {
+            // Update active state
+            if (button) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            }
+            document.getElementById('historyCustomDate').value = '';
+
+            loadHistoryData(filter);
+        }
+
+        function loadHistoryByCustomDate(date) {
+            if (!date) return;
+
+            // Remove active from filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+
+            loadHistoryData(date);
+        }
+
+        function loadHistoryData(dateFilter) {
+            const body = document.getElementById('historyModalBody');
+            body.innerHTML = `
+                                                        <div class="history-loading">
+                                                            <i class="fas fa-spinner"></i>
+                                                            <p>Memuat data...</p>
                                                         </div>
                                                     `;
-                });
 
-                html += '</div>';
-                body.innerHTML = html;
-            }
-
-            // Close modal on Escape key
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape') {
-                    closeHistoryModal();
-                    closeBulkApproveModal();
-                }
-            });
-        </script>
-
-        <!-- Floating Action Bar for Bulk Approve -->
-        <div class="bulk-action-bar" id="bulkActionBar">
-            <div class="bulk-action-info">
-                <div class="bulk-action-icon">
-                    <i class="fas fa-check-double"></i>
-                </div>
-                <div class="bulk-action-text">
-                    <span id="bulkSelectedCount">0</span> dokumen dipilih
-                </div>
-            </div>
-            <div class="bulk-action-buttons">
-                <button type="button" class="btn-bulk-cancel" onclick="clearAllSelections()">
-                    <i class="fas fa-times"></i> Batal
-                </button>
-                <button type="button" class="btn-bulk-approve" onclick="showBulkApproveModal()">
-                    <i class="fas fa-check"></i> Approve Semua
-                </button>
-            </div>
-        </div>
-
-        <!-- Bulk Approve Confirmation Modal -->
-        <div class="bulk-modal-overlay" id="bulkApproveModalOverlay" onclick="closeBulkApproveModalOnOverlay(event)">
-            <div class="bulk-modal">
-                <div class="bulk-modal-header">
-                    <h3 class="bulk-modal-title">
-                        <i class="fas fa-check-double"></i>
-                        Konfirmasi Bulk Approve
-                    </h3>
-                    <button class="bulk-modal-close" onclick="closeBulkApproveModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="bulk-modal-body">
-                    <div class="bulk-modal-summary">
-                        <div class="bulk-modal-summary-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div class="bulk-modal-summary-text">
-                            <div class="bulk-modal-summary-count" id="modalSelectedCount">0</div>
-                            <div class="bulk-modal-summary-label">Dokumen akan disetujui</div>
-                        </div>
-                    </div>
-                    <div class="bulk-modal-doc-list" id="modalDocList">
-                        <!-- Document list populated dynamically -->
-                    </div>
-                </div>
-                <div class="bulk-modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeBulkApproveModal()">
-                        Batal
-                    </button>
-                    <button type="button" class="btn-modal-confirm" id="btnConfirmBulkApprove" onclick="executeBulkApprove()">
-                        <i class="fas fa-spinner spinner"></i>
-                        <span class="btn-text"><i class="fas fa-check"></i> Ya, Setujui Semua</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            // ============================================
-            // BULK APPROVE MULTI-SELECT FUNCTIONALITY
-            // ============================================
-
-            let selectedDocuments = new Map();
-
-            function toggleSelectAll() {
-                const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-                const isChecked = selectAllCheckbox.checked;
-                const docCheckboxes = document.querySelectorAll('.doc-checkbox');
-
-                console.log('toggleSelectAll called:', isChecked, 'Found checkboxes:', docCheckboxes.length);
-
-                // Clear existing selections first if unchecking
-                if (!isChecked) {
-                    selectedDocuments.clear();
-                }
-
-                docCheckboxes.forEach(function(checkbox) {
-                    checkbox.checked = isChecked;
-                    const docId = checkbox.dataset.id;
-                    const docCard = checkbox.closest('.document-card');
-
-                    if (isChecked) {
-                        selectedDocuments.set(docId, {
-                            id: docId,
-                            agenda: checkbox.dataset.agenda,
-                            spp: checkbox.dataset.spp,
-                            nilai: parseFloat(checkbox.dataset.nilai) || 0
-                        });
-                        docCard?.classList.add('selected');
+            fetch(`{{ route('inbox.history') }}?date=${encodeURIComponent(dateFilter)}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderHistoryDocuments(data);
                     } else {
-                        selectedDocuments.delete(docId);
-                        docCard?.classList.remove('selected');
+                        body.innerHTML = `
+                                                                <div class="history-empty-state">
+                                                                    <i class="fas fa-exclamation-circle"></i>
+                                                                    <p>${data.message || 'Gagal memuat data'}</p>
+                                                                </div>
+                                                            `;
                     }
+                })
+                .catch(error => {
+                    console.error('Error loading history:', error);
+                    body.innerHTML = `
+                                                            <div class="history-empty-state">
+                                                                <i class="fas fa-exclamation-triangle"></i>
+                                                                <p>Terjadi kesalahan saat memuat data</p>
+                                                            </div>
+                                                        `;
                 });
+        }
 
-                updateSelectedCount();
-                console.log('Selected documents:', selectedDocuments.size);
+        function renderHistoryDocuments(data) {
+            const body = document.getElementById('historyModalBody');
+
+            if (data.documents_count === 0) {
+                body.innerHTML = `
+                                                            <div class="history-date-label">
+                                                                ${data.date_label}
+                                                                <span class="count-badge">0 dokumen</span>
+                                                            </div>
+                                                            <div class="history-empty-state">
+                                                                <i class="fas fa-inbox"></i>
+                                                                <p>Tidak ada dokumen yang masuk pada periode ini</p>
+                                                            </div>
+                                                        `;
+                return;
             }
 
-            function handleDocCheckboxChange(checkbox, updateCount = true) {
+            let html = `
+                                                        <div class="history-date-label">
+                                                            ${data.date_label}
+                                                            <span class="count-badge">${data.documents_count} dokumen</span>
+                                                        </div>
+                                                        <div class="history-doc-list">
+                                                    `;
+
+            data.documents.forEach(doc => {
+                const statusClass = doc.status || 'pending';
+                html += `
+                                                            <div class="history-doc-item" onclick="window.location.href='${doc.url}'">
+                                                                <div class="history-doc-header">
+                                                                    <span class="history-doc-agenda">${doc.nomor_agenda}</span>
+                                                                    <span class="history-doc-status ${statusClass}">${doc.status_label}</span>
+                                                                </div>
+                                                                <div class="history-doc-spp">${doc.nomor_spp}</div>
+                                                                <div class="history-doc-uraian">${doc.uraian_spp}</div>
+                                                                <div class="history-doc-footer">
+                                                                    <span class="history-doc-time">
+                                                                        <i class="fas fa-clock"></i>
+                                                                        Masuk: ${doc.received_at}
+                                                                    </span>
+                                                                    <span class="history-doc-value">${doc.nilai_rupiah}</span>
+                                                                </div>
+                                                            </div>
+                                                        `;
+            });
+
+            html += '</div>';
+            body.innerHTML = html;
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeHistoryModal();
+                closeBulkApproveModal();
+            }
+        });
+    </script>
+
+    <!-- Floating Action Bar for Bulk Approve -->
+    <div class="bulk-action-bar" id="bulkActionBar">
+        <div class="bulk-action-info">
+            <div class="bulk-action-icon">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <div class="bulk-action-text">
+                <span id="bulkSelectedCount">0</span> dokumen dipilih
+            </div>
+        </div>
+        <div class="bulk-action-buttons">
+            <button type="button" class="btn-bulk-cancel" onclick="clearAllSelections()">
+                <i class="fas fa-times"></i> Batal
+            </button>
+            <button type="button" class="btn-bulk-approve" onclick="showBulkApproveModal()">
+                <i class="fas fa-check"></i> Approve Semua
+            </button>
+        </div>
+    </div>
+
+    <!-- Bulk Approve Confirmation Modal -->
+    <div class="bulk-modal-overlay" id="bulkApproveModalOverlay" onclick="closeBulkApproveModalOnOverlay(event)">
+        <div class="bulk-modal">
+            <div class="bulk-modal-header">
+                <h3 class="bulk-modal-title">
+                    <i class="fas fa-check-double"></i>
+                    Konfirmasi Bulk Approve
+                </h3>
+                <button class="bulk-modal-close" onclick="closeBulkApproveModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="bulk-modal-body">
+                <div class="bulk-modal-summary">
+                    <div class="bulk-modal-summary-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="bulk-modal-summary-text">
+                        <div class="bulk-modal-summary-count" id="modalSelectedCount">0</div>
+                        <div class="bulk-modal-summary-label">Dokumen akan disetujui</div>
+                    </div>
+                </div>
+                <div class="bulk-modal-doc-list" id="modalDocList">
+                    <!-- Document list populated dynamically -->
+                </div>
+            </div>
+            <div class="bulk-modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeBulkApproveModal()">
+                    Batal
+                </button>
+                <button type="button" class="btn-modal-confirm" id="btnConfirmBulkApprove" onclick="executeBulkApprove()">
+                    <i class="fas fa-spinner spinner"></i>
+                    <span class="btn-text"><i class="fas fa-check"></i> Ya, Setujui Semua</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // BULK APPROVE MULTI-SELECT FUNCTIONALITY
+        // ============================================
+
+        let selectedDocuments = new Map();
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const isChecked = selectAllCheckbox.checked;
+            const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+
+            console.log('toggleSelectAll called:', isChecked, 'Found checkboxes:', docCheckboxes.length);
+
+            // Clear existing selections first if unchecking
+            if (!isChecked) {
+                selectedDocuments.clear();
+            }
+
+            docCheckboxes.forEach(function (checkbox) {
+                checkbox.checked = isChecked;
                 const docId = checkbox.dataset.id;
                 const docCard = checkbox.closest('.document-card');
 
-                if (checkbox.checked) {
+                if (isChecked) {
                     selectedDocuments.set(docId, {
                         id: docId,
                         agenda: checkbox.dataset.agenda,
@@ -2995,223 +3155,245 @@
                     selectedDocuments.delete(docId);
                     docCard?.classList.remove('selected');
                 }
+            });
 
-                if (updateCount) {
-                    updateSelectedCount();
-                }
+            updateSelectedCount();
+            console.log('Selected documents:', selectedDocuments.size);
+        }
 
-                updateSelectAllState();
-            }
+        function handleDocCheckboxChange(checkbox, updateCount = true) {
+            const docId = checkbox.dataset.id;
+            const docCard = checkbox.closest('.document-card');
 
-            function updateSelectAllState() {
-                const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-                const docCheckboxes = document.querySelectorAll('.doc-checkbox');
-                const checkedCount = document.querySelectorAll('.doc-checkbox:checked').length;
-
-                if (checkedCount === 0) {
-                    selectAllCheckbox.checked = false;
-                    selectAllCheckbox.indeterminate = false;
-                } else if (checkedCount === docCheckboxes.length) {
-                    selectAllCheckbox.checked = true;
-                    selectAllCheckbox.indeterminate = false;
-                } else {
-                    selectAllCheckbox.checked = false;
-                    selectAllCheckbox.indeterminate = true;
-                }
-            }
-
-            function updateSelectedCount() {
-                const count = selectedDocuments.size;
-                const actionBar = document.getElementById('bulkActionBar');
-                const countBadge = document.getElementById('selectedCountBadge');
-                const bulkCountSpan = document.getElementById('bulkSelectedCount');
-
-                countBadge.textContent = count + ' dipilih';
-                bulkCountSpan.textContent = count;
-
-                if (count > 0) {
-                    actionBar.classList.add('show');
-                    countBadge.classList.add('show');
-                } else {
-                    actionBar.classList.remove('show');
-                    countBadge.classList.remove('show');
-                }
-            }
-
-            function clearAllSelections() {
-                selectedDocuments.clear();
-
-                document.querySelectorAll('.doc-checkbox').forEach(checkbox => {
-                    checkbox.checked = false;
+            if (checkbox.checked) {
+                selectedDocuments.set(docId, {
+                    id: docId,
+                    agenda: checkbox.dataset.agenda,
+                    spp: checkbox.dataset.spp,
+                    nilai: parseFloat(checkbox.dataset.nilai) || 0
                 });
+                docCard?.classList.add('selected');
+            } else {
+                selectedDocuments.delete(docId);
+                docCard?.classList.remove('selected');
+            }
 
-                document.querySelectorAll('.document-card.selected').forEach(card => {
-                    card.classList.remove('selected');
-                });
-
-                document.getElementById('selectAllCheckbox').checked = false;
-                document.getElementById('selectAllCheckbox').indeterminate = false;
-
+            if (updateCount) {
                 updateSelectedCount();
             }
 
-            function showBulkApproveModal() {
-                if (selectedDocuments.size === 0) {
-                    alert('Pilih minimal 1 dokumen untuk di-approve');
-                    return;
-                }
+            updateSelectAllState();
+        }
 
-                const overlay = document.getElementById('bulkApproveModalOverlay');
-                const modalDocList = document.getElementById('modalDocList');
-                const modalCount = document.getElementById('modalSelectedCount');
+        function updateSelectAllState() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+            const checkedCount = document.querySelectorAll('.doc-checkbox:checked').length;
 
-                modalCount.textContent = selectedDocuments.size;
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === docCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
 
-                let html = '';
-                selectedDocuments.forEach((doc, id) => {
-                    const formattedNilai = new Intl.NumberFormat('id-ID', {
-                        style: 'currency',
-                        currency: 'IDR',
-                        minimumFractionDigits: 0
-                    }).format(doc.nilai);
+        function updateSelectedCount() {
+            const count = selectedDocuments.size;
+            const actionBar = document.getElementById('bulkActionBar');
+            const countBadge = document.getElementById('selectedCountBadge');
+            const bulkCountSpan = document.getElementById('bulkSelectedCount');
 
-                    html += `
-                            <div class="bulk-modal-doc-item">
-                                <div class="bulk-modal-doc-info">
-                                    <div class="bulk-modal-doc-agenda">${doc.agenda}</div>
-                                    <div class="bulk-modal-doc-spp">${doc.spp}</div>
+            countBadge.textContent = count + ' dipilih';
+            bulkCountSpan.textContent = count;
+
+            if (count > 0) {
+                actionBar.classList.add('show');
+                countBadge.classList.add('show');
+            } else {
+                actionBar.classList.remove('show');
+                countBadge.classList.remove('show');
+            }
+        }
+
+        function clearAllSelections() {
+            selectedDocuments.clear();
+
+            document.querySelectorAll('.doc-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            document.querySelectorAll('.document-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            document.getElementById('selectAllCheckbox').checked = false;
+            document.getElementById('selectAllCheckbox').indeterminate = false;
+
+            updateSelectedCount();
+        }
+
+        function showBulkApproveModal() {
+            if (selectedDocuments.size === 0) {
+                alert('Pilih minimal 1 dokumen untuk di-approve');
+                return;
+            }
+
+            const overlay = document.getElementById('bulkApproveModalOverlay');
+            const modalDocList = document.getElementById('modalDocList');
+            const modalCount = document.getElementById('modalSelectedCount');
+
+            modalCount.textContent = selectedDocuments.size;
+
+            let html = '';
+            selectedDocuments.forEach((doc, id) => {
+                const formattedNilai = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(doc.nilai);
+
+                html += `
+                                <div class="bulk-modal-doc-item">
+                                    <div class="bulk-modal-doc-info">
+                                        <div class="bulk-modal-doc-agenda">${doc.agenda}</div>
+                                        <div class="bulk-modal-doc-spp">${doc.spp}</div>
+                                    </div>
+                                    <div class="bulk-modal-doc-value">${formattedNilai}</div>
                                 </div>
-                                <div class="bulk-modal-doc-value">${formattedNilai}</div>
-                            </div>
-                        `;
-                });
+                            `;
+            });
 
-                modalDocList.innerHTML = html;
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
+            modalDocList.innerHTML = html;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBulkApproveModal() {
+            const overlay = document.getElementById('bulkApproveModalOverlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+
+            const confirmBtn = document.getElementById('btnConfirmBulkApprove');
+            confirmBtn.classList.remove('loading');
+            confirmBtn.disabled = false;
+        }
+
+        function closeBulkApproveModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeBulkApproveModal();
+            }
+        }
+
+        function executeBulkApprove() {
+            const confirmBtn = document.getElementById('btnConfirmBulkApprove');
+
+            if (selectedDocuments.size === 0) {
+                alert('Tidak ada dokumen yang dipilih');
+                return;
             }
 
-            function closeBulkApproveModal() {
-                const overlay = document.getElementById('bulkApproveModalOverlay');
-                overlay.classList.remove('active');
-                document.body.style.overflow = '';
+            confirmBtn.classList.add('loading');
+            confirmBtn.disabled = true;
 
-                const confirmBtn = document.getElementById('btnConfirmBulkApprove');
-                confirmBtn.classList.remove('loading');
-                confirmBtn.disabled = false;
-            }
+            const documentIds = Array.from(selectedDocuments.keys()).map(id => parseInt(id));
 
-            function closeBulkApproveModalOnOverlay(event) {
-                if (event.target === event.currentTarget) {
-                    closeBulkApproveModal();
-                }
-            }
-
-            function executeBulkApprove() {
-                const confirmBtn = document.getElementById('btnConfirmBulkApprove');
-
-                if (selectedDocuments.size === 0) {
-                    alert('Tidak ada dokumen yang dipilih');
-                    return;
-                }
-
-                confirmBtn.classList.add('loading');
-                confirmBtn.disabled = true;
-
-                const documentIds = Array.from(selectedDocuments.keys()).map(id => parseInt(id));
-
-                fetch('{{ route("inbox.bulk-approve") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        document_ids: documentIds
-                    })
+            fetch('{{ route("inbox.bulk-approve") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    document_ids: documentIds
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showBulkNotification('success', data.message);
-                            closeBulkApproveModal();
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showBulkNotification('success', data.message);
+                        closeBulkApproveModal();
 
-                            selectedDocuments.forEach((doc, id) => {
-                                const card = document.querySelector(`.document-card[data-id="${id}"]`);
-                                if (card) {
-                                    card.style.transition = 'opacity 0.3s, transform 0.3s';
-                                    card.style.opacity = '0';
-                                    card.style.transform = 'translateX(-20px)';
-                                    setTimeout(() => card.remove(), 300);
-                                }
-                            });
+                        selectedDocuments.forEach((doc, id) => {
+                            const card = document.querySelector(`.document-card[data-id="${id}"]`);
+                            if (card) {
+                                card.style.transition = 'opacity 0.3s, transform 0.3s';
+                                card.style.opacity = '0';
+                                card.style.transform = 'translateX(-20px)';
+                                setTimeout(() => card.remove(), 300);
+                            }
+                        });
 
-                            setTimeout(() => {
-                                clearAllSelections();
-                                setTimeout(() => window.location.reload(), 1500);
-                            }, 400);
+                        setTimeout(() => {
+                            clearAllSelections();
+                            setTimeout(() => window.location.reload(), 1500);
+                        }, 400);
 
-                        } else {
-                            showBulkNotification('error', data.message || 'Terjadi kesalahan');
-                            confirmBtn.classList.remove('loading');
-                            confirmBtn.disabled = false;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Bulk approve error:', error);
-                        showBulkNotification('error', 'Terjadi kesalahan saat memproses bulk approve');
+                    } else {
+                        showBulkNotification('error', data.message || 'Terjadi kesalahan');
                         confirmBtn.classList.remove('loading');
                         confirmBtn.disabled = false;
-                    });
-            }
-
-            function showBulkNotification(type, message) {
-                const existingNotif = document.querySelector('.bulk-notification');
-                if (existingNotif) existingNotif.remove();
-
-                const notifDiv = document.createElement('div');
-                notifDiv.className = `bulk-notification ${type}`;
-                notifDiv.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 1rem 1.5rem;
-                        border-radius: 12px;
-                        color: white;
-                        font-weight: 600;
-                        z-index: 3000;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                        animation: slideInRight 0.3s ease;
-                        display: flex;
-                        align-items: center;
-                        gap: 0.75rem;
-                    `;
-
-                const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-                const bgColor = type === 'success' ? 'linear-gradient(135deg, #48bb78, #38a169)' : 'linear-gradient(135deg, #f56565, #e53e3e)';
-                notifDiv.style.background = bgColor;
-
-                notifDiv.innerHTML = `<i class="${icon}"></i><span>${message}</span>`;
-                document.body.appendChild(notifDiv);
-
-                setTimeout(() => {
-                    notifDiv.style.opacity = '0';
-                    notifDiv.style.transform = 'translateX(20px)';
-                    setTimeout(() => notifDiv.remove(), 300);
-                }, 4000);
-            }
-
-            // Add animation style
-            const bulkStyle = document.createElement('style');
-            bulkStyle.textContent = `
-                    @keyframes slideInRight {
-                        from { opacity: 0; transform: translateX(20px); }
-                        to { opacity: 1; transform: translateX(0); }
                     }
-                `;
-            document.head.appendChild(bulkStyle);
-        </script>
+                })
+                .catch(error => {
+                    console.error('Bulk approve error:', error);
+                    showBulkNotification('error', 'Terjadi kesalahan saat memproses bulk approve');
+                    confirmBtn.classList.remove('loading');
+                    confirmBtn.disabled = false;
+                });
+        }
+
+        function showBulkNotification(type, message) {
+            const existingNotif = document.querySelector('.bulk-notification');
+            if (existingNotif) existingNotif.remove();
+
+            const notifDiv = document.createElement('div');
+            notifDiv.className = `bulk-notification ${type}`;
+            notifDiv.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            padding: 1rem 1.5rem;
+                            border-radius: 12px;
+                            color: white;
+                            font-weight: 600;
+                            z-index: 3000;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                            animation: slideInRight 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                        `;
+
+            const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            const bgColor = type === 'success' ? 'linear-gradient(135deg, #48bb78, #38a169)' : 'linear-gradient(135deg, #f56565, #e53e3e)';
+            notifDiv.style.background = bgColor;
+
+            notifDiv.innerHTML = `<i class="${icon}"></i><span>${message}</span>`;
+            document.body.appendChild(notifDiv);
+
+            setTimeout(() => {
+                notifDiv.style.opacity = '0';
+                notifDiv.style.transform = 'translateX(20px)';
+                setTimeout(() => notifDiv.remove(), 300);
+            }, 4000);
+        }
+
+        // Add animation style
+        const bulkStyle = document.createElement('style');
+        bulkStyle.textContent = `
+                        @keyframes slideInRight {
+                            from { opacity: 0; transform: translateX(20px); }
+                            to { opacity: 1; transform: translateX(0); }
+                        }
+                    `;
+        document.head.appendChild(bulkStyle);
+    </script>
 @endsection
