@@ -12,6 +12,40 @@
       font-size: 28px;
     }
 
+    /* Dark Mode Override for h2 */
+    .dark h2 {
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      background-clip: unset !important;
+      color: #ffffff !important;
+    }
+
+    .dark h2 i {
+      color: #ffffff !important;
+    }
+
+    /* Dark Mode - Stats Card numbers */
+    .dark .stat-content .stat-number,
+    .dark .stat-number {
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+
+    /* Dark Mode - Section titles */
+    .dark .table-container h6 span {
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      color: #ffffff !important;
+    }
+
+    .dark .table-container h6,
+    .dark .table-container h6 i {
+      color: #ffffff !important;
+    }
+
+
     /* Statistics Cards - Inspired by Team Verifikasi's Design */
     .stat-card {
       background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
@@ -706,8 +740,3 @@
   </script>
 
 @endsection
-
-
-
-
-
