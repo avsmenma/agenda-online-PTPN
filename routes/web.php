@@ -555,7 +555,7 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])-
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'pengembalian'])->name('index');
     Route::get('/stats', [TeamVerifikasiController::class, 'getPengembalianKeBagianStats'])->name('stats');
-    Route::get('/bidang', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bidang');
+    Route::get('/bagian', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bagian');
     Route::post('/{dokumen}/to-bidang', [TeamVerifikasiController::class, 'returnToBidang'])->name('to-bidang');
     Route::post('/{dokumen}/restore-from-bidang', [TeamVerifikasiController::class, 'restoreFromBidang'])->name('restore-from-bidang');
 });

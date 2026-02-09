@@ -4313,8 +4313,8 @@
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
           <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ route('returns.verifikasi.bidang') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
-          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian ke Bidang
+        <a href="{{ route('returns.verifikasi.bagian') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
+          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
