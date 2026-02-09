@@ -5536,36 +5536,9 @@
                       </style>
 
                       <script>
-                      // Open Return to Bidang Modal
-                      function openReturnToBidangModal(docId) {
-                        // Fetch document details via AJAX (returns HTML)
-                        fetch(`/dokumens/${docId}/detail`, {
-                          method: 'GET',
-                          headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'text/html'
-                          }
-                        })
-                          .then(response => response.text())
-                          .then(html => {
-                            // Set document info in modal
-                            document.getElementById('return-bidang-doc-info').innerHTML = html;
-                            document.getElementById('return-bidang-doc-id').value = docId;
-
-                            // Reset form
-                            document.getElementById('target_bidang').value = '';
-                            document.getElementById('bidang_return_reason').value = '';
-                            document.getElementById('bidang-char-count').textContent = '0';
-
-                            // Show modal
-                            const modal = new bootstrap.Modal(document.getElementById('returnToBidangModal'));
-                            modal.show();
-                          })
-                          .catch(error => {
-                            console.error('Error:', error);
-                            alert('Gagal memuat detail dokumen.');
-                          });
-                      }
+                      // NOTE: openReturnToBidangModal is already defined at line 4219 using window.openReturnToBidangModal
+                      // The duplicate function below has been removed to prevent overwriting the correct version
+                      // (The old version was trying to fetch /dokumens/${docId}/detail which caused ERR_TOO_MANY_REDIRECTS)
 
                       // Return to Bidang function
                       function returnToBidang() {
