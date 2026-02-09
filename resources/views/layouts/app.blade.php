@@ -4314,7 +4314,7 @@
           <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
         </a>
         <a href="{{ route('returns.verifikasi.bagian') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
-          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
+          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Dari Bidang
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
