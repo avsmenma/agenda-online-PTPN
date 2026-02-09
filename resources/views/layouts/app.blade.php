@@ -4314,12 +4314,12 @@
           <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
         </a>
         <a href="{{ route('returns.verifikasi.bagian') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
-          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Dari Bidang
+          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
         <a href="{{ route('returns.verifikasi.index') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-          <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian dari Bagian
+          <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian Dari Bidang
           <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
