@@ -931,9 +931,10 @@ class OwnerDashboardController extends Controller
             $endTime = Carbon::now();
         }
 
-        // Calculate difference
-        $diffDays = $startTime->diffInDays($endTime);
-        $diffHours = $startTime->diffInHours($endTime) % 24;
+        // Calculate total difference in hours first, then derive days
+        $totalHours = (int) $startTime->diffInHours($endTime);
+        $diffDays = (int) floor($totalHours / 24);
+        $diffHours = $totalHours % 24;
 
         // Format output
         if ($diffDays > 0) {
@@ -945,7 +946,7 @@ class OwnerDashboardController extends Controller
             $text = $diffHours . ' jam';
             if ($diffHours == 0) {
                 // Less than 1 hour, show minutes
-                $diffMinutes = $startTime->diffInMinutes($endTime);
+                $diffMinutes = (int) $startTime->diffInMinutes($endTime);
                 $text = $diffMinutes . ' menit';
             }
         }
