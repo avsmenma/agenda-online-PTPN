@@ -83,6 +83,27 @@ class OwnerDashboardController extends Controller
             ? round((($totalNilai - $totalNilaiLastWeek) / $totalNilaiLastWeek) * 100, 1)
             : ($totalNilai > 0 ? 100 : 0);
 
+        // Calculate all document ages (in days) for age filter cards
+        $allDokumenUmur = Dokumen::select('created_at', 'tanggal_masuk', 'tanggal_dibayar', 'status_pembayaran', 'status')
+            ->get()
+            ->map(function ($dok) {
+                $startTime = $dok->created_at ?? $dok->tanggal_masuk;
+                if (!$startTime)
+                    return 0;
+
+                $startTime = Carbon::parse($startTime);
+                $isPaid = !empty($dok->tanggal_dibayar) ||
+                    $dok->status_pembayaran === 'sudah_dibayar' ||
+                    $dok->status === 'completed';
+
+                $endTime = ($isPaid && !empty($dok->tanggal_dibayar))
+                    ? Carbon::parse($dok->tanggal_dibayar)
+                    : Carbon::now();
+
+                return (int) floor($startTime->diffInHours($endTime) / 24);
+            })
+            ->toArray();
+
         return view('owner.dashboard', compact(
             'documents',
             'totalDokumen',
@@ -94,7 +115,8 @@ class OwnerDashboardController extends Controller
             'dokumenSelesaiTrend',
             'dokumenProsesTrend',
             'totalNilaiTrend',
-            'filterData'
+            'filterData',
+            'allDokumenUmur'
         ))
             ->with('title', 'Dashboard Kabag Keuangan - Dokumen')
             ->with('module', 'owner')

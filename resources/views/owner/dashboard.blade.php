@@ -73,6 +73,115 @@
       </div>
     </div>
 
+    {{-- ===== Document Age Filter Section ===== --}}
+    <div class="age-filter-section">
+      <div class="age-filter-header">
+        <h3><i class="fas fa-hourglass-half"></i> Filter Umur Dokumen</h3>
+        <button class="age-settings-btn" onclick="openAgeSettingsModal()">
+          <i class="fas fa-cog"></i>
+          <span>Pengaturan</span>
+        </button>
+      </div>
+
+      {{-- Age Info Cards --}}
+      <div class="age-info-cards">
+        <div class="age-info-card" id="ageCard1" onclick="filterByAge(1)">
+          <div class="age-info-card-icon">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div class="age-info-card-content">
+            <div class="age-info-card-label">Umur &gt; <span id="ageLabel1">3</span> Hari</div>
+            <div class="age-info-card-value" id="ageCount1">-</div>
+            <div class="age-info-card-count">dokumen</div>
+          </div>
+        </div>
+
+        <div class="age-info-card warning" id="ageCard2" onclick="filterByAge(2)">
+          <div class="age-info-card-icon">
+            <i class="fas fa-calendar-week"></i>
+          </div>
+          <div class="age-info-card-content">
+            <div class="age-info-card-label">Umur &gt; <span id="ageLabel2">7</span> Hari</div>
+            <div class="age-info-card-value" id="ageCount2">-</div>
+            <div class="age-info-card-count">dokumen</div>
+          </div>
+        </div>
+
+        <div class="age-info-card danger" id="ageCard3" onclick="filterByAge(3)">
+          <div class="age-info-card-icon">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <div class="age-info-card-content">
+            <div class="age-info-card-label">Umur &gt; <span id="ageLabel3">30</span> Hari</div>
+            <div class="age-info-card-value" id="ageCount3">-</div>
+            <div class="age-info-card-count">dokumen</div>
+          </div>
+        </div>
+      </div>
+
+      {{-- Age Filter Chips --}}
+      <div class="age-filter-chips">
+        <button class="age-chip" id="ageChip1" onclick="filterByAge(1)">
+          <i class="fas fa-filter"></i>
+          <span>&gt; <span class="chip-days-1">3</span> hari</span>
+        </button>
+        <button class="age-chip warning" id="ageChip2" onclick="filterByAge(2)">
+          <i class="fas fa-filter"></i>
+          <span>&gt; <span class="chip-days-2">7</span> hari</span>
+        </button>
+        <button class="age-chip danger" id="ageChip3" onclick="filterByAge(3)">
+          <i class="fas fa-filter"></i>
+          <span>&gt; <span class="chip-days-3">30</span> hari</span>
+        </button>
+        <button class="age-chip age-chip-clear" id="ageChipClear" onclick="clearAgeFilter()" style="display: none;">
+          <i class="fas fa-times"></i>
+          <span>Hapus Filter</span>
+        </button>
+      </div>
+    </div>
+
+    {{-- Age Settings Modal --}}
+    <div class="age-modal-overlay" id="ageSettingsModal" onclick="closeAgeSettingsModal(event)">
+      <div class="age-modal" onclick="event.stopPropagation()">
+        <div class="age-modal-header">
+          <i class="fas fa-sliders-h"></i>
+          <h4>Pengaturan Filter Umur Dokumen</h4>
+        </div>
+        <div class="age-modal-body">
+          <div class="age-input-group">
+            <label>Filter 1 - Level Rendah (Kuning Muda)</label>
+            <div class="age-input-suffix">
+              <input type="number" id="ageSetting1" min="1" max="365" value="3">
+              <span>hari</span>
+            </div>
+          </div>
+          <div class="age-input-group">
+            <label>Filter 2 - Level Sedang (Oranye)</label>
+            <div class="age-input-suffix">
+              <input type="number" id="ageSetting2" min="1" max="365" value="7">
+              <span>hari</span>
+            </div>
+          </div>
+          <div class="age-input-group">
+            <label>Filter 3 - Level Tinggi (Merah)</label>
+            <div class="age-input-suffix">
+              <input type="number" id="ageSetting3" min="1" max="365" value="30">
+              <span>hari</span>
+            </div>
+          </div>
+        </div>
+        <div class="age-modal-footer">
+          <button class="age-modal-btn reset" onclick="resetAgeSettings()">
+            <i class="fas fa-redo"></i> Reset Default
+          </button>
+          <div>
+            <button class="age-modal-btn cancel" onclick="closeAgeSettingsModal()">Batal</button>
+            <button class="age-modal-btn save" onclick="saveAgeSettings()">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     {{-- ===== Filter Bar ===== --}}
     <div class="filter-bar">
       {{-- Search Input --}}
@@ -423,204 +532,380 @@
   </div>
 
   <script>
-    // ===== Navigation =====
-    function navigateToWorkflow(id) {
-      window.location.href = '{{ url("/owner/workflow") }}/' + id;
-    }
+      // ===== Navigation ==       ===
+      function navigateToWorkflow(id) {
+        window.location.href = '{{ url("/owner/workflow") }}/' + id;
+      }
 
-    // ===== Filter by Card Click =====
-    function filterByCard(status) {
-      if (status === 'all') {
-        // Clear all status filters and reload
-        window.location.href = '{{ url("/owner/dokumen") }}';
-      } else {
+      // ===== Filter by Card Click =====
+      function filterByCard(status) {
+        if (status === 'all') {
+          // Clear all status filters and reload
+          window.location.href = '{{ url("/owner/dokumen") }}';
+        } else {
+          document.getElementById('statusInput').value = status;
+          document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+          // Find and activate the correct chip
+          const chips = document.querySelectorAll('.chip');
+          chips.forEach(chip => {
+            if (chip.textContent.includes('Belum Siap') && status === 'belum_siap') chip.classList.add('active');
+            if (chip.textContent.includes('Siap Dibayar') && !chip.textContent.includes('Belum') && status === 'siap_dibayar') chip.classList.add('active');
+            if (chip.textContent.includes('Sudah Dibayar') && status === 'sudah_dibayar') chip.classList.add('active');
+          });
+          applyFilter();
+        }
+      }
+
+      // ===== View Switcher =====
+      function switchView(view) {
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+        document.getElementById('cardView').classList.toggle('active', view === 'card');
+        document.getElementById('tableView').classList.toggle('active', view === 'table');
+
+        localStorage.setItem('ownerDashboardView', view);
+      }
+
+      // ===== Filter Functions =====
+      function toggleFilterPanel() {
+        const panel = document.getElementById('filterPanel');
+        panel.classList.toggle('open');
+      }
+
+      function setStatus(status) {
         document.getElementById('statusInput').value = status;
         document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-        // Find and activate the correct chip
-        const chips = document.querySelectorAll('.chip');
-        chips.forEach(chip => {
-          if (chip.textContent.includes('Belum Siap') && status === 'belum_siap') chip.classList.add('active');
-          if (chip.textContent.includes('Siap Dibayar') && !chip.textContent.includes('Belum') && status === 'siap_dibayar') chip.classList.add('active');
-          if (chip.textContent.includes('Sudah Dibayar') && status === 'sudah_dibayar') chip.classList.add('active');
-        });
+        event.target.classList.add('active');
         applyFilter();
       }
-    }
 
-    // ===== View Switcher =====
-    function switchView(view) {
-      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`[data-view="${view}"]`).classList.add('active');
+      function applyFilter() {
+        const form = document.getElementById('filterForm');
+        const searchInput = document.getElementById('searchInput');
 
-      document.getElementById('cardView').classList.toggle('active', view === 'card');
-      document.getElementById('tableView').classList.toggle('active', view === 'table');
+        // Add search value to form
+        let searchHidden = form.querySelector('input[name="search"]');
+        if (!searchHidden) {
+          searchHidden = document.createElement('input');
+          searchHidden.type = 'hidden';
+          searchHidden.name = 'search';
+          form.appendChild(searchHidden);
+        }
+        searchHidden.value = searchInput.value;
 
-      localStorage.setItem('ownerDashboardView', view);
-    }
-
-    // ===== Filter Functions =====
-    function toggleFilterPanel() {
-      const panel = document.getElementById('filterPanel');
-      panel.classList.toggle('open');
-    }
-
-    function setStatus(status) {
-      document.getElementById('statusInput').value = status;
-      document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-      event.target.classList.add('active');
-      applyFilter();
-    }
-
-    function applyFilter() {
-      const form = document.getElementById('filterForm');
-      const searchInput = document.getElementById('searchInput');
-
-      // Add search value to form
-      let searchHidden = form.querySelector('input[name="search"]');
-      if (!searchHidden) {
-        searchHidden = document.createElement('input');
-        searchHidden.type = 'hidden';
-        searchHidden.name = 'search';
-        form.appendChild(searchHidden);
+        form.submit();
       }
-      searchHidden.value = searchInput.value;
 
-      form.submit();
-    }
+      function resetFilters() {
+        window.location.href = '{{ url("/owner/dokumen") }}';
+      }
 
-    function resetFilters() {
-      window.location.href = '{{ url("/owner/dokumen") }}';
-    }
+      function updateFilterCount() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        let count = 0;
 
-    function updateFilterCount() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      let count = 0;
+        for (let [key, value] of formData.entries()) {
+          if (key.startsWith('filter_') && value && value !== '') {
+            count++;
+          }
+        }
 
-      for (let [key, value] of formData.entries()) {
-        if (key.startsWith('filter_') && value && value !== '') {
-          count++;
+        const badge = document.getElementById('filterCount');
+        badge.textContent = count;
+        badge.setAttribute('data-count', count);
+
+        updateActiveFilterTags();
+      }
+
+      function updateActiveFilterTags() {
+        const container = document.getElementById('activeFilters');
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        container.innerHTML = '';
+
+        const labels = {
+          'filter_bagian': 'Bagian',
+          'filter_vendor': 'Vendor',
+          'filter_kriteria_cf': 'Kriteria CF',
+          'filter_sub_kriteria': 'Sub Kriteria',
+          'filter_item_sub_kriteria': 'Item Sub',
+          'filter_kebun': 'Kebun',
+          'filter_status_pembayaran': 'Status Bayar'
+        };
+
+        for (let [key, value] of formData.entries()) {
+          if (key.startsWith('filter_') && value && value !== '') {
+            const select = form.querySelector(`[name="${key}"]`);
+            const displayValue = select ? (Array.from(select.options).find(o => o.value === value)?.text || value) : value;
+
+            const tag = document.createElement('span');
+            tag.className = 'filter-tag';
+            tag.innerHTML = `
+                        <span>${labels[key] || key}: ${displayValue}</span>
+                        <button type="button" class="remove" onclick="removeFilter('${key}')">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      `;
+            container.appendChild(tag);
+          }
         }
       }
 
-      const badge = document.getElementById('filterCount');
-      badge.textContent = count;
-      badge.setAttribute('data-count', count);
-
-      updateActiveFilterTags();
-    }
-
-    function updateActiveFilterTags() {
-      const container = document.getElementById('activeFilters');
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      container.innerHTML = '';
-
-      const labels = {
-        'filter_bagian': 'Bagian',
-        'filter_vendor': 'Vendor',
-        'filter_kriteria_cf': 'Kriteria CF',
-        'filter_sub_kriteria': 'Sub Kriteria',
-        'filter_item_sub_kriteria': 'Item Sub',
-        'filter_kebun': 'Kebun',
-        'filter_status_pembayaran': 'Status Bayar'
-      };
-
-      for (let [key, value] of formData.entries()) {
-        if (key.startsWith('filter_') && value && value !== '') {
-          const select = form.querySelector(`[name="${key}"]`);
-          const displayValue = select ? (Array.from(select.options).find(o => o.value === value)?.text || value) : value;
-
-          const tag = document.createElement('span');
-          tag.className = 'filter-tag';
-          tag.innerHTML = `
-                      <span>${labels[key] || key}: ${displayValue}</span>
-                      <button type="button" class="remove" onclick="removeFilter('${key}')">
-                        <i class="fas fa-times"></i>
-                      </button>
-                    `;
-          container.appendChild(tag);
+      function removeFilter(key) {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) {
+          input.value = '';
+          applyFilter();
         }
       }
-    }
 
-    function removeFilter(key) {
-      const input = document.querySelector(`[name="${key}"]`);
-      if (input) {
-        input.value = '';
-        applyFilter();
+      // ===== Cascading Dropdowns =====
+      function updateSubKriteriaFilter() {
+        const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+
+        if (kriteriaCfId && kriteriaCfId !== '') {
+          subKriteriaSelect.disabled = false;
+          Array.from(subKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+            option.style.display = kriteriaCfIdForOption === kriteriaCfId ? 'block' : 'none';
+          });
+        } else {
+          subKriteriaSelect.disabled = true;
+          subKriteriaSelect.value = '';
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.value = '';
+          Array.from(subKriteriaSelect.options).forEach(option => option.style.display = 'block');
+        }
+        updateItemSubKriteriaFilter();
       }
-    }
 
-    // ===== Cascading Dropdowns =====
-    function updateSubKriteriaFilter() {
-      const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+      function updateItemSubKriteriaFilter() {
+        const subKriteriaId = document.getElementById('filterSubKriteria').value;
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
 
-      if (kriteriaCfId && kriteriaCfId !== '') {
-        subKriteriaSelect.disabled = false;
-        Array.from(subKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
+        if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+          itemSubKriteriaSelect.disabled = false;
+          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+            option.style.display = subKriteriaIdForOption === subKriteriaId ? 'block' : 'none';
+          });
+        } else {
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.value = '';
+          Array.from(itemSubKriteriaSelect.options).forEach(option => option.style.display = 'block');
+        }
+      }
+
+      // ===== Age Filter Settings =====
+      const DEFAULT_AGE_THRESHOLDS = { age1: 3, age2: 7, age3: 30 };
+      let currentAgeFilter = null;
+
+      // Get age thresholds from localStorage
+      function getAgeThresholds() {
+        const saved = localStorage.getItem('documentAgeThresholds');
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            return { ...DEFAULT_AGE_THRESHOLDS };
           }
-          const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
-          option.style.display = kriteriaCfIdForOption === kriteriaCfId ? 'block' : 'none';
+        }
+        return { ...DEFAULT_AGE_THRESHOLDS };
+      }
+
+      // Save age thresholds to localStorage
+      function saveAgeThresholds(thresholds) {
+        localStorage.setItem('documentAgeThresholds', JSON.stringify(thresholds));
+      }
+
+      // Update UI labels with current thresholds
+      function updateAgeLabels() {
+        const thresholds = getAgeThresholds();
+        // Update card labels
+        document.getElementById('ageLabel1').textContent = thresholds.age1;
+        document.getElementById('ageLabel2').textContent = thresholds.age2;
+        document.getElementById('ageLabel3').textContent = thresholds.age3;
+        // Update chip labels
+        document.querySelectorAll('.chip-days-1').forEach(el => el.textContent = thresholds.age1);
+        document.querySelectorAll('.chip-days-2').forEach(el => el.textContent = thresholds.age2);
+        document.querySelectorAll('.chip-days-3').forEach(el => el.textContent = thresholds.age3);
+      }
+
+      // Count documents by age - uses data passed from PHP
+      function countDocumentsByAge() {
+        const thresholds = getAgeThresholds();
+        const allDokumenAge = @json($allDokumenUmur ?? []);
+
+        let count1 = 0, count2 = 0, count3 = 0;
+
+        allDokumenAge.forEach(days => {
+          if (days > thresholds.age1) count1++;
+          if (days > thresholds.age2) count2++;
+          if (days > thresholds.age3) count3++;
         });
-      } else {
-        subKriteriaSelect.disabled = true;
-        subKriteriaSelect.value = '';
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.value = '';
-        Array.from(subKriteriaSelect.options).forEach(option => option.style.display = 'block');
+
+        document.getElementById('ageCount1').textContent = count1;
+        document.getElementById('ageCount2').textContent = count2;
+        document.getElementById('ageCount3').textContent = count3;
       }
-      updateItemSubKriteriaFilter();
-    }
 
-    function updateItemSubKriteriaFilter() {
-      const subKriteriaId = document.getElementById('filterSubKriteria').value;
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
+      // Open age settings modal
+      function openAgeSettingsModal() {
+        const thresholds = getAgeThresholds();
+        document.getElementById('ageSetting1').value = thresholds.age1;
+        document.getElementById('ageSetting2').value = thresholds.age2;
+        document.getElementById('ageSetting3').value = thresholds.age3;
+        document.getElementById('ageSettingsModal').classList.add('show');
+      }
 
-      if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
-        itemSubKriteriaSelect.disabled = false;
-        Array.from(itemSubKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
-          }
-          const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
-          option.style.display = subKriteriaIdForOption === subKriteriaId ? 'block' : 'none';
+      // Close age settings modal
+      function closeAgeSettingsModal(event) {
+        if (!event || event.target === event.currentTarget) {
+          document.getElementById('ageSettingsModal').classList.remove('show');
+        }
+      }
+
+      // Save age settings
+      function saveAgeSettings() {
+        const age1 = parseInt(document.getElementById('ageSetting1').value) || 3;
+        const age2 = parseInt(document.getElementById('ageSetting2').value) || 7;
+        const age3 = parseInt(document.getElementById('ageSetting3').value) || 30;
+
+        saveAgeThresholds({ age1, age2, age3 });
+        updateAgeLabels();
+        countDocumentsByAge();
+        closeAgeSettingsModal();
+
+        // Show feedback
+        const saveBtn = document.querySelector('.age-modal-btn.save');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
+        saveBtn.style.background = '#22c55e';
+        setTimeout(() => {
+          saveBtn.innerHTML = originalText;
+          saveBtn.style.background = '';
+        }, 1500);
+      }
+
+      // Reset age settings to default
+      function resetAgeSettings() {
+        document.getElementById('ageSetting1').value = DEFAULT_AGE_THRESHOLDS.age1;
+        document.getElementById('ageSetting2').value = DEFAULT_AGE_THRESHOLDS.age2;
+        document.getElementById('ageSetting3').value = DEFAULT_AGE_THRESHOLDS.age3;
+      }
+
+      // Filter by age
+      function filterByAge(level) {
+        const thresholds = getAgeThresholds();
+        let minDays;
+
+        switch(level) {
+          case 1: minDays = thresholds.age1; break;
+          case 2: minDays = thresholds.age2; break;
+          case 3: minDays = thresholds.age3; break;
+        }
+
+        // Toggle filter
+        if (currentAgeFilter === level) {
+          clearAgeFilter();
+          return;
+        }
+
+        currentAgeFilter = level;
+
+        // Update UI
+        document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
+        document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
+        document.getElementById('ageCard' + level).classList.add('active');
+        document.getElementById('ageChip' + level).classList.add('active');
+        document.getElementById('ageChipClear').style.display = 'flex';
+
+        // Apply filter to visible cards
+        filterDocumentsByDays(minDays);
+      }
+
+      // Clear age filter
+      function clearAgeFilter() {
+        currentAgeFilter = null;
+        document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
+        document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
+        document.getElementById('ageChipClear').style.display = 'none';
+
+        // Show all cards
+        document.querySelectorAll('.doc-card').forEach(card => {
+          card.style.display = '';
         });
-      } else {
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.value = '';
-        Array.from(itemSubKriteriaSelect.options).forEach(option => option.style.display = 'block');
-      }
-    }
-
-    // ===== Initialize =====
-    document.addEventListener('DOMContentLoaded', function () {
-      // Load saved view preference (default: card)
-      const savedView = localStorage.getItem('ownerDashboardView') || 'card';
-      switchView(savedView);
-
-      // Initialize cascading dropdowns
-      updateSubKriteriaFilter();
-      updateFilterCount();
-
-      // Auto-open filter panel if filters are active
-      const filterCount = parseInt(document.getElementById('filterCount').getAttribute('data-count') || 0);
-      if (filterCount > 0) {
-        document.getElementById('filterPanel').classList.add('open');
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+          row.style.display = '';
+        });
       }
 
-      // Enable sub kriteria if kriteria CF is selected
-      const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
-      if (kriteriaCfSelect && kriteriaCfSelect.value) {
+      // Filter documents by minimum days
+      function filterDocumentsByDays(minDays) {
+        // Filter card view
+        document.querySelectorAll('.doc-card').forEach(card => {
+          const ageText = card.querySelector('.doc-card-meta-item .fa-hourglass-half')?.parentElement?.textContent || '';
+          const match = ageText.match(/(\d+)\s*hari/);
+          const days = match ? parseInt(match[1]) : 0;
+
+          card.style.display = days > minDays ? '' : 'none';
+        });
+
+        // Filter table view
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+          const ageCell = row.querySelector('td:nth-child(6)')?.textContent || '';
+          const match = ageCell.match(/(\d+)\s*hari/);
+          const days = match ? parseInt(match[1]) : 0;
+
+          row.style.display = days > minDays ? '' : 'none';
+        });
+      }
+
+      // Escape key to close modal
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('ageSettingsModal').classList.contains('show')) {
+          closeAgeSettingsModal();
+        }
+      });
+
+      // ===== Initialize =====
+      document.addEventListener('DOMContentLoaded', function () {
+        // Load saved view preference (default: card)
+        const savedView = localStorage.getItem('ownerDashboardView') || 'card';
+        switchView(savedView);
+
+        // Initialize cascading dropdowns
         updateSubKriteriaFilter();
-      }
-    });
-  </script>
+        updateFilterCount();
+
+        // Auto-open filter panel if filters are active
+        const filterCount = parseInt(document.getElementById('filterCount').getAttribute('data-count') || 0);
+        if (filterCount > 0) {
+          document.getElementById('filterPanel').classList.add('open');
+        }
+
+        // Enable sub kriteria if kriteria CF is selected
+        const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
+        if (kriteriaCfSelect && kriteriaCfSelect.value) {
+          updateSubKriteriaFilter();
+        }
+
+        // Initialize age filter
+        updateAgeLabels();
+        countDocumentsByAge();
+      });
+    </script>
 @endsection
