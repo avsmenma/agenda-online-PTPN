@@ -49,6 +49,7 @@ class AnalyticsController extends Controller
             'availableYears' => $availableYears,
             'analyticsData' => $analyticsData,
             'roles' => $this->roles,
+            'module' => 'owner',
         ]);
     }
 
