@@ -270,10 +270,16 @@ class DokumenController extends Controller
      */
     public function getDocumentDetailForOperator(Dokumen $dokumen)
     {
-        // Allow if created by Operator OR if current_handler is Operator (documents from Bagian)
+        // Allow if:
+        // 1. Created by Operator
+        // 2. Current handler is Operator
+        // 3. Document has a status record for operator role (meaning it passed through operator)
         $createdByLower = strtolower($dokumen->created_by ?? '');
         $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
-        $isOperatorDocument = $createdByLower === 'operator' || $currentHandlerLower === 'operator';
+
+        $isOperatorDocument = $createdByLower === 'operator'
+            || $currentHandlerLower === 'operator'
+            || $dokumen->roleStatuses()->where('role_code', 'operator')->exists();
 
         if (!$isOperatorDocument) {
             return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
@@ -293,10 +299,16 @@ class DokumenController extends Controller
      */
     public function getDocumentDetail(Dokumen $dokumen)
     {
-        // Allow if created by Operator OR if current_handler is Operator (documents from Bagian)
+        // Allow if:
+        // 1. Created by Operator
+        // 2. Current handler is Operator
+        // 3. Document has a status record for operator role (meaning it passed through operator)
         $createdByLower = strtolower($dokumen->created_by ?? '');
         $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
-        $isOperatorDocument = $createdByLower === 'operator' || $currentHandlerLower === 'operator';
+
+        $isOperatorDocument = $createdByLower === 'operator'
+            || $currentHandlerLower === 'operator'
+            || $dokumen->roleStatuses()->where('role_code', 'operator')->exists();
 
         if (!$isOperatorDocument) {
             return response()->json(['success' => false, 'message' => 'Access denied'], 403);
@@ -353,10 +365,16 @@ class DokumenController extends Controller
      */
     public function getDocumentProgressForOperator(Dokumen $dokumen)
     {
-        // Allow if created by Operator OR if current_handler is Operator (documents from Bagian)
+        // Allow if:
+        // 1. Created by Operator
+        // 2. Current handler is Operator
+        // 3. Document has a status record for operator role (meaning it passed through operator)
         $createdByLower = strtolower($dokumen->created_by ?? '');
         $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
-        $isOperatorDocument = $createdByLower === 'operator' || $currentHandlerLower === 'operator';
+
+        $isOperatorDocument = $createdByLower === 'operator'
+            || $currentHandlerLower === 'operator'
+            || $dokumen->roleStatuses()->where('role_code', 'operator')->exists();
 
         if (!$isOperatorDocument) {
             return response()->json([
