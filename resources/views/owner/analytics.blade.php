@@ -306,6 +306,253 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        /* Settings Button */
+        .settings-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: 2px solid rgba(26, 77, 62, 0.15);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: auto;
+        }
+
+        .settings-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-rgba);
+        }
+
+        .settings-btn i {
+            font-size: 16px;
+        }
+
+        /* Settings Modal */
+        .settings-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .settings-modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .settings-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .settings-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 16px 16px 0 0;
+            color: white;
+        }
+
+        .settings-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .settings-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .settings-modal-body {
+            padding: 24px;
+        }
+
+        .settings-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .settings-form-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .settings-label .label-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .settings-label .label-dot.safe {
+            background: #28a745;
+        }
+
+        .settings-label .label-dot.warning {
+            background: #ffc107;
+        }
+
+        .settings-label .label-dot.danger {
+            background: #dc3545;
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-rgba);
+        }
+
+        .settings-input-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .settings-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            background: #f8f9fa;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .settings-btn-cancel {
+            padding: 10px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-btn-cancel:hover {
+            border-color: #ccc;
+            background: #f8f9fa;
+        }
+
+        .settings-btn-save {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-btn-save:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .settings-btn-reset {
+            padding: 10px 20px;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            background: #fff8e1;
+            color: #856404;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: auto;
+        }
+
+        .settings-btn-reset:hover {
+            background: #ffc107;
+            color: #333;
+        }
     </style>
 
     <div class="container-fluid py-4">
@@ -356,6 +603,68 @@
                         <option value="{{ $year }}" {{ $tahun == $year ? 'selected' : '' }}>{{ $year }}</option>
                     @endforeach
                 </select>
+            </div>
+
+            <!-- Settings Button -->
+            <button class="settings-btn" onclick="openSettingsModal()">
+                <i class="fa-solid fa-cog"></i>
+                <span>Pengaturan</span>
+            </button>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="settings-modal-overlay" id="settingsModal">
+            <div class="settings-modal">
+                <div class="settings-modal-header">
+                    <div class="settings-modal-title">
+                        <i class="fa-solid fa-sliders"></i>
+                        Pengaturan Perhitungan Performa
+                    </div>
+                    <button class="settings-modal-close" onclick="closeSettingsModal()">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div class="settings-modal-body">
+                    <div class="settings-description">
+                        <strong>Rumus Perhitungan:</strong> Score = ((Aman × Nilai) + (Peringatan × Nilai) + (Terlambat × Nilai)) / Total Dokumen
+                    </div>
+
+                    <div class="settings-form-group">
+                        <label class="settings-label">
+                            <span class="label-dot safe"></span>
+                            Score Dokumen Aman (< 24 jam)
+                        </label>
+                        <input type="number" class="settings-input" id="scoreAman" min="0" max="100" value="100">
+                        <div class="settings-input-hint">Nilai default: 100 poin</div>
+                    </div>
+
+                    <div class="settings-form-group">
+                        <label class="settings-label">
+                            <span class="label-dot warning"></span>
+                            Score Dokumen Peringatan (24-72 jam)
+                        </label>
+                        <input type="number" class="settings-input" id="scorePeringatan" min="0" max="100" value="50">
+                        <div class="settings-input-hint">Nilai default: 50 poin</div>
+                    </div>
+
+                    <div class="settings-form-group">
+                        <label class="settings-label">
+                            <span class="label-dot danger"></span>
+                            Score Dokumen Terlambat (≥ 72 jam)
+                        </label>
+                        <input type="number" class="settings-input" id="scoreTerlambat" min="0" max="100" value="0">
+                        <div class="settings-input-hint">Nilai default: 0 poin</div>
+                    </div>
+                </div>
+                <div class="settings-modal-footer">
+                    <button class="settings-btn-reset" onclick="resetSettings()">
+                        <i class="fa-solid fa-undo me-1"></i> Reset Default
+                    </button>
+                    <button class="settings-btn-cancel" onclick="closeSettingsModal()">Batal</button>
+                    <button class="settings-btn-save" onclick="saveSettings()">
+                        <i class="fa-solid fa-check me-1"></i> Simpan
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -421,7 +730,151 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Default score settings
+        const DEFAULT_SCORES = {
+            aman: 100,
+            peringatan: 50,
+            terlambat: 0
+        };
+
+        // Get current settings from localStorage or use defaults
+        function getScoreSettings() {
+            const saved = localStorage.getItem('performanceScoreSettings');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    return { ...DEFAULT_SCORES };
+                }
+            }
+            return { ...DEFAULT_SCORES };
+        }
+
+        // Save settings to localStorage
+        function saveScoreSettings(settings) {
+            localStorage.setItem('performanceScoreSettings', JSON.stringify(settings));
+        }
+
+        // Calculate performance score with custom weights
+        function calculateCustomScore(aman, peringatan, terlambat, total, settings) {
+            if (total === 0) return { score: 0, grade: '-', color: '#6c757d' };
+            
+            const totalPoints = (aman * settings.aman) + (peringatan * settings.peringatan) + (terlambat * settings.terlambat);
+            const score = totalPoints / total;
+            
+            let grade, color;
+            if (score >= 90) {
+                grade = 'A';
+                color = '#28a745';
+            } else if (score >= 75) {
+                grade = 'B';
+                color = '#17a2b8';
+            } else if (score >= 60) {
+                grade = 'C';
+                color = '#ffc107';
+            } else {
+                grade = 'D';
+                color = '#dc3545';
+            }
+            
+            return { score: Math.round(score * 10) / 10, grade, color };
+        }
+
+        // Update all performance cards with new scores
+        function updatePerformanceDisplay() {
+            const settings = getScoreSettings();
+            const analyticsData = @json($analyticsData);
+            
+            Object.keys(analyticsData).forEach((roleCode, index) => {
+                const data = analyticsData[roleCode];
+                const stats = data.stats;
+                const newPerformance = calculateCustomScore(
+                    stats.aman, 
+                    stats.peringatan, 
+                    stats.terlambat, 
+                    stats.total, 
+                    settings
+                );
+                
+                // Update the performance card
+                const cards = document.querySelectorAll('.performance-card');
+                if (cards[index]) {
+                    const scoreEl = cards[index].querySelector('.performance-score');
+                    const gradeEl = cards[index].querySelector('.performance-grade');
+                    
+                    if (scoreEl) scoreEl.textContent = newPerformance.score + '%';
+                    if (gradeEl) {
+                        gradeEl.textContent = newPerformance.grade;
+                        gradeEl.style.background = newPerformance.color;
+                    }
+                }
+            });
+        }
+
+        // Modal functions
+        function openSettingsModal() {
+            const settings = getScoreSettings();
+            document.getElementById('scoreAman').value = settings.aman;
+            document.getElementById('scorePeringatan').value = settings.peringatan;
+            document.getElementById('scoreTerlambat').value = settings.terlambat;
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function saveSettings() {
+            const settings = {
+                aman: parseInt(document.getElementById('scoreAman').value) || 0,
+                peringatan: parseInt(document.getElementById('scorePeringatan').value) || 0,
+                terlambat: parseInt(document.getElementById('scoreTerlambat').value) || 0
+            };
+            
+            saveScoreSettings(settings);
+            updatePerformanceDisplay();
+            closeSettingsModal();
+            
+            // Show success feedback
+            const btn = document.querySelector('.settings-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan!';
+            btn.style.background = '#d4edda';
+            btn.style.borderColor = '#28a745';
+            btn.style.color = '#28a745';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }, 2000);
+        }
+
+        function resetSettings() {
+            document.getElementById('scoreAman').value = DEFAULT_SCORES.aman;
+            document.getElementById('scorePeringatan').value = DEFAULT_SCORES.peringatan;
+            document.getElementById('scoreTerlambat').value = DEFAULT_SCORES.terlambat;
+        }
+
+        // Close modal on overlay click
+        document.getElementById('settingsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSettingsModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSettingsModal();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
+            // Apply saved settings on page load
+            updatePerformanceDisplay();
+
             // Chart data from PHP
             const analyticsData = @json($analyticsData);
 
