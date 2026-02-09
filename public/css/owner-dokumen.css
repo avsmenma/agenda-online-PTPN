@@ -107,6 +107,41 @@ html.dark {
   justify-content: space-between;
   align-items: flex-start;
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left accent border for stat cards */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* Different accent colors for each card type */
+.stat-card.total::before {
+  background: linear-gradient(180deg, #083E40, #0a4f52);
+}
+
+.stat-card.proses::before {
+  background: linear-gradient(180deg, #f59e0b, #fbbf24);
+}
+
+.stat-card.siap::before {
+  background: linear-gradient(180deg, #3b82f6, #60a5fa);
+}
+
+.stat-card.selesai::before {
+  background: linear-gradient(180deg, #22c55e, #4ade80);
+}
+
+.stat-card.nilai::before {
+  background: linear-gradient(180deg, #6366f1, #818cf8);
 }
 
 .stat-card:hover {

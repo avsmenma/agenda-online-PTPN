@@ -19,7 +19,7 @@
 
     {{-- ===== Statistics Cards ===== --}}
     <div class="stats-grid">
-      <div class="stat-card clickable" onclick="filterByCard('all')" title="Klik untuk melihat semua dokumen">
+      <div class="stat-card total clickable" onclick="filterByCard('all')" title="Klik untuk melihat semua dokumen">
         <div class="stat-content">
           <div class="stat-label">Total Dokumen</div>
           <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
@@ -29,7 +29,7 @@
         </div>
       </div>
 
-      <div class="stat-card clickable" onclick="filterByCard('belum_siap')"
+      <div class="stat-card proses clickable" onclick="filterByCard('belum_siap')"
         title="Klik untuk filter dokumen belum siap bayar">
         <div class="stat-content">
           <div class="stat-label">Dokumen Belum Siap Bayar</div>
@@ -40,7 +40,7 @@
         </div>
       </div>
 
-      <div class="stat-card clickable" onclick="filterByCard('siap_dibayar')"
+      <div class="stat-card siap clickable" onclick="filterByCard('siap_dibayar')"
         title="Klik untuk filter dokumen siap bayar">
         <div class="stat-content">
           <div class="stat-label">Dokumen Siap Bayar</div>
@@ -51,7 +51,7 @@
         </div>
       </div>
 
-      <div class="stat-card clickable" onclick="filterByCard('sudah_dibayar')"
+      <div class="stat-card selesai clickable" onclick="filterByCard('sudah_dibayar')"
         title="Klik untuk filter dokumen sudah dibayar">
         <div class="stat-content">
           <div class="stat-label">Dokumen Sudah Dibayar</div>
@@ -62,7 +62,7 @@
         </div>
       </div>
 
-      <div class="stat-card">
+      <div class="stat-card nilai">
         <div class="stat-content">
           <div class="stat-label">Total Nilai (Rp)</div>
           <div class="stat-value small">Rp{{ number_format($totalNilai ?? 0, 0, ',', '.') }}</div>
