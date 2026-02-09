@@ -469,9 +469,9 @@
                   <th>Uraian</th>
                   <th>Nilai</th>
                   <th>Bidang Tujuan</th>
-                  <th>Tanggal Return</th>
+                  <th>Tanggal Pengembalian</th>
                   <th>Alasan</th>
-                  <th style="width: 200px;">Aksi</th>
+                  <th>Status Pengembalian</th>
                 </tr>
               </thead>
               <tbody>
@@ -494,7 +494,7 @@
                       </span>
                     </td>
                     <td>
-                      <small>{{ $dokumen->bidang_returned_at ? $dokumen->bidang_returned_at->format('d/m/Y H:i') : '-' }}</small>
+                      <small>{{ $dokumen->bidang_returned_at ? $dokumen->bidang_returned_at->format('d-m-Y H:i') : '-' }}</small>
                     </td>
                     <td>
                       <div class="bidang-info"
@@ -503,19 +503,20 @@
                         {{ Str::limit($dokumen->bidang_return_reason ?? '-', 30) }}
                       </div>
                     </td>
-                    <td onclick="event.stopPropagation()">
-                      <div class="action-buttons">
-                        <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" class="btn-action btn-edit"
-                          title="Edit Dokumen">
-                          <i class="fa-solid fa-pen"></i>
-                          <span>Edit</span>
-                        </a>
-                        <button type="button" class="btn-action btn-send" onclick="sendBackToMainList({{ $dokumen->id }})"
-                          title="Kirim ke Daftar Utama">
-                          <i class="fa-solid fa-undo"></i>
-                          <span>Kembali</span>
-                        </button>
-                      </div>
+                    <td>
+                      @if($dokumen->status == 'returned_to_bidang')
+                        <span class="badge bg-warning text-dark">
+                          <i class="fa-solid fa-clock me-1"></i>Menunggu Respon Bagian
+                        </span>
+                      @elseif(in_array($dokumen->status, ['sent_to_team_verifikasi', 'sedang_diproses', 'sedang diproses']))
+                        <span class="badge bg-success">
+                          <i class="fa-solid fa-check me-1"></i>Sudah Dikirim Kembali
+                        </span>
+                      @else
+                        <span class="badge bg-secondary">
+                          {{ $dokumen->status }}
+                        </span>
+                      @endif
                     </td>
                   </tr>
                   <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none;">

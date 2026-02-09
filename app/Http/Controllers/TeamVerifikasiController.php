@@ -2020,6 +2020,7 @@ class TeamVerifikasiController extends Controller
             'target_bidang',
             'bidang_returned_at',
             'bidang_return_reason',
+            'status',
             'created_at',
             'updated_at',
             'bulan',
