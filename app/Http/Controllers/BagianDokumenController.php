@@ -147,6 +147,10 @@ class BagianDokumenController extends Controller
             } elseif ($statusFilter === 'sudah_dibayar') {
                 // Documents that have been paid
                 $query->whereNotNull('tanggal_dibayar');
+            } elseif ($statusFilter === 'dikembalikan') {
+                // Documents returned from Team Verifikasi
+                $query->where('status', 'returned_to_bidang')
+                    ->where('target_bidang', $bagianCode);
             } else {
                 // Fallback: try exact match
                 $query->where('status', $statusFilter);
@@ -682,7 +686,8 @@ class BagianDokumenController extends Controller
             abort(403, 'Anda tidak memiliki akses ke dokumen ini');
         }
 
-        if ($dokumen->status !== 'belum dikirim') {
+        // Allow sending if document is 'belum dikirim' or 'returned_to_bidang' (dikembalikan)
+        if (!in_array($dokumen->status, ['belum dikirim', 'returned_to_bidang'])) {
             return redirect()->back()
                 ->with('error', 'Dokumen sudah pernah dikirim sebelumnya.');
         }
