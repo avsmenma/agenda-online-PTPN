@@ -291,6 +291,19 @@
                     </span>
                   </div>
                 @endif
+                @if($dokumen['umur_dokumen'])
+                  <div class="doc-card-meta-item">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>Umur Dokumen:</span>
+                    <span
+                      style="font-weight: 500; color: {{ $dokumen['umur_dokumen']['is_paid'] ? 'var(--success-color)' : 'inherit' }}">
+                      {{ $dokumen['umur_dokumen']['text'] }}
+                      @if($dokumen['umur_dokumen']['is_paid'])
+                        <i class="fas fa-check-circle" style="margin-left: 4px; color: var(--success-color);"></i>
+                      @endif
+                    </span>
+                  </div>
+                @endif
               </div>
 
               {{-- Workflow Stepper --}}
@@ -521,11 +534,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                    <span>${labels[key] || key}: ${displayValue}</span>
-                    <button type="button" class="remove" onclick="removeFilter('${key}')">
-                      <i class="fas fa-times"></i>
-                    </button>
-                  `;
+                      <span>${labels[key] || key}: ${displayValue}</span>
+                      <button type="button" class="remove" onclick="removeFilter('${key}')">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    `;
           container.appendChild(tag);
         }
       }

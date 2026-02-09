@@ -478,6 +478,7 @@ class OwnerDashboardController extends Controller
                 'tanggal_dibayar' => $dokumen->tanggal_dibayar,
                 'deadline_info' => $this->getDeadlineInfo($dokumen),
                 'workflow_timeline' => $this->getWorkflowTimeline($dokumen),
+                'umur_dokumen' => $this->calculateDocumentAge($dokumen),
             ];
         });
 
@@ -902,6 +903,61 @@ class OwnerDashboardController extends Controller
 
         return Carbon::now()->greaterThan($dokumen->deadline_at) &&
             !in_array($dokumen->status, $excludedStatuses);
+    }
+
+    /**
+     * Calculate document age (umur dokumen)
+     * From document creation/import until payment declares it paid
+     * Returns formatted string like "X hari Y jam" or "X jam" if less than a day
+     */
+    private function calculateDocumentAge($dokumen)
+    {
+        // Start time: when document was created or imported
+        $startTime = $dokumen->created_at ?? $dokumen->tanggal_masuk;
+        if (!$startTime) {
+            return null;
+        }
+
+        $startTime = Carbon::parse($startTime);
+
+        // End time: payment date if paid, otherwise current time
+        $isPaid = !empty($dokumen->tanggal_dibayar) ||
+            $dokumen->status_pembayaran === 'sudah_dibayar' ||
+            $dokumen->status === 'completed';
+
+        if ($isPaid && !empty($dokumen->tanggal_dibayar)) {
+            $endTime = Carbon::parse($dokumen->tanggal_dibayar);
+        } else {
+            $endTime = Carbon::now();
+        }
+
+        // Calculate difference
+        $diffDays = $startTime->diffInDays($endTime);
+        $diffHours = $startTime->diffInHours($endTime) % 24;
+
+        // Format output
+        if ($diffDays > 0) {
+            $text = $diffDays . ' hari';
+            if ($diffHours > 0) {
+                $text .= ' ' . $diffHours . ' jam';
+            }
+        } else {
+            $text = $diffHours . ' jam';
+            if ($diffHours == 0) {
+                // Less than 1 hour, show minutes
+                $diffMinutes = $startTime->diffInMinutes($endTime);
+                $text = $diffMinutes . ' menit';
+            }
+        }
+
+        return [
+            'text' => $text,
+            'days' => $diffDays,
+            'hours' => $diffHours,
+            'is_paid' => $isPaid,
+            'start_date' => $startTime->format('d M Y'),
+            'end_date' => $endTime->format('d M Y'),
+        ];
     }
 
     /**
