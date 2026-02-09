@@ -505,7 +505,8 @@
                     </td>
                     <td onclick="event.stopPropagation()">
                       <div class="action-buttons">
-                        <a href="{{ route('dokumensB.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
+                        <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" class="btn-action btn-edit"
+                          title="Edit Dokumen">
                           <i class="fa-solid fa-pen"></i>
                           <span>Edit</span>
                         </a>
@@ -635,10 +636,10 @@
 
       // Show loading state
       detailContent.innerHTML = `
-            <div class="text-center p-4">
-              <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-            </div>
-          `;
+              <div class="text-center p-4">
+                <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
+              </div>
+            `;
 
       fetch(`/dokumens/${docId}/detail`)
         .then(response => response.text())
@@ -648,10 +649,10 @@
         .catch(error => {
           console.error('Error:', error);
           detailContent.innerHTML = `
-                <div class="text-center p-4 text-danger">
-                  <i class="fa-solid fa-exclamation-triangle me-2"></i> Gagal memuat detail dokumen.
-                </div>
-              `;
+                  <div class="text-center p-4 text-danger">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Gagal memuat detail dokumen.
+                  </div>
+                `;
         });
     }
 
@@ -746,11 +747,11 @@
       const notification = document.createElement('div');
       notification.className = `notification notification-${type}`;
       notification.innerHTML = `
-            <div class="notification-content">
-              <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
-              <span>${message}</span>
-            </div>
-          `;
+              <div class="notification-content">
+                <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+              </div>
+            `;
 
       document.body.appendChild(notification);
 
