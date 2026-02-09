@@ -842,6 +842,63 @@
         left: 100%;
       }
     }
+
+    /* Dikembalikan - Orange/Amber with shimmer */
+    .badge-status.badge-dikembalikan {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .badge-status.badge-dikembalikan::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent);
+      animation: shimmer-dikembalikan 2.5s infinite;
+    }
+
+    .badge-status.badge-dikembalikan:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    }
+
+    @keyframes shimmer-dikembalikan {
+      0% {
+        left: -100%;
+      }
+
+      50% {
+        left: 100%;
+      }
+
+      100% {
+        left: 100%;
+      }
+    }
+
+    /* Dark mode overrides for dikembalikan badge */
+    .dark .badge-status.badge-dikembalikan {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+    }
+
+    .dark .badge-status.badge-dikembalikan:hover {
+      box-shadow: 0 4px 15px rgba(251, 191, 36, 0.5);
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
   </style>
 
   <div class="container-fluid py-4">
@@ -2574,7 +2631,7 @@
   </style>
 
   <script>
-        f  unction changePerPage(value) {
+          f  unction changePerPage(value) {
       const url = new URL(window.location.href);
       url.searchParams.set('per_page', value);
       url.searchParams.delete('page');
