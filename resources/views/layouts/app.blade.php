@@ -3830,6 +3830,7 @@
     }
     $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
   @endphp
+  @if(($module ?? '') !== 'owner')
   <header>
     <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
       @if(($module ?? '') !== 'owner')
@@ -3873,6 +3874,7 @@
         </div>
       </div>
   </header>
+  @endif
 
   <!-- Sidebar -->
   <div class="sidebar">

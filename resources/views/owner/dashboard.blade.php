@@ -8,12 +8,49 @@
 
     {{-- ===== Header Section ===== --}}
     <div class="dashboard-header">
-      <div class="header-icon">
-        <i class="fas fa-chart-line"></i>
+      <div class="header-left">
+        <div class="header-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="header-content">
+          <h1>Dashboard Kabag Keuangan</h1>
+          <p>Pantau dan kelola semua dokumen perusahaan dengan mudah</p>
+        </div>
       </div>
-      <div class="header-content">
-        <h1>Dashboard Kabag Keuangan</h1>
-        <p>Pantau dan kelola semua dokumen perusahaan dengan mudah</p>
+      <div class="header-right">
+        {{-- Dark Mode Toggle --}}
+        <button id="owner-theme-toggle" class="header-action-btn" aria-label="Toggle dark mode" onclick="toggleOwnerTheme()">
+          <i class="fas fa-moon theme-icon-moon"></i>
+          <i class="fas fa-sun theme-icon-sun"></i>
+        </button>
+        {{-- Notification Bell --}}
+        <button class="header-action-btn" aria-label="Notifications">
+          <i class="fas fa-bell"></i>
+        </button>
+        {{-- Profile Dropdown --}}
+        <div class="header-profile-dropdown">
+          <button class="header-action-btn header-profile-btn" onclick="toggleOwnerProfileMenu()">
+            <i class="fas fa-user"></i>
+          </button>
+          <div class="header-profile-menu" id="ownerProfileMenu">
+            <a href="{{ route('profile.account') }}" class="header-profile-item">
+              <i class="fas fa-user-circle"></i>
+              <span>Akun</span>
+            </a>
+            <a href="{{ route('2fa.setup') }}" class="header-profile-item">
+              <i class="fas fa-shield-alt"></i>
+              <span>Keamanan 2FA</span>
+            </a>
+            <div class="header-profile-divider"></div>
+            <form action="{{ route('logout') }}" method="POST">
+              @csrf
+              <button type="submit" class="header-profile-item header-logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -873,6 +910,28 @@
           row.style.display = days > minDays ? '' : 'none';
         });
       }
+
+      // ===== Owner Header Theme Toggle =====
+      function toggleOwnerTheme() {
+        const html = document.documentElement;
+        const isDark = html.classList.toggle('dark');
+        localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+      }
+
+      // ===== Owner Header Profile Menu =====
+      function toggleOwnerProfileMenu() {
+        const menu = document.getElementById('ownerProfileMenu');
+        menu.classList.toggle('show');
+      }
+
+      // Close profile menu when clicking outside
+      document.addEventListener('click', function(e) {
+        const dropdown = document.querySelector('.header-profile-dropdown');
+        const menu = document.getElementById('ownerProfileMenu');
+        if (dropdown && menu && !dropdown.contains(e.target)) {
+          menu.classList.remove('show');
+        }
+      });
 
       // Escape key to close modal
       document.addEventListener('keydown', function(e) {
