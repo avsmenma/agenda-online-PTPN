@@ -1010,22 +1010,25 @@
                                   <span>{{ $statusText }}</span>
                                 </span>
                               @endif
-                                              @if($displayStatus == 'dikembalikan')
-                                                <span class="badge-status badge-dikembalikan" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
-                                                  <i class="fa-solid fa-undo"></i>
-                                                  <span>Dikembalikan</span>
-                                                </span>
-                                                @if($doc->bidang_return_reason)
-                                                  <div class="return-reason-display" style="margin-top: 6px; padding: 6px 10px; background: #fef3c7; border-radius: 6px; font-size: 10px; color: #92400e; border-left: 3px solid #f59e0b; max-width: 200px;" title="{{ $doc->bidang_return_reason }}">
-                                                    <i class="fa-solid fa-comment-dots" style="margin-right: 4px;"></i>
-                                                    <span>{{ Str::limit($doc->bidang_return_reason, 40) }}</span>
-                                                  </div>
-                                                @endif
-                                              @endif
+                              @if($displayStatus == 'dikembalikan')
+                                <span class="badge-status badge-dikembalikan"
+                                  style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+                                  <i class="fa-solid fa-undo"></i>
+                                  <span>Dikembalikan</span>
+                                </span>
+                                @if($doc->bidang_return_reason)
+                                  <div class="return-reason-display"
+                                    style="margin-top: 6px; padding: 6px 10px; background: #fef3c7; border-radius: 6px; font-size: 10px; color: #92400e; border-left: 3px solid #f59e0b; max-width: 200px;"
+                                    title="{{ $doc->bidang_return_reason }}">
+                                    <i class="fa-solid fa-comment-dots" style="margin-right: 4px;"></i>
+                                    <span>{{ Str::limit($doc->bidang_return_reason, 40) }}</span>
+                                  </div>
+                                @endif
+                              @endif
                             @elseif($col == 'uraian_spp')
-                                            <span
-                                              style="display: block; white-space: normal; word-wrap: break-word; line-height: 1.5; max-width: 300px;">{{ $doc->uraian_spp ?? '-' }}</span>
-                                          @elseif($col == 'tanggal_spp')
+                              <span
+                                style="display: block; white-space: normal; word-wrap: break-word; line-height: 1.5; max-width: 300px;">{{ $doc->uraian_spp ?? '-' }}</span>
+                            @elseif($col == 'tanggal_spp')
                               {{ $doc->tanggal_spp ? $doc->tanggal_spp->format('d-m-Y') : '-' }}
                             @elseif($col == 'kebun')
                               {{ $doc->kebun ?? '-' }}
@@ -1038,8 +1041,13 @@
                                 // Determine if document is paid
                                 $isPaid = $doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar);
 
-                                // Calculate age
-                                $startDate = $doc->created_at;
+                                // Determine if document is returned to bidang
+                                $isReturned = $statusLower == 'returned_to_bidang';
+
+                                // Calculate age - for returned documents, use bidang_returned_at as start date
+                                $startDate = $isReturned && $doc->bidang_returned_at
+                                  ? \Carbon\Carbon::parse($doc->bidang_returned_at)
+                                  : $doc->created_at;
                                 $endDate = $isPaid && $doc->tanggal_dibayar ? \Carbon\Carbon::parse($doc->tanggal_dibayar) : now();
 
                                 if ($startDate) {
@@ -1135,22 +1143,22 @@
                                   <i class="fa-solid fa-paper-plane"></i>
                                 </button>
                               </form>
-                                            @if($statusLower == 'belum dikirim')
-                                              <form id="deleteForm-{{ $doc->id }}" action="{{ route('bagian.documents.destroy', $doc) }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" class="btn-action btn-delete" title="Hapus"
-                                                  onclick="showDeleteModal({{ $doc->id }})">
-                                                  <i class="fa-solid fa-trash"></i>
-                                                </button>
-                                              </form>
-                                            @endif
+                              @if($statusLower == 'belum dikirim')
+                                <form id="deleteForm-{{ $doc->id }}" action="{{ route('bagian.documents.destroy', $doc) }}"
+                                  method="POST" class="d-inline">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button type="button" class="btn-action btn-delete" title="Hapus"
+                                    onclick="showDeleteModal({{ $doc->id }})">
+                                    <i class="fa-solid fa-trash"></i>
+                                  </button>
+                                </form>
+                              @endif
                             @else
-                                           <a href="{{ route('bagian.tracking') }}" class="btn-action btn-tracking" title="Tracking">
-                                            <i class="fa-solid fa-route"></i>
-                                          </a>
-                                        @endif
+                              <a href="{{ route('bagian.tracking') }}" class="btn-action btn-tracking" title="Tracking">
+                                <i class="fa-solid fa-route"></i>
+                              </a>
+                            @endif
                           </div>
                         </td>
                       </tr>
