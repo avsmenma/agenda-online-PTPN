@@ -428,7 +428,7 @@
 
     <!-- Search and Filter -->
     <div class="search-box d-flex align-items-center mb-4">
-      <form action="{{ route('returns.verifikasi.bidang') }}" method="GET" class="d-flex align-items-center w-100">
+      <form action="{{ route('returns.verifikasi.bagian') }}" method="GET" class="d-flex align-items-center w-100">
         <div class="input-group me-3" style="max-width: 300px;">
           <span class="input-group-text">
             <i class="fa-solid fa-search"></i>
@@ -635,10 +635,10 @@
 
       // Show loading state
       detailContent.innerHTML = `
-          <div class="text-center p-4">
-            <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
-          </div>
-        `;
+            <div class="text-center p-4">
+              <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
+            </div>
+          `;
 
       fetch(`/dokumens/${docId}/detail`)
         .then(response => response.text())
@@ -648,10 +648,10 @@
         .catch(error => {
           console.error('Error:', error);
           detailContent.innerHTML = `
-              <div class="text-center p-4 text-danger">
-                <i class="fa-solid fa-exclamation-triangle me-2"></i> Gagal memuat detail dokumen.
-              </div>
-            `;
+                <div class="text-center p-4 text-danger">
+                  <i class="fa-solid fa-exclamation-triangle me-2"></i> Gagal memuat detail dokumen.
+                </div>
+              `;
         });
     }
 
@@ -746,11 +746,11 @@
       const notification = document.createElement('div');
       notification.className = `notification notification-${type}`;
       notification.innerHTML = `
-          <div class="notification-content">
-            <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-          </div>
-        `;
+            <div class="notification-content">
+              <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+              <span>${message}</span>
+            </div>
+          `;
 
       document.body.appendChild(notification);
 
