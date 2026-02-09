@@ -296,6 +296,7 @@ class TeamVerifikasiController extends Controller
                 'dokumens.dibayar_kepada',
                 'dokumens.no_berita_acara',
                 'dokumens.tanggal_berita_acara',
+                'dokumens.bagian', // Added: bagian field for return to bidang modal
                 // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
                 // 'dokumens.inbox_approval_reason', // REMOVED
                 // 'dokumens.inbox_approval_for', // REMOVED
