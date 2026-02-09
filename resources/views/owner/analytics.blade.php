@@ -307,6 +307,141 @@
             letter-spacing: 0.5px;
         }
 
+        /* Summary Right Container */
+        .summary-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* Header Action Buttons */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .header-action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Dark Mode Toggle Icons */
+        .header-action-btn .theme-icon-sun {
+            display: none;
+        }
+
+        html.dark .header-action-btn .theme-icon-moon {
+            display: none;
+        }
+
+        html.dark .header-action-btn .theme-icon-sun {
+            display: block;
+        }
+
+        /* Profile Dropdown */
+        .header-profile-dropdown {
+            position: relative;
+        }
+
+        .header-profile-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .header-profile-menu.show {
+            display: block;
+            animation: fadeInDown 0.2s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-profile-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+
+        .header-profile-item:hover {
+            background: #f5f5f5;
+        }
+
+        .header-profile-item i {
+            width: 18px;
+            text-align: center;
+            color: #666;
+        }
+
+        .header-profile-divider {
+            height: 1px;
+            background: #e9ecef;
+            margin: 4px 0;
+        }
+
+        .header-logout-btn {
+            width: 100%;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #ef4444;
+        }
+
+        .header-logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .header-logout-btn i {
+            color: #ef4444;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .summary-right {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+
         /* Settings Button */
         .settings-btn {
             display: flex;
@@ -556,31 +691,67 @@
     </style>
 
     <div class="container-fluid py-4">
-        <h2><i class="fa-solid fa-chart-line me-2"></i>Analisis Kinerja</h2>
-
         <!-- Summary Section -->
         <div class="summary-section">
             <div>
                 <div class="summary-title">Dashboard Performa Tim</div>
                 <div class="summary-subtitle">Analisis kinerja pengelolaan dokumen per departemen</div>
             </div>
-            <div class="summary-stats">
-                @php
-                    $totalDocs = collect($analyticsData)->sum(fn($r) => $r['stats']['total']);
-                    $totalAman = collect($analyticsData)->sum(fn($r) => $r['stats']['aman']);
-                    $totalTerlambat = collect($analyticsData)->sum(fn($r) => $r['stats']['terlambat']);
-                  @endphp
-                <div class="summary-stat">
-                    <div class="summary-stat-value">{{ $totalDocs }}</div>
-                    <div class="summary-stat-label">Total Dokumen</div>
+            <div class="summary-right">
+                <div class="summary-stats">
+                    @php
+                        $totalDocs = collect($analyticsData)->sum(fn($r) => $r['stats']['total']);
+                        $totalAman = collect($analyticsData)->sum(fn($r) => $r['stats']['aman']);
+                        $totalTerlambat = collect($analyticsData)->sum(fn($r) => $r['stats']['terlambat']);
+                      @endphp
+                    <div class="summary-stat">
+                        <div class="summary-stat-value">{{ $totalDocs }}</div>
+                        <div class="summary-stat-label">Total Dokumen</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value">{{ $totalAman }}</div>
+                        <div class="summary-stat-label">Tepat Waktu</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value">{{ $totalTerlambat }}</div>
+                        <div class="summary-stat-label">Terlambat</div>
+                    </div>
                 </div>
-                <div class="summary-stat">
-                    <div class="summary-stat-value">{{ $totalAman }}</div>
-                    <div class="summary-stat-label">Tepat Waktu</div>
-                </div>
-                <div class="summary-stat">
-                    <div class="summary-stat-value">{{ $totalTerlambat }}</div>
-                    <div class="summary-stat-label">Terlambat</div>
+                <div class="header-actions">
+                    {{-- Dark Mode Toggle --}}
+                    <button id="analytics-theme-toggle" class="header-action-btn" aria-label="Toggle dark mode"
+                        onclick="toggleAnalyticsTheme()">
+                        <i class="fas fa-moon theme-icon-moon"></i>
+                        <i class="fas fa-sun theme-icon-sun"></i>
+                    </button>
+                    {{-- Notification Bell --}}
+                    <button class="header-action-btn" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    {{-- Profile Dropdown --}}
+                    <div class="header-profile-dropdown">
+                        <button class="header-action-btn" onclick="toggleAnalyticsProfileMenu()">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="header-profile-menu" id="analyticsProfileMenu">
+                            <a href="{{ route('profile.account') }}" class="header-profile-item">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Akun</span>
+                            </a>
+                            <a href="{{ route('2fa.setup') }}" class="header-profile-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Keamanan 2FA</span>
+                            </a>
+                            <div class="header-profile-divider"></div>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="header-profile-item header-logout-btn">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -626,16 +797,16 @@
                 </div>
                 <div class="settings-modal-body">
                     <div class="settings-description">
-                        <strong>Rumus Perhitungan:</strong> Score = ((Aman × Nilai) + (Peringatan × Nilai) + (Terlambat × Nilai)) / Total Dokumen
+                        <strong>Rumus Perhitungan:</strong> Score = ((Aman × Nilai) + (Peringatan × Nilai) + (Terlambat ×
+                        Nilai)) / Total Dokumen
                     </div>
 
                     <div class="settings-form-group">
                         <label class="settings-label">
                             <span class="label-dot safe"></span>
-                            Score Dokumen Aman (< 24 jam)
-                        </label>
-                        <input type="number" class="settings-input" id="scoreAman" min="0" max="100" value="100">
-                        <div class="settings-input-hint">Nilai default: 100 poin</div>
+                            Score Dokumen Aman (< 24 jam) </label>
+                                <input type="number" class="settings-input" id="scoreAman" min="0" max="100" value="100">
+                                <div class="settings-input-hint">Nilai default: 100 poin</div>
                     </div>
 
                     <div class="settings-form-group">
@@ -758,10 +929,10 @@
         // Calculate performance score with custom weights
         function calculateCustomScore(aman, peringatan, terlambat, total, settings) {
             if (total === 0) return { score: 0, grade: '-', color: '#6c757d' };
-            
+
             const totalPoints = (aman * settings.aman) + (peringatan * settings.peringatan) + (terlambat * settings.terlambat);
             const score = totalPoints / total;
-            
+
             let grade, color;
             if (score >= 90) {
                 grade = 'A';
@@ -776,7 +947,7 @@
                 grade = 'D';
                 color = '#dc3545';
             }
-            
+
             return { score: Math.round(score * 10) / 10, grade, color };
         }
 
@@ -784,24 +955,24 @@
         function updatePerformanceDisplay() {
             const settings = getScoreSettings();
             const analyticsData = @json($analyticsData);
-            
+
             Object.keys(analyticsData).forEach((roleCode, index) => {
                 const data = analyticsData[roleCode];
                 const stats = data.stats;
                 const newPerformance = calculateCustomScore(
-                    stats.aman, 
-                    stats.peringatan, 
-                    stats.terlambat, 
-                    stats.total, 
+                    stats.aman,
+                    stats.peringatan,
+                    stats.terlambat,
+                    stats.total,
                     settings
                 );
-                
+
                 // Update the performance card
                 const cards = document.querySelectorAll('.performance-card');
                 if (cards[index]) {
                     const scoreEl = cards[index].querySelector('.performance-score');
                     const gradeEl = cards[index].querySelector('.performance-grade');
-                    
+
                     if (scoreEl) scoreEl.textContent = newPerformance.score + '%';
                     if (gradeEl) {
                         gradeEl.textContent = newPerformance.grade;
@@ -830,11 +1001,11 @@
                 peringatan: parseInt(document.getElementById('scorePeringatan').value) || 0,
                 terlambat: parseInt(document.getElementById('scoreTerlambat').value) || 0
             };
-            
+
             saveScoreSettings(settings);
             updatePerformanceDisplay();
             closeSettingsModal();
-            
+
             // Show success feedback
             const btn = document.querySelector('.settings-btn');
             const originalText = btn.innerHTML;
@@ -842,7 +1013,7 @@
             btn.style.background = '#d4edda';
             btn.style.borderColor = '#28a745';
             btn.style.color = '#28a745';
-            
+
             setTimeout(() => {
                 btn.innerHTML = originalText;
                 btn.style.background = '';
@@ -858,14 +1029,14 @@
         }
 
         // Close modal on overlay click
-        document.getElementById('settingsModal').addEventListener('click', function(e) {
+        document.getElementById('settingsModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeSettingsModal();
             }
         });
 
         // Close modal on Escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeSettingsModal();
             }
@@ -983,6 +1154,28 @@
                 const tahun = document.getElementById('filterTahun').value;
                 window.location.href = `{{ route('analytics.index') }}?bulan=${bulan}&tahun=${tahun}`;
             }
+
+            // ===== Analytics Header Theme Toggle =====
+            window.toggleAnalyticsTheme = function () {
+                const html = document.documentElement;
+                const isDark = html.classList.toggle('dark');
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            };
+
+            // ===== Analytics Header Profile Menu =====
+            window.toggleAnalyticsProfileMenu = function () {
+                const menu = document.getElementById('analyticsProfileMenu');
+                menu.classList.toggle('show');
+            };
+
+            // Close profile menu when clicking outside
+            document.addEventListener('click', function (e) {
+                const dropdown = document.querySelector('.header-profile-dropdown');
+                const menu = document.getElementById('analyticsProfileMenu');
+                if (dropdown && menu && !dropdown.contains(e.target)) {
+                    menu.classList.remove('show');
+                }
+            });
         });
     </script>
 
