@@ -302,15 +302,38 @@ class TeamVerifikasiController extends Controller
                 // 'dokumens.inbox_approval_for', // REMOVED
                 // 'dokumens.inbox_approval_status', // REMOVED
                 'dokumens.created_by'
-            ])
-            ->orderByRaw("CAST(
+            ]);
+
+        // Conditional sorting based on request parameters
+        $sortColumn = $request->get('sort', 'nomor_agenda');
+        $sortOrder = $request->get('order', 'asc');
+
+        // Validate sort order to prevent SQL injection
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+        // Apply sorting based on column
+        if ($sortColumn === 'nomor_agenda') {
+            // Natural number sorting for nomor_agenda (extract numeric part before underscore)
+            $query->orderByRaw("CAST(
                 CASE 
                     WHEN dokumens.nomor_agenda REGEXP '^[0-9]+_[0-9]+$' THEN SUBSTRING_INDEX(dokumens.nomor_agenda, '_', 1)
                     WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN dokumens.nomor_agenda
                     ELSE '0'
                 END AS UNSIGNED
-            ) DESC")
-            ->orderByRaw("
+            ) {$sortOrder}");
+        } else {
+            // Fallback to default descending order
+            $query->orderByRaw("CAST(
+                CASE 
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+_[0-9]+$' THEN SUBSTRING_INDEX(dokumens.nomor_agenda, '_', 1)
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN dokumens.nomor_agenda
+                    ELSE '0'
+                END AS UNSIGNED
+            ) DESC");
+        }
+
+        // Secondary sorting by received_at and id (always DESC for consistency)
+        $query->orderByRaw("
                 COALESCE(team_verifikasi_data.received_at, dokumens.created_at) DESC,
                 dokumens.id DESC
             ");
