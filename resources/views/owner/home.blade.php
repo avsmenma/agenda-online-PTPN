@@ -126,6 +126,71 @@
             transform: translateX(4px);
         }
 
+        /* Clickable card styles for Total Dokumen */
+        .summary-card.total.clickable {
+            cursor: pointer;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.total.clickable:hover {
+            border-color: #083E40;
+            transform: translateY(-6px);
+            box-shadow: 0 15px 30px -10px rgba(8, 62, 64, 0.25);
+        }
+
+        .summary-card.total.clickable .click-indicator {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-size: 0.75rem;
+            color: #083E40;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.total.clickable:hover .click-indicator {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
+        /* Clickable card styles for Dokumen Belum Dibayar (Proses) */
+        .summary-card.proses.clickable {
+            cursor: pointer;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.proses.clickable:hover {
+            border-color: #f59e0b;
+            transform: translateY(-6px);
+            box-shadow: 0 15px 30px -10px rgba(245, 158, 11, 0.25);
+        }
+
+        .summary-card.proses.clickable .click-indicator {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-size: 0.75rem;
+            color: #f59e0b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.proses.clickable:hover .click-indicator {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
+
         .summary-card.nilai .icon {
             background: linear-gradient(135deg, #6366f1, #818cf8);
         }
@@ -291,21 +356,30 @@
 
         <!-- Summary Cards -->
         <div class="summary-cards">
-            <div class="summary-card total">
+            <a href="{{ url('/owner/dokumen') }}" class="summary-card total clickable" style="text-decoration: none;">
                 <div class="icon">
                     <i class="fa-solid fa-file-lines"></i>
                 </div>
                 <div class="label">Total Dokumen</div>
                 <div class="value">{{ number_format($totalDokumen) }}</div>
-            </div>
+                <div class="click-indicator">
+                    <span>Lihat Detail</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
 
-            <div class="summary-card proses">
+            <a href="{{ url('/owner/dokumen?status_pembayaran=belum_dibayar') }}" class="summary-card proses clickable"
+                style="text-decoration: none;">
                 <div class="icon">
                     <i class="fa-solid fa-spinner"></i>
                 </div>
                 <div class="label">Dokumen Belum Dibayar</div>
                 <div class="value">{{ number_format($dokumenProses) }}</div>
-            </div>
+                <div class="click-indicator">
+                    <span>Lihat Detail</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
 
             <a href="{{ url('/owner/dokumen?status=selesai') }}" class="summary-card selesai clickable"
                 style="text-decoration: none;">
