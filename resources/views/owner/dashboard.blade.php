@@ -954,7 +954,8 @@
       switchView(savedView);
 
       // Initialize cascading dropdowns
-      updateSubKriteriaFilter(); \n        updateFilterCount();
+      updateSubKriteriaFilter();
+      updateFilterCount();
 
       // Auto-open filter panel if filters are active
       const filterCount = parseInt(document.getElementById('filterCount').getAttribute('data-count') || 0);
