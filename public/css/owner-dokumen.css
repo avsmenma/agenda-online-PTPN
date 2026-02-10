@@ -1746,3 +1746,145 @@ html.dark .age-input-group input {
   border-color: var(--border-color);
   color: var(--text-primary);
 }
+
+/* ===== Additional Dark Mode Fixes ===== */
+
+/* Fix reset button visibility in dark mode */
+html.dark .btn-reset:hover {
+  background: #334155;
+}
+
+/* Fix paid indicator */
+html.dark .paid-indicator {
+  color: var(--success-color);
+}
+
+/* Fix handler avatar contrast */
+html.dark .handler-avatar {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Fix status badges in dark mode */
+html.dark .status-badge {
+  color: white;
+}
+
+/* Fix doc value in table */
+html.dark .doc-value {
+  color: var(--text-primary);
+}
+
+/* Fix doc number and SPP in table */
+html.dark .doc-number,
+html.dark .doc-spp {
+  color: var(--text-primary);
+}
+
+html.dark .doc-spp {
+  color: var(--text-muted);
+}
+
+/* Fix progress text */
+html.dark .progress-text {
+  color: var(--text-primary);
+}
+
+/* Fix workflow stepper tooltips and labels */
+html.dark .stepper-label {
+  color: var(--text-muted);
+}
+
+html.dark .stepper-step {
+  color: var(--text-primary);
+}
+
+/* Fix age chip text */
+html.dark .age-chip {
+  color: var(--text-primary);
+}
+
+html.dark .age-chip:hover {
+  background: var(--bg-card);
+  border-color: var(--primary-color);
+}
+
+html.dark .age-chip.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Fix empty state text */
+html.dark .empty-state-title {
+  color: var(--text-primary);
+}
+
+html.dark .empty-state-text {
+  color: var(--text-secondary);
+}
+
+/* Fix table header */
+html.dark .data-table thead th {
+  color: var(--text-primary);
+  background: var(--bg-light);
+  border-color: var(--border-color);
+}
+
+/* Fix table body */
+html.dark .data-table tbody td {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+html.dark .data-table tbody tr:hover {
+  background: var(--bg-light);
+}
+
+/* Fix btn-view button */
+html.dark .btn-view {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+html.dark .btn-view:hover {
+  background: var(--info-color);
+}
+
+/* Fix overdue table rows */
+html.dark .data-table tbody tr.overdue {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* Fix age filter header text */
+html.dark .age-filter-header h3 {
+  color: var(--text-primary);
+}
+
+/* Fix age settings button */
+html.dark .age-settings-btn {
+  background: var(--bg-light);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+html.dark .age-settings-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--primary-color);
+}
+
+/* Fix age modal overlay */
+html.dark .age-modal-overlay {
+  background: rgba(15, 23, 42, 0.75);
+}
+
+/* Fix chip clear button */
+html.dark .age-chip-clear {
+  background: #334155;
+  color: var(--text-primary);
+}
+
+html.dark .age-chip-clear:hover {
+  background: #475569;
+}
