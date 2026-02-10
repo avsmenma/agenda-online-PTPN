@@ -1978,7 +1978,7 @@
     }
 
     /* ===== Multi-Select Bulk Send Styles ===== */
-    
+
     /* Checkbox Column */
     .col-checkbox {
       width: 45px !important;
@@ -2490,21 +2490,21 @@
               // Check if document has been sent to Team Verifikasi
               $isSentToTeamVerifikasiForCheck = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
                 || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
-              
+
               // Check if approved by Team Verifikasi
               $teamVerifikasiStatusForCheck = $dokumen->roleStatuses()
                 ->where('role_code', 'team_verifikasi')
                 ->where('status', 'approved')
                 ->first();
               $isApprovedByTeamVerifikasiForCheck = $teamVerifikasiStatusForCheck !== null;
-              
+
               // Check if rejected
               $teamVerifikasiRejectedForCheck = $dokumen->roleStatuses()
                 ->where('role_code', 'team_verifikasi')
                 ->where('status', 'rejected')
                 ->first();
               $isRejectedForCheck = $teamVerifikasiRejectedForCheck !== null;
-              
+
               // Check if returned
               if (!$isRejectedForCheck && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
                 $hasAnyRejectionForCheck = $dokumen->roleStatuses()->where('status', 'rejected')->exists();
@@ -2512,23 +2512,27 @@
                   $isRejectedForCheck = true;
                 }
               }
-              
+
               // Check if sent to other roles
               $isSentToOtherRolesForCheck = in_array($dokumen->status ?? '', [
-                'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
-                'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran'
+                'sent_to_perpajakan',
+                'sent_to_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_perpajakan',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran'
               ]);
-              
+
               // Final isSent check
               $isSentForCheck = ($isSentToTeamVerifikasiForCheck || ($isApprovedByTeamVerifikasiForCheck && $isSentToOtherRolesForCheck)) && !$isRejectedForCheck;
-              
+
               // Compute canSend
               $createdByOperatorForCheck = in_array(strtolower($dokumen->created_by ?? ''), ['operator']);
               $currentHandlerOperatorForCheck = in_array(strtolower($dokumen->current_handler ?? ''), ['operator']);
               $isReturnedForCheck = strtolower($dokumen->status ?? '') === 'returned_to_operator';
               // Check if document is from Bagian (menunggu_approval_keuangan)
               $isFromBagianForCheck = strtolower($dokumen->status ?? '') === 'menunggu_approval_keuangan' && $currentHandlerOperatorForCheck;
-              
+
               $canSendForBulk = false;
               // PRIORITY 0: Documents from Bagian waiting for approval can be sent
               if ($isFromBagianForCheck && !$isSentForCheck) {
@@ -2597,39 +2601,43 @@
                         $isWithOperator = in_array($handlerLower, ['operator', 'Operator', 'operator']);
                         $statusLower = strtolower($dokumen->status ?? 'draft');
 
-                        // PERBAIKAN: Cek apakah dokumen PENDING di inbox Team Verifikasi (Verifikasi)
-                        $isPendingInTeamVerifikasi = $dokumen->roleStatuses()
-                          ->where('role_code', 'team_verifikasi')
-                          ->where('status', 'pending')
-                          ->exists();
-
-                        // Cek apakah Team Verifikasi sudah APPROVE (bukan pending)
-                        $teamVerifikasiHasApproved = $dokumen->roleStatuses()
-                          ->where('role_code', 'team_verifikasi')
-                          ->where('status', 'approved')
-                          ->exists();
-
-                        // Cek apakah sudah sampai ke Perpajakan (berarti sudah pasti terkirim)
-                        $hasPerpajakanStatus = $dokumen->roleStatuses()
-                          ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
-                          ->exists();
-
-                        // PRIORITAS: Pending di inbox Team Verifikasi -> Menunggu Approval
-                        if ($isPendingInTeamVerifikasi) {
-                          $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                        } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_team_verifikasi')) {
-                          $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                        } elseif ($teamVerifikasiHasApproved || $hasPerpajakanStatus) {
-                          // Team Verifikasi sudah approve ATAU sudah sampai ke role berikutnya
-                          $OperatorDisplayStatus = 'terkirim';
-                        } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_operator'])) {
+                        // PRIORITY 0: Documents from Bagian waiting at Operator (draft for Operator)
+                        if ($statusLower === 'menunggu_approval_keuangan' && $isWithOperator) {
                           $OperatorDisplayStatus = 'draft';
                         } else {
-                          // Default: cek current_handler untuk menentukan status
-                          if (in_array($handlerLower, ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
-                            $OperatorDisplayStatus = 'terkirim';
-                          } else {
+                          // Check team verifikasi statuses
+                          $isPendingInTeamVerifikasi = $dokumen->roleStatuses()
+                            ->where('role_code', 'team_verifikasi')
+                            ->where('status', 'pending')
+                            ->exists();
+
+                          $teamVerifikasiHasApproved = $dokumen->roleStatuses()
+                            ->where('role_code', 'team_verifikasi')
+                            ->where('status', 'approved')
+                            ->exists();
+
+                          $hasPerpajakanStatus = $dokumen->roleStatuses()
+                            ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
+                            ->exists();
+
+                          // Pending di inbox Team Verifikasi AND NOT with Operator -> Menunggu Approval
+                          if ($isPendingInTeamVerifikasi && !$isWithOperator) {
+                            $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
+                          } elseif ($isPendingInTeamVerifikasi && $isWithOperator) {
+                            // Document is with Operator but has stale pending status -> draft
                             $OperatorDisplayStatus = 'draft';
+                          } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_team_verifikasi')) {
+                            $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
+                          } elseif ($teamVerifikasiHasApproved || $hasPerpajakanStatus) {
+                            $OperatorDisplayStatus = 'terkirim';
+                          } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_operator'])) {
+                            $OperatorDisplayStatus = 'draft';
+                          } else {
+                            if (in_array($handlerLower, ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
+                              $OperatorDisplayStatus = 'terkirim';
+                            } else {
+                              $OperatorDisplayStatus = 'draft';
+                            }
                           }
                         }
                       }
@@ -2772,11 +2780,11 @@
                     // Documents from Bagian: current_handler = operator BUT created_by != operator
                     // They can have status 'menunggu_approval_keuangan' OR 'sent_to_team_verifikasi' (if re-sent)
                     $isFromBagian = $currentHandlerOperator && !$createdByOperator;
-                    
+
                     // Override $isSent for Bagian documents that are still with Operator
                     // These documents should be editable even if status is sent_to_team_verifikasi
                     if ($isFromBagian) {
-                        $isSent = false;
+                      $isSent = false;
                     }
 
                     // Initialize canSend
@@ -3087,7 +3095,7 @@
         <div class="selected-count">
           <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
           @if(count($selectedColumns) > 0)
-                  <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
+                            <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
               return $availableColumns[$col] ?? $col;
             }, $selectedColumns)) }}</small>
           @endif
@@ -4986,7 +4994,7 @@
           </script>
 
           <!-- ===== MULTI-SELECT BULK SEND COMPONENTS ===== -->
-          
+
           <!-- Floating Action Bar -->
           <div class="bulk-action-bar" id="bulkActionBar">
             <div class="selected-count">
@@ -5027,12 +5035,12 @@
                       <span class="summary-value" id="summaryTotalValue">Rp 0</span>
                     </div>
                   </div>
-                  
+
                   <p style="color: #495057; margin-bottom: 12px;">
                     <i class="fa-solid fa-info-circle text-muted me-2"></i>
                     Dokumen berikut akan dikirim ke <strong>Team Verifikasi</strong> untuk diproses:
                   </p>
-                  
+
                   <ul class="document-list" id="bulkSendDocumentList">
                     <!-- Document list items will be populated by JavaScript -->
                   </ul>
@@ -5099,7 +5107,7 @@
               if (selectAllCheckbox) {
                 selectAllCheckbox.addEventListener('change', function() {
                   const isChecked = this.checked;
-                  
+
                   docCheckboxes.forEach(checkbox => {
                     if (!checkbox.disabled) {
                       checkbox.checked = isChecked;
@@ -5164,7 +5172,7 @@
 
             function clearAllSelections() {
               selectedDocuments.clear();
-              
+
               document.querySelectorAll('.doc-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
                 const row = checkbox.closest('tr');
@@ -5273,7 +5281,7 @@
                 if (data.success) {
                   // Show success message
                   showBulkSendResult(true, data);
-                  
+
                   // Clear selections
                   clearAllSelections();
 
@@ -5284,7 +5292,7 @@
                 } else {
                   // Show error message
                   showBulkSendResult(false, data);
-                  
+
                   // Reset button
                   confirmBtn.disabled = false;
                   confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
@@ -5293,9 +5301,9 @@
               .catch(error => {
                 console.error('Bulk send error:', error);
                 loadingOverlay.classList.remove('visible');
-                
+
                 alert('Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
-                
+
                 // Reset button
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Semua';
@@ -5315,7 +5323,7 @@
                 bgClass = 'bg-success';
                 message = `<i class="fa-solid fa-check-circle me-2"></i>
                   <strong>Berhasil!</strong> ${data.success_count || selectedDocuments.size} dokumen telah dikirim ke Team Verifikasi.`;
-                
+
                 if (data.failed_count && data.failed_count > 0) {
                   message += `<br><small>${data.failed_count} dokumen gagal dikirim.</small>`;
                 }

@@ -729,6 +729,7 @@ class BagianDokumenController extends Controller
                     'received_at' => $now,
                     'received_from' => 'bagian_' . strtolower($bagianCode),
                     'processed_at' => null, // Reset for re-processing
+                    'display_status' => null, // Reset so Operator sees it as new/pending
                 ]
             );
 
