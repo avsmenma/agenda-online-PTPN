@@ -303,7 +303,7 @@
                 <div class="icon">
                     <i class="fa-solid fa-spinner"></i>
                 </div>
-                <div class="label">Dokumen Proses</div>
+                <div class="label">Dokumen Belum Dibayar</div>
                 <div class="value">{{ number_format($dokumenProses) }}</div>
             </div>
 
