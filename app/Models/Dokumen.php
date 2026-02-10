@@ -912,6 +912,17 @@ class Dokumen extends Model
         // current_handler will be updated here if needed, or by the caller
         $this->sendToRoleInbox($normalizedRole);
 
+        // === FIX: Explicitly set operator's display_status when sending to team_verifikasi ===
+        // This ensures operator's view shows "Menunggu Approve" status correctly
+        // Even if sendToRoleInbox had edge cases, this guarantees the status is set
+        if ($normalizedRole === 'team_verifikasi') {
+            $this->setDisplayStatusForRole('operator', 'menunggu_approval_verifikasi');
+            \Log::info('Explicitly set operator display_status after sending to team_verifikasi', [
+                'document_id' => $this->id,
+                'nomor_agenda' => $this->nomor_agenda,
+            ]);
+        }
+
         // Update legacy tracking columns if they still exist (for backward compat in views/logic)
         // current_stage and last_action_status were KEPT in the cleanup
         $stageMap = [

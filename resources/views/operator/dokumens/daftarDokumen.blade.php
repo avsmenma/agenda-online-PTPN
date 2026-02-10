@@ -2620,12 +2620,11 @@
                             ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
                             ->exists();
 
-                          // Pending di inbox Team Verifikasi AND NOT with Operator -> Menunggu Approval
-                          if ($isPendingInTeamVerifikasi && !$isWithOperator) {
+                          // === FIX: Pending di inbox Team Verifikasi = Menunggu Approval (regardless of current_handler) ===
+                          // When document is sent to Team Verifikasi inbox for approval,
+                          // current_handler might still be 'operator', so we can't check !$isWithOperator
+                          if ($isPendingInTeamVerifikasi) {
                             $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                          } elseif ($isPendingInTeamVerifikasi && $isWithOperator) {
-                            // Document is with Operator but has stale pending status -> draft
-                            $OperatorDisplayStatus = 'draft';
                           } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_team_verifikasi')) {
                             $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
                           } elseif ($teamVerifikasiHasApproved || $hasPerpajakanStatus) {
