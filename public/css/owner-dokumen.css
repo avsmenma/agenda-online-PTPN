@@ -1729,8 +1729,14 @@ html.dark .age-info-card.danger {
 html.dark .age-info-card-label,
 html.dark .age-info-card-value,
 html.dark .age-info-card-count {
-  color: #fef3c7;
+  color: white !important;
 }
+
+html.dark .age-info-card-icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: white !important;
+}
+
 
 html.dark .age-modal {
   background: var(--bg-card);
