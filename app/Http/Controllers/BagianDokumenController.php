@@ -719,13 +719,18 @@ class BagianDokumenController extends Controller
                 'sent_at' => $now,
             ]);
 
-            // Create role data for tracking
-            DokumenRoleData::create([
-                'dokumen_id' => $dokumen->id,
-                'role_code' => 'operator',
-                'received_at' => $now,
-                'received_from' => 'bagian_' . strtolower($bagianCode),
-            ]);
+            // Create or update role data for tracking
+            DokumenRoleData::updateOrCreate(
+                [
+                    'dokumen_id' => $dokumen->id,
+                    'role_code' => 'operator',
+                ],
+                [
+                    'received_at' => $now,
+                    'received_from' => 'bagian_' . strtolower($bagianCode),
+                    'processed_at' => null, // Reset for re-processing
+                ]
+            );
 
             // Set pending status for Operator inbox
             $dokumen->setStatusForRole('operator', 'pending', Auth::user()->name ?? 'Bagian ' . $bagianCode);
