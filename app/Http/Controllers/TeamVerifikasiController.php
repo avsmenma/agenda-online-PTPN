@@ -304,12 +304,53 @@ class TeamVerifikasiController extends Controller
                 'dokumens.created_by'
             ]);
 
-        // Conditional sorting based on request parameters
-        $sortColumn = $request->get('sort', 'nomor_agenda');
-        $sortOrder = $request->get('order', 'asc');
-
-        // Validate sort order to prevent SQL injection
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+        // Handle sort preferences with persistence (similar to column preferences)
+        $user = Auth::user();
+        
+        // Check if sort parameters are in the request (URL)
+        if ($request->has('sort') || $request->has('order')) {
+            // User is actively changing sort - save preferences
+            $sortColumn = $request->get('sort', 'nomor_agenda');
+            $sortOrder = $request->get('order', 'asc');
+            
+            // Validate sort order to prevent SQL injection
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+            
+            // Save to database (permanent)
+            if ($user) {
+                $sortPreferences = $user->sort_preferences ?? [];
+                $sortPreferences['team_verifikasi'] = [
+                    'column' => $sortColumn,
+                    'order' => $sortOrder
+                ];
+                $user->sort_preferences = $sortPreferences;
+                $user->save();
+            }
+            
+            // Also save to session for backward compatibility
+            session([
+                'team_verifikasi_sort_column' => $sortColumn,
+                'team_verifikasi_sort_order' => $sortOrder
+            ]);
+        } else {
+            // No URL params - load from saved preferences
+            $sortColumn = 'nomor_agenda'; // default
+            $sortOrder = 'asc'; // default
+            
+            // Try database first (permanent), then session, then default
+            if ($user && isset($user->sort_preferences['team_verifikasi'])) {
+                $saved = $user->sort_preferences['team_verifikasi'];
+                $sortColumn = $saved['column'] ?? 'nomor_agenda';
+                $sortOrder = $saved['order'] ?? 'asc';
+            } else {
+                // Fallback to session
+                $sortColumn = session('team_verifikasi_sort_column', 'nomor_agenda');
+                $sortOrder = session('team_verifikasi_sort_order', 'asc');
+            }
+            
+            // Validate loaded preferences
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+        }
 
         // Apply sorting based on column
         if ($sortColumn === 'nomor_agenda') {
