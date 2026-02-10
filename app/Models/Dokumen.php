@@ -47,6 +47,9 @@ class Dokumen extends Model
         'target_bidang',
         'bidang_returned_at',
         'bidang_return_reason',
+        // Conditional routing fields
+        'was_returned_by_verifikasi',
+        'resent_to_verifikasi_at',
         // Workflow tracking (kept for compatibility)
         'created_by',
         'current_handler',
@@ -109,6 +112,9 @@ class Dokumen extends Model
         // Department return casts
         'department_returned_at' => 'datetime',
         'bidang_returned_at' => 'datetime',
+        // Conditional routing casts
+        'was_returned_by_verifikasi' => 'boolean',
+        'resent_to_verifikasi_at' => 'datetime',
         // Perpajakan casts
         'tanggal_faktur' => 'date',
         'tanggal_selesai_verifikasi_pajak' => 'date',

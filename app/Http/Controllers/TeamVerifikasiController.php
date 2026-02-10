@@ -2180,6 +2180,7 @@ class TeamVerifikasiController extends Controller
                 'target_bidang' => $targetBidang,
                 'bidang_returned_at' => now(),
                 'bidang_return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
+                'was_returned_by_verifikasi' => true, // Flag for conditional routing
             ]);
 
             \DB::commit();

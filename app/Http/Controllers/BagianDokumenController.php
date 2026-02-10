@@ -676,7 +676,9 @@ class BagianDokumenController extends Controller
     }
 
     /**
-     * Send document to Ibu Tarapul (Bidang Keuangan dan Akutansi)
+     * Send document - Conditional routing:
+     * - New documents → Operator
+     * - Returned documents (from Team Verifikasi) → directly to Team Verifikasi
      */
     public function sendToOperator(Dokumen $dokumen)
     {
@@ -692,6 +694,12 @@ class BagianDokumenController extends Controller
                 ->with('error', 'Dokumen sudah pernah dikirim sebelumnya.');
         }
 
+        // Conditional routing: if returned by Team Verifikasi, send directly back to them
+        if ($dokumen->was_returned_by_verifikasi) {
+            return $this->sendBackToVerifikasi($dokumen, $bagianCode);
+        }
+
+        // Normal flow: send to Operator
         try {
             DB::beginTransaction();
 
@@ -723,6 +731,61 @@ class BagianDokumenController extends Controller
         } catch (Exception $e) {
             DB::rollback();
             \Log::error('Error sending document to Ibu Tarapul: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Gagal mengirim dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send corrected document directly back to Team Verifikasi (skip Operator)
+     * This is called when a document was previously returned by Team Verifikasi
+     */
+    private function sendBackToVerifikasi(Dokumen $dokumen, string $bagianCode)
+    {
+        try {
+            DB::beginTransaction();
+
+            $now = Carbon::now();
+
+            // Update document status - Send directly to Team Verifikasi
+            $dokumen->update([
+                'status' => 'sent_to_team_verifikasi',
+                'current_handler' => 'team_verifikasi',
+                'was_returned_by_verifikasi' => false, // Reset flag
+                'resent_to_verifikasi_at' => $now,
+            ]);
+
+            // Update existing Team Verifikasi role data (reset for re-processing)
+            $existingRoleData = DokumenRoleData::where('dokumen_id', $dokumen->id)
+                ->where('role_code', 'team_verifikasi')
+                ->first();
+
+            if ($existingRoleData) {
+                $existingRoleData->update([
+                    'received_at' => $now,
+                    'processed_at' => null, // Reset so they can process again
+                    'received_from' => 'bagian_resend_' . strtolower($bagianCode),
+                ]);
+            } else {
+                DokumenRoleData::create([
+                    'dokumen_id' => $dokumen->id,
+                    'role_code' => 'team_verifikasi',
+                    'received_at' => $now,
+                    'received_from' => 'bagian_resend_' . strtolower($bagianCode),
+                ]);
+            }
+
+            // Set pending status for Team Verifikasi inbox
+            $dokumen->setStatusForRole('team_verifikasi', 'pending', Auth::user()->name ?? 'Bagian ' . $bagianCode);
+
+            DB::commit();
+
+            return redirect()->route('bagian.documents.index')
+                ->with('success', 'Dokumen yang telah diperbaiki berhasil dikirim langsung ke Team Verifikasi.');
+
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error sending corrected document to Team Verifikasi: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Gagal mengirim dokumen: ' . $e->getMessage());
         }
