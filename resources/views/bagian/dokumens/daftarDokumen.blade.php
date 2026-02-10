@@ -2631,303 +2631,326 @@
   </style>
 
   <script>
-      function changePerPage(value) {
-            const url = new URL(window.location.href);
-        url.searchParams.set('per_page', value);
-        url.searchParams.delete('page');
-        window.location.href = url.toString();
+    function changePerPage(value) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('per_page', value);
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    function showDocumentDetail(doc) {
+      // Simplified status mapping for Bagian view
+      function getSimplifiedStatus(status) {
+        const statusLower = (status || '').toLowerCase();
+        if (statusLower === 'belum dikirim') {
+          return 'Belum Dikirim';
+        } else if (statusLower === 'menunggu_approval_keuangan') {
+          return 'Menunggu Approve';
+        } else {
+          return 'Terkirim';
+        }
       }
 
-      function showDocumentDetail(doc) {
-        // Simplified status mapping for Bagian view
-        function getSimplifiedStatus(status) {
-          const statusLower = (status || '').toLowerCase();
-          if (statusLower === 'belum dikirim') {
-            return 'Belum Dikirim';
-          } else if (statusLower === 'menunggu_approval_keuangan') {
-            return 'Menunggu Approve';
-          } else {
-            return 'Terkirim';
+      const simplifiedStatus = getSimplifiedStatus(doc.status);
+
+      // Header fields
+      document.getElementById('modal-header-agenda').textContent = doc.nomor_agenda || '-';
+      document.getElementById('modal-header-status').textContent = simplifiedStatus;
+
+      // Tab Info Utama
+      document.getElementById('modal-nomor-agenda').textContent = doc.nomor_agenda || '-';
+      document.getElementById('modal-status').textContent = simplifiedStatus;
+      document.getElementById('modal-nomor-spp').textContent = doc.nomor_spp || '-';
+      document.getElementById('modal-tanggal-spp').textContent = doc.tanggal_spp || '-';
+      document.getElementById('modal-periode').textContent = (doc.bulan || '-') + ' ' + (doc.tahun || '');
+      document.getElementById('modal-tanggal-masuk').textContent = doc.tanggal_masuk || '-';
+      document.getElementById('modal-nilai-rupiah').textContent = doc.nilai_rupiah || '-';
+      document.getElementById('modal-bagian').textContent = doc.bagian || '-';
+      document.getElementById('modal-nama-pengirim').textContent = doc.nama_pengirim || '-';
+      document.getElementById('modal-kebun').textContent = doc.kebun || '-';
+      document.getElementById('modal-uraian-spp').textContent = doc.uraian_spp || '-';
+
+      // Tab Keuangan & Vendor
+      document.getElementById('modal-nilai-rupiah-2').textContent = doc.nilai_rupiah || '-';
+      document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
+      document.getElementById('modal-dibayar-kepada').textContent = doc.dibayar_kepada || '-';
+      document.getElementById('modal-kriteria-cf').textContent = doc.kriteria_cf || '-';
+      document.getElementById('modal-sub-kriteria').textContent = doc.sub_kriteria || '-';
+      document.getElementById('modal-item-sub-kriteria').textContent = doc.item_sub_kriteria || '-';
+      document.getElementById('modal-jenis-pembayaran').textContent = doc.jenis_pembayaran || '-';
+
+      // Tab SPK & Berita Acara
+      document.getElementById('modal-no-spk').textContent = doc.no_spk || '-';
+      document.getElementById('modal-tanggal-spk').textContent = doc.tanggal_spk || '-';
+      document.getElementById('modal-tanggal-berakhir-spk').textContent = doc.tanggal_berakhir_spk || '-';
+      document.getElementById('modal-no-berita-acara').textContent = doc.no_berita_acara || '-';
+      document.getElementById('modal-tanggal-berita-acara').textContent = doc.tanggal_berita_acara || '-';
+      document.getElementById('modal-no-po').textContent = doc.no_po || '-';
+      document.getElementById('modal-no-miro').textContent = doc.no_miro || '-';
+
+      // Reset to first tab
+      switchTab('info');
+
+      document.getElementById('documentDetailModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function switchTab(tabName) {
+      // Remove active from all tabs and contents
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      // Add active to selected
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('documentDetailModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    // Close modal on overlay click
+    document.getElementById('documentDetailModal').addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeDeleteModal();
+        closeSendModal();
+      }
+    });
+
+    // ============ DELETE MODAL FUNCTIONS ============
+    let deleteFormId = null;
+
+    function showDeleteModal(docId) {
+      deleteFormId = docId;
+      document.getElementById('deleteConfirmModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteConfirmModal').classList.remove('show');
+      document.body.style.overflow = '';
+      deleteFormId = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+      if (deleteFormId) {
+        document.getElementById('deleteForm-' + deleteFormId).submit();
+      }
+    });
+
+    // Close on overlay click
+    document.getElementById('deleteConfirmModal').addEventListener('click', function (e) {
+      if (e.target === this) closeDeleteModal();
+    });
+
+    // ============ SEND MODAL FUNCTIONS ============
+    let sendFormId = null;
+
+    function showSendModal(docId) {
+      sendFormId = docId;
+      document.getElementById('sendConfirmModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSendModal() {
+      document.getElementById('sendConfirmModal').classList.remove('show');
+      document.body.style.overflow = '';
+      sendFormId = null;
+    }
+
+    document.getElementById('confirmSendBtn').addEventListener('click', function () {
+      if (sendFormId) {
+        const form = document.getElementById('sendForm-' + sendFormId);
+        const formData = new FormData(form);
+
+        // Show loading state
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+        this.disabled = true;
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
           }
-        }
-
-        const simplifiedStatus = getSimplifiedStatus(doc.status);
-
-        // Header fields
-        document.getElementById('modal-header-agenda').textContent = doc.nomor_agenda || '-';
-        document.getElementById('modal-header-status').textContent = simplifiedStatus;
-
-        // Tab Info Utama
-        document.getElementById('modal-nomor-agenda').textContent = doc.nomor_agenda || '-';
-        document.getElementById('modal-status').textContent = simplifiedStatus;
-        document.getElementById('modal-nomor-spp').textContent = doc.nomor_spp || '-';
-        document.getElementById('modal-tanggal-spp').textContent = doc.tanggal_spp || '-';
-        document.getElementById('modal-periode').textContent = (doc.bulan || '-') + ' ' + (doc.tahun || '');
-        document.getElementById('modal-tanggal-masuk').textContent = doc.tanggal_masuk || '-';
-        document.getElementById('modal-nilai-rupiah').textContent = doc.nilai_rupiah || '-';
-        document.getElementById('modal-bagian').textContent = doc.bagian || '-';
-        document.getElementById('modal-nama-pengirim').textContent = doc.nama_pengirim || '-';
-        document.getElementById('modal-kebun').textContent = doc.kebun || '-';
-        document.getElementById('modal-uraian-spp').textContent = doc.uraian_spp || '-';
-
-        // Tab Keuangan & Vendor
-        document.getElementById('modal-nilai-rupiah-2').textContent = doc.nilai_rupiah || '-';
-        document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
-        document.getElementById('modal-dibayar-kepada').textContent = doc.dibayar_kepada || '-';
-        document.getElementById('modal-kriteria-cf').textContent = doc.kriteria_cf || '-';
-        document.getElementById('modal-sub-kriteria').textContent = doc.sub_kriteria || '-';
-        document.getElementById('modal-item-sub-kriteria').textContent = doc.item_sub_kriteria || '-';
-        document.getElementById('modal-jenis-pembayaran').textContent = doc.jenis_pembayaran || '-';
-
-        // Tab SPK & Berita Acara
-        document.getElementById('modal-no-spk').textContent = doc.no_spk || '-';
-        document.getElementById('modal-tanggal-spk').textContent = doc.tanggal_spk || '-';
-        document.getElementById('modal-tanggal-berakhir-spk').textContent = doc.tanggal_berakhir_spk || '-';
-        document.getElementById('modal-no-berita-acara').textContent = doc.no_berita_acara || '-';
-        document.getElementById('modal-tanggal-berita-acara').textContent = doc.tanggal_berita_acara || '-';
-        document.getElementById('modal-no-po').textContent = doc.no_po || '-';
-        document.getElementById('modal-no-miro').textContent = doc.no_miro || '-';
-
-        // Reset to first tab
-        switchTab('info');
-
-        document.getElementById('documentDetailModal').classList.add('show');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function switchTab(tabName) {
-        // Remove active from all tabs and contents
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-        // Add active to selected
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-      }
-
-      function closeModal() {
-        document.getElementById('documentDetailModal').classList.remove('show');
-        document.body.style.overflow = '';
-      }
-
-      // Close modal on overlay click
-      document.getElementById('documentDetailModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-          closeModal();
-        }
-      });
-
-      // Close modal on Escape key
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          closeModal();
-          closeDeleteModal();
-          closeSendModal();
-        }
-      });
-
-      // ============ DELETE MODAL FUNCTIONS ============
-      let deleteFormId = null;
-
-      function showDeleteModal(docId) {
-        deleteFormId = docId;
-        document.getElementById('deleteConfirmModal').classList.add('show');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeDeleteModal() {
-        document.getElementById('deleteConfirmModal').classList.remove('show');
-        document.body.style.overflow = '';
-        deleteFormId = null;
-      }
-
-      document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-        if (deleteFormId) {
-          document.getElementById('deleteForm-' + deleteFormId).submit();
-        }
-      });
-
-      // Close on overlay click
-      document.getElementById('deleteConfirmModal').addEventListener('click', function (e) {
-        if (e.target === this) closeDeleteModal();
-      });
-
-      // ============ SEND MODAL FUNCTIONS ============
-      let sendFormId = null;
-
-      function showSendModal(docId) {
-        sendFormId = docId;
-        document.getElementById('sendConfirmModal').classList.add('show');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeSendModal() {
-        document.getElementById('sendConfirmModal').classList.remove('show');
-        document.body.style.overflow = '';
-        sendFormId = null;
-      }
-
-      document.getElementById('confirmSendBtn').addEventListener('click', function () {
-        if (sendFormId) {
-          const form = document.getElementById('sendForm-' + sendFormId);
-          const formData = new FormData(form);
-
-          // Show loading state
-          this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
-          this.disabled = true;
-
-          fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
+        })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(data => {
+                throw new Error(data.message || 'Gagal mengirim dokumen');
+              });
             }
+            return response.json();
           })
-            .then(response => {
-              closeSendModal();
-              // Reset button
-              this.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ya, Kirim';
-              this.disabled = false;
+          .then(data => {
+            closeSendModal();
+            // Reset button
+            this.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ya, Kirim';
+            this.disabled = false;
+
+            if (data.success) {
+              // Update destination text dynamically based on server response
+              const destinationEl = document.querySelector('#sendSuccessModal .success-destination span');
+              if (destinationEl && data.destination) {
+                destinationEl.textContent = data.destination;
+              }
 
               // Show success modal
               document.getElementById('sendSuccessModal').classList.add('show');
               document.body.style.overflow = 'hidden';
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              closeSendModal();
-              // Fallback to form submit on error
-              form.submit();
-            });
-        }
-      });
-
-      // Close on overlay click
-      document.getElementById('sendConfirmModal').addEventListener('click', function (e) {
-        if (e.target === this) closeSendModal();
-      });
-
-      // ============ SUCCESS MODAL FUNCTIONS ============
-      function closeSuccessAndReload() {
-        document.getElementById('sendSuccessModal').classList.remove('show');
-        document.body.style.overflow = '';
-        window.location.reload();
-      }
-
-      // Close on overlay click
-      document.getElementById('sendSuccessModal').addEventListener('click', function (e) {
-        if (e.target === this) closeSuccessAndReload();
-      });
-
-      // ============ COLUMN CUSTOMIZATION MODAL FUNCTIONS ============
-      let selectedColumnsOrder = [];
-
-      function initializeColumnOrder() {
-        selectedColumnsOrder = [];
-        document.querySelectorAll('#columnCustomizationModal .column-item.selected').forEach((item) => {
-          selectedColumnsOrder.push(item.dataset.column);
-        });
-        updateColumnOrderBadges();
-        updateSelectedCount();
-      }
-
-      function openColumnCustomizationModal() {
-        document.getElementById('columnCustomizationModal').classList.add('show');
-        document.body.style.overflow = 'hidden';
-        initializeColumnOrder();
-      }
-
-      function closeColumnCustomizationModal() {
-        document.getElementById('columnCustomizationModal').classList.remove('show');
-        document.body.style.overflow = '';
-      }
-
-      function toggleColumn(columnElement) {
-        const columnKey = columnElement.dataset.column;
-        const checkbox = columnElement.querySelector('.column-item-checkbox');
-        const isChecked = checkbox.checked;
-
-        if (!isChecked) {
-          // Add to selection
-          if (!selectedColumnsOrder.includes(columnKey)) {
-            selectedColumnsOrder.push(columnKey);
-          }
-          checkbox.checked = true;
-          columnElement.classList.add('selected');
-        } else {
-          // Remove from selection
-          selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
-          checkbox.checked = false;
-          columnElement.classList.remove('selected');
-        }
-
-        updateColumnOrderBadges();
-        updateSelectedCount();
-      }
-
-      function updateColumnOrderBadges() {
-        document.querySelectorAll('#columnCustomizationModal .column-item').forEach(item => {
-          const columnKey = item.dataset.column;
-          const orderBadge = item.querySelector('.column-item-order');
-          if (orderBadge) {
-            const orderIndex = selectedColumnsOrder.indexOf(columnKey);
-            if (orderIndex !== -1) {
-              orderBadge.textContent = orderIndex + 1;
-              orderBadge.style.opacity = '1';
-              orderBadge.style.transform = 'scale(1)';
             } else {
-              orderBadge.textContent = '';
-              orderBadge.style.opacity = '0';
-              orderBadge.style.transform = 'scale(0)';
+              alert(data.message || 'Gagal mengirim dokumen');
+              window.location.reload();
             }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            closeSendModal();
+            // Reset button
+            this.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Ya, Kirim';
+            this.disabled = false;
+            alert(error.message || 'Terjadi kesalahan saat mengirim dokumen');
+            window.location.reload();
+          });
+      }
+    });
+
+    // Close on overlay click
+    document.getElementById('sendConfirmModal').addEventListener('click', function (e) {
+      if (e.target === this) closeSendModal();
+    });
+
+    // ============ SUCCESS MODAL FUNCTIONS ============
+    function closeSuccessAndReload() {
+      document.getElementById('sendSuccessModal').classList.remove('show');
+      document.body.style.overflow = '';
+      window.location.reload();
+    }
+
+    // Close on overlay click
+    document.getElementById('sendSuccessModal').addEventListener('click', function (e) {
+      if (e.target === this) closeSuccessAndReload();
+    });
+
+    // ============ COLUMN CUSTOMIZATION MODAL FUNCTIONS ============
+    let selectedColumnsOrder = [];
+
+    function initializeColumnOrder() {
+      selectedColumnsOrder = [];
+      document.querySelectorAll('#columnCustomizationModal .column-item.selected').forEach((item) => {
+        selectedColumnsOrder.push(item.dataset.column);
+      });
+      updateColumnOrderBadges();
+      updateSelectedCount();
+    }
+
+    function openColumnCustomizationModal() {
+      document.getElementById('columnCustomizationModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      initializeColumnOrder();
+    }
+
+    function closeColumnCustomizationModal() {
+      document.getElementById('columnCustomizationModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function toggleColumn(columnElement) {
+      const columnKey = columnElement.dataset.column;
+      const checkbox = columnElement.querySelector('.column-item-checkbox');
+      const isChecked = checkbox.checked;
+
+      if (!isChecked) {
+        // Add to selection
+        if (!selectedColumnsOrder.includes(columnKey)) {
+          selectedColumnsOrder.push(columnKey);
+        }
+        checkbox.checked = true;
+        columnElement.classList.add('selected');
+      } else {
+        // Remove from selection
+        selectedColumnsOrder = selectedColumnsOrder.filter(key => key !== columnKey);
+        checkbox.checked = false;
+        columnElement.classList.remove('selected');
+      }
+
+      updateColumnOrderBadges();
+      updateSelectedCount();
+    }
+
+    function updateColumnOrderBadges() {
+      document.querySelectorAll('#columnCustomizationModal .column-item').forEach(item => {
+        const columnKey = item.dataset.column;
+        const orderBadge = item.querySelector('.column-item-order');
+        if (orderBadge) {
+          const orderIndex = selectedColumnsOrder.indexOf(columnKey);
+          if (orderIndex !== -1) {
+            orderBadge.textContent = orderIndex + 1;
+            orderBadge.style.opacity = '1';
+            orderBadge.style.transform = 'scale(1)';
+          } else {
+            orderBadge.textContent = '';
+            orderBadge.style.opacity = '0';
+            orderBadge.style.transform = 'scale(0)';
           }
-        });
+        }
+      });
+    }
+
+    function updateSelectedCount() {
+      const countEl = document.getElementById('selectedColumnCount');
+      if (countEl) {
+        countEl.textContent = selectedColumnsOrder.length;
+      }
+    }
+
+    function saveColumnCustomization() {
+      if (selectedColumnsOrder.length === 0) {
+        alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
+        return;
       }
 
-      function updateSelectedCount() {
-        const countEl = document.getElementById('selectedColumnCount');
-        if (countEl) {
-          countEl.textContent = selectedColumnsOrder.length;
-        }
-      }
+      // Get the filter form
+      const filterForm = document.querySelector('.search-filter-form');
 
-      function saveColumnCustomization() {
-        if (selectedColumnsOrder.length === 0) {
-          alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
-          return;
-        }
+      // Remove any existing columns[] hidden inputs
+      filterForm.querySelectorAll('input[name="columns[]"]').forEach(input => input.remove());
 
-        // Get the filter form
-        const filterForm = document.querySelector('.search-filter-form');
+      // Add hidden inputs for selected columns
+      selectedColumnsOrder.forEach(columnKey => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'columns[]';
+        hiddenInput.value = columnKey;
+        filterForm.appendChild(hiddenInput);
+      });
 
-        // Remove any existing columns[] hidden inputs
-        filterForm.querySelectorAll('input[name="columns[]"]').forEach(input => input.remove());
+      // Close modal and submit form
+      closeColumnCustomizationModal();
+      filterForm.submit();
+    }
 
-        // Add hidden inputs for selected columns
-        selectedColumnsOrder.forEach(columnKey => {
-          const hiddenInput = document.createElement('input');
-          hiddenInput.type = 'hidden';
-          hiddenInput.name = 'columns[]';
-          hiddenInput.value = columnKey;
-          filterForm.appendChild(hiddenInput);
-        });
+    // Close column customization modal on overlay click
+    document.getElementById('columnCustomizationModal').addEventListener('click', function (e) {
+      if (e.target === this) closeColumnCustomizationModal();
+    });
 
-        // Close modal and submit form
+    // Close modals on Escape key (add column customization)
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
         closeColumnCustomizationModal();
-        filterForm.submit();
       }
-
-      // Close column customization modal on overlay click
-      document.getElementById('columnCustomizationModal').addEventListener('click', function (e) {
-        if (e.target === this) closeColumnCustomizationModal();
-      });
-
-      // Close modals on Escape key (add column customization)
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          closeColumnCustomizationModal();
-        }
-      });
-    </script>
+    });
+  </script>
 
 @endsection

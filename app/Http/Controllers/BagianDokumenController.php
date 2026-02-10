@@ -680,23 +680,30 @@ class BagianDokumenController extends Controller
      * - New documents → Operator
      * - Returned documents (from Team Verifikasi) → directly to Team Verifikasi
      */
-    public function sendToOperator(Dokumen $dokumen)
+    public function sendToOperator(Request $request, Dokumen $dokumen)
     {
         $bagianCode = $this->getBagianCode();
+        $isAjax = $request->ajax();
 
         if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses ke dokumen ini'], 403);
+            }
             abort(403, 'Anda tidak memiliki akses ke dokumen ini');
         }
 
         // Allow sending if document is 'belum dikirim' or 'returned_to_bidang' (dikembalikan)
         if (!in_array($dokumen->status, ['belum dikirim', 'returned_to_bidang'])) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Dokumen sudah pernah dikirim sebelumnya.'], 400);
+            }
             return redirect()->back()
                 ->with('error', 'Dokumen sudah pernah dikirim sebelumnya.');
         }
 
         // Conditional routing: if returned by Team Verifikasi, send directly back to them
         if ($dokumen->was_returned_by_verifikasi) {
-            return $this->sendBackToVerifikasi($dokumen, $bagianCode);
+            return $this->sendBackToVerifikasi($request, $dokumen, $bagianCode);
         }
 
         // Normal flow: send to Operator
@@ -725,12 +732,22 @@ class BagianDokumenController extends Controller
 
             DB::commit();
 
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dokumen berhasil dikirim ke Bidang Keuangan dan Akutansi.',
+                    'destination' => 'Bidang Keuangan',
+                ]);
+            }
             return redirect()->route('bagian.documents.index')
                 ->with('success', 'Dokumen berhasil dikirim ke Bidang Keuangan dan Akutansi.');
 
         } catch (Exception $e) {
             DB::rollback();
             \Log::error('Error sending document to Ibu Tarapul: ' . $e->getMessage());
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Gagal mengirim dokumen: ' . $e->getMessage()], 500);
+            }
             return redirect()->back()
                 ->with('error', 'Gagal mengirim dokumen: ' . $e->getMessage());
         }
@@ -740,8 +757,10 @@ class BagianDokumenController extends Controller
      * Send corrected document directly back to Team Verifikasi (skip Operator)
      * This is called when a document was previously returned by Team Verifikasi
      */
-    private function sendBackToVerifikasi(Dokumen $dokumen, string $bagianCode)
+    private function sendBackToVerifikasi(Request $request, Dokumen $dokumen, string $bagianCode)
     {
+        $isAjax = $request->ajax();
+
         try {
             DB::beginTransaction();
 
@@ -780,12 +799,22 @@ class BagianDokumenController extends Controller
 
             DB::commit();
 
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dokumen yang telah diperbaiki berhasil dikirim langsung ke Team Verifikasi.',
+                    'destination' => 'Team Verifikasi',
+                ]);
+            }
             return redirect()->route('bagian.documents.index')
                 ->with('success', 'Dokumen yang telah diperbaiki berhasil dikirim langsung ke Team Verifikasi.');
 
         } catch (Exception $e) {
             DB::rollback();
             \Log::error('Error sending corrected document to Team Verifikasi: ' . $e->getMessage());
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Gagal mengirim dokumen: ' . $e->getMessage()], 500);
+            }
             return redirect()->back()
                 ->with('error', 'Gagal mengirim dokumen: ' . $e->getMessage());
         }
