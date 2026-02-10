@@ -3101,7 +3101,15 @@ class OwnerDashboardController extends Controller
                 continue;
 
             $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
-            $diffInMinutes = $receivedAt->diffInMinutes($now);
+
+            // Determine end time based on completion status
+            // Match display logic: use processed_at for completed documents to create "permanent" age
+            // This ensures consistency between display and export
+            $processedAt = $roleData->processed_at;
+            $endTime = $processedAt ? \Carbon\Carbon::parse($processedAt) : $now;
+
+            // Calculate age using correct end time (processed_at for completed, now for active)
+            $diffInMinutes = $receivedAt->diffInMinutes($endTime);
             $ageHours = $diffInMinutes / 60; // Convert to hours for threshold comparison
 
             // Calculate duration for display
