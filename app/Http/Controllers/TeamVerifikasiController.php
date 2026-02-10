@@ -316,14 +316,19 @@ class TeamVerifikasiController extends Controller
             // Validate sort order to prevent SQL injection
             $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
 
+
             // Save to database (permanent)
             if ($user && \Schema::hasColumn('users', 'sort_preferences')) {
-                $sortPreferences = $user->sort_preferences ?? [];
+                // Decode JSON if it's a string, otherwise use as array
+                $sortPreferences = is_string($user->sort_preferences)
+                    ? json_decode($user->sort_preferences, true) ?? []
+                    : ($user->sort_preferences ?? []);
+
                 $sortPreferences['team_verifikasi'] = [
                     'column' => $sortColumn,
                     'order' => $sortOrder
                 ];
-                $user->sort_preferences = $sortPreferences;
+                $user->sort_preferences = json_encode($sortPreferences);
                 $user->save();
             }
 
@@ -338,10 +343,21 @@ class TeamVerifikasiController extends Controller
             $sortOrder = 'asc'; // default
 
             // Try database first (permanent), then session, then default
-            if ($user && isset($user->sort_preferences['team_verifikasi'])) {
-                $saved = $user->sort_preferences['team_verifikasi'];
-                $sortColumn = $saved['column'] ?? 'nomor_agenda';
-                $sortOrder = $saved['order'] ?? 'asc';
+            if ($user) {
+                // Decode JSON if it's a string
+                $sortPrefs = is_string($user->sort_preferences)
+                    ? json_decode($user->sort_preferences, true) ?? []
+                    : ($user->sort_preferences ?? []);
+
+                if (isset($sortPrefs['team_verifikasi'])) {
+                    $saved = $sortPrefs['team_verifikasi'];
+                    $sortColumn = $saved['column'] ?? 'nomor_agenda';
+                    $sortOrder = $saved['order'] ?? 'asc';
+                } else {
+                    // Fallback to session
+                    $sortColumn = session('team_verifikasi_sort_column', 'nomor_agenda');
+                    $sortOrder = session('team_verifikasi_sort_order', 'asc');
+                }
             } else {
                 // Fallback to session
                 $sortColumn = session('team_verifikasi_sort_column', 'nomor_agenda');
