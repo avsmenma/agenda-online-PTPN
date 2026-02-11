@@ -336,6 +336,8 @@
     color: white;
     font-weight: 600;
     font-size: 12px;
+    text-align: center;
+    vertical-align: middle;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 16px 12px;

@@ -862,6 +862,7 @@
       color: white;
       font-weight: 600;
       text-align: center;
+      vertical-align: middle;
       border-bottom: 2px solid #083E40;
       padding: 16px 12px;
       font-size: 13px;

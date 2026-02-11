@@ -315,6 +315,7 @@
       font-size: 13px;
       font-weight: 600;
       text-align: center;
+      vertical-align: middle;
       letter-spacing: 0.5px;
       white-space: nowrap;
       border-right: 1px solid rgba(255, 255, 255, 0.15);

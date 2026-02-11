@@ -404,6 +404,7 @@
         color: white;
         font-weight: 600;
         text-align: center;
+        vertical-align: middle;
         border-bottom: 2px solid #1a4d3e;
         padding: 18px 16px;
         font-size: 13px;

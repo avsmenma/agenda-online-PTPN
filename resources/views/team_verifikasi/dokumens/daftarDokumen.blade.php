@@ -1564,6 +1564,7 @@
           font-size: 13px;
           border: none;
           text-align: center;
+          vertical-align: middle;
           letter-spacing: 0.5px;
         }
 
