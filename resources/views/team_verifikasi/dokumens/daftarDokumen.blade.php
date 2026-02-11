@@ -1282,6 +1282,19 @@
           width: 100%;
         }
 
+        .table-enhanced .col-dibayar_kepada,
+        .table-enhanced td.col-dibayar_kepada {
+          width: 250px;
+          min-width: 200px;
+          max-width: 300px;
+          word-wrap: break-word;
+          white-space: normal !important;
+          overflow-wrap: break-word;
+          line-height: 1.6;
+          vertical-align: top;
+          padding: 12px;
+        }
+
         .table-enhanced .col-nilai {
           width: 120px;
           min-width: 120px;
