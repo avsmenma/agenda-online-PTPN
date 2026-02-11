@@ -83,6 +83,17 @@
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>
+                            <a href="{{ route('programmer.bulk-set-date-payment.form') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-calendar-check fa-2x text-info"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Bulk Set Date Payment</h6>
+                                    <small class="text-muted">Set tanggal pembayaran massal untuk dokumen siap bayar</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
                             <a href="{{ route('programmer.document-tools') }}"
                                 class="list-group-item list-group-item-action d-flex align-items-center">
                                 <div class="me-3">

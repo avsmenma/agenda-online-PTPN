@@ -1000,6 +1000,14 @@ Route::middleware(['auth', 'role:programmer'])
         Route::post('/bulk-to-payment', [\App\Http\Controllers\ProgrammerController::class, 'bulkDirectToPayment'])
             ->name('bulk-to-payment.execute');
 
+        // Bulk Set Date Payment
+        Route::get('/bulk-set-date-payment', [\App\Http\Controllers\ProgrammerController::class, 'showBulkSetDatePaymentForm'])
+            ->name('bulk-set-date-payment.form');
+        Route::post('/bulk-set-date-payment/preview', [\App\Http\Controllers\ProgrammerController::class, 'previewBulkSetDatePayment'])
+            ->name('bulk-set-date-payment.preview');
+        Route::post('/bulk-set-date-payment', [\App\Http\Controllers\ProgrammerController::class, 'executeBulkSetDatePayment'])
+            ->name('bulk-set-date-payment.execute');
+
         // Document Tools - View document IDs and edit role timestamps
         Route::get('/document-tools', [\App\Http\Controllers\ProgrammerController::class, 'documentTools'])
             ->name('document-tools');

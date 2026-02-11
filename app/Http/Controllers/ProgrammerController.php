@@ -695,5 +695,238 @@ final class ProgrammerController extends Controller
             ], 500);
         }
     }
+
+    // ============================================
+    // BULK SET DATE PAYMENT METHODS
+    // ============================================
+
+    /**
+     * Show bulk set date payment form
+     */
+    public function showBulkSetDatePaymentForm(): View
+    {
+        return view('programmer.bulk-set-date-payment');
+    }
+
+    /**
+     * Preview bulk set date payment - validate paired inputs
+     */
+    public function previewBulkSetDatePayment(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nomor_agenda_list' => 'required|string',
+            'tanggal_list' => 'required|string',
+        ]);
+
+        // Parse both inputs line by line
+        $agendaLines = $this->parseLinesStrict($validated['nomor_agenda_list']);
+        $dateLines = $this->parseLinesStrict($validated['tanggal_list']);
+
+        // Validate count match
+        if (count($agendaLines) !== count($dateLines)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jumlah nomor agenda (' . count($agendaLines) . ') tidak sama dengan jumlah tanggal (' . count($dateLines) . '). Pastikan jumlah baris sama.',
+            ], 422);
+        }
+
+        if (count($agendaLines) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Input tidak boleh kosong.',
+            ], 422);
+        }
+
+        // Build pairs and validate each
+        $pairs = [];
+        $totalValid = 0;
+        $totalInvalid = 0;
+
+        foreach ($agendaLines as $i => $agenda) {
+            $tanggal = $dateLines[$i];
+            $pair = [
+                'index' => $i + 1,
+                'nomor_agenda' => $agenda,
+                'tanggal_input' => $tanggal,
+                'tanggal_valid' => false,
+                'tanggal_parsed' => null,
+                'found' => false,
+                'valid' => false,
+                'reason' => '',
+                'nomor_spp' => null,
+                'uraian_spp' => null,
+                'nilai_rupiah' => null,
+                'current_handler' => null,
+                'status_pembayaran' => null,
+                'tanggal_dibayar_existing' => null,
+            ];
+
+            // Validate date format dd/mm/yyyy
+            try {
+                $parsedDate = \Carbon\Carbon::createFromFormat('d/m/Y', $tanggal);
+                if ($parsedDate && $parsedDate->format('d/m/Y') === $tanggal) {
+                    $pair['tanggal_valid'] = true;
+                    $pair['tanggal_parsed'] = $parsedDate->format('Y-m-d');
+                } else {
+                    $pair['reason'] = 'Format tanggal tidak valid (gunakan dd/mm/yyyy)';
+                    $totalInvalid++;
+                    $pairs[] = $pair;
+                    continue;
+                }
+            } catch (\Exception $e) {
+                $pair['reason'] = 'Format tanggal tidak valid (gunakan dd/mm/yyyy)';
+                $totalInvalid++;
+                $pairs[] = $pair;
+                continue;
+            }
+
+            // Find document
+            $dokumen = Dokumen::where('nomor_agenda', $agenda)->first();
+            if (!$dokumen) {
+                $pair['reason'] = 'Dokumen tidak ditemukan';
+                $totalInvalid++;
+                $pairs[] = $pair;
+                continue;
+            }
+
+            $pair['found'] = true;
+            $pair['nomor_spp'] = $dokumen->nomor_spp;
+            $pair['uraian_spp'] = $dokumen->uraian_spp;
+            $pair['nilai_rupiah'] = number_format((float) ($dokumen->nilai_rupiah ?? 0), 0, ',', '.');
+            $pair['current_handler'] = $dokumen->current_handler;
+            $pair['status_pembayaran'] = $dokumen->status_pembayaran;
+            $pair['tanggal_dibayar_existing'] = $dokumen->tanggal_dibayar?->format('d/m/Y');
+
+            // Check if document is at pembayaran
+            if ($dokumen->current_handler !== 'pembayaran') {
+                $pair['reason'] = 'Dokumen belum di Pembayaran (posisi: ' . ucfirst($dokumen->current_handler ?? 'operator') . ')';
+                $totalInvalid++;
+                $pairs[] = $pair;
+                continue;
+            }
+
+            // Check if already paid
+            if (!empty($dokumen->tanggal_dibayar)) {
+                $pair['reason'] = 'Sudah dibayar pada ' . $dokumen->tanggal_dibayar->format('d/m/Y');
+                $totalInvalid++;
+                $pairs[] = $pair;
+                continue;
+            }
+
+            // Valid!
+            $pair['valid'] = true;
+            $totalValid++;
+            $pairs[] = $pair;
+        }
+
+        return response()->json([
+            'success' => true,
+            'pairs' => $pairs,
+            'total' => count($pairs),
+            'total_valid' => $totalValid,
+            'total_invalid' => $totalInvalid,
+        ]);
+    }
+
+    /**
+     * Execute bulk set date payment
+     */
+    public function executeBulkSetDatePayment(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'pairs' => 'required|array|min:1',
+            'pairs.*.nomor_agenda' => 'required|string',
+            'pairs.*.tanggal' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+        $processed = 0;
+        $failed = 0;
+        $errors = [];
+        $processedDocs = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($validated['pairs'] as $pair) {
+                try {
+                    $dokumen = Dokumen::where('nomor_agenda', $pair['nomor_agenda'])->first();
+
+                    if (!$dokumen) {
+                        $failed++;
+                        $errors[] = "Dokumen {$pair['nomor_agenda']} tidak ditemukan";
+                        continue;
+                    }
+
+                    if ($dokumen->current_handler !== 'pembayaran') {
+                        $failed++;
+                        $errors[] = "Dokumen {$pair['nomor_agenda']} belum di Pembayaran";
+                        continue;
+                    }
+
+                    if (!empty($dokumen->tanggal_dibayar)) {
+                        $failed++;
+                        $errors[] = "Dokumen {$pair['nomor_agenda']} sudah dibayar";
+                        continue;
+                    }
+
+                    // Parse date
+                    $parsedDate = \Carbon\Carbon::createFromFormat('d/m/Y', $pair['tanggal']);
+
+                    // Update document
+                    $dokumen->update([
+                        'tanggal_dibayar' => $parsedDate,
+                        'status_pembayaran' => 'sudah_dibayar',
+                        'status' => 'completed',
+                    ]);
+
+                    $processed++;
+                    $processedDocs[] = $pair['nomor_agenda'];
+
+                    Log::info("Programmer bulk set date payment: Document {$pair['nomor_agenda']} set tanggal_dibayar={$parsedDate->format('d/m/Y')} by {$user->name}");
+
+                } catch (\Exception $e) {
+                    $failed++;
+                    $errors[] = "Error processing {$pair['nomor_agenda']}: " . $e->getMessage();
+                    Log::error("Programmer bulk set date error for {$pair['nomor_agenda']}: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'failed' => $failed,
+                'processed_docs' => $processedDocs,
+                'errors' => $errors,
+                'message' => "Berhasil set tanggal pembayaran untuk {$processed} dokumen" . ($failed > 0 ? ", {$failed} gagal" : ''),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Programmer bulk set date payment failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk operation failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Parse lines strictly - split by newline only, preserve order
+     */
+    private function parseLinesStrict(string $input): array
+    {
+        $lines = explode("\n", $input);
+        $result = [];
+        foreach ($lines as $line) {
+            $trimmed = trim(str_replace("\r", '', $line));
+            if (!empty($trimmed)) {
+                $result[] = $trimmed;
+            }
+        }
+        return $result;
+    }
 }
 
