@@ -41,15 +41,45 @@ class DokumenController extends Controller
                     ->orWhereHas('roleStatuses', function ($subQ) {
                     $subQ->where('role_code', 'operator');
                 });
-            })
-            ->orderByRaw('CASE 
-                WHEN nomor_agenda REGEXP "^[0-9]+(_[0-9]+)?$" THEN 
-                    CAST(SUBSTRING_INDEX(nomor_agenda, "_", 1) AS UNSIGNED)
-                WHEN nomor_agenda REGEXP "^[0-9]+" THEN 
+            });
+
+        // === Sort/Order handling ===
+        if ($request->has('sort') || $request->has('order')) {
+            $sortColumn = $request->get('sort', 'nomor_agenda');
+            $sortOrder = $request->get('order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+            session(['operator_sort_column' => $sortColumn, 'operator_sort_order' => $sortOrder]);
+        } else {
+            $sortColumn = session('operator_sort_column', 'nomor_agenda');
+            $sortOrder = session('operator_sort_order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+        }
+
+        // Apply sorting based on column
+        if ($sortColumn === 'nomor_agenda') {
+            $query->orderByRaw("CASE 
+                WHEN nomor_agenda REGEXP '^[0-9]+(_[0-9]+)?$' THEN 
+                    CAST(SUBSTRING_INDEX(nomor_agenda, '_', 1) AS UNSIGNED)
+                WHEN nomor_agenda REGEXP '^[0-9]+' THEN 
                     CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
-            END DESC')
-            ->orderBy('nomor_agenda', 'DESC'); // Secondary sort for non-numeric or same numeric values
+            END {$sortOrder}")
+                ->orderBy('nomor_agenda', $sortOrder);
+        } else {
+            // Allow sorting by any valid column
+            $allowedColumns = ['nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'tanggal_spp', 'uraian_spp', 'kategori', 'kebun', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran', 'nama_pengirim', 'dibayar_kepada', 'no_berita_acara', 'tanggal_berita_acara', 'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'status'];
+            if (in_array($sortColumn, $allowedColumns)) {
+                $query->orderBy($sortColumn, $sortOrder);
+            }
+            // Always add secondary sort by nomor_agenda DESC
+            $query->orderByRaw("CASE 
+                WHEN nomor_agenda REGEXP '^[0-9]+(_[0-9]+)?$' THEN 
+                    CAST(SUBSTRING_INDEX(nomor_agenda, '_', 1) AS UNSIGNED)
+                WHEN nomor_agenda REGEXP '^[0-9]+' THEN 
+                    CAST(nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC");
+        }
 
         // Enhanced search functionality - search across all relevant fields
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
@@ -198,6 +228,8 @@ class DokumenController extends Controller
             "suggestions" => $suggestions ?? [],
             "availableColumns" => $availableColumns,
             "selectedColumns" => $selectedColumns,
+            "sortColumn" => $sortColumn,
+            "sortOrder" => $sortOrder,
         );
 
         return view('operator.dokumens.daftarDokumen', $data);

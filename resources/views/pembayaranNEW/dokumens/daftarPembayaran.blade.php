@@ -1324,7 +1324,12 @@
           <th class="col-no sticky-column">No</th>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
-              <th class="col-{{ $col }} sticky-column">{{ $availableColumns[$col] ?? $col }}</th>
+              <th class="col-{{ $col }} sticky-column" onclick="toggleSort('{{ $col }}')" style="cursor: pointer;">
+                {{ $availableColumns[$col] ?? $col }}
+                @if(isset($sortColumn) && $sortColumn === $col)
+                  <i class="fa {{ $sortOrder === 'asc' ? 'fa-caret-up' : 'fa-caret-down' }}"></i>
+                @endif
+              </th>
             @endif
           @endforeach
           <th class="col-status sticky-column">Status</th>
@@ -2255,6 +2260,21 @@
 
 </style>
 
+<script>
+function toggleSort(column) {
+    const url = new URL(window.location.href);
+    const currentSort = url.searchParams.get('sort');
+    const currentOrder = url.searchParams.get('order') || 'desc';
+    if (currentSort === column) {
+        url.searchParams.set('order', currentOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+        url.searchParams.set('sort', column);
+        url.searchParams.set('order', 'asc');
+    }
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+</script>
 <script>
 // Global variables for column customization
 let selectedColumnsOrder = [];

@@ -338,27 +338,49 @@ class DashboardPerpajakanController extends Controller
             }
         }
 
+        // === Sort/Order handling ===
+        if ($request->has('sort') || $request->has('order')) {
+            $sortColumn = $request->get('sort', 'nomor_agenda');
+            $sortOrder = $request->get('order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+            session(['perpajakan_sort_column' => $sortColumn, 'perpajakan_sort_order' => $sortOrder]);
+        } else {
+            $sortColumn = session('perpajakan_sort_column', 'nomor_agenda');
+            $sortOrder = session('perpajakan_sort_order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+        }
+
         $perPage = $request->get('per_page', 10);
         $dokumens = $query
             ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
                 $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
                     ->where('perpajakan_data.role_code', '=', 'perpajakan');
             })
-            ->select('dokumens.*')
-            ->orderByRaw("CASE 
+            ->select('dokumens.*');
+
+        // Apply sorting based on column
+        if ($sortColumn === 'nomor_agenda') {
+            $dokumens->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
-            END DESC")
-            ->orderBy('dokumens.nomor_agenda', 'DESC')
-            ->orderByDesc('perpajakan_data.received_at')
+            END {$sortOrder}")
+                ->orderBy('dokumens.nomor_agenda', $sortOrder);
+        } else {
+            $allowedColumns = ['nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'tanggal_spp', 'uraian_spp', 'kategori', 'kebun', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran', 'nama_pengirim', 'dibayar_kepada', 'no_berita_acara', 'tanggal_berita_acara', 'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'status', 'nomor_miro', 'tanggal_miro'];
+            if (in_array($sortColumn, $allowedColumns)) {
+                $dokumens->orderBy($sortColumn, $sortOrder);
+            }
+            $dokumens->orderByRaw("CASE 
+                WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
+                WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC");
+        }
+
+        // Secondary sorting
+        $dokumens = $dokumens->orderByDesc('perpajakan_data.received_at')
             ->orderByDesc('updated_at')
-            ->orderByRaw("CASE
-                WHEN current_handler = 'perpajakan' AND status NOT IN ('sent_to_akutansi', 'sent_to_pembayaran') THEN 1
-                WHEN status = 'sent_to_akutansi' THEN 2
-                WHEN status = 'sent_to_pembayaran' THEN 3
-                ELSE 4
-            END")
             ->paginate($perPage)->appends($request->query());
 
         // Eager load roleData and roleStatuses for perpajakan
@@ -502,6 +524,8 @@ class DashboardPerpajakanController extends Controller
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
+            'sortColumn' => $sortColumn,
+            'sortOrder' => $sortOrder,
         );
         return view('perpajakan.dokumens.daftarPerpajakan', $data);
     }

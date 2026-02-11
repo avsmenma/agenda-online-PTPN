@@ -2727,7 +2727,13 @@
               <th class="col-number">No</th>
               @foreach($selectedColumns as $col)
                 @if($col !== 'status')
-                  <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
+                  <th class="col-{{ $col }}" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                    {{ $availableColumns[$col] ?? $col }}
+                    <span style="display:inline-flex; flex-direction:column; line-height:0.5; margin-left:4px; font-size:10px; vertical-align:middle;">
+                      <i class="fas fa-caret-up" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='asc') ? '1' : '0.3' }}"></i>
+                      <i class="fas fa-caret-down" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='desc') ? '1' : '0.3' }}"></i>
+                    </span>
+                  </th>
                 @endif
               @endforeach
               <th class="col-deadline">Deadline</th>
@@ -3590,6 +3596,24 @@
               </div>
             </div>
           </div>
+
+          <script>
+          /* Sort toggle function */
+          function toggleSort(column) {
+            const url = new URL(window.location.href);
+            const params = url.searchParams;
+            const currentSort = params.get('sort') || 'nomor_agenda';
+            const currentOrder = params.get('order') || 'desc';
+            let newOrder = 'asc';
+            if (currentSort === column) {
+              newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+            }
+            params.set('sort', column);
+            params.set('order', newOrder);
+            params.delete('page');
+            window.location.href = url.toString();
+          }
+          </script>
 
           <script>
           // Wrapper function untuk handle row click dengan text selection check

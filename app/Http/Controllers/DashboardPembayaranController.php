@@ -604,23 +604,44 @@ class DashboardPembayaranController extends Controller
             return 'belum_siap_bayar';
         };
 
+        // === Sort/Order handling ===
+        if ($request->has('sort') || $request->has('order')) {
+            $sortColumn = $request->get('sort', 'nomor_agenda');
+            $sortOrder = $request->get('order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+            session(['pembayaran_sort_column' => $sortColumn, 'pembayaran_sort_order' => $sortOrder]);
+        } else {
+            $sortColumn = session('pembayaran_sort_column', 'nomor_agenda');
+            $sortOrder = session('pembayaran_sort_order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+        }
+
         // Get all documents with ordering and eager load relationships (before pagination)
-        // Order by updated_at descending first, then by nomor_agenda, then by status priority
-        // This ensures newly received documents appear at the top
-        $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs'])
-            ->orderBy('updated_at', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->orderByRaw("CASE 
+        $allDokumens = $query->with(['dibayarKepadas', 'dokumenPos', 'dokumenPrs']);
+
+        // Apply sorting based on column
+        if ($sortColumn === 'nomor_agenda') {
+            $allDokumens->orderByRaw("CASE 
                 WHEN nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN nomor_agenda REGEXP '^[0-9]+$' THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
-            END DESC")
-            ->orderBy('nomor_agenda', 'DESC') // Secondary sort for non-numeric or same numeric values
-            ->orderByRaw("CASE
-                WHEN status IN ('processed_by_akutansi', 'sent_to_pembayaran', 'processed_by_pembayaran') OR current_handler = 'pembayaran' THEN 1
-                WHEN status IN ('sent_to_akutansi', 'processed_by_perpajakan', 'sent_to_perpajakan') THEN 2
-                ELSE 3
-            END")
+            END {$sortOrder}")
+                ->orderBy('nomor_agenda', $sortOrder);
+        } else {
+            $allowedColumns = ['nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'tanggal_spp', 'uraian_spp', 'kategori', 'kebun', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran', 'nama_pengirim', 'dibayar_kepada', 'no_berita_acara', 'tanggal_berita_acara', 'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'status', 'nomor_miro', 'tanggal_miro'];
+            if (in_array($sortColumn, $allowedColumns)) {
+                $allDokumens->orderBy($sortColumn, $sortOrder);
+            }
+            $allDokumens->orderByRaw("CASE 
+                WHEN nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
+                WHEN nomor_agenda REGEXP '^[0-9]+$' THEN CAST(nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC");
+        }
+
+        // Secondary sorting
+        $allDokumens = $allDokumens->orderBy('updated_at', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         // Add computed status to each document
@@ -835,6 +856,8 @@ class DashboardPembayaranController extends Controller
             'filterItemSubKriteria' => $filterItemSubKriteria,
             'filterKebun' => $filterKebun,
             'filterStatusPembayaran' => $filterStatusPembayaran,
+            'sortColumn' => $sortColumn,
+            'sortOrder' => $sortOrder,
         );
         return view('pembayaranNEW.dokumens.daftarPembayaran', $data);
     }

@@ -372,39 +372,40 @@ class DashboardAkutansiController extends Controller
             }
         ]);
 
-        // Order by received_at descending first, then by nomor_agenda, then by deadline status
-        // This ensures newly received documents appear at the top
-        $dokumens = $query->orderByRaw("COALESCE(
-                (SELECT received_at FROM dokumen_role_data 
-                 WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
-                 LIMIT 1),
-                dokumens.created_at
-            ) DESC")
-            ->orderBy('dokumens.id', 'DESC') // Secondary sort by ID untuk konsistensi
-            ->orderByRaw("CASE 
+        // === Sort/Order handling ===
+        if ($request->has('sort') || $request->has('order')) {
+            $sortColumn = $request->get('sort', 'nomor_agenda');
+            $sortOrder = $request->get('order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+            session(['akutansi_sort_column' => $sortColumn, 'akutansi_sort_order' => $sortOrder]);
+        } else {
+            $sortColumn = session('akutansi_sort_column', 'nomor_agenda');
+            $sortOrder = session('akutansi_sort_order', 'desc');
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+        }
+
+        // Apply sorting based on column
+        if ($sortColumn === 'nomor_agenda') {
+            $dokumens = $query->orderByRaw("CASE 
                 WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
-            END DESC")
-            ->orderBy('dokumens.nomor_agenda', 'DESC') // Secondary sort for non-numeric or same numeric values
-            ->orderByRaw("CASE
-                -- Kategori 1: Dokumen yang locked (belum set deadline)
-                WHEN dokumens.status = 'sent_to_akutansi' 
-                AND (
-                    SELECT deadline_at FROM dokumen_role_data 
-                    WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
-                    LIMIT 1
-                ) IS NULL THEN 1
-                -- Kategori 2: Dokumen yang sudah punya deadline atau sudah terkirim ke pembayaran
-                WHEN (
-                    SELECT deadline_at FROM dokumen_role_data 
-                    WHERE dokumen_id = dokumens.id AND role_code = 'akutansi' 
-                    LIMIT 1
-                ) IS NOT NULL 
-                OR dokumens.status IN ('menunggu_di_approve', 'pending_approval_pembayaran', 'sent_to_pembayaran') THEN 2
-                -- Kategori 3: Lainnya
-                ELSE 3
-            END")
+            END {$sortOrder}")
+                ->orderBy('dokumens.nomor_agenda', $sortOrder);
+        } else {
+            $allowedColumns = ['nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'tanggal_spp', 'uraian_spp', 'kategori', 'kebun', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran', 'nama_pengirim', 'dibayar_kepada', 'no_berita_acara', 'tanggal_berita_acara', 'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'status', 'nomor_miro', 'tanggal_miro'];
+            if (in_array($sortColumn, $allowedColumns)) {
+                $query->orderBy($sortColumn, $sortOrder);
+            }
+            $dokumens = $query->orderByRaw("CASE 
+                WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
+                WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
+                ELSE 0
+            END DESC");
+        }
+
+        // Secondary sorting and pagination
+        $dokumens = $dokumens->orderBy('dokumens.id', 'DESC')
             ->paginate($request->get('per_page', 10))
             ->appends($request->query());
 
@@ -539,6 +540,8 @@ class DashboardAkutansiController extends Controller
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
+            'sortColumn' => $sortColumn,
+            'sortOrder' => $sortOrder,
         );
         return view('akutansi.dokumens.daftarAkutansi', $data);
     }
