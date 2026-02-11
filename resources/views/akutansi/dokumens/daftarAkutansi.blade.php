@@ -2127,6 +2127,50 @@
         line-height: 1.6;
       }
 
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .panel-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn-select-action {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-select-action:hover {
+        border-color: #083E40;
+        color: #083E40;
+      }
+
+      .btn-select-action.btn-select-all:hover {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: #22c55e;
+        color: #22c55e;
+      }
+
+      .btn-select-action.btn-remove-all:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+        color: #ef4444;
+      }
+
       .column-selection-list {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -4433,14 +4477,24 @@
               <div class="modal-body-custom">
                 <div class="customization-grid">
                   <!-- Selection Panel -->
-                  <div class="selection-panel">
-                    <div class="panel-title">
-                      <i class="fa-solid fa-check-square"></i>
-                      Pilih Kolom
-                    </div>
-                    <div class="panel-description">
-                      Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
-                    </div>
+                    <div class="selection-panel">
+                      <div class="panel-header">
+                        <div class="panel-title">
+                          <i class="fa-solid fa-check-square"></i>
+                          Pilih Kolom
+                        </div>
+                        <div class="panel-actions">
+                          <button type="button" class="btn-select-action btn-select-all" onclick="selectAllColumns()">
+                            <i class="fa-solid fa-check-double"></i> Pilih Semua
+                          </button>
+                          <button type="button" class="btn-select-action btn-remove-all" onclick="removeAllColumns()">
+                            <i class="fa-solid fa-times"></i> Hapus Semua
+                          </button>
+                        </div>
+                      </div>
+                      <div class="panel-description">
+                        Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+                      </div>
                     <div class="column-selection-list" id="columnSelectionList">
                       @foreach($availableColumns as $key => $label)
                         <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}"
@@ -4613,6 +4667,33 @@
               columnElement.setAttribute('draggable', 'false');
             }
 
+            updateColumnOrderBadges();
+            updatePreviewTable();
+            updateSelectedCount();
+            updateDraggableState();
+          }
+
+          function selectAllColumns() {
+            const allKeys = Object.keys(@json($availableColumns));
+            selectedColumnsOrder = allKeys;
+            document.querySelectorAll('.column-item').forEach(item => {
+              item.classList.add('selected');
+              item.setAttribute('draggable', 'true');
+              item.querySelector('.column-item-checkbox').checked = true;
+            });
+            updateColumnOrderBadges();
+            updatePreviewTable();
+            updateSelectedCount();
+            updateDraggableState();
+          }
+
+          function removeAllColumns() {
+            selectedColumnsOrder = [];
+            document.querySelectorAll('.column-item').forEach(item => {
+              item.classList.remove('selected');
+              item.setAttribute('draggable', 'false');
+              item.querySelector('.column-item-checkbox').checked = false;
+            });
             updateColumnOrderBadges();
             updatePreviewTable();
             updateSelectedCount();

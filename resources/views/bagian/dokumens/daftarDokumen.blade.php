@@ -1346,10 +1346,22 @@
         <!-- Selection Panel -->
         <div class="selection-panel"
           style="background: #f8f9fa; border-radius: 12px; padding: 24px; border: 1px solid #e9ecef;">
-          <div class="panel-title"
-            style="font-size: 18px; font-weight: 600; color: #212529; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-check-square"></i>
-            Pilih Kolom
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="panel-title"
+              style="font-size: 18px; font-weight: 600; color: #212529; margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
+              <i class="fa-solid fa-check-square"></i>
+              Pilih Kolom
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" onclick="selectAllColumns()"
+                style="padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid #e5e7eb; background: #fff; color: #374151; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-check-double"></i> Pilih Semua
+              </button>
+              <button type="button" onclick="removeAllColumns()"
+                style="padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid #e5e7eb; background: #fff; color: #374151; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-times"></i> Hapus Semua
+              </button>
+            </div>
           </div>
           <div class="panel-description" style="font-size: 13px; color: #6c757d; margin-bottom: 16px; line-height: 1.6;">
             Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
@@ -2884,6 +2896,28 @@
         columnElement.classList.remove('selected');
       }
 
+      updateColumnOrderBadges();
+      updateSelectedCount();
+    }
+
+    function selectAllColumns() {
+      const allItems = document.querySelectorAll('#columnCustomizationModal .column-item');
+      selectedColumnsOrder = [];
+      allItems.forEach(item => {
+        selectedColumnsOrder.push(item.dataset.column);
+        item.classList.add('selected');
+        item.querySelector('.column-item-checkbox').checked = true;
+      });
+      updateColumnOrderBadges();
+      updateSelectedCount();
+    }
+
+    function removeAllColumns() {
+      selectedColumnsOrder = [];
+      document.querySelectorAll('#columnCustomizationModal .column-item').forEach(item => {
+        item.classList.remove('selected');
+        item.querySelector('.column-item-checkbox').checked = false;
+      });
       updateColumnOrderBadges();
       updateSelectedCount();
     }
