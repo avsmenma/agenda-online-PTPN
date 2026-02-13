@@ -155,6 +155,15 @@ class TeamVerifikasiController extends Controller
         $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi'])
             ->count();
 
+        // 7. Total dokumen agenda - semua dokumen yang ada di sistem (operator)
+        $totalDokumenAgenda = Dokumen::when($hasImportedFromCsvColumn, function ($query) {
+            $query->where(function ($q) {
+                $q->where('imported_from_csv', false)
+                    ->orWhereNull('imported_from_csv');
+            });
+        })
+            ->count();
+
         // Get latest documents (5 most recent) for Team Verifikasi - same logic as dokumens() method
         $dokumenTerbaru = Dokumen::where(function ($q) {
             $q->where('current_handler', 'team_verifikasi')
@@ -181,6 +190,7 @@ class TeamVerifikasiController extends Controller
             'dokumen24to72h' => $dokumen24to72h,
             'dokumenMoreThan72h' => $dokumenMoreThan72h,
             'totalTerkirim' => $totalTerkirim,
+            'totalDokumenAgenda' => $totalDokumenAgenda,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
         return view('team_verifikasi.dashboard', $data);

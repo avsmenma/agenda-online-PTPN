@@ -96,6 +96,9 @@ class DashboardAkutansiController extends Controller
             ->excludeCsvImports()
             ->count();
 
+        // 7. Total dokumen agenda - semua dokumen yang ada di sistem (operator)
+        $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
+
         // Get latest documents currently handled by akutansi
         $dokumenTerbaru = Dokumen::where('current_handler', 'akutansi')
             ->excludeCsvImports()
@@ -115,6 +118,7 @@ class DashboardAkutansiController extends Controller
             'dokumen24to72h' => $dokumen24to72h,
             'dokumenMoreThan72h' => $dokumenMoreThan72h,
             'totalTerkirim' => $totalTerkirim,
+            'totalDokumenAgenda' => $totalDokumenAgenda,
             'dokumenTerbaru' => $dokumenTerbaru,
         );
         return view('akutansi.dashboardAkutansi', $data);

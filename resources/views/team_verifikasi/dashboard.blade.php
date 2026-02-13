@@ -97,6 +97,10 @@
       background: linear-gradient(135deg, #95d5b2 0%, #74c69d 100%);
     }
 
+    .stat-icon.agenda {
+      background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    }
+
     /* Deadline Card Styles - Modern Design */
     .deadline-card-link {
       text-decoration: none;
@@ -666,26 +670,42 @@
 
   <h2>{{ $title }}</h2>
 
-  <!-- Statistics Cards - Row 1: Total, Proses, Terkirim -->
+  <!-- Statistics Cards - Row 1: Agenda, Total Verifikasi, Proses, Terkirim -->
   <div class="row mb-3">
-    <!-- Total Dokumen -->
-    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+    <!-- Total Dokumen Agenda -->
+    <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
+      <div class="stat-card">
+        <div class="stat-card-body">
+          <div class="stat-icon agenda">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-title">Total Dokumen Agenda</div>
+            <div class="stat-value">{{ number_format($totalDokumenAgenda ?? 0, 0, ',', '.') }}</div>
+            <div class="stat-description">Semua dokumen dalam sistem</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Dokumen Verifikasi -->
+    <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
       <div class="stat-card">
         <div class="stat-card-body">
           <div class="stat-icon total">
             <i class="fas fa-folder-open"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-title">Total Dokumen</div>
+            <div class="stat-title">Total Dokumen Verifikasi</div>
             <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Semua dokumen aktif</div>
+            <div class="stat-description">Dokumen di verifikasi</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Total Dokumen Proses -->
-    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+    <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
       <div class="stat-card">
         <div class="stat-card-body">
           <div class="stat-icon proses">
@@ -701,7 +721,7 @@
     </div>
 
     <!-- Total Dokumen Terkirim -->
-    <div class="col-xl-4 col-lg-4 col-md-6 mb-3">
+    <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
       <div class="stat-card">
         <div class="stat-card-body">
           <div class="stat-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
