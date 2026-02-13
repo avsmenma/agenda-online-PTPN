@@ -132,29 +132,31 @@
       align-items: center;
     }
 
-    .btn-export {
-      display: flex;
+    .btn-export-excel {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-light);
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
+      border: 1px solid #16a34a;
+      background: #16a34a;
+      color: white;
       cursor: pointer;
       transition: var(--transition-base);
       text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
     }
 
-    .btn-export:hover {
-      background: var(--bg-secondary);
-      color: var(--brand-primary);
-      border-color: var(--brand-primary);
+    .btn-export-excel:hover {
+      background: #15803d;
+      border-color: #15803d;
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
     }
 
-    .btn-export i {
+    .btn-export-excel i {
       font-size: 1rem;
     }
 
@@ -1382,11 +1384,8 @@
         <p class="header-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
       </div>
       <div class="header-actions">
-        <button type="button" class="btn-export" onclick="exportDocument('excel')" title="Export Excel">
-          <i class="fas fa-file-excel"></i>
-        </button>
-        <button type="button" class="btn-export" onclick="exportDocument('pdf')" title="Export PDF">
-          <i class="fas fa-file-pdf"></i>
+        <button type="button" class="btn-export-excel" onclick="exportDocument('excel')" title="Export Excel">
+          <i class="fas fa-file-excel"></i> Export Excel
         </button>
       </div>
       <!-- Hidden export form -->
@@ -2526,11 +2525,11 @@
 
       if (selectedColumnsOrder.length === 0) {
         previewContainer.innerHTML = `
-                      <div class="empty-preview">
-                        <i class="fa-solid fa-table"></i>
-                        <p>Belum ada kolom yang dipilih</p>
-                        <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                      </div>`;
+                        <div class="empty-preview">
+                          <i class="fa-solid fa-table"></i>
+                          <p>Belum ada kolom yang dipilih</p>
+                          <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                        </div>`;
         return;
       }
 
@@ -2695,48 +2694,48 @@
     // Export Document Function
     let pendingExportFormat = 'excel';
     let selectedVendorExportMode = 'multi_sheet';
-    
+
     // Get unique vendor count from the page data
     const rekapanByVendorData = @json($rekapanByVendor ?? []);
     const currentMode = '{{ $mode ?? "normal" }}';
     const currentVendorFilter = '{{ request("filter_vendor") ?? "" }}';
-    
+
     function getUniqueVendorCount() {
       if (rekapanByVendorData && typeof rekapanByVendorData === 'object') {
         return Object.keys(rekapanByVendorData).length;
       }
       return 0;
     }
-    
+
     function exportDocument(format) {
       pendingExportFormat = format;
-      
+
       // Check if we're in rekapan_table (Group Vendor) mode and NOT filtering by single vendor
       const vendorCount = getUniqueVendorCount();
       const isGroupVendorMode = currentMode === 'rekapan_table';
       const hasVendorFilter = currentVendorFilter !== '';
-      
+
       // If in group vendor mode with multiple vendors and no specific vendor filter, show modal
       if (isGroupVendorMode && vendorCount > 1 && !hasVendorFilter && format === 'excel') {
         document.getElementById('vendorCountLabel').textContent = vendorCount + ' vendor';
         openExportVendorModal();
         return;
       }
-      
+
       // Otherwise, export directly
       doExport(format, hasVendorFilter ? 'single_vendor' : '');
     }
-    
+
     function openExportVendorModal() {
       document.getElementById('exportVendorModal').classList.add('show');
       document.body.style.overflow = 'hidden';
     }
-    
+
     function closeExportVendorModal() {
       document.getElementById('exportVendorModal').classList.remove('show');
       document.body.style.overflow = '';
     }
-    
+
     function selectExportMode(mode) {
       selectedVendorExportMode = mode;
       // Update radio button visual selection
@@ -2744,12 +2743,12 @@
         radio.checked = (radio.value === mode);
       });
     }
-    
+
     function confirmVendorExport() {
       closeExportVendorModal();
       doExport(pendingExportFormat, selectedVendorExportMode);
     }
-    
+
     function doExport(format, vendorMode) {
       const form = document.getElementById('exportForm');
       const formatInput = document.getElementById('exportFormat');
