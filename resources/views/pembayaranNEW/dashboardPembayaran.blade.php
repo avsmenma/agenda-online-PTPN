@@ -1513,7 +1513,7 @@
     </div>
 
     <!-- Filter Section -->
-    <form action="{{ route('dashboard.pembayaran') }}" method="GET" class="filter-section">
+    <form action="{{ route('dashboard.pembayaran') }}" method="GET" class="filter-section" id="filterForm">
       <div class="filter-row">
         <div class="filter-search">
           <i class="fas fa-search filter-search-icon"></i>
@@ -1675,12 +1675,12 @@
     </form>
 
     <!-- Table Section -->
-    <div class="table-section">
+    <div class="table-section" id="tableSection">
       <div class="table-header">
         <div class="table-title">
           <i class="fas fa-list-alt"></i>
           Daftar Dokumen
-          <span class="table-count">{{ $dokumens->total() }}</span>
+          <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
         </div>
         <div class="table-toggle">
           <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
@@ -1769,7 +1769,14 @@
           </div>
         @else
           <!-- Normal Table View -->
-          <div class="data-table-wrapper">
+          <!-- AJAX loading overlay -->
+          <div class="ajax-loading-overlay" id="ajaxLoadingOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
+            <div style="text-align:center;">
+              <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
+              <p style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.875rem;">Memuat data...</p>
+            </div>
+          </div>
+          <div class="data-table-wrapper" id="dataTableWrapper">
             <table class="data-table">
               <thead>
                 <tr>
@@ -1778,7 +1785,7 @@
                   @endforeach
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="tableBody">
                 @foreach($dokumens as $dok)
                   <tr>
                     @foreach($selectedColumns as $colKey)
@@ -1824,16 +1831,18 @@
         @endif
 
         <!-- Pagination -->
-        @if($dokumens->hasPages())
-          <div class="pagination-wrapper">
-            <div class="pagination-info">
+        <div class="pagination-wrapper" id="paginationWrapper" style="{{ $dokumens->hasPages() ? '' : 'display:none;' }}">
+          <div class="pagination-info" id="paginationInfo">
+            @if($dokumens->hasPages())
               Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
-            </div>
-            <div>
-              {{ $dokumens->links('pagination::bootstrap-4') }}
-            </div>
+            @endif
           </div>
-        @endif
+          <div id="paginationLinks">
+            @if($dokumens->hasPages())
+              {{ $dokumens->links('pagination::bootstrap-4') }}
+            @endif
+          </div>
+        </div>
       @else
         <!-- Empty State -->
         <div class="empty-state">
@@ -2789,5 +2798,363 @@
       // Submit form
       form.submit();
     }
+  </script>
+
+  {{-- ===== AJAX FILTER SYSTEM ===== --}}
+  <script>
+    (function() {
+      'use strict';
+
+      const AJAX_CONFIG = {
+        url: '{{ route("dashboard.pembayaran") }}',
+        debounceMs: 300,
+      };
+
+      let searchDebounceTimer = null;
+      let currentPage = {{ $dokumens->currentPage() }};
+
+      // ==========================================
+      // INIT: Hook into forms and filters
+      // ==========================================
+      document.addEventListener('DOMContentLoaded', function() {
+        const filterForm = document.getElementById('filterForm');
+        if (!filterForm) return;
+
+        // Intercept form submission
+        filterForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          currentPage = 1;
+          fetchFilteredData();
+        });
+
+        // Auto-apply dropdown filters on change
+        filterForm.querySelectorAll('select').forEach(function(sel) {
+          sel.addEventListener('change', function() {
+            currentPage = 1;
+            fetchFilteredData();
+          });
+        });
+
+        // Debounced search on typing
+        const searchInput = filterForm.querySelector('input[name="search"]');
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function() {
+              currentPage = 1;
+              fetchFilteredData();
+            }, AJAX_CONFIG.debounceMs);
+          });
+        }
+      });
+
+      // ==========================================
+      // CORE: Fetch filtered data via AJAX
+      // ==========================================
+      function fetchFilteredData() {
+        const filterForm = document.getElementById('filterForm');
+        if (!filterForm) return;
+
+        showLoading(true);
+
+        // Build query string from form
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams();
+
+        for (const [key, value] of formData.entries()) {
+          if (value) params.append(key, value);
+        }
+        params.set('page', currentPage);
+
+        // Also carry over columns[] and mode from URL if present
+        const currentUrl = new URL(window.location.href);
+        const existingColumns = currentUrl.searchParams.getAll('columns[]');
+        if (existingColumns.length > 0) {
+          existingColumns.forEach(function(col) {
+            params.append('columns[]', col);
+          });
+        }
+        const existingMode = currentUrl.searchParams.get('mode');
+        if (existingMode) {
+          params.set('mode', existingMode);
+        }
+
+        fetch(AJAX_CONFIG.url + '?' + params.toString(), {
+          method: 'GET',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+        })
+        .then(function(response) {
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
+        })
+        .then(function(data) {
+          updateStatisticsCards(data.statistics);
+          updateDeadlineCards(data);
+          updateTable(data);
+          updatePagination(data.pagination);
+          updateUrlState(params);
+          showLoading(false);
+        })
+        .catch(function(error) {
+          console.error('AJAX filter error:', error);
+          showLoading(false);
+          // Fallback: submit form normally
+          filterForm.submit();
+        });
+      }
+
+      // ==========================================
+      // UPDATE: Statistics Cards
+      // ==========================================
+      function updateStatisticsCards(stats) {
+        if (!stats) return;
+
+        // Update stat card values
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(function(card) {
+          const valueEl = card.querySelector('.stat-value');
+          const subvalueEl = card.querySelector('.stat-subvalue');
+          if (!valueEl) return;
+
+          if (card.classList.contains('stat-card--total')) {
+            valueEl.textContent = formatNumber(stats.total_documents);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai);
+          } else if (card.classList.contains('stat-card--pending')) {
+            valueEl.textContent = formatNumber(stats.by_status.belum_dibayar);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.belum_dibayar);
+          } else if (card.classList.contains('stat-card--ready')) {
+            valueEl.textContent = formatNumber(stats.by_status.siap_dibayar);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.siap_dibayar);
+          } else if (card.classList.contains('stat-card--paid')) {
+            valueEl.textContent = formatNumber(stats.by_status.sudah_dibayar);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.sudah_dibayar);
+          }
+        });
+      }
+
+      // ==========================================
+      // UPDATE: Deadline Cards
+      // ==========================================
+      function updateDeadlineCards(data) {
+        const deadlineCards = document.querySelectorAll('.deadline-card');
+        deadlineCards.forEach(function(card) {
+          const valueEl = card.querySelector('.deadline-value');
+          if (!valueEl) return;
+
+          if (card.classList.contains('deadline-card--aman')) {
+            valueEl.textContent = formatNumber(data.totalAman);
+          } else if (card.classList.contains('deadline-card--peringatan')) {
+            valueEl.textContent = formatNumber(data.totalPeringatan);
+          } else if (card.classList.contains('deadline-card--terlambat')) {
+            valueEl.textContent = formatNumber(data.totalTerlambat);
+          }
+        });
+      }
+
+      // ==========================================
+      // UPDATE: Table Body
+      // ==========================================
+      function updateTable(data) {
+        const tableBody = document.getElementById('tableBody');
+        const tableCount = document.getElementById('tableCount');
+        const tableSection = document.getElementById('tableSection');
+
+        if (tableCount) {
+          tableCount.textContent = data.pagination.total;
+        }
+
+        // If in rekapan_table mode, we can't easily update the grouped view via AJAX
+        // So we skip table body update for that mode
+        if (data.mode === 'rekapan_table') {
+          return;
+        }
+
+        if (!tableBody) return;
+
+        const dokumens = data.dokumens || [];
+        const columns = data.selectedColumns || [];
+
+        if (dokumens.length === 0) {
+          // Show empty state
+          const wrapper = document.getElementById('dataTableWrapper');
+          if (wrapper) {
+            wrapper.innerHTML = '';
+          }
+          // Show empty state div if not already visible
+          let emptyState = tableSection.querySelector('.empty-state');
+          if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+              <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+              <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+              <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+              <a href="${AJAX_CONFIG.url}" class="btn-empty">
+                <i class="fas fa-redo"></i> Reset Filter
+              </a>
+            `;
+            tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
+          }
+          return;
+        }
+
+        // Remove empty state if it exists
+        const existingEmpty = tableSection.querySelector('.empty-state');
+        if (existingEmpty) existingEmpty.remove();
+
+        // Rebuild table rows
+        let html = '';
+        dokumens.forEach(function(dok) {
+          html += '<tr>';
+          columns.forEach(function(colKey) {
+            if (colKey === 'nomor_agenda') {
+              html += '<td class="cell-primary cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'nomor_spp') {
+              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'dibayar_kepada') {
+              html += '<td class="cell-vendor">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'uraian_spp') {
+              html += '<td class="cell-uraian">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'nilai_rupiah') {
+              html += '<td class="cell-rupiah text-end">' + escapeHtml(dok[colKey] || '0') + '</td>';
+            } else if (colKey === 'status_pembayaran') {
+              html += '<td>' + renderStatusPill(dok.computed_status) + '</td>';
+            } else if (colKey === 'tgl_jatuhtempo') {
+              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (['dokumen_po', 'dokumen_pr', 'dokumen_gr'].indexOf(colKey) !== -1) {
+              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else {
+              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
+            }
+          });
+          html += '</tr>';
+        });
+
+        tableBody.innerHTML = html;
+      }
+
+      // ==========================================
+      // UPDATE: Pagination
+      // ==========================================
+      function updatePagination(pagination) {
+        const wrapper = document.getElementById('paginationWrapper');
+        const info = document.getElementById('paginationInfo');
+        const links = document.getElementById('paginationLinks');
+
+        if (!wrapper) return;
+
+        if (pagination.last_page <= 1) {
+          wrapper.style.display = 'none';
+          return;
+        }
+
+        wrapper.style.display = '';
+
+        // Update info text
+        if (info) {
+          info.textContent = 'Menampilkan ' + pagination.first_item + ' - ' + pagination.last_item + ' dari ' + pagination.total;
+        }
+
+        // Build pagination links
+        if (links) {
+          let paginationHtml = '<nav><ul class="pagination">';
+
+          // Previous
+          if (pagination.current_page > 1) {
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page - 1) + '">&lsaquo;</a></li>';
+          } else {
+            paginationHtml += '<li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>';
+          }
+
+          // Page numbers
+          let startPage = Math.max(1, pagination.current_page - 2);
+          let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
+
+          if (startPage > 1) {
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>';
+            if (startPage > 2) {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+          }
+
+          for (let i = startPage; i <= endPage; i++) {
+            if (i === pagination.current_page) {
+              paginationHtml += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
+            } else {
+              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+            }
+          }
+
+          if (endPage < pagination.last_page) {
+            if (endPage < pagination.last_page - 1) {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + pagination.last_page + '">' + pagination.last_page + '</a></li>';
+          }
+
+          // Next
+          if (pagination.current_page < pagination.last_page) {
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page + 1) + '">&rsaquo;</a></li>';
+          } else {
+            paginationHtml += '<li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>';
+          }
+
+          paginationHtml += '</ul></nav>';
+          links.innerHTML = paginationHtml;
+
+          // Bind click handlers to pagination links
+          links.querySelectorAll('a.page-link[data-page]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+              e.preventDefault();
+              currentPage = parseInt(this.getAttribute('data-page'));
+              fetchFilteredData();
+              // Scroll to table
+              var tableSection = document.getElementById('tableSection');
+              if (tableSection) tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          });
+        }
+      }
+
+      // ==========================================
+      // HELPERS
+      // ==========================================
+      function showLoading(show) {
+        const overlay = document.getElementById('ajaxLoadingOverlay');
+        if (overlay) {
+          overlay.style.display = show ? 'flex' : 'none';
+        }
+      }
+
+      function updateUrlState(params) {
+        const newUrl = AJAX_CONFIG.url + '?' + params.toString();
+        window.history.replaceState({}, '', newUrl);
+      }
+
+      function formatNumber(num) {
+        if (num === null || num === undefined) return '0';
+        return Number(num).toLocaleString('id-ID');
+      }
+
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '-';
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML;
+      }
+
+      function renderStatusPill(status) {
+        if (status === 'siap_dibayar') {
+          return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
+        } else if (status === 'sudah_dibayar') {
+          return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
+        } else {
+          return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
+        }
+      }
+    })();
   </script>
 @endsection

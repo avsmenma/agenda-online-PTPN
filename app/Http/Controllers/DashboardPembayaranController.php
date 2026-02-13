@@ -455,6 +455,49 @@ class DashboardPembayaranController extends Controller
             'availableKebuns' => $availableKebuns,
         ];
 
+        // Return JSON for AJAX requests (no page refresh)
+        if (request()->ajax() || request()->wantsJson()) {
+            $dokumensArray = $dokumens->map(function ($dok) use ($selectedColumns, $availableColumns) {
+                $row = ['id' => $dok->id];
+                foreach ($selectedColumns as $colKey) {
+                    if ($colKey == 'nilai_rupiah') {
+                        $row[$colKey] = number_format($dok->nilai_rupiah ?? 0, 0, ',', '.');
+                    } elseif ($colKey == 'dibayar_kepada') {
+                        $row[$colKey] = \Illuminate\Support\Str::limit($dok->dibayar_kepada ?? '-', 30);
+                    } elseif ($colKey == 'uraian_spp') {
+                        $row[$colKey] = \Illuminate\Support\Str::limit($dok->uraian_spp ?? '-', 40);
+                    } elseif ($colKey == 'tgl_jatuhtempo') {
+                        $row[$colKey] = $dok->tgl_jatuhtempo ? Carbon::parse($dok->tgl_jatuhtempo)->format('d/m/Y') : '-';
+                    } elseif ($colKey == 'status_pembayaran') {
+                        $row[$colKey] = $dok->computed_status ?? 'belum_siap_dibayar';
+                    } else {
+                        $row[$colKey] = $dok->$colKey ?? '-';
+                    }
+                }
+                $row['computed_status'] = $dok->computed_status ?? 'belum_siap_dibayar';
+                return $row;
+            });
+
+            return response()->json([
+                'dokumens' => $dokumensArray,
+                'pagination' => [
+                    'current_page' => $dokumens->currentPage(),
+                    'last_page' => $dokumens->lastPage(),
+                    'per_page' => $dokumens->perPage(),
+                    'total' => $dokumens->total(),
+                    'first_item' => $dokumens->firstItem(),
+                    'last_item' => $dokumens->lastItem(),
+                ],
+                'statistics' => $statistics,
+                'totalAman' => $totalAman,
+                'totalPeringatan' => $totalPeringatan,
+                'totalTerlambat' => $totalTerlambat,
+                'selectedColumns' => $selectedColumns,
+                'availableColumns' => $availableColumns,
+                'mode' => $mode,
+            ]);
+        }
+
         return view('pembayaranNEW.dashboardPembayaran', $data);
     }
 
