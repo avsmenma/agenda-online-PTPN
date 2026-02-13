@@ -394,7 +394,7 @@
       border-right: 1px solid rgba(26, 77, 62, 0.05);
       font-size: 13px;
       font-weight: 500;
-      color: #2c3e50;
+      color: #000000;
       border-bottom: 1px solid rgba(26, 77, 62, 0.05);
       text-align: center;
     }
@@ -1469,11 +1469,11 @@
       white-space: nowrap;
     }
 
-    /* State 1: 🔒 Terkunci (Locked - Waiting for Deadline) */
+    /* State 1: Terkirim (Locked - Already Sent via Bulk) */
     .badge-status.badge-locked {
-      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
       color: white;
-      border-color: #495057;
+      border-color: #083E40;
       position: relative;
     }
 
@@ -1656,6 +1656,7 @@
 
     .btn-action.locked {
       background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
+      color: white;
       cursor: not-allowed;
       opacity: 0.85;
     }
@@ -3246,13 +3247,16 @@
                         ? $bypassTimestamp 
                         : \Carbon\Carbon::parse($bypassTimestamp);
                       
-                      // For bypassed docs, time is always frozen (already sent)
-                      $bypassEndTime = \Carbon\Carbon::now();
-                      $bypassProcessedAt = $bypassPembayaranData?->processed_at ?? $bypassVerifikasiData?->processed_at;
+                      // For bypassed docs, ALWAYS freeze time at processed_at (like Team Verifikasi)
+                      // This ensures bypassed docs show "0 menit" consistently
+                      $bypassProcessedAt = $bypassVerifikasiData?->processed_at ?? $bypassPembayaranData?->received_at;
                       if ($bypassProcessedAt) {
                         $bypassEndTime = $bypassProcessedAt instanceof \Carbon\Carbon 
                           ? $bypassProcessedAt 
                           : \Carbon\Carbon::parse($bypassProcessedAt);
+                      } else {
+                        // Fallback: use the same timestamp (0 time difference)
+                        $bypassEndTime = $bypassStartTime;
                       }
                       
                       $bypassDiff = $bypassStartTime->diff($bypassEndTime);
@@ -3262,8 +3266,7 @@
                       if ($bypassDiff->days > 0) $bypassElapsedParts[] = $bypassDiff->days . ' hari';
                       if ($bypassDiff->h > 0) $bypassElapsedParts[] = $bypassDiff->h . ' jam';
                       if ($bypassDiff->i > 0 || empty($bypassElapsedParts)) $bypassElapsedParts[] = $bypassDiff->i . ' menit';
-                      $bypassAgeText = implode(' ', $bypassElapsedParts);
-                      if ($bypassProcessedAt) $bypassAgeText .= ' ⏸️';
+                      $bypassAgeText = implode(' ', $bypassElapsedParts) . ' ⏸️';
 
                       $bypassTotalHours = ($bypassDiff->days * 24) + $bypassDiff->h;
                       if ($bypassTotalHours >= 72) { $bypassAgeLabel = 'TERLAMBAT'; $bypassAgeIcon = 'fa-times-circle'; }
@@ -3338,7 +3341,7 @@
                 @elseif($dokumen->status == 'sent_to_pembayaran' && !$pembayaranIsPending)
                   <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
                 @elseif($isLocked)
-                  <span class="badge-status badge-locked">🔒 Terkunci</span>
+                  <span class="badge-status badge-locked">📤 Terkirim ke Team Pembayaran</span>
                 @elseif($dokumen->status == 'sedang diproses')
                   <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
                 @else
@@ -3348,10 +3351,10 @@
               <td class="col-action" onclick="event.stopPropagation()">
                 <div class="action-buttons-hybrid">
                   @if($isLocked)
-                    {{-- Locked state - buttons disabled --}}
-                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen terkunci">
-                      <i class="fa-solid fa-lock"></i>
-                      <span>Terkunci</span>
+                    {{-- Locked state - show as Terkirim --}}
+                    <button class="btn-action btn-terkirim btn-full-width" disabled title="Dokumen sudah terkirim">
+                      <i class="fa-solid fa-check-circle"></i>
+                      <span>Terkirim</span>
                     </button>
                   @elseif($sentToTeamFromPerpajakan || $isPendingDownstream)
                     {{-- Document has been sent/approved by downstream - FINAL state for Perpajakan --}}
