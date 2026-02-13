@@ -3223,24 +3223,38 @@
                     @endif
                   </div>
                 @elseif($isBypassedToPembayaran)
-                  {{-- Document bypassed Perpajakan - show proper deadline card using pembayaran data --}}
+                  {{-- Document bypassed Perpajakan - show proper deadline card like Team Verifikasi --}}
                   @php
-                    $bypassRoleData = $dokumen->getDataForRole('pembayaran');
-                    $bypassReceivedAt = $bypassRoleData?->received_at;
+                    // Try multiple timestamp sources for bypass documents
+                    $bypassPembayaranData = $dokumen->getDataForRole('pembayaran');
+                    $bypassVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+                    
+                    // Priority: pembayaran received_at > verifikasi processed_at > document tanggal_masuk
+                    $bypassTimestamp = $bypassPembayaranData?->received_at 
+                      ?? $bypassVerifikasiData?->processed_at 
+                      ?? $dokumen->tanggal_masuk;
+                    
                     $bypassAgeText = '-';
                     $bypassAgeLabel = '-';
                     $bypassAgeColor = 'gray';
                     $bypassAgeIcon = 'fa-clock';
                     $bypassAgeDays = 0;
 
-                    if ($bypassReceivedAt) {
-                      $bypassProcessedAt = $bypassRoleData?->processed_at;
+                    if ($bypassTimestamp) {
+                      $bypassStartTime = $bypassTimestamp instanceof \Carbon\Carbon 
+                        ? $bypassTimestamp 
+                        : \Carbon\Carbon::parse($bypassTimestamp);
+                      
+                      // For bypassed docs, time is always frozen (already sent)
+                      $bypassEndTime = \Carbon\Carbon::now();
+                      $bypassProcessedAt = $bypassPembayaranData?->processed_at ?? $bypassVerifikasiData?->processed_at;
                       if ($bypassProcessedAt) {
-                        $bypassEndTime = \Carbon\Carbon::parse($bypassProcessedAt);
-                      } else {
-                        $bypassEndTime = \Carbon\Carbon::now();
+                        $bypassEndTime = $bypassProcessedAt instanceof \Carbon\Carbon 
+                          ? $bypassProcessedAt 
+                          : \Carbon\Carbon::parse($bypassProcessedAt);
                       }
-                      $bypassDiff = $bypassReceivedAt->diff($bypassEndTime);
+                      
+                      $bypassDiff = $bypassStartTime->diff($bypassEndTime);
                       $bypassAgeDays = $bypassDiff->days;
 
                       $bypassElapsedParts = [];
@@ -3259,13 +3273,18 @@
                       $bypassAgeColor = 'gray';
                     }
                   @endphp
-                  @if($bypassReceivedAt)
+                  @if($bypassTimestamp)
+                    @php
+                      $bypassDisplayTime = $bypassTimestamp instanceof \Carbon\Carbon 
+                        ? $bypassTimestamp 
+                        : \Carbon\Carbon::parse($bypassTimestamp);
+                    @endphp
                     <div class="deadline-card deadline-sent deadline-{{ $bypassAgeColor }}"
-                      data-received-at="{{ $bypassReceivedAt->format('Y-m-d H:i:s') }}" data-age-days="{{ $bypassAgeDays }}"
+                      data-received-at="{{ $bypassDisplayTime->format('Y-m-d H:i:s') }}" data-age-days="{{ $bypassAgeDays }}"
                       data-sent="true" data-completed="false">
                       <div class="deadline-time">
                         <i class="fa-solid fa-calendar"></i>
-                        <span>{{ $bypassReceivedAt->format('d M Y, H:i') }}</span>
+                        <span>{{ $bypassDisplayTime->format('d M Y, H:i') }}</span>
                       </div>
                       <div class="deadline-indicator deadline-{{ $bypassAgeColor }}">
                         <i class="fa-solid {{ $bypassAgeIcon }}"></i>
@@ -3312,11 +3331,11 @@
                   <span class="badge-status badge-warning">⏳ Menunggu Approval dari {{ $pendingDownstreamTeam }}</span>
                 @elseif($sentToTeamFromPerpajakan)
                   {{-- Document has been APPROVED by downstream (not just pending) --}}
-                  <span class="badge-status badge-sent">📤 Sudah terkirim ke {{ $sentToTeamFromPerpajakan }}</span>
+                  <span class="badge-status badge-sent">📤 Terkirim ke {{ $sentToTeamFromPerpajakan }}</span>
                 @elseif($dokumen->status == 'sent_to_akutansi' && !$akutansiIsPending)
-                  <span class="badge-status badge-sent">📤 Sudah terkirim ke Team Akutansi</span>
+                  <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
                 @elseif($dokumen->status == 'sent_to_pembayaran' && !$pembayaranIsPending)
-                  <span class="badge-status badge-sent">📤 Sudah terkirim ke Team Pembayaran</span>
+                  <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
                 @elseif($isLocked)
                   <span class="badge-status badge-locked">🔒 Terkunci</span>
                 @elseif($dokumen->status == 'sedang diproses')
@@ -3335,7 +3354,7 @@
                     </button>
                   @elseif($sentToTeamFromPerpajakan || $isPendingDownstream)
                     {{-- Document has been sent/approved by downstream - FINAL state for Perpajakan --}}
-                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim">
+                    <button class="btn-action btn-terkirim btn-full-width" disabled title="Dokumen sudah terkirim">
                       <i class="fa-solid fa-check-circle"></i>
                       <span>Terkirim</span>
                     </button>
