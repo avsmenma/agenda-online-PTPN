@@ -3223,15 +3223,69 @@
                     @endif
                   </div>
                 @elseif($isBypassedToPembayaran)
-                  {{-- Document bypassed Perpajakan - show bypass indicator --}}
-                  <div class="deadline-card"
-                    style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white;">
-                    <i class="fa-solid fa-forward me-1"></i>
-                    <span>Bypass</span>
-                    <div class="deadline-label" style="font-size: 8px; color: #e5e7eb; margin-top: 4px; font-weight: 600;">
-                      <i class="fa-solid fa-check-circle"></i> ke Pembayaran
+                  {{-- Document bypassed Perpajakan - show proper deadline card using pembayaran data --}}
+                  @php
+                    $bypassRoleData = $dokumen->getDataForRole('pembayaran');
+                    $bypassReceivedAt = $bypassRoleData?->received_at;
+                    $bypassAgeText = '-';
+                    $bypassAgeLabel = '-';
+                    $bypassAgeColor = 'gray';
+                    $bypassAgeIcon = 'fa-clock';
+                    $bypassAgeDays = 0;
+
+                    if ($bypassReceivedAt) {
+                      $bypassProcessedAt = $bypassRoleData?->processed_at;
+                      if ($bypassProcessedAt) {
+                        $bypassEndTime = \Carbon\Carbon::parse($bypassProcessedAt);
+                      } else {
+                        $bypassEndTime = \Carbon\Carbon::now();
+                      }
+                      $bypassDiff = $bypassReceivedAt->diff($bypassEndTime);
+                      $bypassAgeDays = $bypassDiff->days;
+
+                      $bypassElapsedParts = [];
+                      if ($bypassDiff->days > 0) $bypassElapsedParts[] = $bypassDiff->days . ' hari';
+                      if ($bypassDiff->h > 0) $bypassElapsedParts[] = $bypassDiff->h . ' jam';
+                      if ($bypassDiff->i > 0 || empty($bypassElapsedParts)) $bypassElapsedParts[] = $bypassDiff->i . ' menit';
+                      $bypassAgeText = implode(' ', $bypassElapsedParts);
+                      if ($bypassProcessedAt) $bypassAgeText .= ' ⏸️';
+
+                      $bypassTotalHours = ($bypassDiff->days * 24) + $bypassDiff->h;
+                      if ($bypassTotalHours >= 72) { $bypassAgeLabel = 'TERLAMBAT'; $bypassAgeIcon = 'fa-times-circle'; }
+                      elseif ($bypassTotalHours >= 24) { $bypassAgeLabel = 'PERINGATAN'; $bypassAgeIcon = 'fa-exclamation-triangle'; }
+                      else { $bypassAgeLabel = 'AMAN'; $bypassAgeIcon = 'fa-check-circle'; }
+
+                      // Always grey for bypassed/sent documents
+                      $bypassAgeColor = 'gray';
+                    }
+                  @endphp
+                  @if($bypassReceivedAt)
+                    <div class="deadline-card deadline-sent deadline-{{ $bypassAgeColor }}"
+                      data-received-at="{{ $bypassReceivedAt->format('Y-m-d H:i:s') }}" data-age-days="{{ $bypassAgeDays }}"
+                      data-sent="true" data-completed="false">
+                      <div class="deadline-time">
+                        <i class="fa-solid fa-calendar"></i>
+                        <span>{{ $bypassReceivedAt->format('d M Y, H:i') }}</span>
+                      </div>
+                      <div class="deadline-indicator deadline-{{ $bypassAgeColor }}">
+                        <i class="fa-solid {{ $bypassAgeIcon }}"></i>
+                        <span class="status-text">{{ $bypassAgeLabel }}</span>
+                      </div>
+                      <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        <span>{{ $bypassAgeText }}</span>
+                      </div>
+                      <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-paper-plane"></i> Terkirim
+                      </div>
                     </div>
-                  </div>
+                  @else
+                    <div class="deadline-card deadline-sent deadline-gray">
+                      <div class="deadline-label" style="font-size: 10px; color: #6b7280; font-weight: 600;">
+                        <i class="fa-solid fa-paper-plane"></i> Terkirim ke Pembayaran
+                      </div>
+                    </div>
+                  @endif
                 @else
                   <div class="no-deadline">
                     <i class="fa-solid fa-clock"></i>
