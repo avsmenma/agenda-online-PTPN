@@ -1770,7 +1770,8 @@
         @else
           <!-- Normal Table View -->
           <!-- AJAX loading overlay -->
-          <div class="ajax-loading-overlay" id="ajaxLoadingOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
+          <div class="ajax-loading-overlay" id="ajaxLoadingOverlay"
+            style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
             <div style="text-align:center;">
               <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
               <p style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.875rem;">Memuat data...</p>
@@ -2228,6 +2229,10 @@
                 Pilih Kolom
               </div>
               <div class="panel-actions">
+                <button type="button" class="btn-select-action" onclick="applyTemplateAgenda()"
+                  style="border-color:#10b981;color:#10b981;">
+                  <i class="fa-solid fa-file-alt"></i> Template Agenda
+                </button>
                 <button type="button" class="btn-select-action btn-select-all" onclick="selectAllColumns()">
                   <i class="fa-solid fa-check-double"></i> Pilih Semua
                 </button>
@@ -2469,730 +2474,765 @@
   </style>
 
   <script>
-    // Restore saved columns from localStorage on page load (before any rendering)
-    (function() {
-      try {
-        const currentUrl = new URL(window.location.href);
-        const hasColumnsInUrl = currentUrl.searchParams.has('columns[]') || currentUrl.searchParams.has('columns');
-        if (!hasColumnsInUrl) {
-          const saved = localStorage.getItem('pembayaran_columns');
-          if (saved) {
-            const cols = JSON.parse(saved);
-            if (Array.isArray(cols) && cols.length > 0) {
-              cols.forEach(function(col) {
-                currentUrl.searchParams.append('columns[]', col);
-              });
-              window.location.replace(currentUrl.toString());
+      // Restore saved col   umns from localStorage on page load (before any rendering)
+      (function() {
+        try {
+          const currentUrl = new URL(window.location.href);
+          const hasColumnsInUrl = currentUrl.searchParams.has('columns[]') || currentUrl.searchParams.has('columns');
+          if (!hasColumnsInUrl) {
+            const saved = localStorage.getItem('pembayaran_columns');
+            if (saved) {
+              const cols = JSON.parse(saved);
+              if (Array.isArray(cols) && cols.length > 0) {
+                cols.forEach(function(col) {
+                  currentUrl.searchParams.append('columns[]', col);
+                });
+                window.location.replace(currentUrl.toString());
+              }
             }
           }
-        }
-      } catch (e) { /* ignore */ }
-    })();
+        } catch (e) { /* ignore */ }
+      })();
 
-    // Column customization variables
-    let selectedColumnsOrder = @json($selectedColumns);
-    const availableColumnsData = @json($availableColumns);
+      // Column customization variables
+      let selectedColumnsOrder = @json($selectedColumns);
+      const availableColumnsData = @json($availableColumns);
 
-    function openColumnModal() {
-      document.getElementById('columnCustomizationModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeColumnModal() {
-      document.getElementById('columnCustomizationModal').classList.remove('show');
-      document.body.style.overflow = '';
-    }
-
-    function toggleColumnSelection(element) {
-      const checkbox = element.querySelector('.column-item-checkbox');
-      const columnKey = element.dataset.column;
-
-      checkbox.checked = !checkbox.checked;
-
-      if (checkbox.checked) {
-        element.classList.add('selected');
-        if (!selectedColumnsOrder.includes(columnKey)) {
-          selectedColumnsOrder.push(columnKey);
-        }
-      } else {
-        element.classList.remove('selected');
-        selectedColumnsOrder = selectedColumnsOrder.filter(c => c !== columnKey);
+      function openColumnModal() {
+        document.getElementById('columnCustomizationModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
       }
 
-      updateOrderNumbers();
-      updateSelectedCount();
-      updatePreview();
-    }
-
-    function updateOrderNumbers() {
-      document.querySelectorAll('.column-item').forEach(item => {
-        const key = item.dataset.column;
-        const orderSpan = item.querySelector('.column-item-order');
-        const idx = selectedColumnsOrder.indexOf(key);
-        if (idx !== -1) {
-          orderSpan.textContent = idx + 1;
-        } else {
-          orderSpan.textContent = '';
-        }
-      });
-    }
-
-    function updateSelectedCount() {
-      document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
-      // Update column list text
-      const columnLabels = selectedColumnsOrder.map(col => availableColumnsData[col] || col);
-      const countContainer = document.querySelector('.selected-count');
-      if (countContainer) {
-        countContainer.innerHTML = `<strong id="selectedColumnCount">${selectedColumnsOrder.length}</strong> kolom dipilih` +
-          (selectedColumnsOrder.length > 0 ? `<br><small>Kolom: ${columnLabels.join(', ')}</small>` : '');
-      }
-    }
-
-    function updatePreview() {
-      const previewContainer = document.getElementById('tablePreview');
-      if (!previewContainer) return;
-
-      if (selectedColumnsOrder.length === 0) {
-        previewContainer.innerHTML = `
-                        <div class="empty-preview">
-                          <i class="fa-solid fa-table"></i>
-                          <p>Belum ada kolom yang dipilih</p>
-                          <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                        </div>`;
-        return;
+      function closeColumnModal() {
+        document.getElementById('columnCustomizationModal').classList.remove('show');
+        document.body.style.overflow = '';
       }
 
-      let tableHtml = '<table class="preview-table"><thead><tr><th>No</th>';
-      selectedColumnsOrder.forEach(col => {
-        tableHtml += `<th>${availableColumnsData[col] || col}</th>`;
-      });
-      tableHtml += '<th>Aksi</th></tr></thead><tbody>';
+      function toggleColumnSelection(element) {
+        const checkbox = element.querySelector('.column-item-checkbox');
+        const columnKey = element.dataset.column;
 
-      for (let i = 1; i <= 4; i++) {
-        tableHtml += `<tr><td>${i}</td>`;
-        selectedColumnsOrder.forEach(col => {
-          let cellValue = `Contoh Data ${i}`;
-          if (col === 'nomor_agenda') cellValue = `AGD/10${i}/XII/2024`;
-          else if (col === 'nomor_spp') cellValue = `SPP-0010${i}/XII/2024`;
-          else if (col === 'nilai_rupiah') cellValue = `Rp. ${(1000000 * i).toLocaleString('id-ID')}`;
-          else if (col === 'dibayar_kepada') cellValue = `CV. Contoh Vendor ${i}`;
-          else if (col === 'status_pembayaran') cellValue = i % 2 === 0 ? 'Siap Bayar' : 'Belum Siap';
-          tableHtml += `<td>${cellValue}</td>`;
-        });
-        tableHtml += '<td>Edit, Kirim</td></tr>';
-      }
+        checkbox.checked = !checkbox.checked;
 
-      tableHtml += '</tbody></table>';
-      previewContainer.innerHTML = tableHtml;
-    }
-
-    function selectAllColumns() {
-      selectedColumnsOrder = Object.keys(availableColumnsData);
-      document.querySelectorAll('.column-item').forEach(item => {
-        item.classList.add('selected');
-        item.querySelector('.column-item-checkbox').checked = true;
-      });
-      updateOrderNumbers();
-      updateSelectedCount();
-      updatePreview();
-    }
-
-    function removeAllColumns() {
-      selectedColumnsOrder = [];
-      document.querySelectorAll('.column-item').forEach(item => {
-        item.classList.remove('selected');
-        item.querySelector('.column-item-checkbox').checked = false;
-      });
-      updateOrderNumbers();
-      updateSelectedCount();
-      updatePreview();
-    }
-
-    function saveColumnCustomization() {
-      if (selectedColumnsOrder.length === 0) {
-        alert('Pilih minimal satu kolom!');
-        return;
-      }
-
-      // Save to localStorage for persistence across refreshes
-      try {
-        localStorage.setItem('pembayaran_columns', JSON.stringify(selectedColumnsOrder));
-      } catch (e) { /* localStorage not available */ }
-
-      const url = new URL(window.location.href);
-      // Clear existing columns params
-      url.searchParams.delete('columns[]');
-      url.searchParams.delete('columns');
-
-      // Add selected columns
-      selectedColumnsOrder.forEach(col => {
-        url.searchParams.append('columns[]', col);
-      });
-
-      window.location.href = url.toString();
-    }
-
-    // Close modal on escape key
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        closeColumnModal();
-      }
-    });
-
-    // Close modal on backdrop click
-    document.getElementById('columnCustomizationModal')?.addEventListener('click', function (e) {
-      if (e.target === this) {
-        closeColumnModal();
-      }
-    });
-  </script>
-
-  <script>
-    // View Mode Toggle
-    function setViewMode(mode) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('mode', mode);
-      window.location.href = url.toString();
-    }
-
-    // Vendor Group Toggle
-    function toggleVendorGroup(header) {
-      const body = header.nextElementSibling;
-      const isExpanded = header.classList.contains('expanded');
-
-      if (isExpanded) {
-        header.classList.remove('expanded');
-        body.classList.remove('show');
-      } else {
-        header.classList.add('expanded');
-        body.classList.add('show');
-      }
-    }
-
-    // Number Counter Animation
-    document.addEventListener('DOMContentLoaded', function () {
-      const counters = document.querySelectorAll('.stat-value');
-
-      counters.forEach(counter => {
-        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
-        if (isNaN(target) || target === 0) return;
-
-        let current = 0;
-        const increment = target / 30;
-        const duration = 800;
-        const stepTime = duration / 30;
-
-        const updateCounter = () => {
-          current += increment;
-          if (current < target) {
-            counter.textContent = Math.floor(current).toLocaleString('id-ID');
-            setTimeout(updateCounter, stepTime);
-          } else {
-            counter.textContent = target.toLocaleString('id-ID');
+        if (checkbox.checked) {
+          element.classList.add('selected');
+          if (!selectedColumnsOrder.includes(columnKey)) {
+            selectedColumnsOrder.push(columnKey);
           }
+        } else {
+          element.classList.remove('selected');
+          selectedColumnsOrder = selectedColumnsOrder.filter(c => c !== columnKey);
+        }
+
+        updateOrderNumbers();
+        updateSelectedCount();
+        updatePreview();
+      }
+
+      function updateOrderNumbers() {
+        document.querySelectorAll('.column-item').forEach(item => {
+          const key = item.dataset.column;
+          const orderSpan = item.querySelector('.column-item-order');
+          const idx = selectedColumnsOrder.indexOf(key);
+          if (idx !== -1) {
+            orderSpan.textContent = idx + 1;
+          } else {
+            orderSpan.textContent = '';
+          }
+        });
+      }
+
+      function updateSelectedCount() {
+        document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
+        // Update column list text
+        const columnLabels = selectedColumnsOrder.map(col => availableColumnsData[col] || col);
+        const countContainer = document.querySelector('.selected-count');
+        if (countContainer) {
+          countContainer.innerHTML = `<strong id="selectedColumnCount">${selectedColumnsOrder.length}</strong> kolom dipilih` +
+            (selectedColumnsOrder.length > 0 ? `<br><small>Kolom: ${columnLabels.join(', ')}</small>` : '');
+        }
+      }
+
+      function updatePreview() {
+        const previewContainer = document.getElementById('tablePreview');
+        if (!previewContainer) return;
+
+        if (selectedColumnsOrder.length === 0) {
+          previewContainer.innerHTML = `
+                          <div class="empty-preview">
+                            <i class="fa-solid fa-table"></i>
+                            <p>Belum ada kolom yang dipilih</p>
+                            <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                          </div>`;
+          return;
+        }
+
+        let tableHtml = '<table class="preview-table"><thead><tr><th>No</th>';
+        selectedColumnsOrder.forEach(col => {
+          tableHtml += `<th>${availableColumnsData[col] || col}</th>`;
+        });
+        tableHtml += '<th>Aksi</th></tr></thead><tbody>';
+
+        for (let i = 1; i <= 4; i++) {
+          tableHtml += `<tr><td>${i}</td>`;
+          selectedColumnsOrder.forEach(col => {
+            let cellValue = `Contoh Data ${i}`;
+            if (col === 'nomor_agenda') cellValue = `AGD/10${i}/XII/2024`;
+            else if (col === 'nomor_spp') cellValue = `SPP-0010${i}/XII/2024`;
+            else if (col === 'nilai_rupiah') cellValue = `Rp. ${(1000000 * i).toLocaleString('id-ID')}`;
+            else if (col === 'dibayar_kepada') cellValue = `CV. Contoh Vendor ${i}`;
+            else if (col === 'status_pembayaran') cellValue = i % 2 === 0 ? 'Siap Bayar' : 'Belum Siap';
+            tableHtml += `<td>${cellValue}</td>`;
+          });
+          tableHtml += '<td>Edit, Kirim</td></tr>';
+        }
+
+        tableHtml += '</tbody></table>';
+        previewContainer.innerHTML = tableHtml;
+      }
+
+      function selectAllColumns() {
+        selectedColumnsOrder = Object.keys(availableColumnsData);
+        document.querySelectorAll('.column-item').forEach(item => {
+          item.classList.add('selected');
+          item.querySelector('.column-item-checkbox').checked = true;
+        });
+        updateOrderNumbers();
+        updateSelectedCount();
+        updatePreview();
+      }
+
+      function removeAllColumns() {
+        selectedColumnsOrder = [];
+        document.querySelectorAll('.column-item').forEach(item => {
+          item.classList.remove('selected');
+          item.querySelector('.column-item-checkbox').checked = false;
+        });
+        updateOrderNumbers();
+        updateSelectedCount();
+        updatePreview();
+      }
+
+      function applyTemplateAgenda() {
+        const templateCols = [
+          'nomor_agenda',
+          'bulan',
+          'tahun',
+          'nomor_spp',
+          'tanggal_spp',
+          'umur_dokumen_tanggal_masuk',
+          'dibayar_kepada',
+          'uraian_spp',
+          'nilai_rupiah'
+        ];
+
+        // Reset all first
+        selectedColumnsOrder = [];
+        document.querySelectorAll('.column-item').forEach(item => {
+          item.classList.remove('selected');
+          item.querySelector('.column-item-checkbox').checked = false;
+        });
+
+        // Select template columns in order
+        templateCols.forEach(function(colKey) {
+          const item = document.querySelector('.column-item[data-column="' + colKey + '"]');
+          if (item) {
+            item.classList.add('selected');
+            item.querySelector('.column-item-checkbox').checked = true;
+            selectedColumnsOrder.push(colKey);
+          }
+        });
+
+        updateOrderNumbers();
+        updateSelectedCount();
+        updatePreview();
+      }
+
+      function saveColumnCustomization() {
+        if (selectedColumnsOrder.length === 0) {
+          alert('Pilih minimal satu kolom!');
+          return;
+        }
+
+        // Save to localStorage for persistence across refreshes
+        try {
+          localStorage.setItem('pembayaran_columns', JSON.stringify(selectedColumnsOrder));
+        } catch (e) { /* localStorage not available */ }
+
+        const url = new URL(window.location.href);
+        // Clear existing columns params
+        url.searchParams.delete('columns[]');
+        url.searchParams.delete('columns');
+
+        // Add selected columns
+        selectedColumnsOrder.forEach(col => {
+          url.searchParams.append('columns[]', col);
+        });
+
+        window.location.href = url.toString();
+      }
+
+      // Close modal on escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          closeColumnModal();
+        }
+      });
+
+      // Close modal on backdrop click
+      document.getElementById('columnCustomizationModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+          closeColumnModal();
+        }
+      });
+    </script>
+
+    <script>
+      // View Mode Toggle
+      function setViewMode(mode) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('mode', mode);
+        window.location.href = url.toString();
+      }
+
+      // Vendor Group Toggle
+      function toggleVendorGroup(header) {
+        const body = header.nextElementSibling;
+        const isExpanded = header.classList.contains('expanded');
+
+        if (isExpanded) {
+          header.classList.remove('expanded');
+          body.classList.remove('show');
+        } else {
+          header.classList.add('expanded');
+          body.classList.add('show');
+        }
+      }
+
+      // Number Counter Animation
+      document.addEventListener('DOMContentLoaded', function () {
+        const counters = document.querySelectorAll('.stat-value');
+
+        counters.forEach(counter => {
+          const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+          if (isNaN(target) || target === 0) return;
+
+          let current = 0;
+          const increment = target / 30;
+          const duration = 800;
+          const stepTime = duration / 30;
+
+          const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+              counter.textContent = Math.floor(current).toLocaleString('id-ID');
+              setTimeout(updateCounter, stepTime);
+            } else {
+              counter.textContent = target.toLocaleString('id-ID');
+            }
+          };
+
+          setTimeout(updateCounter, 300);
+        });
+      });
+
+      // Add subtle hover feedback
+      document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
+        card.addEventListener('mouseenter', function () {
+          this.style.transform = 'translateY(-4px)';
+        });
+        card.addEventListener('mouseleave', function () {
+          this.style.transform = 'translateY(0)';
+        });
+      });
+
+      // Advanced Filter Panel Toggle
+      document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
+        const panel = document.getElementById('advancedFilterPanel');
+        const toggle = this;
+
+        panel.classList.toggle('show');
+        toggle.classList.toggle('active');
+      });
+
+      // Reset Advanced Filters
+      function resetAdvancedFilters() {
+        document.getElementById('filterVendor').value = '';
+        document.getElementById('filterKategori').value = '';
+        document.getElementById('filterJenisDokumen').value = '';
+        document.getElementById('filterJenisSubPekerjaan').value = '';
+        document.getElementById('filterKebun').value = '';
+        document.getElementById('filterJenisPembayaran').value = '';
+      }
+
+      // Export Document Function
+      let pendingExportFormat = 'excel';
+      let selectedVendorExportMode = 'multi_sheet';
+
+      // Get unique vendor count from the page data
+      const rekapanByVendorData = @json($rekapanByVendor ?? []);
+      const currentMode = '{{ $mode ?? "normal" }}';
+      const currentVendorFilter = '{{ request("filter_vendor") ?? "" }}';
+
+      function getUniqueVendorCount() {
+        if (rekapanByVendorData && typeof rekapanByVendorData === 'object') {
+          return Object.keys(rekapanByVendorData).length;
+        }
+        return 0;
+      }
+
+      function exportDocument(format) {
+        pendingExportFormat = format;
+
+        // Check if we're in rekapan_table (Group Vendor) mode and NOT filtering by single vendor
+        const vendorCount = getUniqueVendorCount();
+        const isGroupVendorMode = currentMode === 'rekapan_table';
+        const hasVendorFilter = currentVendorFilter !== '';
+
+        // If in group vendor mode with multiple vendors and no specific vendor filter, show modal
+        if (isGroupVendorMode && vendorCount > 1 && !hasVendorFilter && format === 'excel') {
+          document.getElementById('vendorCountLabel').textContent = vendorCount + ' vendor';
+          openExportVendorModal();
+          return;
+        }
+
+        // Otherwise, export directly
+        doExport(format, hasVendorFilter ? 'single_vendor' : '');
+      }
+
+      function openExportVendorModal() {
+        document.getElementById('exportVendorModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeExportVendorModal() {
+        document.getElementById('exportVendorModal').classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      function selectExportMode(mode) {
+        selectedVendorExportMode = mode;
+        // Update radio button visual selection
+        document.querySelectorAll('input[name="export_mode_option"]').forEach(radio => {
+          radio.checked = (radio.value === mode);
+        });
+      }
+
+      function confirmVendorExport() {
+        closeExportVendorModal();
+        doExport(pendingExportFormat, selectedVendorExportMode);
+      }
+
+      function doExport(format, vendorMode) {
+        const form = document.getElementById('exportForm');
+        const formatInput = document.getElementById('exportFormat');
+        const columnsContainer = document.getElementById('exportColumnsContainer');
+        const vendorExportModeInput = document.getElementById('vendorExportMode');
+
+        // Set format and vendor export mode
+        formatInput.value = format;
+        vendorExportModeInput.value = vendorMode || '';
+
+        // Clear previous columns
+        columnsContainer.innerHTML = '';
+
+        // Get selected columns from the page or use defaults
+        const columnCheckboxes = document.querySelectorAll('.column-item input[type="checkbox"]:checked');
+
+        if (columnCheckboxes.length > 0) {
+          // Use selected columns from modal
+          columnCheckboxes.forEach(function (checkbox) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'columns[]';
+            input.value = checkbox.value;
+            columnsContainer.appendChild(input);
+          });
+        } else {
+          // Use default columns for vendor group export
+          const defaultColumns = ['nomor_agenda', 'nomor_spp', 'sent_to_pembayaran_at', 'dibayar_kepada', 'nilai_rupiah', 'computed_status', 'tanggal_dibayar'];
+          defaultColumns.forEach(function (col) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'columns[]';
+            input.value = col;
+            columnsContainer.appendChild(input);
+          });
+        }
+
+        // Submit form
+        form.submit();
+      }
+    </script>
+
+    {{-- ===== AJAX FILTER SYSTEM ===== --}}
+    <script>
+      (function() {
+        'use strict';
+
+        const AJAX_CONFIG = {
+          url: '{{ route("dashboard.pembayaran") }}',
+          debounceMs: 300,
         };
 
-        setTimeout(updateCounter, 300);
-      });
-    });
+        let searchDebounceTimer = null;
+        let currentPage = {{ $dokumens->currentPage() }};
 
-    // Add subtle hover feedback
-    document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
-      card.addEventListener('mouseenter', function () {
-        this.style.transform = 'translateY(-4px)';
-      });
-      card.addEventListener('mouseleave', function () {
-        this.style.transform = 'translateY(0)';
-      });
-    });
+        // ==========================================
+        // INIT: Hook into forms and filters
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function() {
+          const filterForm = document.getElementById('filterForm');
+          if (!filterForm) return;
 
-    // Advanced Filter Panel Toggle
-    document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
-      const panel = document.getElementById('advancedFilterPanel');
-      const toggle = this;
-
-      panel.classList.toggle('show');
-      toggle.classList.toggle('active');
-    });
-
-    // Reset Advanced Filters
-    function resetAdvancedFilters() {
-      document.getElementById('filterVendor').value = '';
-      document.getElementById('filterKategori').value = '';
-      document.getElementById('filterJenisDokumen').value = '';
-      document.getElementById('filterJenisSubPekerjaan').value = '';
-      document.getElementById('filterKebun').value = '';
-      document.getElementById('filterJenisPembayaran').value = '';
-    }
-
-    // Export Document Function
-    let pendingExportFormat = 'excel';
-    let selectedVendorExportMode = 'multi_sheet';
-
-    // Get unique vendor count from the page data
-    const rekapanByVendorData = @json($rekapanByVendor ?? []);
-    const currentMode = '{{ $mode ?? "normal" }}';
-    const currentVendorFilter = '{{ request("filter_vendor") ?? "" }}';
-
-    function getUniqueVendorCount() {
-      if (rekapanByVendorData && typeof rekapanByVendorData === 'object') {
-        return Object.keys(rekapanByVendorData).length;
-      }
-      return 0;
-    }
-
-    function exportDocument(format) {
-      pendingExportFormat = format;
-
-      // Check if we're in rekapan_table (Group Vendor) mode and NOT filtering by single vendor
-      const vendorCount = getUniqueVendorCount();
-      const isGroupVendorMode = currentMode === 'rekapan_table';
-      const hasVendorFilter = currentVendorFilter !== '';
-
-      // If in group vendor mode with multiple vendors and no specific vendor filter, show modal
-      if (isGroupVendorMode && vendorCount > 1 && !hasVendorFilter && format === 'excel') {
-        document.getElementById('vendorCountLabel').textContent = vendorCount + ' vendor';
-        openExportVendorModal();
-        return;
-      }
-
-      // Otherwise, export directly
-      doExport(format, hasVendorFilter ? 'single_vendor' : '');
-    }
-
-    function openExportVendorModal() {
-      document.getElementById('exportVendorModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeExportVendorModal() {
-      document.getElementById('exportVendorModal').classList.remove('show');
-      document.body.style.overflow = '';
-    }
-
-    function selectExportMode(mode) {
-      selectedVendorExportMode = mode;
-      // Update radio button visual selection
-      document.querySelectorAll('input[name="export_mode_option"]').forEach(radio => {
-        radio.checked = (radio.value === mode);
-      });
-    }
-
-    function confirmVendorExport() {
-      closeExportVendorModal();
-      doExport(pendingExportFormat, selectedVendorExportMode);
-    }
-
-    function doExport(format, vendorMode) {
-      const form = document.getElementById('exportForm');
-      const formatInput = document.getElementById('exportFormat');
-      const columnsContainer = document.getElementById('exportColumnsContainer');
-      const vendorExportModeInput = document.getElementById('vendorExportMode');
-
-      // Set format and vendor export mode
-      formatInput.value = format;
-      vendorExportModeInput.value = vendorMode || '';
-
-      // Clear previous columns
-      columnsContainer.innerHTML = '';
-
-      // Get selected columns from the page or use defaults
-      const columnCheckboxes = document.querySelectorAll('.column-item input[type="checkbox"]:checked');
-
-      if (columnCheckboxes.length > 0) {
-        // Use selected columns from modal
-        columnCheckboxes.forEach(function (checkbox) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'columns[]';
-          input.value = checkbox.value;
-          columnsContainer.appendChild(input);
-        });
-      } else {
-        // Use default columns for vendor group export
-        const defaultColumns = ['nomor_agenda', 'nomor_spp', 'sent_to_pembayaran_at', 'dibayar_kepada', 'nilai_rupiah', 'computed_status', 'tanggal_dibayar'];
-        defaultColumns.forEach(function (col) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'columns[]';
-          input.value = col;
-          columnsContainer.appendChild(input);
-        });
-      }
-
-      // Submit form
-      form.submit();
-    }
-  </script>
-
-  {{-- ===== AJAX FILTER SYSTEM ===== --}}
-  <script>
-    (function() {
-      'use strict';
-
-      const AJAX_CONFIG = {
-        url: '{{ route("dashboard.pembayaran") }}',
-        debounceMs: 300,
-      };
-
-      let searchDebounceTimer = null;
-      let currentPage = {{ $dokumens->currentPage() }};
-
-      // ==========================================
-      // INIT: Hook into forms and filters
-      // ==========================================
-      document.addEventListener('DOMContentLoaded', function() {
-        const filterForm = document.getElementById('filterForm');
-        if (!filterForm) return;
-
-        // Intercept form submission
-        filterForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          currentPage = 1;
-          fetchFilteredData();
-        });
-
-        // Auto-apply dropdown filters on change
-        filterForm.querySelectorAll('select').forEach(function(sel) {
-          sel.addEventListener('change', function() {
+          // Intercept form submission
+          filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             currentPage = 1;
             fetchFilteredData();
           });
-        });
 
-        // Debounced search on typing
-        const searchInput = filterForm.querySelector('input[name="search"]');
-        if (searchInput) {
-          searchInput.addEventListener('input', function() {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(function() {
+          // Auto-apply dropdown filters on change
+          filterForm.querySelectorAll('select').forEach(function(sel) {
+            sel.addEventListener('change', function() {
               currentPage = 1;
               fetchFilteredData();
-            }, AJAX_CONFIG.debounceMs);
-          });
-        }
-      });
-
-      // ==========================================
-      // CORE: Fetch filtered data via AJAX
-      // ==========================================
-      function fetchFilteredData() {
-        const filterForm = document.getElementById('filterForm');
-        if (!filterForm) return;
-
-        showLoading(true);
-
-        // Build query string from form
-        const formData = new FormData(filterForm);
-        const params = new URLSearchParams();
-
-        for (const [key, value] of formData.entries()) {
-          if (value) params.append(key, value);
-        }
-        params.set('page', currentPage);
-
-        // Carry over columns[] from URL or localStorage
-        const currentUrl = new URL(window.location.href);
-        let existingColumns = currentUrl.searchParams.getAll('columns[]');
-        if (existingColumns.length === 0) {
-          try {
-            const saved = localStorage.getItem('pembayaran_columns');
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              if (Array.isArray(parsed) && parsed.length > 0) existingColumns = parsed;
-            }
-          } catch (e) { /* ignore */ }
-        }
-        if (existingColumns.length > 0) {
-          existingColumns.forEach(function(col) {
-            params.append('columns[]', col);
-          });
-        }
-        const existingMode = currentUrl.searchParams.get('mode');
-        if (existingMode) {
-          params.set('mode', existingMode);
-        }
-
-        fetch(AJAX_CONFIG.url + '?' + params.toString(), {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-          },
-        })
-        .then(function(response) {
-          if (!response.ok) throw new Error('Network response was not ok');
-          return response.json();
-        })
-        .then(function(data) {
-          updateStatisticsCards(data.statistics);
-          updateDeadlineCards(data);
-          updateTable(data);
-          updatePagination(data.pagination);
-          updateUrlState(params);
-          showLoading(false);
-        })
-        .catch(function(error) {
-          console.error('AJAX filter error:', error);
-          showLoading(false);
-          // Fallback: submit form normally
-          filterForm.submit();
-        });
-      }
-
-      // ==========================================
-      // UPDATE: Statistics Cards
-      // ==========================================
-      function updateStatisticsCards(stats) {
-        if (!stats) return;
-
-        // Update stat card values
-        const statCards = document.querySelectorAll('.stat-card');
-        statCards.forEach(function(card) {
-          const valueEl = card.querySelector('.stat-value');
-          const subvalueEl = card.querySelector('.stat-subvalue');
-          if (!valueEl) return;
-
-          if (card.classList.contains('stat-card--total')) {
-            valueEl.textContent = formatNumber(stats.total_documents);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai);
-          } else if (card.classList.contains('stat-card--pending')) {
-            valueEl.textContent = formatNumber(stats.by_status.belum_dibayar);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.belum_dibayar);
-          } else if (card.classList.contains('stat-card--ready')) {
-            valueEl.textContent = formatNumber(stats.by_status.siap_dibayar);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.siap_dibayar);
-          } else if (card.classList.contains('stat-card--paid')) {
-            valueEl.textContent = formatNumber(stats.by_status.sudah_dibayar);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.sudah_dibayar);
-          }
-        });
-      }
-
-      // ==========================================
-      // UPDATE: Deadline Cards
-      // ==========================================
-      function updateDeadlineCards(data) {
-        const deadlineCards = document.querySelectorAll('.deadline-card');
-        deadlineCards.forEach(function(card) {
-          const valueEl = card.querySelector('.deadline-value');
-          if (!valueEl) return;
-
-          if (card.classList.contains('deadline-card--aman')) {
-            valueEl.textContent = formatNumber(data.totalAman);
-          } else if (card.classList.contains('deadline-card--peringatan')) {
-            valueEl.textContent = formatNumber(data.totalPeringatan);
-          } else if (card.classList.contains('deadline-card--terlambat')) {
-            valueEl.textContent = formatNumber(data.totalTerlambat);
-          }
-        });
-      }
-
-      // ==========================================
-      // UPDATE: Table Body
-      // ==========================================
-      function updateTable(data) {
-        const tableCount = document.getElementById('tableCount');
-        const tableSection = document.getElementById('tableSection');
-        const wrapper = document.getElementById('dataTableWrapper');
-
-        if (tableCount) {
-          tableCount.textContent = data.pagination.total;
-        }
-
-        // If in rekapan_table mode, we can't easily update the grouped view via AJAX
-        // So we skip table body update for that mode
-        if (data.mode === 'rekapan_table') {
-          return;
-        }
-
-        const dokumens = data.dokumens || [];
-        const columns = data.selectedColumns || [];
-
-        if (dokumens.length === 0) {
-          // Hide the table wrapper (don't destroy it!)
-          if (wrapper) {
-            wrapper.style.display = 'none';
-          }
-          // Show empty state div if not already visible
-          let emptyState = tableSection.querySelector('.empty-state');
-          if (!emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-              <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
-              <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-              <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-              <a href="${AJAX_CONFIG.url}" class="btn-empty">
-                <i class="fas fa-redo"></i> Reset Filter
-              </a>
-            `;
-            tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
-          }
-          return;
-        }
-
-        // Remove empty state if it exists and show the table wrapper
-        const existingEmpty = tableSection.querySelector('.empty-state');
-        if (existingEmpty) existingEmpty.remove();
-        if (wrapper) {
-          wrapper.style.display = '';
-        }
-
-        // Re-acquire tableBody (it's preserved since we no longer destroy wrapper)
-        const tableBody = document.getElementById('tableBody');
-        if (!tableBody) return;
-
-        // Rebuild table rows
-        let html = '';
-        dokumens.forEach(function(dok) {
-          html += '<tr>';
-          columns.forEach(function(colKey) {
-            if (colKey === 'nomor_agenda') {
-              html += '<td class="cell-primary cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'nomor_spp') {
-              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'dibayar_kepada') {
-              html += '<td class="cell-vendor">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'uraian_spp') {
-              html += '<td class="cell-uraian">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'nilai_rupiah') {
-              html += '<td class="cell-rupiah text-end">' + escapeHtml(dok[colKey] || '0') + '</td>';
-            } else if (colKey === 'status_pembayaran') {
-              html += '<td>' + renderStatusPill(dok.computed_status) + '</td>';
-            } else if (colKey === 'tgl_jatuhtempo') {
-              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (['dokumen_po', 'dokumen_pr', 'dokumen_gr'].indexOf(colKey) !== -1) {
-              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else {
-              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
-            }
-          });
-          html += '</tr>';
-        });
-
-        tableBody.innerHTML = html;
-      }
-
-      // ==========================================
-      // UPDATE: Pagination
-      // ==========================================
-      function updatePagination(pagination) {
-        const wrapper = document.getElementById('paginationWrapper');
-        const info = document.getElementById('paginationInfo');
-        const links = document.getElementById('paginationLinks');
-
-        if (!wrapper) return;
-
-        if (pagination.last_page <= 1) {
-          wrapper.style.display = 'none';
-          return;
-        }
-
-        wrapper.style.display = '';
-
-        // Update info text
-        if (info) {
-          info.textContent = 'Menampilkan ' + pagination.first_item + ' - ' + pagination.last_item + ' dari ' + pagination.total;
-        }
-
-        // Build pagination links
-        if (links) {
-          let paginationHtml = '<nav><ul class="pagination">';
-
-          // Previous
-          if (pagination.current_page > 1) {
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page - 1) + '">&lsaquo;</a></li>';
-          } else {
-            paginationHtml += '<li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>';
-          }
-
-          // Page numbers
-          let startPage = Math.max(1, pagination.current_page - 2);
-          let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
-
-          if (startPage > 1) {
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>';
-            if (startPage > 2) {
-              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-          }
-
-          for (let i = startPage; i <= endPage; i++) {
-            if (i === pagination.current_page) {
-              paginationHtml += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
-            } else {
-              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
-            }
-          }
-
-          if (endPage < pagination.last_page) {
-            if (endPage < pagination.last_page - 1) {
-              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + pagination.last_page + '">' + pagination.last_page + '</a></li>';
-          }
-
-          // Next
-          if (pagination.current_page < pagination.last_page) {
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page + 1) + '">&rsaquo;</a></li>';
-          } else {
-            paginationHtml += '<li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>';
-          }
-
-          paginationHtml += '</ul></nav>';
-          links.innerHTML = paginationHtml;
-
-          // Bind click handlers to pagination links
-          links.querySelectorAll('a.page-link[data-page]').forEach(function(link) {
-            link.addEventListener('click', function(e) {
-              e.preventDefault();
-              currentPage = parseInt(this.getAttribute('data-page'));
-              fetchFilteredData();
-              // Scroll to table
-              var tableSection = document.getElementById('tableSection');
-              if (tableSection) tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
           });
+
+          // Debounced search on typing
+          const searchInput = filterForm.querySelector('input[name="search"]');
+          if (searchInput) {
+            searchInput.addEventListener('input', function() {
+              clearTimeout(searchDebounceTimer);
+              searchDebounceTimer = setTimeout(function() {
+                currentPage = 1;
+                fetchFilteredData();
+              }, AJAX_CONFIG.debounceMs);
+            });
+          }
+        });
+
+        // ==========================================
+        // CORE: Fetch filtered data via AJAX
+        // ==========================================
+        function fetchFilteredData() {
+          const filterForm = document.getElementById('filterForm');
+          if (!filterForm) return;
+
+          showLoading(true);
+
+          // Build query string from form
+          const formData = new FormData(filterForm);
+          const params = new URLSearchParams();
+
+          for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+          }
+          params.set('page', currentPage);
+
+          // Carry over columns[] from URL or localStorage
+          const currentUrl = new URL(window.location.href);
+          let existingColumns = currentUrl.searchParams.getAll('columns[]');
+          if (existingColumns.length === 0) {
+            try {
+              const saved = localStorage.getItem('pembayaran_columns');
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) existingColumns = parsed;
+              }
+            } catch (e) { /* ignore */ }
+          }
+          if (existingColumns.length > 0) {
+            existingColumns.forEach(function(col) {
+              params.append('columns[]', col);
+            });
+          }
+          const existingMode = currentUrl.searchParams.get('mode');
+          if (existingMode) {
+            params.set('mode', existingMode);
+          }
+
+          fetch(AJAX_CONFIG.url + '?' + params.toString(), {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            },
+          })
+          .then(function(response) {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(function(data) {
+            updateStatisticsCards(data.statistics);
+            updateDeadlineCards(data);
+            updateTable(data);
+            updatePagination(data.pagination);
+            updateUrlState(params);
+            showLoading(false);
+          })
+          .catch(function(error) {
+            console.error('AJAX filter error:', error);
+            showLoading(false);
+            // Fallback: submit form normally
+            filterForm.submit();
+          });
         }
-      }
 
-      // ==========================================
-      // HELPERS
-      // ==========================================
-      function showLoading(show) {
-        const overlay = document.getElementById('ajaxLoadingOverlay');
-        if (overlay) {
-          overlay.style.display = show ? 'flex' : 'none';
+        // ==========================================
+        // UPDATE: Statistics Cards
+        // ==========================================
+        function updateStatisticsCards(stats) {
+          if (!stats) return;
+
+          // Update stat card values
+          const statCards = document.querySelectorAll('.stat-card');
+          statCards.forEach(function(card) {
+            const valueEl = card.querySelector('.stat-value');
+            const subvalueEl = card.querySelector('.stat-subvalue');
+            if (!valueEl) return;
+
+            if (card.classList.contains('stat-card--total')) {
+              valueEl.textContent = formatNumber(stats.total_documents);
+              if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai);
+            } else if (card.classList.contains('stat-card--pending')) {
+              valueEl.textContent = formatNumber(stats.by_status.belum_dibayar);
+              if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.belum_dibayar);
+            } else if (card.classList.contains('stat-card--ready')) {
+              valueEl.textContent = formatNumber(stats.by_status.siap_dibayar);
+              if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.siap_dibayar);
+            } else if (card.classList.contains('stat-card--paid')) {
+              valueEl.textContent = formatNumber(stats.by_status.sudah_dibayar);
+              if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.sudah_dibayar);
+            }
+          });
         }
-      }
 
-      function updateUrlState(params) {
-        const newUrl = AJAX_CONFIG.url + '?' + params.toString();
-        window.history.replaceState({}, '', newUrl);
-      }
+        // ==========================================
+        // UPDATE: Deadline Cards
+        // ==========================================
+        function updateDeadlineCards(data) {
+          const deadlineCards = document.querySelectorAll('.deadline-card');
+          deadlineCards.forEach(function(card) {
+            const valueEl = card.querySelector('.deadline-value');
+            if (!valueEl) return;
 
-      function formatNumber(num) {
-        if (num === null || num === undefined) return '0';
-        return Number(num).toLocaleString('id-ID');
-      }
-
-      function escapeHtml(str) {
-        if (str === null || str === undefined) return '-';
-        const div = document.createElement('div');
-        div.textContent = String(str);
-        return div.innerHTML;
-      }
-
-      function renderStatusPill(status) {
-        if (status === 'siap_dibayar') {
-          return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
-        } else if (status === 'sudah_dibayar') {
-          return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
-        } else {
-          return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
+            if (card.classList.contains('deadline-card--aman')) {
+              valueEl.textContent = formatNumber(data.totalAman);
+            } else if (card.classList.contains('deadline-card--peringatan')) {
+              valueEl.textContent = formatNumber(data.totalPeringatan);
+            } else if (card.classList.contains('deadline-card--terlambat')) {
+              valueEl.textContent = formatNumber(data.totalTerlambat);
+            }
+          });
         }
-      }
-    })();
-  </script>
+
+        // ==========================================
+        // UPDATE: Table Body
+        // ==========================================
+        function updateTable(data) {
+          const tableCount = document.getElementById('tableCount');
+          const tableSection = document.getElementById('tableSection');
+          const wrapper = document.getElementById('dataTableWrapper');
+
+          if (tableCount) {
+            tableCount.textContent = data.pagination.total;
+          }
+
+          // If in rekapan_table mode, we can't easily update the grouped view via AJAX
+          // So we skip table body update for that mode
+          if (data.mode === 'rekapan_table') {
+            return;
+          }
+
+          const dokumens = data.dokumens || [];
+          const columns = data.selectedColumns || [];
+
+          if (dokumens.length === 0) {
+            // Hide the table wrapper (don't destroy it!)
+            if (wrapper) {
+              wrapper.style.display = 'none';
+            }
+            // Show empty state div if not already visible
+            let emptyState = tableSection.querySelector('.empty-state');
+            if (!emptyState) {
+              emptyState = document.createElement('div');
+              emptyState.className = 'empty-state';
+              emptyState.innerHTML = `
+                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+                <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+                <a href="${AJAX_CONFIG.url}" class="btn-empty">
+                  <i class="fas fa-redo"></i> Reset Filter
+                </a>
+              `;
+              tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
+            }
+            return;
+          }
+
+          // Remove empty state if it exists and show the table wrapper
+          const existingEmpty = tableSection.querySelector('.empty-state');
+          if (existingEmpty) existingEmpty.remove();
+          if (wrapper) {
+            wrapper.style.display = '';
+          }
+
+          // Re-acquire tableBody (it's preserved since we no longer destroy wrapper)
+          const tableBody = document.getElementById('tableBody');
+          if (!tableBody) return;
+
+          // Rebuild table rows
+          let html = '';
+          dokumens.forEach(function(dok) {
+            html += '<tr>';
+            columns.forEach(function(colKey) {
+              if (colKey === 'nomor_agenda') {
+                html += '<td class="cell-primary cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+              } else if (colKey === 'nomor_spp') {
+                html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+              } else if (colKey === 'dibayar_kepada') {
+                html += '<td class="cell-vendor">' + escapeHtml(dok[colKey] || '-') + '</td>';
+              } else if (colKey === 'uraian_spp') {
+                html += '<td class="cell-uraian">' + escapeHtml(dok[colKey] || '-') + '</td>';
+              } else if (colKey === 'nilai_rupiah') {
+                html += '<td class="cell-rupiah text-end">' + escapeHtml(dok[colKey] || '0') + '</td>';
+              } else if (colKey === 'status_pembayaran') {
+                html += '<td>' + renderStatusPill(dok.computed_status) + '</td>';
+              } else if (colKey === 'tgl_jatuhtempo') {
+                html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
+              } else if (['dokumen_po', 'dokumen_pr', 'dokumen_gr'].indexOf(colKey) !== -1) {
+                html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+              } else {
+                html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
+              }
+            });
+            html += '</tr>';
+          });
+
+          tableBody.innerHTML = html;
+        }
+
+        // ==========================================
+        // UPDATE: Pagination
+        // ==========================================
+        function updatePagination(pagination) {
+          const wrapper = document.getElementById('paginationWrapper');
+          const info = document.getElementById('paginationInfo');
+          const links = document.getElementById('paginationLinks');
+
+          if (!wrapper) return;
+
+          if (pagination.last_page <= 1) {
+            wrapper.style.display = 'none';
+            return;
+          }
+
+          wrapper.style.display = '';
+
+          // Update info text
+          if (info) {
+            info.textContent = 'Menampilkan ' + pagination.first_item + ' - ' + pagination.last_item + ' dari ' + pagination.total;
+          }
+
+          // Build pagination links
+          if (links) {
+            let paginationHtml = '<nav><ul class="pagination">';
+
+            // Previous
+            if (pagination.current_page > 1) {
+              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page - 1) + '">&lsaquo;</a></li>';
+            } else {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>';
+            }
+
+            // Page numbers
+            let startPage = Math.max(1, pagination.current_page - 2);
+            let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
+
+            if (startPage > 1) {
+              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>';
+              if (startPage > 2) {
+                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+              }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+              if (i === pagination.current_page) {
+                paginationHtml += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
+              } else {
+                paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+              }
+            }
+
+            if (endPage < pagination.last_page) {
+              if (endPage < pagination.last_page - 1) {
+                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+              }
+              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + pagination.last_page + '">' + pagination.last_page + '</a></li>';
+            }
+
+            // Next
+            if (pagination.current_page < pagination.last_page) {
+              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page + 1) + '">&rsaquo;</a></li>';
+            } else {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>';
+            }
+
+            paginationHtml += '</ul></nav>';
+            links.innerHTML = paginationHtml;
+
+            // Bind click handlers to pagination links
+            links.querySelectorAll('a.page-link[data-page]').forEach(function(link) {
+              link.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentPage = parseInt(this.getAttribute('data-page'));
+                fetchFilteredData();
+                // Scroll to table
+                var tableSection = document.getElementById('tableSection');
+                if (tableSection) tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
+            });
+          }
+        }
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        function showLoading(show) {
+          const overlay = document.getElementById('ajaxLoadingOverlay');
+          if (overlay) {
+            overlay.style.display = show ? 'flex' : 'none';
+          }
+        }
+
+        function updateUrlState(params) {
+          const newUrl = AJAX_CONFIG.url + '?' + params.toString();
+          window.history.replaceState({}, '', newUrl);
+        }
+
+        function formatNumber(num) {
+          if (num === null || num === undefined) return '0';
+          return Number(num).toLocaleString('id-ID');
+        }
+
+        function escapeHtml(str) {
+          if (str === null || str === undefined) return '-';
+          const div = document.createElement('div');
+          div.textContent = String(str);
+          return div.innerHTML;
+        }
+
+        function renderStatusPill(status) {
+          if (status === 'siap_dibayar') {
+            return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
+          } else if (status === 'sudah_dibayar') {
+            return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
+          } else {
+            return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
+          }
+        }
+      })();
+    </script>
 @endsection
