@@ -706,15 +706,12 @@
                       @endphp
                     <div class="summary-stat">
                         <div class="summary-stat-value">{{ $totalDocs }}</div>
-                        <div class="summary-stat-label">Total Dokumen</div>
                     </div>
                     <div class="summary-stat">
                         <div class="summary-stat-value">{{ $totalAman }}</div>
-                        <div class="summary-stat-label">Tepat Waktu</div>
                     </div>
                     <div class="summary-stat">
                         <div class="summary-stat-value">{{ $totalTerlambat }}</div>
-                        <div class="summary-stat-label">Terlambat</div>
                     </div>
                 </div>
                 <div class="header-actions">
