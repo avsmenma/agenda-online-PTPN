@@ -688,6 +688,186 @@
             background: #ffc107;
             color: #333;
         }
+
+        /* ===== DARK MODE ===== */
+        html.dark body {
+            background-color: #1a1a2e !important;
+            color: #e0e0e0;
+        }
+
+        html.dark .container-fluid {
+            color: #e0e0e0;
+        }
+
+        /* Filter Container */
+        html.dark .filter-container {
+            background: #16213e;
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        html.dark .filter-label {
+            color: #a0cfb8;
+        }
+
+        html.dark .filter-select {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html.dark .filter-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.2);
+        }
+
+        html.dark .filter-select:hover {
+            border-color: var(--secondary-color);
+        }
+
+        /* Settings Button */
+        html.dark .settings-btn {
+            background: #16213e;
+            color: #a0cfb8;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html.dark .settings-btn:hover {
+            background: rgba(64, 145, 108, 0.15);
+            border-color: var(--secondary-color);
+        }
+
+        /* Performance Cards */
+        html.dark .performance-card {
+            background: #16213e;
+            border-color: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        html.dark .performance-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        html.dark .performance-role {
+            color: #a0a0a0;
+        }
+
+        html.dark .performance-score {
+            color: #a0cfb8;
+        }
+
+        html.dark .performance-label {
+            color: #888;
+        }
+
+        html.dark .performance-stats {
+            border-top-color: rgba(255, 255, 255, 0.08);
+        }
+
+        html.dark .stat-label {
+            color: #777;
+        }
+
+        /* Chart Container */
+        html.dark .chart-container {
+            background: #16213e;
+            border-color: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        html.dark .chart-title {
+            color: #a0cfb8;
+        }
+
+        html.dark .legend-item {
+            color: #aaa;
+        }
+
+        /* Settings Modal */
+        html.dark .settings-modal {
+            background: #16213e;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        html.dark .settings-modal-body {
+            background: #16213e;
+        }
+
+        html.dark .settings-description {
+            background: #1a1a2e;
+            color: #bbb;
+            border-left-color: var(--secondary-color);
+        }
+
+        html.dark .settings-label {
+            color: #e0e0e0;
+        }
+
+        html.dark .settings-input {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html.dark .settings-input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.2);
+        }
+
+        html.dark .settings-input-hint {
+            color: #777;
+        }
+
+        html.dark .settings-modal-footer {
+            background: #0f1a30;
+            border-top-color: rgba(255, 255, 255, 0.08);
+        }
+
+        html.dark .settings-btn-cancel {
+            background: #1a1a2e;
+            color: #ccc;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        html.dark .settings-btn-cancel:hover {
+            background: #222;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Profile Dropdown */
+        html.dark .header-profile-menu {
+            background: #16213e;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        html.dark .header-profile-item {
+            color: #e0e0e0;
+        }
+
+        html.dark .header-profile-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        html.dark .header-profile-item i {
+            color: #aaa;
+        }
+
+        html.dark .header-profile-divider {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Footer */
+        html.dark footer,
+        html.dark .footer {
+            color: #888 !important;
+        }
+
+        /* h2 gradient text */
+        html.dark h2 {
+            background: linear-gradient(135deg, #a0cfb8 0%, #40916c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
     </style>
 
     <div class="container-fluid py-4">
