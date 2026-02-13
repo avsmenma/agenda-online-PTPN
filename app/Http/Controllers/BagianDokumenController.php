@@ -303,8 +303,11 @@ class BagianDokumenController extends Controller
         try {
             DB::beginTransaction();
 
-            // Parse tanggal_spp to get bulan and tahun
+            // Parse tanggal_spp
             $tanggalSpp = Carbon::parse($request->tanggal_spp);
+
+            // Get bulan and tahun from computer timestamp (Carbon::now())
+            $now = Carbon::now();
             $bulanNames = [
                 1 => 'Januari',
                 2 => 'Februari',
@@ -355,9 +358,9 @@ class BagianDokumenController extends Controller
                 'nomor_agenda' => $request->nomor_agenda,
                 'nomor_spp' => $request->nomor_spp,
                 'tanggal_spp' => $tanggalSpp,
-                'bulan' => $bulanNames[$tanggalSpp->month],
-                'tahun' => $tanggalSpp->year,
-                'tanggal_masuk' => Carbon::now(),
+                'bulan' => $bulanNames[$now->month],
+                'tahun' => $now->year,
+                'tanggal_masuk' => $now,
                 'uraian_spp' => $request->uraian_spp,
                 'nilai_rupiah' => str_replace(['.', ','], ['', '.'], $request->nilai_rupiah),
                 'bagian' => $bagianCode, // Auto-filled from user's bagian

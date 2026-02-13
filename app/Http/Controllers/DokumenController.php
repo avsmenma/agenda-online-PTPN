@@ -599,28 +599,24 @@ class DokumenController extends Controller
                 }
             }
 
-            // Extract bulan dan tahun dari tanggal SPP (nullable)
-            $bulan = null;
-            $tahun = null;
-            if ($request->filled('tanggal_spp')) {
-                $tanggalSpp = Carbon::parse($request->tanggal_spp);
-                $bulanIndonesia = [
-                    1 => 'Januari',
-                    2 => 'Februari',
-                    3 => 'Maret',
-                    4 => 'April',
-                    5 => 'May',
-                    6 => 'Juni',
-                    7 => 'July',
-                    8 => 'Agustus',
-                    9 => 'September',
-                    10 => 'Oktober',
-                    11 => 'November',
-                    12 => 'Desember'
-                ];
-                $bulan = $bulanIndonesia[$tanggalSpp->month];
-                $tahun = $tanggalSpp->year;
-            }
+            // Extract bulan dan tahun from computer timestamp (Carbon::now())
+            $now = Carbon::now();
+            $bulanIndonesia = [
+                1 => 'Januari',
+                2 => 'Februari',
+                3 => 'Maret',
+                4 => 'April',
+                5 => 'Mei',
+                6 => 'Juni',
+                7 => 'Juli',
+                8 => 'Agustus',
+                9 => 'September',
+                10 => 'Oktober',
+                11 => 'November',
+                12 => 'Desember'
+            ];
+            $bulan = $bulanIndonesia[$now->month];
+            $tahun = $now->year;
 
             // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
             $kategoriKriteria = null;
@@ -649,7 +645,7 @@ class DokumenController extends Controller
                 'nomor_agenda' => $request->nomor_agenda,
                 'bulan' => $bulan,
                 'tahun' => $tahun,
-                'tanggal_masuk' => now(), // Realtime timestamp
+                'tanggal_masuk' => $now, // Always use current timestamp
                 'nomor_spp' => $request->nomor_spp,
                 'tanggal_spp' => $request->tanggal_spp,
                 'uraian_spp' => $request->uraian_spp,

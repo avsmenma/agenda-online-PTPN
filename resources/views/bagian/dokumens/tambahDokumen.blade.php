@@ -324,11 +324,11 @@
       <!-- Info Box -->
       <div class="info-box">
         <i class="fas fa-info-circle"></i>
-        <strong>Informasi:</strong> Tanggal masuk akan diisi otomatis saat dokumen disimpan. Bulan dan tahun diambil dari
-        tanggal SPP.
+        <strong>Informasi:</strong> Bulan dan tahun diambil otomatis dari timestamp komputer. Tanggal masuk diisi otomatis
+        saat dokumen disimpan.
       </div>
 
-      <!-- Bagian dan Nama Pengirim Dokumen -->
+      <!-- 1. Bagian dan 2. Nama Pengirim Dokumen -->
       <div class="form-row">
         <div class="form-group">
           <label>Bagian</label>
@@ -349,63 +349,30 @@
         </div>
       </div>
 
-      <!-- Nomor SPP -->
+      <!-- 3. Nomor Agenda -->
       <div class="form-group">
-        <label>Nomor SPP <span style="color: #dc3545;">*</span></label>
-        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}" required>
-        @error('nomor_spp')
+        <label>Nomor Agenda</label>
+        <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda') }}">
+        @error('nomor_agenda')
           <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
         @enderror
       </div>
 
-      <!-- 3. Tanggal SPP -->
-      <div class="form-group">
-        <label>Tanggal SPP</label>
-        <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp') }}">
-        @error('tanggal_spp')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
+      <!-- 4. Bulan dan 5. Tahun (auto-filled dari timestamp komputer) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bulan</label>
+          <input type="text" name="bulan" id="auto_bulan" readonly
+            style="background-color: #f5f5f5; cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+          <label>Tahun</label>
+          <input type="text" name="tahun" id="auto_tahun" readonly
+            style="background-color: #f5f5f5; cursor: not-allowed;">
+        </div>
       </div>
 
-      <!-- 4. Uraian SPP -->
-      <div class="form-group">
-        <label>Uraian SPP</label>
-        <textarea name="uraian_spp"
-          placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024"
-          data-autocomplete="document-descriptions">{{ old('uraian_spp') }}</textarea>
-        @error('uraian_spp')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <!-- 5. Vendor/Dibayar Kepada -->
-      <div class="section-title">Vendor/Dibayar Kepada</div>
-      <div class="form-group dynamic-field" data-field-type="dibayar_kepada">
-        <label>Vendor/Dibayar Kepada <span class="optional-label">(Bisa lebih dari 1)</span></label>
-        <input type="text" placeholder="Masukkan nama vendor/penerima" name="dibayar_kepada[]"
-          data-autocomplete="payment-recipients" value="{{ old('dibayar_kepada.0') }}">
-        <button type="button" class="add-field-btn">+</button>
-        <button type="button" class="remove-field-btn" style="display: none;">−</button>
-      </div>
-
-      <!-- 6. Nilai Rupiah -->
-      <div class="form-group">
-        <label>Nilai Rupiah</label>
-        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)"
-          value="{{ old('nilai_rupiah') }}">
-        @error('nilai_rupiah')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <!-- 7. Ejaan Nilai Rupiah (Otomatis) -->
-      <div class="form-group">
-        <label>Ejaan Nilai Rupiah</label>
-        <input type="text" name="ejaan_nilai_rupiah" id="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis"
-          readonly style="background-color: #f5f5f5; cursor: not-allowed;">
-      </div>
-
-      <!-- Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
+      <!-- 6-9. Kriteria CF, Sub Kriteria, Item Sub Kriteria, Jenis Pembayaran -->
       @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
         <!-- Mode Dropdown (jika database cash_bank tersedia) -->
         <div class="form-row" id="dropdown-mode">
@@ -515,6 +482,132 @@
         </div>
       @endif
 
+      <!-- 10. Nomor SPP -->
+      <div class="form-group">
+        <label>Nomor SPP <span style="color: #dc3545;">*</span></label>
+        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}" required>
+        @error('nomor_spp')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <!-- 11. Tanggal SPP -->
+      <div class="form-group">
+        <label>Tanggal SPP</label>
+        <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp') }}">
+        @error('tanggal_spp')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <!-- 12. Tanggal Masuk (auto-filled saat menyimpan) -->
+      <div class="form-group">
+        <label>Tanggal Masuk <span class="optional-label">(otomatis saat menyimpan)</span></label>
+        <input type="text" id="auto_tanggal_masuk" readonly style="background-color: #f5f5f5; cursor: not-allowed;"
+          placeholder="Akan terisi otomatis saat menyimpan">
+      </div>
+
+      <!-- 13. Dibayarkan Kepada (Vendor) -->
+      <div class="section-title">Vendor/Dibayar Kepada</div>
+      <div class="form-group dynamic-field" data-field-type="dibayar_kepada">
+        <label>Dibayarkan Kepada (Vendor) <span class="optional-label">(Bisa lebih dari 1)</span></label>
+        <input type="text" placeholder="Masukkan nama vendor/penerima" name="dibayar_kepada[]"
+          data-autocomplete="payment-recipients" value="{{ old('dibayar_kepada.0') }}">
+        <button type="button" class="add-field-btn">+</button>
+        <button type="button" class="remove-field-btn" style="display: none;">−</button>
+      </div>
+
+      <!-- 14. Uraian SPP -->
+      <div class="form-group">
+        <label>Uraian SPP</label>
+        <textarea name="uraian_spp"
+          placeholder="Permintaan permohonan pembayaran THR Pegawai/Pekerja Harian Lepas (PHL) Bulan Maret sampai dengan Desember 2024"
+          data-autocomplete="document-descriptions">{{ old('uraian_spp') }}</textarea>
+        @error('uraian_spp')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <!-- 15. Nilai Rupiah -->
+      <div class="form-group">
+        <label>Nilai Rupiah</label>
+        <input type="text" name="nilai_rupiah" id="nilai_rupiah" placeholder="Masukkan nilai rupiah (contoh: 120000000)"
+          value="{{ old('nilai_rupiah') }}">
+        @error('nilai_rupiah')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <!-- 16. Ejaan Nilai Rupiah (Otomatis) -->
+      <div class="form-group">
+        <label>Ejaan Nilai Rupiah</label>
+        <input type="text" name="ejaan_nilai_rupiah" id="ejaan_nilai_rupiah" placeholder="Ejaan akan terisi otomatis"
+          readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+      </div>
+
+      <!-- 17-19. SPK (Surat Perjanjian Kontrak) -->
+      <div class="section-title">SPK (Surat Perjanjian Kontrak)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>No SPK</label>
+          <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk') }}">
+          @error('no_spk')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
+        <div class="form-group">
+          <label>Tanggal SPK</label>
+          <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk') }}">
+          @error('tanggal_spk')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tanggal Akhir SPK</label>
+        <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk') }}">
+        @error('tanggal_berakhir_spk')
+          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <!-- 20-21. BA (Berita Acara) -->
+      <div class="section-title">BA (Berita Acara)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>No Berita Acara (BA)</label>
+          <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024"
+            value="{{ old('no_berita_acara') }}">
+          @error('no_berita_acara')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
+        <div class="form-group">
+          <label>Tanggal Berita Acara (BA)</label>
+          <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara') }}">
+          @error('tanggal_berita_acara')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
+      </div>
+
+      <!-- 22-23. PO/PR (Purchase Order / Purchase Request) -->
+      <div class="section-title">PO/PR (Purchase Order / Purchase Request)</div>
+      <div class="form-group dynamic-field" data-field-type="po">
+        <label>No PO</label>
+        <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" data-autocomplete="po-numbers"
+          value="{{ old('nomor_po.0') }}">
+        <button type="button" class="add-field-btn">+</button>
+        <button type="button" class="remove-field-btn" style="display: none;">−</button>
+      </div>
+      <div class="form-group dynamic-field" data-field-type="pr">
+        <label>No PR</label>
+        <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" data-autocomplete="pr-numbers"
+          value="{{ old('nomor_pr.0') }}">
+        <button type="button" class="add-field-btn">+</button>
+        <button type="button" class="remove-field-btn" style="display: none;">−</button>
+      </div>
+
       <!-- Kebun -->
       <div class="form-row">
         <div class="form-group">
@@ -574,69 +667,6 @@
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
           @enderror
         </div>
-      </div>
-
-      <!-- 8. ALL SPK -->
-      <div class="section-title">SPK (Surat Perjanjian Kontrak)</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>No SPK</label>
-          <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024" value="{{ old('no_spk') }}">
-          @error('no_spk')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-          @enderror
-        </div>
-        <div class="form-group">
-          <label>Tanggal SPK</label>
-          <input type="date" name="tanggal_spk" value="{{ old('tanggal_spk') }}">
-          @error('tanggal_spk')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-          @enderror
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Tanggal Berakhir SPK</label>
-        <input type="date" name="tanggal_berakhir_spk" value="{{ old('tanggal_berakhir_spk') }}">
-        @error('tanggal_berakhir_spk')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <!-- 9. ALL BA (Berita Acara) -->
-      <div class="section-title">BA (Berita Acara)</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>No Berita Acara</label>
-          <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024"
-            value="{{ old('no_berita_acara') }}">
-          @error('no_berita_acara')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-          @enderror
-        </div>
-        <div class="form-group">
-          <label>Tanggal Berita Acara</label>
-          <input type="date" name="tanggal_berita_acara" value="{{ old('tanggal_berita_acara') }}">
-          @error('tanggal_berita_acara')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-          @enderror
-        </div>
-      </div>
-
-      <!-- 10. ALL PO/PR -->
-      <div class="section-title">PO/PR (Purchase Order / Purchase Request)</div>
-      <div class="form-group dynamic-field" data-field-type="po">
-        <label>Nomor PO</label>
-        <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]" data-autocomplete="po-numbers"
-          value="{{ old('nomor_po.0') }}">
-        <button type="button" class="add-field-btn">+</button>
-        <button type="button" class="remove-field-btn" style="display: none;">−</button>
-      </div>
-      <div class="form-group dynamic-field" data-field-type="pr">
-        <label>Nomor PR</label>
-        <input type="text" placeholder="Masukkan nomor PR" name="nomor_pr[]" data-autocomplete="pr-numbers"
-          value="{{ old('nomor_pr.0') }}">
-        <button type="button" class="add-field-btn">+</button>
-        <button type="button" class="remove-field-btn" style="display: none;">−</button>
       </div>
 
 
@@ -773,6 +803,28 @@
 
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function () {
+      // Auto-fill Bulan dan Tahun dari timestamp komputer
+      const bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      const now = new Date();
+      const autoBulanInput = document.getElementById('auto_bulan');
+      const autoTahunInput = document.getElementById('auto_tahun');
+      const autoTanggalMasukInput = document.getElementById('auto_tanggal_masuk');
+
+      if (autoBulanInput) autoBulanInput.value = bulanNames[now.getMonth()];
+      if (autoTahunInput) autoTahunInput.value = now.getFullYear();
+
+      // Auto-fill Tanggal Masuk with live-updating datetime
+      function updateTanggalMasuk() {
+        if (autoTanggalMasukInput) {
+          const d = new Date();
+          const pad = (n) => String(n).padStart(2, '0');
+          autoTanggalMasukInput.value = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+      }
+      updateTanggalMasuk();
+      setInterval(updateTanggalMasuk, 1000);
+
       // Format nilai rupiah input with dots
       const nilaiRupiahInput = document.getElementById('nilai_rupiah');
       const ejaanRupiahInput = document.getElementById('ejaan_nilai_rupiah');
@@ -1543,47 +1595,47 @@
       // Create notification element
       const notification = document.createElement('div');
       notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
-            z-index: 10000;
-            font-weight: 600;
-            max-width: 300px;
-            animation: slideIn 0.3s ease;
-          `;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+                z-index: 10000;
+                font-weight: 600;
+                max-width: 300px;
+                animation: slideIn 0.3s ease;
+              `;
       notification.innerHTML = `
-            <i class="fa-solid fa-check-circle me-2"></i>${message}
-          `;
+                <i class="fa-solid fa-check-circle me-2"></i>${message}
+              `;
 
       // Add animation
       const style = document.createElement('style');
       style.textContent = `
-            @keyframes slideIn {
-              from {
-                transform: translateX(100%);
-                opacity: 0;
-              }
-              to {
-                transform: translateX(0);
-                opacity: 1;
-              }
-            }
-            @keyframes slideOut {
-              from {
-                transform: translateX(0);
-                opacity: 1;
-              }
-              to {
-                transform: translateX(100%);
-                opacity: 0;
-              }
-            }
-          `;
+                @keyframes slideIn {
+                  from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                  }
+                  to {
+                    transform: translateX(0);
+                    opacity: 1;
+                  }
+                }
+                @keyframes slideOut {
+                  from {
+                    transform: translateX(0);
+                    opacity: 1;
+                  }
+                  to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                  }
+                }
+              `;
       document.head.appendChild(style);
 
       document.body.appendChild(notification);
