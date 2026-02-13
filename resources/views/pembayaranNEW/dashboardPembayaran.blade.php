@@ -2958,9 +2958,9 @@
       // UPDATE: Table Body
       // ==========================================
       function updateTable(data) {
-        const tableBody = document.getElementById('tableBody');
         const tableCount = document.getElementById('tableCount');
         const tableSection = document.getElementById('tableSection');
+        const wrapper = document.getElementById('dataTableWrapper');
 
         if (tableCount) {
           tableCount.textContent = data.pagination.total;
@@ -2972,16 +2972,13 @@
           return;
         }
 
-        if (!tableBody) return;
-
         const dokumens = data.dokumens || [];
         const columns = data.selectedColumns || [];
 
         if (dokumens.length === 0) {
-          // Show empty state
-          const wrapper = document.getElementById('dataTableWrapper');
+          // Hide the table wrapper (don't destroy it!)
           if (wrapper) {
-            wrapper.innerHTML = '';
+            wrapper.style.display = 'none';
           }
           // Show empty state div if not already visible
           let emptyState = tableSection.querySelector('.empty-state');
@@ -3001,9 +2998,16 @@
           return;
         }
 
-        // Remove empty state if it exists
+        // Remove empty state if it exists and show the table wrapper
         const existingEmpty = tableSection.querySelector('.empty-state');
         if (existingEmpty) existingEmpty.remove();
+        if (wrapper) {
+          wrapper.style.display = '';
+        }
+
+        // Re-acquire tableBody (it's preserved since we no longer destroy wrapper)
+        const tableBody = document.getElementById('tableBody');
+        if (!tableBody) return;
 
         // Rebuild table rows
         let html = '';
