@@ -29,6 +29,22 @@ class OwnerDashboardController extends Controller
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
 
+        // AJAX request: return JSON for live filtering (no page refresh)
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'documents' => array_values($documents->items()),
+                'pagination' => [
+                    'current_page' => $documents->currentPage(),
+                    'last_page' => $documents->lastPage(),
+                    'per_page' => $documents->perPage(),
+                    'total' => $documents->total(),
+                    'from' => $documents->firstItem(),
+                    'to' => $documents->lastItem(),
+                ],
+            ]);
+        }
+
         // Get filter data for dropdowns
         $filterData = $this->getFilterData();
 

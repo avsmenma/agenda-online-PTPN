@@ -676,7 +676,7 @@
       if (_ajaxAbortController) _ajaxAbortController.abort();
       _ajaxAbortController = new AbortController();
 
-      const filterUrl = '{{ url("/owner/dokumen/filter") }}' + (qs ? '?' + qs : '');
+      const filterUrl = '{{ url("/owner/dokumen") }}' + (qs ? '?' + qs : '');
 
       fetch(filterUrl, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
