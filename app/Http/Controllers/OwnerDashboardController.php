@@ -143,6 +143,35 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * AJAX endpoint: return filtered documents as JSON (no page refresh)
+     */
+    public function filterDocuments(Request $request): JsonResponse
+    {
+        $perPage = $request->get('per_page', session('owner_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['owner_per_page' => $perPage]);
+
+        $documents = $this->getDocumentsWithTracking($request, $perPage);
+
+        return response()->json([
+            'success' => true,
+            'documents' => $documents->items(),
+            'pagination' => [
+                'current_page' => $documents->currentPage(),
+                'last_page' => $documents->lastPage(),
+                'per_page' => $documents->perPage(),
+                'total' => $documents->total(),
+                'from' => $documents->firstItem(),
+                'to' => $documents->lastItem(),
+            ],
+        ]);
+    }
+
+    /**
      * Display the owner home page with bagian statistics cards
      */
     public function home()

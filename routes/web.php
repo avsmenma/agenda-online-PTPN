@@ -422,6 +422,11 @@ Route::get('owner/dokumen', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dokumen');
 
+// AJAX filter endpoint for live filtering (no page refresh)
+Route::get('owner/dokumen/filter', [OwnerDashboardController::class, 'filterDocuments'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.dokumen.filter');
+
 // Redirect old dashboard URL to home
 Route::get('owner/dashboard', fn() => redirect()->route('owner.home'))
     ->middleware('auth', 'role:admin,owner')
