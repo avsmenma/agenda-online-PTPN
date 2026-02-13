@@ -45,6 +45,21 @@
       border-color: rgba(8, 62, 64, 0.15);
     }
 
+    .stat-card-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .stat-card-link:hover {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .stat-card-link .stat-card {
+      cursor: pointer;
+    }
+
     .stat-card:hover::before {
       top: -60%;
       right: -60%;
@@ -530,50 +545,56 @@
 
     <!-- Total Dokumen Akutansi -->
     <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
-      <div class="stat-card">
-        <div class="stat-card-body">
-          <div class="stat-icon total">
-            <i class="fas fa-file-invoice-dollar"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-title">Total Dokumen Akutansi</div>
-            <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Dokumen di akutansi</div>
+      <a href="{{ route('documents.akutansi.index') }}" class="stat-card-link">
+        <div class="stat-card">
+          <div class="stat-card-body">
+            <div class="stat-icon total">
+              <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-title">Total Dokumen Akutansi</div>
+              <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
+              <div class="stat-description">Dokumen di akutansi</div>
+            </div>
           </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <!-- Total Dokumen Diproses -->
     <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
-      <div class="stat-card">
-        <div class="stat-card-body">
-          <div class="stat-icon proses">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-title">Dokumen Diproses</div>
-            <div class="stat-value">{{ number_format($totalDokumenProses ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Sedang dalam verifikasi</div>
+      <a href="{{ route('documents.akutansi.index', ['status' => 'sedang_proses']) }}" class="stat-card-link">
+        <div class="stat-card">
+          <div class="stat-card-body">
+            <div class="stat-icon proses">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-title">Dokumen Diproses</div>
+              <div class="stat-value">{{ number_format($totalDokumenProses ?? 0, 0, ',', '.') }}</div>
+              <div class="stat-description">Sedang dalam verifikasi</div>
+            </div>
           </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <!-- Total Dokumen Terkirim -->
     <div class="col-xl-3 col-lg-3 col-md-6 mb-3">
-      <div class="stat-card">
-        <div class="stat-card-body">
-          <div class="stat-icon dikirim">
-            <i class="fas fa-paper-plane"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-title">Total Terkirim</div>
-            <div class="stat-value">{{ number_format($totalTerkirim ?? 0, 0, ',', '.') }}</div>
-            <div class="stat-description">Dikirim ke tahap selanjutnya</div>
+      <a href="{{ route('documents.akutansi.index', ['status' => 'terkirim']) }}" class="stat-card-link">
+        <div class="stat-card">
+          <div class="stat-card-body">
+            <div class="stat-icon dikirim">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-title">Total Terkirim</div>
+              <div class="stat-value">{{ number_format($totalTerkirim ?? 0, 0, ',', '.') }}</div>
+              <div class="stat-description">Dikirim ke tahap selanjutnya</div>
+            </div>
           </div>
         </div>
-      </div>
+      </a>
     </div>
   </div>
 

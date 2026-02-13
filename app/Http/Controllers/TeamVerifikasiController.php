@@ -537,6 +537,20 @@ class TeamVerifikasiController extends Controller
                         });
                     }
                     break;
+                case 'terkirim':
+                    // Semua dokumen yang sudah terkirim ke tahap selanjutnya (gabungan semua terkirim)
+                    $query->where(function ($statusQ) {
+                        $statusQ->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai']);
+                    })
+                        ->where('current_handler', '!=', 'team_verifikasi');
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $query->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
+                    }
+                    break;
                 case 'ditolak':
                     // Dokumen yang ditolak - termasuk yang ditolak oleh perpajakan/akutansi
                     $query->where(function ($q) {

@@ -364,6 +364,20 @@ class DashboardAkutansiController extends Controller
                             ]);
                     });
                     break;
+                case 'terkirim':
+                    // Semua dokumen yang sudah terkirim ke tahap selanjutnya (gabungan semua terkirim)
+                    $query->where(function ($statusQ) {
+                        $statusQ->whereIn('status', ['sent_to_pembayaran', 'completed', 'selesai']);
+                    })
+                        ->where('current_handler', '!=', 'akutansi');
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $query->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
+                    }
+                    break;
                 case 'ditolak':
                     // Dokumen yang ditolak (rejected di dokumen_statuses untuk role akutansi)
                     $query->whereHas('roleStatuses', function ($q) {
