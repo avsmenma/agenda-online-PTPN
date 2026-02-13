@@ -3924,6 +3924,12 @@
                         'waiting_approval_akuntansi',
                       ]);
 
+                      // Also check frozen display_status - for tembak documents, the actual
+                      // status may have progressed past this role, but display_status is frozen
+                      if (!$isSent && $displayStatus && str_starts_with($displayStatus, 'terkirim')) {
+                        $isSent = true;
+                      }
+
                       // Check if document is completed
                       $isCompleted = in_array($dokumen->status, [
                         'selesai',
@@ -3998,11 +4004,13 @@
                       }
 
                       // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
+                      // Prioritize $isSent over $isCompleted - from Team Verifikasi's perspective,
+                      // a document they sent is "Terkirim", even if completed downstream
                       $deadlineType = 'active';
-                      if ($isCompleted) {
-                        $deadlineType = 'completed';
-                      } elseif ($isSent) {
+                      if ($isSent) {
                         $deadlineType = 'sent';
+                      } elseif ($isCompleted) {
+                        $deadlineType = 'completed';
                       }
                     @endphp
                     @if($receivedAt)
