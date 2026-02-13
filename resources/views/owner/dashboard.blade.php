@@ -281,7 +281,7 @@
             {{-- Bagian --}}
             <div class="filter-group">
               <label><i class="fas fa-building"></i> Bagian</label>
-              <select name="filter_bagian" onchange="updateFilterCount()">
+              <select name="filter_bagian" onchange="updateFilterCount(); applyFilter()">
                 <option value="">Semua Bagian</option>
                 @foreach($filterData['bagian'] ?? [] as $key => $value)
                   <option value="{{ $key }}" {{ request('filter_bagian') == $key ? 'selected' : '' }}>{{ $value }}</option>
@@ -292,7 +292,7 @@
             {{-- Vendor --}}
             <div class="filter-group">
               <label><i class="fas fa-handshake"></i> Vendor</label>
-              <select name="filter_vendor" onchange="updateFilterCount()">
+              <select name="filter_vendor" onchange="updateFilterCount(); applyFilter()">
                 <option value="">Semua Vendor</option>
                 @foreach($filterData['vendor'] ?? [] as $key => $value)
                   <option value="{{ $value }}" {{ request('filter_vendor') == $value ? 'selected' : '' }}>{{ $value }}
@@ -305,7 +305,7 @@
             <div class="filter-group">
               <label><i class="fas fa-tags"></i> Kriteria CF</label>
               <select name="filter_kriteria_cf" id="filterKriteriaCf"
-                onchange="updateSubKriteriaFilter(); updateFilterCount();">
+                onchange="updateSubKriteriaFilter(); updateFilterCount(); applyFilter();">
                 <option value="">Semua Kriteria</option>
                 @foreach($filterData['kriteria_cf'] ?? [] as $id => $nama)
                   <option value="{{ $id }}" {{ request('filter_kriteria_cf') == $id ? 'selected' : '' }}>{{ $nama }}</option>
@@ -317,7 +317,7 @@
             <div class="filter-group">
               <label><i class="fas fa-tag"></i> Sub Kriteria</label>
               <select name="filter_sub_kriteria" id="filterSubKriteria"
-                onchange="updateItemSubKriteriaFilter(); updateFilterCount();" disabled>
+                onchange="updateItemSubKriteriaFilter(); updateFilterCount(); applyFilter();" disabled>
                 <option value="">Pilih Kriteria CF dahulu</option>
                 @foreach($filterData['sub_kriteria'] ?? [] as $id => $nama)
                   <option value="{{ $id }}"
@@ -330,7 +330,7 @@
             {{-- Item Sub Kriteria --}}
             <div class="filter-group">
               <label><i class="fas fa-list"></i> Item Sub Kriteria</label>
-              <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" onchange="updateFilterCount();" disabled>
+              <select name="filter_item_sub_kriteria" id="filterItemSubKriteria" onchange="updateFilterCount(); applyFilter();" disabled>
                 <option value="">Pilih Sub Kriteria dahulu</option>
                 @foreach($filterData['item_sub_kriteria'] ?? [] as $id => $nama)
                   <option value="{{ $id }}"
@@ -343,7 +343,7 @@
             {{-- Kebun --}}
             <div class="filter-group">
               <label><i class="fas fa-seedling"></i> Kebun</label>
-              <select name="filter_kebun" onchange="updateFilterCount()">
+              <select name="filter_kebun" onchange="updateFilterCount(); applyFilter()">
                 <option value="">Semua Kebun</option>
                 @foreach($filterData['kebun'] ?? [] as $key => $value)
                   <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
@@ -354,7 +354,7 @@
             {{-- Status Pembayaran --}}
             <div class="filter-group">
               <label><i class="fas fa-money-bill-wave"></i> Status Pembayaran</label>
-              <select name="filter_status_pembayaran" onchange="updateFilterCount()">
+              <select name="filter_status_pembayaran" onchange="updateFilterCount(); applyFilter()">
                 <option value="">Semua Status</option>
                 <option value="belum_dibayar" {{ request('filter_status_pembayaran') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
                 <option value="siap_dibayar" {{ request('filter_status_pembayaran') == 'siap_dibayar' ? 'selected' : '' }}>
@@ -364,13 +364,9 @@
             </div>
           </div>
 
-          {{-- Filter Actions --}}
           <div class="filter-actions">
             <button type="button" class="btn-filter btn-reset" onclick="resetFilters()">
               <i class="fas fa-redo"></i> Reset
-            </button>
-            <button type="button" class="btn-filter btn-apply" onclick="applyFilter()">
-              <i class="fas fa-check"></i> Terapkan
             </button>
           </div>
 
