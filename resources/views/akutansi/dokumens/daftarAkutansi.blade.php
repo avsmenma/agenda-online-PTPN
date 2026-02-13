@@ -3060,14 +3060,83 @@
                                 @endif
                               </div>
                             @elseif($isBypassedToPaymentDeadline)
-                              {{-- Document bypassed Akutansi - show bypass indicator --}}
-                              <div class="deadline-card" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white;">
-                                <i class="fa-solid fa-forward me-1"></i>
-                                <span>Bypass</span>
-                                <div class="deadline-label" style="font-size: 8px; color: #e5e7eb; margin-top: 4px; font-weight: 600;">
-                                  <i class="fa-solid fa-check-circle"></i> ke Pembayaran
+                              {{-- Document bypassed Akutansi - show proper deadline card like Team Verifikasi --}}
+                              @php
+                                $bypassVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+                                
+                                // Priority: pembayaran received_at > verifikasi processed_at > document tanggal_masuk
+                                $bypassTimestamp = $pembayaranRoleData?->received_at 
+                                  ?? $bypassVerifikasiData?->processed_at 
+                                  ?? $dokumen->tanggal_masuk;
+                                
+                                $bypassAgeText = '0 menit';
+                                $bypassAgeLabel = 'AMAN';
+                                $bypassAgeColor = 'gray';
+                                $bypassAgeIcon = 'fa-check-circle';
+                                $bypassAgeDays = 0;
+
+                                if ($bypassTimestamp) {
+                                  $bypassStartTime = $bypassTimestamp instanceof \Carbon\Carbon 
+                                    ? $bypassTimestamp 
+                                    : \Carbon\Carbon::parse($bypassTimestamp);
+                                  
+                                  // ALWAYS freeze time at processed_at (like Team Verifikasi)
+                                  $bypassProcessedAt = $bypassVerifikasiData?->processed_at ?? $pembayaranRoleData?->received_at;
+                                  if ($bypassProcessedAt) {
+                                    $bypassEndTime = $bypassProcessedAt instanceof \Carbon\Carbon 
+                                      ? $bypassProcessedAt 
+                                      : \Carbon\Carbon::parse($bypassProcessedAt);
+                                  } else {
+                                    $bypassEndTime = $bypassStartTime;
+                                  }
+                                  
+                                  $bypassDiff = $bypassStartTime->diff($bypassEndTime);
+                                  $bypassAgeDays = $bypassDiff->days;
+
+                                  $bypassElapsedParts = [];
+                                  if ($bypassDiff->days > 0) $bypassElapsedParts[] = $bypassDiff->days . ' hari';
+                                  if ($bypassDiff->h > 0) $bypassElapsedParts[] = $bypassDiff->h . ' jam';
+                                  if ($bypassDiff->i > 0 || empty($bypassElapsedParts)) $bypassElapsedParts[] = $bypassDiff->i . ' menit';
+                                  $bypassAgeText = implode(' ', $bypassElapsedParts) . ' ⏸️';
+
+                                  $bypassTotalHours = ($bypassDiff->days * 24) + $bypassDiff->h;
+                                  if ($bypassTotalHours >= 72) { $bypassAgeLabel = 'TERLAMBAT'; $bypassAgeIcon = 'fa-times-circle'; }
+                                  elseif ($bypassTotalHours >= 24) { $bypassAgeLabel = 'PERINGATAN'; $bypassAgeIcon = 'fa-exclamation-triangle'; }
+                                  else { $bypassAgeLabel = 'AMAN'; $bypassAgeIcon = 'fa-check-circle'; }
+                                }
+                              @endphp
+                              @if($bypassTimestamp)
+                                @php
+                                  $bypassDisplayTime = $bypassTimestamp instanceof \Carbon\Carbon 
+                                    ? $bypassTimestamp 
+                                    : \Carbon\Carbon::parse($bypassTimestamp);
+                                @endphp
+                                <div class="deadline-card deadline-sent deadline-{{ $bypassAgeColor }}"
+                                  data-received-at="{{ $bypassDisplayTime->format('Y-m-d H:i:s') }}" data-age-days="{{ $bypassAgeDays }}"
+                                  data-sent="true" data-completed="false">
+                                  <div class="deadline-time">
+                                    <i class="fa-solid fa-calendar"></i>
+                                    <span>{{ $bypassDisplayTime->format('d M Y, H:i') }}</span>
+                                  </div>
+                                  <div class="deadline-indicator deadline-{{ $bypassAgeColor }}">
+                                    <i class="fa-solid {{ $bypassAgeIcon }}"></i>
+                                    <span class="status-text">{{ $bypassAgeLabel }}</span>
+                                  </div>
+                                  <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                    <span>{{ $bypassAgeText }}</span>
+                                  </div>
+                                  <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                                    <i class="fa-solid fa-paper-plane"></i> Terkirim
+                                  </div>
                                 </div>
-                              </div>
+                              @else
+                                <div class="deadline-card deadline-sent deadline-gray">
+                                  <div class="deadline-label" style="font-size: 10px; color: #6b7280; font-weight: 600;">
+                                    <i class="fa-solid fa-paper-plane"></i> Terkirim ke Pembayaran
+                                  </div>
+                                </div>
+                              @endif
                             @else
                               <div class="no-deadline">
                                 <i class="fa-solid fa-clock"></i>
