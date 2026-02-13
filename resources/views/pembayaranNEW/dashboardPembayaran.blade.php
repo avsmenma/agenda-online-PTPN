@@ -1553,8 +1553,8 @@
 
         <div class="filter-actions">
           <button type="submit" class="btn-filter btn-filter--primary">
-            <i class="fas fa-search"></i>
-            Cari
+            <i class="fas fa-check"></i>
+            Terapkan
           </button>
           <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary">
             <i class="fas fa-redo"></i>
