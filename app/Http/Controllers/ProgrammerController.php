@@ -241,18 +241,18 @@ final class ProgrammerController extends Controller
     private function getWorkflowPath(string $currentRole): array
     {
         // Define paths from each role to pembayaran
-        // Direct path: skip perpajakan/akutansi, go straight to pembayaran
+        // Full path: go through all roles so dokumen_role_data records are created
+        // This ensures documents appear in rekapan keterlambatan for all roles
         $paths = [
-            'operator' => ['team_verifikasi', 'pembayaran'],
-            'team_verifikasi' => ['pembayaran'],
-            'perpajakan' => ['pembayaran'],
+            'operator' => ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'],
+            'team_verifikasi' => ['perpajakan', 'akutansi', 'pembayaran'],
+            'perpajakan' => ['akutansi', 'pembayaran'],
             'akutansi' => ['pembayaran'],
             'pembayaran' => [], // Already at destination
         ];
 
         return $paths[strtolower($currentRole)] ?? ['pembayaran'];
     }
-
 
     /**
      * Parse nomor_agenda list from various input formats
