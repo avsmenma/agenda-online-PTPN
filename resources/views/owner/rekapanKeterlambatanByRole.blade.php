@@ -717,37 +717,128 @@
       color: white;
     }
 
-    .pagination {
+    /* Modern Pagination */
+    .modern-pagination {
       display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--primary-border);
     }
 
-    .pagination a,
-    .pagination span {
-      padding: 8px 16px;
-      border-radius: 8px;
+    .pagination-info {
+      font-size: 0.85rem;
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .pagination-info strong {
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pagination-controls a,
+    .pagination-controls span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 10px;
       text-decoration: none;
       font-weight: 600;
-      transition: all 0.3s ease;
+      font-size: 0.875rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1.5px solid transparent;
+      user-select: none;
     }
 
-    .pagination .page-link {
+    .pg-btn {
       color: var(--primary-color);
       background: white;
-      border: 2px solid var(--primary-color);
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
-    .pagination .page-link:hover {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-      color: white;
+    .pg-btn:hover {
+      background: var(--primary-rgba);
+      border-color: var(--primary-color) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(8, 62, 64, 0.12);
     }
 
-    .pagination .active .page-link {
+    .pg-btn.active {
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       color: white;
-      border-color: var(--primary-color);
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 3px 10px rgba(8, 62, 64, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .pg-btn.disabled {
+      color: #c4cdd5;
+      background: #f8f9fa;
+      border-color: #f0f0f0 !important;
+      cursor: not-allowed;
+      pointer-events: none;
+      box-shadow: none;
+    }
+
+    .pg-nav {
+      color: var(--primary-color);
+      background: white;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      font-size: 0.8rem;
+      gap: 4px;
+    }
+
+    .pg-nav:hover {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 3px 8px rgba(8, 62, 64, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .pg-nav.disabled {
+      color: #c4cdd5;
+      background: #f8f9fa;
+      border-color: #f0f0f0 !important;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .pg-ellipsis {
+      color: #94a3b8;
+      background: transparent;
+      border: none !important;
+      cursor: default;
+      font-weight: 700;
+      letter-spacing: 2px;
+      min-width: 32px;
+    }
+
+    @media (max-width: 576px) {
+
+      .pagination-controls a,
+      .pagination-controls span {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 8px;
+        font-size: 0.8rem;
+      }
     }
 
     .form-control,
@@ -962,19 +1053,19 @@
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                              {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                                  {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                              {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                                  {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                              {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+                                                                  {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
@@ -1306,7 +1397,7 @@
                 @if(isset($dokumen->is_completed))
                   <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
                     style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                                                                                               {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
+                                                                                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
                     <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
                     {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
                   </span>
@@ -1355,28 +1446,64 @@
         </div>
       @endif
 
-      <!-- Pagination -->
+      <!-- Modern Pagination -->
       @if($dokumens->hasPages())
-        <div class="pagination">
-          @if($dokumens->onFirstPage())
-            <span class="page-link disabled">«</span>
-          @else
-            <a href="{{ $dokumens->previousPageUrl() }}" class="page-link">«</a>
-          @endif
-
-          @for($i = 1; $i <= $dokumens->lastPage(); $i++)
-            @if($i == $dokumens->currentPage())
-              <span class="page-link active">{{ $i }}</span>
+        <div class="modern-pagination">
+          <div class="pagination-info">
+            Halaman <strong>{{ $dokumens->currentPage() }}</strong> dari <strong>{{ $dokumens->lastPage() }}</strong>
+            &nbsp;·&nbsp; {{ $dokumens->total() }} dokumen
+          </div>
+          <div class="pagination-controls">
+            {{-- First + Prev --}}
+            @if($dokumens->onFirstPage())
+              <span class="pg-nav disabled"><i class="fas fa-angles-left"></i></span>
+              <span class="pg-nav disabled"><i class="fas fa-angle-left"></i> Prev</span>
             @else
-              <a href="{{ $dokumens->url($i) }}" class="page-link">{{ $i }}</a>
+              <a href="{{ $dokumens->url(1) }}" class="pg-nav" title="Halaman pertama"><i class="fas fa-angles-left"></i></a>
+              <a href="{{ $dokumens->previousPageUrl() }}" class="pg-nav"><i class="fas fa-angle-left"></i> Prev</a>
             @endif
-          @endfor
 
-          @if($dokumens->hasMorePages())
-            <a href="{{ $dokumens->nextPageUrl() }}" class="page-link">»</a>
-          @else
-            <span class="page-link disabled">»</span>
-          @endif
+            {{-- Page numbers with smart truncation --}}
+            @php
+              $current = $dokumens->currentPage();
+              $last = $dokumens->lastPage();
+              $window = 2;
+              $start = max(1, $current - $window);
+              $end = min($last, $current + $window);
+            @endphp
+
+            @if($start > 1)
+              <a href="{{ $dokumens->url(1) }}" class="pg-btn">1</a>
+              @if($start > 2)
+                <span class="pg-ellipsis">···</span>
+              @endif
+            @endif
+
+            @for($i = $start; $i <= $end; $i++)
+              @if($i == $current)
+                <span class="pg-btn active">{{ $i }}</span>
+              @else
+                <a href="{{ $dokumens->url($i) }}" class="pg-btn">{{ $i }}</a>
+              @endif
+            @endfor
+
+            @if($end < $last)
+              @if($end < $last - 1)
+                <span class="pg-ellipsis">···</span>
+              @endif
+              <a href="{{ $dokumens->url($last) }}" class="pg-btn">{{ $last }}</a>
+            @endif
+
+            {{-- Next + Last --}}
+            @if($dokumens->hasMorePages())
+              <a href="{{ $dokumens->nextPageUrl() }}" class="pg-nav">Next <i class="fas fa-angle-right"></i></a>
+              <a href="{{ $dokumens->url($last) }}" class="pg-nav" title="Halaman terakhir"><i
+                  class="fas fa-angles-right"></i></a>
+            @else
+              <span class="pg-nav disabled">Next <i class="fas fa-angle-right"></i></span>
+              <span class="pg-nav disabled"><i class="fas fa-angles-right"></i></span>
+            @endif
+          </div>
         </div>
       @endif
     </div>
@@ -1480,28 +1607,64 @@
           </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- Modern Pagination -->
         @if($dokumens->hasPages())
-          <div class="pagination">
-            @if($dokumens->onFirstPage())
-              <span class="page-link disabled">«</span>
-            @else
-              <a href="{{ $dokumens->previousPageUrl() }}" class="page-link">«</a>
-            @endif
-
-            @for($i = 1; $i <= $dokumens->lastPage(); $i++)
-              @if($i == $dokumens->currentPage())
-                <span class="page-link active">{{ $i }}</span>
+          <div class="modern-pagination">
+            <div class="pagination-info">
+              Halaman <strong>{{ $dokumens->currentPage() }}</strong> dari <strong>{{ $dokumens->lastPage() }}</strong>
+              &nbsp;·&nbsp; {{ $dokumens->total() }} dokumen
+            </div>
+            <div class="pagination-controls">
+              {{-- First + Prev --}}
+              @if($dokumens->onFirstPage())
+                <span class="pg-nav disabled"><i class="fas fa-angles-left"></i></span>
+                <span class="pg-nav disabled"><i class="fas fa-angle-left"></i> Prev</span>
               @else
-                <a href="{{ $dokumens->url($i) }}" class="page-link">{{ $i }}</a>
+                <a href="{{ $dokumens->url(1) }}" class="pg-nav" title="Halaman pertama"><i class="fas fa-angles-left"></i></a>
+                <a href="{{ $dokumens->previousPageUrl() }}" class="pg-nav"><i class="fas fa-angle-left"></i> Prev</a>
               @endif
-            @endfor
 
-            @if($dokumens->hasMorePages())
-              <a href="{{ $dokumens->nextPageUrl() }}" class="page-link">»</a>
-            @else
-              <span class="page-link disabled">»</span>
-            @endif
+              {{-- Page numbers with smart truncation --}}
+              @php
+                $current = $dokumens->currentPage();
+                $last = $dokumens->lastPage();
+                $window = 2;
+                $start = max(1, $current - $window);
+                $end = min($last, $current + $window);
+              @endphp
+
+              @if($start > 1)
+                <a href="{{ $dokumens->url(1) }}" class="pg-btn">1</a>
+                @if($start > 2)
+                  <span class="pg-ellipsis">···</span>
+                @endif
+              @endif
+
+              @for($i = $start; $i <= $end; $i++)
+                @if($i == $current)
+                  <span class="pg-btn active">{{ $i }}</span>
+                @else
+                  <a href="{{ $dokumens->url($i) }}" class="pg-btn">{{ $i }}</a>
+                @endif
+              @endfor
+
+              @if($end < $last)
+                @if($end < $last - 1)
+                  <span class="pg-ellipsis">···</span>
+                @endif
+                <a href="{{ $dokumens->url($last) }}" class="pg-btn">{{ $last }}</a>
+              @endif
+
+              {{-- Next + Last --}}
+              @if($dokumens->hasMorePages())
+                <a href="{{ $dokumens->nextPageUrl() }}" class="pg-nav">Next <i class="fas fa-angle-right"></i></a>
+                <a href="{{ $dokumens->url($last) }}" class="pg-nav" title="Halaman terakhir"><i
+                    class="fas fa-angles-right"></i></a>
+              @else
+                <span class="pg-nav disabled">Next <i class="fas fa-angle-right"></i></span>
+                <span class="pg-nav disabled"><i class="fas fa-angles-right"></i></span>
+              @endif
+            </div>
           </div>
         @endif
       @endif
@@ -1682,11 +1845,11 @@
           const badge = document.createElement('span');
           badge.className = 'filter-badge-item';
           badge.innerHTML = `
-                                  <span>${label}: ${displayValue}</span>
-                                  <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                                    <i class="fas fa-times"></i>
-                                  </button>
-                                `;
+                                    <span>${label}: ${displayValue}</span>
+                                    <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                                      <i class="fas fa-times"></i>
+                                    </button>
+                                  `;
           badgesContainer.appendChild(badge);
         }
       }
