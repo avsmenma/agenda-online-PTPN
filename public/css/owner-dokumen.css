@@ -358,6 +358,32 @@ html.dark .header-action-btn .theme-icon-sun {
   transform: translateY(0);
 }
 
+.stat-card.clickable.card-active {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(8, 62, 64, 0.2), 0 4px 12px rgba(8, 62, 64, 0.1);
+  transform: translateY(-2px);
+}
+
+.stat-card.clickable.card-active.total {
+  border-color: #083E40;
+  box-shadow: 0 0 0 2px rgba(8, 62, 64, 0.25), 0 4px 12px rgba(8, 62, 64, 0.15);
+}
+
+.stat-card.clickable.card-active.proses {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25), 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.stat-card.clickable.card-active.siap {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25), 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.stat-card.clickable.card-active.selesai {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25), 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
 /* ===== Filter Bar ===== */
 .filter-bar {
   background: var(--bg-card);

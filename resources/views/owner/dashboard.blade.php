@@ -57,7 +57,7 @@
 
     {{-- ===== Statistics Cards ===== --}}
     <div class="stats-grid">
-      <div class="stat-card total clickable" onclick="filterByCard('all')" title="Klik untuk melihat semua dokumen">
+      <div class="stat-card total clickable" data-filter="all" onclick="filterByCard('all')" title="Klik untuk melihat semua dokumen">
         <div class="stat-content">
           <div class="stat-label">Total Dokumen</div>
           <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <div class="stat-card proses clickable" onclick="filterByCard('belum_siap')"
+      <div class="stat-card proses clickable" data-filter="belum_siap" onclick="filterByCard('belum_siap')"
         title="Klik untuk filter dokumen belum siap bayar">
         <div class="stat-content">
           <div class="stat-label">Dokumen Belum Siap Bayar</div>
@@ -78,7 +78,7 @@
         </div>
       </div>
 
-      <div class="stat-card siap clickable" onclick="filterByCard('siap_dibayar')"
+      <div class="stat-card siap clickable" data-filter="siap_dibayar" onclick="filterByCard('siap_dibayar')"
         title="Klik untuk filter dokumen siap bayar">
         <div class="stat-content">
           <div class="stat-label">Dokumen Siap Bayar</div>
@@ -89,7 +89,7 @@
         </div>
       </div>
 
-      <div class="stat-card selesai clickable" onclick="filterByCard('sudah_dibayar')"
+      <div class="stat-card selesai clickable" data-filter="sudah_dibayar" onclick="filterByCard('sudah_dibayar')"
         title="Klik untuk filter dokumen sudah dibayar">
         <div class="stat-content">
           <div class="stat-label">Dokumen Sudah Dibayar</div>
@@ -602,6 +602,28 @@
       document.getElementById('statusInput').value = status;
       document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
       event.target.classList.add('active');
+
+      // Sync the filter_status_pembayaran dropdown in the advanced filter panel
+      const statusPembayaranSelect = document.querySelector('[name="filter_status_pembayaran"]');
+      if (statusPembayaranSelect) {
+        const statusMap = {
+          'semua': '',
+          'belum_siap': 'belum_dibayar',
+          'siap_dibayar': 'siap_dibayar',
+          'sudah_dibayar': 'sudah_dibayar'
+        };
+        statusPembayaranSelect.value = statusMap[status] || '';
+      }
+
+      // Sync stat card highlight
+      const cardFilterMap = {
+        'semua': 'all',
+        'belum_siap': 'belum_siap',
+        'siap_dibayar': 'siap_dibayar',
+        'sudah_dibayar': 'sudah_dibayar'
+      };
+      highlightActiveStatCard(cardFilterMap[status] || null);
+
       applyFilter();
     }
 
@@ -959,7 +981,35 @@
       // Initialize age filter
       updateAgeLabels();
       countDocumentsByAge();
+
+      // Highlight active stat card based on current URL status
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentStatus = urlParams.get('status') || '';
+      const statusToCardMap = {
+        'semua': 'all',
+        'belum_siap': 'belum_siap',
+        'siap_dibayar': 'siap_dibayar',
+        'sudah_dibayar': 'sudah_dibayar'
+      };
+      if (currentStatus && statusToCardMap[currentStatus]) {
+        highlightActiveStatCard(statusToCardMap[currentStatus]);
+      }
     });
+
+    // ===== Highlight Active Stat Card =====
+    function highlightActiveStatCard(filterType) {
+      // Remove active class from all clickable stat cards
+      document.querySelectorAll('.stat-card.clickable').forEach(card => {
+        card.classList.remove('card-active');
+      });
+      // Add active class to the matching card
+      if (filterType) {
+        const activeCard = document.querySelector(`.stat-card.clickable[data-filter="${filterType}"]`);
+        if (activeCard) {
+          activeCard.classList.add('card-active');
+        }
+      }
+    }
 
     // ===== Filter By Card Function =====
     function filterByCard(type) {
