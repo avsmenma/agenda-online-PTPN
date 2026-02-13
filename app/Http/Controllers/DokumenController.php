@@ -178,6 +178,8 @@ class DokumenController extends Controller
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kriteria CF',
             'kebun' => 'Kebun',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
             'jenis_dokumen' => 'Sub Kriteria',
             'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
             'jenis_pembayaran' => 'Jenis Pembayaran',

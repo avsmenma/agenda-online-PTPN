@@ -445,6 +445,8 @@ class DashboardPerpajakanController extends Controller
             'uraian_spp' => 'Uraian SPP',
             'kategori' => 'Kriteria CF',
             'kebun' => 'Kebun',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
             'jenis_dokumen' => 'Sub Kriteria',
             'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
             'jenis_pembayaran' => 'Jenis Pembayaran',
@@ -2609,6 +2611,8 @@ class DashboardPerpajakanController extends Controller
             'status' => 'Status',
             'deadline_at' => 'Deadline',
             'created_at' => 'Tanggal Masuk',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
         ];
 
         $data = [

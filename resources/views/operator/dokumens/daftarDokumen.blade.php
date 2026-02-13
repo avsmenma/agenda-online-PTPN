@@ -2747,6 +2747,12 @@
                     {{ $dokumen->kategori ?? '-' }}
                   @elseif($col == 'kebun')
                     {{ $dokumen->kebun ?? '-' }}
+                  @elseif($col == 'bulan')
+                    {{ $dokumen->bulan ?? '-' }}
+                  @elseif($col == 'tahun')
+                    {{ $dokumen->tahun ?? '-' }}
+                  @elseif($col == 'nomor_miro')
+                    {{ $dokumen->nomor_miro_display ?? $dokumen->nomor_miro ?? '-' }}
                   @elseif($col == 'jenis_dokumen')
                     {{ $dokumen->jenis_dokumen ?? '-' }}
                   @elseif($col == 'jenis_sub_pekerjaan')

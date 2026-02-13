@@ -183,6 +183,8 @@ class BagianDokumenController extends Controller
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'kebun' => 'Kebun',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
             'nama_pengirim' => 'Nama Pengirim',
             'jenis_pembayaran' => 'Jenis Pembayaran',
             'dibayar_kepada' => 'Dibayar Kepada',
