@@ -86,7 +86,15 @@ class DashboardAkutansiController extends Controller
                     $dokumenMoreThan72h++;
                 }
             } else {
-                $dokumenMoreThan72h++;
+                // No roleData for akutansi - check if document was bypassed (tembak)
+                // Bypassed documents that already moved past akutansi should count as AMAN (0 time)
+                $isBypassed = in_array($doc->status, ['sent_to_pembayaran', 'completed', 'selesai'])
+                    || $doc->current_handler !== 'akutansi';
+                if ($isBypassed) {
+                    $dokumenLessThan24h++; // AMAN - 0 processing time
+                } else {
+                    $dokumenMoreThan72h++;
+                }
             }
         }
 

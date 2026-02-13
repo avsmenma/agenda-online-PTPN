@@ -103,7 +103,15 @@ class DashboardPerpajakanController extends Controller
                     $dokumenMoreThan72h++;
                 }
             } else {
-                $dokumenMoreThan72h++;
+                // No roleData for perpajakan - check if document was bypassed (tembak)
+                // Bypassed documents that already moved past perpajakan should count as AMAN (0 time)
+                $isBypassed = in_array($doc->status, ['sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
+                    || $doc->current_handler !== 'perpajakan';
+                if ($isBypassed) {
+                    $dokumenLessThan24h++; // AMAN - 0 processing time
+                } else {
+                    $dokumenMoreThan72h++;
+                }
             }
         }
 
