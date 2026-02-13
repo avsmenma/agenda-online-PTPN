@@ -698,22 +698,6 @@
                 <div class="summary-subtitle">Analisis kinerja pengelolaan dokumen per departemen</div>
             </div>
             <div class="summary-right">
-                <div class="summary-stats">
-                    @php
-                        $totalDocs = collect($analyticsData)->sum(fn($r) => $r['stats']['total']);
-                        $totalAman = collect($analyticsData)->sum(fn($r) => $r['stats']['aman']);
-                        $totalTerlambat = collect($analyticsData)->sum(fn($r) => $r['stats']['terlambat']);
-                      @endphp
-                    <div class="summary-stat">
-                        <div class="summary-stat-value">{{ $totalDocs }}</div>
-                    </div>
-                    <div class="summary-stat">
-                        <div class="summary-stat-value">{{ $totalAman }}</div>
-                    </div>
-                    <div class="summary-stat">
-                        <div class="summary-stat-value">{{ $totalTerlambat }}</div>
-                    </div>
-                </div>
                 <div class="header-actions">
                     {{-- Dark Mode Toggle --}}
                     <button id="analytics-theme-toggle" class="header-action-btn" aria-label="Toggle dark mode"
