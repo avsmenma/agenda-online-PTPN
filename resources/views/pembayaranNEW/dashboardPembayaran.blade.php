@@ -2469,6 +2469,26 @@
   </style>
 
   <script>
+    // Restore saved columns from localStorage on page load (before any rendering)
+    (function() {
+      try {
+        const currentUrl = new URL(window.location.href);
+        const hasColumnsInUrl = currentUrl.searchParams.has('columns[]') || currentUrl.searchParams.has('columns');
+        if (!hasColumnsInUrl) {
+          const saved = localStorage.getItem('pembayaran_columns');
+          if (saved) {
+            const cols = JSON.parse(saved);
+            if (Array.isArray(cols) && cols.length > 0) {
+              cols.forEach(function(col) {
+                currentUrl.searchParams.append('columns[]', col);
+              });
+              window.location.replace(currentUrl.toString());
+            }
+          }
+        }
+      } catch (e) { /* ignore */ }
+    })();
+
     // Column customization variables
     let selectedColumnsOrder = @json($selectedColumns);
     const availableColumnsData = @json($availableColumns);
@@ -2593,6 +2613,11 @@
         alert('Pilih minimal satu kolom!');
         return;
       }
+
+      // Save to localStorage for persistence across refreshes
+      try {
+        localStorage.setItem('pembayaran_columns', JSON.stringify(selectedColumnsOrder));
+      } catch (e) { /* localStorage not available */ }
 
       const url = new URL(window.location.href);
       // Clear existing columns params
@@ -2866,9 +2891,18 @@
         }
         params.set('page', currentPage);
 
-        // Also carry over columns[] and mode from URL if present
+        // Carry over columns[] from URL or localStorage
         const currentUrl = new URL(window.location.href);
-        const existingColumns = currentUrl.searchParams.getAll('columns[]');
+        let existingColumns = currentUrl.searchParams.getAll('columns[]');
+        if (existingColumns.length === 0) {
+          try {
+            const saved = localStorage.getItem('pembayaran_columns');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) existingColumns = parsed;
+            }
+          } catch (e) { /* ignore */ }
+        }
         if (existingColumns.length > 0) {
           existingColumns.forEach(function(col) {
             params.append('columns[]', col);
