@@ -151,8 +151,10 @@ class TeamVerifikasiController extends Controller
             }
         }
 
-        // 6. Total dokumen terkirim - dokumen yang sudah dikirim ke perpajakan/akutansi
-        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi'])
+        // 6. Total dokumen terkirim - dokumen yang sudah dikirim ke tahap selanjutnya
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
+            ->where('current_handler', '!=', 'team_verifikasi')
+            ->excludeCsvImports()
             ->count();
 
         // 7. Total dokumen agenda - semua dokumen yang ada di sistem (operator)
