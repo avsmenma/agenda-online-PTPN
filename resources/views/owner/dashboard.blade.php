@@ -627,6 +627,10 @@
       const form = document.getElementById('filterForm');
       const searchInput = document.getElementById('searchInput');
 
+      // Save scroll position and filter panel state before submit
+      sessionStorage.setItem('ownerScrollPos', window.scrollY.toString());
+      sessionStorage.setItem('ownerFilterPanelOpen', document.getElementById('filterPanel').classList.contains('open') ? 'true' : 'false');
+
       // Add search value to form
       let searchHidden = form.querySelector('input[name="search"]');
       if (!searchHidden) {
@@ -948,6 +952,20 @@
 
     // ===== Initialize =====
     document.addEventListener('DOMContentLoaded', function () {
+      // Restore scroll position from sessionStorage
+      const savedScrollPos = sessionStorage.getItem('ownerScrollPos');
+      if (savedScrollPos !== null) {
+        window.scrollTo(0, parseInt(savedScrollPos));
+        sessionStorage.removeItem('ownerScrollPos');
+      }
+
+      // Restore filter panel open state
+      const filterPanelWasOpen = sessionStorage.getItem('ownerFilterPanelOpen');
+      if (filterPanelWasOpen === 'true') {
+        document.getElementById('filterPanel').classList.add('open');
+      }
+      sessionStorage.removeItem('ownerFilterPanelOpen');
+
       // Restore dark mode from localStorage FIRST
       const isDarkMode = localStorage.getItem('darkMode') === 'true';
       if (isDarkMode) {
