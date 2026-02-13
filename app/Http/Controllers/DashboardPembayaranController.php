@@ -3333,11 +3333,11 @@ class DashboardPembayaranController extends Controller
             'nilai_sudah_dibayar' => 'sudah dibayar',
         ];
 
-        // Default columns for normal mode
-        $defaultColumns = ['nomor_agenda', 'nomor_spp', 'sent_to_pembayaran_at', 'dibayar_kepada', 'nilai_rupiah', 'computed_status', 'tanggal_dibayar'];
+        // Default columns for export
+        $defaultColumns = ['nomor_agenda', 'nomor_spp', 'dibayar_kepada', 'uraian_spp', 'nilai_rupiah'];
 
-        // For rekapan_table mode, use selected columns or default
-        if ($mode === 'rekapan_table' && !empty($selectedColumns)) {
+        // Always use selected columns from request if provided, regardless of mode
+        if (!empty($selectedColumns)) {
             $columnsToExport = $selectedColumns;
         } else {
             $columnsToExport = $defaultColumns;
