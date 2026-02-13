@@ -3351,14 +3351,14 @@
               <td class="col-action" onclick="event.stopPropagation()">
                 <div class="action-buttons-hybrid">
                   @if($isLocked)
-                    {{-- Locked state - show as Terkirim --}}
-                    <button class="btn-action btn-terkirim btn-full-width" disabled title="Dokumen sudah terkirim">
+                    {{-- Locked state - show as Terkirim (matching Team Verifikasi style) --}}
+                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim">
                       <i class="fa-solid fa-check-circle"></i>
                       <span>Terkirim</span>
                     </button>
                   @elseif($sentToTeamFromPerpajakan || $isPendingDownstream)
                     {{-- Document has been sent/approved by downstream - FINAL state for Perpajakan --}}
-                    <button class="btn-action btn-terkirim btn-full-width" disabled title="Dokumen sudah terkirim">
+                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah terkirim">
                       <i class="fa-solid fa-check-circle"></i>
                       <span>Terkirim</span>
                     </button>
