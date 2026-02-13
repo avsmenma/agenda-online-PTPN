@@ -579,31 +579,7 @@
       window.location.href = '{{ url("/owner/workflow") }}/' + id;
     }
 
-    // ===== Filter by Card Click =====
-    function filterByCard(status) {
-      if (status === 'all') {
-        // Show all documents - use semua status
-        document.getElementById('statusInput').value = 'semua';
-        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-        // Activate the 'Semua Dokumen' chip
-        const chips = document.querySelectorAll('.chip');
-        chips.forEach(chip => {
-          if (chip.textContent.includes('Semua Dokumen')) chip.classList.add('active');
-        });
-        applyFilter();
-      } else {
-        document.getElementById('statusInput').value = status;
-        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-        // Find and activate the correct chip
-        const chips = document.querySelectorAll('.chip');
-        chips.forEach(chip => {
-          if (chip.textContent.includes('Belum Siap') && status === 'belum_siap') chip.classList.add('active');
-          if (chip.textContent.includes('Siap Dibayar') && !chip.textContent.includes('Belum') && status === 'siap_dibayar') chip.classList.add('active');
-          if (chip.textContent.includes('Sudah Dibayar') && status === 'sudah_dibayar') chip.classList.add('active');
-        });
-        applyFilter();
-      }
-    }
+
 
     // ===== View Switcher =====
     function switchView(view) {
@@ -990,17 +966,23 @@
       const baseUrl = '{{ url("/owner/dokumen") }}';
       const params = new URLSearchParams(window.location.search);
 
-      // Update or remove status_pembayaran parameter based on filter type
+      // Set status parameter (controls the filter chips) and filter_status_pembayaran
       if (type === 'all') {
-        // Show all documents - remove status filter
+        params.set('status', 'semua');
         params.delete('filter_status_pembayaran');
       } else if (type === 'belum_siap') {
+        params.set('status', 'belum_siap');
         params.set('filter_status_pembayaran', 'belum_dibayar');
       } else if (type === 'siap_dibayar') {
+        params.set('status', 'siap_dibayar');
         params.set('filter_status_pembayaran', 'siap_dibayar');
       } else if (type === 'sudah_dibayar') {
+        params.set('status', 'sudah_dibayar');
         params.set('filter_status_pembayaran', 'sudah_dibayar');
       }
+
+      // Reset to page 1 when changing filter
+      params.delete('page');
 
       // Navigate to URL with updated parameters
       const queryString = params.toString();
