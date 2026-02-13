@@ -566,8 +566,13 @@ class TeamVerifikasiController extends Controller
                 'dokumenPos',
                 'dokumenPrs'
             ]);
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('verifikasi_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_per_page' => $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Cast deadline_at from alias to Carbon if it's a string
@@ -1360,8 +1365,13 @@ class TeamVerifikasiController extends Controller
             });
         }
 
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('verifikasi_returned_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_returned_per_page' => $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
@@ -2108,8 +2118,13 @@ class TeamVerifikasiController extends Controller
             'bulan',
             'tahun'
         ]);
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('verifikasi_bidang_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_bidang_per_page' => $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
@@ -2807,8 +2822,13 @@ class TeamVerifikasiController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('verifikasi_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_analytics_per_page' => $perPage]);
         $tableDokumens = $tableQuery->latest($dateColumn)->paginate($perPage)->appends($request->query());
 
         // Get available years (based on filter type)
@@ -3006,8 +3026,13 @@ class TeamVerifikasiController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('verifikasi_operator_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_operator_analytics_per_page' => $perPage]);
         $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get available years

@@ -19,12 +19,13 @@ class OwnerDashboardController extends Controller
     public function index(Request $request)
     {
         // Get paginated documents with latest status and apply search filter
-        $perPage = $request->get('per_page', 10);
+        $perPage = $request->get('per_page', session('owner_per_page', 10));
         if ($perPage === 'all') {
             $perPage = 999999;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
+        session(['owner_per_page' => $perPage]);
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
 
@@ -1422,12 +1423,13 @@ class OwnerDashboardController extends Controller
     public function trackingDokumen(Request $request)
     {
         // Get paginated documents with latest status and apply search filter
-        $perPage = $request->get('per_page', 10);
+        $perPage = $request->get('per_page', session('owner_tracking_per_page', 10));
         if ($perPage === 'all') {
             $perPage = 999999;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
+        session(['owner_tracking_per_page' => $perPage]);
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
 

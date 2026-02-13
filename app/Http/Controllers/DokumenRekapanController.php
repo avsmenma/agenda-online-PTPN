@@ -46,8 +46,13 @@ class DokumenRekapanController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('operator_rekapan_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['operator_rekapan_per_page' => $perPage]);
         $dokumens = $query->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get statistics
@@ -180,8 +185,13 @@ class DokumenRekapanController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('operator_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['operator_analytics_per_page' => $perPage]);
         $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get available years

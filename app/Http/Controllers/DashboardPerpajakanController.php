@@ -350,8 +350,13 @@ class DashboardPerpajakanController extends Controller
             $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
         }
 
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('perpajakan_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['perpajakan_per_page' => $perPage]);
         $dokumens = $query
             ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
                 $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
@@ -1360,8 +1365,13 @@ class DashboardPerpajakanController extends Controller
             });
         }
 
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('perpajakan_returned_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['perpajakan_returned_per_page' => $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics for returned documents
@@ -1786,8 +1796,13 @@ class DashboardPerpajakanController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('perpajakan_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['perpajakan_analytics_per_page' => $perPage]);
         $tableDokumens = $tableQuery->latest($dateColumn)->paginate($perPage)->appends($request->query());
 
         // Get available years (based on filter type)

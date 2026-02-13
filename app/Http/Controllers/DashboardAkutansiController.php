@@ -404,8 +404,13 @@ class DashboardAkutansiController extends Controller
             END DESC");
         }
 
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('akutansi_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['akutansi_per_page' => $perPage]);
         $dokumens = $dokumens->orderBy('dokumens.id', 'DESC')
             ->paginate($perPage)
             ->appends($request->query());
@@ -1085,8 +1090,13 @@ class DashboardAkutansiController extends Controller
             ->with(['dokumenPos', 'dokumenPrs', 'roleStatuses'])
             ->orderByDesc('department_returned_at');
 
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('akutansi_returned_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['akutansi_returned_per_page' => $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics for returned documents
@@ -1250,8 +1260,13 @@ class DashboardAkutansiController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 10);
-        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
+        $perPage = $request->get('per_page', session('akutansi_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['akutansi_analytics_per_page' => $perPage]);
         $tableDokumens = $tableQuery->latest($dateColumn)->paginate($perPage)->appends($request->query());
 
         // Get available years (based on filter type)
