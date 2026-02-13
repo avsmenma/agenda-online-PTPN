@@ -159,7 +159,7 @@ class OwnerDashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'documents' => $documents->items(),
+            'documents' => array_values($documents->items()),
             'pagination' => [
                 'current_page' => $documents->currentPage(),
                 'last_page' => $documents->lastPage(),

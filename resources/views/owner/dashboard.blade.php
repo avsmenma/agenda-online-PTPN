@@ -680,11 +680,28 @@
 
       fetch(filterUrl, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
         signal: _ajaxAbortController.signal
       })
-        .then(res => res.json())
+        .then(res => {
+          const contentType = res.headers.get('content-type') || '';
+          if (!res.ok) {
+            // If redirected to login or error page
+            return res.text().then(text => {
+              console.error('Filter HTTP error:', res.status, text.substring(0, 200));
+              throw new Error('HTTP error ' + res.status);
+            });
+          }
+          if (!contentType.includes('application/json')) {
+            return res.text().then(text => {
+              console.error('Non-JSON response:', contentType, text.substring(0, 200));
+              throw new Error('Expected JSON but got: ' + contentType);
+            });
+          }
+          return res.json();
+        })
         .then(data => {
-          if (data.success) {
+          if (data && data.success) {
             renderCardView(data.documents);
             renderTableView(data.documents);
             renderPagination(data.pagination);
@@ -763,11 +780,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                              <span>${labels[key] || key}: ${displayValue}</span>
-                              <button type="button" class="remove" onclick="removeFilter('${key}')">
-                                <i class="fas fa-times"></i>
-                              </button>
-                            `;
+                                <span>${labels[key] || key}: ${displayValue}</span>
+                                <button type="button" class="remove" onclick="removeFilter('${key}')">
+                                  <i class="fas fa-times"></i>
+                                </button>
+                              `;
           container.appendChild(tag);
         }
       }
@@ -1156,11 +1173,11 @@
       const container = document.getElementById('cardView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-              <div class="empty-state-title">Tidak ada dokumen</div>
-              <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-            </div>`;
+              <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                <div class="empty-state-title">Tidak ada dokumen</div>
+                <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+              </div>`;
         return;
       }
 
@@ -1214,11 +1231,11 @@
       const container = document.getElementById('tableView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-              <div class="empty-state-title">Tidak ada dokumen</div>
-              <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-            </div>`;
+              <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                <div class="empty-state-title">Tidak ada dokumen</div>
+                <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+              </div>`;
         return;
       }
 
@@ -1262,30 +1279,30 @@
       const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
 
       const html = `
-          <div class="pagination-footer">
-            <div class="pagination-footer-left">
-              <label class="pagination-label">Baris per halaman:</label>
-              <select class="pagination-select" onchange="changePerPage(this.value)">
-                <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
-                <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
-                <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
-                <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
-                <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
-              </select>
-              <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
-            </div>
-            <div class="pagination-footer-right">
-              <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
-                onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
-              <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
-              <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>`;
+            <div class="pagination-footer">
+              <div class="pagination-footer-left">
+                <label class="pagination-label">Baris per halaman:</label>
+                <select class="pagination-select" onchange="changePerPage(this.value)">
+                  <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
+                  <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
+                  <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
+                  <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
+                  <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
+                </select>
+                <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
+              </div>
+              <div class="pagination-footer-right">
+                <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
+                  onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
+                <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
+                <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>`;
 
       ['cardPagination', 'tablePagination'].forEach(id => {
         const el = document.getElementById(id);
