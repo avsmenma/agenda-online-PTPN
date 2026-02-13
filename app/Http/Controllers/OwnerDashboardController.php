@@ -2974,24 +2974,34 @@ class OwnerDashboardController extends Controller
   <Table ss:DefaultColumnWidth="100">
    <Column ss:Width="40"/>
    <Column ss:Width="120"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="60"/>
+   <Column ss:Width="80"/>
    <Column ss:Width="150"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="180"/>
    <Column ss:Width="250"/>
    <Column ss:Width="120"/>
-   <Column ss:Width="130"/>
    <Column ss:Width="100"/>
    <Column ss:Width="100"/>
    <Column ss:Width="100"/>
    <Column ss:Width="130"/>
    <Row ss:Height="30">
-    <Cell ss:StyleID="Title" ss:MergeAcross="9"><Data ss:Type="String">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . ' (' . strtoupper($sheetName) . ')</Data></Cell>
+    <Cell ss:StyleID="Title" ss:MergeAcross="14"><Data ss:Type="String">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . ' (' . strtoupper($sheetName) . ')</Data></Cell>
    </Row>
    <Row>
     <Cell ss:StyleID="Header"><Data ss:Type="String">No</Data></Cell>
-    <Cell ss:StyleID="Header"><Data ss:Type="String">No. Agenda</Data></Cell>
-    <Cell ss:StyleID="Header"><Data ss:Type="String">No. SPP</Data></Cell>
-    <Cell ss:StyleID="Header"><Data ss:Type="String">Uraian</Data></Cell>
-    <Cell ss:StyleID="Header"><Data ss:Type="String">Nilai (Rupiah)</Data></Cell>
-    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal Terima</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nomor Agenda</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Bulan</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tahun</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Bagian</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nomor SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal Masuk</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Dibayar Kepada</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Uraian SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nilai Rupiah</Data></Cell>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Durasi</Data></Cell>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Status Deadline</Data></Cell>
     <Cell ss:StyleID="Header"><Data ss:Type="String">Status Proses</Data></Cell>
@@ -3048,13 +3058,25 @@ class OwnerDashboardController extends Controller
                     $prosesStatus = $isCompleted ? 'Selesai' : 'Sedang Diproses';
                     $completedDate = $isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-';
 
+                    // Derive bulan/tahun from tanggal_masuk or created_at
+                    $docDate = $dokumen->tanggal_masuk ?? $dokumen->created_at;
+                    $bulanDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('F') : '-';
+                    $tahunDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('Y') : '-';
+                    $tglSpp = $dokumen->tanggal_spp ? \Carbon\Carbon::parse($dokumen->tanggal_spp)->format('d/m/Y') : '-';
+                    $tglMasuk = $docDate ? \Carbon\Carbon::parse($docDate)->format('d/m/Y') : '-';
+
                     $xml .= '   <Row>
     <Cell ss:StyleID="CellCenter"><Data ss:Type="Number">' . $no++ . '</Data></Cell>
     <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->nomor_agenda ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $bulanDoc . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $tahunDoc . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . htmlspecialchars($dokumen->bagian ?? '-') . '</Data></Cell>
     <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->nomor_spp ?? '-') . '</Data></Cell>
-    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars(\Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 60)) . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $tglSpp . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $tglMasuk . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->dibayar_kepada ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->uraian_spp ?? '-') . '</Data></Cell>
     <Cell ss:StyleID="CellRight"><Data ss:Type="String">' . ($dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-') . '</Data></Cell>
-    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $receivedAt->format('d/m/Y H:i') . '</Data></Cell>
     <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $duration . '</Data></Cell>
     <Cell ss:StyleID="' . $statusStyle . '"><Data ss:Type="String">' . $status . '</Data></Cell>
     <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $prosesStatus . '</Data></Cell>
@@ -3065,14 +3087,14 @@ class OwnerDashboardController extends Controller
 
                 // Summary row
                 $xml .= '   <Row>
-    <Cell ss:StyleID="Summary" ss:MergeAcross="3"><Data ss:Type="String">Total Dokumen: ' . ($no - 1) . '</Data></Cell>
-    <Cell ss:StyleID="Summary" ss:MergeAcross="5"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="Summary" ss:MergeAcross="4"><Data ss:Type="String">Total Dokumen: ' . ($no - 1) . '</Data></Cell>
+    <Cell ss:StyleID="Summary" ss:MergeAcross="9"><Data ss:Type="String"></Data></Cell>
    </Row>
 ';
             } else {
                 // No data message
                 $xml .= '   <Row>
-    <Cell ss:StyleID="Cell" ss:MergeAcross="9"><Data ss:Type="String">Tidak ada data untuk bulan ini</Data></Cell>
+    <Cell ss:StyleID="Cell" ss:MergeAcross="14"><Data ss:Type="String">Tidak ada data untuk bulan ini</Data></Cell>
    </Row>
 ';
             }
@@ -3134,19 +3156,24 @@ class OwnerDashboardController extends Controller
 <body>
 <table>
     <tr>
-        <td colspan="10" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . $statusLabel . '</td>
+        <td colspan="15" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . $statusLabel . '</td>
     </tr>
     <tr>
-        <td colspan="10" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . ($monthNames[$month] ?? $month) : '') . ($statusFilter ? ' | Status: ' . strtoupper($statusFilter) : '') . '</td>
+        <td colspan="15" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . ($monthNames[$month] ?? $month) : '') . ($statusFilter ? ' | Status: ' . strtoupper($statusFilter) : '') . '</td>
     </tr>
-    <tr><td colspan="10"></td></tr>
+    <tr><td colspan="15"></td></tr>
     <tr class="header">
         <th>No</th>
-        <th>No. Agenda</th>
-        <th>No. SPP</th>
-        <th>Uraian</th>
-        <th>Nilai (Rupiah)</th>
-        <th>Tanggal Terima</th>
+        <th>Nomor Agenda</th>
+        <th>Bulan</th>
+        <th>Tahun</th>
+        <th>Bagian</th>
+        <th>Nomor SPP</th>
+        <th>Tanggal SPP</th>
+        <th>Tanggal Masuk</th>
+        <th>Dibayar Kepada</th>
+        <th>Uraian SPP</th>
+        <th>Nilai Rupiah</th>
         <th>Durasi</th>
         <th>Status Deadline</th>
         <th>Status Proses</th>
@@ -3209,14 +3236,26 @@ class OwnerDashboardController extends Controller
             $prosesClass = $isCompleted ? 'proses-selesai' : 'proses-pending';
             $rowClass = ($no % 2 == 0) ? 'row-even' : '';
 
+            // Derive bulan/tahun from tanggal_masuk or created_at
+            $docDate = $dokumen->tanggal_masuk ?? $dokumen->created_at;
+            $bulanDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('F') : '-';
+            $tahunDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('Y') : '-';
+            $tglSpp = $dokumen->tanggal_spp ? \Carbon\Carbon::parse($dokumen->tanggal_spp)->format('d/m/Y') : '-';
+            $tglMasuk = $docDate ? \Carbon\Carbon::parse($docDate)->format('d/m/Y') : '-';
+
             $html .= '
     <tr class="' . $rowClass . '">
         <td class="center">' . $no++ . '</td>
         <td>' . htmlspecialchars($dokumen->nomor_agenda ?? '-') . '</td>
+        <td class="center">' . $bulanDoc . '</td>
+        <td class="center">' . $tahunDoc . '</td>
+        <td class="center">' . htmlspecialchars($dokumen->bagian ?? '-') . '</td>
         <td>' . htmlspecialchars($dokumen->nomor_spp ?? '-') . '</td>
-        <td>' . htmlspecialchars(\Illuminate\Support\Str::limit($dokumen->uraian_spp ?? '-', 60)) . '</td>
+        <td class="center">' . $tglSpp . '</td>
+        <td class="center">' . $tglMasuk . '</td>
+        <td>' . htmlspecialchars($dokumen->dibayar_kepada ?? '-') . '</td>
+        <td>' . htmlspecialchars($dokumen->uraian_spp ?? '-') . '</td>
         <td class="right">' . ($dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-') . '</td>
-        <td class="center">' . $receivedAt->format('d/m/Y H:i') . '</td>
         <td class="center">' . $duration . '</td>
         <td class="' . $statusClass . '">' . $status . '</td>
         <td class="' . $prosesClass . '">' . ($isCompleted ? 'Selesai' : 'Sedang Diproses') . '</td>
@@ -3225,10 +3264,10 @@ class OwnerDashboardController extends Controller
         }
 
         $html .= '
-    <tr><td colspan="10"></td></tr>
+    <tr><td colspan="15"></td></tr>
     <tr class="summary">
-        <td colspan="4">Total Dokumen: ' . ($no - 1) . '</td>
-        <td colspan="6"></td>
+        <td colspan="5">Total Dokumen: ' . ($no - 1) . '</td>
+        <td colspan="10"></td>
     </tr>
 </table>
 </body>
