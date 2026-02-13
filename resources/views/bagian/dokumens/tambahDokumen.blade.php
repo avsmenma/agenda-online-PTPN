@@ -349,13 +349,72 @@
         </div>
       </div>
 
-      <!-- 3. Nomor Agenda -->
-      <div class="form-group">
-        <label>Nomor Agenda</label>
-        <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda') }}">
-        @error('nomor_agenda')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
+      <!-- 3. Nomor Agenda + Kebun (side by side) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nomor Agenda</label>
+          <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda" value="{{ old('nomor_agenda') }}">
+          @error('nomor_agenda')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
+        <div class="form-group">
+          <label>Kebun</label>
+          <select name="kebun">
+            <option value="">Pilih Kebun</option>
+            @php
+              $kebunOptions = [
+                'KEBUN-UNIT',
+                'REGION OFFICE',
+                'UNIT GRUP KALBAR',
+                'GUNUNG MELIAU',
+                'PKS GUNME',
+                'SUNGAI DEKAN',
+                'RIMBA BELIAN',
+                'PKS RIMBA BELIA',
+                'GUNUNG MAS',
+                'SINTANG',
+                'NGABANG',
+                'PKS NGABANG',
+                'PARINDU',
+                'PKS PARINDU',
+                'KEMBAYAN',
+                'PKS KEMBAYAN',
+                'PPPBB',
+                'UNIT GRUP KALSEL/TENG',
+                'DANAU SALAK',
+                'TAMBARANGAN',
+                'BATULICIN',
+                'PELAIHARI',
+                'PKS PELAIHARI',
+                'KUMAI',
+                'PKS PAMUKAN',
+                'PAMUKAN',
+                'PRYBB',
+                'RAREN BATUAH',
+                'UNIT GRUP KALTIM',
+                'TABARA',
+                'TAJATI',
+                'PANDAWA',
+                'LONGKALI',
+                'PKS SAMUNTAI',
+                'PKS LONG PINANG',
+                'KP JAKARTA',
+                'KP BALIKPAPAN'
+              ];
+              $oldKebun = old('kebun');
+              $oldKebunClean = $oldKebun ? preg_replace('/^\d+\s+/', '', $oldKebun) : '';
+            @endphp
+            @foreach($kebunOptions as $kebun)
+              <option value="{{ $kebun }}" {{ ($oldKebun == $kebun || $oldKebunClean == $kebun) ? 'selected' : '' }}>
+                {{ $kebun }}
+              </option>
+            @endforeach
+          </select>
+          @error('kebun')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
       </div>
 
       <!-- 4. Bulan dan 5. Tahun (auto-filled dari timestamp komputer) -->
@@ -482,22 +541,22 @@
         </div>
       @endif
 
-      <!-- 10. Nomor SPP -->
-      <div class="form-group">
-        <label>Nomor SPP <span style="color: #dc3545;">*</span></label>
-        <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}" required>
-        @error('nomor_spp')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <!-- 11. Tanggal SPP -->
-      <div class="form-group">
-        <label>Tanggal SPP</label>
-        <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp') }}">
-        @error('tanggal_spp')
-          <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-        @enderror
+      <!-- 10. Nomor SPP + 11. Tanggal SPP (side by side) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nomor SPP <span style="color: #dc3545;">*</span></label>
+          <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025" value="{{ old('nomor_spp') }}" required>
+          @error('nomor_spp')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
+        <div class="form-group">
+          <label>Tanggal SPP</label>
+          <input type="datetime-local" name="tanggal_spp" value="{{ old('tanggal_spp') }}">
+          @error('tanggal_spp')
+            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+          @enderror
+        </div>
       </div>
 
       <!-- 12. Tanggal Masuk (auto-filled saat menyimpan) -->
@@ -608,66 +667,7 @@
         <button type="button" class="remove-field-btn" style="display: none;">−</button>
       </div>
 
-      <!-- Kebun -->
-      <div class="form-row">
-        <div class="form-group">
-          <label>Kebun</label>
-          <select name="kebun">
-            <option value="">Pilih Kebun</option>
-            @php
-              $kebunOptions = [
-                'KEBUN-UNIT',
-                'REGION OFFICE',
-                'UNIT GRUP KALBAR',
-                'GUNUNG MELIAU',
-                'PKS GUNME',
-                'SUNGAI DEKAN',
-                'RIMBA BELIAN',
-                'PKS RIMBA BELIA',
-                'GUNUNG MAS',
-                'SINTANG',
-                'NGABANG',
-                'PKS NGABANG',
-                'PARINDU',
-                'PKS PARINDU',
-                'KEMBAYAN',
-                'PKS KEMBAYAN',
-                'PPPBB',
-                'UNIT GRUP KALSEL/TENG',
-                'DANAU SALAK',
-                'TAMBARANGAN',
-                'BATULICIN',
-                'PELAIHARI',
-                'PKS PELAIHARI',
-                'KUMAI',
-                'PKS PAMUKAN',
-                'PAMUKAN',
-                'PRYBB',
-                'RAREN BATUAH',
-                'UNIT GRUP KALTIM',
-                'TABARA',
-                'TAJATI',
-                'PANDAWA',
-                'LONGKALI',
-                'PKS SAMUNTAI',
-                'PKS LONG PINANG',
-                'KP JAKARTA',
-                'KP BALIKPAPAN'
-              ];
-              $oldKebun = old('kebun');
-              $oldKebunClean = $oldKebun ? preg_replace('/^\d+\s+/', '', $oldKebun) : '';
-            @endphp
-            @foreach($kebunOptions as $kebun)
-              <option value="{{ $kebun }}" {{ ($oldKebun == $kebun || $oldKebunClean == $kebun) ? 'selected' : '' }}>
-                {{ $kebun }}
-              </option>
-            @endforeach
-          </select>
-          @error('kebun')
-            <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-          @enderror
-        </div>
-      </div>
+
 
 
       <!-- Form Actions -->
@@ -1595,47 +1595,47 @@
       // Create notification element
       const notification = document.createElement('div');
       notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                color: white;
-                padding: 16px 24px;
-                border-radius: 8px;
-                box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
-                z-index: 10000;
-                font-weight: 600;
-                max-width: 300px;
-                animation: slideIn 0.3s ease;
-              `;
+                  position: fixed;
+                  top: 20px;
+                  right: 20px;
+                  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                  color: white;
+                  padding: 16px 24px;
+                  border-radius: 8px;
+                  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+                  z-index: 10000;
+                  font-weight: 600;
+                  max-width: 300px;
+                  animation: slideIn 0.3s ease;
+                `;
       notification.innerHTML = `
-                <i class="fa-solid fa-check-circle me-2"></i>${message}
-              `;
+                  <i class="fa-solid fa-check-circle me-2"></i>${message}
+                `;
 
       // Add animation
       const style = document.createElement('style');
       style.textContent = `
-                @keyframes slideIn {
-                  from {
-                    transform: translateX(100%);
-                    opacity: 0;
+                  @keyframes slideIn {
+                    from {
+                      transform: translateX(100%);
+                      opacity: 0;
+                    }
+                    to {
+                      transform: translateX(0);
+                      opacity: 1;
+                    }
                   }
-                  to {
-                    transform: translateX(0);
-                    opacity: 1;
+                  @keyframes slideOut {
+                    from {
+                      transform: translateX(0);
+                      opacity: 1;
+                    }
+                    to {
+                      transform: translateX(100%);
+                      opacity: 0;
+                    }
                   }
-                }
-                @keyframes slideOut {
-                  from {
-                    transform: translateX(0);
-                    opacity: 1;
-                  }
-                  to {
-                    transform: translateX(100%);
-                    opacity: 0;
-                  }
-                }
-              `;
+                `;
       document.head.appendChild(style);
 
       document.body.appendChild(notification);
