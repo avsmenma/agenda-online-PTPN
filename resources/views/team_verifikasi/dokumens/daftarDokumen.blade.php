@@ -1291,7 +1291,8 @@
           white-space: normal !important;
           overflow-wrap: break-word;
           line-height: 1.6;
-          vertical-align: top;
+          vertical-align: middle;
+          text-align: center;
           padding: 12px;
         }
 

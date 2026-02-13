@@ -9,13 +9,16 @@
 
 /* Target DataTables cells with dibayar_kepada data */
 table.dataTable tbody td[data-column="dibayar_kepada"],
-table.dat atable tbody td:has([data-field="dibayar_kepada"]),
-table tbody td.col-dibayar-kepada {
+table.dataTable tbody td:has([data-field="dibayar_kepada"]),
+table tbody td.col-dibayar-kepada,
+table tbody td.col-dibayar_kepada {
     max-width: 250px;
     min-width: 150px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    vertical-align: middle;
+    text-align: center;
 }
 
 /* For text content inside dibayar-kepada cells */
