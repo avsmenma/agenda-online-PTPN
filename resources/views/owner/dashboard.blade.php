@@ -231,7 +231,11 @@
 
       {{-- Quick Filter Chips --}}
       <div class="filter-chips">
-        <button class="chip {{ request('status') == '' || request('status') == 'belum_siap' ? 'active' : '' }}"
+        <button class="chip {{ request('status') == 'semua' ? 'active' : '' }}" onclick="setStatus('semua')">
+          📄 Semua Dokumen
+        </button>
+        <button
+          class="chip {{ (request('status') == '' || request('status') == 'belum_siap') && request('status') != 'semua' ? 'active' : '' }}"
           onclick="setStatus('belum_siap')">
           🔄 Belum Siap Dibayar
         </button>
@@ -578,8 +582,15 @@
     // ===== Filter by Card Click =====
     function filterByCard(status) {
       if (status === 'all') {
-        // Clear all status filters and reload
-        window.location.href = '{{ url("/owner/dokumen") }}';
+        // Show all documents - use semua status
+        document.getElementById('statusInput').value = 'semua';
+        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+        // Activate the 'Semua Dokumen' chip
+        const chips = document.querySelectorAll('.chip');
+        chips.forEach(chip => {
+          if (chip.textContent.includes('Semua Dokumen')) chip.classList.add('active');
+        });
+        applyFilter();
       } else {
         document.getElementById('statusInput').value = status;
         document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
@@ -681,11 +692,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                          <span>${labels[key] || key}: ${displayValue}</span>
-                          <button type="button" class="remove" onclick="removeFilter('${key}')">
-                            <i class="fas fa-times"></i>
-                          </button>
-                        `;
+                            <span>${labels[key] || key}: ${displayValue}</span>
+                            <button type="button" class="remove" onclick="removeFilter('${key}')">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          `;
           container.appendChild(tag);
         }
       }

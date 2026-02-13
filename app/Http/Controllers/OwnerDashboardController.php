@@ -264,8 +264,12 @@ class OwnerDashboardController extends Controller
         if ($request && $request->has('status') && !empty($request->status)) {
             $status = $request->status;
 
+            // Semua Dokumen: no status filter, show everything
+            if ($status === 'semua') {
+                // Don't apply any status filter - show all documents
+            }
             // Belum Siap Dibayar: dokumen dari operator sampai akutansi (belum di pembayaran)
-            if ($status === 'belum_siap' || $status === '') {
+            elseif ($status === 'belum_siap' || $status === '') {
                 $query->where(function ($q) {
                     $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
                         ->orWhereIn('status', [
