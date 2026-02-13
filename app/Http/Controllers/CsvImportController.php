@@ -445,6 +445,22 @@ class CsvImportController extends Controller
         // Ensure we have Carbon instance for bulan/tahun extraction
         $carbonDate = Carbon::parse($tanggalMasuk);
 
+        // Map month number to Indonesian month name
+        $bulanNameMap = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
         // Extract kategori and jenis_dokumen from CSV
         // KATEGORI from CSV maps to kategori field (required)
         $kategori = trim($row['KATEGORI'] ?? '');
@@ -469,7 +485,7 @@ class CsvImportController extends Controller
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
 
             // Required: bulan and tahun (extracted from tanggal_masuk)
-            'bulan' => $carbonDate->format('n'), // 1-12
+            'bulan' => $bulanNameMap[(int) $carbonDate->format('n')] ?? $carbonDate->format('n'),
             'tahun' => $carbonDate->format('Y'), // YYYY
 
             // Required: kategori and jenis_dokumen

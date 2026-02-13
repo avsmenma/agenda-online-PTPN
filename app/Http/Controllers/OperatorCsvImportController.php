@@ -487,25 +487,34 @@ class OperatorCsvImportController extends Controller
      */
     private function transformRow($row)
     {
-        // Parse bulan from text to number
-        $bulanMap = [
-            'januari' => 1,
-            'februari' => 2,
-            'maret' => 3,
-            'april' => 4,
-            'mei' => 5,
-            'juni' => 6,
-            'juli' => 7,
-            'agustus' => 8,
-            'september' => 9,
-            'oktober' => 10,
-            'november' => 11,
-            'desember' => 12,
+        // Parse bulan from text - store as month name (e.g., "Januari", "Februari")
+        $bulanNameMap = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
         ];
+        $bulanValidNames = array_map('strtolower', $bulanNameMap);
         $bulanText = strtolower(trim($row['Bulan'] ?? ''));
         // Clean prefix like "a. ", "b. ", etc. from format like "a. Januari", "b. Februari"
         $bulanText = preg_replace('/^[a-z]\.\s*/i', '', $bulanText);
-        $bulan = $bulanMap[$bulanText] ?? (int) $bulanText ?: (int) date('n');
+        // If it's a recognized month name, capitalize it; if numeric, convert to name
+        $bulanKey = array_search($bulanText, $bulanValidNames);
+        if ($bulanKey !== false) {
+            $bulan = $bulanNameMap[$bulanKey];
+        } elseif (is_numeric($bulanText) && isset($bulanNameMap[(int) $bulanText])) {
+            $bulan = $bulanNameMap[(int) $bulanText];
+        } else {
+            $bulan = $bulanNameMap[(int) date('n')];
+        }
 
         // Parse tahun
         $tahun = trim($row['Tahun'] ?? '') ?: date('Y');
