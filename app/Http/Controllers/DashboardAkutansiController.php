@@ -404,9 +404,10 @@ class DashboardAkutansiController extends Controller
             END DESC");
         }
 
-        // Secondary sorting and pagination
+        $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $dokumens = $dokumens->orderBy('dokumens.id', 'DESC')
-            ->paginate($request->get('per_page', 10))
+            ->paginate($perPage)
             ->appends($request->query());
 
         // Add lock status to each document - use getCollection() to modify items while keeping Paginator
@@ -1085,6 +1086,7 @@ class DashboardAkutansiController extends Controller
             ->orderByDesc('department_returned_at');
 
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Calculate statistics for returned documents
@@ -1249,6 +1251,7 @@ class DashboardAkutansiController extends Controller
 
         // Pagination
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $tableDokumens = $tableQuery->latest($dateColumn)->paginate($perPage)->appends($request->query());
 
         // Get available years (based on filter type)

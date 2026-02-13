@@ -152,6 +152,7 @@ class DokumenController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get suggestions if no results found

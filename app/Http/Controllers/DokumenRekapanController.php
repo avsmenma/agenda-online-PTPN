@@ -33,11 +33,11 @@ class DokumenRekapanController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
             });
         }
 
@@ -47,6 +47,7 @@ class DokumenRekapanController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $dokumens = $query->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get statistics
@@ -148,9 +149,18 @@ class DokumenRekapanController extends Controller
         // Get monthly statistics
         $monthlyStats = [];
         $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
         ];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -171,6 +181,7 @@ class DokumenRekapanController extends Controller
 
         // Pagination
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get available years
@@ -183,7 +194,7 @@ class DokumenRekapanController extends Controller
             ->toArray();
 
         if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
+            $availableYears = [(int) date('Y')];
         }
 
         $data = [
@@ -191,9 +202,9 @@ class DokumenRekapanController extends Controller
             'module' => 'operator',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
-            'selectedYear' => (int)$selectedYear,
+            'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
-            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,

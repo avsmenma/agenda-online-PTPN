@@ -1222,6 +1222,7 @@
               <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
               <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
               <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+              <option value="all" {{ request('per_page') == 'all' ? 'selected' : '' }}>Semua</option>
             </select>
             <span class="text-muted">
               Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }} hasil

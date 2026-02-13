@@ -462,7 +462,11 @@ class DashboardPembayaranController extends Controller
         $statusFilter = $request->get('status_filter');
         $search = $request->get('search');
         $perPage = $request->get('per_page', session('pembayaran_per_page', 10)); // Default 10, bisa diubah user
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10; // Validate per_page value
+        if ($perPage === 'all') {
+            $perPage = 999999; // Show all records on one page
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10; // Validate per_page value
+        }
         session(['pembayaran_per_page' => $perPage]); // Save to session
 
         // Build query for pembayaran documents

@@ -20,7 +20,11 @@ class OwnerDashboardController extends Controller
     {
         // Get paginated documents with latest status and apply search filter
         $perPage = $request->get('per_page', 10);
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
 
@@ -1419,7 +1423,11 @@ class OwnerDashboardController extends Controller
     {
         // Get paginated documents with latest status and apply search filter
         $perPage = $request->get('per_page', 10);
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
 

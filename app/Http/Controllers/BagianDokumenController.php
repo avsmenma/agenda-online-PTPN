@@ -163,6 +163,7 @@ class BagianDokumenController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Available columns for customization
@@ -894,6 +895,7 @@ class BagianDokumenController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+        $perPage = $perPage === 'all' ? 999999 : (int) $perPage;
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         return view('bagian.tracking', compact(
