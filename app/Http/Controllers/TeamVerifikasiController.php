@@ -769,8 +769,11 @@ class TeamVerifikasiController extends Controller
         // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
         $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
 
-        // Only allow editing if current_handler is Team Verifikasi or verifikasi
-        if (!in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])) {
+        // Only allow editing if current_handler is Team Verifikasi or document is returned_to_verifikasi
+        if (
+            !in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])
+            && $dokumen->status !== 'returned_to_verifikasi'
+        ) {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
