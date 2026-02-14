@@ -1015,6 +1015,13 @@ class TeamVerifikasiController extends Controller
                     ['status' => 'pending'] // Atau status awal lain, e.g. 'pending' atau NULL jika perlu dihapus
                 );
 
+                // Reset current_handler to team_verifikasi so document stays in the list
+                $updateData['current_handler'] = 'team_verifikasi';
+
+                // Clear department return fields since document has been fixed
+                $updateData['department_returned_at'] = null;
+                $updateData['target_department'] = null;
+
                 // Reset role status fields - now handled by dokumen_statuses table
             }
 
