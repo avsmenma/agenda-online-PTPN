@@ -1101,11 +1101,16 @@ class DashboardAkutansiController extends Controller
         // Get all documents that have been returned to akutansi
         // Includes: documents returned from akutansi to verifikasi AND documents rejected by pembayaran
         $query = Dokumen::where(function ($q) {
-            // Documents returned from akutansi to verifikasi
+            // Documents returned from akutansi to verifikasi (new status)
             $q->where(function ($subQ) {
-                $subQ->where('status', 'returned_to_department')
+                $subQ->where('status', 'returned_to_verifikasi')
                     ->where('target_department', 'akutansi');
             })
+                // Legacy: documents with old returned_to_department status
+                ->orWhere(function ($legacyQ) {
+                    $legacyQ->where('status', 'returned_to_department')
+                        ->where('target_department', 'akutansi');
+                })
                 // Documents rejected by pembayaran (from inbox)
                 ->orWhere(function ($pembayaranRejectQ) {
                     $pembayaranRejectQ->where('current_handler', 'akutansi')
@@ -1131,9 +1136,13 @@ class DashboardAkutansiController extends Controller
         // Include both: documents returned from akutansi to verifikasi AND documents rejected by pembayaran
         $baseQuery = Dokumen::where(function ($q) {
             $q->where(function ($subQ) {
-                $subQ->where('status', 'returned_to_department')
+                $subQ->where('status', 'returned_to_verifikasi')
                     ->where('target_department', 'akutansi');
             })
+                ->orWhere(function ($legacyQ) {
+                    $legacyQ->where('status', 'returned_to_department')
+                        ->where('target_department', 'akutansi');
+                })
                 ->orWhere(function ($pembayaranRejectQ) {
                     $pembayaranRejectQ->where('current_handler', 'akutansi')
                         ->whereHas('roleStatuses', function ($statusQuery) {
@@ -1146,11 +1155,12 @@ class DashboardAkutansiController extends Controller
         // Total dokumen dikembalikan
         $totalReturned = (clone $baseQuery)->count();
 
-        // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika: masih di Team Verifikasi (belum dikirim kembali ke akutansi) ATAU ditolak oleh pembayaran dan masih di akutansi
+        // Menunggu perbaikan: dokumen yang dikembalikan dan masih menunggu (belum diperbaiki)
+        // Logika: status returned_to_verifikasi (masih menunggu) ATAU ditolak oleh pembayaran
         $totalMenungguPerbaikan = (clone $baseQuery)
             ->where(function ($q) {
-                $q->where('current_handler', 'team_verifikasi')
+                $q->where('status', 'returned_to_verifikasi')
+                    ->orWhere('current_handler', 'team_verifikasi')
                     ->orWhere(function ($pembayaranQ) {
                         $pembayaranQ->where('current_handler', 'akutansi')
                             ->whereHas('roleStatuses', function ($statusQuery) {
@@ -1162,8 +1172,9 @@ class DashboardAkutansiController extends Controller
             ->count();
 
         // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali ke akutansi
-        // Logika: sudah kembali ke akutansi (current_handler == 'akutansi') DAN bukan ditolak oleh pembayaran
+        // Logika: status bukan returned_to_verifikasi lagi DAN sudah kembali ke akutansi tanpa reject pembayaran
         $totalSudahDiperbaiki = (clone $baseQuery)
+            ->where('status', '!=', 'returned_to_verifikasi')
             ->where('current_handler', 'akutansi')
             ->whereDoesntHave('roleStatuses', function ($statusQuery) {
                 $statusQuery->where('role_code', 'pembayaran')
@@ -1385,7 +1396,7 @@ class DashboardAkutansiController extends Controller
     {
         // Allow access if document is handled by akutansi or sent to akutansi
         $allowedHandlers = ['akutansi', 'perpajakan', 'team_verifikasi'];
-        $allowedStatuses = ['sent_to_akutansi', 'sedang diproses', 'selesai', 'sent_to_pembayaran'];
+        $allowedStatuses = ['sent_to_akutansi', 'sedang diproses', 'selesai', 'sent_to_pembayaran', 'returned_to_verifikasi'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
             if (request()->wantsJson() || request()->ajax()) {
@@ -1860,9 +1871,10 @@ class DashboardAkutansiController extends Controller
             ]);
 
             // Update all fields in a single call to avoid multiple queries and potential issues
+            // IMPORTANT: current_handler tetap 'akutansi' agar dokumen tetap terlihat di daftar akutansi
             $updateData = [
-                'status' => 'returned_to_department',
-                'current_handler' => 'team_verifikasi',
+                'status' => 'returned_to_verifikasi',
+                // current_handler TIDAK diubah - dokumen tetap muncul di daftar akutansi
                 'target_department' => 'akutansi',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,
@@ -1870,21 +1882,6 @@ class DashboardAkutansiController extends Controller
                 // Reset akutansi status since document is being returned
                 'nomor_miro' => null,
             ];
-
-            // Clear deadline from dokumen_role_data for akutansi
-            $akutansiRoleData = $dokumen->getDataForRole('akutansi');
-            if ($akutansiRoleData) {
-                $akutansiRoleData->deadline_at = null;
-                $akutansiRoleData->deadline_days = null;
-                $akutansiRoleData->deadline_note = null;
-                $akutansiRoleData->save();
-            }
-
-            // Only set sent_to_team_verifikasi_at if it's null (first time entering Team Verifikasi)
-            // This preserves the original entry time for consistent ordering
-            if (is_null($dokumen->sent_to_team_verifikasi_at)) {
-                $updateData['sent_to_team_verifikasi_at'] = now();
-            }
 
             $dokumen->update($updateData);
 

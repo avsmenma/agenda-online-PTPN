@@ -3218,6 +3218,8 @@
                               <span class="badge-status badge-locked">🔒 Terkunci</span>
                             @elseif($dokumen->status == 'selesai')
                               <span class="badge-status badge-selesai">✓ Selesai</span>
+                            @elseif($dokumen->status == 'returned_to_verifikasi')
+                              <span class="badge-status badge-dikembalikan">← Dikembalikan ke Verifikasi</span>
                             @elseif($dokumen->current_handler == 'akutansi' && !in_array($dokumen->status, ['sent_to_pembayaran', 'selesai', 'completed', 'menunggu_di_approve', 'pending_approval_pembayaran']))
                               {{-- Dokumen yang sedang ditangani akutansi dan bukan status khusus --}}
                               <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
@@ -3244,7 +3246,13 @@
                                 ]) || $dokumen->status_pembayaran === 'sudah_dibayar' || $isBypassedToPayment;
                               @endphp
                                 <!-- Unlocked state - buttons enabled -->
-                                @unless($isSentToPembayaran)
+                                @if($dokumen->status == 'returned_to_verifikasi')
+                                  {{-- Document returned to verifikasi - disable all actions --}}
+                                  <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen dikembalikan ke Verifikasi">
+                                    <i class="fa-solid fa-undo"></i>
+                                    <span>Dikembalikan</span>
+                                  </button>
+                                @elseif(!$isSentToPembayaran)
                                   <!-- Tombol Kirim Data - selalu muncul untuk dokumen yang tidak terkunci dan belum terkirim -->
                                   <button
                                     type="button"
@@ -3277,7 +3285,7 @@
                                     <i class="fa-solid fa-check-circle"></i>
                                     <span>Terkirim</span>
                                   </button>
-                                @endunless
+                                @endif
                             </div>
                           </td>
                         </tr>
@@ -3416,7 +3424,7 @@
                     <ul class="mb-0 mt-2">
                       <li>Muncul di halaman "Pengembalian Dokumen Team Verifikasi"</li>
                       <li>Muncul di halaman "Pengembalian Dokumen Team Akutansi"</li>
-                      <li>Hilang dari daftar dokumen aktif akutansi</li>
+                      <li>Tetap terlihat di daftar dokumen akutansi dengan status "Dikembalikan ke Verifikasi"</li>
                     </ul>
                   </div>
                 </div>

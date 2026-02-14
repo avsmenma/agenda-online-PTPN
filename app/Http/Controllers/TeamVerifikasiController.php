@@ -497,6 +497,7 @@ class TeamVerifikasiController extends Controller
                                 'sent_to_akutansi',
                                 'sent_to_pembayaran',
                                 'returned_to_department',
+                                'returned_to_verifikasi',
                                 'returned_to_bidang',
                                 'selesai',
                                 'completed'
@@ -570,6 +571,11 @@ class TeamVerifikasiController extends Controller
                             ->orWhere(function ($returnQ) {
                                 $returnQ->where('status', 'returned_to_department')
                                     ->where('current_handler', 'team_verifikasi')
+                                    ->whereIn('target_department', ['perpajakan', 'akutansi']);
+                            })
+                            // ATAU dokumen dengan status returned_to_verifikasi (new: current_handler tetap di department)
+                            ->orWhere(function ($returnNewQ) {
+                                $returnNewQ->where('status', 'returned_to_verifikasi')
                                     ->whereIn('target_department', ['perpajakan', 'akutansi']);
                             });
                     });
@@ -929,7 +935,8 @@ class TeamVerifikasiController extends Controller
 
             if (
                 $isRejectedByTeamVerifikasi ||
-                $dokumen->status === 'returned_to_department'
+                $dokumen->status === 'returned_to_department' ||
+                $dokumen->status === 'returned_to_verifikasi'
             ) {
                 $newStatus = 'sedang diproses';
                 $resetInboxRejection = true;
@@ -1076,7 +1083,7 @@ class TeamVerifikasiController extends Controller
             ]);
 
             $allowedHandlers = ['team_verifikasi', 'team_verifikasi', 'perpajakan', 'akutansi', 'operator', 'pembayaran'];
-            $allowedStatuses = ['sent_to_team_verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_bidang', 'returned_to_Operator'];
+            $allowedStatuses = ['sent_to_team_verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_verifikasi', 'returned_to_bidang', 'returned_to_Operator'];
 
             // Allow if rejected by Team Verifikasi
             $isInboxRejected = false;
@@ -1354,10 +1361,14 @@ class TeamVerifikasiController extends Controller
         // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
         $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas', 'roleStatuses'])
             ->where(function ($q) {
-                // Dokumen yang dikembalikan dari department/bagian
+                // Dokumen yang dikembalikan dari department/bagian (legacy: current_handler = team_verifikasi)
                 $q->where(function ($subQ) {
                     $subQ->where('current_handler', 'team_verifikasi')
                         ->where('status', 'returned_to_department');
+                })
+                    // Dokumen dengan status returned_to_verifikasi (new: current_handler tetap di department asal)
+                    ->orWhere(function ($newReturnQ) {
+                    $newReturnQ->where('status', 'returned_to_verifikasi');
                 })
                     // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke Team Verifikasi
                     // Check dokumen_statuses table for rejected status
@@ -1404,11 +1415,15 @@ class TeamVerifikasiController extends Controller
 
         // Get statistics
         $totalReturnedToDept = \App\Models\Dokumen::where(function ($q) {
-            // Dokumen yang dikembalikan dari department/bagian
+            // Dokumen yang dikembalikan dari department/bagian (legacy)
             $q->where(function ($subQ) {
                 $subQ->where('current_handler', 'team_verifikasi')
                     ->where('status', 'returned_to_department');
             })
+                // Dokumen dengan status returned_to_verifikasi (new)
+                ->orWhere(function ($newReturnQ) {
+                    $newReturnQ->where('status', 'returned_to_verifikasi');
+                })
                 // Dokumen yang di-reject dari inbox dan dikembalikan ke Team Verifikasi
                 ->orWhere(function ($inboxRejectQ) {
                     $inboxRejectQ->where('current_handler', 'team_verifikasi')
@@ -1421,31 +1436,55 @@ class TeamVerifikasiController extends Controller
             ->count();
 
         $totalByDept = [
-            'perpajakan' => \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
-                ->where(function ($q) {
-                    $q->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan')
-                        ->orWhereHas('roleStatuses', function ($statusQuery) {
-                            $statusQuery->where('role_code', 'perpajakan')
-                                ->where('status', 'rejected');
-                        });
+            'perpajakan' => \App\Models\Dokumen::where(function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department')
+                        ->where('target_department', 'perpajakan');
                 })
+                    ->orWhere(function ($newQ) {
+                        $newQ->where('status', 'returned_to_verifikasi')
+                            ->where('target_department', 'perpajakan');
+                    })
+                    ->orWhere(function ($rejectQ) {
+                        $rejectQ->where('current_handler', 'team_verifikasi')
+                            ->whereHas('roleStatuses', function ($statusQuery) {
+                                $statusQuery->where('role_code', 'perpajakan')
+                                    ->where('status', 'rejected');
+                            });
+                    });
+            })
                 ->count(),
-            'akutansi' => \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
-                ->where(function ($q) {
-                    $q->where(function ($subQ) {
-                        $subQ->where('status', 'returned_to_department')
+            'akutansi' => \App\Models\Dokumen::where(function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department')
+                        ->where('target_department', 'akutansi');
+                })
+                    ->orWhere(function ($newQ) {
+                        $newQ->where('status', 'returned_to_verifikasi')
                             ->where('target_department', 'akutansi');
                     })
-                        ->orWhereHas('roleStatuses', function ($statusQuery) {
-                            $statusQuery->where('role_code', 'akutansi')
-                                ->where('status', 'rejected');
-                        });
-                })
+                    ->orWhere(function ($rejectQ) {
+                        $rejectQ->where('current_handler', 'team_verifikasi')
+                            ->whereHas('roleStatuses', function ($statusQuery) {
+                                $statusQuery->where('role_code', 'akutansi')
+                                    ->where('status', 'rejected');
+                            });
+                    });
+            })
                 ->count(),
-            'pembayaran' => \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
-                ->where('status', 'returned_to_department')
-                ->where('target_department', 'pembayaran')
+            'pembayaran' => \App\Models\Dokumen::where(function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department')
+                        ->where('target_department', 'pembayaran');
+                })
+                    ->orWhere(function ($newQ) {
+                        $newQ->where('status', 'returned_to_verifikasi')
+                            ->where('target_department', 'pembayaran');
+                    });
+            })
                 ->count(),
         ];
 

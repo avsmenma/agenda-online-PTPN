@@ -3346,6 +3346,8 @@
                   <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
                 @elseif($isLocked)
                   <span class="badge-status badge-locked">📤 Terkirim ke Team Pembayaran</span>
+                @elseif($dokumen->status == 'returned_to_verifikasi')
+                  <span class="badge-status badge-dikembalikan">← Dikembalikan ke Verifikasi</span>
                 @elseif($dokumen->status == 'sedang diproses')
                   <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
                 @else
@@ -3371,6 +3373,12 @@
                     <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen ditolak">
                       <i class="fa-solid fa-times-circle"></i>
                       <span>Ditolak</span>
+                    </button>
+                  @elseif($dokumen->status == 'returned_to_verifikasi')
+                    {{-- Document returned to verifikasi - disable all actions --}}
+                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen dikembalikan ke Verifikasi">
+                      <i class="fa-solid fa-undo"></i>
+                      <span>Dikembalikan</span>
                     </button>
                   @else
                     <!-- Unlocked state - buttons enabled -->
@@ -3509,8 +3517,8 @@
             <strong>Informasi:</strong> Dokumen yang dikembalikan akan:
             <ul class="mb-0 mt-2">
               <li>Muncul di halaman "Pengembalian Dokumen Team Verifikasi"</li>
-              <li>Muncul di halaman "Pengembalian Dokumen Team Perpajakan"</li>
-              <li>Hilang dari daftar dokumen aktif perpajakan</li>
+              <li>Muncul di halaman "Pengembalian Dokumen Perpajakan"</li>
+              <li>Tetap terlihat di daftar dokumen perpajakan dengan status "Dikembalikan ke Verifikasi"</li>
             </ul>
           </div>
         </div>

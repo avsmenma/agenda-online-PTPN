@@ -1159,7 +1159,7 @@ class DashboardPerpajakanController extends Controller
     {
         // Allow access if document was handled by perpajakan or returned from perpajakan
         $allowedHandlers = ['perpajakan', 'team_verifikasi', 'akutansi'];
-        $allowedStatuses = ['sent_to_perpajakan', 'returned_to_department', 'sent_to_akutansi'];
+        $allowedStatuses = ['sent_to_perpajakan', 'returned_to_department', 'returned_to_verifikasi', 'sent_to_akutansi'];
 
         if (!in_array($dokumen->current_handler, $allowedHandlers) && !in_array($dokumen->status, $allowedStatuses)) {
             if (request()->wantsJson() || request()->ajax()) {
@@ -1366,11 +1366,16 @@ class DashboardPerpajakanController extends Controller
         // Get all documents that have been returned to perpajakan
         // Includes: documents returned FROM perpajakan to verifikasi AND documents rejected BY akutansi
         $query = Dokumen::where(function ($q) {
-            // Documents returned from perpajakan to verifikasi (original logic)
+            // Documents returned from perpajakan to verifikasi (new status)
             $q->where(function ($subQ) {
-                $subQ->where('status', 'returned_to_department')
+                $subQ->where('status', 'returned_to_verifikasi')
                     ->where('target_department', 'perpajakan');
             })
+                // Legacy: documents with old returned_to_department status
+                ->orWhere(function ($legacyQ) {
+                    $legacyQ->where('status', 'returned_to_department')
+                        ->where('target_department', 'perpajakan');
+                })
                 // Documents rejected by akutansi (via roleStatuses with rejected status)
                 ->orWhere(function ($akutansiRejectQ) {
                     $akutansiRejectQ->where('current_handler', 'perpajakan')
@@ -1406,9 +1411,13 @@ class DashboardPerpajakanController extends Controller
         // Include both: documents returned from perpajakan to verifikasi AND documents rejected by akutansi
         $baseQuery = Dokumen::where(function ($q) {
             $q->where(function ($subQ) {
-                $subQ->where('status', 'returned_to_department')
+                $subQ->where('status', 'returned_to_verifikasi')
                     ->where('target_department', 'perpajakan');
             })
+                ->orWhere(function ($legacyQ) {
+                    $legacyQ->where('status', 'returned_to_department')
+                        ->where('target_department', 'perpajakan');
+                })
                 ->orWhere(function ($akutansiRejectQ) {
                     $akutansiRejectQ->where('current_handler', 'perpajakan')
                         ->whereHas('roleStatuses', function ($statusQuery) {
@@ -1421,11 +1430,12 @@ class DashboardPerpajakanController extends Controller
         // Total dokumen dikembalikan
         $totalReturned = (clone $baseQuery)->count();
 
-        // Menunggu perbaikan: dokumen yang dikembalikan dan masih di verifikasi (belum diperbaiki)
-        // Logika: masih di Team Verifikasi (belum dikirim kembali) ATAU ditolak oleh akutansi dan masih di perpajakan
+        // Menunggu perbaikan: dokumen yang dikembalikan dan masih menunggu (belum diperbaiki)
+        // Logika: status returned_to_verifikasi (masih menunggu) ATAU ditolak oleh akutansi
         $totalMenungguPerbaikan = (clone $baseQuery)
             ->where(function ($q) {
-                $q->where('current_handler', 'team_verifikasi')
+                $q->where('status', 'returned_to_verifikasi')
+                    ->orWhere('current_handler', 'team_verifikasi')
                     ->orWhere(function ($akutansiQ) {
                         $akutansiQ->where('current_handler', 'perpajakan')
                             ->whereHas('roleStatuses', function ($statusQuery) {
@@ -1437,8 +1447,9 @@ class DashboardPerpajakanController extends Controller
             ->count();
 
         // Sudah diperbaiki: dokumen yang sudah diperbaiki dan dikirim kembali
-        // Logika: sudah tidak di Team Verifikasi lagi DAN tidak ada rejected status dari akutansi
+        // Logika: status bukan returned_to_verifikasi lagi DAN tidak di team_verifikasi
         $totalSudahDiperbaiki = (clone $baseQuery)
+            ->where('status', '!=', 'returned_to_verifikasi')
             ->where('current_handler', '!=', 'team_verifikasi')
             ->where('current_handler', '!=', 'perpajakan')
             ->count();
@@ -1499,9 +1510,10 @@ class DashboardPerpajakanController extends Controller
             ]);
 
             // Update all fields in a single call to avoid multiple queries and potential issues
+            // IMPORTANT: current_handler tetap 'perpajakan' agar dokumen tetap terlihat di daftar perpajakan
             $updateData = [
-                'status' => 'returned_to_department',
-                'current_handler' => 'team_verifikasi',
+                'status' => 'returned_to_verifikasi',
+                // current_handler TIDAK diubah - dokumen tetap muncul di daftar perpajakan
                 'target_department' => 'perpajakan',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,
@@ -1510,12 +1522,6 @@ class DashboardPerpajakanController extends Controller
                 'status_perpajakan' => null,
                 'tanggal_selesai_verifikasi_pajak' => null,
             ];
-
-            // Only set sent_to_team_verifikasi_at if it's null (first time entering Team Verifikasi)
-            // This preserves the original entry time for consistent ordering
-            if (is_null($dokumen->sent_to_team_verifikasi_at)) {
-                $updateData['sent_to_team_verifikasi_at'] = now();
-            }
 
             $dokumen->update($updateData);
 
