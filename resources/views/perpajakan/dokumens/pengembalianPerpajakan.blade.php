@@ -150,7 +150,7 @@
     }
 
     .table-dokumen table {
-      min-width: 1600px;
+      min-width: 1300px;
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
@@ -266,8 +266,8 @@
     }
 
     .table-dokumen thead th:nth-child(6) {
-      width: 140px;
-      min-width: 140px;
+      width: 160px;
+      min-width: 160px;
     }
 
     .table-dokumen thead th:nth-child(7) {
@@ -278,11 +278,6 @@
     .table-dokumen thead th:nth-child(8) {
       width: 300px;
       min-width: 250px;
-    }
-
-    .table-dokumen thead th:nth-child(9) {
-      width: 180px;
-      min-width: 180px;
     }
 
     .table-dokumen tbody tr.main-row {
@@ -687,10 +682,9 @@
                 <th>Nomor SPP</th>
                 <th>Uraian</th>
                 <th>Nilai</th>
-                <th>Status Dokumen</th>
+                <th>Tanggal Terima</th>
                 <th>Tanggal Dikembalikan</th>
                 <th>Alasan</th>
-                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -706,18 +700,18 @@
                   <td class="nomor-column">{{ $dokumen->nomor_spp }}</td>
                   <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>
                   <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
-                  <td>
-                    @if($dokumen->returned_from_perpajakan_fixed_at || ($dokumen->current_handler == 'perpajakan' && !$dokumen->pengembalian_awaiting_fix))
-                      <span class="badge-status badge-success">
-                        <i class="fa-solid fa-check-circle"></i>
-                        Sudah diperbaiki
-                      </span>
-                    @else
-                      <span class="badge-status badge-returned">
-                        <i class="fa-solid fa-clock"></i>
-                        Menunggu perbaikan
-                      </span>
-                    @endif
+                  <td class="tanggal-column">
+                    <small>
+                      @php
+                        $roleData = $dokumen->getDataForRole('perpajakan');
+                        $receivedAt = $roleData?->received_at;
+                      @endphp
+                      @if($receivedAt)
+                        {{ \Carbon\Carbon::parse($receivedAt)->format('d/m/Y H:i') }}
+                      @else
+                        -
+                      @endif
+                    </small>
                   </td>
                   <td class="tanggal-column">
                     <small>
@@ -748,20 +742,9 @@
                       <span class="alasan-text">{{ $rejectionReason ?? '-' }}</span>
                     </div>
                   </td>
-                  <td class="action-column" onclick="event.stopPropagation();">
-                    <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}?redirect_to={{ urlencode(route('returns.perpajakan.index')) }}"
-                      class="btn-action btn-action-edit">
-                      <i class="fa-solid fa-edit"></i>
-                      Perbaiki Data
-                    </a>
-                    <button type="button" class="btn-action btn-action-send" onclick="sendToAkutansi({{ $dokumen->id }})">
-                      <i class="fa-solid fa-paper-plane"></i>
-                      Kirim
-                    </button>
-                  </td>
                 </tr>
                 <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none !important;">
-                  <td colspan="9" style="padding: 0;">
+                  <td colspan="8" style="padding: 0;">
                     <div class="detail-content" id="detail-content-{{ $dokumen->id }}" style="padding: 24px;">
                       <div class="text-center p-4">
                         <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i>
@@ -1507,11 +1490,11 @@
 
       // Show loading
       detailContent.innerHTML = `
-                  <div class="text-center p-4">
-                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-                    <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-                  </div>
-                `;
+                      <div class="text-center p-4">
+                        <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                        <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+                      </div>
+                    `;
 
       fetch(`/documents/perpajakan/${docId}/detail`, {
         headers: {
@@ -1609,11 +1592,11 @@
       // Generate detail items HTML
       for (const [label, value] of Object.entries(detailItems)) {
         html += `
-                    <div class="detail-item">
-                      <div class="detail-label">${label}</div>
-                      <div class="detail-value">${value}</div>
-                    </div>
-                  `;
+                        <div class="detail-item">
+                          <div class="detail-label">${label}</div>
+                          <div class="detail-value">${value}</div>
+                        </div>
+                      `;
       }
 
       html += '</div>';
@@ -1632,18 +1615,18 @@
       const toast = document.createElement('div');
       toast.className = `toast-notification toast-${type}`;
       toast.innerHTML = `
-          <div class="toast-icon">
-            <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
-          </div>
-          <div class="toast-content">
-            <div class="toast-title">${title}</div>
-            <div class="toast-message">${message}</div>
-          </div>
-          <button class="toast-close" onclick="closeToast(this.parentElement)">
-            <i class="fa-solid fa-times"></i>
-          </button>
-          ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
-        `;
+              <div class="toast-icon">
+                <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
+              </div>
+              <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+              </div>
+              <button class="toast-close" onclick="closeToast(this.parentElement)">
+                <i class="fa-solid fa-times"></i>
+              </button>
+              ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
+            `;
       toast.style.position = 'relative';
 
       container.appendChild(toast);
@@ -1669,7 +1652,7 @@
     function sendToAkutansi(docId) {
       pendingDocId = docId;
       pendingButton = event.target.closest('.btn-action-send');
-      
+
       const modal = document.getElementById('confirmModal');
       modal.classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -1688,11 +1671,11 @@
 
     function executeSendToAkutansi() {
       if (!pendingDocId || !pendingButton) return;
-      
+
       const docId = pendingDocId;
       const button = pendingButton;
       const originalContent = button.innerHTML;
-      
+
       closeConfirmModal();
 
       button.disabled = true;
@@ -1732,7 +1715,7 @@
     }
 
     // Initialize confirmation button listener
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const confirmBtn = document.getElementById('confirmSendBtn');
       if (confirmBtn) {
         confirmBtn.addEventListener('click', executeSendToAkutansi);
@@ -1750,11 +1733,11 @@
 
       // Show loading state
       modalBody.innerHTML = `
-              <div class="text-center p-4">
-                <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
-                <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
-              </div>
-            `;
+                  <div class="text-center p-4">
+                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+                    <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+                  </div>
+                `;
 
       // Fetch document details
       fetch(`/documents/perpajakan/${docId}/detail`, {
@@ -1889,7 +1872,3 @@
   </script>
 
 @endsection
-
-
-
-
