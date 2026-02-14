@@ -3917,6 +3917,9 @@
                       $roleData = $dokumen->getDataForRole('team_verifikasi');
                       $receivedAt = $roleData?->received_at;
 
+                      // Check if document is returned_to_verifikasi (deadline should be paused)
+                      $isReturnedToVerifikasi = $dokumen->status === 'returned_to_verifikasi';
+
                       // Check if document is already sent to other roles (including waiting approval statuses)
                       $isSent = in_array($dokumen->status, [
                         'sent_to_perpajakan',
@@ -3927,7 +3930,7 @@
                         'pending_approval_pembayaran',
                         'waiting_approval_perpajakan',
                         'waiting_approval_akuntansi',
-                      ]);
+                      ]) || $isReturnedToVerifikasi; // Pause deadline for returned documents
 
                       // Also check frozen display_status - for tembak documents, the actual
                       // status may have progressed past this role, but display_status is frozen
@@ -4053,7 +4056,26 @@
                   </td>
                   <!-- Kolom Status: Menampilkan status badge -->
                   <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
-                    @if($isRejected)
+                    @if($isReturnedToVerifikasi)
+                      {{-- Dokumen dikembalikan oleh Perpajakan/Akutansi --}}
+                      @php
+                        $returnedByLabel = match($dokumen->target_department) {
+                          'perpajakan' => 'Perpajakan',
+                          'akutansi' => 'Akutansi',
+                          default => Str::title($dokumen->target_department ?? 'Bidang'),
+                        };
+                      @endphp
+                      <span class="badge-status badge-dikembalikan" style="position: relative;">
+                        <i class="fa-solid fa-rotate-left me-1"></i>
+                        <span>Dikembalikan oleh {{ $returnedByLabel }}</span>
+                      </span>
+                      @if($dokumen->department_return_reason)
+                        <div style="font-size: 10px; color: #ef4444; margin-top: 4px; max-width: 160px; word-wrap: break-word;">
+                          <i class="fa-solid fa-comment-dots me-1"></i>
+                          {{ Str::limit($dokumen->department_return_reason, 50) }}
+                        </div>
+                      @endif
+                    @elseif($isRejected)
                       {{-- Dokumen ditolak dari inbox atau dari perpajakan/akutansi --}}
                       @if($isRejectedByOtherRole && $rejectedByRole)
                         {{-- Dokumen ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi --}}
@@ -4185,7 +4207,29 @@
                   </td>
                   <td class="col-action" onclick="event.stopPropagation()">
                     <div class="action-buttons-hybrid">
-                      @if($isRejected)
+                      @if($isReturnedToVerifikasi)
+                        <!-- Dokumen dikembalikan oleh Perpajakan/Akutansi - tampilkan Kirim Data + Edit + Balik -->
+                        <button type="button" class="btn-action btn-kirim btn-full-width"
+                          onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">
+                          <i class="fa-solid fa-paper-plane"></i>
+                          <span>Kirim Data</span>
+                        </button>
+                        <div class="action-row">
+                          <a href="{{ route('documents.verifikasi.edit', $dokumen->id) }}" title="Edit Dokumen"
+                            style="flex: 1; text-decoration: none;">
+                            <button class="btn-action btn-edit" style="width: 100%;">
+                              <i class="fa-solid fa-pen"></i>
+                              <span>Edit</span>
+                            </button>
+                          </a>
+                          <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
+                            onclick="openReturnToBidangModal({{ $dokumen->id }}, '{{ $dokumen->bagian ?? 'Unknown' }}')"
+                            title="Kembalikan Dokumen ke Bidang">
+                            <i class="fa-solid fa-undo"></i>
+                            <span>Balik</span>
+                          </button>
+                        </div>
+                    @elseif($isRejected)
                         <!-- Dokumen ditolak dari inbox - tampilkan Kirim (full width), Edit dan Kembalikan di bawah -->
                         <button type="button" class="btn-action btn-kirim btn-full-width"
                           onclick="openSendToNextModal({{ $dokumen->id }})" title="Kirim ke Team Perpajakan/Team Akutansi">

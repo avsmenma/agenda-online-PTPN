@@ -252,6 +252,11 @@ class TeamVerifikasiController extends Controller
                         $rejectQ->where('status', 'returned_to_department')
                             ->where('target_department', 'perpajakan')
                             ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
+                    })
+                    ->orWhere(function ($returnVerifQ) {
+                        // Include dokumen yang dikembalikan oleh Perpajakan/Akutansi ke Verifikasi
+                        // Tetap tampil di daftar utama dengan status "Dikembalikan oleh ..."
+                        $returnVerifQ->where('status', 'returned_to_verifikasi');
                     });
             })
                 // Exclude CSV imported documents (only if column exists)
@@ -309,6 +314,9 @@ class TeamVerifikasiController extends Controller
                 'dokumens.no_berita_acara',
                 'dokumens.tanggal_berita_acara',
                 'dokumens.bagian', // Added: bagian field for return to bidang modal
+                'dokumens.target_department', // Added: for returned_to_verifikasi status badge
+                'dokumens.department_return_reason', // Added: for returned_to_verifikasi reason
+                'dokumens.department_returned_at', // Added: for returned_to_verifikasi timestamp
                 // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
                 // 'dokumens.inbox_approval_reason', // REMOVED
                 // 'dokumens.inbox_approval_for', // REMOVED
