@@ -682,6 +682,7 @@
                 <th>Nomor SPP</th>
                 <th>Uraian</th>
                 <th>Nilai</th>
+                <th>Status Dokumen</th>
                 <th>Tanggal Terima</th>
                 <th>Tanggal Dikembalikan</th>
                 <th>Alasan</th>
@@ -700,6 +701,32 @@
                   <td class="nomor-column">{{ $dokumen->nomor_spp }}</td>
                   <td class="uraian-column">{{ $dokumen->uraian_spp ?? '-' }}</td>
                   <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
+                  <td>
+                    @php
+                      // Determine status: "Menunggu Perbaikan" or "Perbaikan Selesai"
+                      $roleDataStatus = $dokumen->getDataForRole('perpajakan');
+                      $receivedAtStatus = $roleDataStatus?->received_at;
+                      $returnedAtStatus = $dokumen->department_returned_at;
+
+                      $isPerbaikanSelesai = false;
+                      if ($receivedAtStatus && $returnedAtStatus) {
+                        $rcvCarbon = $receivedAtStatus instanceof \Carbon\Carbon ? $receivedAtStatus : \Carbon\Carbon::parse($receivedAtStatus);
+                        $retCarbon = $returnedAtStatus instanceof \Carbon\Carbon ? $returnedAtStatus : \Carbon\Carbon::parse($returnedAtStatus);
+                        $isPerbaikanSelesai = $rcvCarbon->gt($retCarbon);
+                      }
+                    @endphp
+                    @if($isPerbaikanSelesai)
+                      <span class="badge-status badge-success">
+                        <i class="fa-solid fa-check-circle"></i>
+                        Perbaikan Selesai
+                      </span>
+                    @else
+                      <span class="badge-status badge-returned">
+                        <i class="fa-solid fa-clock"></i>
+                        Menunggu Perbaikan
+                      </span>
+                    @endif
+                  </td>
                   <td class="tanggal-column">
                     <small>
                       @php
@@ -757,7 +784,7 @@
                   </td>
                 </tr>
                 <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none !important;">
-                  <td colspan="8" style="padding: 0;">
+                  <td colspan="9" style="padding: 0;">
                     <div class="detail-content" id="detail-content-{{ $dokumen->id }}" style="padding: 24px;">
                       <div class="text-center p-4">
                         <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i>

@@ -1514,7 +1514,11 @@ class TeamVerifikasiController extends Controller
     {
         try {
             // Validate current handler
-            if ($dokumen->current_handler !== 'team_verifikasi') {
+            // Allow 'perpajakan' handler for returned_to_verifikasi documents (handler stays with department)
+            if (
+                $dokumen->current_handler !== 'team_verifikasi' &&
+                !($dokumen->current_handler === 'perpajakan' && $dokumen->status === 'returned_to_verifikasi')
+            ) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
@@ -1524,8 +1528,12 @@ class TeamVerifikasiController extends Controller
             // Validate that this is a returned document from perpajakan
             $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
             if (!$perpajakanStatus || $perpajakanStatus->status !== 'rejected') {
-                // Also check if status is returned_to_department with target_department = perpajakan
-                if ($dokumen->status !== 'returned_to_department' || $dokumen->target_department !== 'perpajakan') {
+                // Also check if status is returned_to_department or returned_to_verifikasi with target_department = perpajakan
+                if ($dokumen->status === 'returned_to_verifikasi' && $dokumen->target_department === 'perpajakan') {
+                    // Valid - returned to verifikasi from perpajakan
+                } elseif ($dokumen->status === 'returned_to_department' && $dokumen->target_department === 'perpajakan') {
+                    // Valid - legacy return status
+                } else {
                     return response()->json([
                         'success' => false,
                         'message' => 'Dokumen ini bukan dokumen yang dikembalikan dari perpajakan.'
@@ -1593,8 +1601,11 @@ class TeamVerifikasiController extends Controller
     public function sendToNextHandler(Dokumen $dokumen, Request $request)
     {
         try {
-            // Validate current handler - allow both 'team_verifikasi' and 'team_verifikasi' roles
-            if (!in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])) {
+            // Validate current handler - allow team_verifikasi AND departments with returned_to_verifikasi status
+            if (
+                !in_array($dokumen->current_handler, ['team_verifikasi']) &&
+                !($dokumen->status === 'returned_to_verifikasi' && in_array($dokumen->current_handler, ['perpajakan', 'akutansi']))
+            ) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
@@ -1619,7 +1630,7 @@ class TeamVerifikasiController extends Controller
 
             // Jika dokumen adalah dokumen yang dikembalikan (returned_to_department),
             // bersihkan status pengembalian sebelum dikirim
-            $isReturnedDocument = $dokumen->status === 'returned_to_department';
+            $isReturnedDocument = in_array($dokumen->status, ['returned_to_department', 'returned_to_verifikasi']);
 
             if ($isReturnedDocument) {
                 // Clear return-related fields before sending
