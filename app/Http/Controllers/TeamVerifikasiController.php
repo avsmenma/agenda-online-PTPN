@@ -863,8 +863,11 @@ class TeamVerifikasiController extends Controller
 
     public function updateDokumen(Request $request, Dokumen $dokumen)
     {
-        // Only allow updating if current_handler is Team Verifikasi or verifikasi
-        if (!in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])) {
+        // Only allow updating if current_handler is Team Verifikasi or document is returned_to_verifikasi
+        if (
+            !in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])
+            && $dokumen->status !== 'returned_to_verifikasi'
+        ) {
             return redirect()->route('documents.verifikasi.index')
                 ->with('error', 'Anda tidak memiliki izin untuk mengupdate dokumen ini.');
         }
