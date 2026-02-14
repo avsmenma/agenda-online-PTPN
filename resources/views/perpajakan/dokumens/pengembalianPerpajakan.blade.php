@@ -703,11 +703,24 @@
                   <td class="tanggal-column">
                     <small>
                       @php
+                        // Tanggal Terima = tanggal Team Verifikasi mengirim kembali dokumen ke Perpajakan
+                        // Hanya tampilkan jika received_at LEBIH BARU dari department_returned_at
+                        // (artinya dokumen sudah dikirim ulang setelah dikembalikan)
                         $roleData = $dokumen->getDataForRole('perpajakan');
                         $receivedAt = $roleData?->received_at;
+                        $returnedAt = $dokumen->department_returned_at;
+
+                        $resendDate = null;
+                        if ($receivedAt && $returnedAt) {
+                          $receivedCarbon = $receivedAt instanceof \Carbon\Carbon ? $receivedAt : \Carbon\Carbon::parse($receivedAt);
+                          $returnedCarbon = $returnedAt instanceof \Carbon\Carbon ? $returnedAt : \Carbon\Carbon::parse($returnedAt);
+                          if ($receivedCarbon->gt($returnedCarbon)) {
+                            $resendDate = $receivedCarbon;
+                          }
+                        }
                       @endphp
-                      @if($receivedAt)
-                        {{ \Carbon\Carbon::parse($receivedAt)->format('d/m/Y H:i') }}
+                      @if($resendDate)
+                        {{ $resendDate->format('d/m/Y H:i') }}
                       @else
                         -
                       @endif
@@ -1490,11 +1503,11 @@
 
       // Show loading
       detailContent.innerHTML = `
-                      <div class="text-center p-4">
-                        <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-                        <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-                      </div>
-                    `;
+                        <div class="text-center p-4">
+                          <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                          <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+                        </div>
+                      `;
 
       fetch(`/documents/perpajakan/${docId}/detail`, {
         headers: {
@@ -1592,11 +1605,11 @@
       // Generate detail items HTML
       for (const [label, value] of Object.entries(detailItems)) {
         html += `
-                        <div class="detail-item">
-                          <div class="detail-label">${label}</div>
-                          <div class="detail-value">${value}</div>
-                        </div>
-                      `;
+                          <div class="detail-item">
+                            <div class="detail-label">${label}</div>
+                            <div class="detail-value">${value}</div>
+                          </div>
+                        `;
       }
 
       html += '</div>';
@@ -1615,18 +1628,18 @@
       const toast = document.createElement('div');
       toast.className = `toast-notification toast-${type}`;
       toast.innerHTML = `
-              <div class="toast-icon">
-                <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
-              </div>
-              <div class="toast-content">
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
-              </div>
-              <button class="toast-close" onclick="closeToast(this.parentElement)">
-                <i class="fa-solid fa-times"></i>
-              </button>
-              ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
-            `;
+                <div class="toast-icon">
+                  <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
+                </div>
+                <div class="toast-content">
+                  <div class="toast-title">${title}</div>
+                  <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="closeToast(this.parentElement)">
+                  <i class="fa-solid fa-times"></i>
+                </button>
+                ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
+              `;
       toast.style.position = 'relative';
 
       container.appendChild(toast);
@@ -1733,11 +1746,11 @@
 
       // Show loading state
       modalBody.innerHTML = `
-                  <div class="text-center p-4">
-                    <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
-                    <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
-                  </div>
-                `;
+                    <div class="text-center p-4">
+                      <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+                      <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+                    </div>
+                  `;
 
       // Fetch document details
       fetch(`/documents/perpajakan/${docId}/detail`, {
