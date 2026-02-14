@@ -1510,10 +1510,11 @@ class DashboardPerpajakanController extends Controller
             ]);
 
             // Update all fields in a single call to avoid multiple queries and potential issues
-            // IMPORTANT: current_handler tetap 'perpajakan' agar dokumen tetap terlihat di daftar perpajakan
+            // current_handler diubah ke 'team_verifikasi' agar dokumen muncul di daftar Team Verifikasi
+            // Halaman pengembalian perpajakan tetap bisa menampilkan dokumen ini karena filter berdasarkan status + target_department
             $updateData = [
                 'status' => 'returned_to_verifikasi',
-                // current_handler TIDAK diubah - dokumen tetap muncul di daftar perpajakan
+                'current_handler' => 'team_verifikasi', // Pindah ke Team Verifikasi untuk perbaikan
                 'target_department' => 'perpajakan',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,

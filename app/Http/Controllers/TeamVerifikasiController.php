@@ -1535,11 +1535,8 @@ class TeamVerifikasiController extends Controller
     {
         try {
             // Validate current handler
-            // Allow 'perpajakan' handler for returned_to_verifikasi documents (handler stays with department)
-            if (
-                $dokumen->current_handler !== 'team_verifikasi' &&
-                !($dokumen->current_handler === 'perpajakan' && $dokumen->status === 'returned_to_verifikasi')
-            ) {
+            // Returned documents now always have current_handler = 'team_verifikasi'
+            if ($dokumen->current_handler !== 'team_verifikasi') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'

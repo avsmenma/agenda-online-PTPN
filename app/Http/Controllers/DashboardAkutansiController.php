@@ -1871,10 +1871,11 @@ class DashboardAkutansiController extends Controller
             ]);
 
             // Update all fields in a single call to avoid multiple queries and potential issues
-            // IMPORTANT: current_handler tetap 'akutansi' agar dokumen tetap terlihat di daftar akutansi
+            // current_handler diubah ke 'team_verifikasi' agar dokumen muncul di daftar Team Verifikasi
+            // Halaman pengembalian akutansi tetap bisa menampilkan dokumen ini karena filter berdasarkan status + target_department
             $updateData = [
                 'status' => 'returned_to_verifikasi',
-                // current_handler TIDAK diubah - dokumen tetap muncul di daftar akutansi
+                'current_handler' => 'team_verifikasi', // Pindah ke Team Verifikasi untuk perbaikan
                 'target_department' => 'akutansi',
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->return_reason,
