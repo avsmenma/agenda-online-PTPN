@@ -825,6 +825,66 @@
       color: #4b5563 !important;
     }
 
+    /* Paused State - Grey Theme for returned documents */
+    .deadline-card.deadline-paused {
+      --deadline-color: #9ca3af;
+      --deadline-color-light: #d1d5db;
+      --deadline-bg: #f3f4f6;
+      --deadline-text: #6b7280;
+      opacity: 0.75;
+    }
+
+    .deadline-card.deadline-paused {
+      background: var(--deadline-bg) !important;
+      border-color: rgba(156, 163, 175, 0.3) !important;
+      border-style: dashed !important;
+    }
+
+    .deadline-card.deadline-paused .deadline-time {
+      color: var(--deadline-text) !important;
+    }
+
+    .deadline-card.deadline-paused .deadline-indicator,
+    .deadline-card.deadline-paused .deadline-indicator.deadline-green,
+    .deadline-card.deadline-paused .deadline-indicator.deadline-yellow,
+    .deadline-card.deadline-paused .deadline-indicator.deadline-red {
+      background: linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%) !important;
+      color: white !important;
+      box-shadow: 0 2px 6px rgba(156, 163, 175, 0.3) !important;
+    }
+
+    .deadline-card.deadline-paused .deadline-indicator i::before {
+      content: "\f04c"; /* pause icon */
+    }
+
+    .deadline-card.deadline-paused.deadline-green,
+    .deadline-card.deadline-paused.deadline-yellow,
+    .deadline-card.deadline-paused.deadline-red {
+      --deadline-color: #9ca3af !important;
+      --deadline-color-light: #d1d5db !important;
+      --deadline-bg: #f3f4f6 !important;
+      --deadline-text: #6b7280 !important;
+      background: #f3f4f6 !important;
+      border-color: rgba(156, 163, 175, 0.3) !important;
+      border-style: dashed !important;
+      opacity: 0.75;
+    }
+
+    .deadline-card.deadline-paused.deadline-green .deadline-time,
+    .deadline-card.deadline-paused.deadline-yellow .deadline-time,
+    .deadline-card.deadline-paused.deadline-red .deadline-time {
+      color: #6b7280 !important;
+    }
+
+    .deadline-card.deadline-paused .deadline-paused-label {
+      font-size: 8px;
+      color: #9ca3af;
+      margin-top: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     /* Enhanced late information */
     .late-info {
       display: inline-flex;
@@ -3122,6 +3182,9 @@
                     'approved_data_sudah_terkirim',
                   ]) || ($dokumen->status_pembayaran === 'sudah_dibayar');
 
+                  // Check if document is returned to verifikasi (deadline paused)
+                  $isReturned = $dokumen->status === 'returned_to_verifikasi';
+
                   // Calculate document age from received_at (count up)
                   $ageText = '-';
                   $ageLabel = '-';
@@ -3135,9 +3198,13 @@
                     // For active documents, calculate time from received_at to now (live time)
                     $processedAt = $roleData?->processed_at;
 
-                    if (($isSent || $isCompleted) && $processedAt) {
-                      // Document is sent/completed - freeze the time at processed_at
+                    if (($isSent || $isCompleted || $isReturned) && $processedAt) {
+                      // Document is sent/completed/returned - freeze the time at processed_at
                       $endTime = \Carbon\Carbon::parse($processedAt);
+                      $timeFrozen = true;
+                    } else if ($isReturned) {
+                      // Returned but no processed_at - freeze at now
+                      $endTime = \Carbon\Carbon::now();
                       $timeFrozen = true;
                     } else {
                       // Document is still active - use current time
@@ -3181,9 +3248,9 @@
                       $ageIcon = 'fa-check-circle';
                     }
 
-                    // For sent/completed documents, use grey color
+                    // For sent/completed/returned documents, use grey color
                     // For active documents, use color based on time
-                    if ($isSent || $isCompleted) {
+                    if ($isSent || $isCompleted || $isReturned) {
                       $ageColor = 'gray';
                     } elseif ($totalHours >= 72) {
                       $ageColor = 'red';
@@ -3194,9 +3261,11 @@
                     }
                   }
 
-                  // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai)
+                  // Determine deadline type: 'active' (masih diproses), 'sent' (sudah terkirim), 'completed' (selesai), 'paused' (dikembalikan)
                   $deadlineType = 'active';
-                  if ($isCompleted) {
+                  if ($isReturned) {
+                    $deadlineType = 'paused';
+                  } elseif ($isCompleted) {
                     $deadlineType = 'completed';
                   } elseif ($isSent) {
                     $deadlineType = 'sent';
@@ -3218,7 +3287,11 @@
                       <i class="fa-solid fa-hourglass-half"></i>
                       <span>{{ $ageText }}</span>
                     </div>
-                    @if($isSent)
+                    @if($isReturned)
+                      <div class="deadline-paused-label">
+                        <i class="fa-solid fa-pause-circle"></i> Berhenti Sementara
+                      </div>
+                    @elseif($isSent)
                       <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
                         <i class="fa-solid fa-paper-plane"></i> Terkirim
                       </div>
