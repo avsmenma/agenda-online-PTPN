@@ -4797,7 +4797,7 @@
                 <div class="notification-body">
                   <strong>No. Agenda:</strong> ${doc.nomor_agenda || '-'}<br>
                   <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
-                  <strong>Alasan:</strong> <span class="alasan-text">${doc.alasan_pengembalian || 'Tidak ada alasan'}</span><br>
+                  <strong>Alasan:</strong> <span class="alasan-text">${doc.return_reason || doc.alasan_pengembalian || 'Tidak ada alasan'}</span><br>
                   <small style="opacity: 0.8;">Dikembalikan dari Team Verifikasi - ${doc.returned_at}</small>
                 </div>
                 <div class="notification-footer">

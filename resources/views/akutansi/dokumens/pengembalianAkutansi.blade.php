@@ -714,6 +714,8 @@
                       $tanggalTerima = null;
                       if ($rejectedStatus && $rejectedStatus->status_changed_at) {
                         $tanggalTerima = $rejectedStatus->status_changed_at;
+                      } elseif ($dokumen->returned_at) {
+                        $tanggalTerima = $dokumen->returned_at;
                       } elseif ($dokumen->department_returned_at) {
                         $tanggalTerima = $dokumen->department_returned_at;
                       }
@@ -769,6 +771,8 @@
                       if ($rejectedStatus && $rejectedStatus->notes) {
                         // Ambil alasan dari dokumen_statuses table (notes)
                         $alasan = $rejectedStatus->notes;
+                      } elseif ($dokumen->return_reason) {
+                        $alasan = $dokumen->return_reason;
                       } elseif ($dokumen->department_return_reason) {
                         $alasan = $dokumen->department_return_reason;
                       } elseif ($dokumen->alasan_pengembalian) {

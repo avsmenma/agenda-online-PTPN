@@ -1386,7 +1386,7 @@ class DashboardPerpajakanController extends Controller
                 });
         })
             ->with(['dokumenPos', 'dokumenPrs', 'roleStatuses'])
-            ->orderByDesc('department_returned_at');
+            ->orderByDesc('returned_at');
 
         // Apply search filter if provided
         if ($request->has('search') && !empty($request->search)) {
@@ -1511,14 +1511,14 @@ class DashboardPerpajakanController extends Controller
 
             // Update all fields in a single call to avoid multiple queries and potential issues
             // current_handler diubah ke 'team_verifikasi' agar dokumen muncul di daftar Team Verifikasi
-            // Halaman pengembalian perpajakan tetap bisa menampilkan dokumen ini karena filter berdasarkan status + target_department
+            // Return to Team Verifikasi for corrections
             $updateData = [
                 'status' => 'returned_to_verifikasi',
-                'current_handler' => 'team_verifikasi', // Pindah ke Team Verifikasi untuk perbaikan
-                'target_department' => 'perpajakan',
-                'department_returned_at' => now(),
-                'department_return_reason' => $request->return_reason,
-                'alasan_pengembalian' => $request->return_reason,
+                'current_handler' => 'team_verifikasi',
+                // Unified return fields (Phase 3 complete)
+                'return_source' => 'perpajakan',
+                'return_reason' => $request->return_reason,
+                'returned_at' => now(),
                 // Reset tax status since document is being returned
                 'status_perpajakan' => null,
                 'tanggal_selesai_verifikasi_pajak' => null,

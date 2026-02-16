@@ -1068,12 +1068,13 @@
                                   <span>{{ $statusText }}</span>
                                 </span>
                               @endif
-                              @if($displayStatus == 'dikembalikan' && $doc->bidang_return_reason)
+                              @php $returnReasonDisplay = $doc->return_reason ?? $doc->bidang_return_reason; @endphp
+                              @if($displayStatus == 'dikembalikan' && $returnReasonDisplay)
                                 <div class="return-reason-display"
                                   style="margin-top: 6px; padding: 6px 10px; background: #fef3c7; border-radius: 6px; font-size: 10px; color: #92400e; border-left: 3px solid #f59e0b; max-width: 200px;"
-                                  title="{{ $doc->bidang_return_reason }}">
+                                  title="{{ $returnReasonDisplay }}">
                                   <i class="fa-solid fa-comment-dots" style="margin-right: 4px;"></i>
-                                  <span>{{ Str::limit($doc->bidang_return_reason, 40) }}</span>
+                                  <span>{{ Str::limit($returnReasonDisplay, 40) }}</span>
                                 </div>
                               @endif
                             @elseif($col == 'uraian_spp')

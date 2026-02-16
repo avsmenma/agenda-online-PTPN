@@ -2033,6 +2033,10 @@ class TeamVerifikasiController extends Controller
                 'target_department' => $request->target_department,
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->department_return_reason,
+                // Unified return fields (Phase 1 Opsi B)
+                'return_source' => 'team_verifikasi',
+                'return_reason' => $request->department_return_reason,
+                'returned_at' => now(),
             ]);
 
             \DB::commit();
@@ -2375,6 +2379,10 @@ class TeamVerifikasiController extends Controller
                 'bidang_returned_at' => now(),
                 'bidang_return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
                 'was_returned_by_verifikasi' => true, // Flag for conditional routing
+                // Unified return fields (Phase 1 Opsi B)
+                'return_source' => 'team_verifikasi',
+                'return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
+                'returned_at' => now(),
             ]);
 
             \DB::commit();
@@ -2509,6 +2517,10 @@ class TeamVerifikasiController extends Controller
                 'target_bidang' => null,
                 'bidang_returned_at' => null,
                 'bidang_return_reason' => null,
+                // Unified return fields (Phase 1 Opsi B)
+                'return_source' => 'team_verifikasi',
+                'return_reason' => $request->alasan_pengembalian,
+                'returned_at' => now(),
             ]);
 
             \DB::commit();

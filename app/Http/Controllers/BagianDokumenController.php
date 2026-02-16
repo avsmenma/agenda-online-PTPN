@@ -789,6 +789,10 @@ class BagianDokumenController extends Controller
                 'current_handler' => 'team_verifikasi',
                 'was_returned_by_verifikasi' => false, // Reset flag
                 'resent_to_verifikasi_at' => $now,
+                // Clear unified return fields (Phase 1 Opsi B)
+                'return_source' => null,
+                'return_reason' => null,
+                'returned_at' => null,
             ]);
 
             // Update existing Team Verifikasi role data (reset for re-processing)

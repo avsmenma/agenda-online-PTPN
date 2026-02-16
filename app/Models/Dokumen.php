@@ -39,17 +39,12 @@ class Dokumen extends Model
         'tanggal_miro',
         'status',
         'keterangan',
-        'alasan_pengembalian',
-        // Department/Bidang return fields
-        'target_department',
-        'department_returned_at',
-        'department_return_reason',
-        'target_bidang',
-        'bidang_returned_at',
-        'bidang_return_reason',
         // Conditional routing fields
-        'was_returned_by_verifikasi',
         'resent_to_verifikasi_at',
+        // Unified return fields (Phase 1 Opsi B)
+        'return_source',
+        'return_reason',
+        'returned_at',
         // Workflow tracking (kept for compatibility)
         'created_by',
         'current_handler',
@@ -109,12 +104,10 @@ class Dokumen extends Model
         'tanggal_spk' => 'date',
         'tanggal_berakhir_spk' => 'date',
         'nilai_rupiah' => 'decimal:2',
-        // Department return casts
-        'department_returned_at' => 'datetime',
-        'bidang_returned_at' => 'datetime',
         // Conditional routing casts
-        'was_returned_by_verifikasi' => 'boolean',
         'resent_to_verifikasi_at' => 'datetime',
+        // Unified return field casts
+        'returned_at' => 'datetime',
         // Perpajakan casts
         'tanggal_faktur' => 'date',
         'tanggal_selesai_verifikasi_pajak' => 'date',
@@ -386,7 +379,7 @@ class Dokumen extends Model
 
         // If sending to perpajakan and document was returned, always reset deadline
         // This ensures returned documents must set deadline again
-        $isReturnedDocument = $this->department_returned_at ||
+        $isReturnedDocument = $this->returned_at ||
             $this->returned_from_perpajakan_fixed_at;
 
         if ($targetRoleCode === 'perpajakan' && $isReturnedDocument) {
@@ -508,8 +501,8 @@ class Dokumen extends Model
             }
 
             // Reset deadline for returned documents so they must set deadline again
-            // Check if document was returned (has department_returned_at timestamp)
-            $isReturnedDocument = $this->department_returned_at ||
+            // Check if document was returned (has returned_at timestamp)
+            $isReturnedDocument = $this->returned_at ||
                 $this->returned_from_perpajakan_fixed_at;
 
             if ($isReturnedDocument && $normalizedRoleCode === 'perpajakan') {
@@ -1106,12 +1099,14 @@ class Dokumen extends Model
         $originalSender = 'operator';
         $returnStatus = 'returned_to_Operator';
 
+        // Unified return fields (Opsi B - Phase 3 complete)
+        $this->return_source = $roleCode; // Who is returning the document
+        $this->return_reason = $reason;
+        $this->returned_at = now();
+
         if ($roleCode === 'perpajakan' || $roleCode === 'akutansi') {
             $originalSender = 'team_verifikasi';
-            $returnStatus = 'returned_to_department';
-            $this->department_returned_at = now();
-            $this->target_department = $roleCode;
-            $this->department_return_reason = $reason;
+            $returnStatus = 'returned_to_verifikasi';
         }
 
         $this->current_handler = $originalSender;

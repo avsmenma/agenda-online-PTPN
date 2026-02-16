@@ -1,7 +1,8 @@
 <div class="detail-grid">
   <div class="detail-item">
     <span class="detail-label">Tanggal Masuk</span>
-    <span class="detail-value">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-' }}</span>
+    <span
+      class="detail-value">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-' }}</span>
   </div>
   <div class="detail-item">
     <span class="detail-label">Bulan</span>
@@ -63,7 +64,8 @@
   </div>
   <div class="detail-item">
     <span class="detail-label">Tanggal Berita Acara</span>
-    <span class="detail-value">{{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}</span>
+    <span
+      class="detail-value">{{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}</span>
   </div>
   <div class="detail-item">
     <span class="detail-label">No SPK</span>
@@ -75,13 +77,14 @@
   </div>
   <div class="detail-item">
     <span class="detail-label">Tanggal Akhir SPK</span>
-    <span class="detail-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/d/Y') : '-' }}</span>
+    <span
+      class="detail-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/d/Y') : '-' }}</span>
   </div>
-  @if($dokumen->alasan_pengembalian)
-  <div class="detail-item">
-    <span class="detail-label">Alasan Pengembalian</span>
-    <span class="detail-value text-danger">{{ $dokumen->alasan_pengembalian }}</span>
-  </div>
+  @if($dokumen->return_reason ?? $dokumen->alasan_pengembalian)
+    <div class="detail-item">
+      <span class="detail-label">Alasan Pengembalian</span>
+      <span class="detail-value text-danger">{{ $dokumen->return_reason ?? $dokumen->alasan_pengembalian }}</span>
+    </div>
   @endif
   <div class="detail-item">
     <span class="detail-label">No PO</span>
@@ -118,37 +121,34 @@
     </span>
   </div>
   @if($dokumen->created_at)
-  <div class="detail-item">
-    <span class="detail-label">DOperatort</span>
-    <span class="detail-value">{{ $dokumen->created_at->format('d M Y H:i') }}</span>
-  </div>
+    <div class="detail-item">
+      <span class="detail-label">DOperatort</span>
+      <span class="detail-value">{{ $dokumen->created_at->format('d M Y H:i') }}</span>
+    </div>
   @endif
   @if($dokumen->sent_to_team_verifikasi_at)
-  <div class="detail-item">
-    <span class="detail-label">Dikirim ke Ibu Yuni</span>
-    <span class="detail-value">{{ $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') }}</span>
-  </div>
+    <div class="detail-item">
+      <span class="detail-label">Dikirim ke Ibu Yuni</span>
+      <span class="detail-value">{{ $dokumen->sent_to_team_verifikasi_at->format('d M Y H:i') }}</span>
+    </div>
   @endif
   @if($dokumen->processed_at)
-  <div class="detail-item">
-    <span class="detail-label">Diproses</span>
-    <span class="detail-value">{{ $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-' }}</span>
-  </div>
+    <div class="detail-item">
+      <span class="detail-label">Diproses</span>
+      <span class="detail-value">{{ $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-' }}</span>
+    </div>
   @endif
-  @if($dokumen->returned_to_operator_at)
-  <div class="detail-item">
-    <span class="detail-label">Dikembalikan</span>
-    <span class="detail-value">{{ $dokumen->returned_to_operator_at ? $dokumen->returned_to_operator_at->format('d M Y H:i') : '-' }}</span>
-  </div>
+  @if($dokumen->returned_at ?? $dokumen->returned_to_operator_at)
+    <div class="detail-item">
+      <span class="detail-label">Dikembalikan</span>
+      <span
+        class="detail-value">{{ ($dokumen->returned_at ?? $dokumen->returned_to_operator_at) ? ($dokumen->returned_at ?? $dokumen->returned_to_operator_at)->format('d M Y H:i') : '-' }}</span>
+    </div>
   @endif
   @if($dokumen->keterangan)
-  <div class="detail-item">
-    <span class="detail-label">Keterangan</span>
-    <span class="detail-value">{{ $dokumen->keterangan }}</span>
-  </div>
+    <div class="detail-item">
+      <span class="detail-label">Keterangan</span>
+      <span class="detail-value">{{ $dokumen->keterangan }}</span>
+    </div>
   @endif
 </div>
-
-
-
-
