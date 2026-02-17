@@ -35,7 +35,7 @@ class DashboardPerpajakanController extends Controller
                     })
                     ->orWhere(function ($rejectedQ) {
                         $rejectedQ->where('status', 'returned_to_department')
-                            ->where('target_department', 'akutansi')
+                            ->where('return_source', 'akutansi')
                             ->where('current_handler', 'perpajakan')
                             ->whereHas('roleStatuses', function ($statusQ) {
                                 $statusQ->where('role_code', 'akutansi')
@@ -185,7 +185,7 @@ class DashboardPerpajakanController extends Controller
                     // Include documents rejected by akutansi and returned to perpajakan
                     ->orWhere(function ($rejectedQ) {
                         $rejectedQ->where('status', 'returned_to_department')
-                            ->where('target_department', 'akutansi')
+                            ->where('return_source', 'akutansi')
                             ->where('current_handler', 'perpajakan')
                             ->whereHas('roleStatuses', function ($statusQ) {
                                 $statusQ->where('role_code', 'akutansi')
@@ -1369,12 +1369,12 @@ class DashboardPerpajakanController extends Controller
             // Documents returned from perpajakan to verifikasi (new status)
             $q->where(function ($subQ) {
                 $subQ->where('status', 'returned_to_verifikasi')
-                    ->where('target_department', 'perpajakan');
+                    ->where('return_source', 'perpajakan');
             })
                 // Legacy: documents with old returned_to_department status
                 ->orWhere(function ($legacyQ) {
                     $legacyQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 })
                 // Documents rejected by akutansi (via roleStatuses with rejected status)
                 ->orWhere(function ($akutansiRejectQ) {
@@ -1412,11 +1412,11 @@ class DashboardPerpajakanController extends Controller
         $baseQuery = Dokumen::where(function ($q) {
             $q->where(function ($subQ) {
                 $subQ->where('status', 'returned_to_verifikasi')
-                    ->where('target_department', 'perpajakan');
+                    ->where('return_source', 'perpajakan');
             })
                 ->orWhere(function ($legacyQ) {
                     $legacyQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 })
                 ->orWhere(function ($akutansiRejectQ) {
                     $akutansiRejectQ->where('current_handler', 'perpajakan')
@@ -1948,9 +1948,9 @@ class DashboardPerpajakanController extends Controller
                     });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking) - check status and target_department
+                    // Documents returned from perpajakan (for tracking) - check status and return_source
                     $subQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 });
         });
 
@@ -2125,9 +2125,9 @@ class DashboardPerpajakanController extends Controller
                     });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking) - check status and target_department
+                    // Documents returned from perpajakan (for tracking) - check status and return_source
                     $subQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 });
         });
 
@@ -2205,9 +2205,9 @@ class DashboardPerpajakanController extends Controller
                     });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking) - check status and target_department
+                    // Documents returned from perpajakan (for tracking) - check status and return_source
                     $subQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 });
         });
         if ($year) {
@@ -2414,9 +2414,9 @@ class DashboardPerpajakanController extends Controller
                     });
                 })
                 ->orWhere(function ($subQ) {
-                    // Documents returned from perpajakan (for tracking) - check status and target_department
+                    // Documents returned from perpajakan (for tracking) - check status and return_source
                     $subQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 });
         });
 

@@ -2069,7 +2069,7 @@ class OwnerDashboardController extends Controller
                 'timestamp' => $dokumen->bidang_returned_at,
                 'reason' => $dokumen->bidang_return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
-                'returned_to' => 'Bidang: ' . ($dokumen->target_bidang ?? 'Tidak diketahui')
+                'returned_to' => 'Bidang: ' . ($dokumen->return_source ?? 'Tidak diketahui')
             ];
         }
 

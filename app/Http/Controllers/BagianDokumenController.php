@@ -150,7 +150,7 @@ class BagianDokumenController extends Controller
             } elseif ($statusFilter === 'dikembalikan') {
                 // Documents returned from Team Verifikasi
                 $query->where('status', 'returned_to_bidang')
-                    ->where('target_bidang', $bagianCode);
+                    ->where('return_source', $bagianCode);
             } else {
                 // Fallback: try exact match
                 $query->where('status', $statusFilter);

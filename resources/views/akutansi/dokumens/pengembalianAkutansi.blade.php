@@ -738,8 +738,8 @@
                       $dariRole = null;
                       if ($rejectedStatus) {
                         $dariRole = $rejectedStatus->role_code;
-                      } elseif ($dokumen->target_department) {
-                        $dariRole = $dokumen->target_department;
+                      } elseif ($dokumen->return_source) {
+                        $dariRole = $dokumen->return_source;
                       }
                     @endphp
                     @if($dariRole == 'pembayaran')

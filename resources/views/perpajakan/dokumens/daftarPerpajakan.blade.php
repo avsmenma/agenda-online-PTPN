@@ -2929,7 +2929,7 @@
 
               // Check if document was rejected by akutansi and returned to department (perpajakan)
               $isReturnedFromAkutansi = $dokumen->status == 'returned_to_department'
-                && $dokumen->target_department == 'akutansi';
+                && $dokumen->return_source == 'akutansi';
 
               // Check if akutansi rejected this document (using roleStatuses)
               $isRejectedByAkutansi = $dokumen->roleStatuses()

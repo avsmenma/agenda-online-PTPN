@@ -773,8 +773,8 @@
                         $dariRole = strtolower($rejectedFrom);
                       } elseif ($dokumen->returned_from_perpajakan_at) {
                         $dariRole = 'perpajakan';
-                      } elseif ($dokumen->target_department) {
-                        $dariRole = $dokumen->target_department;
+                      } elseif ($dokumen->return_source) {
+                        $dariRole = $dokumen->return_source;
                       }
                     @endphp
                     @if($dariRole == 'perpajakan')
@@ -953,11 +953,11 @@
       const newField = document.createElement('div');
       newField.className = 'po-item mb-2';
       newField.innerHTML = `
-        <input type="text" class="form-control-custom" name="nomor_po[]" placeholder="Masukkan nomor PO" style="flex: 1;">
-        <button type="button" class="btn-remove-field" onclick="removeField(this)">
-          <i class="fa-solid fa-times"></i>
-            </button>
-      `;
+          <input type="text" class="form-control-custom" name="nomor_po[]" placeholder="Masukkan nomor PO" style="flex: 1;">
+          <button type="button" class="btn-remove-field" onclick="removeField(this)">
+            <i class="fa-solid fa-times"></i>
+              </button>
+        `;
       container.appendChild(newField);
     }
 
@@ -967,11 +967,11 @@
       const newField = document.createElement('div');
       newField.className = 'pr-item mb-2';
       newField.innerHTML = `
-        <input type="text" class="form-control-custom" name="nomor_pr[]" placeholder="Masukkan nomor PR" style="flex: 1;">
-        <button type="button" class="btn-remove-field" onclick="removeField(this)">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      `;
+          <input type="text" class="form-control-custom" name="nomor_pr[]" placeholder="Masukkan nomor PR" style="flex: 1;">
+          <button type="button" class="btn-remove-field" onclick="removeField(this)">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        `;
       container.appendChild(newField);
     }
 
@@ -1041,37 +1041,37 @@
       const notification = document.createElement('div');
       notification.id = 'custom-notification';
       notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        padding: 16px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 300px;
-        max-width: 500px;
-        animation: slideInRight 0.3s ease-out;
-        font-weight: 500;
-        font-size: 14px;
-      `;
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+          padding: 16px 24px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 300px;
+          max-width: 500px;
+          animation: slideInRight 0.3s ease-out;
+          font-weight: 500;
+          font-size: 14px;
+        `;
 
       if (type === 'success') {
         notification.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
         notification.style.color = 'white';
         notification.innerHTML = `
-          <i class="fa-solid fa-check-circle" style="font-size: 20px;"></i>
-          <span>${message}</span>
-        `;
+            <i class="fa-solid fa-check-circle" style="font-size: 20px;"></i>
+            <span>${message}</span>
+          `;
       } else {
         notification.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
         notification.style.color = 'white';
         notification.innerHTML = `
-          <i class="fa-solid fa-exclamation-circle" style="font-size: 20px;"></i>
-          <span>${message}</span>
-        `;
+            <i class="fa-solid fa-exclamation-circle" style="font-size: 20px;"></i>
+            <span>${message}</span>
+          `;
       }
 
       // Add animation CSS if not exists
@@ -1079,27 +1079,27 @@
         const style = document.createElement('style');
         style.id = 'notification-styles';
         style.textContent = `
-          @keyframes slideInRight {
-            from {
-              transform: translateX(100%);
-              opacity: 0;
+            @keyframes slideInRight {
+              from {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
             }
-            to {
-              transform: translateX(0);
-              opacity: 1;
+            @keyframes slideOutRight {
+              from {
+                transform: translateX(0);
+                opacity: 1;
+              }
+              to {
+                transform: translateX(100%);
+                opacity: 0;
+              }
             }
-          }
-          @keyframes slideOutRight {
-            from {
-              transform: translateX(0);
-              opacity: 1;
-            }
-            to {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-          }
-        `;
+          `;
         document.head.appendChild(style);
       }
 
@@ -1384,8 +1384,8 @@
       let targetHandler = null;
       let handlerName = '';
 
-      if (docData.target_department) {
-        targetHandler = docData.target_department;
+      if (docData.return_source) {
+        targetHandler = docData.return_source;
         const handlerNameMap = {
           'perpajakan': 'Team Perpajakan',
           'akutansi': 'Team Akutansi',
@@ -1393,7 +1393,7 @@
         };
         handlerName = handlerNameMap[targetHandler] || targetHandler;
       } else {
-        // Default to perpajakan if no target_department
+        // Default to perpajakan if no return_source
         targetHandler = 'perpajakan';
         handlerName = 'Team Perpajakan';
       }

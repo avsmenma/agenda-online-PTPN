@@ -1104,12 +1104,12 @@ class DashboardAkutansiController extends Controller
             // Documents returned from akutansi to verifikasi (new status)
             $q->where(function ($subQ) {
                 $subQ->where('status', 'returned_to_verifikasi')
-                    ->where('target_department', 'akutansi');
+                    ->where('return_source', 'akutansi');
             })
                 // Legacy: documents with old returned_to_department status
                 ->orWhere(function ($legacyQ) {
                     $legacyQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'akutansi');
+                        ->where('return_source', 'akutansi');
                 })
                 // Documents rejected by pembayaran (from inbox)
                 ->orWhere(function ($pembayaranRejectQ) {
@@ -1137,11 +1137,11 @@ class DashboardAkutansiController extends Controller
         $baseQuery = Dokumen::where(function ($q) {
             $q->where(function ($subQ) {
                 $subQ->where('status', 'returned_to_verifikasi')
-                    ->where('target_department', 'akutansi');
+                    ->where('return_source', 'akutansi');
             })
                 ->orWhere(function ($legacyQ) {
                     $legacyQ->where('status', 'returned_to_department')
-                        ->where('target_department', 'akutansi');
+                        ->where('return_source', 'akutansi');
                 })
                 ->orWhere(function ($pembayaranRejectQ) {
                     $pembayaranRejectQ->where('current_handler', 'akutansi')

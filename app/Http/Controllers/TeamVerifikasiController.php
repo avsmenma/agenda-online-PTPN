@@ -250,7 +250,7 @@ class TeamVerifikasiController extends Controller
                         // FIX: Tampilkan dokumen yang direject dari Perpajakan dan dikembalikan ke Verifikasi
                         // (Dokumen yang ditolak oleh Akutansi dikembalikan ke Perpajakan, bukan Verifikasi)
                         $rejectQ->where('status', 'returned_to_department')
-                            ->where('target_department', 'perpajakan')
+                            ->where('return_source', 'perpajakan')
                             ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
                     })
                     ->orWhere(function ($returnVerifQ) {
@@ -314,9 +314,9 @@ class TeamVerifikasiController extends Controller
                 'dokumens.no_berita_acara',
                 'dokumens.tanggal_berita_acara',
                 'dokumens.bagian', // Added: bagian field for return to bidang modal
-                'dokumens.target_department', // Added: for returned_to_verifikasi status badge
-                'dokumens.department_return_reason', // Added: for returned_to_verifikasi reason
-                'dokumens.department_returned_at', // Added: for returned_to_verifikasi timestamp
+                'dokumens.return_source', // Added: for returned_to_verifikasi status badge
+                'dokumens.return_reason', // Added: for returned_to_verifikasi reason
+                'dokumens.returned_at', // Added: for returned_to_verifikasi timestamp
                 // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
                 // 'dokumens.inbox_approval_reason', // REMOVED
                 // 'dokumens.inbox_approval_for', // REMOVED
@@ -579,12 +579,12 @@ class TeamVerifikasiController extends Controller
                             ->orWhere(function ($returnQ) {
                                 $returnQ->where('status', 'returned_to_department')
                                     ->where('current_handler', 'team_verifikasi')
-                                    ->whereIn('target_department', ['perpajakan', 'akutansi']);
+                                    ->whereIn('return_source', ['perpajakan', 'akutansi']);
                             })
                             // ATAU dokumen dengan status returned_to_verifikasi (new: current_handler tetap di department)
                             ->orWhere(function ($returnNewQ) {
                                 $returnNewQ->where('status', 'returned_to_verifikasi')
-                                    ->whereIn('target_department', ['perpajakan', 'akutansi']);
+                                    ->whereIn('return_source', ['perpajakan', 'akutansi']);
                             });
                     });
                     break;
@@ -1019,8 +1019,8 @@ class TeamVerifikasiController extends Controller
                 $updateData['current_handler'] = 'team_verifikasi';
 
                 // Clear department return fields since document has been fixed
-                $updateData['department_returned_at'] = null;
-                $updateData['target_department'] = null;
+                $updateData['returned_at'] = null;
+                $updateData['return_source'] = null;
 
                 // Reset role status fields - now handled by dokumen_statuses table
             }
@@ -1401,14 +1401,14 @@ class TeamVerifikasiController extends Controller
                         });
                 });
             })
-            ->orderByDesc('department_returned_at');
+            ->orderByDesc('returned_at');
 
         // Filter by department (hanya untuk dokumen yang dikembalikan dari department, bukan dari inbox)
         if ($request->has('department') && $request->department) {
             $query->where(function ($q) use ($request) {
-                $q->where('target_department', $request->department)
+                $q->where('return_source', $request->department)
                     ->orWhereHas('roleStatuses', function ($statusQuery) {
-                        // Dokumen yang di-reject dari inbox tidak memiliki target_department
+                        // Dokumen yang di-reject dari inbox tidak memiliki return_source
                         $statusQuery->whereIn('role_code', ['perpajakan', 'akutansi'])
                             ->where('status', 'rejected');
                     });
@@ -1461,11 +1461,11 @@ class TeamVerifikasiController extends Controller
                 $q->where(function ($subQ) {
                     $subQ->where('current_handler', 'team_verifikasi')
                         ->where('status', 'returned_to_department')
-                        ->where('target_department', 'perpajakan');
+                        ->where('return_source', 'perpajakan');
                 })
                     ->orWhere(function ($newQ) {
                         $newQ->where('status', 'returned_to_verifikasi')
-                            ->where('target_department', 'perpajakan');
+                            ->where('return_source', 'perpajakan');
                     })
                     ->orWhere(function ($rejectQ) {
                         $rejectQ->where('current_handler', 'team_verifikasi')
@@ -1480,11 +1480,11 @@ class TeamVerifikasiController extends Controller
                 $q->where(function ($subQ) {
                     $subQ->where('current_handler', 'team_verifikasi')
                         ->where('status', 'returned_to_department')
-                        ->where('target_department', 'akutansi');
+                        ->where('return_source', 'akutansi');
                 })
                     ->orWhere(function ($newQ) {
                         $newQ->where('status', 'returned_to_verifikasi')
-                            ->where('target_department', 'akutansi');
+                            ->where('return_source', 'akutansi');
                     })
                     ->orWhere(function ($rejectQ) {
                         $rejectQ->where('current_handler', 'team_verifikasi')
@@ -1499,11 +1499,11 @@ class TeamVerifikasiController extends Controller
                 $q->where(function ($subQ) {
                     $subQ->where('current_handler', 'team_verifikasi')
                         ->where('status', 'returned_to_department')
-                        ->where('target_department', 'pembayaran');
+                        ->where('return_source', 'pembayaran');
                 })
                     ->orWhere(function ($newQ) {
                         $newQ->where('status', 'returned_to_verifikasi')
-                            ->where('target_department', 'pembayaran');
+                            ->where('return_source', 'pembayaran');
                     });
             })
                 ->count(),
@@ -1546,10 +1546,10 @@ class TeamVerifikasiController extends Controller
             // Validate that this is a returned document from perpajakan
             $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
             if (!$perpajakanStatus || $perpajakanStatus->status !== 'rejected') {
-                // Also check if status is returned_to_department or returned_to_verifikasi with target_department = perpajakan
-                if ($dokumen->status === 'returned_to_verifikasi' && $dokumen->target_department === 'perpajakan') {
+                // Also check if status is returned_to_department or returned_to_verifikasi with return_source = perpajakan
+                if ($dokumen->status === 'returned_to_verifikasi' && $dokumen->return_source === 'perpajakan') {
                     // Valid - returned to verifikasi from perpajakan
-                } elseif ($dokumen->status === 'returned_to_department' && $dokumen->target_department === 'perpajakan') {
+                } elseif ($dokumen->status === 'returned_to_department' && $dokumen->return_source === 'perpajakan') {
                     // Valid - legacy return status
                 } else {
                     return response()->json([
@@ -1653,9 +1653,9 @@ class TeamVerifikasiController extends Controller
             if ($isReturnedDocument) {
                 // Clear return-related fields before sending
                 $dokumen->update([
-                    'target_department' => null,
-                    'department_returned_at' => null,
-                    'department_return_reason' => null,
+                    'return_source' => null,
+                    'returned_at' => null,
+                    'return_reason' => null,
                     'returned_from_perpajakan_at' => null,
                     'returned_from_akutansi_at' => null,
                     'pengembalian_awaiting_fix' => false,
@@ -2014,11 +2014,11 @@ class TeamVerifikasiController extends Controller
 
             // Validate input
             $request->validate([
-                'target_department' => 'required|in:perpajakan,akutansi,pembayaran',
+                'return_source' => 'required|in:perpajakan,akutansi,pembayaran',
                 'department_return_reason' => 'required|string|min:5|max:1000'
             ], [
-                'target_department.required' => 'Bagian tujuan wajib dipilih.',
-                'target_department.in' => 'Bagian tujuan tidak valid.',
+                'return_source.required' => 'Bagian tujuan wajib dipilih.',
+                'return_source.in' => 'Bagian tujuan tidak valid.',
                 'department_return_reason.required' => 'Alasan pengembalian ke bagian wajib diisi.',
                 'department_return_reason.min' => 'Alasan pengembalian minimal 5 karakter.',
                 'department_return_reason.max' => 'Alasan pengembalian maksimal 1000 karakter.'
@@ -2030,11 +2030,10 @@ class TeamVerifikasiController extends Controller
             $dokumen->update([
                 'status' => 'returned_to_department',
                 'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
-                'target_department' => $request->target_department,
+                'return_source' => $request->return_source,
                 'department_returned_at' => now(),
                 'department_return_reason' => $request->department_return_reason,
                 // Unified return fields (Phase 1 Opsi B)
-                'return_source' => 'team_verifikasi',
                 'return_reason' => $request->department_return_reason,
                 'returned_at' => now(),
             ]);
@@ -2044,14 +2043,14 @@ class TeamVerifikasiController extends Controller
             \Log::info('Document returned to department', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
-                'target_department' => $request->target_department,
+                'return_source' => $request->return_source,
                 'reason' => $request->department_return_reason
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => "Dokumen berhasil dikembalikan ke bagian " . ucfirst($request->target_department) . ".",
-                'target_department' => $request->target_department,
+                'message' => "Dokumen berhasil dikembalikan ke bagian " . ucfirst($request->return_source) . ".",
+                'return_source' => $request->return_source,
                 'reason' => $request->department_return_reason
             ]);
 
@@ -2092,7 +2091,7 @@ class TeamVerifikasiController extends Controller
 
             \DB::beginTransaction();
 
-            $targetDepartment = $dokumen->target_department;
+            $targetDepartment = $dokumen->return_source;
 
             $updateData = [
                 'current_handler' => $targetDepartment,
@@ -2135,7 +2134,7 @@ class TeamVerifikasiController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Dokumen berhasil dikirim ke bagian {$departmentName}.",
-                'target_department' => $departmentName
+                'return_source' => $departmentName
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -2189,7 +2188,7 @@ class TeamVerifikasiController extends Controller
 
         // Filter by specific bidang if provided
         if ($request->has('bidang') && $request->bidang) {
-            $query->where('target_bidang', $request->bidang);
+            $query->where('return_source', $request->bidang);
         }
 
         // Search functionality
@@ -2209,7 +2208,7 @@ class TeamVerifikasiController extends Controller
             'nomor_spp',
             'uraian_spp',
             'nilai_rupiah',
-            'target_bidang',
+            'return_source',
             'bidang_returned_at',
             'bidang_return_reason',
             'status',
@@ -2249,7 +2248,7 @@ class TeamVerifikasiController extends Controller
         foreach ($bidangList as $kode => $nama) {
             $count = Dokumen::where('current_handler', 'team_verifikasi')
                 ->where('status', 'returned_to_bidang')
-                ->where('target_bidang', $kode)
+                ->where('return_source', $kode)
                 ->count();
 
             $bidangStats[] = [
@@ -2375,7 +2374,7 @@ class TeamVerifikasiController extends Controller
             $dokumen->update([
                 'status' => 'returned_to_bidang',
                 'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
-                'target_bidang' => $targetBidang,
+                'return_source' => $targetBidang,
                 'bidang_returned_at' => now(),
                 'bidang_return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
                 'was_returned_by_verifikasi' => true, // Flag for conditional routing
@@ -2391,7 +2390,7 @@ class TeamVerifikasiController extends Controller
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
                 'original_bagian' => $bagian,
-                'target_bidang' => $targetBidang,
+                'return_source' => $targetBidang,
                 'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
             ]);
 
@@ -2413,7 +2412,7 @@ class TeamVerifikasiController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Dokumen berhasil dikembalikan ke bidang {$bidangName}.",
-                'target_bidang' => $targetBidang,
+                'return_source' => $targetBidang,
                 'bidang_name' => $bidangName,
                 'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
             ]);
@@ -2454,7 +2453,7 @@ class TeamVerifikasiController extends Controller
             // Update document to return to main list
             $dokumen->update([
                 'status' => 'sent_to_team_verifikasi',
-                'target_bidang' => null,
+                'return_source' => null,
                 'bidang_returned_at' => null,
                 'bidang_return_reason' => null,
             ]);
@@ -2514,7 +2513,7 @@ class TeamVerifikasiController extends Controller
                 'alasan_pengembalian' => $request->alasan_pengembalian,
                 'returned_to_Operator_at' => now(),
                 // Clear bidang return fields if they exist
-                'target_bidang' => null,
+                'return_source' => null,
                 'bidang_returned_at' => null,
                 'bidang_return_reason' => null,
                 // Unified return fields (Phase 1 Opsi B)

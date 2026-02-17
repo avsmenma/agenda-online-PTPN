@@ -4059,10 +4059,10 @@
                     @if($isReturnedToVerifikasi)
                       {{-- Dokumen dikembalikan oleh Perpajakan/Akutansi --}}
                       @php
-                        $returnedByLabel = match($dokumen->target_department) {
+                        $returnedByLabel = match($dokumen->return_source) {
                           'perpajakan' => 'Perpajakan',
                           'akutansi' => 'Akutansi',
-                          default => Str::title($dokumen->target_department ?? 'Bidang'),
+                          default => Str::title($dokumen->return_source ?? 'Bidang'),
                         };
                       @endphp
                       <span class="badge-status badge-dikembalikan" style="position: relative;">
@@ -4189,7 +4189,7 @@
                       <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
                     @elseif($dokumen->status == 'returned_to_department')
                       <span class="badge-status badge-dikembalikan">
-                        Dikembalikan dari {{ Str::title($dokumen->target_department ?? 'Bagian Terkait') }}
+                        Dikembalikan dari {{ Str::title($dokumen->return_source ?? 'Bagian Terkait') }}
                       </span>
                     @elseif(Str::startsWith($dokumen->status, 'returned_from_'))
                       @php
@@ -4429,7 +4429,7 @@
               .then(data => {
                 if (data.success) {
                   // Show success message
-                  alert('Dokumen berhasil dikembalikan ke ' + (data.target_bidang || 'Bidang'));
+                  alert('Dokumen berhasil dikembalikan ke ' + (data.return_source || 'Bidang'));
                   closeReturnToBidangModal();
 
                   // Remove row from table
@@ -5742,7 +5742,7 @@
                               modal.hide();
 
                               // Show success notification
-                              showNotification(`Dokumen berhasil dikembalikan ke bidang ${data.target_bidang}`, 'success');
+                              showNotification(`Dokumen berhasil dikembalikan ke bidang ${data.return_source}`, 'success');
 
                               // Reload page after 2 seconds
                               setTimeout(() => {
