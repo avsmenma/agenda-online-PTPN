@@ -6,12 +6,12 @@ use Illuminate\Http\Request;
 
 class PengembalianDokumenController extends Controller
 {
-     public function index(){
+    public function index()
+    {
         // Operator only sees returned documents (status = returned_to_Operator)
         $dokumens = \App\Models\Dokumen::where('created_by', 'operator')
             ->where('status', 'returned_to_Operator')
-            ->latest('returned_to_Operator_at')
-            ->select(['*', 'alasan_pengembalian']) // Ensure alasan_pengembalian is loaded
+            ->latest('returned_at')
             ->paginate(10);
 
         // Get statistics

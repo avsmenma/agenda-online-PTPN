@@ -1068,7 +1068,7 @@
                                   <span>{{ $statusText }}</span>
                                 </span>
                               @endif
-                              @php $returnReasonDisplay = $doc->return_reason ?? $doc->bidang_return_reason; @endphp
+                              @php $returnReasonDisplay = $doc->return_reason; @endphp
                               @if($displayStatus == 'dikembalikan' && $returnReasonDisplay)
                                 <div class="return-reason-display"
                                   style="margin-top: 6px; padding: 6px 10px; background: #fef3c7; border-radius: 6px; font-size: 10px; color: #92400e; border-left: 3px solid #f59e0b; max-width: 200px;"

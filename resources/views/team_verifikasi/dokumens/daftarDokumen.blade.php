@@ -4069,10 +4069,10 @@
                         <i class="fa-solid fa-rotate-left me-1"></i>
                         <span>Dikembalikan oleh {{ $returnedByLabel }}</span>
                       </span>
-                      @if($dokumen->return_reason ?? $dokumen->department_return_reason)
+                      @if($dokumen->return_reason)
                         <div style="font-size: 10px; color: #ef4444; margin-top: 4px; max-width: 160px; word-wrap: break-word;">
                           <i class="fa-solid fa-comment-dots me-1"></i>
-                          {{ Str::limit($dokumen->return_reason ?? $dokumen->department_return_reason, 50) }}
+                          {{ Str::limit($dokumen->return_reason, 50) }}
                         </div>
                       @endif
                     @elseif($isRejected)

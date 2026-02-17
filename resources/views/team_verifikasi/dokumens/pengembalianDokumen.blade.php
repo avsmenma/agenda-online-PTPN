@@ -574,8 +574,8 @@
     }
   </style>
   <!-- <div class="card mb-4 p-3" style="background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%); border-radius: 10px; box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05); border: 1px solid rgba(8, 62, 64, 0.08);">
-      <h2 class="form-title">{{ $title }}</h2>
-  </div> -->
+        <h2 class="form-title">{{ $title }}</h2>
+    </div> -->
   <h2 style="margin-bottom: 50px; font-weight: 700;">{{ $title }}</h2>
 
   <div class="row justify-content-center  pb-0 mb-3" style="width :100%;">
@@ -647,29 +647,29 @@
               <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
             </td>
             <td>
-              @if($dokumen->returned_at ?? $dokumen->department_returned_at)
-                <small>{{ ($dokumen->returned_at ?? $dokumen->department_returned_at)->format('d/m/Y H:i') }}</small>
+              @if($dokumen->returned_at)
+                <small>{{ $dokumen->returned_at->format('d/m/Y H:i') }}</small>
               @else
                 <small>-</small>
               @endif
             </td>
             <td class="alasan-column">
               <div style="
-                  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-                  padding: 10px 14px;
-                  border-radius: 8px;
-                  border-left: 3px solid #889717;
-                  word-wrap: break-word;
-                  overflow-wrap: break-word;
-                  word-break: break-word;
-                  white-space: normal;
-                  line-height: 1.6;
-                  font-size: 12px;
-                  color: #555;
-                  min-height: 40px;
-                  display: block;
-                ">
-                {{ $dokumen->return_reason ?? $dokumen->department_return_reason ?? '-' }}
+                      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                      padding: 10px 14px;
+                      border-radius: 8px;
+                      border-left: 3px solid #889717;
+                      word-wrap: break-word;
+                      overflow-wrap: break-word;
+                      word-break: break-word;
+                      white-space: normal;
+                      line-height: 1.6;
+                      font-size: 12px;
+                      color: #555;
+                      min-height: 40px;
+                      display: block;
+                    ">
+                {{ $dokumen->return_reason ?? '-' }}
               </div>
             </td>
           </tr>

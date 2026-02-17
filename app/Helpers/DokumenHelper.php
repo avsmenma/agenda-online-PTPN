@@ -132,8 +132,8 @@ class DokumenHelper
 
         // Don't lock documents that were returned and repaired (only if they have been fixed)
         // Check if document was returned but has been fixed and re-sent
-        if ($dokumen->department_returned_at) {
-            // Document was returned from department, check if it has been fixed
+        if ($dokumen->returned_at) {
+            // Document was returned, check if it has been fixed
             // If it has a deadline set, it means it's been fixed and re-sent
             if ($hasDeadline) {
                 $isLocked = false;

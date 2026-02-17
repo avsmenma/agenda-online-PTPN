@@ -291,7 +291,6 @@ class TeamVerifikasiController extends Controller
                 'dokumens.tanggal_masuk',
                 'dokumens.tanggal_spp',
                 'dokumens.keterangan',
-                'dokumens.alasan_pengembalian',
                 // Deadline fields are now in dokumen_role_data table - use aliases for easier access
                 'team_verifikasi_data.deadline_at as deadline_at',
                 'team_verifikasi_data.deadline_days as deadline_days',
@@ -1060,7 +1059,7 @@ class TeamVerifikasiController extends Controller
 
             // Check if document is returned document and redirect accordingly
             $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
-                $dokumen->department_returned_at);
+                ($dokumen->returned_at && in_array($dokumen->status, ['returned_to_department', 'returned_to_bidang'])));
 
             // Also check referer to be more accurate
             $referer = request()->header('referer');
@@ -2031,9 +2030,7 @@ class TeamVerifikasiController extends Controller
                 'status' => 'returned_to_department',
                 'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
                 'return_source' => $request->return_source,
-                'department_returned_at' => now(),
-                'department_return_reason' => $request->department_return_reason,
-                // Unified return fields (Phase 1 Opsi B)
+                // Unified return fields
                 'return_reason' => $request->department_return_reason,
                 'returned_at' => now(),
             ]);
@@ -2184,7 +2181,7 @@ class TeamVerifikasiController extends Controller
         // Get documents with status = 'returned_to_bidang' and current_handler = 'team_verifikasi'
         $query = Dokumen::where('current_handler', 'team_verifikasi')
             ->where('status', 'returned_to_bidang')
-            ->latest('bidang_returned_at');
+            ->latest('returned_at');
 
         // Filter by specific bidang if provided
         if ($request->has('bidang') && $request->bidang) {
@@ -2209,8 +2206,8 @@ class TeamVerifikasiController extends Controller
             'uraian_spp',
             'nilai_rupiah',
             'return_source',
-            'bidang_returned_at',
-            'bidang_return_reason',
+            'returned_at',
+            'return_reason',
             'status',
             'created_at',
             'updated_at',
@@ -2375,11 +2372,7 @@ class TeamVerifikasiController extends Controller
                 'status' => 'returned_to_bidang',
                 'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
                 'return_source' => $targetBidang,
-                'bidang_returned_at' => now(),
-                'bidang_return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
-                'was_returned_by_verifikasi' => true, // Flag for conditional routing
-                // Unified return fields (Phase 1 Opsi B)
-                'return_source' => 'team_verifikasi',
+                // Unified return fields
                 'return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
                 'returned_at' => now(),
             ]);
@@ -2454,8 +2447,8 @@ class TeamVerifikasiController extends Controller
             $dokumen->update([
                 'status' => 'sent_to_team_verifikasi',
                 'return_source' => null,
-                'bidang_returned_at' => null,
-                'bidang_return_reason' => null,
+                'return_reason' => null,
+                'returned_at' => null,
             ]);
 
             \DB::commit();
@@ -2510,13 +2503,7 @@ class TeamVerifikasiController extends Controller
             $dokumen->update([
                 'status' => 'returned_to_Operator',
                 'current_handler' => 'operator',
-                'alasan_pengembalian' => $request->alasan_pengembalian,
-                'returned_to_Operator_at' => now(),
-                // Clear bidang return fields if they exist
-                'return_source' => null,
-                'bidang_returned_at' => null,
-                'bidang_return_reason' => null,
-                // Unified return fields (Phase 1 Opsi B)
+                // Unified return fields
                 'return_source' => 'team_verifikasi',
                 'return_reason' => $request->alasan_pengembalian,
                 'returned_at' => now(),

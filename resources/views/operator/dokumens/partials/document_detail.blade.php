@@ -80,10 +80,10 @@
     <span
       class="detail-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/d/Y') : '-' }}</span>
   </div>
-  @if($dokumen->return_reason ?? $dokumen->alasan_pengembalian)
+  @if($dokumen->return_reason)
     <div class="detail-item">
       <span class="detail-label">Alasan Pengembalian</span>
-      <span class="detail-value text-danger">{{ $dokumen->return_reason ?? $dokumen->alasan_pengembalian }}</span>
+      <span class="detail-value text-danger">{{ $dokumen->return_reason }}</span>
     </div>
   @endif
   <div class="detail-item">

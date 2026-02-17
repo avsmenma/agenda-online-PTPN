@@ -172,7 +172,9 @@ class DocumentPreviewController extends Controller
             // Update document status
             $dokumen->status = 'returned_to_department';
             $dokumen->current_handler = 'bagian';
-            $dokumen->alasan_pengembalian = $request->input('reason');
+            $dokumen->return_reason = $request->input('reason');
+            $dokumen->return_source = 'team_verifikasi';
+            $dokumen->returned_at = now();
             $dokumen->save();
 
             // Update role data

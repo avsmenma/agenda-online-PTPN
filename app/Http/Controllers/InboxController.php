@@ -439,16 +439,16 @@ class InboxController extends Controller
                 $dokumen->current_handler = 'team_verifikasi';
                 $dokumen->status = 'returned_to_department';
                 $dokumen->return_source = 'perpajakan';
-                $dokumen->department_returned_at = now();
-                $dokumen->department_return_reason = $request->reason;
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
                 $dokumen->save();
             } elseif ($roleCode === 'akutansi') {
                 // Akutansi menolak -> kembali ke Perpajakan (pengirim sebelumnya)
                 $dokumen->current_handler = 'perpajakan';
                 $dokumen->status = 'returned_to_department';
                 $dokumen->return_source = 'akutansi';
-                $dokumen->department_returned_at = now();
-                $dokumen->department_return_reason = $request->reason;
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
                 $dokumen->save();
             }
             // Pembayaran -> Akutansi
@@ -456,8 +456,8 @@ class InboxController extends Controller
                 $dokumen->current_handler = 'akutansi';
                 $dokumen->status = 'returned_to_department';
                 $dokumen->return_source = 'akutansi';
-                $dokumen->department_returned_at = now();
-                $dokumen->department_return_reason = $request->reason;
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
                 $dokumen->save();
             }
 

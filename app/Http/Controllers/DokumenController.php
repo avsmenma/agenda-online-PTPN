@@ -490,7 +490,7 @@ class DokumenController extends Controller
                 'step' => 'Dikembalikan ke Ibu Tarapul',
                 'status' => 'completed',
                 'time' => $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d M Y H:i') : '',
-                'description' => $dokumen->alasan_pengembalian ? 'Dikembalikan: ' . $dokumen->alasan_pengembalian : 'Dokumen dikembalikan untuk perbaikan',
+                'description' => $dokumen->return_reason ? 'Dikembalikan: ' . $dokumen->return_reason : 'Dokumen dikembalikan untuk perbaikan',
                 'percentage' => 40
             ];
 

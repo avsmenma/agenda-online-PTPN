@@ -699,8 +699,8 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 8: Dikembalikan
-        if ($dokumen->returned_to_Operator_at || $dokumen->department_returned_at || $dokumen->bidang_returned_at) {
-            $returnTime = $dokumen->returned_to_Operator_at ?? $dokumen->department_returned_at ?? $dokumen->bidang_returned_at;
+        if ($dokumen->returned_to_Operator_at || $dokumen->returned_at) {
+            $returnTime = $dokumen->returned_to_Operator_at ?? $dokumen->returned_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $returnTime) : null;
 
             $events[] = [
@@ -712,7 +712,7 @@ class OwnerDashboardController extends Controller
                 'info' => [
                     'Dikembalikan oleh' => $this->getRoleDisplayName($dokumen->current_handler),
                     'Dikembalikan ke' => $this->getReturnDestination($dokumen),
-                    'Alasan' => $dokumen->alasan_pengembalian ?? $dokumen->department_return_reason ?? $dokumen->bidang_return_reason,
+                    'Alasan' => $dokumen->return_reason,
                 ]
             ];
             $previousTime = $returnTime;
@@ -1350,9 +1350,9 @@ class OwnerDashboardController extends Controller
     {
         if ($dokumen->returned_to_Operator_at)
             return 'Operator';
-        if ($dokumen->department_returned_at)
+        if ($dokumen->return_source === 'perpajakan' || $dokumen->return_source === 'akutansi' || $dokumen->return_source === 'pembayaran')
             return 'Ibu Tarapul (Department)';
-        if ($dokumen->bidang_returned_at)
+        if ($dokumen->returned_at)
             return 'Team Verifikasi';
         return 'Tidak Diketahui';
     }
@@ -2055,31 +2055,31 @@ class OwnerDashboardController extends Controller
                 'from' => 'tax',
                 'to' => 'reviewer',
                 'timestamp' => $dokumen->returned_from_perpajakan_at,
-                'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Team Perpajakan',
                 'returned_to' => 'Ibu Yuni'
             ];
         }
 
         // Return from Ibu Yuni to Bidang
-        if ($dokumen->bidang_returned_at) {
+        if ($dokumen->status === 'returned_to_bidang' && $dokumen->returned_at) {
             $returns[] = [
                 'from' => 'reviewer',
                 'to' => 'bidang',
-                'timestamp' => $dokumen->bidang_returned_at,
-                'reason' => $dokumen->bidang_return_reason ?? 'Tidak ada alasan',
+                'timestamp' => $dokumen->returned_at,
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
                 'returned_to' => 'Bidang: ' . ($dokumen->return_source ?? 'Tidak diketahui')
             ];
         }
 
         // Return to Department
-        if ($dokumen->department_returned_at) {
+        if ($dokumen->status === 'returned_to_department' && $dokumen->returned_at) {
             $returns[] = [
                 'from' => $dokumen->current_handler === 'perpajakan' ? 'tax' : ($dokumen->current_handler === 'akutansi' ? 'accounting' : 'reviewer'),
                 'to' => 'department',
-                'timestamp' => $dokumen->department_returned_at,
-                'reason' => $dokumen->department_return_reason ?? 'Tidak ada alasan',
+                'timestamp' => $dokumen->returned_at,
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => $this->getRoleDisplayName($dokumen->current_handler),
                 'returned_to' => 'Department'
             ];
@@ -2091,7 +2091,7 @@ class OwnerDashboardController extends Controller
                 'from' => 'reviewer',
                 'to' => 'sender',
                 'timestamp' => $dokumen->returned_to_Operator_at,
-                'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
                 'returned_to' => 'Operator'
             ];
@@ -2149,15 +2149,15 @@ class OwnerDashboardController extends Controller
             }
         } elseif ($stageId === 'reviewer') {
             // Check if returned to bidang and sent back
-            if ($dokumen->bidang_returned_at) {
+            if ($dokumen->returned_at && $dokumen->status === 'returned_to_bidang') {
                 $hasCycle = true;
-                $returnTimestamp = $dokumen->bidang_returned_at;
+                $returnTimestamp = $dokumen->returned_at;
                 $attemptCount = 1;
 
                 // Check if processed again after return from bidang
                 if (
                     $dokumen->processed_at &&
-                    $dokumen->processed_at->gt($dokumen->bidang_returned_at)
+                    $dokumen->processed_at->gt($dokumen->returned_at)
                 ) {
                     $isResend = true;
                     $resendTimestamp = $dokumen->processed_at;

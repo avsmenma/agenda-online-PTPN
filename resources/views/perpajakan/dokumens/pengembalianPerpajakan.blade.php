@@ -706,7 +706,7 @@
                       // Determine status: "Menunggu Perbaikan" or "Perbaikan Selesai"
                       $roleDataStatus = $dokumen->getDataForRole('perpajakan');
                       $receivedAtStatus = $roleDataStatus?->received_at;
-                      $returnedAtStatus = $dokumen->department_returned_at;
+                      $returnedAtStatus = $dokumen->returned_at;
 
                       $isPerbaikanSelesai = false;
                       if ($receivedAtStatus && $returnedAtStatus) {
@@ -731,11 +731,11 @@
                     <small>
                       @php
                         // Tanggal Terima = tanggal Team Verifikasi mengirim kembali dokumen ke Perpajakan
-                        // Hanya tampilkan jika received_at LEBIH BARU dari department_returned_at
+                        // Hanya tampilkan jika received_at LEBIH BARU dari returned_at
                         // (artinya dokumen sudah dikirim ulang setelah dikembalikan)
                         $roleData = $dokumen->getDataForRole('perpajakan');
                         $receivedAt = $roleData?->received_at;
-                        $returnedAt = $dokumen->department_returned_at;
+                        $returnedAt = $dokumen->returned_at;
 
                         $resendDate = null;
                         if ($receivedAt && $returnedAt) {
@@ -755,8 +755,8 @@
                   </td>
                   <td class="tanggal-column">
                     <small>
-                      @if($dokumen->department_returned_at)
-                        {{ $dokumen->department_returned_at->format('d/m/Y H:i') }}
+                      @if($dokumen->returned_at)
+                        {{ $dokumen->returned_at->format('d/m/Y H:i') }}
                       @else
                         -
                       @endif
@@ -765,16 +765,13 @@
                   <td class="alasan-column">
                     @php
                       // Get rejection reason - first try alasan_pengembalian, then check roleStatuses
-                      $rejectionReason = $dokumen->return_reason ?? $dokumen->alasan_pengembalian;
+                      $rejectionReason = $dokumen->return_reason;
                       if (empty($rejectionReason)) {
                         // Check roleStatuses for rejection reason from akutansi
                         $akutansiStatus = $dokumen->roleStatuses->where('role_code', 'akutansi')->where('status', 'rejected')->first();
                         if ($akutansiStatus && !empty($akutansiStatus->notes)) {
                           $rejectionReason = $akutansiStatus->notes;
                         }
-                      }
-                      if (empty($rejectionReason)) {
-                        $rejectionReason = $dokumen->department_return_reason;
                       }
                     @endphp
                     <div class="alasan-bubble">
@@ -1530,11 +1527,11 @@
 
       // Show loading
       detailContent.innerHTML = `
-                          <div class="text-center p-4">
-                            <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
-                            <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
-                          </div>
-                        `;
+                            <div class="text-center p-4">
+                              <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40;"></i> 
+                              <span style="color: #083E40; font-weight: 600;">Loading detail...</span>
+                            </div>
+                          `;
 
       fetch(`/documents/perpajakan/${docId}/detail`, {
         headers: {
@@ -1632,11 +1629,11 @@
       // Generate detail items HTML
       for (const [label, value] of Object.entries(detailItems)) {
         html += `
-                            <div class="detail-item">
-                              <div class="detail-label">${label}</div>
-                              <div class="detail-value">${value}</div>
-                            </div>
-                          `;
+                              <div class="detail-item">
+                                <div class="detail-label">${label}</div>
+                                <div class="detail-value">${value}</div>
+                              </div>
+                            `;
       }
 
       html += '</div>';
@@ -1655,18 +1652,18 @@
       const toast = document.createElement('div');
       toast.className = `toast-notification toast-${type}`;
       toast.innerHTML = `
-                  <div class="toast-icon">
-                    <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
-                  </div>
-                  <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
-                  </div>
-                  <button class="toast-close" onclick="closeToast(this.parentElement)">
-                    <i class="fa-solid fa-times"></i>
-                  </button>
-                  ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
-                `;
+                    <div class="toast-icon">
+                      <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
+                    </div>
+                    <div class="toast-content">
+                      <div class="toast-title">${title}</div>
+                      <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="closeToast(this.parentElement)">
+                      <i class="fa-solid fa-times"></i>
+                    </button>
+                    ${autoClose ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
+                  `;
       toast.style.position = 'relative';
 
       container.appendChild(toast);
@@ -1773,11 +1770,11 @@
 
       // Show loading state
       modalBody.innerHTML = `
-                      <div class="text-center p-4">
-                        <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
-                        <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
-                      </div>
-                    `;
+                        <div class="text-center p-4">
+                          <i class="fa-solid fa-spinner fa-spin me-2" style="color: #083E40; font-size: 24px;"></i>
+                          <p style="color: #083E40; font-weight: 600; margin-top: 12px;">Memuat data dokumen...</p>
+                        </div>
+                      `;
 
       // Fetch document details
       fetch(`/documents/perpajakan/${docId}/detail`, {

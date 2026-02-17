@@ -469,9 +469,9 @@
             <td>{{ $dokumen->nomor_spp }}</td>
             <td>{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y H:i') : '-' }}</td>
             <td>
-              @if($dokumen->return_reason ?? $dokumen->alasan_pengembalian)
+              @if($dokumen->return_reason)
                 <div class="alasan-pengembalian">
-                  @php $displayReason = $dokumen->return_reason ?? $dokumen->alasan_pengembalian; @endphp
+                  @php $displayReason = $dokumen->return_reason; @endphp
                   <span class="alasan-text">{{ Str::limit($displayReason, 100) }}</span>
                   @if(strlen($displayReason) > 100)
                     <button class="btn-link btn-sm" onclick="toggleAlasan({{ $dokumen->id }})">
@@ -531,11 +531,10 @@
                     <span class="detail-label">Status</span>
                     <span class="detail-value">{{ $dokumen->status }}</span>
                   </div>
-                  @if($dokumen->return_reason ?? $dokumen->alasan_pengembalian)
+                  @if($dokumen->return_reason)
                     <div class="detail-item">
                       <span class="detail-label">Alasan Pengembalian</span>
-                      <span
-                        class="detail-value text-danger">{{ $dokumen->return_reason ?? $dokumen->alasan_pengembalian }}</span>
+                      <span class="detail-value text-danger">{{ $dokumen->return_reason }}</span>
                     </div>
                   @endif
                   <div class="detail-item">

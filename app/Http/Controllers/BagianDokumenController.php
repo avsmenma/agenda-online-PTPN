@@ -713,7 +713,7 @@ class BagianDokumenController extends Controller
         }
 
         // Conditional routing: if returned by Team Verifikasi, send directly back to them
-        if ($dokumen->was_returned_by_verifikasi) {
+        if ($dokumen->return_source === 'team_verifikasi') {
             return $this->sendBackToVerifikasi($request, $dokumen, $bagianCode);
         }
 
@@ -787,7 +787,7 @@ class BagianDokumenController extends Controller
             $dokumen->update([
                 'status' => 'sent_to_team_verifikasi',
                 'current_handler' => 'team_verifikasi',
-                'was_returned_by_verifikasi' => false, // Reset flag
+                // return_source is cleared via unified fields below
                 'resent_to_verifikasi_at' => $now,
                 // Clear unified return fields (Phase 1 Opsi B)
                 'return_source' => null,
