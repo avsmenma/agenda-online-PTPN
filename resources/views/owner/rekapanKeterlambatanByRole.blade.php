@@ -5,8 +5,8 @@
 
   <style>
     /* ═══════════════════════════════════════════════════════════
-               REKAPAN KETERLAMBATAN — MODERN REDESIGN
-               ═══════════════════════════════════════════════════════════ */
+                 REKAPAN KETERLAMBATAN — MODERN REDESIGN
+                 ═══════════════════════════════════════════════════════════ */
 
     :root {
       --rk-primary: #0f766e;
@@ -1573,6 +1573,7 @@
         <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="filterForm"
           class="filter-form">
           <input type="hidden" name="filter_age" value="{{ request('filter_age') }}">
+          <input type="hidden" name="status_filter" value="{{ request('status_filter', 'all') }}">
 
           <!-- Search Bar -->
           <div class="filter-row">
@@ -1775,12 +1776,12 @@
                   <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
                   <div class="card-subtitle">SPP: {{ $dokumen->nomor_spp }}</div>
                 </div>
-                  @if(isset($dokumen->is_completed))
-                    <span class="rk-badge {{ $dokumen->is_completed ? 'rk-badge-completed' : 'rk-badge-active' }}">
-                      <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
-                      {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
-                    </span>
-                  @endif
+                @if(isset($dokumen->is_completed))
+                  <span class="rk-badge {{ $dokumen->is_completed ? 'rk-badge-completed' : 'rk-badge-active' }}">
+                    <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
+                    {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
+                  </span>
+                @endif
               </div>
               <div class="card-value">
                 Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}
@@ -1800,23 +1801,23 @@
                   @endif
                 </span>
               </div>
-                <div class="card-info-row">
-                  <i class="fas fa-info-circle"></i>
-                  <span>Status:</span>
-                  @if(isset($dokumen->is_completed) && $dokumen->is_completed)
-                    <span class="rk-badge rk-badge-completed rk-badge-sm">
-                      @if($roleCode === 'pembayaran')
-                        <i class="fas fa-check-circle"></i> Sudah Dibayar
-                      @else
-                        <i class="fas fa-paper-plane"></i> Sudah Dikirim
-                      @endif
-                    </span>
-                  @else
-                    <span class="rk-badge rk-badge-active rk-badge-sm">
-                      <i class="fas fa-spinner"></i> Sedang Diproses
-                    </span>
-                  @endif
-                </div>
+              <div class="card-info-row">
+                <i class="fas fa-info-circle"></i>
+                <span>Status:</span>
+                @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                  <span class="rk-badge rk-badge-completed rk-badge-sm">
+                    @if($roleCode === 'pembayaran')
+                      <i class="fas fa-check-circle"></i> Sudah Dibayar
+                    @else
+                      <i class="fas fa-paper-plane"></i> Sudah Dikirim
+                    @endif
+                  </span>
+                @else
+                  <span class="rk-badge rk-badge-active rk-badge-sm">
+                    <i class="fas fa-spinner"></i> Sedang Diproses
+                  </span>
+                @endif
+              </div>
             </div>
 
           @endforeach
@@ -1894,10 +1895,10 @@
           <p class="text-muted">Dokumen akan ditampilkan di sini ketika tersedia</p>
         </div>
       @else
-          <div class="table-container">
-            <h6 class="rk-table-heading">
-              <span>Daftar Dokumen (Total: {{ $totalDocuments }})</span>
-            </h6>
+        <div class="table-container">
+          <h6 class="rk-table-heading">
+            <span>Daftar Dokumen (Total: {{ $totalDocuments }})</span>
+          </h6>
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -1963,17 +1964,17 @@
                         @endif
                       </span>
                     </td>
-                      <td>
-                        @if(isset($dokumen->is_completed) && $dokumen->is_completed)
-                          <span class="rk-badge rk-badge-completed rk-badge-sm">
-                            <i class="fas fa-paper-plane"></i> Selesai
-                          </span>
-                        @else
-                          <span class="rk-badge rk-badge-active rk-badge-sm">
-                            <i class="fas fa-spinner"></i> Aktif
-                          </span>
-                        @endif
-                      </td>
+                    <td>
+                      @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                        <span class="rk-badge rk-badge-completed rk-badge-sm">
+                          <i class="fas fa-paper-plane"></i> Selesai
+                        </span>
+                      @else
+                        <span class="rk-badge rk-badge-active rk-badge-sm">
+                          <i class="fas fa-spinner"></i> Aktif
+                        </span>
+                      @endif
+                    </td>
                   </tr>
 
                 @endforeach
@@ -2115,390 +2116,390 @@
   </div>
 
   <script>
-      // Filter Pan  el Functionality
-      let filterPanelExpanded = false;
+    // Filter Pan  el Functionality
+    let filterPanelExpanded = false;
 
-      function toggleFilterPanel() {
-        const panel = document.getElementById('filterPanel');
-        const icon = document.getElementById('filterToggleIcon');
-        filterPanelExpanded = !filterPanelExpanded;
+    function toggleFilterPanel() {
+      const panel = document.getElementById('filterPanel');
+      const icon = document.getElementById('filterToggleIcon');
+      filterPanelExpanded = !filterPanelExpanded;
 
-        if (filterPanelExpanded) {
-          panel.style.display = 'block';
-          icon.classList.remove('fa-chevron-down');
-          icon.classList.add('fa-chevron-up');
-        } else {
-          panel.style.display = 'none';
-          icon.classList.remove('fa-chevron-up');
-          icon.classList.add('fa-chevron-down');
+      if (filterPanelExpanded) {
+        panel.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+      } else {
+        panel.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+      }
+
+      updateActiveFilterCount();
+    }
+
+    function applyFilter() {
+      const form = document.getElementById('filterForm');
+      form.submit();
+    }
+
+    function resetFilters() {
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
+      const filterAge = params.get('filter_age');
+
+      // Clear all filter_ parameters
+      for (let key of Array.from(params.keys())) {
+        if (key.startsWith('filter_') || key === 'search' || key === 'year' || key === 'month') {
+          params.delete(key);
         }
-
-        updateActiveFilterCount();
       }
 
-      function applyFilter() {
-        const form = document.getElementById('filterForm');
-        form.submit();
+      // Preserve filter_age if exists
+      if (filterAge) {
+        params.set('filter_age', filterAge);
       }
 
-      function resetFilters() {
-        const currentUrl = new URL(window.location.href);
-        const params = currentUrl.searchParams;
-        const filterAge = params.get('filter_age');
+      window.location.href = currentUrl.toString();
+    }
 
-        // Clear all filter_ parameters
-        for (let key of Array.from(params.keys())) {
-          if (key.startsWith('filter_') || key === 'search' || key === 'year' || key === 'month') {
-            params.delete(key);
+    function updateActiveFilterCount() {
+      const form = document.getElementById('filterForm');
+      const formData = new FormData(form);
+      let count = 0;
+
+      // Count active filters
+      for (let [key, value] of formData.entries()) {
+        if (key.startsWith('filter_') && value && value !== '') {
+          count++;
+        }
+        if ((key === 'year' || key === 'month') && value && value !== '') {
+          count++;
+        }
+        if (key === 'search' && value && value !== '') {
+          count++;
+        }
+      }
+
+      const badge = document.getElementById('activeFilterCount');
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline-block' : 'none';
+
+      updateActiveFilterBadges();
+    }
+
+    function updateActiveFilterBadges() {
+      const form = document.getElementById('filterForm');
+      const formData = new FormData(form);
+      const badgesContainer = document.getElementById('activeFilters');
+      badgesContainer.innerHTML = '';
+
+      const filterLabels = {
+        'filter_bagian': 'Bagian',
+        'filter_vendor': 'Vendor',
+        'filter_kriteria_cf': 'Kriteria CF',
+        'filter_sub_kriteria': 'Sub Kriteria',
+        'filter_item_sub_kriteria': 'Item Sub Kriteria',
+        'filter_kebun': 'Kebun',
+        'year': 'Tahun',
+        'search': 'Pencarian',
+        'filter_age': 'Umur Dokumen'
+      };
+
+      const filterAgeLabels = {
+        '1': '1 Hari',
+        '2': '2 Hari',
+        '3+': '3+ Hari'
+      };
+
+      for (let [key, value] of formData.entries()) {
+        if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
+          const label = filterLabels[key] || key;
+          let displayValue = getFilterDisplayValue(key, value);
+          if (key === 'filter_age') {
+            displayValue = filterAgeLabels[value] || value;
           }
-        }
-
-        // Preserve filter_age if exists
-        if (filterAge) {
-          params.set('filter_age', filterAge);
-        }
-
-        window.location.href = currentUrl.toString();
-      }
-
-      function updateActiveFilterCount() {
-        const form = document.getElementById('filterForm');
-        const formData = new FormData(form);
-        let count = 0;
-
-        // Count active filters
-        for (let [key, value] of formData.entries()) {
-          if (key.startsWith('filter_') && value && value !== '') {
-            count++;
-          }
-          if ((key === 'year' || key === 'month') && value && value !== '') {
-            count++;
-          }
-          if (key === 'search' && value && value !== '') {
-            count++;
-          }
-        }
-
-        const badge = document.getElementById('activeFilterCount');
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
-
-        updateActiveFilterBadges();
-      }
-
-      function updateActiveFilterBadges() {
-        const form = document.getElementById('filterForm');
-        const formData = new FormData(form);
-        const badgesContainer = document.getElementById('activeFilters');
-        badgesContainer.innerHTML = '';
-
-        const filterLabels = {
-          'filter_bagian': 'Bagian',
-          'filter_vendor': 'Vendor',
-          'filter_kriteria_cf': 'Kriteria CF',
-          'filter_sub_kriteria': 'Sub Kriteria',
-          'filter_item_sub_kriteria': 'Item Sub Kriteria',
-          'filter_kebun': 'Kebun',
-          'year': 'Tahun',
-          'search': 'Pencarian',
-          'filter_age': 'Umur Dokumen'
-        };
-
-        const filterAgeLabels = {
-          '1': '1 Hari',
-          '2': '2 Hari',
-          '3+': '3+ Hari'
-        };
-
-        for (let [key, value] of formData.entries()) {
-          if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
-            const label = filterLabels[key] || key;
-            let displayValue = getFilterDisplayValue(key, value);
-            if (key === 'filter_age') {
-              displayValue = filterAgeLabels[value] || value;
-            }
-            const badge = document.createElement('span');
-            badge.className = 'filter-badge-item';
-            badge.innerHTML = `
-                                            <span>${label}: ${displayValue}</span>
-                                            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                                              <i class="fas fa-times"></i>
-                                            </button>
-                                          `;
-            badgesContainer.appendChild(badge);
-          }
+          const badge = document.createElement('span');
+          badge.className = 'filter-badge-item';
+          badge.innerHTML = `
+                                              <span>${label}: ${displayValue}</span>
+                                              <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                                                <i class="fas fa-times"></i>
+                                              </button>
+                                            `;
+          badgesContainer.appendChild(badge);
         }
       }
+    }
 
-      function getFilterDisplayValue(key, value) {
-        // Get display value from select options
-        const select = document.querySelector(`[name="${key}"]`);
-        if (select && select.options) {
-          const option = Array.from(select.options).find(opt => opt.value === value);
-          if (option) return option.text;
-        }
-        return value;
+    function getFilterDisplayValue(key, value) {
+      // Get display value from select options
+      const select = document.querySelector(`[name="${key}"]`);
+      if (select && select.options) {
+        const option = Array.from(select.options).find(opt => opt.value === value);
+        if (option) return option.text;
       }
+      return value;
+    }
 
-      function removeFilter(key) {
-        const input = document.querySelector(`[name="${key}"]`);
-        if (input) {
-          input.value = '';
-          applyFilter();
-        }
+    function removeFilter(key) {
+      const input = document.querySelector(`[name="${key}"]`);
+      if (input) {
+        input.value = '';
+        applyFilter();
       }
+    }
 
-      // Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
-      function updateSubKriteriaFilter() {
-        const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
-        const subKriteriaSelect = document.getElementById('filterSubKriteria');
-        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+    // Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
+    function updateSubKriteriaFilter() {
+      const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+      const subKriteriaSelect = document.getElementById('filterSubKriteria');
+      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
 
-        // Enable/disable Sub Kriteria based on Kriteria CF selection
-        if (kriteriaCfId && kriteriaCfId !== '') {
-          subKriteriaSelect.disabled = false;
-          subKriteriaSelect.style.opacity = '1';
-          subKriteriaSelect.style.cursor = 'pointer';
+      // Enable/disable Sub Kriteria based on Kriteria CF selection
+      if (kriteriaCfId && kriteriaCfId !== '') {
+        subKriteriaSelect.disabled = false;
+        subKriteriaSelect.style.opacity = '1';
+        subKriteriaSelect.style.cursor = 'pointer';
 
-          // Show/hide options based on selected kriteria CF
-          Array.from(subKriteriaSelect.options).forEach(option => {
-            if (option.value === '') {
-              option.style.display = 'block';
-              return;
-            }
-            const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
-            if (kriteriaCfIdForOption === kriteriaCfId) {
-              option.style.display = 'block';
-            } else {
-              option.style.display = 'none';
-            }
-          });
-        } else {
-          // Disable Sub Kriteria and reset value if Kriteria CF is not selected
-          subKriteriaSelect.disabled = true;
-          subKriteriaSelect.style.opacity = '0.6';
-          subKriteriaSelect.style.cursor = 'not-allowed';
-          subKriteriaSelect.value = '';
-
-          // Also disable and reset Item Sub Kriteria
-          itemSubKriteriaSelect.disabled = true;
-          itemSubKriteriaSelect.style.opacity = '0.6';
-          itemSubKriteriaSelect.style.cursor = 'not-allowed';
-          itemSubKriteriaSelect.value = '';
-
-          // Show all options when disabled
-          Array.from(subKriteriaSelect.options).forEach(option => {
+        // Show/hide options based on selected kriteria CF
+        Array.from(subKriteriaSelect.options).forEach(option => {
+          if (option.value === '') {
             option.style.display = 'block';
-          });
-        }
-
-        // Update Item Sub Kriteria filter
-        updateItemSubKriteriaFilter();
-      }
-
-      function updateItemSubKriteriaFilter() {
-        const subKriteriaId = document.getElementById('filterSubKriteria').value;
-        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-        const subKriteriaSelect = document.getElementById('filterSubKriteria');
-
-        // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
-        if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
-          itemSubKriteriaSelect.disabled = false;
-          itemSubKriteriaSelect.style.opacity = '1';
-          itemSubKriteriaSelect.style.cursor = 'pointer';
-
-          // Show/hide options based on selected sub kriteria
-          Array.from(itemSubKriteriaSelect.options).forEach(option => {
-            if (option.value === '') {
-              option.style.display = 'block';
-              return;
-            }
-            const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
-            if (subKriteriaIdForOption === subKriteriaId) {
-              option.style.display = 'block';
-            } else {
-              option.style.display = 'none';
-            }
-          });
-        } else {
-          // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
-          itemSubKriteriaSelect.disabled = true;
-          itemSubKriteriaSelect.style.opacity = '0.6';
-          itemSubKriteriaSelect.style.cursor = 'not-allowed';
-          itemSubKriteriaSelect.value = '';
-
-          // Show all options when disabled
-          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            return;
+          }
+          const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+          if (kriteriaCfIdForOption === kriteriaCfId) {
             option.style.display = 'block';
-          });
-        }
-      }
-
-      // View Switcher
-      function switchView(view) {
-        // Update buttons
-        document.querySelectorAll('.view-switcher-btn').forEach(btn => {
-          btn.classList.remove('active');
+          } else {
+            option.style.display = 'none';
+          }
         });
-        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+      } else {
+        // Disable Sub Kriteria and reset value if Kriteria CF is not selected
+        subKriteriaSelect.disabled = true;
+        subKriteriaSelect.style.opacity = '0.6';
+        subKriteriaSelect.style.cursor = 'not-allowed';
+        subKriteriaSelect.value = '';
 
-        // Update views
-        document.getElementById('cardView').classList.toggle('active', view === 'card');
-        document.getElementById('tableView').classList.toggle('active', view === 'table');
+        // Also disable and reset Item Sub Kriteria
+        itemSubKriteriaSelect.disabled = true;
+        itemSubKriteriaSelect.style.opacity = '0.6';
+        itemSubKriteriaSelect.style.cursor = 'not-allowed';
+        itemSubKriteriaSelect.value = '';
 
-        // Save preference
-        localStorage.setItem('rekapanKeterlambatanView', view);
+        // Show all options when disabled
+        Array.from(subKriteriaSelect.options).forEach(option => {
+          option.style.display = 'block';
+        });
       }
 
-      // Initialize on page load
-      document.addEventListener('DOMContentLoaded', function () {
-        // Load saved view preference
-        const savedView = localStorage.getItem('rekapanKeterlambatanView') || 'card';
-        switchView(savedView);
+      // Update Item Sub Kriteria filter
+      updateItemSubKriteriaFilter();
+    }
 
-        // Initialize filter count and panel state
-        updateActiveFilterCount();
+    function updateItemSubKriteriaFilter() {
+      const subKriteriaId = document.getElementById('filterSubKriteria').value;
+      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+      const subKriteriaSelect = document.getElementById('filterSubKriteria');
 
-        // Initialize cascading dropdowns
-        updateSubKriteriaFilter();
-        updateItemSubKriteriaFilter();
+      // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
+      if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+        itemSubKriteriaSelect.disabled = false;
+        itemSubKriteriaSelect.style.opacity = '1';
+        itemSubKriteriaSelect.style.cursor = 'pointer';
 
-        // Auto-expand filter panel if filters are active
-        const form = document.getElementById('filterForm');
-        const formData = new FormData(form);
-        let hasActiveFilters = false;
-        for (let [key, value] of formData.entries()) {
-          if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
-            hasActiveFilters = true;
-            break;
+        // Show/hide options based on selected sub kriteria
+        Array.from(itemSubKriteriaSelect.options).forEach(option => {
+          if (option.value === '') {
+            option.style.display = 'block';
+            return;
           }
-        }
+          const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+          if (subKriteriaIdForOption === subKriteriaId) {
+            option.style.display = 'block';
+          } else {
+            option.style.display = 'none';
+          }
+        });
+      } else {
+        // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
+        itemSubKriteriaSelect.disabled = true;
+        itemSubKriteriaSelect.style.opacity = '0.6';
+        itemSubKriteriaSelect.style.cursor = 'not-allowed';
+        itemSubKriteriaSelect.value = '';
 
-        if (hasActiveFilters) {
-          toggleFilterPanel();
-        }
+        // Show all options when disabled
+        Array.from(itemSubKriteriaSelect.options).forEach(option => {
+          option.style.display = 'block';
+        });
+      }
+    }
+
+    // View Switcher
+    function switchView(view) {
+      // Update buttons
+      document.querySelectorAll('.view-switcher-btn').forEach(btn => {
+        btn.classList.remove('active');
       });
+      document.querySelector(`[data-view="${view}"]`).classList.add('active');
 
-      // Timeframe Filter Function (for horizontal year/month filter)
-      function applyTimeframeFilter() {
-        const yearSelect = document.querySelector('.timeframe-filter-select[name="year"]');
-        const monthSelect = document.querySelector('.timeframe-filter-select[name="month"]');
+      // Update views
+      document.getElementById('cardView').classList.toggle('active', view === 'card');
+      document.getElementById('tableView').classList.toggle('active', view === 'table');
 
-        const currentUrl = new URL(window.location.href);
-        const params = currentUrl.searchParams;
+      // Save preference
+      localStorage.setItem('rekapanKeterlambatanView', view);
+    }
 
-        // Update year parameter
-        if (yearSelect && yearSelect.value) {
-          params.set('year', yearSelect.value);
-        } else if (yearSelect) {
-          params.delete('year');
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+      // Load saved view preference
+      const savedView = localStorage.getItem('rekapanKeterlambatanView') || 'card';
+      switchView(savedView);
+
+      // Initialize filter count and panel state
+      updateActiveFilterCount();
+
+      // Initialize cascading dropdowns
+      updateSubKriteriaFilter();
+      updateItemSubKriteriaFilter();
+
+      // Auto-expand filter panel if filters are active
+      const form = document.getElementById('filterForm');
+      const formData = new FormData(form);
+      let hasActiveFilters = false;
+      for (let [key, value] of formData.entries()) {
+        if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
+          hasActiveFilters = true;
+          break;
         }
-
-        // Update month parameter
-        if (monthSelect && monthSelect.value) {
-          params.set('month', monthSelect.value);
-        } else if (monthSelect) {
-          params.delete('month');
-        }
-
-        // Remove page parameter to go back to first page
-        params.delete('page');
-
-        window.location.href = currentUrl.toString();
       }
 
-      // Change entries per page
-      function changeEntriesPerPage(value) {
-        const currentUrl = new URL(window.location.href);
-        const params = currentUrl.searchParams;
+      if (hasActiveFilters) {
+        toggleFilterPanel();
+      }
+    });
 
-        if (value && value !== '10') {
-          params.set('per_page', value);
-        } else {
-          params.delete('per_page');
-        }
+    // Timeframe Filter Function (for horizontal year/month filter)
+    function applyTimeframeFilter() {
+      const yearSelect = document.querySelector('.timeframe-filter-select[name="year"]');
+      const monthSelect = document.querySelector('.timeframe-filter-select[name="month"]');
 
-        // Reset to page 1 when changing entries
-        params.delete('page');
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
 
-        window.location.href = currentUrl.toString();
+      // Update year parameter
+      if (yearSelect && yearSelect.value) {
+        params.set('year', yearSelect.value);
+      } else if (yearSelect) {
+        params.delete('year');
       }
 
-      // Apply quick search
-      function applyQuickSearch() {
-        const searchValue = document.getElementById('quickSearchInput').value.trim();
-        const currentUrl = new URL(window.location.href);
-        const params = currentUrl.searchParams;
-
-        if (searchValue) {
-          params.set('search', searchValue);
-        } else {
-          params.delete('search');
-        }
-
-        // Reset to page 1 when searching
-        params.delete('page');
-
-        window.location.href = currentUrl.toString();
+      // Update month parameter
+      if (monthSelect && monthSelect.value) {
+        params.set('month', monthSelect.value);
+      } else if (monthSelect) {
+        params.delete('month');
       }
 
-      // Export Modal Functions
-      function showExportModal() {
-        const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
-        exportModal.show();
+      // Remove page parameter to go back to first page
+      params.delete('page');
+
+      window.location.href = currentUrl.toString();
+    }
+
+    // Change entries per page
+    function changeEntriesPerPage(value) {
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
+
+      if (value && value !== '10') {
+        params.set('per_page', value);
+      } else {
+        params.delete('per_page');
       }
 
-      function confirmExport() {
-        const year = document.getElementById('exportYear').value;
-        const month = document.getElementById('exportMonth').value;
-        const status = document.getElementById('exportStatus').value;
+      // Reset to page 1 when changing entries
+      params.delete('page');
 
-        let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
-        const params = new URLSearchParams();
+      window.location.href = currentUrl.toString();
+    }
 
-        if (year) {
-          params.set('year', year);
-        }
-        if (month) {
-          params.set('month', month);
-        }
+    // Apply quick search
+    function applyQuickSearch() {
+      const searchValue = document.getElementById('quickSearchInput').value.trim();
+      const currentUrl = new URL(window.location.href);
+      const params = currentUrl.searchParams;
 
-        // Convert filter_age to status if present and status not manually selected
-        // Read current filter_age from URL
-        const currentUrl = new URL(window.location.href);
-        const filterAge = currentUrl.searchParams.get('filter_age');
-
-        if (status) {
-          // User explicitly selected status in modal - use that
-          params.set('status', status);
-        } else if (filterAge) {
-          // No manual status selection, but filter_age exists in URL
-          // Convert filter_age to status for export compatibility
-          const ageToStatus = {
-            '1': 'aman',
-            '2': 'peringatan',
-            '3+': 'terlambat'
-          };
-          const convertedStatus = ageToStatus[filterAge];
-          if (convertedStatus) {
-            params.set('status', convertedStatus);
-          }
-        }
-
-        if (params.toString()) {
-          exportUrl += '?' + params.toString();
-        }
-
-        // Close Modal
-        const modalEl = document.getElementById('exportModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) {
-          modal.hide();
-        }
-
-        // Redirect to download
-        window.location.href = exportUrl;
+      if (searchValue) {
+        params.set('search', searchValue);
+      } else {
+        params.delete('search');
       }
-    </script>
+
+      // Reset to page 1 when searching
+      params.delete('page');
+
+      window.location.href = currentUrl.toString();
+    }
+
+    // Export Modal Functions
+    function showExportModal() {
+      const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+      exportModal.show();
+    }
+
+    function confirmExport() {
+      const year = document.getElementById('exportYear').value;
+      const month = document.getElementById('exportMonth').value;
+      const status = document.getElementById('exportStatus').value;
+
+      let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
+      const params = new URLSearchParams();
+
+      if (year) {
+        params.set('year', year);
+      }
+      if (month) {
+        params.set('month', month);
+      }
+
+      // Convert filter_age to status if present and status not manually selected
+      // Read current filter_age from URL
+      const currentUrl = new URL(window.location.href);
+      const filterAge = currentUrl.searchParams.get('filter_age');
+
+      if (status) {
+        // User explicitly selected status in modal - use that
+        params.set('status', status);
+      } else if (filterAge) {
+        // No manual status selection, but filter_age exists in URL
+        // Convert filter_age to status for export compatibility
+        const ageToStatus = {
+          '1': 'aman',
+          '2': 'peringatan',
+          '3+': 'terlambat'
+        };
+        const convertedStatus = ageToStatus[filterAge];
+        if (convertedStatus) {
+          params.set('status', convertedStatus);
+        }
+      }
+
+      if (params.toString()) {
+        exportUrl += '?' + params.toString();
+      }
+
+      // Close Modal
+      const modalEl = document.getElementById('exportModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) {
+        modal.hide();
+      }
+
+      // Redirect to download
+      window.location.href = exportUrl;
+    }
+  </script>
 
 @endsection

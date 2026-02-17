@@ -3802,10 +3802,16 @@ class OwnerDashboardController extends Controller
         }
 
         if ($request->has('filter_vendor') && $request->filter_vendor) {
-            $query->where(function ($q) use ($request) {
-                $q->where('dokumens.nama_pengirim', 'like', '%' . $request->filter_vendor . '%')
-                    ->orWhereHas('dibayarKepadas', function ($subQ) use ($request) {
-                        $subQ->where('nama_penerima', 'like', '%' . $request->filter_vendor . '%');
+            $vendorSearch = $request->filter_vendor;
+            $query->where(function ($q) use ($vendorSearch) {
+                // Check legacy dibayar_kepada column on dokumens table
+                $q->where('dokumens.dibayar_kepada', 'like', '%' . $vendorSearch . '%')
+                    // Check related dibayar_kepadas table (new structure)
+                    ->orWhereExists(function ($subQ) use ($vendorSearch) {
+                        $subQ->select(\DB::raw(1))
+                            ->from('dibayar_kepadas')
+                            ->whereColumn('dibayar_kepadas.dokumen_id', 'dokumens.id')
+                            ->where('dibayar_kepadas.nama_penerima', 'like', '%' . $vendorSearch . '%');
                     });
             });
         }
