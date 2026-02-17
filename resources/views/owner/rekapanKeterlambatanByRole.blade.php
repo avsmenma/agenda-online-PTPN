@@ -1,42 +1,93 @@
 @extends('layouts/app')
 @section('content')
 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
-    /* Color Variables - Always use Perpajakan Green Theme */
+    /* ═══════════════════════════════════════════════════════════
+               REKAPAN KETERLAMBATAN — MODERN REDESIGN
+               ═══════════════════════════════════════════════════════════ */
+
     :root {
-      --primary-color: #1a4d3e;
-      --primary-dark: #0f3d2e;
-      --secondary-color: #40916c;
-      --primary-rgba: rgba(26, 77, 62, 0.1);
-      --primary-rgba-dark: rgba(26, 77, 62, 0.2);
-      --primary-border: rgba(26, 77, 62, 0.08);
-      --primary-border-hover: rgba(26, 77, 62, 0.15);
-      --card-green: #28a745;
-      --card-yellow: #ffc107;
-      --card-red: #dc3545;
+      --rk-primary: #0f766e;
+      --rk-primary-dark: #0d5d57;
+      --rk-primary-deep: #134e4a;
+      --rk-secondary: #14b8a6;
+      --rk-accent: #2dd4bf;
+      --rk-surface: #ffffff;
+      --rk-surface-alt: #f0fdfa;
+      --rk-surface-muted: #f8fafc;
+      --rk-text: #0f172a;
+      --rk-text-secondary: #64748b;
+      --rk-text-muted: #94a3b8;
+      --rk-border: #e2e8f0;
+      --rk-border-light: #f1f5f9;
+      --rk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --rk-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --rk-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --rk-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      --rk-shadow-glow: 0 0 20px rgba(20, 184, 166, 0.15);
+      --rk-radius: 12px;
+      --rk-radius-lg: 16px;
+      --rk-radius-xl: 20px;
+      --rk-green: #10b981;
+      --rk-green-bg: #ecfdf5;
+      --rk-green-border: #a7f3d0;
+      --rk-green-text: #065f46;
+      --rk-yellow: #f59e0b;
+      --rk-yellow-bg: #fffbeb;
+      --rk-yellow-border: #fde68a;
+      --rk-yellow-text: #92400e;
+      --rk-red: #ef4444;
+      --rk-red-bg: #fef2f2;
+      --rk-red-border: #fecaca;
+      --rk-red-text: #991b1b;
+      --rk-transition: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    h2 {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    /* ── Page Title ── */
+    .rk-page-title {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--rk-primary) 0%, var(--rk-secondary) 50%, var(--rk-accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 30px;
-      font-weight: 700;
-      font-size: 28px;
-    }
-
-    /* Timeframe Filter - Horizontal Layout */
-    .timeframe-filter-container {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 16px 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e5e7eb;
+      margin-bottom: 28px;
+      letter-spacing: -0.5px;
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 14px;
+    }
+
+    .rk-page-title i {
+      background: linear-gradient(135deg, var(--rk-primary), var(--rk-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 0.85em;
+    }
+
+    h2 {
+      display: none;
+    }
+
+    /* ── Global Font ── */
+    .container-fluid {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── Timeframe Filter ── */
+    .timeframe-filter-container {
+      background: var(--rk-surface);
+      border-radius: var(--rk-radius);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--rk-shadow-sm);
+      border: 1px solid var(--rk-border);
+      display: flex;
+      align-items: center;
+      gap: 24px;
       flex-wrap: wrap;
     }
 
@@ -47,99 +98,124 @@
     }
 
     .timeframe-filter-label {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      color: var(--primary-color);
+      color: var(--rk-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       white-space: nowrap;
     }
 
     .timeframe-filter-select {
-      padding: 8px 16px;
-      border: 2px solid var(--primary-border);
+      padding: 8px 14px;
+      border: 1.5px solid var(--rk-border);
       border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
-      color: #333;
-      background: white;
+      font-family: 'Inter', sans-serif;
+      color: var(--rk-text);
+      background: var(--rk-surface);
       cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 180px;
+      transition: all 0.2s var(--rk-transition);
+      min-width: 170px;
     }
 
     .timeframe-filter-select:focus {
       outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px var(--primary-rgba);
+      border-color: var(--rk-secondary);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
     }
 
     .timeframe-filter-select:hover {
-      border-color: var(--secondary-color);
+      border-color: var(--rk-secondary);
     }
 
-    /* Timeframe Settings Panel */
     .timeframe-settings {
-      background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-      border-radius: 16px;
+      background: var(--rk-surface);
+      border-radius: var(--rk-radius-lg);
       padding: 24px;
-      margin-bottom: 30px;
-      box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-      border: 1px solid var(--primary-border);
+      margin-bottom: 24px;
+      box-shadow: var(--rk-shadow);
+      border: 1px solid var(--rk-border);
     }
 
     .timeframe-settings-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--primary-color);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--rk-primary);
       margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-
-    /* Card Statistics - New Deadline Card Design */
+    /* ── Status Cards ── */
     .card-stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
-    /* Deadline Card Styles - Modern Design */
+    @media(max-width:900px) {
+      .card-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .deadline-card-link {
       text-decoration: none;
       display: block;
     }
 
     .deadline-card {
-      border-radius: 16px;
-      padding: 20px;
-      transition: all 0.3s ease;
+      border-radius: var(--rk-radius-lg);
+      padding: 24px;
+      transition: all 0.35s var(--rk-transition);
       position: relative;
       overflow: hidden;
-      min-height: 140px;
+      min-height: 130px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       cursor: pointer;
-      border-left: 5px solid;
+      border: 1.5px solid transparent;
+      border-top: 4px solid;
+    }
+
+    .deadline-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      opacity: 0.06;
+      transform: translate(30%, -30%);
+      transition: all 0.35s var(--rk-transition);
     }
 
     .deadline-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(-6px);
+      box-shadow: var(--rk-shadow-lg);
+    }
+
+    .deadline-card:hover::before {
+      opacity: 0.12;
+      transform: translate(20%, -20%) scale(1.2);
     }
 
     .deadline-card.active {
-      border: 3px solid var(--primary-color);
-      box-shadow: 0 12px 40px var(--primary-rgba-dark);
+      border-color: var(--rk-primary) !important;
+      box-shadow: var(--rk-shadow-lg), 0 0 0 3px rgba(15, 118, 110, 0.1);
     }
 
     .deadline-card-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
     .deadline-indicator {
@@ -148,181 +224,214 @@
     }
 
     .deadline-dot {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      animation: pulse 2s infinite;
+      animation: rkPulse 2s ease-in-out infinite;
     }
 
     .deadline-dot.aman {
-      background: #28a745;
-      box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+      background: var(--rk-green);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
     }
 
     .deadline-dot.peringatan {
-      background: #ffc107;
-      box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+      background: var(--rk-yellow);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
     }
 
     .deadline-dot.terlambat {
-      background: #dc3545;
-      box-shadow: 0 0 8px rgba(220, 53, 69, 0.5);
+      background: var(--rk-red);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
     }
 
-    @keyframes pulse {
+    @keyframes rkPulse {
 
       0%,
       100% {
         opacity: 1;
+        transform: scale(1);
       }
 
       50% {
         opacity: 0.5;
+        transform: scale(0.85);
       }
     }
 
     .deadline-count {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      font-family: 'Inter', sans-serif;
     }
 
     .deadline-badge-wrapper {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .deadline-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 16px;
+      padding: 5px 14px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
     }
 
     .badge-aman {
-      background: #28a745;
+      background: var(--rk-green);
       color: white;
-      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
     }
 
     .badge-peringatan {
-      background: #ffc107;
-      color: #856404;
-      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+      background: var(--rk-yellow);
+      color: var(--rk-yellow-text);
     }
 
     .badge-terlambat {
-      background: #dc3545;
+      background: var(--rk-red);
       color: white;
-      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
     }
 
     .deadline-info {
-      font-size: 13px;
+      font-size: 12.5px;
       display: flex;
       align-items: center;
       gap: 8px;
+      opacity: 0.8;
     }
 
     .deadline-info i {
-      font-size: 14px;
+      font-size: 13px;
     }
 
-    /* Deadline Card Color Variations */
+    /* Card Color Variations */
     .deadline-aman {
-      background: linear-gradient(135deg, #d4edda 0%, #c8e6c9 100%);
-      border-left-color: #28a745;
+      background: var(--rk-green-bg);
+      border-top-color: var(--rk-green);
+      border-color: var(--rk-green-border);
+    }
+
+    .deadline-aman::before {
+      background: var(--rk-green);
     }
 
     .deadline-aman .deadline-count,
     .deadline-aman .deadline-info {
-      color: #155724;
+      color: var(--rk-green-text);
+    }
+
+    .deadline-aman:hover {
+      box-shadow: 0 12px 30px rgba(16, 185, 129, 0.18);
     }
 
     .deadline-peringatan {
-      background: linear-gradient(135deg, #fff3cd 0%, #ffe0b2 100%);
-      border-left-color: #ffc107;
+      background: var(--rk-yellow-bg);
+      border-top-color: var(--rk-yellow);
+      border-color: var(--rk-yellow-border);
+    }
+
+    .deadline-peringatan::before {
+      background: var(--rk-yellow);
     }
 
     .deadline-peringatan .deadline-count,
     .deadline-peringatan .deadline-info {
-      color: #856404;
+      color: var(--rk-yellow-text);
+    }
+
+    .deadline-peringatan:hover {
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.18);
     }
 
     .deadline-terlambat {
-      background: linear-gradient(135deg, #f8d7da 0%, #ffcdd2 100%);
-      border-left-color: #dc3545;
+      background: var(--rk-red-bg);
+      border-top-color: var(--rk-red);
+      border-color: var(--rk-red-border);
+    }
+
+    .deadline-terlambat::before {
+      background: var(--rk-red);
     }
 
     .deadline-terlambat .deadline-count,
     .deadline-terlambat .deadline-info {
-      color: #721c24;
+      color: var(--rk-red-text);
     }
 
-    /* Modern Filter Panel Styles */
+    .deadline-terlambat:hover {
+      box-shadow: 0 12px 30px rgba(239, 68, 68, 0.18);
+    }
+
+    /* ── Filter Panel ── */
     .modern-filter-container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      margin-bottom: 2rem;
+      background: var(--rk-surface);
+      border-radius: var(--rk-radius-lg);
+      box-shadow: var(--rk-shadow);
+      margin-bottom: 1.5rem;
       overflow: hidden;
+      border: 1px solid var(--rk-border);
     }
 
     .filter-toggle-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 1.5rem;
-      background: linear-gradient(135deg, #f8faf8 0%, #f1f5f9 100%);
-      border-bottom: 2px solid var(--primary-border);
+      padding: 12px 20px;
+      background: var(--rk-surface-muted);
+      border-bottom: 1px solid var(--rk-border);
     }
 
     .filter-toggle-btn {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1.25rem;
-      background: white;
-      border: 2px solid var(--primary-border);
+      gap: 0.6rem;
+      padding: 8px 16px;
+      background: var(--rk-surface);
+      border: 1.5px solid var(--rk-border);
       border-radius: 8px;
       font-weight: 600;
-      color: var(--primary-color);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--rk-text-secondary);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.25s var(--rk-transition);
     }
 
     .filter-toggle-btn:hover {
-      background: var(--primary-color);
+      background: var(--rk-primary);
       color: white;
-      border-color: var(--primary-color);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px var(--primary-rgba-dark);
+      border-color: var(--rk-primary);
+      transform: translateY(-1px);
+      box-shadow: var(--rk-shadow);
     }
 
     .filter-badge {
-      background: var(--primary-color);
+      background: var(--rk-secondary);
       color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
       font-weight: 700;
-      min-width: 24px;
+      min-width: 20px;
       text-align: center;
     }
 
     .filter-panel {
-      padding: 2rem;
-      background: white;
-      animation: slideDown 0.3s ease;
+      padding: 1.5rem;
+      background: var(--rk-surface);
+      animation: rkSlideDown 0.25s var(--rk-transition);
     }
 
-    @keyframes slideDown {
+    @keyframes rkSlideDown {
       from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-8px);
       }
 
       to {
@@ -334,7 +443,7 @@
     .filter-form {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
 
     .filter-row {
@@ -344,14 +453,14 @@
 
     .filter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.25rem;
     }
 
     .filter-group {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 6px;
     }
 
     .filter-group.full-width {
@@ -360,98 +469,104 @@
 
     .filter-label {
       font-weight: 600;
-      color: var(--primary-color);
-      font-size: 0.9rem;
+      color: var(--rk-text-secondary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 6px;
     }
 
     .filter-select,
     .filter-input-search {
-      padding: 0.75rem 1rem;
-      border: 2px solid var(--primary-border);
+      padding: 10px 14px;
+      border: 1.5px solid var(--rk-border);
       border-radius: 8px;
-      font-size: 0.95rem;
-      transition: all 0.3s ease;
-      background: white;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s var(--rk-transition);
+      background: var(--rk-surface);
+      color: var(--rk-text);
     }
 
     .filter-select:focus,
     .filter-input-search:focus {
       outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px var(--primary-rgba);
+      border-color: var(--rk-secondary);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
     }
 
     .filter-select:disabled {
-      background-color: #f1f5f9;
+      background: var(--rk-surface-muted);
       cursor: not-allowed;
-      opacity: 0.6;
+      opacity: 0.5;
     }
 
     .filter-searchable {
-      min-height: 44px;
+      min-height: 42px;
     }
 
     .filter-actions {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       justify-content: flex-end;
       padding-top: 1rem;
-      border-top: 2px solid var(--primary-border);
+      border-top: 1px solid var(--rk-border);
     }
 
     .filter-btn {
-      padding: 0.75rem 1.5rem;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
       font-weight: 600;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.25s var(--rk-transition);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 6px;
     }
 
     .filter-btn-reset {
-      background: #f8faf8;
-      color: var(--primary-color);
+      background: var(--rk-surface-muted);
+      color: var(--rk-text-secondary);
     }
 
     .filter-btn-reset:hover {
-      background: #e2e8f0;
-      transform: translateY(-2px);
+      background: var(--rk-border);
+      transform: translateY(-1px);
     }
 
     .filter-btn-apply {
-      background: var(--primary-color);
+      background: var(--rk-primary);
       color: white;
     }
 
     .filter-btn-apply:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px var(--primary-rgba-dark);
+      background: var(--rk-primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
     }
 
     .active-filters {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      padding-top: 1rem;
-      border-top: 2px solid var(--primary-border);
+      gap: 0.4rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--rk-border);
     }
 
     .filter-badge-item {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: var(--primary-color);
+      gap: 6px;
+      padding: 5px 12px;
+      background: linear-gradient(135deg, var(--rk-primary), var(--rk-secondary));
       color: white;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      border-radius: 16px;
+      font-size: 12px;
       font-weight: 500;
     }
 
@@ -459,58 +574,59 @@
       background: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
-      transition: all 0.2s ease;
+      font-size: 10px;
+      transition: all 0.2s;
     }
 
     .filter-badge-item .remove-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.35);
     }
 
-    /* View Switcher */
+    /* ── View Switcher ── */
     .view-switcher {
       display: inline-flex;
-      background: white;
+      background: var(--rk-surface);
       border-radius: 8px;
-      padding: 4px;
-      gap: 4px;
-      border: 2px solid var(--primary-border);
+      padding: 3px;
+      gap: 3px;
+      border: 1.5px solid var(--rk-border);
     }
 
     .view-switcher-btn {
-      padding: 8px 16px;
+      padding: 7px 14px;
       border: none;
       background: transparent;
       border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--primary-color);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      color: var(--rk-text-secondary);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s var(--rk-transition);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .view-switcher-btn:hover {
-      background: var(--primary-rgba);
-      color: var(--primary-color);
+      background: var(--rk-surface-alt);
+      color: var(--rk-primary);
     }
 
     .view-switcher-btn.active {
-      background: var(--primary-color);
+      background: linear-gradient(135deg, var(--rk-primary), var(--rk-secondary));
       color: white;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25);
     }
 
-    /* View Container */
     .view-container {
       display: none;
     }
@@ -519,11 +635,11 @@
       display: block;
     }
 
-    /* Card View */
+    /* ── Card View ── */
     .card-view-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px;
     }
 
     @media (max-width: 768px) {
@@ -537,85 +653,100 @@
 
       .filter-toggle-bar {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
         align-items: stretch;
       }
     }
 
     .document-card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--primary-border);
-      transition: all 0.2s ease;
+      background: var(--rk-surface);
+      border-radius: var(--rk-radius-lg);
+      padding: 22px;
+      box-shadow: var(--rk-shadow-sm);
+      border: 1px solid var(--rk-border);
+      border-top: 4px solid transparent;
+      transition: all 0.3s var(--rk-transition);
       cursor: pointer;
       position: relative;
       overflow: hidden;
     }
 
-    .document-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 4px 12px var(--primary-rgba);
-      border-color: var(--secondary-color);
+    .document-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--rk-secondary), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
-    /* Color-coded document cards based on deadline status */
+    .document-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--rk-shadow-md);
+    }
+
+    .document-card:hover::after {
+      opacity: 1;
+    }
+
     .document-card-green {
-      border-left: 5px solid var(--card-green);
-      background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, white 100%);
+      border-top-color: var(--rk-green);
+      background: linear-gradient(180deg, var(--rk-green-bg) 0%, var(--rk-surface) 40%);
     }
 
     .document-card-green:hover {
-      border-color: var(--card-green);
-      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
     }
 
     .document-card-yellow {
-      border-left: 5px solid var(--card-yellow);
-      background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, white 100%);
+      border-top-color: var(--rk-yellow);
+      background: linear-gradient(180deg, var(--rk-yellow-bg) 0%, var(--rk-surface) 40%);
     }
 
     .document-card-yellow:hover {
-      border-color: var(--card-yellow);
-      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
     }
 
     .document-card-red {
-      border-left: 5px solid var(--card-red);
-      background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, white 100%);
+      border-top-color: var(--rk-red);
+      background: linear-gradient(180deg, var(--rk-red-bg) 0%, var(--rk-surface) 40%);
     }
 
     .document-card-red:hover {
-      border-color: var(--card-red);
-      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);
     }
-
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 1rem;
+      margin-bottom: 12px;
     }
 
     .card-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 4px;
+      color: var(--rk-text);
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 3px;
     }
 
     .card-subtitle {
-      font-size: 13px;
-      color: #6c757d;
+      font-size: 12.5px;
+      color: var(--rk-text-muted);
+      font-weight: 500;
     }
 
     .card-value {
       font-size: 20px;
-      font-weight: 700;
-      color: var(--secondary-color);
-      margin-bottom: 1rem;
+      font-weight: 800;
+      color: var(--rk-primary);
+      margin-bottom: 14px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.3px;
     }
 
     .card-info-row {
@@ -623,22 +754,23 @@
       align-items: center;
       gap: 8px;
       font-size: 13px;
-      color: #6c757d;
+      color: var(--rk-text-secondary);
       margin-bottom: 8px;
     }
 
     .card-info-row i {
       width: 16px;
-      color: var(--primary-color);
+      color: var(--rk-secondary);
+      font-size: 13px;
     }
 
-    /* Table Section */
+    /* ── Table Section ── */
     .table-container {
-      background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-      border: 1px solid var(--primary-border);
+      background: var(--rk-surface);
+      padding: 24px;
+      border-radius: var(--rk-radius-lg);
+      box-shadow: var(--rk-shadow);
+      border: 1px solid var(--rk-border);
     }
 
     .table-responsive {
@@ -648,22 +780,23 @@
     }
 
     .table thead {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+      background: linear-gradient(135deg, var(--rk-primary-deep) 0%, var(--rk-primary) 100%) !important;
     }
 
     .table thead th {
       background: transparent !important;
       color: white !important;
       font-weight: 600;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-      padding: 18px 16px;
+      font-size: 11.5px;
+      letter-spacing: 0.8px;
+      padding: 14px 16px;
       border: none !important;
       text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
     }
 
     .table tbody tr {
-      transition: all 0.3s ease;
+      transition: all 0.25s var(--rk-transition);
       border-left: 3px solid transparent;
     }
 
@@ -672,77 +805,82 @@
     }
 
     .table tbody tr.clickable-row:hover {
-      background: linear-gradient(90deg, var(--primary-rgba) 0%, transparent 100%);
-      border-left: 3px solid var(--secondary-color);
-      transform: scale(1.002);
+      background: var(--rk-surface-alt);
+      border-left-color: var(--rk-secondary);
     }
 
-    /* Color-coded table rows based on deadline status */
     .table tbody tr.table-row-green {
-      border-left: 4px solid var(--card-green);
-      background: linear-gradient(90deg, rgba(40, 167, 69, 0.08) 0%, transparent 50%);
+      border-left: 3px solid var(--rk-green);
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
     }
 
     .table tbody tr.table-row-yellow {
-      border-left: 4px solid var(--card-yellow);
-      background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 50%);
+      border-left: 3px solid var(--rk-yellow);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
     }
 
     .table tbody tr.table-row-red {
-      border-left: 4px solid var(--card-red);
-      background: linear-gradient(90deg, rgba(220, 53, 69, 0.08) 0%, transparent 50%);
+      border-left: 3px solid var(--rk-red);
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, transparent 40%);
     }
 
-
+    /* ── Age Badges ── */
     .age-badge {
-      padding: 6px 12px;
-      border-radius: 12px;
+      padding: 5px 12px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'Inter', sans-serif;
     }
 
     .age-badge.age-green {
-      background: linear-gradient(135deg, var(--card-green) 0%, #20c997 100%);
-      color: white;
+      background: var(--rk-green-bg);
+      color: var(--rk-green-text);
+      border: 1px solid var(--rk-green-border);
     }
 
     .age-badge.age-yellow {
-      background: linear-gradient(135deg, var(--card-yellow) 0%, #ffcd39 100%);
-      color: #333;
+      background: var(--rk-yellow-bg);
+      color: var(--rk-yellow-text);
+      border: 1px solid var(--rk-yellow-border);
     }
 
     .age-badge.age-red {
-      background: linear-gradient(135deg, var(--card-red) 0%, #c82333 100%);
-      color: white;
+      background: var(--rk-red-bg);
+      color: var(--rk-red-text);
+      border: 1px solid var(--rk-red-border);
     }
 
-    /* Modern Pagination */
+    /* ── Pagination ── */
     .modern-pagination {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      margin-top: 28px;
+      margin-top: 24px;
       padding-top: 20px;
-      border-top: 1px solid var(--primary-border);
+      border-top: 1px solid var(--rk-border);
     }
 
     .pagination-info {
-      font-size: 0.85rem;
-      color: #6c757d;
+      font-size: 13px;
+      color: var(--rk-text-muted);
       font-weight: 500;
+      font-family: 'Inter', sans-serif;
     }
 
     .pagination-info strong {
-      color: var(--primary-color);
+      color: var(--rk-primary);
       font-weight: 700;
     }
 
     .pagination-controls {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -752,127 +890,390 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 40px;
-      height: 40px;
-      padding: 0 12px;
-      border-radius: 10px;
+      min-width: 38px;
+      height: 38px;
+      padding: 0 10px;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
-      font-size: 0.875rem;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s var(--rk-transition);
       border: 1.5px solid transparent;
       user-select: none;
     }
 
     .pg-btn {
-      color: var(--primary-color);
-      background: white;
-      border-color: #e2e8f0 !important;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      color: var(--rk-text-secondary);
+      background: var(--rk-surface);
+      border-color: var(--rk-border) !important;
     }
 
     .pg-btn:hover {
-      background: var(--primary-rgba);
-      border-color: var(--primary-color) !important;
+      background: var(--rk-surface-alt);
+      border-color: var(--rk-secondary) !important;
+      color: var(--rk-primary);
       transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(8, 62, 64, 0.12);
     }
 
     .pg-btn.active {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      background: linear-gradient(135deg, var(--rk-primary), var(--rk-secondary));
       color: white;
-      border-color: var(--primary-color) !important;
-      box-shadow: 0 3px 10px rgba(8, 62, 64, 0.25);
-      transform: translateY(-1px);
-    }
-
-    .pg-btn.disabled {
-      color: #c4cdd5;
-      background: #f8f9fa;
-      border-color: #f0f0f0 !important;
-      cursor: not-allowed;
-      pointer-events: none;
-      box-shadow: none;
+      border-color: transparent !important;
+      box-shadow: 0 3px 8px rgba(15, 118, 110, 0.25);
     }
 
     .pg-nav {
-      color: var(--primary-color);
-      background: white;
-      border-color: #e2e8f0 !important;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      font-size: 0.8rem;
+      color: var(--rk-text-secondary);
+      background: var(--rk-surface);
+      border-color: var(--rk-border) !important;
+      font-size: 12px;
       gap: 4px;
     }
 
     .pg-nav:hover {
-      background: var(--primary-color);
+      background: var(--rk-primary);
       color: white;
-      border-color: var(--primary-color) !important;
-      box-shadow: 0 3px 8px rgba(8, 62, 64, 0.2);
+      border-color: var(--rk-primary) !important;
       transform: translateY(-1px);
     }
 
     .pg-nav.disabled {
-      color: #c4cdd5;
-      background: #f8f9fa;
-      border-color: #f0f0f0 !important;
+      color: var(--rk-text-muted);
+      background: var(--rk-surface-muted);
+      border-color: var(--rk-border-light) !important;
       cursor: not-allowed;
       pointer-events: none;
     }
 
     .pg-ellipsis {
-      color: #94a3b8;
+      color: var(--rk-text-muted);
       background: transparent;
       border: none !important;
       cursor: default;
       font-weight: 700;
       letter-spacing: 2px;
-      min-width: 32px;
     }
 
     @media (max-width: 576px) {
 
       .pagination-controls a,
       .pagination-controls span {
-        min-width: 36px;
-        height: 36px;
+        min-width: 34px;
+        height: 34px;
         padding: 0 8px;
-        font-size: 0.8rem;
+        font-size: 12px;
       }
     }
 
+    /* ── Form Controls ── */
     .form-control,
     .form-select {
-      border: 2px solid rgba(8, 62, 64, 0.1);
+      border: 1.5px solid var(--rk-border);
       border-radius: 8px;
-      padding: 10px 16px;
-      transition: all 0.3s ease;
+      padding: 10px 14px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s var(--rk-transition);
     }
 
     .form-control:focus,
     .form-select:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 0.2rem var(--primary-rgba);
+      border-color: var(--rk-secondary);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
     }
 
     .btn-filter {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      background: linear-gradient(135deg, var(--rk-primary), var(--rk-secondary));
       color: white;
       border: none;
       border-radius: 8px;
       padding: 10px 24px;
       font-weight: 600;
-      transition: all 0.3s ease;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.25s var(--rk-transition);
     }
 
     .btn-filter:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px var(--primary-rgba-dark);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+    }
+
+    /* ── Status Tabs ── */
+    .rk-status-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .rk-status-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.25s var(--rk-transition);
+      border: 1.5px solid var(--rk-border);
+      background: var(--rk-surface);
+      color: var(--rk-text-secondary);
+    }
+
+    .rk-status-tab:hover {
+      background: var(--rk-surface-alt);
+      border-color: var(--rk-secondary);
+      color: var(--rk-primary);
+      transform: translateY(-1px);
+    }
+
+    .rk-status-tab.active-all {
+      background: var(--rk-primary);
+      color: white;
+      border-color: var(--rk-primary);
+    }
+
+    .rk-status-tab.active-active {
+      background: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+
+    .rk-status-tab.active-completed {
+      background: #198754;
+      color: white;
+      border-color: #198754;
+    }
+
+    /* ── Entries / Export Bar ── */
+    .rk-entries-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .rk-entries-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rk-entries-label {
+      font-size: 13px;
+      color: var(--rk-text-muted);
+      font-weight: 500;
+    }
+
+    .rk-entries-select {
+      padding: 7px 12px;
+      border: 1.5px solid var(--rk-border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      background: var(--rk-surface);
+      transition: all 0.2s var(--rk-transition);
+    }
+
+    .rk-entries-select:focus {
+      outline: none;
+      border-color: var(--rk-secondary);
+    }
+
+    .rk-export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      background: linear-gradient(135deg, #217346 0%, #2e8b57 100%);
+      color: white;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s var(--rk-transition);
+      box-shadow: 0 2px 6px rgba(33, 115, 70, 0.2);
+    }
+
+    .rk-export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(33, 115, 70, 0.3);
+    }
+
+    /* ── Quick Search ── */
+    .rk-search-container {
+      margin-bottom: 16px;
+    }
+
+    .rk-search-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .rk-search-wrapper {
+      flex: 1;
+      min-width: 300px;
+      position: relative;
+    }
+
+    .rk-search-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--rk-text-muted);
+      font-size: 14px;
+    }
+
+    .rk-search-input {
+      width: 100%;
+      padding: 11px 16px 11px 42px;
+      border: 1.5px solid var(--rk-border);
+      border-radius: var(--rk-radius);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.25s var(--rk-transition);
+      background: var(--rk-surface);
+      color: var(--rk-text);
+    }
+
+    .rk-search-input:focus {
+      outline: none;
+      border-color: var(--rk-secondary);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    }
+
+    .rk-search-btn {
+      padding: 11px 22px;
+      background: linear-gradient(135deg, var(--rk-primary), var(--rk-secondary));
+      color: white;
+      border: none;
+      border-radius: var(--rk-radius);
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s var(--rk-transition);
+    }
+
+    .rk-search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+    }
+
+    .rk-search-reset {
+      padding: 11px 18px;
+      background: var(--rk-surface-muted);
+      color: var(--rk-text-secondary);
+      border: none;
+      border-radius: var(--rk-radius);
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s var(--rk-transition);
+    }
+
+    .rk-search-reset:hover {
+      background: var(--rk-border);
+      color: var(--rk-text);
+    }
+
+    .rk-search-info {
+      margin-top: 10px;
+      padding: 8px 14px;
+      background: var(--rk-surface-alt);
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--rk-text-secondary);
+      border: 1px solid rgba(20, 184, 166, 0.15);
+    }
+
+    .rk-search-info i {
+      color: var(--rk-secondary);
+    }
+
+    /* ── Status Badges ── */
+    .rk-badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .rk-badge-completed {
+      background: #198754;
+      color: white;
+    }
+
+    .rk-badge-active {
+      background: #0d6efd;
+      color: white;
+    }
+
+    .rk-badge-sm {
+      font-size: 11px;
+      padding: 3px 8px;
+    }
+
+    /* ── Table Heading ── */
+    .rk-table-heading {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--rk-text);
+      margin-bottom: 20px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── Empty State ── */
+    .rk-empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .rk-empty-state i {
+      font-size: 3rem;
+      color: var(--rk-text-muted);
+      margin-bottom: 16px;
+    }
+
+    .rk-empty-state h5 {
+      color: var(--rk-text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+    }
+
+    .rk-empty-state p {
+      color: var(--rk-text-muted);
+      font-size: 14px;
     }
   </style>
 
   <div class="container-fluid">
     <h2><i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan - {{ $roleConfig[$roleCode]['name'] }}</h2>
+    <div class="rk-page-title">
+      <i class="fa-solid fa-chart-line"></i> Rekapan Keterlambatan — {{ $roleConfig[$roleCode]['name'] }}
+    </div>
 
     <!-- Horizontal Year/Month Filter -->
     <div class="timeframe-filter-container">
@@ -1049,56 +1450,46 @@
       @php
         $currentStatusFilter = request('status_filter', 'all');
       @endphp
-      <div class="status-filter-tabs" style="margin: 1.5rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <div class="rk-status-tabs">
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
-          class="status-tab {{ $currentStatusFilter === 'all' ? 'active' : '' }}"
-          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                                  {{ $currentStatusFilter === 'all' ? 'background: var(--primary-color); color: white;' : 'background: #f0f0f0; color: #333;' }}">
+          class="rk-status-tab {{ $currentStatusFilter === 'all' ? 'active-all' : '' }}">
           <i class="fas fa-list"></i> Semua
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
-          class="status-tab {{ $currentStatusFilter === 'active' ? 'active' : '' }}"
-          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                                  {{ $currentStatusFilter === 'active' ? 'background: #0d6efd; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+          class="rk-status-tab {{ $currentStatusFilter === 'active' ? 'active-active' : '' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
         <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
-          class="status-tab {{ $currentStatusFilter === 'completed' ? 'active' : '' }}"
-          style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;
-                                                                  {{ $currentStatusFilter === 'completed' ? 'background: #198754; color: white;' : 'background: #f0f0f0; color: #333;' }}">
+          class="rk-status-tab {{ $currentStatusFilter === 'completed' ? 'active-completed' : '' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
       </div>
     @endif
 
     <!-- Show Entries Bar -->
-    <div class="entries-bar"
-      style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span style="font-size: 0.875rem; color: #555;">Show</span>
-        <select id="entriesPerPage" onchange="changeEntriesPerPage(this.value)"
-          style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.875rem; cursor: pointer; background: white;">
+    <div class="rk-entries-bar">
+      <div class="rk-entries-group">
+        <span class="rk-entries-label">Show</span>
+        <select id="entriesPerPage" onchange="changeEntriesPerPage(this.value)" class="rk-entries-select">
           <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
           <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
           <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
           <option value="100" {{ request('per_page', 10) == 100 ? 'selected' : '' }}>100</option>
         </select>
-        <span style="font-size: 0.875rem; color: #555;">entries</span>
+        <span class="rk-entries-label">entries</span>
       </div>
 
       <!-- Export Excel Button -->
-      <button type="button" onclick="showExportModal()" class="btn-export-excel"
-        style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 16px; background: linear-gradient(135deg, #217346 0%, #2e8b57 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(33, 115, 70, 0.25); border: none; cursor: pointer;">
+      <button type="button" onclick="showExportModal()" class="rk-export-btn">
         <i class="fas fa-file-excel"></i>
         <span>Export Excel</span>
       </button>
     </div>
 
-    <!-- Quick Search Box (Prominent) -->
-    <div class="quick-search-container" style="margin-bottom: 1rem;">
+    <!-- Quick Search Box -->
+    <div class="rk-search-container">
       <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="quickSearchForm"
-        style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-        <!-- Preserve existing filter parameters -->
+        class="rk-search-form">
         @if(request('year'))
           <input type="hidden" name="year" value="{{ request('year') }}">
         @endif
@@ -1127,29 +1518,21 @@
           <input type="hidden" name="per_page" value="{{ request('per_page') }}">
         @endif
 
-        <div style="flex: 1; min-width: 300px; position: relative;">
-          <i class="fas fa-search"
-            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6c757d;"></i>
+        <div class="rk-search-wrapper">
+          <i class="fas fa-search"></i>
           <input type="text" name="search" id="quickSearchInput" value="{{ request('search') }}"
-            placeholder="Cari nomor agenda, nilai rupiah, kebun, vendor, uraian..."
-            style="width: 100%; padding: 12px 16px 12px 42px; border: 2px solid var(--primary-border); border-radius: 10px; font-size: 0.95rem; transition: all 0.3s ease; background: white;"
-            onkeypress="if(event.key === 'Enter') { document.getElementById('quickSearchForm').submit(); }"
-            onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 3px var(--primary-rgba)';"
-            onblur="this.style.borderColor='var(--primary-border)'; this.style.boxShadow='none';">
+            placeholder="Cari nomor agenda, nilai rupiah, kebun, vendor, uraian..." class="rk-search-input"
+            onkeypress="if(event.key === 'Enter') { document.getElementById('quickSearchForm').submit(); }">
         </div>
 
-        <button type="submit"
-          style="padding: 12px 24px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;"
-          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px var(--primary-rgba-dark)';"
-          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <button type="submit" class="rk-search-btn">
           <i class="fas fa-search"></i>
           <span>Cari</span>
         </button>
 
         @if(request('search'))
           <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], request()->except(['search', 'page']))) }}"
-            style="padding: 12px 18px; background: #f1f5f9; color: #64748b; border: none; border-radius: 10px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;"
-            onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f1f5f9';">
+            class="rk-search-reset">
             <i class="fas fa-times"></i>
             <span>Reset</span>
           </a>
@@ -1157,11 +1540,9 @@
       </form>
 
       @if(request('search'))
-        <div
-          style="margin-top: 0.75rem; padding: 8px 14px; background: var(--primary-rgba); border-radius: 8px; display: inline-flex; align-items: center; gap: 0.5rem;">
-          <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
-          <span style="font-size: 0.875rem; color: #333;">Menampilkan hasil pencarian:
-            <strong>"{{ request('search') }}"</strong></span>
+        <div class="rk-search-info">
+          <i class="fas fa-info-circle"></i>
+          <span>Menampilkan hasil pencarian: <strong>"{{ request('search') }}"</strong></span>
         </div>
       @endif
     </div>
@@ -1394,14 +1775,12 @@
                   <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
                   <div class="card-subtitle">SPP: {{ $dokumen->nomor_spp }}</div>
                 </div>
-                @if(isset($dokumen->is_completed))
-                  <span class="badge {{ $dokumen->is_completed ? 'badge-completed' : 'badge-active' }}"
-                    style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-                                                                                                                       {{ $dokumen->is_completed ? 'background: #198754; color: white;' : 'background: #0d6efd; color: white;' }}">
-                    <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
-                    {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
-                  </span>
-                @endif
+                  @if(isset($dokumen->is_completed))
+                    <span class="rk-badge {{ $dokumen->is_completed ? 'rk-badge-completed' : 'rk-badge-active' }}">
+                      <i class="fas {{ $dokumen->is_completed ? 'fa-check-circle' : 'fa-spinner' }}"></i>
+                      {{ $dokumen->is_completed ? 'Selesai' : 'Aktif' }}
+                    </span>
+                  @endif
               </div>
               <div class="card-value">
                 Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}
@@ -1421,25 +1800,23 @@
                   @endif
                 </span>
               </div>
-              <div class="card-info-row">
-                <i class="fas fa-info-circle"></i>
-                <span>Status:</span>
-                @if(isset($dokumen->is_completed) && $dokumen->is_completed)
-                  <span class="badge"
-                    style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
-                    @if($roleCode === 'pembayaran')
-                      <i class="fas fa-check-circle"></i> Sudah Dibayar
-                    @else
-                      <i class="fas fa-paper-plane"></i> Sudah Dikirim
-                    @endif
-                  </span>
-                @else
-                  <span class="badge"
-                    style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
-                    <i class="fas fa-spinner"></i> Sedang Diproses
-                  </span>
-                @endif
-              </div>
+                <div class="card-info-row">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Status:</span>
+                  @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                    <span class="rk-badge rk-badge-completed rk-badge-sm">
+                      @if($roleCode === 'pembayaran')
+                        <i class="fas fa-check-circle"></i> Sudah Dibayar
+                      @else
+                        <i class="fas fa-paper-plane"></i> Sudah Dikirim
+                      @endif
+                    </span>
+                  @else
+                    <span class="rk-badge rk-badge-active rk-badge-sm">
+                      <i class="fas fa-spinner"></i> Sedang Diproses
+                    </span>
+                  @endif
+                </div>
             </div>
 
           @endforeach
@@ -1517,10 +1894,10 @@
           <p class="text-muted">Dokumen akan ditampilkan di sini ketika tersedia</p>
         </div>
       @else
-        <div class="table-container">
-          <h6 style="font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px;">
-            <span>Daftar Dokumen (Total: {{ $totalDocuments }})</span>
-          </h6>
+          <div class="table-container">
+            <h6 class="rk-table-heading">
+              <span>Daftar Dokumen (Total: {{ $totalDocuments }})</span>
+            </h6>
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -1586,19 +1963,17 @@
                         @endif
                       </span>
                     </td>
-                    <td>
-                      @if(isset($dokumen->is_completed) && $dokumen->is_completed)
-                        <span class="badge"
-                          style="background: #198754; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
-                          <i class="fas fa-paper-plane"></i> Selesai
-                        </span>
-                      @else
-                        <span class="badge"
-                          style="background: #0d6efd; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
-                          <i class="fas fa-spinner"></i> Aktif
-                        </span>
-                      @endif
-                    </td>
+                      <td>
+                        @if(isset($dokumen->is_completed) && $dokumen->is_completed)
+                          <span class="rk-badge rk-badge-completed rk-badge-sm">
+                            <i class="fas fa-paper-plane"></i> Selesai
+                          </span>
+                        @else
+                          <span class="rk-badge rk-badge-active rk-badge-sm">
+                            <i class="fas fa-spinner"></i> Aktif
+                          </span>
+                        @endif
+                      </td>
                   </tr>
 
                 @endforeach
@@ -1740,390 +2115,390 @@
   </div>
 
   <script>
-    // Filter Panel Functionality
-    let filterPanelExpanded = false;
+      // Filter Pan  el Functionality
+      let filterPanelExpanded = false;
 
-    function toggleFilterPanel() {
-      const panel = document.getElementById('filterPanel');
-      const icon = document.getElementById('filterToggleIcon');
-      filterPanelExpanded = !filterPanelExpanded;
+      function toggleFilterPanel() {
+        const panel = document.getElementById('filterPanel');
+        const icon = document.getElementById('filterToggleIcon');
+        filterPanelExpanded = !filterPanelExpanded;
 
-      if (filterPanelExpanded) {
-        panel.style.display = 'block';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-      } else {
-        panel.style.display = 'none';
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
+        if (filterPanelExpanded) {
+          panel.style.display = 'block';
+          icon.classList.remove('fa-chevron-down');
+          icon.classList.add('fa-chevron-up');
+        } else {
+          panel.style.display = 'none';
+          icon.classList.remove('fa-chevron-up');
+          icon.classList.add('fa-chevron-down');
+        }
+
+        updateActiveFilterCount();
       }
 
-      updateActiveFilterCount();
-    }
-
-    function applyFilter() {
-      const form = document.getElementById('filterForm');
-      form.submit();
-    }
-
-    function resetFilters() {
-      const currentUrl = new URL(window.location.href);
-      const params = currentUrl.searchParams;
-      const filterAge = params.get('filter_age');
-
-      // Clear all filter_ parameters
-      for (let key of Array.from(params.keys())) {
-        if (key.startsWith('filter_') || key === 'search' || key === 'year' || key === 'month') {
-          params.delete(key);
-        }
+      function applyFilter() {
+        const form = document.getElementById('filterForm');
+        form.submit();
       }
 
-      // Preserve filter_age if exists
-      if (filterAge) {
-        params.set('filter_age', filterAge);
-      }
+      function resetFilters() {
+        const currentUrl = new URL(window.location.href);
+        const params = currentUrl.searchParams;
+        const filterAge = params.get('filter_age');
 
-      window.location.href = currentUrl.toString();
-    }
-
-    function updateActiveFilterCount() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      let count = 0;
-
-      // Count active filters
-      for (let [key, value] of formData.entries()) {
-        if (key.startsWith('filter_') && value && value !== '') {
-          count++;
-        }
-        if ((key === 'year' || key === 'month') && value && value !== '') {
-          count++;
-        }
-        if (key === 'search' && value && value !== '') {
-          count++;
-        }
-      }
-
-      const badge = document.getElementById('activeFilterCount');
-      badge.textContent = count;
-      badge.style.display = count > 0 ? 'inline-block' : 'none';
-
-      updateActiveFilterBadges();
-    }
-
-    function updateActiveFilterBadges() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      const badgesContainer = document.getElementById('activeFilters');
-      badgesContainer.innerHTML = '';
-
-      const filterLabels = {
-        'filter_bagian': 'Bagian',
-        'filter_vendor': 'Vendor',
-        'filter_kriteria_cf': 'Kriteria CF',
-        'filter_sub_kriteria': 'Sub Kriteria',
-        'filter_item_sub_kriteria': 'Item Sub Kriteria',
-        'filter_kebun': 'Kebun',
-        'year': 'Tahun',
-        'search': 'Pencarian',
-        'filter_age': 'Umur Dokumen'
-      };
-
-      const filterAgeLabels = {
-        '1': '1 Hari',
-        '2': '2 Hari',
-        '3+': '3+ Hari'
-      };
-
-      for (let [key, value] of formData.entries()) {
-        if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
-          const label = filterLabels[key] || key;
-          let displayValue = getFilterDisplayValue(key, value);
-          if (key === 'filter_age') {
-            displayValue = filterAgeLabels[value] || value;
+        // Clear all filter_ parameters
+        for (let key of Array.from(params.keys())) {
+          if (key.startsWith('filter_') || key === 'search' || key === 'year' || key === 'month') {
+            params.delete(key);
           }
-          const badge = document.createElement('span');
-          badge.className = 'filter-badge-item';
-          badge.innerHTML = `
-                                    <span>${label}: ${displayValue}</span>
-                                    <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
-                                      <i class="fas fa-times"></i>
-                                    </button>
-                                  `;
-          badgesContainer.appendChild(badge);
         }
-      }
-    }
 
-    function getFilterDisplayValue(key, value) {
-      // Get display value from select options
-      const select = document.querySelector(`[name="${key}"]`);
-      if (select && select.options) {
-        const option = Array.from(select.options).find(opt => opt.value === value);
-        if (option) return option.text;
-      }
-      return value;
-    }
-
-    function removeFilter(key) {
-      const input = document.querySelector(`[name="${key}"]`);
-      if (input) {
-        input.value = '';
-        applyFilter();
-      }
-    }
-
-    // Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
-    function updateSubKriteriaFilter() {
-      const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-
-      // Enable/disable Sub Kriteria based on Kriteria CF selection
-      if (kriteriaCfId && kriteriaCfId !== '') {
-        subKriteriaSelect.disabled = false;
-        subKriteriaSelect.style.opacity = '1';
-        subKriteriaSelect.style.cursor = 'pointer';
-
-        // Show/hide options based on selected kriteria CF
-        Array.from(subKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
-          }
-          const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
-          if (kriteriaCfIdForOption === kriteriaCfId) {
-            option.style.display = 'block';
-          } else {
-            option.style.display = 'none';
-          }
-        });
-      } else {
-        // Disable Sub Kriteria and reset value if Kriteria CF is not selected
-        subKriteriaSelect.disabled = true;
-        subKriteriaSelect.style.opacity = '0.6';
-        subKriteriaSelect.style.cursor = 'not-allowed';
-        subKriteriaSelect.value = '';
-
-        // Also disable and reset Item Sub Kriteria
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.style.opacity = '0.6';
-        itemSubKriteriaSelect.style.cursor = 'not-allowed';
-        itemSubKriteriaSelect.value = '';
-
-        // Show all options when disabled
-        Array.from(subKriteriaSelect.options).forEach(option => {
-          option.style.display = 'block';
-        });
-      }
-
-      // Update Item Sub Kriteria filter
-      updateItemSubKriteriaFilter();
-    }
-
-    function updateItemSubKriteriaFilter() {
-      const subKriteriaId = document.getElementById('filterSubKriteria').value;
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
-
-      // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
-      if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
-        itemSubKriteriaSelect.disabled = false;
-        itemSubKriteriaSelect.style.opacity = '1';
-        itemSubKriteriaSelect.style.cursor = 'pointer';
-
-        // Show/hide options based on selected sub kriteria
-        Array.from(itemSubKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
-          }
-          const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
-          if (subKriteriaIdForOption === subKriteriaId) {
-            option.style.display = 'block';
-          } else {
-            option.style.display = 'none';
-          }
-        });
-      } else {
-        // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.style.opacity = '0.6';
-        itemSubKriteriaSelect.style.cursor = 'not-allowed';
-        itemSubKriteriaSelect.value = '';
-
-        // Show all options when disabled
-        Array.from(itemSubKriteriaSelect.options).forEach(option => {
-          option.style.display = 'block';
-        });
-      }
-    }
-
-    // View Switcher
-    function switchView(view) {
-      // Update buttons
-      document.querySelectorAll('.view-switcher-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      document.querySelector(`[data-view="${view}"]`).classList.add('active');
-
-      // Update views
-      document.getElementById('cardView').classList.toggle('active', view === 'card');
-      document.getElementById('tableView').classList.toggle('active', view === 'table');
-
-      // Save preference
-      localStorage.setItem('rekapanKeterlambatanView', view);
-    }
-
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function () {
-      // Load saved view preference
-      const savedView = localStorage.getItem('rekapanKeterlambatanView') || 'card';
-      switchView(savedView);
-
-      // Initialize filter count and panel state
-      updateActiveFilterCount();
-
-      // Initialize cascading dropdowns
-      updateSubKriteriaFilter();
-      updateItemSubKriteriaFilter();
-
-      // Auto-expand filter panel if filters are active
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      let hasActiveFilters = false;
-      for (let [key, value] of formData.entries()) {
-        if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
-          hasActiveFilters = true;
-          break;
+        // Preserve filter_age if exists
+        if (filterAge) {
+          params.set('filter_age', filterAge);
         }
+
+        window.location.href = currentUrl.toString();
       }
 
-      if (hasActiveFilters) {
-        toggleFilterPanel();
-      }
-    });
+      function updateActiveFilterCount() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        let count = 0;
 
-    // Timeframe Filter Function (for horizontal year/month filter)
-    function applyTimeframeFilter() {
-      const yearSelect = document.querySelector('.timeframe-filter-select[name="year"]');
-      const monthSelect = document.querySelector('.timeframe-filter-select[name="month"]');
+        // Count active filters
+        for (let [key, value] of formData.entries()) {
+          if (key.startsWith('filter_') && value && value !== '') {
+            count++;
+          }
+          if ((key === 'year' || key === 'month') && value && value !== '') {
+            count++;
+          }
+          if (key === 'search' && value && value !== '') {
+            count++;
+          }
+        }
 
-      const currentUrl = new URL(window.location.href);
-      const params = currentUrl.searchParams;
+        const badge = document.getElementById('activeFilterCount');
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
 
-      // Update year parameter
-      if (yearSelect && yearSelect.value) {
-        params.set('year', yearSelect.value);
-      } else if (yearSelect) {
-        params.delete('year');
-      }
-
-      // Update month parameter
-      if (monthSelect && monthSelect.value) {
-        params.set('month', monthSelect.value);
-      } else if (monthSelect) {
-        params.delete('month');
+        updateActiveFilterBadges();
       }
 
-      // Remove page parameter to go back to first page
-      params.delete('page');
+      function updateActiveFilterBadges() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const badgesContainer = document.getElementById('activeFilters');
+        badgesContainer.innerHTML = '';
 
-      window.location.href = currentUrl.toString();
-    }
-
-    // Change entries per page
-    function changeEntriesPerPage(value) {
-      const currentUrl = new URL(window.location.href);
-      const params = currentUrl.searchParams;
-
-      if (value && value !== '10') {
-        params.set('per_page', value);
-      } else {
-        params.delete('per_page');
-      }
-
-      // Reset to page 1 when changing entries
-      params.delete('page');
-
-      window.location.href = currentUrl.toString();
-    }
-
-    // Apply quick search
-    function applyQuickSearch() {
-      const searchValue = document.getElementById('quickSearchInput').value.trim();
-      const currentUrl = new URL(window.location.href);
-      const params = currentUrl.searchParams;
-
-      if (searchValue) {
-        params.set('search', searchValue);
-      } else {
-        params.delete('search');
-      }
-
-      // Reset to page 1 when searching
-      params.delete('page');
-
-      window.location.href = currentUrl.toString();
-    }
-
-    // Export Modal Functions
-    function showExportModal() {
-      const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
-      exportModal.show();
-    }
-
-    function confirmExport() {
-      const year = document.getElementById('exportYear').value;
-      const month = document.getElementById('exportMonth').value;
-      const status = document.getElementById('exportStatus').value;
-
-      let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
-      const params = new URLSearchParams();
-
-      if (year) {
-        params.set('year', year);
-      }
-      if (month) {
-        params.set('month', month);
-      }
-
-      // Convert filter_age to status if present and status not manually selected
-      // Read current filter_age from URL
-      const currentUrl = new URL(window.location.href);
-      const filterAge = currentUrl.searchParams.get('filter_age');
-
-      if (status) {
-        // User explicitly selected status in modal - use that
-        params.set('status', status);
-      } else if (filterAge) {
-        // No manual status selection, but filter_age exists in URL
-        // Convert filter_age to status for export compatibility
-        const ageToStatus = {
-          '1': 'aman',
-          '2': 'peringatan',
-          '3+': 'terlambat'
+        const filterLabels = {
+          'filter_bagian': 'Bagian',
+          'filter_vendor': 'Vendor',
+          'filter_kriteria_cf': 'Kriteria CF',
+          'filter_sub_kriteria': 'Sub Kriteria',
+          'filter_item_sub_kriteria': 'Item Sub Kriteria',
+          'filter_kebun': 'Kebun',
+          'year': 'Tahun',
+          'search': 'Pencarian',
+          'filter_age': 'Umur Dokumen'
         };
-        const convertedStatus = ageToStatus[filterAge];
-        if (convertedStatus) {
-          params.set('status', convertedStatus);
+
+        const filterAgeLabels = {
+          '1': '1 Hari',
+          '2': '2 Hari',
+          '3+': '3+ Hari'
+        };
+
+        for (let [key, value] of formData.entries()) {
+          if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
+            const label = filterLabels[key] || key;
+            let displayValue = getFilterDisplayValue(key, value);
+            if (key === 'filter_age') {
+              displayValue = filterAgeLabels[value] || value;
+            }
+            const badge = document.createElement('span');
+            badge.className = 'filter-badge-item';
+            badge.innerHTML = `
+                                            <span>${label}: ${displayValue}</span>
+                                            <button type="button" class="remove-btn" onclick="removeFilter('${key}')">
+                                              <i class="fas fa-times"></i>
+                                            </button>
+                                          `;
+            badgesContainer.appendChild(badge);
+          }
         }
       }
 
-      if (params.toString()) {
-        exportUrl += '?' + params.toString();
+      function getFilterDisplayValue(key, value) {
+        // Get display value from select options
+        const select = document.querySelector(`[name="${key}"]`);
+        if (select && select.options) {
+          const option = Array.from(select.options).find(opt => opt.value === value);
+          if (option) return option.text;
+        }
+        return value;
       }
 
-      // Close Modal
-      const modalEl = document.getElementById('exportModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) {
-        modal.hide();
+      function removeFilter(key) {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) {
+          input.value = '';
+          applyFilter();
+        }
       }
 
-      // Redirect to download
-      window.location.href = exportUrl;
-    }
-  </script>
+      // Cascading dropdowns for Kriteria CF, Sub Kriteria, Item Sub Kriteria
+      function updateSubKriteriaFilter() {
+        const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+
+        // Enable/disable Sub Kriteria based on Kriteria CF selection
+        if (kriteriaCfId && kriteriaCfId !== '') {
+          subKriteriaSelect.disabled = false;
+          subKriteriaSelect.style.opacity = '1';
+          subKriteriaSelect.style.cursor = 'pointer';
+
+          // Show/hide options based on selected kriteria CF
+          Array.from(subKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+            if (kriteriaCfIdForOption === kriteriaCfId) {
+              option.style.display = 'block';
+            } else {
+              option.style.display = 'none';
+            }
+          });
+        } else {
+          // Disable Sub Kriteria and reset value if Kriteria CF is not selected
+          subKriteriaSelect.disabled = true;
+          subKriteriaSelect.style.opacity = '0.6';
+          subKriteriaSelect.style.cursor = 'not-allowed';
+          subKriteriaSelect.value = '';
+
+          // Also disable and reset Item Sub Kriteria
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.style.opacity = '0.6';
+          itemSubKriteriaSelect.style.cursor = 'not-allowed';
+          itemSubKriteriaSelect.value = '';
+
+          // Show all options when disabled
+          Array.from(subKriteriaSelect.options).forEach(option => {
+            option.style.display = 'block';
+          });
+        }
+
+        // Update Item Sub Kriteria filter
+        updateItemSubKriteriaFilter();
+      }
+
+      function updateItemSubKriteriaFilter() {
+        const subKriteriaId = document.getElementById('filterSubKriteria').value;
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
+
+        // Enable/disable Item Sub Kriteria based on Sub Kriteria selection
+        if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+          itemSubKriteriaSelect.disabled = false;
+          itemSubKriteriaSelect.style.opacity = '1';
+          itemSubKriteriaSelect.style.cursor = 'pointer';
+
+          // Show/hide options based on selected sub kriteria
+          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+            if (subKriteriaIdForOption === subKriteriaId) {
+              option.style.display = 'block';
+            } else {
+              option.style.display = 'none';
+            }
+          });
+        } else {
+          // Disable Item Sub Kriteria and reset value if Sub Kriteria is not selected
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.style.opacity = '0.6';
+          itemSubKriteriaSelect.style.cursor = 'not-allowed';
+          itemSubKriteriaSelect.value = '';
+
+          // Show all options when disabled
+          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            option.style.display = 'block';
+          });
+        }
+      }
+
+      // View Switcher
+      function switchView(view) {
+        // Update buttons
+        document.querySelectorAll('.view-switcher-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+        // Update views
+        document.getElementById('cardView').classList.toggle('active', view === 'card');
+        document.getElementById('tableView').classList.toggle('active', view === 'table');
+
+        // Save preference
+        localStorage.setItem('rekapanKeterlambatanView', view);
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function () {
+        // Load saved view preference
+        const savedView = localStorage.getItem('rekapanKeterlambatanView') || 'card';
+        switchView(savedView);
+
+        // Initialize filter count and panel state
+        updateActiveFilterCount();
+
+        // Initialize cascading dropdowns
+        updateSubKriteriaFilter();
+        updateItemSubKriteriaFilter();
+
+        // Auto-expand filter panel if filters are active
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        let hasActiveFilters = false;
+        for (let [key, value] of formData.entries()) {
+          if ((key.startsWith('filter_') || key === 'year' || key === 'search') && value && value !== '') {
+            hasActiveFilters = true;
+            break;
+          }
+        }
+
+        if (hasActiveFilters) {
+          toggleFilterPanel();
+        }
+      });
+
+      // Timeframe Filter Function (for horizontal year/month filter)
+      function applyTimeframeFilter() {
+        const yearSelect = document.querySelector('.timeframe-filter-select[name="year"]');
+        const monthSelect = document.querySelector('.timeframe-filter-select[name="month"]');
+
+        const currentUrl = new URL(window.location.href);
+        const params = currentUrl.searchParams;
+
+        // Update year parameter
+        if (yearSelect && yearSelect.value) {
+          params.set('year', yearSelect.value);
+        } else if (yearSelect) {
+          params.delete('year');
+        }
+
+        // Update month parameter
+        if (monthSelect && monthSelect.value) {
+          params.set('month', monthSelect.value);
+        } else if (monthSelect) {
+          params.delete('month');
+        }
+
+        // Remove page parameter to go back to first page
+        params.delete('page');
+
+        window.location.href = currentUrl.toString();
+      }
+
+      // Change entries per page
+      function changeEntriesPerPage(value) {
+        const currentUrl = new URL(window.location.href);
+        const params = currentUrl.searchParams;
+
+        if (value && value !== '10') {
+          params.set('per_page', value);
+        } else {
+          params.delete('per_page');
+        }
+
+        // Reset to page 1 when changing entries
+        params.delete('page');
+
+        window.location.href = currentUrl.toString();
+      }
+
+      // Apply quick search
+      function applyQuickSearch() {
+        const searchValue = document.getElementById('quickSearchInput').value.trim();
+        const currentUrl = new URL(window.location.href);
+        const params = currentUrl.searchParams;
+
+        if (searchValue) {
+          params.set('search', searchValue);
+        } else {
+          params.delete('search');
+        }
+
+        // Reset to page 1 when searching
+        params.delete('page');
+
+        window.location.href = currentUrl.toString();
+      }
+
+      // Export Modal Functions
+      function showExportModal() {
+        const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+        exportModal.show();
+      }
+
+      function confirmExport() {
+        const year = document.getElementById('exportYear').value;
+        const month = document.getElementById('exportMonth').value;
+        const status = document.getElementById('exportStatus').value;
+
+        let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
+        const params = new URLSearchParams();
+
+        if (year) {
+          params.set('year', year);
+        }
+        if (month) {
+          params.set('month', month);
+        }
+
+        // Convert filter_age to status if present and status not manually selected
+        // Read current filter_age from URL
+        const currentUrl = new URL(window.location.href);
+        const filterAge = currentUrl.searchParams.get('filter_age');
+
+        if (status) {
+          // User explicitly selected status in modal - use that
+          params.set('status', status);
+        } else if (filterAge) {
+          // No manual status selection, but filter_age exists in URL
+          // Convert filter_age to status for export compatibility
+          const ageToStatus = {
+            '1': 'aman',
+            '2': 'peringatan',
+            '3+': 'terlambat'
+          };
+          const convertedStatus = ageToStatus[filterAge];
+          if (convertedStatus) {
+            params.set('status', convertedStatus);
+          }
+        }
+
+        if (params.toString()) {
+          exportUrl += '?' + params.toString();
+        }
+
+        // Close Modal
+        const modalEl = document.getElementById('exportModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) {
+          modal.hide();
+        }
+
+        // Redirect to download
+        window.location.href = exportUrl;
+      }
+    </script>
 
 @endsection
