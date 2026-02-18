@@ -3941,6 +3941,8 @@
                           {{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}
                         @elseif($col == 'tanggal_berakhir_spk')
                           {{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}
+                        @elseif($col == 'bagian')
+                          {{ $dokumen->bagian ?? '-' }}
                         @else
                           -
                         @endif

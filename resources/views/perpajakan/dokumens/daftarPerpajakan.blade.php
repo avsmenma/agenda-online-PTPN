@@ -3199,6 +3199,8 @@
                       @else
                         -
                       @endif
+                    @elseif($col == 'bagian')
+                      {{ $dokumen->bagian ?? '-' }}
                     @else
                       -
                     @endif
