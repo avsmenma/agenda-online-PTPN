@@ -448,11 +448,46 @@
           font-size: 13px;
         }
 
-        .table-enhanced th.sticky-column {
+        .table-enhanced th.sticky-column,
+        .table-enhanced td.sticky-column {
           position: sticky;
-          left: 0;
+          z-index: 5;
+        }
+
+        .table-enhanced th.sticky-column {
           z-index: 11;
           background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+        }
+
+        .table-enhanced td.sticky-column {
+          background: #ffffff;
+          z-index: 5;
+        }
+
+        .table-enhanced tbody tr:hover td.sticky-column {
+          background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+        }
+
+        /* Freeze pane column positions: Checkbox(0) → No(50px) → Nomor Agenda(130px) */
+        .table-enhanced th.col-checkbox.sticky-column,
+        .table-enhanced td.col-checkbox.sticky-column {
+          left: 0;
+        }
+
+        .table-enhanced th.col-no.sticky-column,
+        .table-enhanced td.col-no.sticky-column {
+          left: 50px;
+        }
+
+        .table-enhanced th.col-nomor_agenda.sticky-column,
+        .table-enhanced td.col-nomor_agenda.sticky-column {
+          left: 130px;
+        }
+
+        /* Right shadow on last frozen column for visual separation */
+        .table-enhanced th.col-nomor_agenda.sticky-column,
+        .table-enhanced td.col-nomor_agenda.sticky-column {
+          box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.1);
         }
 
         .table-enhanced tbody tr {
@@ -3690,7 +3725,7 @@
                   @if($col !== 'status')
                     @if($col === 'nomor_agenda')
                       {{-- Nomor Agenda with sortable arrows --}}
-                      <th class="col-{{ $col }}" style="cursor: pointer; user-select: none;" 
+                      <th class="col-{{ $col }} sticky-column" style="cursor: pointer; user-select: none;" 
                           onclick="toggleSort('nomor_agenda')">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                           <span>{{ $availableColumns[$col] ?? $col }}</span>
@@ -3847,12 +3882,12 @@
                       data-nomor="{{ $dokumen->nomor_agenda }}" onclick="event.stopPropagation();">
                   </td>
                   {{-- No Column --}}
-                  <td class="col-no" style="width: 40px;">
+                  <td class="col-no sticky-column" style="width: 40px;">
                     {{ $loop->iteration + ($dokumens->currentPage() - 1) * $dokumens->perPage() }}
                   </td>
                   @foreach($selectedColumns as $col)
                     @if($col !== 'status')
-                      <td class="col-{{ $col }}">
+                      <td class="col-{{ $col }}{{ $col === 'nomor_agenda' ? ' sticky-column' : '' }}">
                         @if($col == 'nomor_agenda')
                           <span class="select-text">{{ $dokumen->nomor_agenda }}</span>
                         @elseif($col == 'nomor_spp')

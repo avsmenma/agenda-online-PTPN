@@ -868,11 +868,50 @@
       font-size: 13px;
     }
 
-    .table-enhanced th.sticky-column {
+    .table-enhanced th.sticky-column,
+    .table-enhanced td.sticky-column {
       position: sticky;
-      left: 0;
+      z-index: 5;
+    }
+
+    .table-enhanced th.sticky-column {
       z-index: 11;
       background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    }
+
+    .table-enhanced td.sticky-column {
+      background: #ffffff;
+      z-index: 5;
+    }
+
+    .table-enhanced tbody tr:hover td.sticky-column {
+      background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+    }
+
+    /* Freeze pane column positions: Checkbox(0) → No(50px) → Nomor Agenda(130px) */
+    .table-enhanced th.col-checkbox,
+    .table-enhanced td.col-checkbox {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+    }
+    .table-enhanced th.col-checkbox { z-index: 11; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); }
+    .table-enhanced td.col-checkbox { background: #ffffff; }
+
+    .table-enhanced th.col-no.sticky-column,
+    .table-enhanced td.col-no.sticky-column {
+      left: 50px;
+    }
+
+    .table-enhanced th.col-nomor_agenda.sticky-column,
+    .table-enhanced td.col-nomor_agenda.sticky-column {
+      left: 130px;
+    }
+
+    /* Right shadow on last frozen column for visual separation */
+    .table-enhanced th.col-nomor_agenda.sticky-column,
+    .table-enhanced td.col-nomor_agenda.sticky-column {
+      box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.1);
     }
 
     .table-enhanced tbody tr {
@@ -2538,7 +2577,7 @@
             @endphp
             @foreach($filteredColumns as $col)
               @if($col === 'nomor_agenda')
-                <th class="col-{{ $col }}" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                <th class="col-{{ $col }} sticky-column" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                   {{ $availableColumns[$col] }}
                   <span style="display:inline-flex; flex-direction:column; line-height:0.5; margin-left:4px; font-size:10px; vertical-align:middle;">
                     <i class="fas fa-caret-up" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='asc') ? '1' : '0.3' }}"></i>
@@ -2646,7 +2685,7 @@
                 });
               @endphp
               @foreach($filteredColumns as $col)
-                <td class="col-{{ $col }}">
+                <td class="col-{{ $col }}{{ $col === 'nomor_agenda' ? ' sticky-column' : '' }}">
                   @if($col == 'nomor_agenda')
                     <strong>{{ $dokumen->nomor_agenda }}</strong>
                     <br>

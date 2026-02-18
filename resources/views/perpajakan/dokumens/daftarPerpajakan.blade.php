@@ -374,6 +374,49 @@
       transform: scale(1.002);
     }
 
+    /* Freeze pane sticky columns */
+    .table-enhanced th.sticky-column,
+    .table-enhanced td.sticky-column {
+      position: sticky;
+      z-index: 5;
+    }
+
+    .table-enhanced th.sticky-column {
+      z-index: 11;
+      background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
+    }
+
+    .table-enhanced td.sticky-column {
+      background: #ffffff;
+      z-index: 5;
+    }
+
+    .table-enhanced tbody tr:hover td.sticky-column {
+      background: linear-gradient(135deg, rgba(26, 77, 62, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
+    }
+
+    /* Freeze pane column positions: Checkbox(0) → No(50px) → Nomor Agenda(130px) */
+    .table-enhanced th.col-checkbox.sticky-column,
+    .table-enhanced td.col-checkbox.sticky-column {
+      left: 0;
+    }
+
+    .table-enhanced th.col-no.sticky-column,
+    .table-enhanced td.col-no.sticky-column {
+      left: 50px;
+    }
+
+    .table-enhanced th.col-nomor_agenda.sticky-column,
+    .table-enhanced td.col-nomor_agenda.sticky-column {
+      left: 130px;
+    }
+
+    /* Right shadow on last frozen column for visual separation */
+    .table-enhanced th.col-nomor_agenda.sticky-column,
+    .table-enhanced td.col-nomor_agenda.sticky-column {
+      box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.1);
+    }
+
     .table-enhanced tbody tr.highlight-row {
       background: linear-gradient(90deg, rgba(26, 77, 62, 0.15) 0%, transparent 100%);
       border-left: 3px solid #1a4d3e;
@@ -2884,14 +2927,14 @@
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>
-            <th class="col-checkbox" style="width: 50px;">
+            <th class="col-checkbox sticky-column" style="width: 50px;">
               <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
             </th>
-            <th class="col-no">No</th>
+            <th class="col-no sticky-column">No</th>
             @foreach($selectedColumns as $col)
               @if($col !== 'status')
                 @if($col === 'nomor_agenda')
-                  <th class="col-{{ $col }}" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                  <th class="col-{{ $col }} sticky-column" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                     {{ $availableColumns[$col] ?? $col }}
                     <span style="display:inline-flex; flex-direction:column; line-height:0.5; margin-left:4px; font-size:10px; vertical-align:middle;">
                       <i class="fas fa-caret-up" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='asc') ? '1' : '0.3' }}"></i>
@@ -3068,16 +3111,16 @@
             @endphp
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen">
-              <td class="col-checkbox" onclick="event.stopPropagation();">
+              <td class="col-checkbox sticky-column" onclick="event.stopPropagation();">
                 @if($canSend && !$isSentToAkutansi && !$isSentToPembayaran && !$isPendingApprovalAkutansi && !$isPendingApprovalPembayaran)
                   <input type="checkbox" class="doc-checkbox bulk-checkbox" data-id="{{ $dokumen->id }}"
                     data-agenda="{{ $dokumen->nomor_agenda }}">
                 @endif
               </td>
-              <td class="col-no" style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
+              <td class="col-no sticky-column" style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
               @foreach($selectedColumns as $col)
                 @if($col !== 'status')
-                  <td class="col-{{ $col }}">
+                  <td class="col-{{ $col }}{{ $col === 'nomor_agenda' ? ' sticky-column' : '' }}">
                     @if($col == 'nomor_agenda')
                       <strong>{{ $dokumen->nomor_agenda }}</strong>
                       <br>
