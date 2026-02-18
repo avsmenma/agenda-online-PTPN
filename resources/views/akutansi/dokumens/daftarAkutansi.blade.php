@@ -3363,6 +3363,26 @@
                             @endif
                           </td>
                           <td class="col-action" onclick="event.stopPropagation()">
+                            @if(!$dokumen->is_at_my_role)
+                              {{-- Cross-role visibility: document not yet at Akutansi --}}
+                              @php
+                                $handlerLabel = match($dokumen->current_handler) {
+                                  'operator' => 'Operator',
+                                  'bidang' => 'Bidang',
+                                  'team_verifikasi' => 'Verifikasi',
+                                  'perpajakan' => 'Perpajakan',
+                                  'akutansi' => 'Akutansi',
+                                  'pembayaran' => 'Pembayaran',
+                                  default => ucfirst(str_replace('_', ' ', $dokumen->current_handler ?? 'Unknown')),
+                                };
+                              @endphp
+                              <div class="action-buttons-hybrid" style="display: flex; align-items: center; justify-content: center;">
+                                <span class="badge-status badge-proses" style="font-size: 11px; padding: 6px 12px; white-space: nowrap;">
+                                  <i class="fa-solid fa-hourglass-half me-1"></i>
+                                  Di {{ $handlerLabel }}
+                                </span>
+                              </div>
+                            @else
                             <div class="action-buttons-hybrid">
                               @php
                                 $isSentToPembayaran = in_array($dokumen->status, [
@@ -3415,6 +3435,7 @@
                                   </button>
                                 @endif
                             </div>
+                            @endif
                           </td>
                         </tr>
                         <tr class="detail-row" id="detail-{{ $dokumen->id }}">

@@ -223,35 +223,13 @@ class DashboardAkutansiController extends Controller
 
     public function dokumens(Request $request)
     {
-        // Akutansi sees:
-        // 1. Documents currently handled by Akutansi (active)
-        // 2. Documents that have been sent to Akutansi (tracking)
-        // Exclude CSV imported documents - they are meant only for pembayaran
-        // Note: Removed 'sent_to_pembayaran' and related statuses because CSV imports use these statuses
+        // Akutansi sees ALL documents (cross-role visibility)
+        // Action buttons are disabled for documents not yet at this role (controlled in blade view)
+        // Exclude documents that are returned to bidang and CSV imports
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
-        $query = Dokumen::where(function ($q) use ($hasImportedFromCsvColumn) {
-            $q->where('current_handler', 'akutansi')
-                ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
-                    // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
-                    $pembayaranQ->where(function ($statusQ) {
-                        $statusQ->where('status', 'sent_to_pembayaran')
-                            ->orWhere(function ($completedQ) {
-                                // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
-                                $completedQ->whereIn('status', ['completed', 'selesai'])
-                                    ->whereNotNull('status_pembayaran');
-                            });
-                    });
-                    // Only exclude CSV imports if column exists
-                    if ($hasImportedFromCsvColumn) {
-                        $pembayaranQ->where(function ($csvQ) {
-                            $csvQ->where('imported_from_csv', false)
-                                ->orWhereNull('imported_from_csv');
-                        });
-                    }
-                });
-        })
+        $query = Dokumen::query()
+            ->where('status', '!=', 'returned_to_bidang')
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
@@ -466,6 +444,21 @@ class DashboardAkutansiController extends Controller
             $dokumen->can_edit = DokumenHelper::canEditDocument($dokumen, 'akutansi');
             $dokumen->can_set_deadline = DokumenHelper::canSetDeadline($dokumen)['can_set'];
             $dokumen->lock_status_class = DokumenHelper::getLockStatusClass($dokumen);
+
+            // Cross-role visibility: determine if document is at Akutansi's role
+            // Documents are "at my role" if:
+            // - current_handler is akutansi
+            // - status indicates it was sent/processed by akutansi (sent_to_pembayaran, etc.)
+            // - status is completed/selesai with status_pembayaran set (went through full workflow)
+            $dokumen->is_at_my_role = in_array($dokumen->current_handler, ['akutansi'])
+                || in_array($dokumen->status, [
+                    'sent_to_pembayaran',
+                    'pending_approval_pembayaran',
+                    'waiting_approval_pembayaran',
+                    'menunggu_di_approve',
+                ])
+                || (in_array($dokumen->status, ['completed', 'selesai']) && !empty($dokumen->status_pembayaran));
+
             return $dokumen;
         });
 

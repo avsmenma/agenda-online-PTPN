@@ -200,81 +200,23 @@ class TeamVerifikasiController extends Controller
 
     public function dokumens(Request $request)
     {
-        // Team Verifikasi sees:
-        // 1. Documents with current_handler = Team Verifikasi (active documents) - including approved via universal approval
-        // 2. Documents with status sedang_diproses and current_handler = Team Verifikasi (from universal approval)
-        // 3. Documents that were sent to perpajakan/akutansi (for tracking)
+        // Team Verifikasi sees ALL documents (cross-role visibility)
+        // Action buttons are disabled for documents not yet at this role (controlled in blade view)
         // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
-        // Exclude pending approval documents (they should use inbox)
-        // Optimized query - only load essential columns for list view
         // Base query - akan dimodifikasi oleh filter status jika ada
         $query = Dokumen::with('activityLogs')
             ->where('status', '!=', 'returned_to_bidang');
 
-        // Apply base filter only if no status filter is specified
-        // If status filter is specified, it will override base filter
         // Exclude CSV imported documents - they are exclusive to Pembayaran module
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
-        if (!$request->has('status') || !$request->status) {
-            $query->where(function ($q) use ($hasImportedFromCsvColumn) {
-                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-                    ->orWhere(function ($subQ) {
-                        // Handle both status formats (with space and underscore) for backward compatibility
-                        $subQ->where(function ($statusQ) {
-                            $statusQ->where('status', 'sedang diproses')
-                                ->orWhere('status', 'sedang_diproses');
-                        })
-                            ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
-                    })
-                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve', 'waiting_approval_perpajakan', 'waiting_approval_akuntansi']) // Include documents sent to perpajakan/akutansi/pembayaran AND waiting approval
-                    ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
-                        // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
-                        $pembayaranQ->where(function ($statusQ) {
-                            $statusQ->where('status', 'sent_to_pembayaran')
-                                ->orWhere(function ($completedQ) {
-                                    // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
-                                    $completedQ->whereIn('status', ['completed', 'selesai'])
-                                        ->whereNotNull('status_pembayaran');
-                                });
-                        });
-                        // Only exclude CSV imports if column exists
-                        if ($hasImportedFromCsvColumn) {
-                            $pembayaranQ->where(function ($csvQ) {
-                                $csvQ->where('imported_from_csv', false)
-                                    ->orWhereNull('imported_from_csv');
-                            });
-                        }
-                    })
-                    ->orWhere(function ($rejectQ) {
-                        // FIX: Tampilkan dokumen yang direject dari Perpajakan dan dikembalikan ke Verifikasi
-                        // (Dokumen yang ditolak oleh Akutansi dikembalikan ke Perpajakan, bukan Verifikasi)
-                        $rejectQ->where('status', 'returned_to_department')
-                            ->where('return_source', 'perpajakan')
-                            ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi']);
-                    })
-                    ->orWhere(function ($returnVerifQ) {
-                        // Include dokumen yang dikembalikan oleh Perpajakan/Akutansi ke Verifikasi
-                        // Tetap tampil di daftar utama dengan status "Dikembalikan oleh ..."
-                        $returnVerifQ->where('status', 'returned_to_verifikasi');
-                    });
-            })
-                // Exclude CSV imported documents (only if column exists)
-                ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                    $query->where(function ($q) {
-                        $q->where('imported_from_csv', false)
-                            ->orWhereNull('imported_from_csv');
-                    });
-                });
-        } else {
-            // Even when status filter is applied, exclude CSV imported documents
-            $query->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
+        // Always exclude CSV imported documents regardless of status filter
+        $query->when($hasImportedFromCsvColumn, function ($query) {
+            $query->where(function ($q) {
+                $q->where('imported_from_csv', false)
+                    ->orWhereNull('imported_from_csv');
             });
-        }
+        });
 
         $query->leftJoin('dokumen_role_data as team_verifikasi_data', function ($join) {
             $join->on('dokumens.id', '=', 'team_verifikasi_data.dokumen_id')
@@ -619,6 +561,7 @@ class TeamVerifikasiController extends Controller
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Cast deadline_at from alias to Carbon if it's a string
+        // Also set is_at_my_role flag for cross-role document visibility
         $dokumens->getCollection()->transform(function ($dokumen) {
             if ($dokumen->deadline_at && is_string($dokumen->deadline_at)) {
                 try {
@@ -627,6 +570,32 @@ class TeamVerifikasiController extends Controller
                     $dokumen->deadline_at = null;
                 }
             }
+
+            // Cross-role visibility: determine if document is at Team Verifikasi's role
+            // Documents are "at my role" if:
+            // - current_handler is team_verifikasi
+            // - status indicates it was sent/processed by team_verifikasi (sent_to_perpajakan, etc.)
+            // - status indicates it was returned to verifikasi
+            // - status is completed/selesai with status_pembayaran set
+            $dokumen->is_at_my_role = in_array($dokumen->current_handler, ['team_verifikasi'])
+                || in_array($dokumen->status, [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'returned_to_verifikasi',
+                    'sedang diproses',
+                    'sedang_diproses',
+                ])
+                || (in_array($dokumen->status, ['completed', 'selesai']) && !empty($dokumen->status_pembayaran))
+                || ($dokumen->status === 'returned_to_department' && in_array($dokumen->return_source, ['perpajakan', 'akutansi']) && $dokumen->current_handler === 'team_verifikasi');
+
             return $dokumen;
         });
 

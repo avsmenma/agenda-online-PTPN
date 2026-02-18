@@ -171,46 +171,13 @@ class DashboardPerpajakanController extends Controller
 
     public function dokumens(Request $request)
     {
-        // Perpajakan sees:
-        // 1. Documents with current_handler = perpajakan (active documents)
-        // 2. Documents that were sent to akutansi (for tracking)
-        // Exclude CSV imported documents - they are meant only for pembayaran
-        // Note: Removed 'sent_to_pembayaran' status because CSV imports use this status
+        // Perpajakan sees ALL documents (cross-role visibility)
+        // Action buttons are disabled for documents not yet at this role (controlled in blade view)
+        // Exclude documents that are returned to bidang and CSV imports
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
         $query = Dokumen::query()
-            ->where(function ($q) use ($hasImportedFromCsvColumn) {
-                $q->where('current_handler', 'perpajakan')
-                    ->orWhere('status', 'sent_to_akutansi')
-                    // Include documents rejected by akutansi and returned to perpajakan
-                    ->orWhere(function ($rejectedQ) {
-                        $rejectedQ->where('status', 'returned_to_department')
-                            ->where('return_source', 'akutansi')
-                            ->where('current_handler', 'perpajakan')
-                            ->whereHas('roleStatuses', function ($statusQ) {
-                                $statusQ->where('role_code', 'akutansi')
-                                    ->where('status', 'rejected');
-                            });
-                    })
-                    ->orWhere(function ($pembayaranQ) use ($hasImportedFromCsvColumn) {
-                        // Include documents sent to pembayaran or completed after payment, but exclude CSV imports
-                        $pembayaranQ->where(function ($statusQ) {
-                            $statusQ->whereIn('status', ['sent_to_pembayaran', 'menunggu_di_approve', 'pending_approval_pembayaran'])
-                                ->orWhere(function ($completedQ) {
-                                    // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
-                                    $completedQ->whereIn('status', ['completed', 'selesai'])
-                                        ->whereNotNull('status_pembayaran');
-                                });
-                        });
-                        // Only exclude CSV imports if column exists
-                        if ($hasImportedFromCsvColumn) {
-                            $pembayaranQ->where(function ($csvQ) {
-                                $csvQ->where('imported_from_csv', false)
-                                    ->orWhereNull('imported_from_csv');
-                            });
-                        }
-                    });
-            })
+            ->where('status', '!=', 'returned_to_bidang')
             ->excludeCsvImports()
             ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
@@ -450,6 +417,27 @@ class DashboardPerpajakanController extends Controller
             $dokumen->can_edit = \App\Helpers\DokumenHelper::canEditDocument($dokumen, 'perpajakan');
             $dokumen->can_set_deadline = \App\Helpers\DokumenHelper::canSetDeadline($dokumen)['can_set'];
             $dokumen->lock_status_class = \App\Helpers\DokumenHelper::getLockStatusClass($dokumen);
+
+            // Cross-role visibility: determine if document is at Perpajakan's role
+            // Documents are "at my role" if:
+            // - current_handler is perpajakan
+            // - status indicates it was sent/processed by perpajakan (sent_to_akutansi, etc.)
+            // - status indicates it was returned to perpajakan
+            // - status is completed/selesai with status_pembayaran set (went through full workflow)
+            $dokumen->is_at_my_role = in_array($dokumen->current_handler, ['perpajakan'])
+                || in_array($dokumen->status, [
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'menunggu_di_approve',
+                    'returned_to_verifikasi',
+                ])
+                || (in_array($dokumen->status, ['completed', 'selesai']) && !empty($dokumen->status_pembayaran))
+                || ($dokumen->status === 'returned_to_department' && $dokumen->return_source === 'akutansi' && $dokumen->current_handler === 'perpajakan');
+
             return $dokumen;
         });
 
