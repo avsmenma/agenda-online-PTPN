@@ -3887,7 +3887,7 @@
             <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})">
               {{-- Checkbox Column --}}
-              <td class="col-checkbox text-center">
+              <td class="col-checkbox sticky-column text-center">
                 <input type="checkbox" class="document-checkbox" value="{{ $dokumen->id }}"
                   data-nomor="{{ $dokumen->nomor_agenda }}" onclick="event.stopPropagation();">
               </td>
