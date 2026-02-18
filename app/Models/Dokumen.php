@@ -49,6 +49,8 @@ class Dokumen extends Model
         'tanggal_paraf',
         'pemaraf',
         'tanggal_selesai_diproses',
+        'kepala_sub_bagian',
+        'status_dokumen_csv',
         // Workflow tracking (kept for compatibility)
         'created_by',
         'current_handler',

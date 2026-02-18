@@ -175,6 +175,13 @@ class OperatorCsvImportController extends Controller
             // PO and MIRO
             'No. PO',
             'No. Miro/SES',
+            // Paraf & processing fields
+            'Tanggal Paraf',
+            'Pemaraf',
+            'Tgl selesai diproses',
+            'Kepala Sub Bagian',
+            'Status Dokumen',
+            'Tanggal Bayar',
         ];
 
         // Clean headers and track which indices to keep
@@ -560,6 +567,13 @@ class OperatorCsvImportController extends Controller
             // PO and MIRO
             'NO_PO' => trim($row['No. PO'] ?? '') ?: null,
             'NO_MIRO_SES' => trim($row['No. Miro/SES'] ?? '') ?: null,
+            // Paraf & processing fields
+            'tanggal_paraf' => $this->parseDate($row['Tanggal Paraf'] ?? null),
+            'pemaraf' => trim($row['Pemaraf'] ?? '') ?: null,
+            'tanggal_selesai_diproses' => $this->parseDate($row['Tgl selesai diproses'] ?? null),
+            'kepala_sub_bagian' => trim($row['Kepala Sub Bagian'] ?? '') ?: null,
+            'status_dokumen_csv' => trim($row['Status Dokumen'] ?? '') ?: null,
+            'tanggal_dibayar' => $this->parseDate($row['Tanggal Bayar'] ?? null),
         ];
     }
 

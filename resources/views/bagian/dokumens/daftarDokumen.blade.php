@@ -1187,6 +1187,20 @@
                               @endif
                             @elseif($col == 'tanggal_selesai_diproses')
                               {{ $doc->tanggal_selesai_diproses ? $doc->tanggal_selesai_diproses->format('d/m/Y H:i') : '-' }}
+                            @elseif($col == 'kepala_sub_bagian')
+                              {{ $doc->kepala_sub_bagian ?? '-' }}
+                            @elseif($col == 'status_dokumen_custom')
+                              @if($doc->status_dokumen_csv)
+                                <span
+                                  class="badge-status {{ $doc->status_dokumen_csv == 'Selesai Dibayar' ? 'badge-selesai' : ($doc->status_dokumen_csv == 'Dikembalikan' ? 'badge-dikembalikan' : 'badge-proses') }}"
+                                  style="font-size: 10px; padding: 4px 8px;">
+                                  {{ $doc->status_dokumen_csv }}
+                                </span>
+                              @else
+                                -
+                              @endif
+                            @elseif($col == 'tanggal_dibayar')
+                              {{ $doc->tanggal_dibayar ? \Carbon\Carbon::parse($doc->tanggal_dibayar)->format('d/m/Y') : '-' }}
                             @else
                               -
                             @endif
