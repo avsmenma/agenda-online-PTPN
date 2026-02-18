@@ -213,6 +213,9 @@ class OwnerDashboardController extends Controller
                 });
         })->count();
 
+        // Dokumen Siap Bayar
+        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')->count();
+
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
@@ -228,6 +231,7 @@ class OwnerDashboardController extends Controller
             'bagianStats',
             'totalDokumen',
             'dokumenProses',
+            'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
             'totalDokumenTrend'

@@ -94,6 +94,42 @@
             background: linear-gradient(135deg, #10b981, #34d399);
         }
 
+        .summary-card.siap_bayar .icon {
+            background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+        }
+
+        /* Clickable card indicator for siap_bayar card */
+        .summary-card.siap_bayar.clickable {
+            cursor: pointer;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.siap_bayar.clickable:hover {
+            border-color: #0ea5e9;
+            transform: translateY(-6px);
+            box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25);
+        }
+
+        .summary-card.siap_bayar.clickable .click-indicator {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-size: 0.75rem;
+            color: #0ea5e9;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card.siap_bayar.clickable:hover .click-indicator {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
         /* Clickable card indicator for selesai card */
         .summary-card.selesai.clickable {
             cursor: pointer;
@@ -375,6 +411,19 @@
                 </div>
                 <div class="label">Dokumen Belum Dibayar</div>
                 <div class="value">{{ number_format($dokumenProses) }}</div>
+                <div class="click-indicator">
+                    <span>Lihat Detail</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <a href="{{ url('/owner/dokumen?status=siap_dibayar') }}" class="summary-card siap_bayar clickable"
+                style="text-decoration: none;">
+                <div class="icon">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <div class="label">Dokumen Siap Bayar</div>
+                <div class="value">{{ number_format($dokumenSiapBayar) }}</div>
                 <div class="click-indicator">
                     <span>Lihat Detail</span>
                     <i class="fa-solid fa-arrow-right"></i>
