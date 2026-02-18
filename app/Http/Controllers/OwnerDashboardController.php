@@ -1511,7 +1511,7 @@ class OwnerDashboardController extends Controller
     /**
      * Show workflow tracking page for a document
      */
-    public function showWorkflow($id)
+    public function showWorkflow(Request $request, $id)
     {
         $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
             ->findOrFail($id);
@@ -1556,6 +1556,11 @@ class OwnerDashboardController extends Controller
         } elseif (in_array($userRole, ['admin', 'owner'])) {
             $module = 'owner';
             $dashboardUrl = '/owner/dokumen';
+        }
+
+        // If a return_url was passed (e.g., from Rekapan Keterlambatan with filters), use it
+        if ($request->has('return_url') && $request->return_url) {
+            $dashboardUrl = $request->return_url;
         }
 
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))

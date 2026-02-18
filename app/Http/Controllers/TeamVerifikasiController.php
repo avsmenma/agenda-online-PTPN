@@ -652,26 +652,45 @@ class TeamVerifikasiController extends Controller
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
-            'nomor_spp' => 'Nomor SPP',
-            'tanggal_masuk' => 'Tanggal Masuk',
-            'nilai_rupiah' => 'Nilai Rupiah',
-            'nomor_miro' => 'Nomor Miro',
-            'tanggal_spp' => 'Tanggal SPP',
-            'uraian_spp' => 'Uraian SPP',
-            'kategori' => 'Kriteria CF',
-            'kebun' => 'Kebun',
             'bulan' => 'Bulan',
             'tahun' => 'Tahun',
+            'kategori' => 'Kriteria CF',
             'jenis_dokumen' => 'Sub Kriteria',
             'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
             'jenis_pembayaran' => 'Jenis Pembayaran',
-            'nama_pengirim' => 'Nama Pengirim',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_spp' => 'Tanggal SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
             'dibayar_kepada' => 'Dibayar Kepada',
-            'no_berita_acara' => 'No Berita Acara',
-            'tanggal_berita_acara' => 'Tanggal Berita Acara',
+            'uraian_spp' => 'Uraian SPP',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            // Backend later columns
+            'tanggal_paraf' => 'Tanggal Paraf',
+            'pemaraf' => 'Pemaraf',
+            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
+            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
+            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
+            'kepala_sub_bagian' => 'Kepala Sub Bagian',
+            'keterangan' => 'Keterangan',
+            'status_dokumen_custom' => 'Status Dokumen',
+            'tanggal_dibayar' => 'Tanggal Bayar',
+            'bagian' => 'Bagian',
+            'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Berakhir SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Akhir SPK',
+            'no_berita_acara' => 'No Berita Acara (BA)',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara (BA)',
+            'nomor_po' => 'No PO',
+            'nomor_miro' => 'No Miro',
+            'no_faktur' => 'No Faktur',
+            'tanggal_faktur' => 'Tanggal Faktur',
+            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
+            'jenis_pph' => 'Jenis PPh',
+            'dpp_pph' => 'DPP PPh',
+            'ppn_terhutang' => 'PPH Terhutang',
+            // Role-specific columns
+            'kebun' => 'Kebun',
         ];
 
         // Get selected columns from request or session
@@ -679,7 +698,7 @@ class TeamVerifikasiController extends Controller
 
         // Filter out 'status' and 'keterangan' from selectedColumns if present
         $selectedColumns = array_filter($selectedColumns, function ($col) {
-            return $col !== 'status' && $col !== 'keterangan';
+            return $col !== 'status';
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
 
@@ -715,7 +734,7 @@ class TeamVerifikasiController extends Controller
 
             // Filter out 'status' and 'keterangan' if they exist
             $selectedColumns = array_filter($selectedColumns, function ($col) {
-                return $col !== 'status' && $col !== 'keterangan';
+                return $col !== 'status';
             });
             $selectedColumns = array_values($selectedColumns);
 
