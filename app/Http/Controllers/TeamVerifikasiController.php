@@ -316,6 +316,10 @@ class TeamVerifikasiController extends Controller
                 'dokumens.return_source', // Added: for returned_to_verifikasi status badge
                 'dokumens.return_reason', // Added: for returned_to_verifikasi reason
                 'dokumens.returned_at', // Added: for returned_to_verifikasi timestamp
+                // Paraf & processing columns
+                'dokumens.tanggal_paraf',
+                'dokumens.pemaraf',
+                'dokumens.tanggal_selesai_diproses',
                 // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
                 // 'dokumens.inbox_approval_reason', // REMOVED
                 // 'dokumens.inbox_approval_for', // REMOVED
