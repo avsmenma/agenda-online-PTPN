@@ -889,14 +889,10 @@
     }
 
     /* Freeze pane column positions: Checkbox(0) → No(50px) → Nomor Agenda(130px) */
-    .table-enhanced th.col-checkbox,
-    .table-enhanced td.col-checkbox {
-      position: sticky;
+    .table-enhanced th.col-checkbox.sticky-column,
+    .table-enhanced td.col-checkbox.sticky-column {
       left: 0;
-      z-index: 5;
     }
-    .table-enhanced th.col-checkbox { z-index: 11; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); }
-    .table-enhanced td.col-checkbox { background: #ffffff; }
 
     .table-enhanced th.col-no.sticky-column,
     .table-enhanced td.col-no.sticky-column {
@@ -2566,7 +2562,7 @@
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>
-            <th class="col-checkbox">
+            <th class="col-checkbox sticky-column">
               <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
             </th>
             <th class="col-no sticky-column">No</th>
@@ -2665,7 +2661,7 @@
               data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
               data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})">
-              <td class="col-checkbox" onclick="event.stopPropagation()">
+              <td class="col-checkbox sticky-column" onclick="event.stopPropagation()">
                 @if($canSendForBulk)
                   <input type="checkbox" 
                     class="bulk-checkbox doc-checkbox" 
