@@ -3201,6 +3201,19 @@
                       @endif
                     @elseif($col == 'bagian')
                       {{ $dokumen->bagian ?? '-' }}
+                    @elseif($col == 'tanggal_paraf')
+                      {{ $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('d/m/Y H:i') : '-' }}
+                    @elseif($col == 'pemaraf')
+                      @if($dokumen->pemaraf)
+                        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);color:white;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">
+                          <i class="fa-solid fa-check-circle"></i>
+                          {{ $dokumen->pemaraf }}
+                        </span>
+                      @else
+                        -
+                      @endif
+                    @elseif($col == 'tanggal_selesai_diproses')
+                      {{ $dokumen->tanggal_selesai_diproses ? $dokumen->tanggal_selesai_diproses->format('d/m/Y H:i') : '-' }}
                     @else
                       -
                     @endif
