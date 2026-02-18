@@ -468,7 +468,7 @@
       background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
     }
 
-    /* Freeze pane column positions: Checkbox(0) → No(50px) → Nomor Agenda(130px) */
+    /* Freeze pane column positions: Checkbox(0) → No(50px) */
     .table-enhanced th.col-checkbox.sticky-column,
     .table-enhanced td.col-checkbox.sticky-column {
       left: 0;
@@ -479,14 +479,9 @@
       left: 50px;
     }
 
-    .table-enhanced th.col-nomor_agenda.sticky-column,
-    .table-enhanced td.col-nomor_agenda.sticky-column {
-      left: 130px;
-    }
-
     /* Right shadow on last frozen column for visual separation */
-    .table-enhanced th.col-nomor_agenda.sticky-column,
-    .table-enhanced td.col-nomor_agenda.sticky-column {
+    .table-enhanced th.col-no.sticky-column,
+    .table-enhanced td.col-no.sticky-column {
       box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.1);
     }
 
@@ -3740,7 +3735,7 @@
               @if($col !== 'status')
                 @if($col === 'nomor_agenda')
                   {{-- Nomor Agenda with sortable arrows --}}
-                  <th class="col-{{ $col }} sticky-column" style="cursor: pointer; user-select: none;"
+                  <th class="col-{{ $col }}" style="cursor: pointer; user-select: none;"
                     onclick="toggleSort('nomor_agenda')">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                       <span>{{ $availableColumns[$col] ?? $col }}</span>
@@ -3902,7 +3897,7 @@
               </td>
               @foreach($selectedColumns as $col)
                 @if($col !== 'status')
-                  <td class="col-{{ $col }}{{ $col === 'nomor_agenda' ? ' sticky-column' : '' }}">
+                  <td class="col-{{ $col }}">
                     @if($col == 'nomor_agenda')
                       <span class="select-text">{{ $dokumen->nomor_agenda }}</span>
                     @elseif($col == 'nomor_spp')
