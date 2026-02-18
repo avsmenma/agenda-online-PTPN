@@ -868,42 +868,6 @@
       font-size: 13px;
     }
 
-    .table-enhanced th.sticky-column,
-    .table-enhanced td.sticky-column {
-      position: sticky;
-      z-index: 5;
-    }
-
-    .table-enhanced th.sticky-column {
-      z-index: 11;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    }
-
-    .table-enhanced td.sticky-column {
-      background: #ffffff;
-      z-index: 5;
-    }
-
-    .table-enhanced tbody tr:hover td.sticky-column {
-      background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
-    }
-
-    /* Freeze pane column positions: Checkbox(0) → No(50px) */
-    .table-enhanced th.col-checkbox.sticky-column,
-    .table-enhanced td.col-checkbox.sticky-column {
-      left: 0;
-    }
-
-    .table-enhanced th.col-no.sticky-column,
-    .table-enhanced td.col-no.sticky-column {
-      left: 50px;
-    }
-
-    /* Right shadow on last frozen column for visual separation */
-    .table-enhanced th.col-no.sticky-column,
-    .table-enhanced td.col-no.sticky-column {
-      box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.1);
-    }
 
     .table-enhanced tbody tr {
       transition: all 0.2s ease;
@@ -2560,10 +2524,10 @@
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>
-            <th class="col-checkbox sticky-column">
+            <th class="col-checkbox">
               <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
             </th>
-            <th class="col-no sticky-column">No</th>
+            <th class="col-no">No</th>
             @php
               $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
                 return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
@@ -2659,7 +2623,7 @@
               data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
               data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})">
-              <td class="col-checkbox sticky-column" onclick="event.stopPropagation()">
+              <td class="col-checkbox" onclick="event.stopPropagation()">
                 @if($canSendForBulk)
                   <input type="checkbox" 
                     class="bulk-checkbox doc-checkbox" 
@@ -2672,7 +2636,7 @@
                   <input type="checkbox" class="bulk-checkbox" disabled title="Dokumen ini tidak dapat dikirim">
                 @endif
               </td>
-              <td class="col-no sticky-column">{{ $dokumens->firstItem() + $index }}</td>
+              <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
               @php
                 $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
                   return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);

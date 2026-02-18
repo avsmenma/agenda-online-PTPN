@@ -448,42 +448,6 @@
       font-size: 13px;
     }
 
-    .table-enhanced th.sticky-column,
-    .table-enhanced td.sticky-column {
-      position: sticky;
-      z-index: 5;
-    }
-
-    .table-enhanced th.sticky-column {
-      z-index: 11;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    }
-
-    .table-enhanced td.sticky-column {
-      background: #ffffff;
-      z-index: 5;
-    }
-
-    .table-enhanced tbody tr:hover td.sticky-column {
-      background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%);
-    }
-
-    /* Freeze pane column positions: Checkbox(0) → No(50px) */
-    .table-enhanced th.col-checkbox.sticky-column,
-    .table-enhanced td.col-checkbox.sticky-column {
-      left: 0;
-    }
-
-    .table-enhanced th.col-no.sticky-column,
-    .table-enhanced td.col-no.sticky-column {
-      left: 50px;
-    }
-
-    /* Right shadow on last frozen column for visual separation */
-    .table-enhanced th.col-no.sticky-column,
-    .table-enhanced td.col-no.sticky-column {
-      box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.1);
-    }
 
     .table-enhanced tbody tr {
       transition: all 0.2s ease;
@@ -3727,10 +3691,10 @@
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>
-            <th class="col-checkbox sticky-column" style="width: 50px;">
+            <th class="col-checkbox" style="width: 50px;">
               <input type="checkbox" id="selectAll" title="Pilih Semua">
             </th>
-            <th class="col-no sticky-column">No</th>
+            <th class="col-no">No</th>
             @foreach($selectedColumns as $col)
               @if($col !== 'status')
                 @if($col === 'nomor_agenda')
@@ -3756,9 +3720,9 @@
                 @endif
               @endif
             @endforeach
-            <th class="col-deadline sticky-column">Deadline</th>
-            <th class="col-status sticky-column">Status</th>
-            <th class="col-action sticky-column">Aksi</th>
+            <th class="col-deadline">Deadline</th>
+            <th class="col-status">Status</th>
+            <th class="col-action">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -3886,12 +3850,12 @@
             <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
               onclick="handleRowClick(event, {{ $dokumen->id }})">
               {{-- Checkbox Column --}}
-              <td class="col-checkbox sticky-column text-center">
+              <td class="col-checkbox text-center">
                 <input type="checkbox" class="document-checkbox" value="{{ $dokumen->id }}"
                   data-nomor="{{ $dokumen->nomor_agenda }}" onclick="event.stopPropagation();">
               </td>
               {{-- No Column --}}
-              <td class="col-no sticky-column" style="width: 40px;">
+              <td class="col-no" style="width: 40px;">
                 {{ $loop->iteration + ($dokumens->currentPage() - 1) * $dokumens->perPage() }}
               </td>
               @foreach($selectedColumns as $col)
