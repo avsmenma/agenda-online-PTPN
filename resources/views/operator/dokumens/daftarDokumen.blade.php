@@ -984,11 +984,13 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-sticky {
-      position: sticky;
-      left: 0;
-      background: white;
-      z-index: 5;
+    /* Ensure checkbox and No columns are NOT sticky */
+    .table-enhanced .col-checkbox,
+    .table-enhanced .col-no {
+      position: static !important;
+      left: auto !important;
+      z-index: auto !important;
+      box-shadow: none !important;
     }
 
     /* Responsive design improvements */
@@ -2546,7 +2548,7 @@
                 <th class="col-{{ $col }}">{{ $availableColumns[$col] }}</th>
               @endif
             @endforeach
-            <th class="col-action sticky-column">Aksi</th>
+            <th class="col-action">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -2806,7 +2808,7 @@
                   @endif
                 </td>
               @endforeach
-              <td class="col-action sticky-column" onclick="event.stopPropagation()">
+              <td class="col-action" onclick="event.stopPropagation()">
                 <div class="action-buttons">
                   @php
                     // Check if document has been sent to Team Verifikasi
