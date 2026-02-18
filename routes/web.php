@@ -548,6 +548,7 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])-
     Route::post('/{dokumen}/set-deadline', [TeamVerifikasiController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/return-to-owner', [TeamVerifikasiController::class, 'returnToOperator'])->name('return-to-owner');
     Route::post('/{dokumen}/change-status', [TeamVerifikasiController::class, 'changeDocumentStatus'])->name('change-status');
+    Route::post('/{dokumen}/paraf', [TeamVerifikasiController::class, 'parafDokumen'])->name('paraf');
 });
 
 // Professional Reports Routes - Verifikasi

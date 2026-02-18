@@ -45,6 +45,10 @@ class Dokumen extends Model
         'return_source',
         'return_reason',
         'returned_at',
+        // Paraf & processing tracking fields
+        'tanggal_paraf',
+        'pemaraf',
+        'tanggal_selesai_diproses',
         // Workflow tracking (kept for compatibility)
         'created_by',
         'current_handler',
@@ -108,6 +112,9 @@ class Dokumen extends Model
         'resent_to_verifikasi_at' => 'datetime',
         // Unified return field casts
         'returned_at' => 'datetime',
+        // Paraf & processing casts
+        'tanggal_paraf' => 'datetime',
+        'tanggal_selesai_diproses' => 'datetime',
         // Perpajakan casts
         'tanggal_faktur' => 'date',
         'tanggal_selesai_verifikasi_pajak' => 'date',

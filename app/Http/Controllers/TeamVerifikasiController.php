@@ -1737,6 +1737,11 @@ class TeamVerifikasiController extends Controller
                 ]);
             }
 
+            // Set tanggal_selesai_diproses - auto-fill when document is sent to next role
+            $dokumen->update([
+                'tanggal_selesai_diproses' => now(),
+            ]);
+
             \DB::commit();
 
             // Map handler name for success message
@@ -3578,6 +3583,66 @@ class TeamVerifikasiController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error showing rejected document for Team Verifikasi: ' . $e->getMessage());
             return back()->with('error', 'Gagal memuat detail dokumen yang ditolak');
+        }
+    }
+
+    /**
+     * Paraf (sign off) a document.
+     * Saves the current datetime as tanggal_paraf and the selected pemaraf.
+     */
+    public function parafDokumen(Dokumen $dokumen, Request $request): JsonResponse
+    {
+        try {
+            // Validate that document belongs to team_verifikasi
+            if (!in_array($dokumen->current_handler, ['team_verifikasi'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini tidak berada di Team Verifikasi.'
+                ], 403);
+            }
+
+            // Validate that document hasn't been parafed yet
+            if ($dokumen->tanggal_paraf) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini sudah diparaf sebelumnya.'
+                ], 422);
+            }
+
+            // Validate pemaraf selection
+            $request->validate([
+                'pemaraf' => 'required|in:Ibu Yuni,Sekar'
+            ]);
+
+            $dokumen->update([
+                'tanggal_paraf' => now(),
+                'pemaraf' => $request->pemaraf,
+            ]);
+
+            \Log::info("Document #{$dokumen->id} parafed by {$request->pemaraf}", [
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'pemaraf' => $request->pemaraf,
+                'tanggal_paraf' => $dokumen->tanggal_paraf,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil diparaf oleh {$request->pemaraf}.",
+                'tanggal_paraf' => $dokumen->tanggal_paraf->format('d-m-Y H:i:s'),
+                'pemaraf' => $dokumen->pemaraf,
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pilih pemaraf terlebih dahulu.'
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error parafing document: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memparaf dokumen.'
+            ], 500);
         }
     }
 }
