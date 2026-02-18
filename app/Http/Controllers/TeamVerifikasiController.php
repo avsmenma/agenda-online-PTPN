@@ -182,7 +182,7 @@ class TeamVerifikasiController extends Controller
             ->get();
 
         $data = array(
-            "title" => "team_verifikasi",
+            "title" => "Dashboard Team Verifikasi",
             "module" => "team_verifikasi",
             "menuDashboard" => "Active",
             'menuDokumen' => '',
