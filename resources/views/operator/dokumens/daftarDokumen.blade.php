@@ -2556,6 +2556,9 @@
     </div>
   @endif
 
+  <!-- Per-page dropdown at the top -->
+  @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
+
   <!-- Enhanced Tabel Dokumen -->
   <div class="table-dokumen">
     <div class="table-responsive table-container">

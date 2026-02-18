@@ -3713,6 +3713,8 @@
             </div>
           </div>
         </div>
+        <!-- Per-page dropdown at the top -->
+        @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
         <div class="table-responsive table-container">
           <table class="table table-enhanced mb-0">
             <thead>

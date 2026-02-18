@@ -969,6 +969,8 @@
     <!-- Document Table -->
     <div class="table-container">
       @if($dokumens->count() > 0)
+        <!-- Per-page dropdown at the top -->
+        @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
