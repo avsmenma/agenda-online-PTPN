@@ -883,7 +883,6 @@
     .table-enhanced td {
       padding: 12px;
       vertical-align: middle;
-      border-right: 1px solid #e0e0e0;
       white-space: nowrap;
     }
 
