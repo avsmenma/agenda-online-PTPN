@@ -6700,14 +6700,21 @@
 
                             // Helper functions for formatting
                             function formatDate(dateStr) {
-                              if (!dateStr) return '-';
+                              if (!dateStr || dateStr === '-') return '-';
+                              // If already formatted as dd/mm/yyyy, return as-is
+                              if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) return dateStr;
+                              // Try to parse ISO or other standard formats
                               const date = new Date(dateStr);
+                              if (isNaN(date.getTime())) return dateStr; // Return original if unparseable
                               return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
                             }
 
                             function formatDateTime(dateStr) {
-                              if (!dateStr) return '-';
+                              if (!dateStr || dateStr === '-') return '-';
+                              // If already formatted as dd/mm/yyyy HH:mm, return as-is
+                              if (/^\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}/.test(dateStr)) return dateStr;
                               const date = new Date(dateStr);
+                              if (isNaN(date.getTime())) return dateStr; // Return original if unparseable
                               return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                             }
 
