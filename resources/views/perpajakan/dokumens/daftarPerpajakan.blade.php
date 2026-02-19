@@ -3447,8 +3447,12 @@
                   <span class="badge-status badge-sent">📤 Terkirim ke Team Akutansi</span>
                 @elseif($dokumen->status == 'sent_to_pembayaran' && !$pembayaranIsPending)
                   <span class="badge-status badge-sent">📤 Terkirim ke Team Pembayaran</span>
+                @elseif($dokumen->status == 'sent_to_perpajakan' && $dokumen->current_handler == 'perpajakan')
+                  <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
                 @elseif($isLocked)
-                  <span class="badge-status badge-locked">📤 Terkirim ke Team Pembayaran</span>
+                  <span class="badge-status badge-locked">🔒 Terkunci - Menunggu Deadline</span>
+                @elseif($dokumen->status == 'pending_approval_perpajakan')
+                  <span class="badge-status badge-warning">📥 Baru Diterima</span>
                 @elseif($dokumen->status == 'returned_to_verifikasi')
                   <span class="badge-status badge-dikembalikan">← Dikembalikan ke Verifikasi</span>
                 @elseif($dokumen->status == 'sedang diproses')
