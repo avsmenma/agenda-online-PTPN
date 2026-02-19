@@ -404,7 +404,7 @@
                 </div>
             </a>
 
-            <a href="{{ url('/owner/dokumen?status_pembayaran=belum_dibayar') }}" class="summary-card proses clickable"
+            <a href="{{ url('/owner/dokumen?status=belum_siap') }}" class="summary-card proses clickable"
                 style="text-decoration: none;">
                 <div class="icon">
                     <i class="fa-solid fa-spinner"></i>
@@ -430,7 +430,7 @@
                 </div>
             </a>
 
-            <a href="{{ url('/owner/dokumen?status=selesai') }}" class="summary-card selesai clickable"
+            <a href="{{ url('/owner/dokumen?status=sudah_dibayar') }}" class="summary-card selesai clickable"
                 style="text-decoration: none;">
                 <div class="icon">
                     <i class="fa-solid fa-check-circle"></i>
