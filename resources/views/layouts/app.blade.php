@@ -3831,49 +3831,49 @@
     $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
   @endphp
   @if(($module ?? '') !== 'owner')
-  <header>
-    <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
-      @if(($module ?? '') !== 'owner')
-        <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
-      @else
-        {{-- Spacer to push icons to the right for owner pages --}}
-        <div class="flex-grow-1"></div>
-      @endif
-      <div class="d-flex align-items-center ms-auto">
-        <!-- Dark Mode Toggle Button -->
-        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
-          <i class="fas fa-moon theme-toggle-icon moon"></i>
-          <i class="fas fa-sun theme-toggle-icon sun"></i>
-        </button>
-        <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666; cursor: pointer;"></i>
+    <header>
+      <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
+        @if(($module ?? '') !== 'owner')
+          <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
+        @else
+          {{-- Spacer to push icons to the right for owner pages --}}
+          <div class="flex-grow-1"></div>
+        @endif
+        <div class="d-flex align-items-center ms-auto">
+          <!-- Dark Mode Toggle Button -->
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
+            <i class="fas fa-moon theme-toggle-icon moon"></i>
+            <i class="fas fa-sun theme-toggle-icon sun"></i>
+          </button>
+          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666; cursor: pointer;"></i>
 
-        <!-- Profile Dropdown -->
-        <div class="profile-dropdown-container" style="position: relative;">
-          <i class="fa-solid fa-user profile-icon" id="profileDropdownToggle"
-            style="font-size: 18px; color: #666; cursor: pointer; position: relative;">
-          </i>
-          <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
-            <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
-              <i class="fa-solid fa-user-circle me-2"></i>
-              Akun
-            </a>
-            <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
-              <i class="fa-solid fa-shield-alt me-2"></i>
-              Keamanan 2FA
-            </a>
-            <div class="profile-dropdown-divider"></div>
-            <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-              @csrf
-              <button type="submit" class="profile-dropdown-item"
-                style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
-                <i class="fa-solid fa-sign-out-alt me-2"></i>
-                Logout
-              </button>
-            </form>
+          <!-- Profile Dropdown -->
+          <div class="profile-dropdown-container" style="position: relative;">
+            <i class="fa-solid fa-user profile-icon" id="profileDropdownToggle"
+              style="font-size: 18px; color: #666; cursor: pointer; position: relative;">
+            </i>
+            <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
+              <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
+                <i class="fa-solid fa-user-circle me-2"></i>
+                Akun
+              </a>
+              <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
+                <i class="fa-solid fa-shield-alt me-2"></i>
+                Keamanan 2FA
+              </a>
+              <div class="profile-dropdown-divider"></div>
+              <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                @csrf
+                <button type="submit" class="profile-dropdown-item"
+                  style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
+                  <i class="fa-solid fa-sign-out-alt me-2"></i>
+                  Logout
+                </button>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
-  </header>
+    </header>
   @endif
 
   <!-- Sidebar -->
@@ -3966,188 +3966,188 @@
         </form>
       </div>
     @else
-      <!-- Regular Menu for other roles -->
-      <div style="flex: 1; display: flex; flex-direction: column;">
-        @if($isBagianUser)
-          {{-- Bagian-specific Home menu --}}
-          @php
-            $isBagianDashboardActive = request()->is('*bagian/dashboard*') || request()->routeIs('bagian.dashboard');
-          @endphp
-          <a href="{{ route('bagian.dashboard') }}" class="{{ $isBagianDashboardActive ? 'active' : '' }}"><i
-              class="fa-solid fa-house"></i> Home</a>
-        @else
-          <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
-        @endif
-
-        <!-- Owner Dashboard - Only for Admin users -->
-        @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
-          <a href="{{ url('/owner/dashboard') }}" class="nav-link">
-            <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
-          </a>
-        @endif
-
-        <!-- Inbox Menu - Untuk Team Verifikasi, Perpajakan, Akutansi -->
+    <!-- Regular Menu for other roles -->
+    <div style="flex: 1; display: flex; flex-direction: column;">
+      @if($isBagianUser)
+        {{-- Bagian-specific Home menu --}}
         @php
-          $currentUserRole = 'operator'; // Default
-          if (auth()->check()) {
-            $user = auth()->user();
-            // Prioritize role field first (most accurate)
-            if (isset($user->role) && !empty($user->role)) {
-              $currentUserRole = $user->role;
-            } elseif (isset($user->name)) {
-              // Fallback to name mapping if role is not set
-              $nameToRole = [
-                'Operator' => 'operator',
-                'operator' => 'operator',
-                'Operator' => 'operator',
-                'team_verifikasi' => 'team_verifikasi',
-                'Ibu B' => 'team_verifikasi',
-                'Ibu Yuni' => 'team_verifikasi',
-                'Team Verifikasi' => 'team_verifikasi',
-                'Perpajakan' => 'Perpajakan',
-                'Team Perpajakan' => 'Perpajakan',
-                'Akutansi' => 'Akutansi',
-                'Team Akutansi' => 'Akutansi',
-                'Pembayaran' => 'Pembayaran',
-                'Team Pembayaran' => 'Pembayaran'
-              ];
-              $currentUserRole = $nameToRole[$user->name] ?? 'operator';
-            }
-          }
-
-          // Normalize role to check (case-insensitive comparison)
-          $currentUserRoleLower = strtolower($currentUserRole);
-          // Include all possible variations of role names after lowercase
-          $OperatorRoles = ['operator', 'Operator', 'Operator', 'operator'];
-          $inboxRoles = array_merge($OperatorRoles, ['team_verifikasi', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
-          $showInbox = in_array($currentUserRoleLower, $inboxRoles);
-
-          // Map role to inbox query format
-          $inboxRoleForQuery = 'team_verifikasi';
-          if (in_array($currentUserRoleLower, $OperatorRoles)) {
-            $inboxRoleForQuery = 'operator';
-          } elseif (in_array($currentUserRoleLower, ['perpajakan', 'team perpajakan'])) {
-            $inboxRoleForQuery = 'Perpajakan';
-          } elseif (in_array($currentUserRoleLower, ['akutansi', 'team akutansi'])) {
-            $inboxRoleForQuery = 'Akutansi';
-          } elseif (in_array($currentUserRoleLower, ['pembayaran', 'team pembayaran'])) {
-            $inboxRoleForQuery = 'Pembayaran';
-          } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'team_verifikasi', 'ibu b'])) {
-            $inboxRoleForQuery = 'team_verifikasi'; // Verifikasi uses Team Verifikasi inbox
-          }
+          $isBagianDashboardActive = request()->is('*bagian/dashboard*') || request()->routeIs('bagian.dashboard');
         @endphp
+        <a href="{{ route('bagian.dashboard') }}" class="{{ $isBagianDashboardActive ? 'active' : '' }}"><i
+            class="fa-solid fa-house"></i> Home</a>
+      @else
+        <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
+      @endif
 
-        @if($showInbox)
-          <a href="{{ url('/inbox') }}"
-            class="{{ request()->is('inbox') || request()->routeIs('inbox.*') ? 'active' : '' }}">
-            <i class="fa-solid fa-inbox"></i>
-            Inbox
-            @php
-              try {
-                $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
-                  ->where('inbox_approval_status', 'pending')
-                  ->count();
-              } catch (\Exception $e) {
-                $inboxCount = 0;
-              }
-            @endphp
-            @if($inboxCount > 0)
-              <span class="badge badge-danger right">{{ $inboxCount }}</span>
+      <!-- Owner Dashboard - Only for Admin users -->
+      @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
+        <a href="{{ url('/owner/dashboard') }}" class="nav-link">
+          <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
+        </a>
+      @endif
+
+      <!-- Inbox Menu - Untuk Team Verifikasi, Perpajakan, Akutansi -->
+      @php
+        $currentUserRole = 'operator'; // Default
+        if (auth()->check()) {
+          $user = auth()->user();
+          // Prioritize role field first (most accurate)
+          if (isset($user->role) && !empty($user->role)) {
+            $currentUserRole = $user->role;
+          } elseif (isset($user->name)) {
+            // Fallback to name mapping if role is not set
+            $nameToRole = [
+              'Operator' => 'operator',
+              'operator' => 'operator',
+              'Operator' => 'operator',
+              'team_verifikasi' => 'team_verifikasi',
+              'Ibu B' => 'team_verifikasi',
+              'Ibu Yuni' => 'team_verifikasi',
+              'Team Verifikasi' => 'team_verifikasi',
+              'Perpajakan' => 'Perpajakan',
+              'Team Perpajakan' => 'Perpajakan',
+              'Akutansi' => 'Akutansi',
+              'Team Akutansi' => 'Akutansi',
+              'Pembayaran' => 'Pembayaran',
+              'Team Pembayaran' => 'Pembayaran'
+            ];
+            $currentUserRole = $nameToRole[$user->name] ?? 'operator';
+          }
+        }
+
+        // Normalize role to check (case-insensitive comparison)
+        $currentUserRoleLower = strtolower($currentUserRole);
+        // Include all possible variations of role names after lowercase
+        $OperatorRoles = ['operator', 'Operator', 'Operator', 'operator'];
+        $inboxRoles = array_merge($OperatorRoles, ['team_verifikasi', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
+        $showInbox = in_array($currentUserRoleLower, $inboxRoles);
+
+        // Map role to inbox query format
+        $inboxRoleForQuery = 'team_verifikasi';
+        if (in_array($currentUserRoleLower, $OperatorRoles)) {
+          $inboxRoleForQuery = 'operator';
+        } elseif (in_array($currentUserRoleLower, ['perpajakan', 'team perpajakan'])) {
+          $inboxRoleForQuery = 'Perpajakan';
+        } elseif (in_array($currentUserRoleLower, ['akutansi', 'team akutansi'])) {
+          $inboxRoleForQuery = 'Akutansi';
+        } elseif (in_array($currentUserRoleLower, ['pembayaran', 'team pembayaran'])) {
+          $inboxRoleForQuery = 'Pembayaran';
+        } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'team_verifikasi', 'ibu b'])) {
+          $inboxRoleForQuery = 'team_verifikasi'; // Verifikasi uses Team Verifikasi inbox
+        }
+      @endphp
+
+      @if($showInbox)
+        <a href="{{ url('/inbox') }}"
+          class="{{ request()->is('inbox') || request()->routeIs('inbox.*') ? 'active' : '' }}">
+          <i class="fa-solid fa-inbox"></i>
+          Inbox
+          @php
+            try {
+              $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
+                ->where('inbox_approval_status', 'pending')
+                ->count();
+            } catch (\Exception $e) {
+              $inboxCount = 0;
+            }
+          @endphp
+          @if($inboxCount > 0)
+            <span class="badge badge-danger right">{{ $inboxCount }}</span>
+          @endif
+        </a>
+      @endif
+
+      @unless($isOwner)
+        @if($isBagianUser)
+          {{-- Bagian-specific menu --}}
+          @php
+            $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
+          @endphp
+          <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
+            <i class="fa-solid fa-file-lines"></i> Dokumen
+          </a>
+        @else
+          {{-- Regular Dokumen menu for other roles --}}
+          @php
+            // Determine route based on module
+            $menuRoute = match ($module) {
+              'pembayaran' => route('documents.pembayaran.index'),
+              'akutansi' => url($dokumenUrl),
+              'perpajakan' => url($dokumenUrl),
+              'team_verifikasi' => url($dokumenUrl),
+              default => url($dokumenUrl)
+            };
+
+            // Check if current route is within this module
+            $isModuleActive = match ($module) {
+              'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
+              request()->routeIs('pembayaran.*') ||
+              request()->routeIs('rekapanKeterlambatan.*') ||
+              request()->routeIs('csv.import.*') ||
+              request()->is('*dokumensPembayaran*') ||
+              request()->is('*rekapan-pembayaran*') ||
+              request()->is('*rekapan-keterlambatan*') ||
+              request()->is('*csv-import*'),
+              'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
+              request()->routeIs('akutansi.*'),
+              'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
+              request()->routeIs('perpajakan.*'),
+              'team_verifikasi' => request()->routeIs('dokumensB.*') ||
+              request()->routeIs('team_verifikasi.*'),
+              default => false
+            };
+          @endphp
+          <a href="{{ $menuRoute }}"
+            class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger"
+            data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
+            <i class="fa-solid fa-file-lines"></i>
+            @if($module === 'pembayaran')
+              Pembayaran
+            @elseif($module === 'akutansi')
+              Akutansi
+            @elseif($module === 'perpajakan')
+              Perpajakan
+            @elseif($module === 'team_verifikasi')
+              Dokumen
+            @else
+              Dokumen
             @endif
           </a>
         @endif
 
-        @unless($isOwner)
-          @if($isBagianUser)
-            {{-- Bagian-specific menu --}}
-            @php
-              $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
-            @endphp
-            <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
-              <i class="fa-solid fa-file-lines"></i> Dokumen
-            </a>
-          @else
-            {{-- Regular Dokumen menu for other roles --}}
-            @php
-              // Determine route based on module
-              $menuRoute = match ($module) {
-                'pembayaran' => route('documents.pembayaran.index'),
-                'akutansi' => url($dokumenUrl),
-                'perpajakan' => url($dokumenUrl),
-                'team_verifikasi' => url($dokumenUrl),
-                default => url($dokumenUrl)
-              };
-
-              // Check if current route is within this module
-              $isModuleActive = match ($module) {
-                'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
-                request()->routeIs('pembayaran.*') ||
-                request()->routeIs('rekapanKeterlambatan.*') ||
-                request()->routeIs('csv.import.*') ||
-                request()->is('*dokumensPembayaran*') ||
-                request()->is('*rekapan-pembayaran*') ||
-                request()->is('*rekapan-keterlambatan*') ||
-                request()->is('*csv-import*'),
-                'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
-                request()->routeIs('akutansi.*'),
-                'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
-                request()->routeIs('perpajakan.*'),
-                'team_verifikasi' => request()->routeIs('dokumensB.*') ||
-                request()->routeIs('team_verifikasi.*'),
-                default => false
-              };
-            @endphp
-            <a href="{{ $menuRoute }}"
-              class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger"
-              data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
-              <i class="fa-solid fa-file-lines"></i>
-              @if($module === 'pembayaran')
-                Pembayaran
-              @elseif($module === 'akutansi')
-                Akutansi
-              @elseif($module === 'perpajakan')
-                Perpajakan
-              @elseif($module === 'team_verifikasi')
-                Dokumen
-              @else
-                Dokumen
-              @endif
-            </a>
-          @endif
-
-        @endunless
-
-        <!-- Tracking Dokumen Menu - Untuk semua role -->
-        @unless($isBagianUser)
-          @php
-            $trackingUrl = match ($module) {
-              'operator', 'operator' => '/tracking-dokumen',
-              'team_verifikasi', 'team_verifikasi' => '/tracking-dokumen',
-              'pembayaran' => '/tracking-dokumen',
-              'akutansi' => '/tracking-dokumen',
-              'perpajakan' => '/tracking-dokumen',
-              default => '/tracking-dokumen'
-            };
-            $isTrackingActive = request()->is('*tracking-dokumen*');
-          @endphp
-          <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
-            <i class="fa-solid fa-route"></i> Tracking Dokumen
-          </a>
-        @endif
-      </div>
-
-      <!-- Logout Button - Pindahkan ke paling bawah -->
-      @unless($isOwner)
-        <div style="margin-top: auto; padding-bottom: 20px;">
-          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-            @csrf
-          </form>
-          <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-            class="logout-link">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-          </a>
-        </div>
       @endunless
+
+      <!-- Tracking Dokumen Menu - Untuk semua role -->
+      @unless($isBagianUser)
+      @php
+        $trackingUrl = match ($module) {
+          'operator', 'operator' => '/tracking-dokumen',
+          'team_verifikasi', 'team_verifikasi' => '/tracking-dokumen',
+          'pembayaran' => '/tracking-dokumen',
+          'akutansi' => '/tracking-dokumen',
+          'perpajakan' => '/tracking-dokumen',
+          default => '/tracking-dokumen'
+        };
+        $isTrackingActive = request()->is('*tracking-dokumen*');
+      @endphp
+      <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
+        <i class="fa-solid fa-route"></i> Tracking Dokumen
+      </a>
+      @endif
+    </div>
+
+    <!-- Logout Button - Pindahkan ke paling bawah -->
+    @unless($isOwner)
+      <div style="margin-top: auto; padding-bottom: 20px;">
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+          class="logout-link">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </a>
+      </div>
+    @endunless
     @endif
   </div>
 
@@ -4224,6 +4224,7 @@
     } else {
       $isSubmenuPage = request()->is('*dokumens*') ||
         request()->is('*rekapan*') ||
+        request()->is('*reports*') ||
         request()->is('*pengembalian*');
     }
 
@@ -4362,7 +4363,7 @@
         <a href="{{ url('/documents/import') }}" class="{{ request()->is('*documents/import*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-import me-2"></i> Import CSV
         </a>
-        <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
+        <a href="{{ url('/reports/analytics') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
         </a>
       @endif
