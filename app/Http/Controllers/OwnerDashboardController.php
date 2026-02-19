@@ -4019,7 +4019,10 @@ class OwnerDashboardController extends Controller
 
 
         // Paginate the filtered results
-        $perPage = 20;
+        $perPage = (int) $request->get('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
         $currentPage = $request->get('page', 1);
         $currentItems = $filteredDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
         $dokumens = new \Illuminate\Pagination\LengthAwarePaginator(
