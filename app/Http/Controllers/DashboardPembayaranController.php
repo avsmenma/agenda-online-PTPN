@@ -314,7 +314,13 @@ class DashboardPembayaranController extends Controller
 
         // Paginate manually
         $currentPage = request()->get('page', 1);
-        $perPage = 15;
+        $perPage = request()->get('per_page', session('pembayaran_per_page', 15));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array((int) $perPage, [10, 15, 25, 50, 100]) ? (int) $perPage : 15;
+        }
+        session(['pembayaran_per_page' => $perPage]);
         $total = $allDokumens->count();
         $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
@@ -460,6 +466,7 @@ class DashboardPembayaranController extends Controller
             'totalTerlambat' => $totalTerlambat,
             // Dokumen list
             'dokumens' => $dokumens,
+            'perPage' => $perPage,
             // Filters
             'selectedStatus' => $statusPembayaran,
             'selectedYear' => $year,

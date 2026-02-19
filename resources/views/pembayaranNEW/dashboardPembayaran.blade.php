@@ -1683,6 +1683,28 @@
           Daftar Dokumen
           <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
         </div>
+        <div class="per-page-selector" style="display: flex; align-items: center; gap: 6px; margin-left: 16px;">
+          <label for="perPageSelect"
+            style="font-size: 13px; color: var(--text-secondary, #94a3b8); white-space: nowrap;">Baris per
+            halaman:</label>
+          <select id="perPageSelect" onchange="changePerPage(this.value)" style="
+                background: var(--card-bg, #1e293b);
+                color: var(--text-primary, #e2e8f0);
+                border: 1px solid var(--border-color, #334155);
+                border-radius: 6px;
+                padding: 4px 8px;
+                font-size: 13px;
+                cursor: pointer;
+                outline: none;
+              ">
+            <option value="10" {{ (isset($perPage) && $perPage == 10) ? 'selected' : '' }}>10</option>
+            <option value="15" {{ (!isset($perPage) || $perPage == 15) ? 'selected' : '' }}>15</option>
+            <option value="25" {{ (isset($perPage) && $perPage == 25) ? 'selected' : '' }}>25</option>
+            <option value="50" {{ (isset($perPage) && $perPage == 50) ? 'selected' : '' }}>50</option>
+            <option value="100" {{ (isset($perPage) && $perPage == 100) ? 'selected' : '' }}>100</option>
+            <option value="all" {{ (isset($perPage) && $perPage == 999999) ? 'selected' : '' }}>Semua</option>
+          </select>
+        </div>
         <div class="table-toggle">
           <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
             <i class="fas fa-columns"></i> Atur Kolom
@@ -2542,11 +2564,11 @@
 
       if (selectedColumnsOrder.length === 0) {
         previewContainer.innerHTML = `
-                                <div class="empty-preview">
-                                  <i class="fa-solid fa-table"></i>
-                                  <p>Belum ada kolom yang dipilih</p>
-                                  <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                                </div>`;
+                                    <div class="empty-preview">
+                                      <i class="fa-solid fa-table"></i>
+                                      <p>Belum ada kolom yang dipilih</p>
+                                      <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                                    </div>`;
         return;
       }
 
@@ -2675,6 +2697,13 @@
     function setViewMode(mode) {
       const url = new URL(window.location.href);
       url.searchParams.set('mode', mode);
+      window.location.href = url.toString();
+    }
+
+    function changePerPage(value) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('per_page', value);
+      url.searchParams.delete('page'); // Reset to page 1
       window.location.href = url.toString();
     }
 
@@ -3063,13 +3092,13 @@
             emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
             emptyState.innerHTML = `
-                      <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
-                      <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-                      <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-                      <a href="${AJAX_CONFIG.url}" class="btn-empty">
-                        <i class="fas fa-redo"></i> Reset Filter
-                      </a>
-                    `;
+                          <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                          <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+                          <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+                          <a href="${AJAX_CONFIG.url}" class="btn-empty">
+                            <i class="fas fa-redo"></i> Reset Filter
+                          </a>
+                        `;
             tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
           }
           return;
