@@ -848,7 +848,7 @@ class TeamVerifikasiController extends Controller
             'isDropdownAvailable' => $isDropdownAvailable,
             'jenisPembayaranList' => $jenisPembayaranList,
             'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
-            'bagianList' => Bidang::orderBy('nama')->get(),
+            'bagianList' => Bidang::orderBy('nama_bidang')->get(),
         );
         return view('team_verifikasi.dokumens.editDokumen', $data);
     }
