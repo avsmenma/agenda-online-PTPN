@@ -2482,7 +2482,7 @@
         <input type="hidden" name="status_filter" id="statusSelect" value="{{ request('status_filter') }}">
       </div>
       <button type="submit" class="btn-filter" id="filterBtn" onclick="handleFilterSubmit(event)">
-        <i class="fa-solid fa-caret-down me-2"></i>Filter
+        <i class="fa-solid fa-magnifying-glass me-2"></i>Cari
       </button>
       <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
         <i class="fa-solid fa-table-columns me-2"></i>
@@ -4129,68 +4129,7 @@
                   });
               });
 
-              // ===== LIVE SEARCH FUNCTIONALITY =====
-              // Debounce function to limit the rate of function calls
-              function debounce(func, wait) {
-                  let timeout;
-                  return function executedFunction(...args) {
-                      const later = () => {
-                          clearTimeout(timeout);
-                          func(...args);
-                      };
-                      clearTimeout(timeout);
-                      timeout = setTimeout(later, wait);
-                  };
-              }
-
-              // Live search handler
-              const searchInput = document.querySelector('input[name="search"]');
-              if (searchInput) {
-                  const liveSearchHandler = debounce(function() {
-                      const form = document.getElementById('filterForm');
-                      const searchValue = searchInput.value.trim();
-
-                      // Build URL with all parameters
-                      const url = new URL(form.action);
-
-                      // Add search parameter
-                      if (searchValue) {
-                          url.searchParams.set('search', searchValue);
-                      } else {
-                          url.searchParams.delete('search');
-                      }
-
-                      // Preserve year filter
-                      const yearInput = form.querySelector('input[name="year"]');
-                      if (yearInput && yearInput.value) {
-                          url.searchParams.set('year', yearInput.value);
-                      }
-
-                      // Preserve status filter
-                      const statusInput = form.querySelector('input[name="status_filter"]');
-                      if (statusInput && statusInput.value) {
-                          url.searchParams.set('status_filter', statusInput.value);
-                      }
-
-                      // Preserve per_page
-                      const perPage = new URLSearchParams(window.location.search).get('per_page');
-                      if (perPage) {
-                          url.searchParams.set('per_page', perPage);
-                      }
-
-                      // Preserve column customization
-                      const columnInputs = form.querySelectorAll('input[name="columns[]"]');
-                      columnInputs.forEach(input => {
-                          url.searchParams.append('columns[]', input.value);
-                      });
-
-                      // Navigate to the new URL
-                      window.location.href = url.toString();
-                  }, 500); // 500ms debounce delay
-
-                  // Attach input event listener
-                  searchInput.addEventListener('input', liveSearchHandler);
-              }
+              // Auto-search removed - user clicks "Cari" button to search
 
               // Handle year dropdown - Fixed version
               const yearSelectBtn = document.getElementById('yearSelectBtn');
