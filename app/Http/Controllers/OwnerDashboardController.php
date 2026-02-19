@@ -3959,13 +3959,14 @@ class OwnerDashboardController extends Controller
             $endTime = ($isCompleted && $processedAt) ? $processedAt : $now;
 
             $ageHours = $receivedAt ? $receivedAt->diffInHours($endTime) : 0;
+            $ageMinutes = $receivedAt ? $receivedAt->diffInMinutes($endTime) : 0;
             $ageDays = ($receivedAt && $endTime) ? $endTime->diffInDays($receivedAt, false) : 0;
             $ageDays = max(0, $ageDays);
 
             $dokumen->is_completed = $isCompleted;
             $dokumen->age_days = $ageDays;
             $dokumen->age_hours = $ageHours;
-            $dokumen->age_formatted = $this->formatAge($ageDays, $ageHours);
+            $dokumen->age_formatted = $this->formatAge($ageDays, $ageHours, $ageMinutes);
             $dokumen->effective_received_at = $receivedAt ? $receivedAt->format('Y-m-d H:i:s') : null;
             $dokumen->effective_processed_at = $processedAt ? $processedAt->format('Y-m-d H:i:s') : null;
 
@@ -4241,7 +4242,7 @@ class OwnerDashboardController extends Controller
      * Format age in days and hours to readable format
      * Uses total hours to calculate days for more accurate display
      */
-    private function formatAge($days, $hours = 0)
+    private function formatAge($days, $hours = 0, $totalMinutes = 0)
     {
         // Calculate days and remaining hours from total hours
         // This is more reliable than using separate $days parameter
@@ -4252,6 +4253,11 @@ class OwnerDashboardController extends Controller
         $actualDays = max($days, $calculatedDays);
 
         if ($actualDays == 0 && $remainingHours == 0) {
+            // Show minutes when less than 1 hour
+            $remainingMinutes = $totalMinutes % 60;
+            if ($remainingMinutes > 0) {
+                return $remainingMinutes . ' menit';
+            }
             return 'Baru';
         } elseif ($actualDays == 0) {
             return $remainingHours . ' jam';
