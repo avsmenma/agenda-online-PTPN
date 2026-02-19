@@ -848,6 +848,7 @@ class TeamVerifikasiController extends Controller
             'isDropdownAvailable' => $isDropdownAvailable,
             'jenisPembayaranList' => $jenisPembayaranList,
             'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
+            'bagianList' => Bidang::orderBy('nama')->get(),
         );
         return view('team_verifikasi.dokumens.editDokumen', $data);
     }
@@ -1212,27 +1213,27 @@ class TeamVerifikasiController extends Controller
         $html = '<div class="detail-grid">';
 
         $detailItems = [
-            'Tanggal Masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-',
+            'Nomor Agenda' => $dokumen->nomor_agenda ?? '-',
             'Bulan' => $dokumen->bulan,
             'Tahun' => $dokumen->tahun,
-            'No SPP' => $dokumen->nomor_spp,
-            'Tanggal SPP' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-',
-            'Uraian SPP' => $dokumen->uraian_spp,
-            'Nilai Rp' => $dokumen->formatted_nilai_rupiah,
             'Kriteria CF' => $dokumen->kategori ?? '-',
             'Sub Kriteria' => $dokumen->jenis_dokumen ?? '-',
             'Item Sub Kriteria' => $dokumen->jenis_sub_pekerjaan ?? '-',
-            'Kebun' => $dokumen->kebun ?? '-',
+            'Jenis Pembayaran' => $dokumen->jenis_pembayaran ?? '-',
+            'No SPP' => $dokumen->nomor_spp,
+            'Tanggal SPP' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-',
+            'Tanggal Masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-',
             'Dibayar Kepada' => $dokumen->dibayarKepadas->count() > 0
                 ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
                 : ($dokumen->dibayar_kepada ?? '-'),
-            'No Berita Acara' => $dokumen->no_berita_acara ?? '-',
-            'Tanggal Berita Acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
+            'Uraian SPP' => $dokumen->uraian_spp,
+            'Nilai Rp' => $dokumen->formatted_nilai_rupiah,
+            'Bagian' => $dokumen->bagian ?? '-',
             'No SPK' => $dokumen->no_spk ?? '-',
             'Tanggal SPK' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
-            'Nomor Miro' => $dokumen->nomor_miro_display ?? '-',
-            'Current Handler' => ucfirst($dokumen->current_handler),
+            'No Berita Acara' => $dokumen->no_berita_acara ?? '-',
+            'Tanggal Berita Acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
         ];
 
         foreach ($detailItems as $label => $value) {

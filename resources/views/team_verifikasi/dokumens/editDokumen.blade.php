@@ -417,6 +417,7 @@
         </div>
         <div class="accordion-content active">
           <div class="accordion-body">
+            <!-- 1. Nomor Agenda -->
             <div class="form-row">
               <div class="form-group">
                 <label>Nomor Agenda</label>
@@ -426,6 +427,7 @@
                   <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
                 @enderror
               </div>
+              <!-- 2. Bulan -->
               <div class="form-group">
                 <label>Bulan</label>
                 <select name="bulan">
@@ -441,6 +443,7 @@
               </div>
             </div>
 
+            <!-- 3. Tahun -->
             <div class="form-row">
               <div class="form-group">
                 <label>Tahun</label>
@@ -450,143 +453,12 @@
                   <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
                 @enderror
               </div>
-              <div class="form-group">
-                <label>Tanggal Masuk</label>
-                <input type="datetime-local" name="tanggal_masuk"
-                  value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk?->format('Y-m-d\TH:i') ?? '') }}">
-                @error('tanggal_masuk')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-            </div>
-
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>Dibayar Kepada</label>
-                @php
-                  // Get dibayar_kepada from relationship if available, otherwise use direct field
-                  $dibayarKepadaValue = old('dibayar_kepada');
-                  if (!$dibayarKepadaValue) {
-                    if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
-                      $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
-                    } else {
-                      $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '';
-                    }
-                  }
-                @endphp
-                <input type="text" name="dibayar_kepada" value="{{ $dibayarKepadaValue }}" placeholder="Nama penerima">
-                @error('dibayar_kepada')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-              <div class="form-group">
-                <label>No Berita Acara</label>
-                <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024"
-                  value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
-                @error('no_berita_acara')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-              <div class="form-group">
-                <label>Tanggal Berita Acara</label>
-                <input type="date" name="tanggal_berita_acara"
-                  value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
-                @error('tanggal_berita_acara')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-            </div>
-
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>No SPK</label>
-                <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024"
-                  value="{{ old('no_spk', $dokumen->no_spk) }}">
-                @error('no_spk')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-              <div class="form-group">
-                <label>Tanggal SPK</label>
-                <input type="date" name="tanggal_spk"
-                  value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
-                @error('tanggal_spk')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-              <div class="form-group">
-                <label>Tanggal Berakhir SPK</label>
-                <input type="date" name="tanggal_berakhir_spk"
-                  value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
-                @error('tanggal_berakhir_spk')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Section 2: Informasi SPP -->
-      <div class="accordion-section">
-        <div class="accordion-header active" onclick="toggleAccordion(this)">
-          <div class="accordion-title">
-            <i class="fa-solid fa-file-invoice-dollar"></i>
-            <span>Informasi SPP</span>
-            <span class="section-badge">Wajib</span>
-          </div>
-          <i class="fa-solid fa-chevron-down accordion-icon"></i>
-        </div>
-        <div class="accordion-content active">
-          <div class="accordion-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Nomor SPP</label>
-                <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025"
-                  value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
-                @error('nomor_spp')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-              <div class="form-group">
-                <label>Tanggal SPP</label>
-                <input type="datetime-local" name="tanggal_spp"
-                  value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
-                @error('tanggal_spp')
-                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-                @enderror
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Uraian SPP</label>
-              <textarea name="uraian_spp"
-                placeholder="Permintaan permohonan pembayaran...">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
-              @error('uraian_spp')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <div class="form-group">
-              <label>Nilai Rupiah</label>
-              <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah"
-                placeholder="Masukkan nilai rupiah (contoh: 120000000)"
-                value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format($dokumen->nilai_rupiah, 0, '', '.') : '') }}">
-              @error('nilai_rupiah')
-                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <div class="form-group">
-              <label>Ejaan Nilai Rupiah</label>
-              <input type="text" name="ejaan_nilai_rupiah" id="edit-ejaan-nilai-rupiah"
-                placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 3: Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
+      <!-- Section 2: Kriteria CF, Sub Kriteria, Item Sub Kriteria -->
       <div class="accordion-section">
         <div class="accordion-header active" onclick="toggleAccordion(this)">
           <div class="accordion-title">
@@ -599,7 +471,8 @@
         <div class="accordion-content active">
           <div class="accordion-body">
             @if(isset($isDropdownAvailable) && $isDropdownAvailable && $kategoriKriteria->count() > 0)
-              <!-- Mode Dropdown (jika database cash_bank tersedia) -->
+              <!-- Mode Dropdown -->
+              <!-- 4. Kriteria CF, 5. Sub Kriteria, 6. Item Sub Kriteria -->
               <div class="form-row" id="dropdown-mode">
                 <div class="form-group">
                   <label>Kriteria CF</label>
@@ -634,6 +507,7 @@
                   @enderror
                 </div>
               </div>
+              <!-- 7. Jenis Pembayaran -->
               <div class="form-row">
                 <div class="form-group">
                   <label>Jenis Pembayaran</label>
@@ -661,7 +535,7 @@
                 </div>
               </div>
             @else
-              <!-- Mode Input Manual (jika database cash_bank tidak tersedia) -->
+              <!-- Mode Input Manual -->
               <div class="form-row" id="manual-mode">
                 <div class="form-group">
                   <label>Kategori</label>
@@ -711,6 +585,180 @@
                 <input type="hidden" name="item_sub_kriteria" value="">
               </div>
             @endif
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Informasi SPP -->
+      <div class="accordion-section">
+        <div class="accordion-header active" onclick="toggleAccordion(this)">
+          <div class="accordion-title">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span>Informasi SPP</span>
+            <span class="section-badge">Wajib</span>
+          </div>
+          <i class="fa-solid fa-chevron-down accordion-icon"></i>
+        </div>
+        <div class="accordion-content active">
+          <div class="accordion-body">
+            <!-- 8. Nomor SPP, 9. Tanggal SPP -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nomor SPP</label>
+                <input type="text" name="nomor_spp" placeholder="123/M/SPP/13/XII/2025"
+                  value="{{ old('nomor_spp', $dokumen->nomor_spp) }}">
+                @error('nomor_spp')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="form-group">
+                <label>Tanggal SPP</label>
+                <input type="datetime-local" name="tanggal_spp"
+                  value="{{ old('tanggal_spp', $dokumen->tanggal_spp?->format('Y-m-d\TH:i') ?? '') }}">
+                @error('tanggal_spp')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <!-- 10. Tanggal Masuk -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tanggal Masuk</label>
+                <input type="datetime-local" name="tanggal_masuk"
+                  value="{{ old('tanggal_masuk', $dokumen->tanggal_masuk?->format('Y-m-d\TH:i') ?? '') }}">
+                @error('tanggal_masuk')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+              <!-- 11. Dibayar Kepada -->
+              <div class="form-group">
+                <label>Dibayar Kepada</label>
+                @php
+                  $dibayarKepadaValue = old('dibayar_kepada');
+                  if (!$dibayarKepadaValue) {
+                    if ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0) {
+                      $dibayarKepadaValue = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
+                    } else {
+                      $dibayarKepadaValue = $dokumen->dibayar_kepada ?? '';
+                    }
+                  }
+                @endphp
+                <input type="text" name="dibayar_kepada" value="{{ $dibayarKepadaValue }}" placeholder="Nama penerima">
+                @error('dibayar_kepada')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <!-- 12. Uraian SPP -->
+            <div class="form-group">
+              <label>Uraian SPP</label>
+              <textarea name="uraian_spp"
+                placeholder="Permintaan permohonan pembayaran...">{{ old('uraian_spp', $dokumen->uraian_spp) }}</textarea>
+              @error('uraian_spp')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+
+            <!-- 13. Nilai Rupiah -->
+            <div class="form-group">
+              <label>Nilai Rupiah</label>
+              <input type="text" name="nilai_rupiah" id="edit-nilai-rupiah"
+                placeholder="Masukkan nilai rupiah (contoh: 120000000)"
+                value="{{ old('nilai_rupiah', $dokumen->nilai_rupiah ? number_format($dokumen->nilai_rupiah, 0, '', '.') : '') }}">
+              @error('nilai_rupiah')
+                <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+              @enderror
+            </div>
+
+            <div class="form-group">
+              <label>Ejaan Nilai Rupiah</label>
+              <input type="text" name="ejaan_nilai_rupiah" id="edit-ejaan-nilai-rupiah"
+                placeholder="Ejaan akan terisi otomatis" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Informasi Tambahan -->
+      <div class="accordion-section">
+        <div class="accordion-header active" onclick="toggleAccordion(this)">
+          <div class="accordion-title">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Informasi Tambahan</span>
+          </div>
+          <i class="fa-solid fa-chevron-down accordion-icon"></i>
+        </div>
+        <div class="accordion-content active">
+          <div class="accordion-body">
+            <!-- 14. Bagian -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bagian</label>
+                <select name="bagian">
+                  <option value="">Pilih Bagian</option>
+                  @foreach($bagianList as $bagian)
+                    <option value="{{ $bagian->kode }}" {{ old('bagian', $dokumen->bagian) == $bagian->kode ? 'selected' : '' }}>
+                      {{ $bagian->nama }}
+                    </option>
+                  @endforeach
+                </select>
+                @error('bagian')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <!-- 15. No SPK, 16. Tanggal SPK, 17. Tanggal Akhir SPK -->
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>No SPK</label>
+                <input type="text" name="no_spk" placeholder="5TEP/SP/Sawit/30/IX/2024"
+                  value="{{ old('no_spk', $dokumen->no_spk) }}">
+                @error('no_spk')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="form-group">
+                <label>Tanggal SPK</label>
+                <input type="date" name="tanggal_spk"
+                  value="{{ old('tanggal_spk', $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('Y-m-d') : '') }}">
+                @error('tanggal_spk')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="form-group">
+                <label>Tanggal Berakhir SPK</label>
+                <input type="date" name="tanggal_berakhir_spk"
+                  value="{{ old('tanggal_berakhir_spk', $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('Y-m-d') : '') }}">
+                @error('tanggal_berakhir_spk')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <!-- 18. No BA, 19. Tanggal BA -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>No Berita Acara</label>
+                <input type="text" name="no_berita_acara" placeholder="5TEP/BAST/49/SP.30/XI/2024"
+                  value="{{ old('no_berita_acara', $dokumen->no_berita_acara) }}">
+                @error('no_berita_acara')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="form-group">
+                <label>Tanggal Berita Acara</label>
+                <input type="date" name="tanggal_berita_acara"
+                  value="{{ old('tanggal_berita_acara', $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('Y-m-d') : '') }}">
+                @error('tanggal_berita_acara')
+                  <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <!-- Kebun -->
             <div class="form-row">
               <div class="form-group">
                 <label>Kebun</label>
@@ -772,7 +820,7 @@
         </div>
       </div>
 
-      <!-- Section 4: Nomor PO & PR -->
+      <!-- Section 5: Nomor PO & PR -->
       <div class="accordion-section">
         <div class="accordion-header" onclick="toggleAccordion(this)">
           <div class="accordion-title">
@@ -783,7 +831,7 @@
         </div>
         <div class="accordion-content">
           <div class="accordion-body">
-            <!-- Nomor PO -->
+            <!-- 20. Nomor PO -->
             <div id="po-container">
               @if($dokumen->dokumenPos->count() > 0)
                 @foreach($dokumen->dokumenPos as $index => $po)
@@ -797,7 +845,6 @@
                   </div>
                 @endforeach
               @elseif($dokumen->NO_PO)
-                {{-- Fallback: Use NO_PO column from imported CSV data --}}
                 <div class="form-group dynamic-field" data-field-type="po">
                   <label>Nomor PO</label>
                   <input type="text" placeholder="Masukkan nomor PO" name="nomor_po[]"
@@ -815,7 +862,7 @@
               @endif
             </div>
 
-            <!-- Nomor PR -->
+            <!-- 21. Nomor PR -->
             <div id="pr-container">
               @if($dokumen->dokumenPrs->count() > 0)
                 @foreach($dokumen->dokumenPrs as $index => $pr)
@@ -1197,7 +1244,6 @@
           ejaanInput.disabled = true; // Disable so it won't be submitted
         }
       });
-
     }); // End DOMContentLoaded
   </script>
 
