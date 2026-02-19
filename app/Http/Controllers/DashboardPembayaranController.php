@@ -3186,7 +3186,7 @@ class DashboardPembayaranController extends Controller
      */
     public function exportRekapan(Request $request)
     {
-        $exportType = $request->get('export', 'excel'); // excel or pdf
+        $exportType = $request->get('format', $request->get('export', 'excel')); // excel or pdf
         $mode = $request->get('mode', 'normal'); // normal or rekapan_table
         $statusPembayaran = $request->get('status_pembayaran');
         $year = $request->get('year');
@@ -3211,16 +3211,16 @@ class DashboardPembayaranController extends Controller
                         ->orWhere('status', 'sent_to_pembayaran');
                 })->where(function ($q) {
                     $q->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                        ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                        ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
-                });
+                        ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+                })->whereNull('tanggal_dibayar');
             } elseif ($statusPembayaran === 'sudah_dibayar') {
                 // Sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+                // Also include documents with tanggal_dibayar set
                 $query->where(function ($q) {
                     $q->where('status_pembayaran', 'sudah_dibayar')
                         ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                        ->orWhereNotNull('tanggal_dibayar');
                 });
             }
         }
@@ -3317,22 +3317,22 @@ class DashboardPembayaranController extends Controller
             }
         }
 
-        // Helper function to calculate computed status
+        // Helper function to calculate computed status (must match index() logic)
         $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
-            // Jika sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
-            $statusPembayaran = strtoupper(trim($doc->status_pembayaran ?? ''));
             if (
-                $statusPembayaran === 'SUDAH_DIBAYAR' ||
-                $statusPembayaran === 'SUDAH DIBAYAR' ||
+                $doc->tanggal_dibayar ||
+                $doc->link_bukti_pembayaran ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+                strtoupper(trim($doc->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
                 $doc->status_pembayaran === 'sudah_dibayar'
             ) {
                 return 'sudah_dibayar';
             }
-            if (in_array($doc->current_handler, $belumSiapHandlers)) {
-                return 'belum_siap_dibayar';
-            }
             if ($doc->current_handler === 'pembayaran' || $doc->status === 'sent_to_pembayaran') {
                 return 'siap_dibayar';
+            }
+            if (in_array($doc->current_handler, $belumSiapHandlers)) {
+                return 'belum_siap_dibayar';
             }
             return 'belum_siap_dibayar';
         };
@@ -3354,29 +3354,51 @@ class DashboardPembayaranController extends Controller
             $doc->computed_status = $getComputedStatus($doc);
         });
 
-        // Available columns mapping - must match rekapan() method
+        // Available columns mapping - must match index() method's $availableColumns
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
-            'dibayar_kepada' => 'Nama Vendor/Dibayar Kepada',
-            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
+            'kategori' => 'Kriteria CF',
+            'jenis_dokumen' => 'Sub Kriteria',
             'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
-            'nomor_mirror' => 'Nomor Miro',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
             'nomor_spp' => 'No SPP',
-            'uraian_spp' => 'Uraian SPP',
             'tanggal_spp' => 'TGL SPP',
-            'tanggal_berita_acara' => 'TGL BA',
-            'no_berita_acara' => 'Nomor BA',
-            'tanggal_berakhir_ba' => 'TGL Akhir BA',
+            'tanggal_masuk' => 'TGL Masuk',
+            'dibayar_kepada' => 'Nama Vendor/Dibayar Kepada',
+            'uraian_spp' => 'Uraian SPP',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'tanggal_paraf' => 'Tanggal Paraf',
+            'pemaraf' => 'Pemaraf',
+            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
+            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
+            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
+            'kepala_sub_bagian' => 'Kepala Sub Bagian',
+            'keterangan' => 'Keterangan',
+            'status_dokumen_custom' => 'Status Dokumen',
+            'status_pembayaran' => 'Status Pembayaran',
+            'tanggal_dibayar' => 'Tanggal Bayar',
+            'bagian' => 'Bagian',
+            'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'Nomor SPK',
             'tanggal_spk' => 'TGL SPK',
             'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
+            'no_berita_acara' => 'Nomor BA',
+            'tanggal_berita_acara' => 'TGL BA',
+            'tanggal_berakhir_ba' => 'TGL Akhir BA',
+            'nomor_po' => 'No PO',
+            'nomor_mirror' => 'Nomor Miro',
+            'no_faktur' => 'No Faktur',
+            'tanggal_faktur' => 'Tanggal Faktur',
+            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
+            'jenis_pph' => 'Jenis PPh',
+            'dpp_pph' => 'DPP PPh',
+            'ppn_terhutang' => 'PPH Terhutang',
             'kebun' => 'Kebun',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
             'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
             'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
             'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
-            'nilai_rupiah' => 'Nilai Rupiah',
             'nilai_belum_siap_bayar' => 'Belum siap bayar',
             'nilai_siap_bayar' => 'sudah siap bayar',
             'nilai_sudah_dibayar' => 'sudah dibayar',
