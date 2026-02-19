@@ -144,13 +144,13 @@
     </div>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             let previewData = null;
 
             console.log('Programmer bulk-to-payment JS loaded');
 
             // Preview button click
-            $('#btn-preview').on('click', function() {
+            $('#btn-preview').on('click', function () {
                 console.log('Preview button clicked');
                 const nomorAgendas = $('#nomor_agendas').val().trim();
 
@@ -175,7 +175,7 @@
                         nomor_agendas: nomorAgendas,
                         _token: '{{ csrf_token() }}'
                     },
-                    success: function(response) {
+                    success: function (response) {
                         console.log('Preview response:', response);
                         $('#preview-loading').hide();
 
@@ -196,7 +196,7 @@
 
                             // Populate found table
                             let tableHtml = '';
-                            response.found.forEach(function(doc) {
+                            response.found.forEach(function (doc) {
                                 tableHtml += '<tr>' +
                                     '<td><strong>' + doc.nomor_agenda + '</strong></td>' +
                                     '<td>' + (doc.nomor_spp || '-') + '</td>' +
@@ -214,7 +214,7 @@
                             $('#preview-result').show();
                         }
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         console.log('Preview error:', xhr);
                         $('#preview-loading').hide();
                         $('#preview-empty').show();
@@ -224,9 +224,9 @@
             });
 
             // Execute button click
-            $('#btn-execute').on('click', function() {
+            $('#btn-execute').on('click', function () {
                 if (!confirm('Apakah Anda yakin ingin mengirim ' + previewData.total_found +
-                        ' dokumen langsung ke Pembayaran?\n\nProses ini TIDAK DAPAT dibatalkan!')) {
+                    ' dokumen langsung ke Pembayaran?\n\nProses ini TIDAK DAPAT dibatalkan!')) {
                     return;
                 }
 
@@ -236,11 +236,16 @@
                 $.ajax({
                     url: '{{ route("programmer.bulk-to-payment.execute") }}',
                     method: 'POST',
+                    timeout: 300000, // 5 minutes timeout for large batches
                     data: {
                         nomor_agendas: $('#nomor_agendas').val().trim(),
                         _token: '{{ csrf_token() }}'
                     },
-                    success: function(response) {
+                    beforeSend: function () {
+                        btn.prop('disabled', true).html(
+                            '<i class="fas fa-spinner fa-spin me-2"></i>Memproses... (mohon tunggu, jangan tutup halaman)');
+                    },
+                    success: function (response) {
                         btn.html('<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
 
                         // Show execution result
@@ -249,7 +254,7 @@
 
                         if (response.errors && response.errors.length > 0) {
                             let errorHtml = '';
-                            response.errors.forEach(function(err) {
+                            response.errors.forEach(function (err) {
                                 errorHtml += '<li>' + err + '</li>';
                             });
                             $('#exec-error-list').html(errorHtml);
@@ -268,10 +273,14 @@
                             $('#preview-empty').show();
                         }
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         btn.prop('disabled', false).html(
                             '<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
-                        alert('Error: ' + (xhr.responseJSON?.message || 'Gagal mengeksekusi'));
+                        if (xhr.statusText === 'timeout') {
+                            alert('Request timeout. Server masih memproses dokumen. Coba refresh halaman dan periksa hasilnya.');
+                        } else {
+                            alert('Error: ' + (xhr.responseJSON?.message || 'Gagal mengeksekusi'));
+                        }
                     }
                 });
             });

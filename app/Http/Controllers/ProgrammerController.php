@@ -96,12 +96,19 @@ final class ProgrammerController extends Controller
 
     /**
      * Bulk send documents directly to payment, bypassing normal workflow
+     * Uses chunked processing to avoid gateway timeout on large batches
      */
     public function bulkDirectToPayment(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'nomor_agendas' => 'required|string',
         ]);
+
+        // Prevent PHP timeout for large batches
+        set_time_limit(0);
+
+        // Disable query log to reduce memory usage
+        DB::disableQueryLog();
 
         $user = Auth::user();
 
@@ -113,60 +120,83 @@ final class ProgrammerController extends Controller
         $errors = [];
         $processedDocs = [];
 
-        DB::beginTransaction();
-        try {
-            foreach ($nomorAgendas as $nomorAgenda) {
-                try {
-                    $dokumen = Dokumen::where('nomor_agenda', $nomorAgenda)->first();
+        // Process in chunks of 50 documents to avoid timeout
+        $chunks = array_chunk($nomorAgendas, 50);
 
-                    if (!$dokumen) {
+        Log::info("Programmer bulk direct-to-payment: Starting processing {$this->countItems($nomorAgendas)} documents in " . count($chunks) . " chunks", [
+            'total_documents' => count($nomorAgendas),
+            'chunk_size' => 50,
+            'chunks' => count($chunks),
+            'by' => $user->name ?? 'Programmer',
+        ]);
+
+        foreach ($chunks as $chunkIndex => $chunk) {
+            DB::beginTransaction();
+            try {
+                foreach ($chunk as $nomorAgenda) {
+                    try {
+                        $dokumen = Dokumen::where('nomor_agenda', $nomorAgenda)->first();
+
+                        if (!$dokumen) {
+                            $failed++;
+                            $errors[] = "Dokumen {$nomorAgenda} tidak ditemukan";
+                            continue;
+                        }
+
+                        // Skip if already at pembayaran
+                        if ($dokumen->current_handler === 'pembayaran') {
+                            $failed++;
+                            $errors[] = "Dokumen {$nomorAgenda} sudah di Pembayaran";
+                            continue;
+                        }
+
+                        // Simulate manual workflow - step by step through each role
+                        $this->simulateManualWorkflow($dokumen, $user->name ?? 'Programmer');
+
+                        $processed++;
+                        $processedDocs[] = $nomorAgenda;
+
+                    } catch (\Exception $e) {
                         $failed++;
-                        $errors[] = "Dokumen {$nomorAgenda} tidak ditemukan";
-                        continue;
+                        $errors[] = "Error processing {$nomorAgenda}: " . $e->getMessage();
+                        Log::error("Programmer bulk error for {$nomorAgenda}: " . $e->getMessage());
                     }
-
-                    // Skip if already at pembayaran
-                    if ($dokumen->current_handler === 'pembayaran') {
-                        $failed++;
-                        $errors[] = "Dokumen {$nomorAgenda} sudah di Pembayaran";
-                        continue;
-                    }
-
-                    // Simulate manual workflow - step by step through each role
-                    $this->simulateManualWorkflow($dokumen, $user->name ?? 'Programmer');
-
-                    $processed++;
-                    $processedDocs[] = $nomorAgenda;
-
-                    Log::info("Programmer bulk direct-to-payment: Document {$nomorAgenda} sent to pembayaran by {$user->name}");
-
-                } catch (\Exception $e) {
-                    $failed++;
-                    $errors[] = "Error processing {$nomorAgenda}: " . $e->getMessage();
-                    Log::error("Programmer bulk error for {$nomorAgenda}: " . $e->getMessage());
                 }
+
+                DB::commit();
+
+                Log::info("Programmer bulk direct-to-payment: Chunk " . ($chunkIndex + 1) . "/" . count($chunks) . " committed ({$processed} processed so far)");
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Programmer bulk direct-to-payment chunk " . ($chunkIndex + 1) . " failed: " . $e->getMessage());
+
+                // Continue with next chunk instead of failing entirely
+                $failed += count($chunk);
+                $errors[] = "Chunk " . ($chunkIndex + 1) . " gagal: " . $e->getMessage();
             }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'processed' => $processed,
-                'failed' => $failed,
-                'processed_docs' => $processedDocs,
-                'errors' => $errors,
-                'message' => "Berhasil mengirim {$processed} dokumen ke Pembayaran" . ($failed > 0 ? ", {$failed} gagal" : '')
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Programmer bulk direct-to-payment failed: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Bulk operation failed: ' . $e->getMessage()
-            ], 500);
         }
+
+        Log::info("Programmer bulk direct-to-payment: Completed. {$processed} processed, {$failed} failed", [
+            'by' => $user->name ?? 'Programmer',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'processed' => $processed,
+            'failed' => $failed,
+            'processed_docs' => $processedDocs,
+            'errors' => $errors,
+            'message' => "Berhasil mengirim {$processed} dokumen ke Pembayaran" . ($failed > 0 ? ", {$failed} gagal" : '')
+        ]);
+    }
+
+    /**
+     * Helper to count array items (avoids count() type issues)
+     */
+    private function countItems(array $items): int
+    {
+        return count($items);
     }
 
     /**
