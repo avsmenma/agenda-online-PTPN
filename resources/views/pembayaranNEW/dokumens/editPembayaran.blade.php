@@ -1102,12 +1102,14 @@
                 <div class="info-item">
                   <div class="info-label"><i class="fa-solid fa-money-bill me-1"></i> DPP PPh</div>
                   <div class="info-value">
-                    {{ $dokumen->dpp_pph ? 'Rp ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}</div>
+                    {{ $dokumen->dpp_pph ? 'Rp ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}
+                  </div>
                 </div>
                 <div class="info-item">
                   <div class="info-label"><i class="fa-solid fa-money-bill-wave me-1"></i> PPh Terhutang</div>
                   <div class="info-value">
-                    {{ $dokumen->pph_terhutang ? 'Rp ' . number_format($dokumen->pph_terhutang, 0, ',', '.') : '-' }}</div>
+                    {{ $dokumen->ppn_terhutang ? 'Rp ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
+                  </div>
                 </div>
               </div>
 
