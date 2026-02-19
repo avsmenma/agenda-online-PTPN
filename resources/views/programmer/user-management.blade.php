@@ -128,6 +128,7 @@
                                         <th>Name</th>
                                         <th>Username</th>
                                         <th>Email</th>
+                                        <th>No. HP</th>
                                         <th>Role</th>
                                         <th>Bagian</th>
                                         <th>Action</th>
@@ -140,6 +141,7 @@
                                             <td>{{ $user->name }}</td>
                                             <td><code>{{ $user->username }}</code></td>
                                             <td>{{ $user->email }}</td>
+                                            <td>{{ $user->phone_number ?? '-' }}</td>
                                             <td>
                                                 <span class="role-badge {{ strtolower($user->role ?? '') }}">
                                                     {{ ucwords(str_replace('_', ' ', $user->role ?? '-')) }}
@@ -155,7 +157,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="text-center text-muted py-4">
+                                            <td colspan="8" class="text-center text-muted py-4">
                                                 <i class="fas fa-users fa-2x mb-2"></i>
                                                 <p class="mb-0">Tidak ada user ditemukan</p>
                                             </td>
@@ -267,8 +269,8 @@
 
     <script>
         let editModal;
-        
-        $(document).ready(function() {
+
+        $(document).ready(function () {
             editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
         });
 
