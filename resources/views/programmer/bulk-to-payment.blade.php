@@ -108,6 +108,21 @@
                                     <i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran
                                 </button>
                             </div>
+
+                            <!-- Progress Bar (hidden by default) -->
+                            <div id="batch-progress" class="mt-3" style="display: none;">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted" id="batch-progress-label">Memproses batch...</small>
+                                    <small class="text-muted" id="batch-progress-count">0/0</small>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div id="batch-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                                         role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        0%
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1 d-block" id="batch-progress-detail"></small>
+                            </div>
                         </div>
 
                         <div id="preview-empty" class="text-center text-muted py-4">
@@ -146,8 +161,110 @@
     <script>
         $(document).ready(function () {
             let previewData = null;
+            const BATCH_SIZE = 50; // Documents per batch request
 
             console.log('Programmer bulk-to-payment JS loaded');
+
+            /**
+             * Split an array into chunks of given size
+             */
+            function chunkArray(arr, size) {
+                const chunks = [];
+                for (let i = 0; i < arr.length; i += size) {
+                    chunks.push(arr.slice(i, i + size));
+                }
+                return chunks;
+            }
+
+            /**
+             * Parse nomor agenda text into array (same logic as backend)
+             */
+            function parseNomorAgendas(text) {
+                return text.replace(/[,;\t]/g, '\n')
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0)
+                    .filter((v, i, a) => a.indexOf(v) === i); // unique
+            }
+
+            /**
+             * Update progress bar UI
+             */
+            function updateProgress(current, total, processed, failed) {
+                const pct = Math.round((current / total) * 100);
+                $('#batch-progress-bar').css('width', pct + '%').text(pct + '%').attr('aria-valuenow', pct);
+                $('#batch-progress-count').text('Batch ' + current + '/' + total);
+                $('#batch-progress-detail').text('Berhasil: ' + processed + ' | Gagal: ' + failed);
+            }
+
+            /**
+             * Send a single batch via AJAX - returns a Promise
+             */
+            function sendBatch(nomorAgendasStr) {
+                return new Promise(function (resolve, reject) {
+                    $.ajax({
+                        url: '{{ route("programmer.bulk-to-payment.execute") }}',
+                        method: 'POST',
+                        timeout: 120000, // 2 min per batch (50 docs should be fast)
+                        data: {
+                            nomor_agendas: nomorAgendasStr,
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            resolve(response);
+                        },
+                        error: function (xhr) {
+                            reject(xhr);
+                        }
+                    });
+                });
+            }
+
+            /**
+             * Process all batches sequentially
+             */
+            async function processAllBatches(chunks) {
+                let totalProcessed = 0;
+                let totalFailed = 0;
+                let allErrors = [];
+
+                $('#batch-progress').show();
+                updateProgress(0, chunks.length, 0, 0);
+
+                for (let i = 0; i < chunks.length; i++) {
+                    const chunk = chunks[i];
+                    const batchStr = chunk.join('\n');
+
+                    $('#batch-progress-label').text('Memproses batch ' + (i + 1) + ' dari ' + chunks.length + ' (' + chunk.length + ' dokumen)...');
+
+                    try {
+                        const response = await sendBatch(batchStr);
+                        totalProcessed += response.processed || 0;
+                        totalFailed += response.failed || 0;
+                        if (response.errors && response.errors.length > 0) {
+                            allErrors = allErrors.concat(response.errors);
+                        }
+                    } catch (xhr) {
+                        // Batch failed entirely - count all docs as failed
+                        totalFailed += chunk.length;
+                        allErrors.push('Batch ' + (i + 1) + ' gagal: ' + (xhr.statusText || 'Server error'));
+                    }
+
+                    updateProgress(i + 1, chunks.length, totalProcessed, totalFailed);
+                }
+
+                // Mark progress bar as complete
+                $('#batch-progress-bar')
+                    .removeClass('progress-bar-animated bg-info')
+                    .addClass('bg-success');
+                $('#batch-progress-label').text('Selesai!');
+
+                return {
+                    processed: totalProcessed,
+                    failed: totalFailed,
+                    errors: allErrors
+                };
+            }
 
             // Preview button click
             $('#btn-preview').on('click', function () {
@@ -166,6 +283,7 @@
                 $('#preview-result').hide();
                 $('#preview-loading').show();
                 $('#execution-result').hide();
+                $('#batch-progress').hide();
                 $('#btn-execute').prop('disabled', true);
 
                 $.ajax({
@@ -223,66 +341,58 @@
                 });
             });
 
-            // Execute button click
-            $('#btn-execute').on('click', function () {
-                if (!confirm('Apakah Anda yakin ingin mengirim ' + previewData.total_found +
-                    ' dokumen langsung ke Pembayaran?\n\nProses ini TIDAK DAPAT dibatalkan!')) {
+            // Execute button click - uses frontend batching
+            $('#btn-execute').on('click', async function () {
+                const allNomors = parseNomorAgendas($('#nomor_agendas').val().trim());
+                const totalDocs = allNomors.length;
+                const totalBatches = Math.ceil(totalDocs / BATCH_SIZE);
+
+                if (!confirm('Apakah Anda yakin ingin mengirim ' + totalDocs +
+                    ' dokumen langsung ke Pembayaran?\n\n' +
+                    'Akan diproses dalam ' + totalBatches + ' batch (@' + BATCH_SIZE + ' dokumen).\n' +
+                    'Proses ini TIDAK DAPAT dibatalkan!')) {
                     return;
                 }
 
                 const btn = $(this);
-                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Memproses...');
+                btn.prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin me-2"></i>Memproses... (jangan tutup halaman)');
+                $('#execution-result').hide();
 
-                $.ajax({
-                    url: '{{ route("programmer.bulk-to-payment.execute") }}',
-                    method: 'POST',
-                    timeout: 300000, // 5 minutes timeout for large batches
-                    data: {
-                        nomor_agendas: $('#nomor_agendas').val().trim(),
-                        _token: '{{ csrf_token() }}'
-                    },
-                    beforeSend: function () {
-                        btn.prop('disabled', true).html(
-                            '<i class="fas fa-spinner fa-spin me-2"></i>Memproses... (mohon tunggu, jangan tutup halaman)');
-                    },
-                    success: function (response) {
-                        btn.html('<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
+                // Reset progress bar
+                $('#batch-progress-bar')
+                    .removeClass('bg-success')
+                    .addClass('progress-bar-animated bg-info');
 
-                        // Show execution result
-                        $('#exec-processed').text(response.processed);
-                        $('#exec-failed').text(response.failed);
+                // Split into chunks and process sequentially
+                const chunks = chunkArray(allNomors, BATCH_SIZE);
+                const result = await processAllBatches(chunks);
 
-                        if (response.errors && response.errors.length > 0) {
-                            let errorHtml = '';
-                            response.errors.forEach(function (err) {
-                                errorHtml += '<li>' + err + '</li>';
-                            });
-                            $('#exec-error-list').html(errorHtml);
-                            $('#exec-errors').show();
-                        } else {
-                            $('#exec-errors').hide();
-                        }
+                // Show final results
+                btn.prop('disabled', false).html('<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
+                $('#exec-processed').text(result.processed);
+                $('#exec-failed').text(result.failed);
 
-                        $('#execution-result').show();
+                if (result.errors.length > 0) {
+                    let errorHtml = '';
+                    result.errors.forEach(function (err) {
+                        errorHtml += '<li>' + err + '</li>';
+                    });
+                    $('#exec-error-list').html(errorHtml);
+                    $('#exec-errors').show();
+                } else {
+                    $('#exec-errors').hide();
+                }
 
-                        if (response.success) {
-                            alert(response.message);
-                            // Clear form
-                            $('#nomor_agendas').val('');
-                            $('#preview-result').hide();
-                            $('#preview-empty').show();
-                        }
-                    },
-                    error: function (xhr) {
-                        btn.prop('disabled', false).html(
-                            '<i class="fas fa-rocket me-2"></i>Kirim ke Pembayaran');
-                        if (xhr.statusText === 'timeout') {
-                            alert('Request timeout. Server masih memproses dokumen. Coba refresh halaman dan periksa hasilnya.');
-                        } else {
-                            alert('Error: ' + (xhr.responseJSON?.message || 'Gagal mengeksekusi'));
-                        }
-                    }
-                });
+                $('#execution-result').show();
+
+                alert('Selesai! Berhasil: ' + result.processed + ', Gagal: ' + result.failed);
+
+                if (result.processed > 0) {
+                    $('#nomor_agendas').val('');
+                    $('#preview-result').hide();
+                    $('#preview-empty').show();
+                }
             });
         });
     </script>
