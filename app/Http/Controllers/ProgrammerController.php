@@ -257,6 +257,14 @@ final class ProgrammerController extends Controller
             ],
         ]);
 
+        // Safety net: ensure status_pembayaran reflects tanggal_dibayar for docs already paid
+        $dokumen->refresh();
+        if ($dokumen->tanggal_dibayar && $dokumen->status_pembayaran !== 'sudah_dibayar') {
+            $dokumen->status_pembayaran = 'sudah_dibayar';
+            $dokumen->save();
+            Log::info("Bulk workflow: corrected status_pembayaran to sudah_dibayar for {$dokumen->nomor_agenda} (tanggal_dibayar exists)");
+        }
+
         Log::info("Bulk workflow completed: {$dokumen->nomor_agenda}", [
             'from_role' => $normalizedCurrentRole,
             'to_role' => 'pembayaran',

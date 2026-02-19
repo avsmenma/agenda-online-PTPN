@@ -51,10 +51,11 @@ class OwnerDashboardController extends Controller
         // Calculate dashboard statistics
         $totalDokumen = Dokumen::count();
 
-        // Dokumen Selesai: status completed atau status_pembayaran = sudah_dibayar
+        // Dokumen Selesai: status completed, status_pembayaran = sudah_dibayar, OR tanggal_dibayar exists
         $dokumenSelesai = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
         })->count();
 
         // Dokumen Belum Siap Bayar: dokumen yang belum selesai dan belum siap dibayar
@@ -66,8 +67,10 @@ class OwnerDashboardController extends Controller
                 });
         })->count();
 
-        // Dokumen Siap Bayar: dokumen dengan status_pembayaran = siap_dibayar
-        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')->count();
+        // Dokumen Siap Bayar: dokumen dengan status_pembayaran = siap_dibayar, tapi belum punya tanggal_dibayar
+        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->count();
 
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
@@ -82,7 +85,8 @@ class OwnerDashboardController extends Controller
 
         $dokumenSelesaiLastWeek = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
         })->where('updated_at', '<=', $oneWeekAgo)->count();
         $dokumenSelesaiTrend = $dokumenSelesaiLastWeek > 0
             ? round((($dokumenSelesai - $dokumenSelesaiLastWeek) / $dokumenSelesaiLastWeek) * 100, 1)
@@ -201,7 +205,8 @@ class OwnerDashboardController extends Controller
         // Dokumen Selesai
         $dokumenSelesai = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
         })->count();
 
         // Dokumen Proses
@@ -210,11 +215,14 @@ class OwnerDashboardController extends Controller
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                });
+                })
+                ->whereNull('tanggal_dibayar');
         })->count();
 
         // Dokumen Siap Bayar
-        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')->count();
+        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->count();
 
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;

@@ -593,9 +593,11 @@ class Dokumen extends Model
 
             case 'pembayaran':
                 $this->status = 'sent_to_pembayaran'; // Use status that exists in enum
-                // Set status_pembayaran to 'siap_dibayar' when document is sent to pembayaran
-                // Only update if status_pembayaran is null or empty (don't overwrite 'sudah_dibayar')
-                if (!$this->status_pembayaran || $this->status_pembayaran === 'pending') {
+                // If document already has tanggal_dibayar (e.g. from CSV import), mark as sudah_dibayar
+                if ($this->tanggal_dibayar) {
+                    $this->status_pembayaran = 'sudah_dibayar';
+                } elseif (!$this->status_pembayaran || $this->status_pembayaran === 'pending') {
+                    // Set status_pembayaran to 'siap_dibayar' when document is sent to pembayaran
                     $this->status_pembayaran = 'siap_dibayar';
                 }
                 break;

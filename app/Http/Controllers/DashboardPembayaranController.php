@@ -176,15 +176,14 @@ class DashboardPembayaranController extends Controller
                         ->orWhere('status', 'sent_to_pembayaran');
                 })->where(function ($q) {
                     $q->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                        ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                        ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
-                });
+                        ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+                })->whereNull('tanggal_dibayar');
             } elseif ($statusPembayaran === 'sudah_dibayar') {
                 $query->where(function ($q) {
                     $q->where('status_pembayaran', 'sudah_dibayar')
                         ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                        ->orWhereNotNull('tanggal_dibayar');
                 });
             }
         }
@@ -2834,16 +2833,15 @@ class DashboardPembayaranController extends Controller
                         ->orWhere('status', 'sent_to_pembayaran');
                 })->where(function ($q) {
                     $q->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
-                        ->orWhere('status_pembayaran', '!=', 'SUDAH DIBAYAR')
-                        ->orWhere('status_pembayaran', '!=', 'SUDAH_DIBAYAR');
-                });
+                        ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+                })->whereNull('tanggal_dibayar');
             } elseif ($statusPembayaran === 'sudah_dibayar') {
-                // Sudah dibayar - cek berbagai format (dari CSV: "SUDAH DIBAYAR", dari aplikasi: "sudah_dibayar")
+                // Sudah dibayar - cek berbagai format + tanggal_dibayar
                 $query->where(function ($q) {
                     $q->where('status_pembayaran', 'sudah_dibayar')
                         ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
-                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                        ->orWhereNotNull('tanggal_dibayar');
                 });
             }
         }
