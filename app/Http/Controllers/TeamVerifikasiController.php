@@ -14,6 +14,7 @@ use App\Models\DokumenStatus;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
 use App\Models\Bidang;
+use App\Models\Bagian;
 use App\Models\DibayarKepada;
 use App\Models\KategoriKriteria;
 use App\Models\SubKriteria;
@@ -848,7 +849,7 @@ class TeamVerifikasiController extends Controller
             'isDropdownAvailable' => $isDropdownAvailable,
             'jenisPembayaranList' => $jenisPembayaranList,
             'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
-            'bagianList' => Bidang::orderBy('nama_bidang')->get(),
+            'bagianList' => Bagian::active()->ordered()->get(),
         );
         return view('team_verifikasi.dokumens.editDokumen', $data);
     }

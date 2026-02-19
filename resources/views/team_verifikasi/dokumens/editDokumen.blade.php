@@ -699,8 +699,8 @@
                 <select name="bagian">
                   <option value="">Pilih Bagian</option>
                   @foreach($bagianList as $bagian)
-                    <option value="{{ $bagian->kode_bidang }}" {{ old('bagian', $dokumen->bagian) == $bagian->kode_bidang ? 'selected' : '' }}>
-                      {{ $bagian->nama_bidang }}
+                    <option value="{{ $bagian->kode }}" {{ old('bagian', $dokumen->bagian) == $bagian->kode ? 'selected' : '' }}>
+                      {{ $bagian->nama }}
                     </option>
                   @endforeach
                 </select>
