@@ -299,8 +299,16 @@
       <div class="form-row">
         <div class="form-group">
           <label>Nomor Agenda</label>
-          <input type="text" name="nomor_agenda" placeholder="Masukkan nomor agenda"
-            value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}">
+          <div style="display: flex; gap: 8px; align-items: flex-start;">
+            <input type="text" name="nomor_agenda" id="nomor_agenda" placeholder="Masukkan nomor agenda"
+              value="{{ old('nomor_agenda', $dokumen->nomor_agenda) }}" style="flex: 1;">
+            <button type="button" id="autoNomorAgendaBtn" onclick="autoFillNomorAgenda()"
+              style="padding: 12px 20px; border: 2px solid #889717; background: linear-gradient(135deg, #ffffff 0%, #f9faf5 100%); color: #083E40; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.3s ease; white-space: nowrap; display: flex; align-items: center; gap: 6px;"
+              onmouseover="this.style.background='linear-gradient(135deg, #889717 0%, #9ab01f 100%)'; this.style.color='white'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(136, 151, 23, 0.3)';"
+              onmouseout="this.style.background='linear-gradient(135deg, #ffffff 0%, #f9faf5 100%)'; this.style.color='#083E40'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Auto
+            </button>
+          </div>
           @error('nomor_agenda')
             <div class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
           @enderror
@@ -693,6 +701,46 @@
       </div>
     </form>
   </div>
+
+  <script>
+    // Auto-fill Nomor Agenda function
+    function autoFillNomorAgenda() {
+      const btn = document.getElementById('autoNomorAgendaBtn');
+      const input = document.getElementById('nomor_agenda');
+      const originalHTML = btn.innerHTML;
+
+      // Show loading state
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+
+      fetch('{{ route("documents.next-nomor-agenda") }}')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            input.value = data.next_nomor_agenda;
+            // Flash green briefly to indicate success
+            input.style.borderColor = '#889717';
+            input.style.boxShadow = '0 0 0 4px rgba(136, 151, 23, 0.2)';
+            setTimeout(() => {
+              input.style.borderColor = '';
+              input.style.boxShadow = '';
+            }, 1500);
+          } else {
+            alert('Gagal mengambil nomor agenda: ' + (data.message || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching next nomor agenda:', error);
+          alert('Gagal mengambil nomor agenda. Silakan coba lagi.');
+        })
+        .finally(() => {
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        });
+    }
+  </script>
 
   <script>
     // Wait for DOM to be ready

@@ -490,6 +490,37 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::post('/import/preview', [\App\Http\Controllers\OperatorCsvImportController::class, 'preview'])->name('import.preview');
     Route::post('/import', [\App\Http\Controllers\OperatorCsvImportController::class, 'import'])->name('import.execute');
 
+    // API: Get next nomor agenda (auto-generate)
+    Route::get('/next-nomor-agenda', function () {
+        try {
+            $currentYear = \Carbon\Carbon::now()->year;
+
+            // Find the highest nomor_agenda number for the current year
+            $latestDokumen = \App\Models\Dokumen::where('nomor_agenda', 'like', '%_' . $currentYear)
+                ->get()
+                ->map(function ($doc) {
+                    // Extract the numeric part before the underscore
+                    $parts = explode('_', $doc->nomor_agenda);
+                    return isset($parts[0]) && is_numeric($parts[0]) ? (int) $parts[0] : 0;
+                })
+                ->max();
+
+            $nextNumber = ($latestDokumen ?? 0) + 1;
+            $nextNomorAgenda = $nextNumber . '_' . $currentYear;
+
+            return response()->json([
+                'success' => true,
+                'next_nomor_agenda' => $nextNomorAgenda,
+                'current_highest' => $latestDokumen ?? 0,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil nomor agenda: ' . $e->getMessage(),
+            ], 500);
+        }
+    })->name('next-nomor-agenda');
+
     // Bulk send route (static route, before parameterized routes)
     Route::post('/bulk-send-to-verifikasi', [DokumenController::class, 'bulkSendToTeamVerifikasi'])->name('bulk-send-to-verifikasi');
 
