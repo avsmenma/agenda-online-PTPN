@@ -1556,7 +1556,8 @@
             <i class="fas fa-check"></i>
             Terapkan
           </button>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary">
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary"
+            onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
             <i class="fas fa-redo"></i>
             Reset
           </a>
@@ -1852,7 +1853,8 @@
           </div>
           <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
           <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty">
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty"
+            onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
             <i class="fas fa-redo"></i>
             Reset Filter
           </a>
@@ -2474,25 +2476,6 @@
   </style>
 
   <script>
-    // Restore saved col   umns from localStorage on page load (before any rendering)
-    (function () {
-      try {
-        const currentUrl = new URL(window.location.href);
-        const hasColumnsInUrl = currentUrl.searchParams.has('columns[]') || currentUrl.searchParams.has('columns');
-        if (!hasColumnsInUrl) {
-          const saved = localStorage.getItem('pembayaran_columns');
-          if (saved) {
-            const cols = JSON.parse(saved);
-            if (Array.isArray(cols) && cols.length > 0) {
-              cols.forEach(function (col) {
-                currentUrl.searchParams.append('columns[]', col);
-              });
-              window.location.replace(currentUrl.toString());
-            }
-          }
-        }
-      } catch (e) { /* ignore */ }
-    })();
 
     // Column customization variables
     let selectedColumnsOrder = @json($selectedColumns);
@@ -2559,11 +2542,11 @@
 
       if (selectedColumnsOrder.length === 0) {
         previewContainer.innerHTML = `
-                            <div class="empty-preview">
-                              <i class="fa-solid fa-table"></i>
-                              <p>Belum ada kolom yang dipilih</p>
-                              <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
-                            </div>`;
+                                <div class="empty-preview">
+                                  <i class="fa-solid fa-table"></i>
+                                  <p>Belum ada kolom yang dipilih</p>
+                                  <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                                </div>`;
         return;
       }
 
@@ -3080,13 +3063,13 @@
             emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
             emptyState.innerHTML = `
-                  <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
-                  <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-                  <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-                  <a href="${AJAX_CONFIG.url}" class="btn-empty">
-                    <i class="fas fa-redo"></i> Reset Filter
-                  </a>
-                `;
+                      <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                      <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+                      <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+                      <a href="${AJAX_CONFIG.url}" class="btn-empty">
+                        <i class="fas fa-redo"></i> Reset Filter
+                      </a>
+                    `;
             tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
           }
           return;
