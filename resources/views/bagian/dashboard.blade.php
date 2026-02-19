@@ -111,7 +111,7 @@
                             </div>
                             <div class="ms-3">
                                 <h3 class="mb-0" style="color: #1e7e34; font-weight: 700;">{{ $dokumenSelesai }}</h3>
-                                <p class="mb-0 text-muted" style="font-size: 13px;">Selesai</p>
+                                <p class="mb-0 text-muted" style="font-size: 13px;">Sudah Dibayar</p>
                             </div>
                         </div>
                     </div>
