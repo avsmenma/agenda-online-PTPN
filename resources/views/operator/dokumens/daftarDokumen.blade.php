@@ -935,7 +935,7 @@
     .table-enhanced .col-status .badge-status {
       margin: 0 auto;
       display: inline-flex;
-      white-space: nowrap;
+      white-space: normal;
     }
 
     .table-enhanced .col-keterangan {
@@ -1329,7 +1329,7 @@
       justify-content: center;
       gap: 6px;
       transition: all 0.3s ease;
-      white-space: nowrap;
+      white-space: normal;
       word-wrap: break-word;
       line-height: 1.3;
     }
