@@ -883,6 +883,7 @@
     /* Column width optimization for Operator */
     .table-enhanced td {
       padding: 12px;
+      text-align: center;
       vertical-align: middle;
       white-space: nowrap;
     }

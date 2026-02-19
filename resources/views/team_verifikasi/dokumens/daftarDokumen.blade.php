@@ -455,6 +455,11 @@
       border-bottom: 1px solid #f0f0f0;
     }
 
+    .table-enhanced tbody td {
+      text-align: center;
+      vertical-align: middle;
+    }
+
     .table-enhanced tbody tr:hover {
       background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);
       transform: translateY(-1px);

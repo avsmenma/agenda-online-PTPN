@@ -250,6 +250,7 @@ class TeamVerifikasiController extends Controller
                 'dokumens.tanggal_berakhir_spk',
                 'dokumens.no_spk',
                 'dokumens.nomor_miro',
+                'dokumens.nomor_po',
                 'dokumens.nama_pengirim',
                 'dokumens.jenis_pembayaran',
                 'dokumens.dibayar_kepada',
@@ -263,6 +264,14 @@ class TeamVerifikasiController extends Controller
                 'dokumens.tanggal_paraf',
                 'dokumens.pemaraf',
                 'dokumens.tanggal_selesai_diproses',
+                // Perpajakan columns
+                'dokumens.no_faktur',
+                'dokumens.tanggal_faktur',
+                'dokumens.tanggal_selesai_verifikasi_pajak',
+                'dokumens.jenis_pph',
+                'dokumens.dpp_pph',
+                'dokumens.ppn_terhutang',
+                'dokumens.tanggal_dibayar',
                 // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
                 // 'dokumens.inbox_approval_reason', // REMOVED
                 // 'dokumens.inbox_approval_for', // REMOVED
