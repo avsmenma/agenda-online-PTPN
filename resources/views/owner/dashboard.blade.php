@@ -780,11 +780,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                                <span>${labels[key] || key}: ${displayValue}</span>
-                                <button type="button" class="remove" onclick="removeFilter('${key}')">
-                                  <i class="fas fa-times"></i>
-                                </button>
-                              `;
+                                  <span>${labels[key] || key}: ${displayValue}</span>
+                                  <button type="button" class="remove" onclick="removeFilter('${key}')">
+                                    <i class="fas fa-times"></i>
+                                  </button>
+                                `;
           container.appendChild(tag);
         }
       }
@@ -1085,10 +1085,22 @@
         highlightActiveStatCard(statusToCardMap[currentStatus]);
       }
 
+      // Create top progress bar element
+      const progressBar = document.createElement('div');
+      progressBar.id = 'ajaxProgressBar';
+      progressBar.innerHTML = '<div class="progress-fill"></div>';
+      document.body.appendChild(progressBar);
+
       // Create loading overlay element
       const overlay = document.createElement('div');
       overlay.id = 'ajaxLoadingOverlay';
-      overlay.innerHTML = '<div class="ajax-spinner"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
+      overlay.innerHTML = `
+          <div class="ajax-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-text">Memuat data...</div>
+            <div class="spinner-subtext">Mohon tunggu sebentar</div>
+          </div>
+        `;
       document.querySelector('.main-content').appendChild(overlay);
     });
 
@@ -1173,11 +1185,11 @@
       const container = document.getElementById('cardView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-              <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                <div class="empty-state-title">Tidak ada dokumen</div>
-                <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-              </div>`;
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                  <div class="empty-state-title">Tidak ada dokumen</div>
+                  <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                </div>`;
         return;
       }
 
@@ -1231,11 +1243,11 @@
       const container = document.getElementById('tableView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-              <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                <div class="empty-state-title">Tidak ada dokumen</div>
-                <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-              </div>`;
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                  <div class="empty-state-title">Tidak ada dokumen</div>
+                  <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                </div>`;
         return;
       }
 
@@ -1279,30 +1291,30 @@
       const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
 
       const html = `
-            <div class="pagination-footer">
-              <div class="pagination-footer-left">
-                <label class="pagination-label">Baris per halaman:</label>
-                <select class="pagination-select" onchange="changePerPage(this.value)">
-                  <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
-                  <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
-                  <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
-                  <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
-                  <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
-                </select>
-                <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
-              </div>
-              <div class="pagination-footer-right">
-                <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
-                  onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
-                <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
-                <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>`;
+              <div class="pagination-footer">
+                <div class="pagination-footer-left">
+                  <label class="pagination-label">Baris per halaman:</label>
+                  <select class="pagination-select" onchange="changePerPage(this.value)">
+                    <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
+                    <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
+                    <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
+                    <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
+                    <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
+                  </select>
+                  <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
+                </div>
+                <div class="pagination-footer-right">
+                  <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
+                    onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
+                  <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
+                  <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>`;
 
       ['cardPagination', 'tablePagination'].forEach(id => {
         const el = document.getElementById(id);
@@ -1321,18 +1333,102 @@
       applyFilter({ page: String(pageNum) });
     }
 
-    // ===== Loading overlay =====
+    // ===== Loading overlay with progress bar =====
+    let _progressInterval = null;
+    let _progressValue = 0;
+
     function showLoadingOverlay() {
+      // Show top progress bar
+      const bar = document.getElementById('ajaxProgressBar');
+      if (bar) {
+        bar.classList.add('show');
+        const fill = bar.querySelector('.progress-fill');
+        _progressValue = 0;
+        if (fill) fill.style.width = '0%';
+
+        // Simulate progress: fast start, then slow
+        clearInterval(_progressInterval);
+        _progressInterval = setInterval(() => {
+          if (_progressValue < 30) {
+            _progressValue += 3;
+          } else if (_progressValue < 60) {
+            _progressValue += 1.5;
+          } else if (_progressValue < 85) {
+            _progressValue += 0.5;
+          } else if (_progressValue < 95) {
+            _progressValue += 0.1;
+          }
+          if (fill) fill.style.width = _progressValue + '%';
+        }, 100);
+      }
+
+      // Show overlay
       const el = document.getElementById('ajaxLoadingOverlay');
       if (el) el.classList.add('show');
     }
+
     function hideLoadingOverlay() {
+      clearInterval(_progressInterval);
+
+      // Complete the progress bar
+      const bar = document.getElementById('ajaxProgressBar');
+      if (bar) {
+        const fill = bar.querySelector('.progress-fill');
+        if (fill) {
+          fill.style.width = '100%';
+          fill.style.transition = 'width 0.3s ease';
+        }
+        setTimeout(() => {
+          bar.classList.remove('show');
+          if (fill) {
+            fill.style.width = '0%';
+            fill.style.transition = '';
+          }
+        }, 400);
+      }
+
+      // Hide overlay
       const el = document.getElementById('ajaxLoadingOverlay');
       if (el) el.classList.remove('show');
     }
   </script>
 
   <style>
+    /* ===== Top Progress Bar ===== */
+    #ajaxProgressBar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    #ajaxProgressBar.show {
+      opacity: 1;
+    }
+
+    #ajaxProgressBar .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #083E40, #0ea5e9, #10b981);
+      background-size: 200% 100%;
+      animation: progressShimmer 1.5s ease infinite;
+      border-radius: 0 2px 2px 0;
+      transition: width 0.15s ease;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.5), 0 0 5px rgba(16, 185, 129, 0.3);
+    }
+
+    @keyframes progressShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ===== Loading Overlay ===== */
     #ajaxLoadingOverlay {
       display: none;
       position: fixed;
@@ -1340,7 +1436,8 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.18);
+      background: rgba(248, 250, 252, 0.75);
+      backdrop-filter: blur(2px);
       z-index: 9999;
       justify-content: center;
       align-items: center;
@@ -1352,28 +1449,72 @@
 
     .ajax-spinner {
       background: white;
-      padding: 1.2rem 2rem;
-      border-radius: 12px;
-      font-size: 1.05rem;
-      font-weight: 500;
-      color: #083E40;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.13);
+      padding: 2rem 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.75rem;
+      animation: spinnerPop 0.25s ease;
     }
 
-    .ajax-spinner i {
-      font-size: 1.2rem;
+    @keyframes spinnerPop {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .spinner-ring {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #083E40;
+      border-right-color: #0ea5e9;
+      border-radius: 50%;
+      animation: spinnerRotate 0.8s linear infinite;
+    }
+
+    @keyframes spinnerRotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner-text {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .spinner-subtext {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    /* ===== Dark Mode ===== */
+    html.dark #ajaxProgressBar {
+      background: rgba(255, 255, 255, 0.05);
     }
 
     html.dark #ajaxLoadingOverlay {
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(15, 23, 42, 0.75);
     }
 
     html.dark .ajax-spinner {
       background: #1e293b;
-      color: #94a3b8;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    html.dark .spinner-ring {
+      border-color: #334155;
+      border-top-color: #0ea5e9;
+      border-right-color: #10b981;
+    }
+
+    html.dark .spinner-text {
+      color: #f1f5f9;
+    }
+
+    html.dark .spinner-subtext {
+      color: #64748b;
     }
   </style>
 @endsection
