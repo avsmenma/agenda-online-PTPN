@@ -458,6 +458,7 @@
     .table-enhanced tbody td {
       text-align: center;
       vertical-align: middle;
+      font-weight: 700;
     }
 
     .table-enhanced tbody tr:hover {
