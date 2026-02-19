@@ -3513,6 +3513,14 @@ class DashboardPembayaranController extends Controller
             $rowIndex++;
         }
 
+        // Apply center + middle alignment to all data cells
+        $lastRow = $rowIndex - 1;
+        if ($lastRow >= 2) {
+            $sheet->getStyle("A2:{$lastColumn}{$lastRow}")->getAlignment()
+                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        }
+
         // Apply borders to all data cells
         $lastRow = $rowIndex - 1;
         if ($lastRow >= 2) {
@@ -3723,6 +3731,9 @@ class DashboardPembayaranController extends Controller
                             ],
                         ],
                     ]);
+                    $sheet->getStyle("A2:{$lastCol}{$lastDataRow}")->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 }
 
                 // Add TOTAL row for this vendor
@@ -3802,6 +3813,9 @@ class DashboardPembayaranController extends Controller
                             ],
                         ],
                     ]);
+                    $sheet->getStyle("A{$dataStartRow}:{$lastCol}{$dataEndRow}")->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 }
 
                 // Vendor summary rows
@@ -3877,7 +3891,13 @@ class DashboardPembayaranController extends Controller
             case 'nilai_rupiah':
                 return 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.');
             case 'computed_status':
-                return $dokumen->computed_status ?? $dokumen->status_pembayaran ?? '-';
+            case 'status_pembayaran':
+                $status = $dokumen->computed_status ?? 'belum_siap_dibayar';
+                if ($status === 'sudah_dibayar')
+                    return 'Sudah Dibayar';
+                if ($status === 'siap_dibayar')
+                    return 'Siap Dibayar';
+                return 'Belum Siap Dibayar';
             case 'tanggal_dibayar':
                 return $dokumen->tanggal_dibayar
                     ? \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d/m/Y')
@@ -4031,6 +4051,7 @@ class DashboardPembayaranController extends Controller
             case 'nilai_rupiah':
                 return 'Rp ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.');
             case 'computed_status':
+            case 'status_pembayaran':
                 $status = $dokumen->computed_status ?? 'belum_siap_dibayar';
                 if ($status === 'sudah_dibayar')
                     return 'Sudah Dibayar';
