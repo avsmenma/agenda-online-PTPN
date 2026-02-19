@@ -3126,6 +3126,14 @@
                         class="select-text">{{ $dokumen->formatted_nilai_rupiah ?? 'Rp. ' . number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
                     @elseif($col == 'nomor_mirror')
                       {{ $dokumen->nomor_mirror ?? '-' }}
+                    @elseif($col == 'nomor_miro')
+                      {{ $dokumen->nomor_miro ?? '-' }}
+                    @elseif($col == 'nomor_po')
+                      @if($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0)
+                        {{ $dokumen->dokumenPos->pluck('nomor_po')->join(', ') }}
+                      @else
+                        -
+                      @endif
                     @elseif($col == 'tanggal_spp')
                       {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
                     @elseif($col == 'uraian_spp')
