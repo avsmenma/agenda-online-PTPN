@@ -3520,7 +3520,7 @@ class DashboardPembayaranController extends Controller
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => 'DDDDDD'],
+                        'color' => ['rgb' => '000000'],
                     ],
                 ],
             ];
@@ -3577,10 +3577,17 @@ class DashboardPembayaranController extends Controller
         ];
         $sheet->getStyle("A{$totalRow}:{$lastColumn}{$totalRow}")->applyFromArray($totalRowStyle);
 
-        // Auto-size columns
+        // Auto-size columns (except uraian_spp which gets fixed width + wrap)
         foreach (range(1, count($headers)) as $colNum) {
             $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colNum);
-            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            $colKey = $columns[$colNum - 1] ?? '';
+            if ($colKey === 'uraian_spp') {
+                // Fixed width + text wrap for Uraian SPP so it doesn't stretch too wide
+                $sheet->getColumnDimension($colLetter)->setWidth(50);
+                $sheet->getStyle("{$colLetter}2:{$colLetter}{$totalRow}")->getAlignment()->setWrapText(true);
+            } else {
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            }
         }
 
         // Freeze header row
@@ -3705,6 +3712,19 @@ class DashboardPembayaranController extends Controller
                     $rowIndex++;
                 }
 
+                // Apply borders to all data cells
+                $lastDataRow = $rowIndex - 1;
+                if ($lastDataRow >= 2) {
+                    $sheet->getStyle("A2:{$lastCol}{$lastDataRow}")->applyFromArray([
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                'color' => ['rgb' => '000000'],
+                            ],
+                        ],
+                    ]);
+                }
+
                 // Add TOTAL row for this vendor
                 $totalRow = $rowIndex;
                 $sheet->setCellValue([1, $totalRow], 'TOTAL');
@@ -3712,10 +3732,17 @@ class DashboardPembayaranController extends Controller
                 $sheet->setCellValue([5, $totalRow], 'Rp ' . number_format($vendorTotal, 0, ',', '.'));
                 $sheet->getStyle("A{$totalRow}:{$lastCol}{$totalRow}")->applyFromArray($totalRowStyle);
 
-                // Auto-size columns
+                // Auto-size columns (except uraian_spp which gets fixed width + wrap)
+                $vendorColumnKeys = array_keys($vendorColumns);
                 foreach (range(1, count($vendorColumns)) as $col) {
                     $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
-                    $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                    $colKey = $vendorColumnKeys[$col - 1] ?? '';
+                    if ($colKey === 'uraian_spp') {
+                        $sheet->getColumnDimension($colLetter)->setWidth(50);
+                        $sheet->getStyle("{$colLetter}2:{$colLetter}{$totalRow}")->getAlignment()->setWrapText(true);
+                    } else {
+                        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                    }
                 }
 
                 $sheetIndex++;
@@ -3763,6 +3790,20 @@ class DashboardPembayaranController extends Controller
                     $rowIndex++;
                 }
 
+                // Apply borders to data cells for this vendor section
+                $dataStartRow = $rowIndex - $vendorCount;
+                $dataEndRow = $rowIndex - 1;
+                if ($dataEndRow >= $dataStartRow) {
+                    $sheet->getStyle("A{$dataStartRow}:{$lastCol}{$dataEndRow}")->applyFromArray([
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                'color' => ['rgb' => '000000'],
+                            ],
+                        ],
+                    ]);
+                }
+
                 // Vendor summary rows
                 $sheet->setCellValue([1, $rowIndex], "Total Dokumen: {$vendorCount}");
                 $sheet->mergeCells([1, $rowIndex, 4, $rowIndex]);
@@ -3791,10 +3832,17 @@ class DashboardPembayaranController extends Controller
                 ]
             ]);
 
-            // Auto-size columns
+            // Auto-size columns (except uraian_spp which gets fixed width + wrap)
+            $vendorColumnKeys = array_keys($vendorColumns);
             foreach (range(1, count($vendorColumns)) as $col) {
                 $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
-                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                $colKey = $vendorColumnKeys[$col - 1] ?? '';
+                if ($colKey === 'uraian_spp') {
+                    $sheet->getColumnDimension($colLetter)->setWidth(50);
+                    $sheet->getStyle("{$colLetter}1:{$colLetter}{$rowIndex}")->getAlignment()->setWrapText(true);
+                } else {
+                    $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                }
             }
         }
 
