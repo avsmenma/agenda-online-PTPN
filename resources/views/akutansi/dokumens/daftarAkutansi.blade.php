@@ -519,6 +519,10 @@
         border-left: 3px solid transparent;
       }
 
+      .table-enhanced tbody td {
+        font-weight: 700;
+      }
+
       /* Enhanced Locked Row Styling from perpajakan */
       .table-enhanced tbody tr.locked-row {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
