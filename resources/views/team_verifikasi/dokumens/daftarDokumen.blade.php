@@ -443,6 +443,7 @@
       color: white;
       font-weight: 600;
       text-align: center;
+      white-space: nowrap;
       border-bottom: 2px solid #083E40;
       padding: 16px 12px;
       font-size: 13px;
@@ -3941,6 +3942,26 @@
                       @endif
                     @elseif($col == 'tanggal_dibayar')
                       {{ $dokumen->tanggal_dibayar ? \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d/m/Y') : '-' }}
+                    @elseif($col == 'nomor_po')
+                      @if($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0)
+                        {{ $dokumen->dokumenPos->pluck('nomor_po')->join(', ') }}
+                      @else
+                        {{ $dokumen->NO_PO ?? '-' }}
+                      @endif
+                    @elseif($col == 'nomor_miro')
+                      {{ $dokumen->nomor_miro_display ?? $dokumen->nomor_miro ?? '-' }}
+                    @elseif($col == 'no_faktur')
+                      {{ $dokumen->no_faktur ?? '-' }}
+                    @elseif($col == 'tanggal_faktur')
+                      {{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}
+                    @elseif($col == 'tanggal_selesai_verifikasi_pajak')
+                      {{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-' }}
+                    @elseif($col == 'jenis_pph')
+                      {{ $dokumen->jenis_pph ?? '-' }}
+                    @elseif($col == 'dpp_pph')
+                      {{ $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}
+                    @elseif($col == 'ppn_terhutang')
+                      {{ $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
                     @else
                       -
                     @endif
