@@ -2763,6 +2763,34 @@
       background: linear-gradient(135deg, #0a4f52 0%, #083E40 100%);
       transform: translateY(-1px);
     }
+
+    .btn-filter {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      white-space: nowrap;
+    }
+
+    .btn-filter:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+      background: linear-gradient(135deg, #0a4f52 0%, #0d5f63 100%);
+    }
+
+    .btn-filter:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
+    }
   </style>
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
@@ -2806,7 +2834,7 @@
         </div>
       </div>
       <div class="filter-section">
-        <select name="status" class="form-select" onchange="this.form.submit()">
+        <select name="status" class="form-select">
           <option value="">Semua Status</option>
           <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
           <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>Terkirim ke
@@ -2827,6 +2855,9 @@
           <input type="hidden" name="columns[]" value="{{ $column }}">
         @endforeach
       @endif
+      <button type="submit" class="btn-filter">
+        <i class="fa-solid fa-magnifying-glass me-2"></i>Cari
+      </button>
       <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
         <i class="fa-solid fa-table-columns me-2"></i>
         Kustomisasi Kolom Tabel
