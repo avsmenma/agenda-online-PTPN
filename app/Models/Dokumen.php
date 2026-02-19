@@ -346,15 +346,38 @@ class Dokumen extends Model
 
         $changedBy = $changedBy ?? auth()->user()?->name ?? 'System';
 
-        return DokumenStatus::updateOrCreate(
-            ['dokumen_id' => $this->id, 'role_code' => $roleCode],
-            [
-                'status' => $status,
-                'status_changed_at' => now(),
-                'changed_by' => $changedBy,
-                'notes' => $notes,
-            ]
-        );
+        try {
+            return DokumenStatus::updateOrCreate(
+                ['dokumen_id' => $this->id, 'role_code' => $roleCode],
+                [
+                    'status' => $status,
+                    'status_changed_at' => now(),
+                    'changed_by' => $changedBy,
+                    'notes' => $notes,
+                ]
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle duplicate key violation - record already exists
+            // This can happen when the SELECT in updateOrCreate misses the row
+            // but the INSERT hits the unique constraint (e.g. casing differences)
+            if ($e->errorInfo[1] == 1062) {
+                $existing = DokumenStatus::where('dokumen_id', $this->id)
+                    ->where('role_code', $roleCode)
+                    ->first();
+
+                if ($existing) {
+                    $existing->update([
+                        'status' => $status,
+                        'status_changed_at' => now(),
+                        'changed_by' => $changedBy,
+                        'notes' => $notes,
+                    ]);
+                    return $existing;
+                }
+            }
+
+            throw $e;
+        }
     }
 
     /**
