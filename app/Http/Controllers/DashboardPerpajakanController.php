@@ -10,6 +10,7 @@ use App\Models\DokumenPR;
 use App\Models\DibayarKepada;
 use App\Models\DokumenStatus;
 use App\Helpers\SearchHelper;
+use App\Models\Bagian;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
@@ -650,6 +651,8 @@ class DashboardPerpajakanController extends Controller
             'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
             'isDropdownAvailable' => $isDropdownAvailable,
             'jenisPembayaranList' => $jenisPembayaranList,
+            'isJenisPembayaranAvailable' => $jenisPembayaranList->count() > 0,
+            'bagianList' => Bagian::active()->ordered()->get(),
         );
         return view('perpajakan.dokumens.editPerpajakan', $data);
     }
