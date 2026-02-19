@@ -1201,6 +1201,10 @@
                               @endif
                             @elseif($col == 'tanggal_dibayar')
                               {{ $doc->tanggal_dibayar ? \Carbon\Carbon::parse($doc->tanggal_dibayar)->format('d/m/Y') : '-' }}
+                            @elseif($col == 'bulan')
+                              {{ $doc->bulan ?? '-' }}
+                            @elseif($col == 'tahun')
+                              {{ $doc->tahun ?? '-' }}
                             @else
                               -
                             @endif
