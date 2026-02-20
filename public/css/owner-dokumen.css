@@ -1923,170 +1923,202 @@ html.dark .age-chip-clear:hover {
 
 /* ===== Bagian Summary Banner ===== */
 .bagian-summary-banner {
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-  border-left: 4px solid var(--primary-color);
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  border: none !important;
+  margin-bottom: 1.5rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(8, 62, 64, 0.06) !important;
 }
 
 .bagian-summary-banner.show {
-  animation: slideDown 0.3s ease;
+  animation: slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .bagian-summary-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(135deg, rgba(8, 62, 64, 0.04) 0%, rgba(10, 79, 82, 0.02) 100%);
-}
-
-html.dark .bagian-summary-header {
-  background: linear-gradient(135deg, rgba(8, 62, 64, 0.15) 0%, rgba(10, 79, 82, 0.08) 100%);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 20px !important;
+  background: linear-gradient(135deg, #083E40 0%, #0a5e61 100%) !important;
 }
 
 .bagian-summary-title {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  font-size: 0.9rem;
-  color: var(--text-primary);
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 0.875rem !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
 }
 
 .bagian-summary-title i {
-  color: var(--primary-color);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.9rem !important;
 }
 
 .bagian-summary-title strong {
-  color: var(--primary-color);
-  font-weight: 700;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
 }
 
 .bagian-summary-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.75rem !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(4px) !important;
 }
 
 .bagian-summary-close:hover {
-  background: var(--bg-light);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  transform: scale(1.05) !important;
 }
 
 .bagian-summary-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0 !important;
+  padding: 0 !important;
 }
 
 .bagian-stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  position: relative;
-  transition: background 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 18px 20px !important;
+  position: relative !important;
+  transition: all 0.25s ease !important;
+  border-bottom: none !important;
 }
 
 .bagian-stat-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px;
-  background: var(--border-color);
+  content: '' !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 22% !important;
+  height: 56% !important;
+  width: 1px !important;
+  background: #e5e7eb !important;
 }
 
 .bagian-stat-item:hover {
-  background: rgba(8, 62, 64, 0.03);
-}
-
-html.dark .bagian-stat-item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: #f8fafb !important;
 }
 
 .bagian-stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  color: white;
-  flex-shrink: 0;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.05rem !important;
+  color: white !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12) !important;
 }
 
 .bagian-stat-item.total .bagian-stat-icon {
-  background: linear-gradient(135deg, #083E40, #0a4f52);
+  background: linear-gradient(140deg, #083E40 0%, #0d6b6e 100%) !important;
 }
 
 .bagian-stat-item.belum .bagian-stat-icon {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  background: linear-gradient(140deg, #e67e22 0%, #f39c12 100%) !important;
 }
 
 .bagian-stat-item.siap .bagian-stat-icon {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  background: linear-gradient(140deg, #2563eb 0%, #3b82f6 100%) !important;
 }
 
 .bagian-stat-item.sudah .bagian-stat-icon {
-  background: linear-gradient(135deg, #22c55e, #4ade80);
+  background: linear-gradient(140deg, #16a34a 0%, #22c55e 100%) !important;
 }
 
 .bagian-stat-info {
-  min-width: 0;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .bagian-stat-value {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  color: #1e293b !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.3px !important;
 }
 
 .bagian-stat-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  margin-top: 0.125rem;
-  white-space: nowrap;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  color: #94a3b8 !important;
+  margin-top: 3px !important;
+  white-space: nowrap !important;
 }
 
-/* Responsive Bagian Summary */
+/* === Dark mode === */
+html.dark .bagian-summary-banner {
+  background: #1e293b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+html.dark .bagian-summary-header {
+  background: linear-gradient(135deg, #0f4547 0%, #0d6b6e 100%) !important;
+}
+
+html.dark .bagian-stat-item:not(:last-child)::after {
+  background: #334155 !important;
+}
+
+html.dark .bagian-stat-item:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html.dark .bagian-stat-value {
+  color: #f1f5f9 !important;
+}
+
+html.dark .bagian-stat-label {
+  color: #64748b !important;
+}
+
+/* === Responsive === */
 @media (max-width: 900px) {
   .bagian-summary-stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
   .bagian-stat-item:nth-child(2)::after {
-    display: none;
+    display: none !important;
   }
 
   .bagian-stat-item:nth-child(1),
   .bagian-stat-item:nth-child(2) {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  html.dark .bagian-stat-item:nth-child(1),
+  html.dark .bagian-stat-item:nth-child(2) {
+    border-bottom: 1px solid #334155 !important;
   }
 }
 
 @media (max-width: 480px) {
   .bagian-summary-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
   .bagian-stat-item::after {
@@ -2094,6 +2126,10 @@ html.dark .bagian-stat-item:hover {
   }
 
   .bagian-stat-item:not(:last-child) {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  html.dark .bagian-stat-item:not(:last-child) {
+    border-bottom: 1px solid #334155 !important;
   }
 }
