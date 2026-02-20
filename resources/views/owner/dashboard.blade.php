@@ -379,6 +379,220 @@
     </div>
 
     {{-- ===== Bagian Summary Banner (shown when bagian filter is active) ===== --}}
+    <style>
+      .bagian-summary-banner {
+        background: #fff;
+        border-radius: 16px;
+        border: none;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 6px 16px rgba(8, 62, 64, .06)
+      }
+
+      .bagian-summary-banner.show {
+        animation: bagianSlide .35s cubic-bezier(.4, 0, .2, 1)
+      }
+
+      @keyframes bagianSlide {
+        from {
+          opacity: 0;
+          transform: translateY(-12px)
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0)
+        }
+      }
+
+      .bagian-summary-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 14px 20px !important;
+        background: linear-gradient(135deg, #083E40 0%, #0a5e61 100%) !important
+      }
+
+      .bagian-summary-title {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        font-size: .875rem !important;
+        color: #fff !important;
+        font-weight: 500 !important
+      }
+
+      .bagian-summary-title i {
+        color: rgba(255, 255, 255, .8) !important;
+        font-size: .9rem !important
+      }
+
+      .bagian-summary-title strong {
+        color: #fff !important;
+        font-weight: 700 !important;
+        letter-spacing: .3px !important
+      }
+
+      .bagian-summary-close {
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 8px !important;
+        border: none !important;
+        background: rgba(255, 255, 255, .15) !important;
+        color: rgba(255, 255, 255, .8) !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: .75rem !important;
+        transition: all .2s ease !important
+      }
+
+      .bagian-summary-close:hover {
+        background: rgba(255, 255, 255, .25) !important;
+        color: #fff !important;
+        transform: scale(1.05) !important
+      }
+
+      .bagian-summary-stats {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0 !important;
+        padding: 0 !important
+      }
+
+      .bagian-stat-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 14px !important;
+        padding: 18px 20px !important;
+        position: relative !important;
+        transition: all .25s ease !important;
+        border: none !important
+      }
+
+      .bagian-stat-item:not(:last-child)::after {
+        content: '' !important;
+        position: absolute !important;
+        right: 0 !important;
+        top: 22% !important;
+        height: 56% !important;
+        width: 1px !important;
+        background: #e5e7eb !important
+      }
+
+      .bagian-stat-item:hover {
+        background: #f8fafb !important
+      }
+
+      .bagian-stat-icon {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.05rem !important;
+        color: #fff !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, .12) !important
+      }
+
+      .bagian-stat-item.total .bagian-stat-icon {
+        background: linear-gradient(140deg, #083E40, #0d6b6e) !important
+      }
+
+      .bagian-stat-item.belum .bagian-stat-icon {
+        background: linear-gradient(140deg, #e67e22, #f39c12) !important
+      }
+
+      .bagian-stat-item.siap .bagian-stat-icon {
+        background: linear-gradient(140deg, #2563eb, #3b82f6) !important
+      }
+
+      .bagian-stat-item.sudah .bagian-stat-icon {
+        background: linear-gradient(140deg, #16a34a, #22c55e) !important
+      }
+
+      .bagian-stat-info {
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important
+      }
+
+      .bagian-stat-value {
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        color: #1e293b !important;
+        line-height: 1.15 !important;
+        letter-spacing: -.3px !important
+      }
+
+      .bagian-stat-label {
+        font-size: .68rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: .6px !important;
+        color: #94a3b8 !important;
+        margin-top: 3px !important;
+        white-space: nowrap !important
+      }
+
+      html.dark .bagian-summary-banner {
+        background: #1e293b !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .2), 0 6px 20px rgba(0, 0, 0, .15) !important
+      }
+
+      html.dark .bagian-summary-header {
+        background: linear-gradient(135deg, #0f4547, #0d6b6e) !important
+      }
+
+      html.dark .bagian-stat-item:not(:last-child)::after {
+        background: #334155 !important
+      }
+
+      html.dark .bagian-stat-item:hover {
+        background: rgba(255, 255, 255, .04) !important
+      }
+
+      html.dark .bagian-stat-value {
+        color: #f1f5f9 !important
+      }
+
+      html.dark .bagian-stat-label {
+        color: #64748b !important
+      }
+
+      @media(max-width:900px) {
+        .bagian-summary-stats {
+          grid-template-columns: repeat(2, 1fr) !important
+        }
+
+        .bagian-stat-item:nth-child(2)::after {
+          display: none !important
+        }
+
+        .bagian-stat-item:nth-child(1),
+        .bagian-stat-item:nth-child(2) {
+          border-bottom: 1px solid #e5e7eb !important
+        }
+      }
+
+      @media(max-width:480px) {
+        .bagian-summary-stats {
+          grid-template-columns: 1fr !important
+        }
+
+        .bagian-stat-item::after {
+          display: none !important
+        }
+
+        .bagian-stat-item:not(:last-child) {
+          border-bottom: 1px solid #e5e7eb !important
+        }
+      }
+    </style>
     <div class="bagian-summary-banner" id="bagianSummaryBanner" style="display: none;">
       <div class="bagian-summary-header">
         <div class="bagian-summary-title">
@@ -833,11 +1047,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                                    <span>${labels[key] || key}: ${displayValue}</span>
-                                    <button type="button" class="remove" onclick="removeFilter('${key}')">
-                                      <i class="fas fa-times"></i>
-                                    </button>
-                                  `;
+                                      <span>${labels[key] || key}: ${displayValue}</span>
+                                      <button type="button" class="remove" onclick="removeFilter('${key}')">
+                                        <i class="fas fa-times"></i>
+                                      </button>
+                                    `;
           container.appendChild(tag);
         }
       }
@@ -1170,12 +1384,12 @@
       const overlay = document.createElement('div');
       overlay.id = 'ajaxLoadingOverlay';
       overlay.innerHTML = `
-            <div class="ajax-spinner">
-              <div class="spinner-ring"></div>
-              <div class="spinner-text">Memuat data...</div>
-              <div class="spinner-subtext">Mohon tunggu sebentar</div>
-            </div>
-          `;
+              <div class="ajax-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-text">Memuat data...</div>
+                <div class="spinner-subtext">Mohon tunggu sebentar</div>
+              </div>
+            `;
       document.querySelector('.main-content').appendChild(overlay);
     });
 
@@ -1260,11 +1474,11 @@
       const container = document.getElementById('cardView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-                  <div class="empty-state">
-                    <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                    <div class="empty-state-title">Tidak ada dokumen</div>
-                    <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                  </div>`;
+                    <div class="empty-state">
+                      <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                      <div class="empty-state-title">Tidak ada dokumen</div>
+                      <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                    </div>`;
         return;
       }
 
@@ -1318,11 +1532,11 @@
       const container = document.getElementById('tableView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-                  <div class="empty-state">
-                    <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                    <div class="empty-state-title">Tidak ada dokumen</div>
-                    <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                  </div>`;
+                    <div class="empty-state">
+                      <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                      <div class="empty-state-title">Tidak ada dokumen</div>
+                      <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                    </div>`;
         return;
       }
 
@@ -1366,30 +1580,30 @@
       const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
 
       const html = `
-                <div class="pagination-footer">
-                  <div class="pagination-footer-left">
-                    <label class="pagination-label">Baris per halaman:</label>
-                    <select class="pagination-select" onchange="changePerPage(this.value)">
-                      <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
-                      <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
-                      <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
-                      <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
-                      <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
-                    </select>
-                    <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
-                  </div>
-                  <div class="pagination-footer-right">
-                    <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
-                      <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
-                      onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
-                    <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
-                    <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
-                      <i class="fas fa-chevron-right"></i>
-                    </button>
-                  </div>
-                </div>`;
+                  <div class="pagination-footer">
+                    <div class="pagination-footer-left">
+                      <label class="pagination-label">Baris per halaman:</label>
+                      <select class="pagination-select" onchange="changePerPage(this.value)">
+                        <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
+                        <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
+                        <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
+                        <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
+                        <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
+                      </select>
+                      <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
+                    </div>
+                    <div class="pagination-footer-right">
+                      <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
+                        <i class="fas fa-chevron-left"></i>
+                      </button>
+                      <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
+                        onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
+                      <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
+                      <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
+                        <i class="fas fa-chevron-right"></i>
+                      </button>
+                    </div>
+                  </div>`;
 
       ['cardPagination', 'tablePagination'].forEach(id => {
         const el = document.getElementById(id);
