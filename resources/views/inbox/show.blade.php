@@ -1048,10 +1048,12 @@
                 }
             @endif
 
-        // Handle form submissions with loading state
+        // Handle form submissions with AJAX (no page reload)
         const approveForm = document.getElementById('approveForm');
             if (approveForm) {
                 approveForm.addEventListener('submit', function (e) {
+                    e.preventDefault(); // Prevent default form submission
+
                     // Copy note from textarea to hidden input
                     const noteTextarea = document.getElementById('approvalNote');
                     const noteInput = document.getElementById('approveNoteInput');
@@ -1064,18 +1066,63 @@
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memproses...';
                     }
+
+                    const formData = new FormData(this);
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                    .then(({ ok, data }) => {
+                        // Close the modal
+                        const approveModal = document.getElementById('approveModal');
+                        if (approveModal) {
+                            const bsModal = bootstrap.Modal.getInstance(approveModal);
+                            if (bsModal) bsModal.hide();
+                        }
+
+                        if (data.success) {
+                            showNotification('success', 'Berhasil!', data.message);
+                            // Redirect to inbox after short delay
+                            setTimeout(() => {
+                                window.location.href = '{{ route("inbox.index") }}';
+                            }, 1500);
+                        } else {
+                            showNotification('error', 'Error!', data.message || 'Gagal menyetujui dokumen.');
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="fas fa-check me-1"></i> Ya, Setujui';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('AJAX approve error:', error);
+                        showNotification('error', 'Error!', 'Terjadi kesalahan saat memproses persetujuan.');
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fas fa-check me-1"></i> Ya, Setujui';
+                        }
+                    });
                 });
             }
 
             const rejectForm = document.getElementById('rejectForm');
             if (rejectForm) {
                 rejectForm.addEventListener('submit', function (e) {
+                    e.preventDefault(); // Prevent default form submission
+
                     const reasonTextarea = document.getElementById('rejectReason');
                     const reasonInput = document.getElementById('rejectReasonInput');
                     const reason = reasonTextarea ? reasonTextarea.value.trim() : '';
 
                     if (!reason) {
-                        e.preventDefault();
                         showNotification('warning', 'Peringatan', 'Alasan penolakan harus diisi!');
                         return false;
                     }
@@ -1090,6 +1137,50 @@
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memproses...';
                     }
+
+                    const formData = new FormData(this);
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                    .then(({ ok, data }) => {
+                        // Close the modal
+                        const rejectModalEl = document.getElementById('rejectModal');
+                        if (rejectModalEl) {
+                            const bsModal = bootstrap.Modal.getInstance(rejectModalEl);
+                            if (bsModal) bsModal.hide();
+                        }
+
+                        if (data.success) {
+                            showNotification('success', 'Berhasil!', data.message);
+                            // Redirect to inbox after short delay
+                            setTimeout(() => {
+                                window.location.href = '{{ route("inbox.index") }}';
+                            }, 1500);
+                        } else {
+                            showNotification('error', 'Error!', data.message || 'Gagal menolak dokumen.');
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="fas fa-times me-1"></i> Ya, Tolak';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('AJAX reject error:', error);
+                        showNotification('error', 'Error!', 'Terjadi kesalahan saat memproses penolakan.');
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fas fa-times me-1"></i> Ya, Tolak';
+                        }
+                    });
                 });
             }
 

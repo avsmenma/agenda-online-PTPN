@@ -336,9 +336,12 @@ class InboxController extends Controller
     /**
      * Approve dokumen dari inbox
      * Updated to use new dokumen_statuses table
+     * Supports AJAX (returns JSON) and regular form POST (redirect)
      */
     public function approve(Request $request, Dokumen $dokumen)
     {
+        $isAjax = $request->ajax() || $request->wantsJson();
+
         try {
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
@@ -355,21 +358,28 @@ class InboxController extends Controller
                 // Cek apakah dokumen sudah di-approve oleh user ini
                 $status = $dokumen->getStatusForRole($roleCode);
                 if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
-                    // Dokumen sudah di-approve, redirect dengan success message
-                    return redirect()->route('inbox.index')
-                        ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan telah masuk ke daftar dokumen resmi.');
+                    $msg = 'Dokumen ini sudah disetujui sebelumnya dan telah masuk ke daftar dokumen resmi.';
+                    if ($isAjax) {
+                        return response()->json(['success' => true, 'message' => $msg, 'type' => 'info']);
+                    }
+                    return redirect()->route('inbox.index')->with('info', $msg);
                 }
 
-                // Dokumen tidak pending dan tidak approved - mungkin sudah di-reject atau tidak ada akses
-                return redirect()->route('inbox.index')
-                    ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk approval.');
+                $msg = 'Dokumen ini sudah diproses atau tidak tersedia untuk approval.';
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return redirect()->route('inbox.index')->with('error', $msg);
             }
 
             // Use new approval method
             $dokumen->approveFromRoleInbox($roleCode);
 
-            return redirect()->route('inbox.index')
-                ->with('success', 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.');
+            $msg = 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.';
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => $msg]);
+            }
+            return redirect()->route('inbox.index')->with('success', $msg);
 
         } catch (\Exception $e) {
             Log::error('Error approving document from inbox: ' . $e->getMessage(), [
@@ -377,17 +387,23 @@ class InboxController extends Controller
                 'user_role' => $userRole ?? 'unknown',
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->route('inbox.index')
-                ->with('error', 'Gagal menyetujui dokumen: ' . $e->getMessage());
+            $msg = 'Gagal menyetujui dokumen: ' . $e->getMessage();
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $msg], 500);
+            }
+            return redirect()->route('inbox.index')->with('error', $msg);
         }
     }
 
     /**
      * Reject dokumen dari inbox
      * Updated to use new dokumen_statuses table
+     * Supports AJAX (returns JSON) and regular form POST (redirect)
      */
     public function reject(Request $request, Dokumen $dokumen)
     {
+        $isAjax = $request->ajax() || $request->wantsJson();
+
         try {
             $request->validate([
                 'reason' => 'required|string|max:500'
@@ -396,6 +412,9 @@ class InboxController extends Controller
                 'reason.max' => 'Alasan penolakan maksimal 500 karakter'
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Alasan penolakan harus diisi', 'errors' => $e->errors()], 422);
+            }
             // Redirect back to show page with validation errors
             return redirect()->route('inbox.show', $dokumen)
                 ->withErrors($e->errors())
@@ -416,15 +435,27 @@ class InboxController extends Controller
                 // Cek apakah dokumen sudah di-process
                 $status = $dokumen->getStatusForRole($roleCode);
                 if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
+                    $msg = 'Dokumen ini sudah disetujui sebelumnya dan tidak dapat ditolak.';
+                    if ($isAjax) {
+                        return response()->json(['success' => true, 'message' => $msg, 'type' => 'info']);
+                    }
                     return redirect()->route('inbox.index')
-                        ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan tidak dapat ditolak.');
+                        ->with('info', $msg);
                 } elseif ($status && $status->status === DokumenStatus::STATUS_REJECTED) {
+                    $msg = 'Dokumen ini sudah ditolak sebelumnya.';
+                    if ($isAjax) {
+                        return response()->json(['success' => true, 'message' => $msg, 'type' => 'info']);
+                    }
                     return redirect()->route('inbox.index')
-                        ->with('info', 'Dokumen ini sudah ditolak sebelumnya.');
+                        ->with('info', $msg);
                 }
 
+                $msg = 'Dokumen ini sudah diproses atau tidak tersedia untuk penolakan.';
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
                 return redirect()->route('inbox.index')
-                    ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk penolakan.');
+                    ->with('error', $msg);
             }
 
             // Use new rejection method
@@ -461,8 +492,12 @@ class InboxController extends Controller
                 $dokumen->save();
             }
 
+            $msg = 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason;
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => $msg]);
+            }
             return redirect()->route('inbox.index')
-                ->with('success', 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason);
+                ->with('success', $msg);
 
         } catch (\Exception $e) {
             Log::error('Error rejecting document from inbox: ' . $e->getMessage(), [
@@ -478,6 +513,9 @@ class InboxController extends Controller
                 ? 'Gagal menolak dokumen: ' . $e->getMessage() . ' (File: ' . basename($e->getFile()) . ', Line: ' . $e->getLine() . ')'
                 : 'Gagal menolak dokumen. Silakan cek log untuk detail.';
 
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $errorMessage], 500);
+            }
             return redirect()->route('inbox.index')
                 ->with('error', $errorMessage);
         }
