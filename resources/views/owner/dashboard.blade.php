@@ -378,6 +378,49 @@
       </form>
     </div>
 
+    {{-- ===== Bagian Summary Banner (shown when bagian filter is active) ===== --}}
+    <div class="bagian-summary-banner" id="bagianSummaryBanner" style="display: none;">
+      <div class="bagian-summary-header">
+        <div class="bagian-summary-title">
+          <i class="fas fa-building"></i>
+          <span>Ringkasan Bagian: <strong id="bagianSummaryName">-</strong></span>
+        </div>
+        <button class="bagian-summary-close" onclick="hideBagianSummary()" title="Tutup">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="bagian-summary-stats">
+        <div class="bagian-stat-item total">
+          <div class="bagian-stat-icon"><i class="fas fa-file-alt"></i></div>
+          <div class="bagian-stat-info">
+            <div class="bagian-stat-value" id="bagianStatTotal">0</div>
+            <div class="bagian-stat-label">Total Dokumen</div>
+          </div>
+        </div>
+        <div class="bagian-stat-item belum">
+          <div class="bagian-stat-icon"><i class="fas fa-clock"></i></div>
+          <div class="bagian-stat-info">
+            <div class="bagian-stat-value" id="bagianStatBelum">0</div>
+            <div class="bagian-stat-label">Belum Siap Bayar</div>
+          </div>
+        </div>
+        <div class="bagian-stat-item siap">
+          <div class="bagian-stat-icon"><i class="fas fa-clipboard-check"></i></div>
+          <div class="bagian-stat-info">
+            <div class="bagian-stat-value" id="bagianStatSiap">0</div>
+            <div class="bagian-stat-label">Siap Dibayar</div>
+          </div>
+        </div>
+        <div class="bagian-stat-item sudah">
+          <div class="bagian-stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="bagian-stat-info">
+            <div class="bagian-stat-value" id="bagianStatSudah">0</div>
+            <div class="bagian-stat-label">Sudah Dibayar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     {{-- ===== Card View ===== --}}
     <div id="cardView" class="view-container active">
       @if($documents->count() == 0)
@@ -705,6 +748,13 @@
             renderCardView(data.documents);
             renderTableView(data.documents);
             renderPagination(data.pagination);
+
+            // Show/hide bagian summary banner
+            if (data.bagian_stats) {
+              showBagianSummary(data.bagian_stats);
+            } else {
+              hideBagianSummary();
+            }
           }
           hideLoadingOverlay();
         })
@@ -734,6 +784,9 @@
 
       // Reset stat cards
       highlightActiveStatCard(null);
+
+      // Hide bagian summary banner
+      hideBagianSummary();
 
       applyFilter();
     }
@@ -780,11 +833,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                                  <span>${labels[key] || key}: ${displayValue}</span>
-                                  <button type="button" class="remove" onclick="removeFilter('${key}')">
-                                    <i class="fas fa-times"></i>
-                                  </button>
-                                `;
+                                    <span>${labels[key] || key}: ${displayValue}</span>
+                                    <button type="button" class="remove" onclick="removeFilter('${key}')">
+                                      <i class="fas fa-times"></i>
+                                    </button>
+                                  `;
           container.appendChild(tag);
         }
       }
@@ -879,6 +932,28 @@
       document.querySelectorAll('.chip-days-1').forEach(el => el.textContent = thresholds.age1);
       document.querySelectorAll('.chip-days-2').forEach(el => el.textContent = thresholds.age2);
       document.querySelectorAll('.chip-days-3').forEach(el => el.textContent = thresholds.age3);
+    }
+
+    // ===== Bagian Summary Banner =====
+    function showBagianSummary(stats) {
+      const banner = document.getElementById('bagianSummaryBanner');
+      document.getElementById('bagianSummaryName').textContent = stats.bagian_name;
+      document.getElementById('bagianStatTotal').textContent = formatNumber(stats.total);
+      document.getElementById('bagianStatBelum').textContent = formatNumber(stats.belum_siap_bayar);
+      document.getElementById('bagianStatSiap').textContent = formatNumber(stats.siap_dibayar);
+      document.getElementById('bagianStatSudah').textContent = formatNumber(stats.sudah_dibayar);
+      banner.style.display = 'block';
+      banner.classList.add('show');
+    }
+
+    function hideBagianSummary() {
+      const banner = document.getElementById('bagianSummaryBanner');
+      banner.classList.remove('show');
+      banner.style.display = 'none';
+    }
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('id-ID').format(num || 0);
     }
 
     // Count documents by age - uses data passed from PHP
@@ -1095,12 +1170,12 @@
       const overlay = document.createElement('div');
       overlay.id = 'ajaxLoadingOverlay';
       overlay.innerHTML = `
-          <div class="ajax-spinner">
-            <div class="spinner-ring"></div>
-            <div class="spinner-text">Memuat data...</div>
-            <div class="spinner-subtext">Mohon tunggu sebentar</div>
-          </div>
-        `;
+            <div class="ajax-spinner">
+              <div class="spinner-ring"></div>
+              <div class="spinner-text">Memuat data...</div>
+              <div class="spinner-subtext">Mohon tunggu sebentar</div>
+            </div>
+          `;
       document.querySelector('.main-content').appendChild(overlay);
     });
 
@@ -1185,11 +1260,11 @@
       const container = document.getElementById('cardView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-                <div class="empty-state">
-                  <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                  <div class="empty-state-title">Tidak ada dokumen</div>
-                  <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                </div>`;
+                  <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="empty-state-title">Tidak ada dokumen</div>
+                    <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                  </div>`;
         return;
       }
 
@@ -1243,11 +1318,11 @@
       const container = document.getElementById('tableView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-                <div class="empty-state">
-                  <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                  <div class="empty-state-title">Tidak ada dokumen</div>
-                  <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                </div>`;
+                  <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="empty-state-title">Tidak ada dokumen</div>
+                    <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                  </div>`;
         return;
       }
 
@@ -1291,30 +1366,30 @@
       const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
 
       const html = `
-              <div class="pagination-footer">
-                <div class="pagination-footer-left">
-                  <label class="pagination-label">Baris per halaman:</label>
-                  <select class="pagination-select" onchange="changePerPage(this.value)">
-                    <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
-                    <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
-                    <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
-                    <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
-                    <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
-                  </select>
-                  <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
-                </div>
-                <div class="pagination-footer-right">
-                  <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
-                    <i class="fas fa-chevron-left"></i>
-                  </button>
-                  <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
-                    onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
-                  <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
-                  <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
-                    <i class="fas fa-chevron-right"></i>
-                  </button>
-                </div>
-              </div>`;
+                <div class="pagination-footer">
+                  <div class="pagination-footer-left">
+                    <label class="pagination-label">Baris per halaman:</label>
+                    <select class="pagination-select" onchange="changePerPage(this.value)">
+                      <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
+                      <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
+                      <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
+                      <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
+                      <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
+                    </select>
+                    <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
+                  </div>
+                  <div class="pagination-footer-right">
+                    <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
+                      <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
+                      onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
+                    <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
+                    <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
+                      <i class="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>`;
 
       ['cardPagination', 'tablePagination'].forEach(id => {
         const el = document.getElementById(id);
@@ -1424,8 +1499,13 @@
     }
 
     @keyframes progressShimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
 
     /* ===== Loading Overlay ===== */
@@ -1460,8 +1540,15 @@
     }
 
     @keyframes spinnerPop {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     .spinner-ring {
@@ -1475,7 +1562,9 @@
     }
 
     @keyframes spinnerRotate {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .spinner-text {

@@ -31,7 +31,7 @@ class OwnerDashboardController extends Controller
 
         // AJAX request: return JSON for live filtering (no page refresh)
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
+            $response = [
                 'success' => true,
                 'documents' => array_values($documents->items()),
                 'pagination' => [
@@ -42,7 +42,36 @@ class OwnerDashboardController extends Controller
                     'from' => $documents->firstItem(),
                     'to' => $documents->lastItem(),
                 ],
-            ]);
+            ];
+
+            // Include bagian statistics when a bagian filter is active
+            if ($request->has('filter_bagian') && !empty($request->filter_bagian)) {
+                $bagian = $request->filter_bagian;
+                $bagianQuery = Dokumen::where('bagian', $bagian);
+
+                $bagianTotal = (clone $bagianQuery)->count();
+
+                $bagianSudahDibayar = (clone $bagianQuery)->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhereNotNull('tanggal_dibayar');
+                })->count();
+
+                $bagianSiapDibayar = (clone $bagianQuery)->where('status_pembayaran', 'siap_dibayar')
+                    ->whereNull('tanggal_dibayar')
+                    ->count();
+
+                $bagianBelumSiapBayar = $bagianTotal - $bagianSudahDibayar - $bagianSiapDibayar;
+
+                $response['bagian_stats'] = [
+                    'bagian_name' => $bagian,
+                    'total' => $bagianTotal,
+                    'belum_siap_bayar' => $bagianBelumSiapBayar,
+                    'siap_dibayar' => $bagianSiapDibayar,
+                    'sudah_dibayar' => $bagianSudahDibayar,
+                ];
+            }
+
+            return response()->json($response);
         }
 
         // Get filter data for dropdowns
