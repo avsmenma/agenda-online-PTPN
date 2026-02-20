@@ -549,6 +549,41 @@ class DashboardPerpajakanController extends Controller
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // Calculate 4 dashboard-style stats for the document list header
+        // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
+        $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
+
+        // 2. Total Dokumen Perpajakan - dokumen yang terlihat oleh Perpajakan
+        $totalDokumenPerpajakan = Dokumen::where(function ($query) {
+            $query->where('current_handler', 'perpajakan')
+                ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran'])
+                ->orWhere(function ($completedQ) {
+                    $completedQ->whereIn('status', ['completed', 'selesai'])
+                        ->whereNotNull('status_perpajakan');
+                });
+        })
+            ->excludeCsvImports()
+            ->count();
+
+        // 3. Total Dokumen Diproses - sedang diproses di perpajakan
+        $totalDokumenDiproses = Dokumen::where('current_handler', 'perpajakan')
+            ->whereNotIn('status', [
+                'sent_to_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_akutansi',
+                'pending_approval_pembayaran',
+                'completed',
+                'selesai'
+            ])
+            ->excludeCsvImports()
+            ->count();
+
+        // 4. Total Terkirim - dikirim ke tahap selanjutnya
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran', 'selesai'])
+            ->where('current_handler', '!=', 'perpajakan')
+            ->excludeCsvImports()
+            ->count();
+
         $data = array(
             "title" => "Daftar Dokumen Team Perpajakan",
             "module" => "perpajakan",
@@ -556,6 +591,10 @@ class DashboardPerpajakanController extends Controller
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
             'dokumens' => $dokumens,
+            'totalDokumenAgenda' => $totalDokumenAgenda,
+            'totalDokumenPerpajakan' => $totalDokumenPerpajakan,
+            'totalDokumenDiproses' => $totalDokumenDiproses,
+            'totalTerkirim' => $totalTerkirim,
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
