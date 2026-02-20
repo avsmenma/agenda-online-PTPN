@@ -569,6 +569,35 @@ class DashboardAkutansiController extends Controller
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // Calculate 4 dashboard-style stats for the document list header
+        // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
+        $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
+
+        // 2. Total Dokumen Akutansi - dokumen yang terlihat oleh Akutansi
+        $totalDokumenAkutansi = Dokumen::where(function ($query) {
+            $query->where('current_handler', 'akutansi')
+                ->orWhere('status', 'sent_to_akutansi');
+        })
+            ->excludeCsvImports()
+            ->count();
+
+        // 3. Total Dokumen Diproses - sedang diproses di akutansi
+        $totalDokumenDiproses = Dokumen::where('current_handler', 'akutansi')
+            ->whereNotIn('status', [
+                'sent_to_pembayaran',
+                'pending_approval_pembayaran',
+                'completed',
+                'selesai'
+            ])
+            ->excludeCsvImports()
+            ->count();
+
+        // 4. Total Terkirim - dikirim ke pembayaran atau selesai
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_pembayaran', 'selesai'])
+            ->where('current_handler', '!=', 'akutansi')
+            ->excludeCsvImports()
+            ->count();
+
         $data = array(
             "title" => "Daftar Team Akutansi",
             "module" => "akutansi",
@@ -576,6 +605,10 @@ class DashboardAkutansiController extends Controller
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
             'dokumens' => $dokumens,
+            'totalDokumenAgenda' => $totalDokumenAgenda,
+            'totalDokumenAkutansi' => $totalDokumenAkutansi,
+            'totalDokumenDiproses' => $totalDokumenDiproses,
+            'totalTerkirim' => $totalTerkirim,
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
