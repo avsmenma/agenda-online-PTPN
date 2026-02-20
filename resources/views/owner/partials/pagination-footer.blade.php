@@ -161,17 +161,8 @@
 </style>
 
 <div class="pagination-footer">
-  <!-- Left Section: Rows per page & Summary -->
+  <!-- Left Section: Summary -->
   <div class="pagination-footer-left">
-    <label class="pagination-label">Baris per halaman:</label>
-    <select class="pagination-select" onchange="changePerPage(this.value)">
-      <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-      <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
-      <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-      <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-      <option value="all" {{ $perPage >= $total ? 'selected' : '' }}>Semua</option>
-    </select>
-    
     <span class="pagination-summary">
       Menampilkan {{ $from ?? 0 }} - {{ $to ?? 0 }} dari {{ number_format($total, 0, ',', '.') }} hasil
     </span>

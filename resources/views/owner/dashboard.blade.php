@@ -224,10 +224,26 @@
     {{-- ===== Filter Bar ===== --}}
     <div class="filter-bar">
       {{-- Search Input --}}
-      <div class="search-wrapper">
+      <div class="search-wrapper" style="flex: 0 1 auto !important; min-width: 180px !important;">
         <i class="fas fa-search"></i>
         <input type="text" id="searchInput" name="search" value="{{ $search ?? '' }}"
           placeholder="Cari nomor agenda, SPP, uraian..." onkeypress="if(event.key==='Enter') applyFilter()">
+      </div>
+
+      {{-- Per Page Selector --}}
+      <div id="perPageWrapper"
+        style="display:flex !important; align-items:center !important; gap:8px !important; flex-shrink:0 !important;">
+        <label
+          style="font-weight:500 !important; color:#64748b !important; font-size:0.8rem !important; white-space:nowrap !important; margin:0 !important;">Baris:</label>
+        <select id="perPageSelect" onchange="changePerPage(this.value)"
+          style="padding:0.5rem 2rem 0.5rem 0.75rem !important; border:1px solid #e2e8f0 !important; border-radius:6px !important; background:#fff !important; font-size:0.8rem !important; color:#334155 !important; cursor:pointer !important; appearance:none !important; background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Cpath fill=%27%2364748b%27 d=%27M6 8L1 3h10z%27/%3E%3C/svg%3E') !important; background-repeat:no-repeat !important; background-position:right 0.5rem center !important; min-width:65px !important;">
+          <option value="10" {{ ($documents->perPage() ?? 10) == 10 ? 'selected' : '' }}>10</option>
+          <option value="25" {{ ($documents->perPage() ?? 10) == 25 ? 'selected' : '' }}>25</option>
+          <option value="50" {{ ($documents->perPage() ?? 10) == 50 ? 'selected' : '' }}>50</option>
+          <option value="100" {{ ($documents->perPage() ?? 10) == 100 ? 'selected' : '' }}>100</option>
+          <option value="all" {{ ($documents->perPage() ?? 10) >= ($documents->total() ?? 0) ? 'selected' : '' }}>Semua
+          </option>
+        </select>
       </div>
 
       {{-- Quick Filter Chips --}}
@@ -829,995 +845,995 @@
   </div>
 
   <script>
-    // ===== Navigation ==       ===
-    function navigateToWorkflow(id) {
-      window.location.href = '{{ url("/owner/workflow") }}/' + id;
-    }
+      // ===== Navigati  on ==       ===
+      function navigateToWorkflow(id) {
+        window.location.href = '{{ url("/owner/workflow") }}/' + id;
+      }
 
 
 
-    // ===== View Switcher =====
-    function switchView(view) {
-      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`[data-view="${view}"]`).classList.add('active');
+      // ===== View Switcher =====
+      function switchView(view) {
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-view="${view}"]`).classList.add('active');
 
-      document.getElementById('cardView').classList.toggle('active', view === 'card');
-      document.getElementById('tableView').classList.toggle('active', view === 'table');
+        document.getElementById('cardView').classList.toggle('active', view === 'card');
+        document.getElementById('tableView').classList.toggle('active', view === 'table');
 
-      localStorage.setItem('ownerDashboardView', view);
-    }
+        localStorage.setItem('ownerDashboardView', view);
+      }
 
-    // ===== Filter Functions =====
-    function toggleFilterPanel() {
-      const panel = document.getElementById('filterPanel');
-      panel.classList.toggle('open');
-    }
+      // ===== Filter Functions =====
+      function toggleFilterPanel() {
+        const panel = document.getElementById('filterPanel');
+        panel.classList.toggle('open');
+      }
 
-    function setStatus(status) {
-      document.getElementById('statusInput').value = status;
-      document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-      event.target.classList.add('active');
+      function setStatus(status) {
+        document.getElementById('statusInput').value = status;
+        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+        event.target.classList.add('active');
 
-      // Sync the filter_status_pembayaran dropdown in the advanced filter panel
-      const statusPembayaranSelect = document.querySelector('[name="filter_status_pembayaran"]');
-      if (statusPembayaranSelect) {
-        const statusMap = {
-          'semua': '',
-          'belum_siap': 'belum_dibayar',
+        // Sync the filter_status_pembayaran dropdown in the advanced filter panel
+        const statusPembayaranSelect = document.querySelector('[name="filter_status_pembayaran"]');
+        if (statusPembayaranSelect) {
+          const statusMap = {
+            'semua': '',
+            'belum_siap': 'belum_dibayar',
+            'siap_dibayar': 'siap_dibayar',
+            'sudah_dibayar': 'sudah_dibayar'
+          };
+          statusPembayaranSelect.value = statusMap[status] || '';
+        }
+
+        // Sync stat card highlight
+        const cardFilterMap = {
+          'semua': 'all',
+          'belum_siap': 'belum_siap',
           'siap_dibayar': 'siap_dibayar',
           'sudah_dibayar': 'sudah_dibayar'
         };
-        statusPembayaranSelect.value = statusMap[status] || '';
+        highlightActiveStatCard(cardFilterMap[status] || null);
+
+        applyFilter();
       }
 
-      // Sync stat card highlight
-      const cardFilterMap = {
-        'semua': 'all',
-        'belum_siap': 'belum_siap',
-        'siap_dibayar': 'siap_dibayar',
-        'sudah_dibayar': 'sudah_dibayar'
-      };
-      highlightActiveStatCard(cardFilterMap[status] || null);
+      // ===== AJAX Live Filter =====
+      let _ajaxAbortController = null;
 
-      applyFilter();
-    }
+      function applyFilter(extraParams) {
+        const form = document.getElementById('filterForm');
+        const searchInput = document.getElementById('searchInput');
 
-    // ===== AJAX Live Filter =====
-    let _ajaxAbortController = null;
+        // Build query params from form + search + current page/per_page
+        const params = new URLSearchParams();
 
-    function applyFilter(extraParams) {
-      const form = document.getElementById('filterForm');
-      const searchInput = document.getElementById('searchInput');
-
-      // Build query params from form + search + current page/per_page
-      const params = new URLSearchParams();
-
-      // Add form fields
-      const formData = new FormData(form);
-      for (let [key, value] of formData.entries()) {
-        if (value && value !== '' && key !== '_token') {
-          params.set(key, value);
-        }
-      }
-
-      // Add search
-      if (searchInput && searchInput.value.trim()) {
-        params.set('search', searchInput.value.trim());
-      }
-
-      // Merge extraParams (e.g. page, per_page from pagination)
-      if (extraParams) {
-        for (let [key, value] of Object.entries(extraParams)) {
-          if (value === null || value === '') {
-            params.delete(key);
-          } else {
+        // Add form fields
+        const formData = new FormData(form);
+        for (let [key, value] of formData.entries()) {
+          if (value && value !== '' && key !== '_token') {
             params.set(key, value);
           }
         }
-      }
 
-      // Default: reset to page 1 unless page was explicitly passed
-      if (!extraParams || !extraParams.page) {
-        params.delete('page');
-      }
+        // Add search
+        if (searchInput && searchInput.value.trim()) {
+          params.set('search', searchInput.value.trim());
+        }
 
-      // Update URL bar without navigation
-      const baseUrl = '{{ url("/owner/dokumen") }}';
-      const qs = params.toString();
-      history.replaceState(null, '', qs ? `${baseUrl}?${qs}` : baseUrl);
-
-      // Show loading
-      showLoadingOverlay();
-
-      // Abort previous request if still in flight
-      if (_ajaxAbortController) _ajaxAbortController.abort();
-      _ajaxAbortController = new AbortController();
-
-      const filterUrl = '{{ url("/owner/dokumen") }}' + (qs ? '?' + qs : '');
-
-      fetch(filterUrl, {
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        credentials: 'same-origin',
-        signal: _ajaxAbortController.signal
-      })
-        .then(res => {
-          const contentType = res.headers.get('content-type') || '';
-          if (!res.ok) {
-            // If redirected to login or error page
-            return res.text().then(text => {
-              console.error('Filter HTTP error:', res.status, text.substring(0, 200));
-              throw new Error('HTTP error ' + res.status);
-            });
-          }
-          if (!contentType.includes('application/json')) {
-            return res.text().then(text => {
-              console.error('Non-JSON response:', contentType, text.substring(0, 200));
-              throw new Error('Expected JSON but got: ' + contentType);
-            });
-          }
-          return res.json();
-        })
-        .then(data => {
-          if (data && data.success) {
-            renderCardView(data.documents);
-            renderTableView(data.documents);
-            renderPagination(data.pagination);
-
-            // Show/hide bagian summary banner
-            if (data.bagian_stats) {
-              showBagianSummary(data.bagian_stats);
+        // Merge extraParams (e.g. page, per_page from pagination)
+        if (extraParams) {
+          for (let [key, value] of Object.entries(extraParams)) {
+            if (value === null || value === '') {
+              params.delete(key);
             } else {
-              hideBagianSummary();
+              params.set(key, value);
             }
           }
-          hideLoadingOverlay();
+        }
+
+        // Default: reset to page 1 unless page was explicitly passed
+        if (!extraParams || !extraParams.page) {
+          params.delete('page');
+        }
+
+        // Update URL bar without navigation
+        const baseUrl = '{{ url("/owner/dokumen") }}';
+        const qs = params.toString();
+        history.replaceState(null, '', qs ? `${baseUrl}?${qs}` : baseUrl);
+
+        // Show loading
+        showLoadingOverlay();
+
+        // Abort previous request if still in flight
+        if (_ajaxAbortController) _ajaxAbortController.abort();
+        _ajaxAbortController = new AbortController();
+
+        const filterUrl = '{{ url("/owner/dokumen") }}' + (qs ? '?' + qs : '');
+
+        fetch(filterUrl, {
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+          signal: _ajaxAbortController.signal
         })
-        .catch(err => {
-          if (err.name !== 'AbortError') {
-            console.error('Filter fetch error:', err);
+          .then(res => {
+            const contentType = res.headers.get('content-type') || '';
+            if (!res.ok) {
+              // If redirected to login or error page
+              return res.text().then(text => {
+                console.error('Filter HTTP error:', res.status, text.substring(0, 200));
+                throw new Error('HTTP error ' + res.status);
+              });
+            }
+            if (!contentType.includes('application/json')) {
+              return res.text().then(text => {
+                console.error('Non-JSON response:', contentType, text.substring(0, 200));
+                throw new Error('Expected JSON but got: ' + contentType);
+              });
+            }
+            return res.json();
+          })
+          .then(data => {
+            if (data && data.success) {
+              renderCardView(data.documents);
+              renderTableView(data.documents);
+              renderPagination(data.pagination);
+
+              // Show/hide bagian summary banner
+              if (data.bagian_stats) {
+                showBagianSummary(data.bagian_stats);
+              } else {
+                hideBagianSummary();
+              }
+            }
             hideLoadingOverlay();
-          }
-        });
+          })
+          .catch(err => {
+            if (err.name !== 'AbortError') {
+              console.error('Filter fetch error:', err);
+              hideLoadingOverlay();
+            }
+          });
 
-      // Update filter count & tags
-      updateFilterCount();
-    }
-
-    function resetFilters() {
-      // Clear all form inputs
-      const form = document.getElementById('filterForm');
-      form.querySelectorAll('select').forEach(s => s.value = '');
-      form.querySelectorAll('input[type="hidden"]').forEach(i => { if (i.name !== '_token') i.value = ''; });
-      document.getElementById('searchInput').value = '';
-      document.getElementById('statusInput').value = 'belum_siap';
-
-      // Reset chips
-      document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-      const defaultChip = document.querySelector('.chip:nth-child(2)');
-      if (defaultChip) defaultChip.classList.add('active');
-
-      // Reset stat cards
-      highlightActiveStatCard(null);
-
-      // Hide bagian summary banner
-      hideBagianSummary();
-
-      applyFilter();
-    }
-
-    function updateFilterCount() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      let count = 0;
-
-      for (let [key, value] of formData.entries()) {
-        if (key.startsWith('filter_') && value && value !== '') {
-          count++;
-        }
+        // Update filter count & tags
+        updateFilterCount();
       }
 
-      const badge = document.getElementById('filterCount');
-      badge.textContent = count;
-      badge.setAttribute('data-count', count);
+      function resetFilters() {
+        // Clear all form inputs
+        const form = document.getElementById('filterForm');
+        form.querySelectorAll('select').forEach(s => s.value = '');
+        form.querySelectorAll('input[type="hidden"]').forEach(i => { if (i.name !== '_token') i.value = ''; });
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusInput').value = 'belum_siap';
 
-      updateActiveFilterTags();
-    }
+        // Reset chips
+        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+        const defaultChip = document.querySelector('.chip:nth-child(2)');
+        if (defaultChip) defaultChip.classList.add('active');
 
-    function updateActiveFilterTags() {
-      const container = document.getElementById('activeFilters');
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      container.innerHTML = '';
+        // Reset stat cards
+        highlightActiveStatCard(null);
 
-      const labels = {
-        'filter_bagian': 'Bagian',
-        'filter_vendor': 'Vendor',
-        'filter_kriteria_cf': 'Kriteria CF',
-        'filter_sub_kriteria': 'Sub Kriteria',
-        'filter_item_sub_kriteria': 'Item Sub',
-        'filter_kebun': 'Kebun',
-        'filter_status_pembayaran': 'Status Bayar'
-      };
+        // Hide bagian summary banner
+        hideBagianSummary();
 
-      for (let [key, value] of formData.entries()) {
-        if (key.startsWith('filter_') && value && value !== '') {
-          const select = form.querySelector(`[name="${key}"]`);
-          const displayValue = select ? (Array.from(select.options).find(o => o.value === value)?.text || value) : value;
-
-          const tag = document.createElement('span');
-          tag.className = 'filter-tag';
-          tag.innerHTML = `
-                                      <span>${labels[key] || key}: ${displayValue}</span>
-                                      <button type="button" class="remove" onclick="removeFilter('${key}')">
-                                        <i class="fas fa-times"></i>
-                                      </button>
-                                    `;
-          container.appendChild(tag);
-        }
-      }
-    }
-
-    function removeFilter(key) {
-      const input = document.querySelector(`[name="${key}"]`);
-      if (input) {
-        input.value = '';
         applyFilter();
       }
-    }
 
-    // ===== Cascading Dropdowns =====
-    function updateSubKriteriaFilter() {
-      const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+      function updateFilterCount() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        let count = 0;
 
-      if (kriteriaCfId && kriteriaCfId !== '') {
-        subKriteriaSelect.disabled = false;
-        Array.from(subKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
+        for (let [key, value] of formData.entries()) {
+          if (key.startsWith('filter_') && value && value !== '') {
+            count++;
           }
-          const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
-          option.style.display = kriteriaCfIdForOption === kriteriaCfId ? 'block' : 'none';
-        });
-      } else {
-        subKriteriaSelect.disabled = true;
-        subKriteriaSelect.value = '';
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.value = '';
-        Array.from(subKriteriaSelect.options).forEach(option => option.style.display = 'block');
+        }
+
+        const badge = document.getElementById('filterCount');
+        badge.textContent = count;
+        badge.setAttribute('data-count', count);
+
+        updateActiveFilterTags();
       }
-      updateItemSubKriteriaFilter();
-    }
 
-    function updateItemSubKriteriaFilter() {
-      const subKriteriaId = document.getElementById('filterSubKriteria').value;
-      const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
-      const subKriteriaSelect = document.getElementById('filterSubKriteria');
+      function updateActiveFilterTags() {
+        const container = document.getElementById('activeFilters');
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        container.innerHTML = '';
 
-      if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
-        itemSubKriteriaSelect.disabled = false;
-        Array.from(itemSubKriteriaSelect.options).forEach(option => {
-          if (option.value === '') {
-            option.style.display = 'block';
-            return;
+        const labels = {
+          'filter_bagian': 'Bagian',
+          'filter_vendor': 'Vendor',
+          'filter_kriteria_cf': 'Kriteria CF',
+          'filter_sub_kriteria': 'Sub Kriteria',
+          'filter_item_sub_kriteria': 'Item Sub',
+          'filter_kebun': 'Kebun',
+          'filter_status_pembayaran': 'Status Bayar'
+        };
+
+        for (let [key, value] of formData.entries()) {
+          if (key.startsWith('filter_') && value && value !== '') {
+            const select = form.querySelector(`[name="${key}"]`);
+            const displayValue = select ? (Array.from(select.options).find(o => o.value === value)?.text || value) : value;
+
+            const tag = document.createElement('span');
+            tag.className = 'filter-tag';
+            tag.innerHTML = `
+                                        <span>${labels[key] || key}: ${displayValue}</span>
+                                        <button type="button" class="remove" onclick="removeFilter('${key}')">
+                                          <i class="fas fa-times"></i>
+                                        </button>
+                                      `;
+            container.appendChild(tag);
           }
-          const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
-          option.style.display = subKriteriaIdForOption === subKriteriaId ? 'block' : 'none';
-        });
-      } else {
-        itemSubKriteriaSelect.disabled = true;
-        itemSubKriteriaSelect.value = '';
-        Array.from(itemSubKriteriaSelect.options).forEach(option => option.style.display = 'block');
-      }
-    }
-
-    // ===== Age Filter Settings =====
-    const DEFAULT_AGE_THRESHOLDS = { age1: 3, age2: 7, age3: 30 };
-    let currentAgeFilter = null;
-
-    // Get age thresholds from localStorage
-    function getAgeThresholds() {
-      const saved = localStorage.getItem('documentAgeThresholds');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          return { ...DEFAULT_AGE_THRESHOLDS };
         }
       }
-      return { ...DEFAULT_AGE_THRESHOLDS };
-    }
 
-    // Save age thresholds to localStorage
-    function saveAgeThresholds(thresholds) {
-      localStorage.setItem('documentAgeThresholds', JSON.stringify(thresholds));
-    }
-
-    // Update UI labels with current thresholds
-    function updateAgeLabels() {
-      const thresholds = getAgeThresholds();
-      // Update card labels
-      document.getElementById('ageLabel1').textContent = thresholds.age1;
-      document.getElementById('ageLabel2').textContent = thresholds.age2;
-      document.getElementById('ageLabel3').textContent = thresholds.age3;
-      // Update chip labels
-      document.querySelectorAll('.chip-days-1').forEach(el => el.textContent = thresholds.age1);
-      document.querySelectorAll('.chip-days-2').forEach(el => el.textContent = thresholds.age2);
-      document.querySelectorAll('.chip-days-3').forEach(el => el.textContent = thresholds.age3);
-    }
-
-    // ===== Bagian Summary Banner =====
-    function showBagianSummary(stats) {
-      const banner = document.getElementById('bagianSummaryBanner');
-      document.getElementById('bagianSummaryName').textContent = stats.bagian_name;
-      document.getElementById('bagianStatTotal').textContent = formatNumber(stats.total);
-      document.getElementById('bagianStatBelum').textContent = formatNumber(stats.belum_siap_bayar);
-      document.getElementById('bagianStatSiap').textContent = formatNumber(stats.siap_dibayar);
-      document.getElementById('bagianStatSudah').textContent = formatNumber(stats.sudah_dibayar);
-      banner.style.display = 'block';
-      banner.classList.add('show');
-    }
-
-    function hideBagianSummary() {
-      const banner = document.getElementById('bagianSummaryBanner');
-      banner.classList.remove('show');
-      banner.style.display = 'none';
-    }
-
-    function formatNumber(num) {
-      return new Intl.NumberFormat('id-ID').format(num || 0);
-    }
-
-    // Count documents by age - uses data passed from PHP
-    function countDocumentsByAge() {
-      const thresholds = getAgeThresholds();
-      const allDokumenAge = @json($allDokumenUmur ?? []);
-
-      let count1 = 0, count2 = 0, count3 = 0;
-
-      allDokumenAge.forEach(days => {
-        if (days > thresholds.age1) count1++;
-        if (days > thresholds.age2) count2++;
-        if (days > thresholds.age3) count3++;
-      });
-
-      document.getElementById('ageCount1').textContent = count1;
-      document.getElementById('ageCount2').textContent = count2;
-      document.getElementById('ageCount3').textContent = count3;
-    }
-
-    // Open age settings modal
-    function openAgeSettingsModal() {
-      const thresholds = getAgeThresholds();
-      document.getElementById('ageSetting1').value = thresholds.age1;
-      document.getElementById('ageSetting2').value = thresholds.age2;
-      document.getElementById('ageSetting3').value = thresholds.age3;
-      document.getElementById('ageSettingsModal').classList.add('show');
-    }
-
-    // Close age settings modal
-    function closeAgeSettingsModal(event) {
-      if (!event || event.target === event.currentTarget) {
-        document.getElementById('ageSettingsModal').classList.remove('show');
-      }
-    }
-
-    // Save age settings
-    function saveAgeSettings() {
-      const age1 = parseInt(document.getElementById('ageSetting1').value) || 3;
-      const age2 = parseInt(document.getElementById('ageSetting2').value) || 7;
-      const age3 = parseInt(document.getElementById('ageSetting3').value) || 30;
-
-      saveAgeThresholds({ age1, age2, age3 });
-      updateAgeLabels();
-      countDocumentsByAge();
-      closeAgeSettingsModal();
-
-      // Show feedback
-      const saveBtn = document.querySelector('.age-modal-btn.save');
-      const originalText = saveBtn.innerHTML;
-      saveBtn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
-      saveBtn.style.background = '#22c55e';
-      setTimeout(() => {
-        saveBtn.innerHTML = originalText;
-        saveBtn.style.background = '';
-      }, 1500);
-    }
-
-    // Reset age settings to default
-    function resetAgeSettings() {
-      document.getElementById('ageSetting1').value = DEFAULT_AGE_THRESHOLDS.age1;
-      document.getElementById('ageSetting2').value = DEFAULT_AGE_THRESHOLDS.age2;
-      document.getElementById('ageSetting3').value = DEFAULT_AGE_THRESHOLDS.age3;
-    }
-
-    // Filter by age
-    function filterByAge(level) {
-      const thresholds = getAgeThresholds();
-      let minDays;
-
-      switch (level) {
-        case 1: minDays = thresholds.age1; break;
-        case 2: minDays = thresholds.age2; break;
-        case 3: minDays = thresholds.age3; break;
-      }
-
-      // Toggle filter
-      if (currentAgeFilter === level) {
-        clearAgeFilter();
-        return;
-      }
-
-      currentAgeFilter = level;
-
-      // Update UI
-      document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
-      document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
-      document.getElementById('ageCard' + level).classList.add('active');
-      document.getElementById('ageChip' + level).classList.add('active');
-      document.getElementById('ageChipClear').style.display = 'flex';
-
-      // Apply filter to visible cards
-      filterDocumentsByDays(minDays);
-    }
-
-    // Clear age filter
-    function clearAgeFilter() {
-      currentAgeFilter = null;
-      document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
-      document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
-      document.getElementById('ageChipClear').style.display = 'none';
-
-      // Show all cards
-      document.querySelectorAll('.doc-card').forEach(card => {
-        card.style.display = '';
-      });
-      document.querySelectorAll('.data-table tbody tr').forEach(row => {
-        row.style.display = '';
-      });
-    }
-
-    // Filter documents by minimum days
-    function filterDocumentsByDays(minDays) {
-      // Filter card view
-      document.querySelectorAll('.doc-card').forEach(card => {
-        const ageText = card.querySelector('.doc-card-meta-item .fa-hourglass-half')?.parentElement?.textContent || '';
-        const match = ageText.match(/(\d+)\s*hari/);
-        const days = match ? parseInt(match[1]) : 0;
-
-        card.style.display = days > minDays ? '' : 'none';
-      });
-
-      // Filter table view
-      document.querySelectorAll('.data-table tbody tr').forEach(row => {
-        const ageCell = row.querySelector('td:nth-child(6)')?.textContent || '';
-        const match = ageCell.match(/(\d+)\s*hari/);
-        const days = match ? parseInt(match[1]) : 0;
-
-        row.style.display = days > minDays ? '' : 'none';
-      });
-    }
-
-    // ===== Owner Header Theme Toggle =====
-    function toggleOwnerTheme() {
-      const html = document.documentElement;
-      const isDark = html.classList.toggle('dark');
-      localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-    }
-
-    // ===== Owner Header Profile Menu =====
-    function toggleOwnerProfileMenu() {
-      const menu = document.getElementById('ownerProfileMenu');
-      menu.classList.toggle('show');
-    }
-
-    // Close profile menu when clicking outside
-    document.addEventListener('click', function (e) {
-      const dropdown = document.querySelector('.header-profile-dropdown');
-      const menu = document.getElementById('ownerProfileMenu');
-      if (dropdown && menu && !dropdown.contains(e.target)) {
-        menu.classList.remove('show');
-      }
-    });
-
-    // Escape key to close modal
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && document.getElementById('ageSettingsModal').classList.contains('show')) {
-        closeAgeSettingsModal();
-      }
-    });
-
-    // ===== Initialize =====
-    document.addEventListener('DOMContentLoaded', function () {
-      // Restore dark mode from localStorage FIRST
-      const isDarkMode = localStorage.getItem('darkMode') === 'true';
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-      }
-
-      // Load saved view preference (default: card)
-      const savedView = localStorage.getItem('ownerDashboardView') || 'card';
-      switchView(savedView);
-
-      // Initialize cascading dropdowns
-      updateSubKriteriaFilter();
-      updateFilterCount();
-
-      // Auto-open filter panel if filters are active
-      const filterCount = parseInt(document.getElementById('filterCount').getAttribute('data-count') || 0);
-      if (filterCount > 0) {
-        document.getElementById('filterPanel').classList.add('open');
-      }
-
-      // Enable sub kriteria if kriteria CF is selected
-      const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
-      if (kriteriaCfSelect && kriteriaCfSelect.value) {
-        updateSubKriteriaFilter();
-      }
-
-      // Initialize age filter
-      updateAgeLabels();
-      countDocumentsByAge();
-
-      // Highlight active stat card based on current URL status
-      const urlParams = new URLSearchParams(window.location.search);
-      const currentStatus = urlParams.get('status') || '';
-      const statusToCardMap = {
-        'semua': 'all',
-        'belum_siap': 'belum_siap',
-        'siap_dibayar': 'siap_dibayar',
-        'sudah_dibayar': 'sudah_dibayar'
-      };
-      if (currentStatus && statusToCardMap[currentStatus]) {
-        highlightActiveStatCard(statusToCardMap[currentStatus]);
-      }
-
-      // Create top progress bar element
-      const progressBar = document.createElement('div');
-      progressBar.id = 'ajaxProgressBar';
-      progressBar.innerHTML = '<div class="progress-fill"></div>';
-      document.body.appendChild(progressBar);
-
-      // Create loading overlay element
-      const overlay = document.createElement('div');
-      overlay.id = 'ajaxLoadingOverlay';
-      overlay.innerHTML = `
-              <div class="ajax-spinner">
-                <div class="spinner-ring"></div>
-                <div class="spinner-text">Memuat data...</div>
-                <div class="spinner-subtext">Mohon tunggu sebentar</div>
-              </div>
-            `;
-      document.querySelector('.main-content').appendChild(overlay);
-    });
-
-    // ===== Highlight Active Stat Card =====
-    function highlightActiveStatCard(filterType) {
-      // Remove active class from all clickable stat cards
-      document.querySelectorAll('.stat-card.clickable').forEach(card => {
-        card.classList.remove('card-active');
-      });
-      // Add active class to the matching card
-      if (filterType) {
-        const activeCard = document.querySelector(`.stat-card.clickable[data-filter="${filterType}"]`);
-        if (activeCard) {
-          activeCard.classList.add('card-active');
+      function removeFilter(key) {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) {
+          input.value = '';
+          applyFilter();
         }
       }
-    }
 
-    // ===== Filter By Card Function (AJAX) =====
-    function filterByCard(type) {
-      const statusInput = document.getElementById('statusInput');
-      const statusPembayaranSelect = document.querySelector('[name="filter_status_pembayaran"]');
-      const extra = {};
+      // ===== Cascading Dropdowns =====
+      function updateSubKriteriaFilter() {
+        const kriteriaCfId = document.getElementById('filterKriteriaCf').value;
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
 
-      if (type === 'all') {
-        statusInput.value = 'semua';
-        extra['status'] = 'semua';
-        if (statusPembayaranSelect) statusPembayaranSelect.value = '';
-      } else if (type === 'belum_siap') {
-        statusInput.value = 'belum_siap';
-        extra['status'] = 'belum_siap';
-        extra['filter_status_pembayaran'] = 'belum_dibayar';
-        if (statusPembayaranSelect) statusPembayaranSelect.value = 'belum_dibayar';
-      } else if (type === 'siap_dibayar') {
-        statusInput.value = 'siap_dibayar';
-        extra['status'] = 'siap_dibayar';
-        extra['filter_status_pembayaran'] = 'siap_dibayar';
-        if (statusPembayaranSelect) statusPembayaranSelect.value = 'siap_dibayar';
-      } else if (type === 'sudah_dibayar') {
-        statusInput.value = 'sudah_dibayar';
-        extra['status'] = 'sudah_dibayar';
-        extra['filter_status_pembayaran'] = 'sudah_dibayar';
-        if (statusPembayaranSelect) statusPembayaranSelect.value = 'sudah_dibayar';
-      }
-
-      // Update chips UI
-      document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
-      const chipMap = { 'all': 0, 'belum_siap': 1, 'siap_dibayar': 2, 'sudah_dibayar': 3 };
-      const chipIdx = chipMap[type];
-      const chips = document.querySelectorAll('.filter-chips .chip');
-      if (chipIdx !== undefined && chips[chipIdx]) chips[chipIdx].classList.add('active');
-
-      highlightActiveStatCard(type);
-      applyFilter(extra);
-    }
-
-    // ===== AJAX Render Functions =====
-    function formatRupiah(value) {
-      return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
-    }
-
-    function buildStepperHtml(progressPct, isPaid) {
-      const currentStep = Math.min(5, Math.max(1, Math.ceil((progressPct || 0) / 20)));
-      const labels = ['Operator', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
-      let html = '<div class="workflow-stepper"><div class="stepper-label">Progres Alur</div><div class="stepper-track">';
-      for (let i = 1; i <= 5; i++) {
-        if (isPaid) {
-          html += `<div class="stepper-step completed" data-tooltip="${labels[i - 1]}"><i class="fas fa-check"></i></div>`;
-        } else if (i < currentStep) {
-          html += `<div class="stepper-step completed" data-tooltip="${labels[i - 1]}"><i class="fas fa-check"></i></div>`;
-        } else if (i === currentStep) {
-          html += `<div class="stepper-step active" data-tooltip="${labels[i - 1]}">${i}</div>`;
+        if (kriteriaCfId && kriteriaCfId !== '') {
+          subKriteriaSelect.disabled = false;
+          Array.from(subKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const kriteriaCfIdForOption = option.getAttribute('data-kriteria-cf');
+            option.style.display = kriteriaCfIdForOption === kriteriaCfId ? 'block' : 'none';
+          });
         } else {
-          html += `<div class="stepper-step" data-tooltip="${labels[i - 1]}">${i}</div>`;
+          subKriteriaSelect.disabled = true;
+          subKriteriaSelect.value = '';
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.value = '';
+          Array.from(subKriteriaSelect.options).forEach(option => option.style.display = 'block');
         }
-      }
-      html += '</div></div>';
-      return html;
-    }
-
-    function renderCardView(documents) {
-      const container = document.getElementById('cardView');
-      if (!documents || documents.length === 0) {
-        container.innerHTML = `
-                    <div class="empty-state">
-                      <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                      <div class="empty-state-title">Tidak ada dokumen</div>
-                      <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                    </div>`;
-        return;
+        updateItemSubKriteriaFilter();
       }
 
-      let html = '<div class="cards-grid">';
-      documents.forEach(doc => {
-        const isOverdue = doc.is_overdue;
-        const isPaid = doc.is_paid;
-        const cardClass = `doc-card ${isOverdue ? 'overdue' : ''} ${isPaid ? 'completed' : ''}`;
+      function updateItemSubKriteriaFilter() {
+        const subKriteriaId = document.getElementById('filterSubKriteria').value;
+        const itemSubKriteriaSelect = document.getElementById('filterItemSubKriteria');
+        const subKriteriaSelect = document.getElementById('filterSubKriteria');
 
-        html += `<div class="${cardClass}" onclick="navigateToWorkflow('${doc.id}')">`;
-
-        if (isOverdue) html += '<span class="overdue-badge">TERLAMBAT</span>';
-        if (isPaid) html += '<span class="paid-stamp">SUDAH DIBAYAR</span>';
-
-        html += '<div class="doc-card-header"><div>';
-        html += `<div class="doc-card-title">${doc.nomor_agenda || '-'}</div>`;
-        html += `<div class="doc-card-subtitle">SPP: ${doc.nomor_spp || '-'}</div>`;
-        html += '</div>';
-        if (isPaid) html += '<span class="paid-indicator"><i class="fas fa-check-circle"></i> Dibayar</span>';
-        html += '</div>';
-
-        html += `<div class="doc-card-value">${formatRupiah(doc.nilai_rupiah)}</div>`;
-
-        // Meta
-        const handler = doc.current_handler_display || '-';
-        html += '<div class="doc-card-meta">';
-        html += `<div class="doc-card-meta-item"><i class="fas fa-user"></i><span>Posisi:</span><span class="handler-avatar">${handler.charAt(0)}</span><span>${handler}</span></div>`;
-
-        if (doc.deadline_info) {
-          const dlColor = isOverdue ? 'var(--danger-color)' : 'inherit';
-          html += `<div class="doc-card-meta-item"><i class="fas fa-clock"></i><span>Batas Waktu:</span><span style="font-weight:500;color:${dlColor}">${doc.deadline_info.text || '-'}</span></div>`;
+        if (subKriteriaId && subKriteriaId !== '' && !subKriteriaSelect.disabled) {
+          itemSubKriteriaSelect.disabled = false;
+          Array.from(itemSubKriteriaSelect.options).forEach(option => {
+            if (option.value === '') {
+              option.style.display = 'block';
+              return;
+            }
+            const subKriteriaIdForOption = option.getAttribute('data-sub-kriteria');
+            option.style.display = subKriteriaIdForOption === subKriteriaId ? 'block' : 'none';
+          });
+        } else {
+          itemSubKriteriaSelect.disabled = true;
+          itemSubKriteriaSelect.value = '';
+          Array.from(itemSubKriteriaSelect.options).forEach(option => option.style.display = 'block');
         }
-        if (doc.umur_dokumen) {
-          const umurColor = doc.umur_dokumen.is_paid ? 'var(--success-color)' : 'inherit';
-          let umurExtra = doc.umur_dokumen.is_paid ? ' <i class="fas fa-check-circle" style="margin-left:4px;color:var(--success-color);"></i>' : '';
-          html += `<div class="doc-card-meta-item"><i class="fas fa-hourglass-half"></i><span>Umur Dokumen:</span><span style="font-weight:500;color:${umurColor}">${doc.umur_dokumen.text || '-'}${umurExtra}</span></div>`;
-        }
-        html += '</div>';
+      }
 
-        // Stepper
-        html += buildStepperHtml(doc.progress_percentage, isPaid);
-        html += '</div>';
+      // ===== Age Filter Settings =====
+      const DEFAULT_AGE_THRESHOLDS = { age1: 3, age2: 7, age3: 30 };
+      let currentAgeFilter = null;
+
+      // Get age thresholds from localStorage
+      function getAgeThresholds() {
+        const saved = localStorage.getItem('documentAgeThresholds');
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            return { ...DEFAULT_AGE_THRESHOLDS };
+          }
+        }
+        return { ...DEFAULT_AGE_THRESHOLDS };
+      }
+
+      // Save age thresholds to localStorage
+      function saveAgeThresholds(thresholds) {
+        localStorage.setItem('documentAgeThresholds', JSON.stringify(thresholds));
+      }
+
+      // Update UI labels with current thresholds
+      function updateAgeLabels() {
+        const thresholds = getAgeThresholds();
+        // Update card labels
+        document.getElementById('ageLabel1').textContent = thresholds.age1;
+        document.getElementById('ageLabel2').textContent = thresholds.age2;
+        document.getElementById('ageLabel3').textContent = thresholds.age3;
+        // Update chip labels
+        document.querySelectorAll('.chip-days-1').forEach(el => el.textContent = thresholds.age1);
+        document.querySelectorAll('.chip-days-2').forEach(el => el.textContent = thresholds.age2);
+        document.querySelectorAll('.chip-days-3').forEach(el => el.textContent = thresholds.age3);
+      }
+
+      // ===== Bagian Summary Banner =====
+      function showBagianSummary(stats) {
+        const banner = document.getElementById('bagianSummaryBanner');
+        document.getElementById('bagianSummaryName').textContent = stats.bagian_name;
+        document.getElementById('bagianStatTotal').textContent = formatNumber(stats.total);
+        document.getElementById('bagianStatBelum').textContent = formatNumber(stats.belum_siap_bayar);
+        document.getElementById('bagianStatSiap').textContent = formatNumber(stats.siap_dibayar);
+        document.getElementById('bagianStatSudah').textContent = formatNumber(stats.sudah_dibayar);
+        banner.style.display = 'block';
+        banner.classList.add('show');
+      }
+
+      function hideBagianSummary() {
+        const banner = document.getElementById('bagianSummaryBanner');
+        banner.classList.remove('show');
+        banner.style.display = 'none';
+      }
+
+      function formatNumber(num) {
+        return new Intl.NumberFormat('id-ID').format(num || 0);
+      }
+
+      // Count documents by age - uses data passed from PHP
+      function countDocumentsByAge() {
+        const thresholds = getAgeThresholds();
+        const allDokumenAge = @json($allDokumenUmur ?? []);
+
+        let count1 = 0, count2 = 0, count3 = 0;
+
+        allDokumenAge.forEach(days => {
+          if (days > thresholds.age1) count1++;
+          if (days > thresholds.age2) count2++;
+          if (days > thresholds.age3) count3++;
+        });
+
+        document.getElementById('ageCount1').textContent = count1;
+        document.getElementById('ageCount2').textContent = count2;
+        document.getElementById('ageCount3').textContent = count3;
+      }
+
+      // Open age settings modal
+      function openAgeSettingsModal() {
+        const thresholds = getAgeThresholds();
+        document.getElementById('ageSetting1').value = thresholds.age1;
+        document.getElementById('ageSetting2').value = thresholds.age2;
+        document.getElementById('ageSetting3').value = thresholds.age3;
+        document.getElementById('ageSettingsModal').classList.add('show');
+      }
+
+      // Close age settings modal
+      function closeAgeSettingsModal(event) {
+        if (!event || event.target === event.currentTarget) {
+          document.getElementById('ageSettingsModal').classList.remove('show');
+        }
+      }
+
+      // Save age settings
+      function saveAgeSettings() {
+        const age1 = parseInt(document.getElementById('ageSetting1').value) || 3;
+        const age2 = parseInt(document.getElementById('ageSetting2').value) || 7;
+        const age3 = parseInt(document.getElementById('ageSetting3').value) || 30;
+
+        saveAgeThresholds({ age1, age2, age3 });
+        updateAgeLabels();
+        countDocumentsByAge();
+        closeAgeSettingsModal();
+
+        // Show feedback
+        const saveBtn = document.querySelector('.age-modal-btn.save');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
+        saveBtn.style.background = '#22c55e';
+        setTimeout(() => {
+          saveBtn.innerHTML = originalText;
+          saveBtn.style.background = '';
+        }, 1500);
+      }
+
+      // Reset age settings to default
+      function resetAgeSettings() {
+        document.getElementById('ageSetting1').value = DEFAULT_AGE_THRESHOLDS.age1;
+        document.getElementById('ageSetting2').value = DEFAULT_AGE_THRESHOLDS.age2;
+        document.getElementById('ageSetting3').value = DEFAULT_AGE_THRESHOLDS.age3;
+      }
+
+      // Filter by age
+      function filterByAge(level) {
+        const thresholds = getAgeThresholds();
+        let minDays;
+
+        switch (level) {
+          case 1: minDays = thresholds.age1; break;
+          case 2: minDays = thresholds.age2; break;
+          case 3: minDays = thresholds.age3; break;
+        }
+
+        // Toggle filter
+        if (currentAgeFilter === level) {
+          clearAgeFilter();
+          return;
+        }
+
+        currentAgeFilter = level;
+
+        // Update UI
+        document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
+        document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
+        document.getElementById('ageCard' + level).classList.add('active');
+        document.getElementById('ageChip' + level).classList.add('active');
+        document.getElementById('ageChipClear').style.display = 'flex';
+
+        // Apply filter to visible cards
+        filterDocumentsByDays(minDays);
+      }
+
+      // Clear age filter
+      function clearAgeFilter() {
+        currentAgeFilter = null;
+        document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
+        document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
+        document.getElementById('ageChipClear').style.display = 'none';
+
+        // Show all cards
+        document.querySelectorAll('.doc-card').forEach(card => {
+          card.style.display = '';
+        });
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+          row.style.display = '';
+        });
+      }
+
+      // Filter documents by minimum days
+      function filterDocumentsByDays(minDays) {
+        // Filter card view
+        document.querySelectorAll('.doc-card').forEach(card => {
+          const ageText = card.querySelector('.doc-card-meta-item .fa-hourglass-half')?.parentElement?.textContent || '';
+          const match = ageText.match(/(\d+)\s*hari/);
+          const days = match ? parseInt(match[1]) : 0;
+
+          card.style.display = days > minDays ? '' : 'none';
+        });
+
+        // Filter table view
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+          const ageCell = row.querySelector('td:nth-child(6)')?.textContent || '';
+          const match = ageCell.match(/(\d+)\s*hari/);
+          const days = match ? parseInt(match[1]) : 0;
+
+          row.style.display = days > minDays ? '' : 'none';
+        });
+      }
+
+      // ===== Owner Header Theme Toggle =====
+      function toggleOwnerTheme() {
+        const html = document.documentElement;
+        const isDark = html.classList.toggle('dark');
+        localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+      }
+
+      // ===== Owner Header Profile Menu =====
+      function toggleOwnerProfileMenu() {
+        const menu = document.getElementById('ownerProfileMenu');
+        menu.classList.toggle('show');
+      }
+
+      // Close profile menu when clicking outside
+      document.addEventListener('click', function (e) {
+        const dropdown = document.querySelector('.header-profile-dropdown');
+        const menu = document.getElementById('ownerProfileMenu');
+        if (dropdown && menu && !dropdown.contains(e.target)) {
+          menu.classList.remove('show');
+        }
       });
-      html += '</div>';
 
-      // Pagination placeholder will be rendered separately
-      container.innerHTML = html + '<div id="cardPagination"></div>';
-    }
-
-    function renderTableView(documents) {
-      const container = document.getElementById('tableView');
-      if (!documents || documents.length === 0) {
-        container.innerHTML = `
-                    <div class="empty-state">
-                      <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                      <div class="empty-state-title">Tidak ada dokumen</div>
-                      <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                    </div>`;
-        return;
-      }
-
-      let html = '<div class="table-container"><table class="data-table"><thead><tr>';
-      html += '<th>No. Dokumen</th><th>Tgl Masuk</th><th>Nilai (Rp)</th><th>Posisi</th><th>Status</th><th>Progres</th><th>Aksi</th>';
-      html += '</tr></thead><tbody>';
-
-      documents.forEach(doc => {
-        const rowClass = doc.is_overdue ? 'overdue' : '';
-        const handler = doc.current_handler_display || '-';
-        const pct = doc.progress_percentage || 0;
-        const statusLabel = pct >= 100 ? 'Selesai' : 'Proses';
-        const statusClass = pct >= 100 ? 'selesai' : 'proses';
-
-        html += `<tr class="${rowClass}" onclick="navigateToWorkflow('${doc.id}')">`;
-        html += `<td><div class="doc-number">${doc.nomor_agenda || '-'}</div><div class="doc-spp">${doc.nomor_spp || '-'}</div></td>`;
-        html += `<td>${doc.tanggal_masuk || '-'}</td>`;
-        html += `<td><span class="doc-value">${formatRupiah(doc.nilai_rupiah)}</span></td>`;
-        html += `<td><div style="display:flex;align-items:center;gap:6px;"><span class="handler-avatar">${handler.charAt(0)}</span><span>${handler}</span></div></td>`;
-        html += `<td><span class="status-badge ${statusClass}">${statusLabel}</span></td>`;
-        html += `<td><div class="progress-bar-mini"><div class="fill" style="width:${pct}%;background:${doc.progress_color || '#083E40'}"></div></div><div class="progress-text">${pct}%</div></td>`;
-        html += `<td><button class="btn-view" onclick="event.stopPropagation();navigateToWorkflow('${doc.id}')">Lihat</button></td>`;
-        html += '</tr>';
+      // Escape key to close modal
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && document.getElementById('ageSettingsModal').classList.contains('show')) {
+          closeAgeSettingsModal();
+        }
       });
 
-      html += '</tbody></table></div>';
-      container.innerHTML = html + '<div id="tablePagination"></div>';
-    }
+      // ===== Initialize =====
+      document.addEventListener('DOMContentLoaded', function () {
+        // Restore dark mode from localStorage FIRST
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+          document.documentElement.classList.add('dark');
+        }
 
-    function renderPagination(pg) {
-      if (!pg || pg.total === 0) {
+        // Load saved view preference (default: card)
+        const savedView = localStorage.getItem('ownerDashboardView') || 'card';
+        switchView(savedView);
+
+        // Initialize cascading dropdowns
+        updateSubKriteriaFilter();
+        updateFilterCount();
+
+        // Auto-open filter panel if filters are active
+        const filterCount = parseInt(document.getElementById('filterCount').getAttribute('data-count') || 0);
+        if (filterCount > 0) {
+          document.getElementById('filterPanel').classList.add('open');
+        }
+
+        // Enable sub kriteria if kriteria CF is selected
+        const kriteriaCfSelect = document.getElementById('filterKriteriaCf');
+        if (kriteriaCfSelect && kriteriaCfSelect.value) {
+          updateSubKriteriaFilter();
+        }
+
+        // Initialize age filter
+        updateAgeLabels();
+        countDocumentsByAge();
+
+        // Highlight active stat card based on current URL status
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentStatus = urlParams.get('status') || '';
+        const statusToCardMap = {
+          'semua': 'all',
+          'belum_siap': 'belum_siap',
+          'siap_dibayar': 'siap_dibayar',
+          'sudah_dibayar': 'sudah_dibayar'
+        };
+        if (currentStatus && statusToCardMap[currentStatus]) {
+          highlightActiveStatCard(statusToCardMap[currentStatus]);
+        }
+
+        // Create top progress bar element
+        const progressBar = document.createElement('div');
+        progressBar.id = 'ajaxProgressBar';
+        progressBar.innerHTML = '<div class="progress-fill"></div>';
+        document.body.appendChild(progressBar);
+
+        // Create loading overlay element
+        const overlay = document.createElement('div');
+        overlay.id = 'ajaxLoadingOverlay';
+        overlay.innerHTML = `
+                <div class="ajax-spinner">
+                  <div class="spinner-ring"></div>
+                  <div class="spinner-text">Memuat data...</div>
+                  <div class="spinner-subtext">Mohon tunggu sebentar</div>
+                </div>
+              `;
+        document.querySelector('.main-content').appendChild(overlay);
+      });
+
+      // ===== Highlight Active Stat Card =====
+      function highlightActiveStatCard(filterType) {
+        // Remove active class from all clickable stat cards
+        document.querySelectorAll('.stat-card.clickable').forEach(card => {
+          card.classList.remove('card-active');
+        });
+        // Add active class to the matching card
+        if (filterType) {
+          const activeCard = document.querySelector(`.stat-card.clickable[data-filter="${filterType}"]`);
+          if (activeCard) {
+            activeCard.classList.add('card-active');
+          }
+        }
+      }
+
+      // ===== Filter By Card Function (AJAX) =====
+      function filterByCard(type) {
+        const statusInput = document.getElementById('statusInput');
+        const statusPembayaranSelect = document.querySelector('[name="filter_status_pembayaran"]');
+        const extra = {};
+
+        if (type === 'all') {
+          statusInput.value = 'semua';
+          extra['status'] = 'semua';
+          if (statusPembayaranSelect) statusPembayaranSelect.value = '';
+        } else if (type === 'belum_siap') {
+          statusInput.value = 'belum_siap';
+          extra['status'] = 'belum_siap';
+          extra['filter_status_pembayaran'] = 'belum_dibayar';
+          if (statusPembayaranSelect) statusPembayaranSelect.value = 'belum_dibayar';
+        } else if (type === 'siap_dibayar') {
+          statusInput.value = 'siap_dibayar';
+          extra['status'] = 'siap_dibayar';
+          extra['filter_status_pembayaran'] = 'siap_dibayar';
+          if (statusPembayaranSelect) statusPembayaranSelect.value = 'siap_dibayar';
+        } else if (type === 'sudah_dibayar') {
+          statusInput.value = 'sudah_dibayar';
+          extra['status'] = 'sudah_dibayar';
+          extra['filter_status_pembayaran'] = 'sudah_dibayar';
+          if (statusPembayaranSelect) statusPembayaranSelect.value = 'sudah_dibayar';
+        }
+
+        // Update chips UI
+        document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+        const chipMap = { 'all': 0, 'belum_siap': 1, 'siap_dibayar': 2, 'sudah_dibayar': 3 };
+        const chipIdx = chipMap[type];
+        const chips = document.querySelectorAll('.filter-chips .chip');
+        if (chipIdx !== undefined && chips[chipIdx]) chips[chipIdx].classList.add('active');
+
+        highlightActiveStatCard(type);
+        applyFilter(extra);
+      }
+
+      // ===== AJAX Render Functions =====
+      function formatRupiah(value) {
+        return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
+      }
+
+      function buildStepperHtml(progressPct, isPaid) {
+        const currentStep = Math.min(5, Math.max(1, Math.ceil((progressPct || 0) / 20)));
+        const labels = ['Operator', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+        let html = '<div class="workflow-stepper"><div class="stepper-label">Progres Alur</div><div class="stepper-track">';
+        for (let i = 1; i <= 5; i++) {
+          if (isPaid) {
+            html += `<div class="stepper-step completed" data-tooltip="${labels[i - 1]}"><i class="fas fa-check"></i></div>`;
+          } else if (i < currentStep) {
+            html += `<div class="stepper-step completed" data-tooltip="${labels[i - 1]}"><i class="fas fa-check"></i></div>`;
+          } else if (i === currentStep) {
+            html += `<div class="stepper-step active" data-tooltip="${labels[i - 1]}">${i}</div>`;
+          } else {
+            html += `<div class="stepper-step" data-tooltip="${labels[i - 1]}">${i}</div>`;
+          }
+        }
+        html += '</div></div>';
+        return html;
+      }
+
+      function renderCardView(documents) {
+        const container = document.getElementById('cardView');
+        if (!documents || documents.length === 0) {
+          container.innerHTML = `
+                      <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                        <div class="empty-state-title">Tidak ada dokumen</div>
+                        <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                      </div>`;
+          return;
+        }
+
+        let html = '<div class="cards-grid">';
+        documents.forEach(doc => {
+          const isOverdue = doc.is_overdue;
+          const isPaid = doc.is_paid;
+          const cardClass = `doc-card ${isOverdue ? 'overdue' : ''} ${isPaid ? 'completed' : ''}`;
+
+          html += `<div class="${cardClass}" onclick="navigateToWorkflow('${doc.id}')">`;
+
+          if (isOverdue) html += '<span class="overdue-badge">TERLAMBAT</span>';
+          if (isPaid) html += '<span class="paid-stamp">SUDAH DIBAYAR</span>';
+
+          html += '<div class="doc-card-header"><div>';
+          html += `<div class="doc-card-title">${doc.nomor_agenda || '-'}</div>`;
+          html += `<div class="doc-card-subtitle">SPP: ${doc.nomor_spp || '-'}</div>`;
+          html += '</div>';
+          if (isPaid) html += '<span class="paid-indicator"><i class="fas fa-check-circle"></i> Dibayar</span>';
+          html += '</div>';
+
+          html += `<div class="doc-card-value">${formatRupiah(doc.nilai_rupiah)}</div>`;
+
+          // Meta
+          const handler = doc.current_handler_display || '-';
+          html += '<div class="doc-card-meta">';
+          html += `<div class="doc-card-meta-item"><i class="fas fa-user"></i><span>Posisi:</span><span class="handler-avatar">${handler.charAt(0)}</span><span>${handler}</span></div>`;
+
+          if (doc.deadline_info) {
+            const dlColor = isOverdue ? 'var(--danger-color)' : 'inherit';
+            html += `<div class="doc-card-meta-item"><i class="fas fa-clock"></i><span>Batas Waktu:</span><span style="font-weight:500;color:${dlColor}">${doc.deadline_info.text || '-'}</span></div>`;
+          }
+          if (doc.umur_dokumen) {
+            const umurColor = doc.umur_dokumen.is_paid ? 'var(--success-color)' : 'inherit';
+            let umurExtra = doc.umur_dokumen.is_paid ? ' <i class="fas fa-check-circle" style="margin-left:4px;color:var(--success-color);"></i>' : '';
+            html += `<div class="doc-card-meta-item"><i class="fas fa-hourglass-half"></i><span>Umur Dokumen:</span><span style="font-weight:500;color:${umurColor}">${doc.umur_dokumen.text || '-'}${umurExtra}</span></div>`;
+          }
+          html += '</div>';
+
+          // Stepper
+          html += buildStepperHtml(doc.progress_percentage, isPaid);
+          html += '</div>';
+        });
+        html += '</div>';
+
+        // Pagination placeholder will be rendered separately
+        container.innerHTML = html + '<div id="cardPagination"></div>';
+      }
+
+      function renderTableView(documents) {
+        const container = document.getElementById('tableView');
+        if (!documents || documents.length === 0) {
+          container.innerHTML = `
+                      <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                        <div class="empty-state-title">Tidak ada dokumen</div>
+                        <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                      </div>`;
+          return;
+        }
+
+        let html = '<div class="table-container"><table class="data-table"><thead><tr>';
+        html += '<th>No. Dokumen</th><th>Tgl Masuk</th><th>Nilai (Rp)</th><th>Posisi</th><th>Status</th><th>Progres</th><th>Aksi</th>';
+        html += '</tr></thead><tbody>';
+
+        documents.forEach(doc => {
+          const rowClass = doc.is_overdue ? 'overdue' : '';
+          const handler = doc.current_handler_display || '-';
+          const pct = doc.progress_percentage || 0;
+          const statusLabel = pct >= 100 ? 'Selesai' : 'Proses';
+          const statusClass = pct >= 100 ? 'selesai' : 'proses';
+
+          html += `<tr class="${rowClass}" onclick="navigateToWorkflow('${doc.id}')">`;
+          html += `<td><div class="doc-number">${doc.nomor_agenda || '-'}</div><div class="doc-spp">${doc.nomor_spp || '-'}</div></td>`;
+          html += `<td>${doc.tanggal_masuk || '-'}</td>`;
+          html += `<td><span class="doc-value">${formatRupiah(doc.nilai_rupiah)}</span></td>`;
+          html += `<td><div style="display:flex;align-items:center;gap:6px;"><span class="handler-avatar">${handler.charAt(0)}</span><span>${handler}</span></div></td>`;
+          html += `<td><span class="status-badge ${statusClass}">${statusLabel}</span></td>`;
+          html += `<td><div class="progress-bar-mini"><div class="fill" style="width:${pct}%;background:${doc.progress_color || '#083E40'}"></div></div><div class="progress-text">${pct}%</div></td>`;
+          html += `<td><button class="btn-view" onclick="event.stopPropagation();navigateToWorkflow('${doc.id}')">Lihat</button></td>`;
+          html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html + '<div id="tablePagination"></div>';
+      }
+
+      function renderPagination(pg) {
+        if (!pg || pg.total === 0) {
+          ['cardPagination', 'tablePagination'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+          });
+          return;
+        }
+
+        const totalFormatted = Number(pg.total).toLocaleString('id-ID');
+        const prevDisabled = pg.current_page <= 1 ? 'disabled' : '';
+        const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
+
+        const html = `
+                    <div class="pagination-footer">
+                      <div class="pagination-footer-left">
+                        <label class="pagination-label">Baris per halaman:</label>
+                        <select class="pagination-select" onchange="changePerPage(this.value)">
+                          <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
+                          <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
+                          <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
+                          <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
+                          <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
+                        </select>
+                        <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
+                      </div>
+                      <div class="pagination-footer-right">
+                        <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
+                          onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
+                        <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
+                        <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>`;
+
         ['cardPagination', 'tablePagination'].forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.innerHTML = '';
+          if (el) el.innerHTML = html;
         });
-        return;
       }
 
-      const totalFormatted = Number(pg.total).toLocaleString('id-ID');
-      const prevDisabled = pg.current_page <= 1 ? 'disabled' : '';
-      const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
-
-      const html = `
-                  <div class="pagination-footer">
-                    <div class="pagination-footer-left">
-                      <label class="pagination-label">Baris per halaman:</label>
-                      <select class="pagination-select" onchange="changePerPage(this.value)">
-                        <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
-                        <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
-                        <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
-                        <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
-                        <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
-                      </select>
-                      <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
-                    </div>
-                    <div class="pagination-footer-right">
-                      <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
-                        <i class="fas fa-chevron-left"></i>
-                      </button>
-                      <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
-                        onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
-                      <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
-                      <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
-                        <i class="fas fa-chevron-right"></i>
-                      </button>
-                    </div>
-                  </div>`;
-
-      ['cardPagination', 'tablePagination'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = html;
-      });
-    }
-
-    // ===== AJAX-aware pagination =====
-    function changePerPage(value) {
-      applyFilter({ per_page: value, page: '1' });
-    }
-
-    function goToPage(page) {
-      let pageNum = parseInt(page);
-      if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
-      applyFilter({ page: String(pageNum) });
-    }
-
-    // ===== Loading overlay with progress bar =====
-    let _progressInterval = null;
-    let _progressValue = 0;
-
-    function showLoadingOverlay() {
-      // Show top progress bar
-      const bar = document.getElementById('ajaxProgressBar');
-      if (bar) {
-        bar.classList.add('show');
-        const fill = bar.querySelector('.progress-fill');
-        _progressValue = 0;
-        if (fill) fill.style.width = '0%';
-
-        // Simulate progress: fast start, then slow
-        clearInterval(_progressInterval);
-        _progressInterval = setInterval(() => {
-          if (_progressValue < 30) {
-            _progressValue += 3;
-          } else if (_progressValue < 60) {
-            _progressValue += 1.5;
-          } else if (_progressValue < 85) {
-            _progressValue += 0.5;
-          } else if (_progressValue < 95) {
-            _progressValue += 0.1;
-          }
-          if (fill) fill.style.width = _progressValue + '%';
-        }, 100);
+      // ===== AJAX-aware pagination =====
+      function changePerPage(value) {
+        applyFilter({ per_page: value, page: '1' });
       }
 
-      // Show overlay
-      const el = document.getElementById('ajaxLoadingOverlay');
-      if (el) el.classList.add('show');
-    }
+      function goToPage(page) {
+        let pageNum = parseInt(page);
+        if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
+        applyFilter({ page: String(pageNum) });
+      }
 
-    function hideLoadingOverlay() {
-      clearInterval(_progressInterval);
+      // ===== Loading overlay with progress bar =====
+      let _progressInterval = null;
+      let _progressValue = 0;
 
-      // Complete the progress bar
-      const bar = document.getElementById('ajaxProgressBar');
-      if (bar) {
-        const fill = bar.querySelector('.progress-fill');
-        if (fill) {
-          fill.style.width = '100%';
-          fill.style.transition = 'width 0.3s ease';
+      function showLoadingOverlay() {
+        // Show top progress bar
+        const bar = document.getElementById('ajaxProgressBar');
+        if (bar) {
+          bar.classList.add('show');
+          const fill = bar.querySelector('.progress-fill');
+          _progressValue = 0;
+          if (fill) fill.style.width = '0%';
+
+          // Simulate progress: fast start, then slow
+          clearInterval(_progressInterval);
+          _progressInterval = setInterval(() => {
+            if (_progressValue < 30) {
+              _progressValue += 3;
+            } else if (_progressValue < 60) {
+              _progressValue += 1.5;
+            } else if (_progressValue < 85) {
+              _progressValue += 0.5;
+            } else if (_progressValue < 95) {
+              _progressValue += 0.1;
+            }
+            if (fill) fill.style.width = _progressValue + '%';
+          }, 100);
         }
-        setTimeout(() => {
-          bar.classList.remove('show');
+
+        // Show overlay
+        const el = document.getElementById('ajaxLoadingOverlay');
+        if (el) el.classList.add('show');
+      }
+
+      function hideLoadingOverlay() {
+        clearInterval(_progressInterval);
+
+        // Complete the progress bar
+        const bar = document.getElementById('ajaxProgressBar');
+        if (bar) {
+          const fill = bar.querySelector('.progress-fill');
           if (fill) {
-            fill.style.width = '0%';
-            fill.style.transition = '';
+            fill.style.width = '100%';
+            fill.style.transition = 'width 0.3s ease';
           }
-        }, 400);
+          setTimeout(() => {
+            bar.classList.remove('show');
+            if (fill) {
+              fill.style.width = '0%';
+              fill.style.transition = '';
+            }
+          }, 400);
+        }
+
+        // Hide overlay
+        const el = document.getElementById('ajaxLoadingOverlay');
+        if (el) el.classList.remove('show');
       }
+    </script>
 
-      // Hide overlay
-      const el = document.getElementById('ajaxLoadingOverlay');
-      if (el) el.classList.remove('show');
-    }
-  </script>
-
-  <style>
-    /* ===== Top Progress Bar ===== */
-    #ajaxProgressBar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      z-index: 99999;
-      background: rgba(0, 0, 0, 0.08);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    #ajaxProgressBar.show {
-      opacity: 1;
-    }
-
-    #ajaxProgressBar .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #083E40, #0ea5e9, #10b981);
-      background-size: 200% 100%;
-      animation: progressShimmer 1.5s ease infinite;
-      border-radius: 0 2px 2px 0;
-      transition: width 0.15s ease;
-      box-shadow: 0 0 10px rgba(14, 165, 233, 0.5), 0 0 5px rgba(16, 185, 129, 0.3);
-    }
-
-    @keyframes progressShimmer {
-      0% {
-        background-position: 200% 0;
-      }
-
-      100% {
-        background-position: -200% 0;
-      }
-    }
-
-    /* ===== Loading Overlay ===== */
-    #ajaxLoadingOverlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(248, 250, 252, 0.75);
-      backdrop-filter: blur(2px);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #ajaxLoadingOverlay.show {
-      display: flex;
-    }
-
-    .ajax-spinner {
-      background: white;
-      padding: 2rem 2.5rem;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-      animation: spinnerPop 0.25s ease;
-    }
-
-    @keyframes spinnerPop {
-      from {
-        transform: scale(0.9);
+    <style>
+      /* ===== Top Progress Bar ===== */
+      #ajaxProgressBar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        z-index: 99999;
+        background: rgba(0, 0, 0, 0.08);
         opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
       }
 
-      to {
-        transform: scale(1);
+      #ajaxProgressBar.show {
         opacity: 1;
       }
-    }
 
-    .spinner-ring {
-      width: 44px;
-      height: 44px;
-      border: 4px solid #e2e8f0;
-      border-top-color: #083E40;
-      border-right-color: #0ea5e9;
-      border-radius: 50%;
-      animation: spinnerRotate 0.8s linear infinite;
-    }
-
-    @keyframes spinnerRotate {
-      to {
-        transform: rotate(360deg);
+      #ajaxProgressBar .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #083E40, #0ea5e9, #10b981);
+        background-size: 200% 100%;
+        animation: progressShimmer 1.5s ease infinite;
+        border-radius: 0 2px 2px 0;
+        transition: width 0.15s ease;
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.5), 0 0 5px rgba(16, 185, 129, 0.3);
       }
-    }
 
-    .spinner-text {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1e293b;
-    }
+      @keyframes progressShimmer {
+        0% {
+          background-position: 200% 0;
+        }
 
-    .spinner-subtext {
-      font-size: 0.8rem;
-      color: #94a3b8;
-    }
+        100% {
+          background-position: -200% 0;
+        }
+      }
 
-    /* ===== Dark Mode ===== */
-    html.dark #ajaxProgressBar {
-      background: rgba(255, 255, 255, 0.05);
-    }
+      /* ===== Loading Overlay ===== */
+      #ajaxLoadingOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(248, 250, 252, 0.75);
+        backdrop-filter: blur(2px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      }
 
-    html.dark #ajaxLoadingOverlay {
-      background: rgba(15, 23, 42, 0.75);
-    }
+      #ajaxLoadingOverlay.show {
+        display: flex;
+      }
 
-    html.dark .ajax-spinner {
-      background: #1e293b;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
+      .ajax-spinner {
+        background: white;
+        padding: 2rem 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        animation: spinnerPop 0.25s ease;
+      }
 
-    html.dark .spinner-ring {
-      border-color: #334155;
-      border-top-color: #0ea5e9;
-      border-right-color: #10b981;
-    }
+      @keyframes spinnerPop {
+        from {
+          transform: scale(0.9);
+          opacity: 0;
+        }
 
-    html.dark .spinner-text {
-      color: #f1f5f9;
-    }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
 
-    html.dark .spinner-subtext {
-      color: #64748b;
-    }
-  </style>
+      .spinner-ring {
+        width: 44px;
+        height: 44px;
+        border: 4px solid #e2e8f0;
+        border-top-color: #083E40;
+        border-right-color: #0ea5e9;
+        border-radius: 50%;
+        animation: spinnerRotate 0.8s linear infinite;
+      }
+
+      @keyframes spinnerRotate {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinner-text {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .spinner-subtext {
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+
+      /* ===== Dark Mode ===== */
+      html.dark #ajaxProgressBar {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      html.dark #ajaxLoadingOverlay {
+        background: rgba(15, 23, 42, 0.75);
+      }
+
+      html.dark .ajax-spinner {
+        background: #1e293b;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      html.dark .spinner-ring {
+        border-color: #334155;
+        border-top-color: #0ea5e9;
+        border-right-color: #10b981;
+      }
+
+      html.dark .spinner-text {
+        color: #f1f5f9;
+      }
+
+      html.dark .spinner-subtext {
+        color: #64748b;
+      }
+    </style>
 @endsection
