@@ -3707,31 +3707,172 @@
         <i class="fa-solid fa-file-lines"></i>
         Daftar Dokumen Team Verifikasi
       </h3>
-      <div class="table-container-stats">
-        <div class="stat-item">
-          <span class="stat-value">{{ count($dokumens) }}</span>
-          <span class="stat-label">Total</span>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <style>
+      .dokumen-stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+        padding: 0 5px;
+      }
+      .dokumen-stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 20px rgba(26, 77, 62, 0.08), 0 2px 8px rgba(15, 61, 46, 0.04);
+        border: 1px solid rgba(26, 77, 62, 0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .dokumen-stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(26, 77, 62, 0.04) 0%, transparent 70%);
+        transition: all 0.5s ease;
+      }
+      .dokumen-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(26, 77, 62, 0.15), 0 4px 16px rgba(15, 61, 46, 0.08);
+        border-color: rgba(26, 77, 62, 0.12);
+      }
+      .dokumen-stat-card:hover::before {
+        top: -60%;
+        right: -60%;
+      }
+      .dokumen-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+      }
+      .dokumen-stat-icon.agenda {
+        background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
+      }
+      .dokumen-stat-icon.verifikasi {
+        background: linear-gradient(135deg, #2d6a4f 0%, #1b5e3f 100%);
+      }
+      .dokumen-stat-icon.proses {
+        background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%);
+      }
+      .dokumen-stat-icon.terkirim {
+        background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+      }
+      .dokumen-stat-info {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        min-width: 0;
+      }
+      .dokumen-stat-info .stat-number {
+        font-size: 26px;
+        font-weight: 800;
+        color: #1a4d3e;
+        line-height: 1.1;
+        margin-bottom: 2px;
+      }
+      .dokumen-stat-info .stat-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7c8a;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Dark mode support */
+      body.dark-mode .dokumen-stat-card {
+        background: linear-gradient(135deg, #1e2a35 0%, #243240 100%);
+        border-color: rgba(82, 183, 136, 0.15);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+      body.dark-mode .dokumen-stat-card:hover {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        border-color: rgba(82, 183, 136, 0.25);
+      }
+      body.dark-mode .dokumen-stat-card::before {
+        background: radial-gradient(circle, rgba(82, 183, 136, 0.06) 0%, transparent 70%);
+      }
+      body.dark-mode .dokumen-stat-info .stat-number {
+        color: #95d5b2;
+      }
+      body.dark-mode .dokumen-stat-info .stat-label {
+        color: #8899a6;
+      }
+
+      /* Responsive */
+      @media (max-width: 992px) {
+        .dokumen-stats-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 576px) {
+        .dokumen-stats-row {
+          grid-template-columns: 1fr;
+        }
+        .dokumen-stat-card {
+          padding: 14px 16px;
+        }
+        .dokumen-stat-info .stat-number {
+          font-size: 22px;
+        }
+      }
+    </style>
+    <div class="dokumen-stats-row">
+      <div class="dokumen-stat-card">
+        <div class="dokumen-stat-icon agenda">
+          <i class="fa-solid fa-book"></i>
         </div>
-        <div class="stat-item">
-          <span
-            class="stat-value">{{ $dokumens->whereIn('status', ['selesai', 'approved_Team Verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi'])->count() }}</span>
-          <span class="stat-label">Selesai</span>
+        <div class="dokumen-stat-info">
+          <div class="stat-number">{{ $totalDokumenAgenda ?? 0 }}</div>
+          <div class="stat-label">Total Dokumen Agenda</div>
         </div>
-        <div class="stat-item">
-          <span class="stat-value">{{ $dokumens->filter(function ($dokumen) {
-    $roleData = $dokumen->getDataForRole('team_verifikasi');
-    $hasDeadline = ($roleData && $roleData->deadline_at) || $dokumen->deadline_at;
-    $isRejected = $dokumen->roleStatuses()
-      ->where('role_code', 'team_verifikasi')
-      ->where('status', 'rejected')
-      ->exists();
-    return !$hasDeadline
-      && in_array($dokumen->status, ['sent_to_team_verifikasi', 'sedang diproses'])
-      && is_null($dokumen->returned_to_department_at)
-      && is_null($dokumen->returned_to_bidang_at)
-      && !$isRejected;
-  })->count() }}</span>
-          <span class="stat-label">Terkunci</span>
+      </div>
+      <div class="dokumen-stat-card">
+        <div class="dokumen-stat-icon verifikasi">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <div class="dokumen-stat-info">
+          <div class="stat-number">{{ $totalDokumenVerifikasi ?? 0 }}</div>
+          <div class="stat-label">Total Dokumen Verifikasi</div>
+        </div>
+      </div>
+      <div class="dokumen-stat-card">
+        <div class="dokumen-stat-icon proses">
+          <i class="fa-solid fa-spinner"></i>
+        </div>
+        <div class="dokumen-stat-info">
+          <div class="stat-number">{{ $totalDokumenDiproses ?? 0 }}</div>
+          <div class="stat-label">Dokumen Diproses</div>
+        </div>
+      </div>
+      <div class="dokumen-stat-card">
+        <div class="dokumen-stat-icon terkirim">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div class="dokumen-stat-info">
+          <div class="stat-number">{{ $totalTerkirim ?? 0 }}</div>
+          <div class="stat-label">Total Terkirim</div>
         </div>
       </div>
     </div>

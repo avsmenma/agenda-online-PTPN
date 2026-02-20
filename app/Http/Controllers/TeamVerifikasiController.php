@@ -608,21 +608,63 @@ class TeamVerifikasiController extends Controller
             return $dokumen;
         });
 
-        // Cache statistics for better performance
-        $cacheKey = 'team_verifikasi_stats_' . md5($request->fullUrl());
-        $statistics = \Cache::remember($cacheKey, 300, function () {
-            return Dokumen::where('current_handler', 'team_verifikasi')
-                ->selectRaw('
-                    COUNT(*) as total_dibaca,
-                    SUM(CASE WHEN status = "returned_to_Operator" THEN 1 ELSE 0 END) as total_dikembalikan,
-                    SUM(CASE WHEN status IN ("approved_Team Verifikasi", "selesai") THEN 1 ELSE 0 END) as total_dikirim
-                ')
-                ->first();
-        });
+        // Cache statistics for better performance (4 dashboard-style stats)
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
-        $totalDibaca = $statistics->total_dibaca ?? 0;
-        $totalDikembalikan = $statistics->total_dikembalikan ?? 0;
-        $totalDikirim = $statistics->total_dikirim ?? 0;
+        // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
+        $totalDokumenAgenda = Dokumen::when($hasImportedFromCsvColumn, function ($query) {
+            $query->where(function ($q) {
+                $q->where('imported_from_csv', false)
+                    ->orWhereNull('imported_from_csv');
+            });
+        })->count();
+
+        // 2. Total Dokumen Verifikasi - dokumen yang terlihat di Team Verifikasi
+        $totalDokumenVerifikasi = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi'])
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve'
+                ]);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->count();
+
+        // 3. Dokumen Diproses - dokumen yang sedang diproses oleh Team Verifikasi
+        $totalDokumenDiproses = Dokumen::whereIn('current_handler', ['team_verifikasi'])
+            ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses'])
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->count();
+
+        // 4. Total Terkirim - dokumen yang sudah dikirim ke tahap selanjutnya
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
+            ->where('current_handler', '!=', 'team_verifikasi')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->count();
 
         // Get suggestions if no results found
         $suggestions = [];
@@ -736,9 +778,10 @@ class TeamVerifikasiController extends Controller
             'menuDokumen' => 'Active',
             'menuDaftarDokumen' => 'Active',
             'dokumens' => $dokumens,
-            'totalDibaca' => $totalDibaca,
-            'totalDikembalikan' => $totalDikembalikan,
-            'totalDikirim' => $totalDikirim,
+            'totalDokumenAgenda' => $totalDokumenAgenda,
+            'totalDokumenVerifikasi' => $totalDokumenVerifikasi,
+            'totalDokumenDiproses' => $totalDokumenDiproses,
+            'totalTerkirim' => $totalTerkirim,
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
