@@ -900,6 +900,106 @@
       background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       color: white;
     }
+
+    /* Refresh Button */
+    .btn-refresh {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(23, 162, 184, 0.3);
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-refresh:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+      background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+    }
+
+    .btn-refresh:active {
+      transform: translateY(0);
+    }
+
+    .btn-refresh.loading {
+      opacity: 0.8;
+      cursor: wait;
+    }
+
+    .btn-refresh.loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .refresh-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
+    }
+
+    .refresh-toast.success {
+      background: linear-gradient(135deg, #28a745, #218838);
+    }
+
+    .refresh-toast.error {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    .dark .btn-refresh {
+      background: linear-gradient(135deg, #138496 0%, #0d6d7e 100%);
+      box-shadow: 0 2px 6px rgba(19, 132, 150, 0.4);
+    }
+
+    .dark .btn-refresh:hover {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
   </style>
 
   <div class="container-fluid py-4">
@@ -959,6 +1059,9 @@
         <button type="submit" class="btn-filter">
           <i class="fa-solid fa-filter me-1"></i>Filter
         </button>
+        <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
         <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
           <i class="fa-solid fa-table-columns me-2"></i>
           Kustomisasi Kolom Tabel
@@ -967,7 +1070,7 @@
     </div>
 
     <!-- Document Table -->
-    <div class="table-container">
+    <div class="table-container" id="documentTableContainer">
       @if($dokumens->count() > 0)
         <!-- Per-page dropdown at the top -->
         @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
@@ -3022,6 +3125,61 @@
         closeColumnCustomizationModal();
       }
     });
+
+    // AJAX Refresh Document Table
+    function refreshDocumentTable() {
+      const btn = document.getElementById('btnRefreshTable');
+      const container = document.getElementById('documentTableContainer');
+
+      if (!btn || !container) return;
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      fetch(window.location.href, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'text/html'
+        }
+      })
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.text();
+        })
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newTable = doc.getElementById('documentTableContainer');
+          if (newTable) {
+            container.innerHTML = newTable.innerHTML;
+            showRefreshToast('success', 'Data berhasil diperbarui!');
+          } else {
+            showRefreshToast('error', 'Gagal memperbarui data.');
+          }
+        })
+        .catch(error => {
+          console.error('Refresh error:', error);
+          showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+        })
+        .finally(() => {
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        });
+    }
+
+    function showRefreshToast(type, message) {
+      // Remove existing toasts
+      document.querySelectorAll('.refresh-toast').forEach(t => t.remove());
+
+      const toast = document.createElement('div');
+      toast.className = `refresh-toast ${type}`;
+      toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 3000);
+    }
   </script>
 
 @endsection
