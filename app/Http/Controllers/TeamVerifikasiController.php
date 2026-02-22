@@ -2429,6 +2429,18 @@ class TeamVerifikasiController extends Controller
 
             \DB::commit();
 
+            // Log activity: dokumen dikembalikan ke bidang oleh Team Verifikasi
+            try {
+                \App\Helpers\ActivityLogHelper::logReturned(
+                    $dokumen,
+                    $targetBidang,
+                    $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
+                    'team_verifikasi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for returnToBidang: ' . $logException->getMessage());
+            }
+
             \Log::info('Document returned to bidang', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
@@ -2561,6 +2573,18 @@ class TeamVerifikasiController extends Controller
 
             \DB::commit();
 
+            // Log activity: dokumen dikembalikan ke Operator oleh Team Verifikasi
+            try {
+                \App\Helpers\ActivityLogHelper::logReturned(
+                    $dokumen,
+                    'operator',
+                    $request->alasan_pengembalian,
+                    'team_verifikasi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for returnToOperator: ' . $logException->getMessage());
+            }
+
             \Log::info('Document returned to Operator', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
@@ -2664,6 +2688,18 @@ class TeamVerifikasiController extends Controller
             }
 
             \DB::commit();
+
+            // Log activity: status dokumen diubah oleh Team Verifikasi
+            try {
+                \App\Helpers\ActivityLogHelper::logStatusChanged(
+                    $dokumen,
+                    $dokumen->getOriginal('status'),
+                    $newStatus,
+                    'team_verifikasi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for changeDocumentStatus: ' . $logException->getMessage());
+            }
 
             \Log::info('Document status changed', [
                 'document_id' => $dokumen->id,

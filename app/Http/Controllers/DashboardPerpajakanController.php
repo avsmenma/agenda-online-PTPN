@@ -1570,6 +1570,18 @@ class DashboardPerpajakanController extends Controller
 
             \DB::commit();
 
+            // Log activity: dokumen dikembalikan ke Team Verifikasi oleh Perpajakan
+            try {
+                \App\Helpers\ActivityLogHelper::logReturned(
+                    $dokumen,
+                    'team_verifikasi',
+                    $request->return_reason,
+                    'perpajakan'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for returnDocument (perpajakan): ' . $logException->getMessage());
+            }
+
             \Log::info('Document successfully returned from perpajakan', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda
@@ -1664,6 +1676,15 @@ class DashboardPerpajakanController extends Controller
             \DB::commit();
 
             $handlerName = $request->next_handler === 'akutansi' ? 'Akutansi' : 'Pembayaran';
+
+            // Log activity: dokumen dikirim dari Perpajakan ke handler berikutnya
+            try {
+                \App\Helpers\ActivityLogHelper::logSent($dokumen, $request->next_handler, 'perpajakan');
+                \App\Helpers\ActivityLogHelper::logReceived($dokumen, $request->next_handler);
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for sendToNext (perpajakan): ' . $logException->getMessage());
+            }
+
             \Log::info("Document #{$dokumen->id} sent to inbox {$handlerName} by Perpajakan");
 
             return response()->json([

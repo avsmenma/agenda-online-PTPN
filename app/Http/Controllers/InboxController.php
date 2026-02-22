@@ -375,6 +375,18 @@ class InboxController extends Controller
             // Use new approval method
             $dokumen->approveFromRoleInbox($roleCode);
 
+            // Log activity: dokumen di-approve dari inbox
+            try {
+                \App\Helpers\ActivityLogHelper::logStatusChanged(
+                    $dokumen,
+                    'pending',
+                    'approved',
+                    $roleCode
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for inbox approve: ' . $logException->getMessage());
+            }
+
             $msg = 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.';
             if ($isAjax) {
                 return response()->json(['success' => true, 'message' => $msg]);
@@ -493,6 +505,19 @@ class InboxController extends Controller
             }
 
             $msg = 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason;
+
+            // Log activity: dokumen di-reject dari inbox
+            try {
+                \App\Helpers\ActivityLogHelper::logStatusChanged(
+                    $dokumen,
+                    'pending',
+                    'rejected',
+                    $roleCode
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for inbox reject: ' . $logException->getMessage());
+            }
+
             if ($isAjax) {
                 return response()->json(['success' => true, 'message' => $msg]);
             }
@@ -1003,6 +1028,19 @@ class InboxController extends Controller
                 // Approve document using existing method
                 // This will also update sender's display_status to "terkirim"
                 $dokumen->approveFromRoleInbox($roleCode);
+
+                // Log activity: dokumen di-approve dari bulk approve
+                try {
+                    \App\Helpers\ActivityLogHelper::logStatusChanged(
+                        $dokumen,
+                        'pending',
+                        'approved',
+                        $roleCode
+                    );
+                } catch (\Exception $logException) {
+                    \Log::error('Failed to log activity for bulk approve: ' . $logException->getMessage());
+                }
+
                 $successCount++;
                 $successDocuments[] = [
                     'nomor_agenda' => $dokumen->nomor_agenda,

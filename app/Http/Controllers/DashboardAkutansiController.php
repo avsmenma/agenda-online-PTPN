@@ -1926,6 +1926,18 @@ class DashboardAkutansiController extends Controller
 
             \DB::commit();
 
+            // Log activity: dokumen dikembalikan ke Team Verifikasi oleh Akutansi
+            try {
+                \App\Helpers\ActivityLogHelper::logReturned(
+                    $dokumen,
+                    'team_verifikasi',
+                    $request->return_reason,
+                    'akutansi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for returnDocument (akutansi): ' . $logException->getMessage());
+            }
+
             \Log::info('Document successfully returned from akutansi', [
                 'document_id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda

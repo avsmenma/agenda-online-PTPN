@@ -1294,6 +1294,14 @@ class DokumenController extends Controller
             $dokumen->refresh();
             DB::commit();
 
+            // Log activity: dokumen dikirim ke Team Verifikasi oleh Operator
+            try {
+                \App\Helpers\ActivityLogHelper::logSent($dokumen, 'team_verifikasi', 'operator');
+                \App\Helpers\ActivityLogHelper::logReceived($dokumen, 'team_verifikasi');
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for sendToTeamVerifikasi: ' . $logException->getMessage());
+            }
+
             // Broadcast event untuk inbox (DocumentSentToInbox sudah di-broadcast di method sendToInbox)
             try {
                 \Log::info('Document sent to inbox Team Verifikasi with WAITING_REVIEWER_APPROVAL status', [
