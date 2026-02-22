@@ -789,6 +789,8 @@
                 <th>No. Dokumen</th>
                 <th>Tgl Masuk</th>
                 <th>Nilai (Rp)</th>
+                <th>Kebun</th>
+                <th>Vendor/Dibayarkan Kepada</th>
                 <th>Posisi</th>
                 <th>Status</th>
                 <th>Progres</th>
@@ -806,6 +808,11 @@
                   <td>{{ $dokumen['tanggal_masuk'] ?? '-' }}</td>
                   <td>
                     <span class="doc-value">Rp {{ number_format($dokumen['nilai_rupiah'], 0, ',', '.') }}</span>
+                  </td>
+                  <td>{{ $dokumen['kebun'] ?? '-' }}</td>
+                  <td>
+                    <span class="vendor-cell" title="{{ $dokumen['vendor'] ?? '-' }}"
+                      style="max-width: 180px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $dokumen['vendor'] ?? '-' }}</span>
                   </td>
                   <td>
                     <div style="display: flex; align-items: center; gap: 6px;">
@@ -1063,11 +1070,11 @@
           const tag = document.createElement('span');
           tag.className = 'filter-tag';
           tag.innerHTML = `
-                                          <span>${labels[key] || key}: ${displayValue}</span>
-                                          <button type="button" class="remove" onclick="removeFilter('${key}')">
-                                            <i class="fas fa-times"></i>
-                                          </button>
-                                        `;
+                                            <span>${labels[key] || key}: ${displayValue}</span>
+                                            <button type="button" class="remove" onclick="removeFilter('${key}')">
+                                              <i class="fas fa-times"></i>
+                                            </button>
+                                          `;
           container.appendChild(tag);
         }
       }
@@ -1400,12 +1407,12 @@
       const overlay = document.createElement('div');
       overlay.id = 'ajaxLoadingOverlay';
       overlay.innerHTML = `
-                  <div class="ajax-spinner">
-                    <div class="spinner-ring"></div>
-                    <div class="spinner-text">Memuat data...</div>
-                    <div class="spinner-subtext">Mohon tunggu sebentar</div>
-                  </div>
-                `;
+                    <div class="ajax-spinner">
+                      <div class="spinner-ring"></div>
+                      <div class="spinner-text">Memuat data...</div>
+                      <div class="spinner-subtext">Mohon tunggu sebentar</div>
+                    </div>
+                  `;
       document.querySelector('.main-content').appendChild(overlay);
     });
 
@@ -1490,11 +1497,11 @@
       const container = document.getElementById('cardView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-                        <div class="empty-state">
-                          <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                          <div class="empty-state-title">Tidak ada dokumen</div>
-                          <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                        </div>`;
+                          <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                            <div class="empty-state-title">Tidak ada dokumen</div>
+                            <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                          </div>`;
         return;
       }
 
@@ -1548,11 +1555,11 @@
       const container = document.getElementById('tableView');
       if (!documents || documents.length === 0) {
         container.innerHTML = `
-                        <div class="empty-state">
-                          <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
-                          <div class="empty-state-title">Tidak ada dokumen</div>
-                          <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
-                        </div>`;
+                          <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+                            <div class="empty-state-title">Tidak ada dokumen</div>
+                            <div class="empty-state-text">Dokumen akan ditampilkan di sini ketika tersedia</div>
+                          </div>`;
         return;
       }
 
@@ -1596,30 +1603,30 @@
       const nextDisabled = pg.current_page >= pg.last_page ? 'disabled' : '';
 
       const html = `
-                      <div class="pagination-footer">
-                        <div class="pagination-footer-left">
-                          <label class="pagination-label">Baris per halaman:</label>
-                          <select class="pagination-select" onchange="changePerPage(this.value)">
-                            <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
-                            <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
-                            <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
-                            <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
-                            <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
-                          </select>
-                          <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
-                        </div>
-                        <div class="pagination-footer-right">
-                          <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
-                            <i class="fas fa-chevron-left"></i>
-                          </button>
-                          <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
-                            onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
-                          <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
-                          <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
-                            <i class="fas fa-chevron-right"></i>
-                          </button>
-                        </div>
-                      </div>`;
+                        <div class="pagination-footer">
+                          <div class="pagination-footer-left">
+                            <label class="pagination-label">Baris per halaman:</label>
+                            <select class="pagination-select" onchange="changePerPage(this.value)">
+                              <option value="10" ${pg.per_page == 10 ? 'selected' : ''}>10</option>
+                              <option value="25" ${pg.per_page == 25 ? 'selected' : ''}>25</option>
+                              <option value="50" ${pg.per_page == 50 ? 'selected' : ''}>50</option>
+                              <option value="100" ${pg.per_page == 100 ? 'selected' : ''}>100</option>
+                              <option value="all" ${pg.per_page >= pg.total ? 'selected' : ''}>Semua</option>
+                            </select>
+                            <span class="pagination-summary">Menampilkan ${pg.from || 0} - ${pg.to || 0} dari ${totalFormatted} hasil</span>
+                          </div>
+                          <div class="pagination-footer-right">
+                            <button class="pagination-btn" onclick="goToPage(${pg.current_page - 1})" ${prevDisabled} title="Halaman sebelumnya">
+                              <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <input type="number" class="pagination-page-input" value="${pg.current_page}" min="1" max="${pg.last_page}"
+                              onchange="goToPage(this.value)" onkeypress="if(event.key==='Enter')goToPage(this.value)">
+                            <span class="pagination-total-pages">dari ${pg.last_page} halaman</span>
+                            <button class="pagination-btn" onclick="goToPage(${pg.current_page + 1})" ${nextDisabled} title="Halaman berikutnya">
+                              <i class="fas fa-chevron-right"></i>
+                            </button>
+                          </div>
+                        </div>`;
 
       ['cardPagination', 'tablePagination'].forEach(id => {
         const el = document.getElementById(id);

@@ -596,6 +596,8 @@ class OwnerDashboardController extends Controller
                 'deadline_info' => $this->getDeadlineInfo($dokumen),
                 'workflow_timeline' => $this->getWorkflowTimeline($dokumen),
                 'umur_dokumen' => $this->calculateDocumentAge($dokumen),
+                'kebun' => $dokumen->kebun ?? '-',
+                'vendor' => $dokumen->dibayar_kepada ?? ($dokumen->dibayarKepadas->first()->nama_penerima ?? '-'),
             ];
         });
 
