@@ -2833,6 +2833,183 @@
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
 
+  <!-- ===== BENTO GRID STATS PERPAJAKAN ===== -->
+  <style>
+    /* Bento Grid reuse vstat pattern */
+    .vstat-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .vstat-card {
+      grid-column: span 3;
+      background: white;
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 1rem;
+      text-decoration: none; color: inherit;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .vstat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(8,62,64,0.12); }
+    .vstat-card--total { grid-column: span 6; background: linear-gradient(135deg, #083E40 0%, #0a5254 100%); color: white; }
+    .vstat-content { flex: 1; }
+    .vstat-label { font-size: 0.75rem; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    .vstat-value { font-size: 1.75rem; font-weight: 800; line-height: 1; }
+    .vstat-sub { font-size: 0.75rem; margin-top: 0.25rem; opacity: 0.7; }
+    .vstat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .vstat-icon--perpajakan { background: rgba(14,116,144,0.12); color: #0e7490; }
+    .vstat-icon--proses { background: rgba(245,158,11,0.12); color: #d97706; }
+    .vstat-icon--terkirim { background: rgba(59,130,246,0.12); color: #3b82f6; }
+    /* Deadline cards */
+    .vdeadline-card {
+      grid-column: span 4;
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      display: flex; align-items: center; gap: 0.85rem;
+      text-decoration: none; position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid transparent;
+    }
+    .vdeadline-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .vdeadline-card--aman { background: linear-gradient(135deg,#10b981,#059669); color:white; }
+    .vdeadline-card--peringatan { background: linear-gradient(135deg,#f59e0b,#d97706); color:white; }
+    .vdeadline-card--terlambat { background: linear-gradient(135deg,#ef4444,#dc2626); color:white; }
+    .vdeadline-icon { font-size: 1.4rem; opacity: 0.9; flex-shrink: 0; }
+    .vdeadline-content { flex: 1; }
+    .vdeadline-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
+    .vdeadline-value { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+    .vdeadline-desc { font-size: 0.7rem; opacity: 0.8; margin-top: 2px; }
+    .vdeadline-active { box-shadow: 0 0 0 3px rgba(255,255,255,0.6), 0 8px 24px rgba(0,0,0,0.2) !important; transform: scale(1.02); }
+    @media (max-width: 1200px) { .vstat-card { grid-column: span 6; } .vdeadline-card { grid-column: span 4; } }
+    @media (max-width: 992px) { .vdeadline-card { grid-column: span 6; } }
+    @media (max-width: 768px) { .vstat-grid { gap: 0.75rem; } .vstat-card, .vdeadline-card { grid-column: span 12; } }
+  </style>
+
+  <div class="vstat-grid">
+    <!-- Card 1: Total Dokumen Agenda -->
+    <div class="vstat-card vstat-card--total">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Dokumen Agenda</div>
+        <div class="vstat-value" data-counter="{{ $totalDokumenAgenda ?? 0 }}" data-duration="1400">0</div>
+        <div class="vstat-sub" data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}" data-duration="1600">Rp 0</div>
+      </div>
+      <div class="vstat-icon" style="background:rgba(255,255,255,0.2);color:white;"><i class="fas fa-layer-group"></i></div>
+    </div>
+
+    <!-- Card 2: Total Dokumen Perpajakan -->
+    <a href="{{ route('documents.perpajakan.index') }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Dokumen Perpajakan</div>
+        <div class="vstat-value" data-counter="{{ $totalDokumenPerpajakan ?? 0 }}" data-duration="1200">0</div>
+        <div class="vstat-sub">Dokumen di perpajakan</div>
+      </div>
+      <div class="vstat-icon vstat-icon--perpajakan"><i class="fas fa-file-invoice-dollar"></i></div>
+    </a>
+
+    <!-- Card 3: Dokumen Diproses -->
+    <a href="{{ route('documents.perpajakan.index', ['status' => 'sedang_proses']) }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Dokumen Diproses</div>
+        <div class="vstat-value" data-counter="{{ $totalDokumenDiproses ?? 0 }}" data-duration="1200">0</div>
+        <div class="vstat-sub">Sedang diproses</div>
+      </div>
+      <div class="vstat-icon vstat-icon--proses"><i class="fas fa-clock"></i></div>
+    </a>
+
+    <!-- Card 4: Total Terkirim -->
+    <a href="{{ route('documents.perpajakan.index', ['status' => 'terkirim']) }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Terkirim</div>
+        <div class="vstat-value" data-counter="{{ $totalTerkirim ?? 0 }}" data-duration="1200">0</div>
+        <div class="vstat-sub">Dikirim ke tahap selanjutnya</div>
+      </div>
+      <div class="vstat-icon vstat-icon--terkirim"><i class="fas fa-paper-plane"></i></div>
+    </a>
+
+    <!-- Deadline Card: Aman -->
+    @php $filterKeterlambatan = request('keterlambatan'); @endphp
+    <a href="{{ route('documents.perpajakan.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
+      class="vdeadline-card vdeadline-card--aman {{ $filterKeterlambatan === 'aman' ? 'vdeadline-active' : '' }}">
+      <div class="vdeadline-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Aman</div>
+        <div class="vdeadline-value" data-counter="{{ $dokumenLessThan24h ?? 0 }}" data-duration="1000">0</div>
+        <div class="vdeadline-desc">Diterima &lt; 24 jam</div>
+      </div>
+      @if($filterKeterlambatan === 'aman')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(16,185,129,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
+    </a>
+
+    <!-- Deadline Card: Peringatan -->
+    <a href="{{ route('documents.perpajakan.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
+      class="vdeadline-card vdeadline-card--peringatan {{ $filterKeterlambatan === 'peringatan' ? 'vdeadline-active' : '' }}">
+      <div class="vdeadline-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Peringatan</div>
+        <div class="vdeadline-value" data-counter="{{ $dokumen24to72h ?? 0 }}" data-duration="1000">0</div>
+        <div class="vdeadline-desc">Diterima 1–3 hari lalu</div>
+      </div>
+      @if($filterKeterlambatan === 'peringatan')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(245,158,11,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
+    </a>
+
+    <!-- Deadline Card: Terlambat -->
+    <a href="{{ route('documents.perpajakan.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
+      class="vdeadline-card vdeadline-card--terlambat {{ $filterKeterlambatan === 'terlambat' ? 'vdeadline-active' : '' }}">
+      <div class="vdeadline-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Terlambat</div>
+        <div class="vdeadline-value" data-counter="{{ $dokumenMoreThan72h ?? 0 }}" data-duration="1000">0</div>
+        <div class="vdeadline-desc">Diterima &gt; 3 hari lalu</div>
+      </div>
+      @if($filterKeterlambatan === 'terlambat')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(244,63,94,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
+    </a>
+  </div>
+  <!-- ===== END BENTO GRID STATS PERPAJAKAN ===== -->
+
+  <script>
+    (function() {
+      function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
+      function formatNumber(n) { return Math.floor(n).toLocaleString('id-ID').replace(/\./g, ','); }
+      function formatRupiah(n) { return 'Rp ' + Math.floor(n).toLocaleString('id-ID'); }
+      function animateCounter(el, target, duration, isRupiah) {
+        var start = performance.now(); target = parseInt(target) || 0;
+        function step(now) {
+          var elapsed = now - start, progress = Math.min(elapsed / duration, 1);
+          var current = easeOutExpo(progress) * target;
+          el.textContent = isRupiah ? formatRupiah(current) : formatNumber(current);
+          if (progress < 1) { requestAnimationFrame(step); }
+          else { el.textContent = isRupiah ? formatRupiah(target) : formatNumber(target); }
+        }
+        requestAnimationFrame(step);
+      }
+      function initCounters() {
+        document.querySelectorAll('[data-counter]').forEach(function(el) {
+          var target = el.getAttribute('data-counter');
+          var duration = parseInt(el.getAttribute('data-duration')) || 1200;
+          var animated = false;
+          var obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) { if (e.isIntersecting && !animated) { animated = true; animateCounter(el, target, duration, false); obs.disconnect(); } });
+          }, { threshold: 0.3 });
+          obs.observe(el);
+        });
+        document.querySelectorAll('[data-counter-rupiah]').forEach(function(el) {
+          var target = el.getAttribute('data-counter-rupiah');
+          var duration = parseInt(el.getAttribute('data-duration')) || 1600;
+          var animated = false;
+          var obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) { if (e.isIntersecting && !animated) { animated = true; animateCounter(el, target, duration, true); obs.disconnect(); } });
+          }, { threshold: 0.3 });
+          obs.observe(el);
+        });
+      }
+      if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initCounters); } else { initCounters(); }
+    })();
+  </script>
+
   <!-- Enhanced Search & Filter Box -->
   <div class="search-box">
     <form action="{{ route('documents.perpajakan.index') }}" method="GET"
@@ -2931,14 +3108,69 @@
     </div>
   @endif
 
-  <!-- Tabel Dokumen dengan Horizontal Scroll -->
+  <!-- ===== REDESIGNED TABLE SECTION PERPAJAKAN ===== -->
+  <style>
+    #documentTableContainer.table-dokumen {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+      overflow: hidden;
+      padding: 0 !important;
+    }
+    .dtable-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.35rem; border-bottom: 1px solid #f1f5f9; gap: 1rem; flex-wrap: wrap; }
+    .dtable-toolbar-left { display: flex; align-items: center; gap: 0.65rem; }
+    .dtable-toolbar-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #083E40 0%, #0a5254 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; flex-shrink: 0; }
+    .dtable-toolbar-title { font-size: 1rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; }
+    .dtable-toolbar-subtitle { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+    .dtable-toolbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .dtable-perpage-label { font-size: 0.8125rem; color: #64748b; white-space: nowrap; }
+    .dtable-perpage-select { padding: 0.35rem 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8125rem; color: #334155; background: #f8fafc; cursor: pointer; outline: none; transition: border-color 0.2s; }
+    .dtable-perpage-select:focus { border-color: #083E40; }
+    #documentTableContainer .table-responsive { padding: 0; }
+    #documentTableContainer .pagination-perpage-top-wrapper { display: none !important; }
+    #documentTableContainer table.table-enhanced thead th {
+      font-size: 0.775rem !important; font-weight: 600 !important; letter-spacing: 0.04em !important;
+      color: rgba(255,255,255,0.95) !important; padding: 0.85rem 0.9rem !important;
+      border: none !important; white-space: nowrap;
+      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+    }
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) td { background: #f8fafc; }
+    #documentTableContainer .table-enhanced td { border-top: 1px solid #f1f5f9 !important; border-bottom: none !important; }
+    #documentTableContainer .table-enhanced tbody tr:hover td { background: linear-gradient(90deg, rgba(8,62,64,0.05) 0%, transparent 100%) !important; border-left: 3px solid #083E40; }
+  </style>
+
   <div class="table-dokumen" id="documentTableContainer">
-    <div class="table-container-header">
-      <h3 class="table-container-title">
-        <i class="fa-solid fa-file-lines"></i>
-        Daftar Dokumen Team Perpajakan
-      </h3>
+    <div class="dtable-toolbar">
+      <div class="dtable-toolbar-left">
+        <div class="dtable-toolbar-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <div>
+          <div class="dtable-toolbar-title">Daftar Dokumen Team Perpajakan</div>
+          <div class="dtable-toolbar-subtitle">
+            Menampilkan {{ $dokumens->firstItem() ?? 0 }}–{{ $dokumens->lastItem() ?? 0 }} dari {{ number_format($dokumens->total()) }} hasil
+          </div>
+        </div>
+      </div>
+      <div class="dtable-toolbar-right">
+        <span class="dtable-perpage-label">Baris per halaman:</span>
+        @php $currentPerPage = request('per_page', session('perpajakan_per_page', 10)); @endphp
+        <form method="GET" action="{{ route('documents.perpajakan.index') }}" style="display:inline;">
+          @foreach(request()->except('per_page', 'page') as $key => $val)
+            @if(is_array($val))
+              @foreach($val as $v)<input type="hidden" name="{{ $key }}[]" value="{{ $v }}">@endforeach
+            @else
+              <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+            @endif
+          @endforeach
+          <select name="per_page" class="dtable-perpage-select" onchange="this.form.submit()">
+            @foreach([10, 25, 50, 100] as $pp)
+              <option value="{{ $pp }}" {{ (int)$currentPerPage === $pp ? 'selected' : '' }}>{{ $pp }}</option>
+            @endforeach
+          </select>
+        </form>
+      </div>
     </div>
+    <div class="table-responsive">
 
     <!-- Stats Cards Row -->
     <style>
@@ -3068,49 +3300,8 @@
           font-size: 22px;
         }
       }
-    </style>
-    <div class="dokumen-stats-row">
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon agenda">
-          <i class="fa-solid fa-book"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalDokumenAgenda ?? 0 }}</div>
-          <div class="stat-label">Total Dokumen Agenda</div>
-        </div>
-      </div>
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon perpajakan">
-          <i class="fa-solid fa-file-invoice-dollar"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalDokumenPerpajakan ?? 0 }}</div>
-          <div class="stat-label">Total Dokumen Perpajakan</div>
-        </div>
-      </div>
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon proses">
-          <i class="fa-solid fa-clock"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalDokumenDiproses ?? 0 }}</div>
-          <div class="stat-label">Dokumen Diproses</div>
-        </div>
-      </div>
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon terkirim">
-          <i class="fa-solid fa-paper-plane"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalTerkirim ?? 0 }}</div>
-          <div class="stat-label">Total Terkirim</div>
-        </div>
-      </div>
-    </div>
-    <!-- Per-page dropdown at the top -->
-    @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
-    <div class="table-responsive">
       <table class="table table-enhanced mb-0">
+
         <thead>
           <tr>
             <th class="col-checkbox" style="width: 50px;">

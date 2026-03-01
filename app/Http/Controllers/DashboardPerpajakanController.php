@@ -584,6 +584,76 @@ class DashboardPerpajakanController extends Controller
             ->excludeCsvImports()
             ->count();
 
+        // Calculate delay stats (same logic as dashboard index)
+        $now = Carbon::now();
+        $perpajakanDocsWithRoleData = Dokumen::where(function ($query) {
+            $query->where('current_handler', 'perpajakan')
+                ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran'])
+                ->orWhere(function ($completedQ) {
+                    $completedQ->whereIn('status', ['completed', 'selesai'])
+                        ->whereNotNull('status_perpajakan');
+                });
+        })
+            ->excludeCsvImports()
+            ->with(['roleData' => function ($q) {
+                $q->where('role_code', 'perpajakan');
+            }])
+            ->get(['id', 'status', 'current_handler', 'nilai_rupiah']);
+
+        $dokumenLessThan24h = 0;
+        $dokumen24to72h = 0;
+        $dokumenMoreThan72h = 0;
+        $totalNilaiRupiah = 0;
+
+        foreach ($perpajakanDocsWithRoleData as $doc) {
+            $totalNilaiRupiah += (float) preg_replace('/[^0-9]/', '', $doc->nilai_rupiah ?? 0);
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $isSent = $doc->status === 'sent_to_akutansi' || $doc->current_handler !== 'perpajakan';
+                $hoursDiff = ($isSent && $roleData->processed_at)
+                    ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
+                    : $receivedAt->diffInHours($now);
+                if ($hoursDiff < 24) { $dokumenLessThan24h++; }
+                elseif ($hoursDiff < 72) { $dokumen24to72h++; }
+                else { $dokumenMoreThan72h++; }
+            } else {
+                $isBypassed = in_array($doc->status, ['sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
+                    || $doc->current_handler !== 'perpajakan';
+                if ($isBypassed) { $dokumenLessThan24h++; }
+                else { $dokumenMoreThan72h++; }
+            }
+        }
+
+        // Filter by keterlambatan (deadline card click filter)
+        if ($request->has('keterlambatan') && in_array($request->keterlambatan, ['aman', 'peringatan', 'terlambat'])) {
+            $keterlambatanFilter = $request->keterlambatan;
+            $filteredIds = [];
+            foreach ($perpajakanDocsWithRoleData as $doc) {
+                $roleData = $doc->roleData->first();
+                if ($roleData && $roleData->received_at) {
+                    $receivedAt = Carbon::parse($roleData->received_at);
+                    $isSent = $doc->status === 'sent_to_akutansi' || $doc->current_handler !== 'perpajakan';
+                    $hoursDiff = ($isSent && $roleData->processed_at)
+                        ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
+                        : $receivedAt->diffInHours($now);
+                    $isAman = $hoursDiff < 24;
+                    $isPeringatan = $hoursDiff >= 24 && $hoursDiff < 72;
+                    $isTerlambat = $hoursDiff >= 72;
+                } else {
+                    $isBypassed = in_array($doc->status, ['sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
+                        || $doc->current_handler !== 'perpajakan';
+                    $isAman = $isBypassed;
+                    $isPeringatan = false;
+                    $isTerlambat = !$isBypassed;
+                }
+                if ($keterlambatanFilter === 'aman' && $isAman) $filteredIds[] = $doc->id;
+                elseif ($keterlambatanFilter === 'peringatan' && $isPeringatan) $filteredIds[] = $doc->id;
+                elseif ($keterlambatanFilter === 'terlambat' && $isTerlambat) $filteredIds[] = $doc->id;
+            }
+            $query->whereIn('dokumens.id', empty($filteredIds) ? [0] : $filteredIds);
+        }
+
         $data = array(
             "title" => "Daftar Dokumen Team Perpajakan",
             "module" => "perpajakan",
@@ -595,6 +665,10 @@ class DashboardPerpajakanController extends Controller
             'totalDokumenPerpajakan' => $totalDokumenPerpajakan,
             'totalDokumenDiproses' => $totalDokumenDiproses,
             'totalTerkirim' => $totalTerkirim,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
+            'totalNilaiRupiah' => $totalNilaiRupiah,
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
@@ -603,6 +677,7 @@ class DashboardPerpajakanController extends Controller
         );
         return view('perpajakan.dokumens.daftarPerpajakan', $data);
     }
+
 
     public function editDokumen(Dokumen $dokumen)
     {
