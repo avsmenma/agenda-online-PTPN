@@ -378,6 +378,60 @@ class TeamVerifikasiController extends Controller
             }
         }
 
+        // Filter by keterlambatan (deadline card click filter)
+        if ($request->has('keterlambatan') && in_array($request->keterlambatan, ['aman', 'peringatan', 'terlambat'])) {
+            $keterlambatanFilter = $request->keterlambatan;
+            $now = Carbon::now();
+
+            // Get all relevant dokumen IDs with their roleData received_at
+            $allDokumenWithRoleData = Dokumen::where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($q) {
+                    $q->where(function ($sq) {
+                        $sq->where('imported_from_csv', false)->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->with(['roleData' => function ($q) {
+                    $q->where('role_code', 'team_verifikasi');
+                }])
+                ->get(['id', 'status']);
+
+            $filteredIds = [];
+            foreach ($allDokumenWithRoleData as $doc) {
+                $roleData = $doc->roleData->first();
+                if ($roleData && $roleData->received_at) {
+                    $receivedAt = Carbon::parse($roleData->received_at);
+                    $isSent = in_array($doc->status, [
+                        'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                        'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
+                        'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi'
+                    ]);
+                    $hoursDiff = ($isSent && $roleData->processed_at)
+                        ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
+                        : $receivedAt->diffInHours($now);
+
+                    $isAman = $hoursDiff < 24;
+                    $isPeringatan = $hoursDiff >= 24 && $hoursDiff < 72;
+                    $isTerlambat = $hoursDiff >= 72;
+                } else {
+                    // No received_at → treat as terlambat
+                    $isAman = false;
+                    $isPeringatan = false;
+                    $isTerlambat = true;
+                }
+
+                if ($keterlambatanFilter === 'aman' && $isAman) {
+                    $filteredIds[] = $doc->id;
+                } elseif ($keterlambatanFilter === 'peringatan' && $isPeringatan) {
+                    $filteredIds[] = $doc->id;
+                } elseif ($keterlambatanFilter === 'terlambat' && $isTerlambat) {
+                    $filteredIds[] = $doc->id;
+                }
+            }
+
+            $query->whereIn('dokumens.id', empty($filteredIds) ? [0] : $filteredIds);
+        }
+
+
         // Use eager loading for relations to prevent N+1 queries
         $dokumens = $query->with([
             'dibayarKepadas',

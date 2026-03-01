@@ -3643,6 +3643,17 @@
     .vdeadline-label { font-size: 0.8125rem; font-weight: 500; color: #94a3b8; margin-bottom: 0.2rem; }
     .vdeadline-value { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
     .vdeadline-desc { font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem; }
+    /* Active state when card filter is applied */
+    .vdeadline-card.vdeadline-active { transform: translateY(-2px); }
+    .vdeadline-card--aman.vdeadline-active { background: rgba(16,185,129,0.1); border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 6px 20px rgba(16,185,129,0.15); }
+    .vdeadline-card--aman.vdeadline-active::before { width: 6px; background: #10b981; }
+    .vdeadline-card--aman.vdeadline-active .vdeadline-value { color: #059669; }
+    .vdeadline-card--peringatan.vdeadline-active { background: rgba(245,158,11,0.1); border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.3), 0 6px 20px rgba(245,158,11,0.15); }
+    .vdeadline-card--peringatan.vdeadline-active::before { width: 6px; background: #f59e0b; }
+    .vdeadline-card--peringatan.vdeadline-active .vdeadline-value { color: #d97706; }
+    .vdeadline-card--terlambat.vdeadline-active { background: rgba(244,63,94,0.1); border-color: #f43f5e; box-shadow: 0 0 0 2px rgba(244,63,94,0.3), 0 6px 20px rgba(244,63,94,0.15); }
+    .vdeadline-card--terlambat.vdeadline-active::before { width: 6px; background: #f43f5e; }
+    .vdeadline-card--terlambat.vdeadline-active .vdeadline-value { color: #e11d48; }
     @media (max-width: 1280px) {
       .vstat-card { grid-column: span 6; }
       .vdeadline-card { grid-column: span 4; }
@@ -3653,6 +3664,7 @@
       .vstat-card, .vdeadline-card { grid-column: span 12; }
     }
   </style>
+
 
   <div class="vstat-grid">
     <!-- Card 1: Total Dokumen Agenda (hijau solid - besar) -->
@@ -3704,34 +3716,48 @@
     </a>
 
     <!-- Deadline Card: Aman -->
-    <a href="{{ route('documents.verifikasi.index') }}" class="vdeadline-card vdeadline-card--aman">
+    @php $filterKeterlambatan = request('keterlambatan'); @endphp
+    <a href="{{ route('documents.verifikasi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
+      class="vdeadline-card vdeadline-card--aman {{ $filterKeterlambatan === 'aman' ? 'vdeadline-active' : '' }}">
       <div class="vdeadline-icon"><i class="fas fa-shield-alt"></i></div>
       <div class="vdeadline-content">
         <div class="vdeadline-label">Aman</div>
         <div class="vdeadline-value">{{ number_format($dokumenLessThan24h ?? 0) }}</div>
         <div class="vdeadline-desc">Diterima &lt; 24 jam</div>
       </div>
+      @if($filterKeterlambatan === 'aman')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(16,185,129,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
     </a>
 
     <!-- Deadline Card: Peringatan -->
-    <a href="{{ route('documents.verifikasi.index') }}" class="vdeadline-card vdeadline-card--peringatan">
+    <a href="{{ route('documents.verifikasi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
+      class="vdeadline-card vdeadline-card--peringatan {{ $filterKeterlambatan === 'peringatan' ? 'vdeadline-active' : '' }}">
       <div class="vdeadline-icon"><i class="fas fa-exclamation-triangle"></i></div>
       <div class="vdeadline-content">
         <div class="vdeadline-label">Peringatan</div>
         <div class="vdeadline-value">{{ number_format($dokumen24to72h ?? 0) }}</div>
         <div class="vdeadline-desc">Diterima 1–3 hari lalu</div>
       </div>
+      @if($filterKeterlambatan === 'peringatan')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(245,158,11,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
     </a>
 
     <!-- Deadline Card: Terlambat -->
-    <a href="{{ route('documents.verifikasi.index') }}" class="vdeadline-card vdeadline-card--terlambat">
+    <a href="{{ route('documents.verifikasi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
+      class="vdeadline-card vdeadline-card--terlambat {{ $filterKeterlambatan === 'terlambat' ? 'vdeadline-active' : '' }}">
       <div class="vdeadline-icon"><i class="fas fa-times-circle"></i></div>
       <div class="vdeadline-content">
         <div class="vdeadline-label">Terlambat</div>
         <div class="vdeadline-value">{{ number_format($dokumenMoreThan72h ?? 0) }}</div>
         <div class="vdeadline-desc">Diterima &gt; 3 hari lalu</div>
       </div>
+      @if($filterKeterlambatan === 'terlambat')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(244,63,94,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
     </a>
+
   </div>
   <!-- ===== END BENTO GRID STATS ===== -->
 
@@ -3835,6 +3861,10 @@
         Kustomisasi Kolom Tabel
       </button>
 
+      <!-- Preserve keterlambatan filter from deadline card clicks -->
+      @if(request('keterlambatan'))
+        <input type="hidden" name="keterlambatan" value="{{ request('keterlambatan') }}">
+      @endif
       <!-- Preserve per_page and columns parameters -->
       @if(request('per_page'))
         <input type="hidden" name="per_page" value="{{ request('per_page') }}">
