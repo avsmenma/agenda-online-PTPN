@@ -3562,6 +3562,178 @@
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
 
+  <!-- ===== PREMIUM BENTO GRID STATS ===== -->
+  <style>
+    /* Bento Grid for Verifikasi Stats */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    .vstat-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.1rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .vstat-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.35rem 1.5rem;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: 250ms cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      grid-column: span 3;
+    }
+    .vstat-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .vstat-card--total {
+      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
+      border: none;
+      box-shadow: 0 4px 20px rgba(8,62,64,0.35);
+    }
+    .vstat-card--total:hover { box-shadow: 0 8px 30px rgba(8,62,64,0.45); transform: translateY(-3px); }
+    .vstat-card--total .vstat-label, .vstat-card--total .vstat-value, .vstat-card--total .vstat-sub { color: white; }
+    .vstat-card--total .vstat-label { opacity: 0.9; }
+    .vstat-card--total .vstat-sub { opacity: 0.85; }
+    .vstat-card--total .vstat-icon { background: rgba(255,255,255,0.2); color: white; }
+    .vstat-content { display: flex; flex-direction: column; }
+    .vstat-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; flex-shrink: 0;
+    }
+    .vstat-icon--verifikasi { background: rgba(8,62,64,0.1); color: #083E40; }
+    .vstat-icon--proses { background: rgba(245,158,11,0.12); color: #f59e0b; }
+    .vstat-icon--terkirim { background: rgba(59,130,246,0.12); color: #3b82f6; }
+    .vstat-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+    .vstat-value { font-size: 1.875rem; font-weight: 700; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.2rem; }
+    .vstat-sub { font-size: 0.8125rem; color: #10b981; font-weight: 600; }
+    /* Deadline cards */
+    .vdeadline-card {
+      grid-column: span 4;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.2rem 1.5rem;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: 250ms cubic-bezier(0.4,0,0.2,1);
+      display: flex; align-items: center; gap: 1rem;
+      cursor: pointer; text-decoration: none; color: inherit;
+      position: relative; overflow: hidden;
+    }
+    .vdeadline-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; transition: 250ms; }
+    .vdeadline-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .vdeadline-card--aman::before { background: #10b981; }
+    .vdeadline-card--peringatan::before { background: #f59e0b; }
+    .vdeadline-card--terlambat::before { background: #f43f5e; }
+    .vdeadline-card--aman:hover { box-shadow: 0 0 20px rgba(16,185,129,0.2), 0 8px 32px rgba(0,0,0,0.08); }
+    .vdeadline-card--peringatan:hover { box-shadow: 0 0 20px rgba(245,158,11,0.2), 0 8px 32px rgba(0,0,0,0.08); }
+    .vdeadline-card--terlambat:hover { box-shadow: 0 0 20px rgba(244,63,94,0.2), 0 8px 32px rgba(0,0,0,0.08); }
+    .vdeadline-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .vdeadline-card--aman .vdeadline-icon { background: rgba(16,185,129,0.12); color: #10b981; }
+    .vdeadline-card--peringatan .vdeadline-icon { background: rgba(245,158,11,0.12); color: #f59e0b; }
+    .vdeadline-card--terlambat .vdeadline-icon { background: rgba(244,63,94,0.12); color: #f43f5e; }
+    .vdeadline-content { flex: 1; }
+    .vdeadline-label { font-size: 0.8125rem; font-weight: 500; color: #94a3b8; margin-bottom: 0.2rem; }
+    .vdeadline-value { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
+    .vdeadline-desc { font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem; }
+    @media (max-width: 1280px) {
+      .vstat-card { grid-column: span 6; }
+      .vdeadline-card { grid-column: span 4; }
+    }
+    @media (max-width: 992px) { .vdeadline-card { grid-column: span 6; } }
+    @media (max-width: 768px) {
+      .vstat-grid { gap: 0.75rem; }
+      .vstat-card, .vdeadline-card { grid-column: span 12; }
+    }
+  </style>
+
+  <div class="vstat-grid">
+    <!-- Card 1: Total Dokumen Agenda (hijau solid - besar) -->
+    <div class="vstat-card vstat-card--total">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Dokumen Agenda</div>
+        <div class="vstat-value">{{ number_format($totalDokumenAgenda ?? 0) }}</div>
+        <div class="vstat-sub">Rp {{ number_format($totalNilaiRupiah ?? 0, 0, ',', '.') }}</div>
+      </div>
+      <div class="vstat-icon" style="background:rgba(255,255,255,0.2);color:white;">
+        <i class="fas fa-layer-group"></i>
+      </div>
+    </div>
+
+    <!-- Card 2: Total Dokumen Verifikasi -->
+    <a href="{{ route('documents.verifikasi.index') }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Dokumen Verifikasi</div>
+        <div class="vstat-value">{{ number_format($totalDokumenVerifikasi ?? 0) }}</div>
+        <div class="vstat-sub">Dokumen di verifikasi</div>
+      </div>
+      <div class="vstat-icon vstat-icon--verifikasi">
+        <i class="fas fa-folder-open"></i>
+      </div>
+    </a>
+
+    <!-- Card 3: Dokumen Diproses -->
+    <a href="{{ route('documents.verifikasi.index', ['status' => 'sedang_proses']) }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Dokumen Diproses</div>
+        <div class="vstat-value">{{ number_format($totalDokumenDiproses ?? 0) }}</div>
+        <div class="vstat-sub">Sedang diproses</div>
+      </div>
+      <div class="vstat-icon vstat-icon--proses">
+        <i class="fas fa-clock"></i>
+      </div>
+    </a>
+
+    <!-- Card 4: Total Terkirim -->
+    <a href="{{ route('documents.verifikasi.index', ['status' => 'terkirim']) }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Terkirim</div>
+        <div class="vstat-value">{{ number_format($totalTerkirim ?? 0) }}</div>
+        <div class="vstat-sub">Dikirim ke tahap selanjutnya</div>
+      </div>
+      <div class="vstat-icon vstat-icon--terkirim">
+        <i class="fas fa-paper-plane"></i>
+      </div>
+    </a>
+
+    <!-- Deadline Card: Aman -->
+    <a href="{{ route('documents.verifikasi.index') }}" class="vdeadline-card vdeadline-card--aman">
+      <div class="vdeadline-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Aman</div>
+        <div class="vdeadline-value">{{ number_format($dokumenLessThan24h ?? 0) }}</div>
+        <div class="vdeadline-desc">Diterima &lt; 24 jam</div>
+      </div>
+    </a>
+
+    <!-- Deadline Card: Peringatan -->
+    <a href="{{ route('documents.verifikasi.index') }}" class="vdeadline-card vdeadline-card--peringatan">
+      <div class="vdeadline-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Peringatan</div>
+        <div class="vdeadline-value">{{ number_format($dokumen24to72h ?? 0) }}</div>
+        <div class="vdeadline-desc">Diterima 1–3 hari lalu</div>
+      </div>
+    </a>
+
+    <!-- Deadline Card: Terlambat -->
+    <a href="{{ route('documents.verifikasi.index') }}" class="vdeadline-card vdeadline-card--terlambat">
+      <div class="vdeadline-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Terlambat</div>
+        <div class="vdeadline-value">{{ number_format($dokumenMoreThan72h ?? 0) }}</div>
+        <div class="vdeadline-desc">Diterima &gt; 3 hari lalu</div>
+      </div>
+    </a>
+  </div>
+  <!-- ===== END BENTO GRID STATS ===== -->
 
 
   <!-- Enhanced Search & Filter Box -->

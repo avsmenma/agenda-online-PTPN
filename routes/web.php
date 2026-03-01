@@ -339,9 +339,10 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware('auth', 'role:admin,operator,Operator')
     ->name('dashboard.main');
 
-// Professional dashboard routes
-Route::get('dashboard/verifikasi', [TeamVerifikasiController::class, 'index'])
-    ->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')
+// dashboard/verifikasi removed - redirected to documents/verifikasi
+Route::get('dashboard/verifikasi', function () {
+    return redirect()->route('documents.verifikasi.index', [], 301);
+})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
@@ -356,15 +357,9 @@ Route::get('dashboard/perpajakan', [DashboardPerpajakanController::class, 'index
     ->middleware('auth', 'role:admin,perpajakan,Perpajakan')
     ->name('dashboard.perpajakan');
 
-// Dashboard for Verifikasi role (future implementation)
-Route::get('dashboard/verifikasi-role', function () {
-    return view('verifikasi.dashboard');
-})->middleware('role:admin,team_verifikasi,verifikasi,Verifikasi')
-    ->name('dashboard.verifikasi-role');
-
 // Backward compatibility - redirect old URLs to new professional URLs
 Route::get('dashboardB', function () {
-    return redirect()->route('dashboard.verifikasi', [], 301);
+    return redirect()->route('documents.verifikasi.index', [], 301);
 })->name('dashboard.team_verifikasi.old');
 
 Route::get('dashboardPembayaran', function () {
@@ -380,7 +375,7 @@ Route::get('dashboardPerpajakan', function () {
 })->name('dashboard.perpajakan.old');
 
 Route::get('dashboardVerifikasi', function () {
-    return redirect()->route('dashboard.verifikasi-role', [], 301);
+    return redirect()->route('documents.verifikasi.index', [], 301);
 })->name('dashboard.verifikasi.old');
 
 // Professional API routes for rejected documents

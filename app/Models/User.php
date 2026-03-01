@@ -48,12 +48,12 @@ final class User extends Authenticatable
         'programmer' => '/programmer/dashboard',  // Programmer dashboard
         // New standardized role names
         'operator' => '/dashboard',
-        'team_verifikasi' => '/dashboard/verifikasi',
+        'team_verifikasi' => '/documents/verifikasi',
         // Legacy role names for backward compatibility
         'operator' => '/dashboard',
         'operator' => '/dashboard',
-        'team_verifikasi' => '/dashboard/verifikasi',
-        'verifikasi' => '/dashboard/verifikasi',
+        'team_verifikasi' => '/documents/verifikasi',
+        'verifikasi' => '/documents/verifikasi',
         // Other roles
         'Pembayaran' => '/dashboard/pembayaran',
         'pembayaran' => '/dashboard/pembayaran',

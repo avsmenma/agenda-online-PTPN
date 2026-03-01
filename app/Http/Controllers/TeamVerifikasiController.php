@@ -32,173 +32,6 @@ use Exception;
 
 class TeamVerifikasiController extends Controller
 {
-    public function index()
-    {
-        // Get statistics for Team Verifikasi (only documents with current_handler = Team Verifikasi)
-        $now = Carbon::now();
-        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
-
-        // 1. Total dokumen - semua dokumen yang terlihat oleh Team Verifikasi (same as dokumens() query)
-        $totalDokumen = Dokumen::where(function ($q) {
-            $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-                ->orWhereIn('status', [
-                    'sent_to_perpajakan',
-                    'sent_to_akutansi',
-                    'sent_to_pembayaran',
-                    'waiting_approval_perpajakan',
-                    'waiting_approval_akuntansi',
-                    'waiting_approval_pembayaran',
-                    'pending_approval_perpajakan',
-                    'pending_approval_akutansi',
-                    'pending_approval_pembayaran',
-                    'menunggu_di_approve'
-                ]);
-        })
-            ->where('status', '!=', 'returned_to_bidang')
-            ->when($hasImportedFromCsvColumn, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->count();
-
-        // 2. Total dokumen proses - dokumen yang sedang diproses (belum dikirim)
-        $totalDokumenProses = Dokumen::whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-            ->where(function ($q) {
-                $q->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses'])
-                    ->orWhereNotIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'returned_to_bidang']);
-            })
-            ->when($hasImportedFromCsvColumn, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->count();
-
-        // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
-        // Get all documents currently handled by Team Verifikasi/verifikasi AND sent documents with their roleData
-        $teamVerifikasiDocuments = Dokumen::where(function ($q) {
-            $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-                ->orWhereIn('status', [
-                    'sent_to_perpajakan',
-                    'sent_to_akutansi',
-                    'sent_to_pembayaran',
-                    'waiting_approval_perpajakan',
-                    'waiting_approval_akuntansi',
-                    'waiting_approval_pembayaran',
-                    'pending_approval_perpajakan',
-                    'pending_approval_akutansi',
-                    'pending_approval_pembayaran',
-                    'menunggu_di_approve'
-                ]);
-        })
-            ->where('status', '!=', 'returned_to_bidang')
-            ->when($hasImportedFromCsvColumn, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->with([
-                'roleData' => function ($q) {
-                    $q->where('role_code', 'team_verifikasi');
-                }
-            ])
-            ->get();
-
-        $dokumenLessThan24h = 0;  // < 24 jam (green)
-        $dokumen24to72h = 0;      // 24-72 jam (yellow)
-        $dokumenMoreThan72h = 0;  // > 72 jam (red)
-
-        foreach ($teamVerifikasiDocuments as $doc) {
-            $roleData = $doc->roleData->first();
-            if ($roleData && $roleData->received_at) {
-                $receivedAt = Carbon::parse($roleData->received_at);
-
-                // Check if document is sent - use processed_at as end time (frozen)
-                // For active documents - use now as end time (counting up)
-                $isSent = in_array($doc->status, [
-                    'sent_to_perpajakan',
-                    'sent_to_akutansi',
-                    'sent_to_pembayaran',
-                    'waiting_approval_perpajakan',
-                    'waiting_approval_akuntansi',
-                    'waiting_approval_pembayaran',
-                    'pending_approval_perpajakan',
-                    'pending_approval_akutansi'
-                ]);
-
-                if ($isSent && $roleData->processed_at) {
-                    // Sent documents: calculate time taken (frozen)
-                    $endTime = Carbon::parse($roleData->processed_at);
-                    $hoursDiff = $receivedAt->diffInHours($endTime);
-                } else {
-                    // Active documents: calculate time since received (counting)
-                    $hoursDiff = $receivedAt->diffInHours($now);
-                }
-
-                if ($hoursDiff < 24) {
-                    $dokumenLessThan24h++;
-                } elseif ($hoursDiff < 72) {
-                    $dokumen24to72h++;
-                } else {
-                    $dokumenMoreThan72h++;
-                }
-            } else {
-                // If no received_at, count as >72h (needs attention)
-                $dokumenMoreThan72h++;
-            }
-        }
-
-        // 6. Total dokumen terkirim - dokumen yang sudah dikirim ke tahap selanjutnya
-        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
-            ->where('current_handler', '!=', 'team_verifikasi')
-            ->excludeCsvImports()
-            ->count();
-
-        // 7. Total dokumen agenda - semua dokumen yang ada di sistem (operator)
-        $totalDokumenAgenda = Dokumen::when($hasImportedFromCsvColumn, function ($query) {
-            $query->where(function ($q) {
-                $q->where('imported_from_csv', false)
-                    ->orWhereNull('imported_from_csv');
-            });
-        })
-            ->count();
-
-        // Get latest documents (5 most recent) for Team Verifikasi - same logic as dokumens() method
-        $dokumenTerbaru = Dokumen::where(function ($q) {
-            $q->where('current_handler', 'team_verifikasi')
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
-        })
-            ->where('status', '!=', 'returned_to_bidang')
-            ->orderByRaw("CASE
-                WHEN current_handler = 'team_verifikasi' AND status IN ('sent_to_team_verifikasi', 'sedang diproses') THEN 1
-                WHEN current_handler = 'team_verifikasi' THEN 2
-                ELSE 3
-            END ASC")
-            ->orderBy('updated_at', 'desc')
-            ->take(5)
-            ->get();
-
-        $data = array(
-            "title" => "Dashboard Team Verifikasi",
-            "module" => "team_verifikasi",
-            "menuDashboard" => "Active",
-            'menuDokumen' => '',
-            'totalDokumen' => $totalDokumen,
-            'totalDokumenProses' => $totalDokumenProses,
-            'dokumenLessThan24h' => $dokumenLessThan24h,
-            'dokumen24to72h' => $dokumen24to72h,
-            'dokumenMoreThan72h' => $dokumenMoreThan72h,
-            'totalTerkirim' => $totalTerkirim,
-            'totalDokumenAgenda' => $totalDokumenAgenda,
-            'dokumenTerbaru' => $dokumenTerbaru,
-        );
-        return view('team_verifikasi.dashboard', $data);
-    }
-
     public function dokumens(Request $request)
     {
         // Team Verifikasi sees ALL documents (cross-role visibility)
@@ -666,7 +499,83 @@ class TeamVerifikasiController extends Controller
             })
             ->count();
 
-        // Get suggestions if no results found
+        // Keterlambatan: hitung berdasarkan waktu dokumen diterima dari roleData
+        $now = Carbon::now();
+        $teamDokumensForDelay = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi'])
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve'
+                ]);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->with(['roleData' => function ($q) {
+                $q->where('role_code', 'team_verifikasi');
+            }])
+            ->get();
+
+        $dokumenLessThan24h = 0;
+        $dokumen24to72h = 0;
+        $dokumenMoreThan72h = 0;
+
+        foreach ($teamDokumensForDelay as $doc) {
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $isSent = in_array($doc->status, [
+                    'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                    'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi'
+                ]);
+                if ($isSent && $roleData->processed_at) {
+                    $hoursDiff = $receivedAt->diffInHours(Carbon::parse($roleData->processed_at));
+                } else {
+                    $hoursDiff = $receivedAt->diffInHours($now);
+                }
+                if ($hoursDiff < 24) {
+                    $dokumenLessThan24h++;
+                } elseif ($hoursDiff < 72) {
+                    $dokumen24to72h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            } else {
+                $dokumenMoreThan72h++;
+            }
+        }
+
+        // Total nilai rupiah dokumen verifikasi
+        $totalNilaiRupiah = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi'])
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                    'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran', 'pending_approval_perpajakan',
+                    'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve'
+                ]);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)->orWhereNull('imported_from_csv');
+                });
+            })
+            ->sum('nilai_rupiah');
+
         $suggestions = [];
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
             $searchTerm = trim((string) $request->search);
@@ -782,6 +691,10 @@ class TeamVerifikasiController extends Controller
             'totalDokumenVerifikasi' => $totalDokumenVerifikasi,
             'totalDokumenDiproses' => $totalDokumenDiproses,
             'totalTerkirim' => $totalTerkirim,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
+            'totalNilaiRupiah' => $totalNilaiRupiah,
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
