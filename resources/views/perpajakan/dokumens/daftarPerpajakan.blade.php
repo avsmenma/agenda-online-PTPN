@@ -3205,6 +3205,7 @@
 
   <!-- ===== REDESIGNED TABLE SECTION PERPAJAKAN ===== -->
   <style>
+    /* Override nested-table look — unified single card */
     #documentTableContainer.table-dokumen {
       background: #ffffff;
       border-radius: 16px;
@@ -3213,27 +3214,102 @@
       overflow: hidden;
       padding: 0 !important;
     }
-    .dtable-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.35rem; border-bottom: 1px solid #f1f5f9; gap: 1rem; flex-wrap: wrap; }
-    .dtable-toolbar-left { display: flex; align-items: center; gap: 0.65rem; }
-    .dtable-toolbar-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #083E40 0%, #0a5254 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; flex-shrink: 0; }
-    .dtable-toolbar-title { font-size: 1rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; }
-    .dtable-toolbar-subtitle { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
-    .dtable-toolbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* New unified toolbar header */
+    .dtable-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.35rem;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .dtable-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .dtable-toolbar-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.875rem; flex-shrink: 0;
+    }
+    .dtable-toolbar-title {
+      font-size: 1rem; font-weight: 700;
+      color: #0f172a; letter-spacing: -0.01em;
+    }
+    .dtable-toolbar-subtitle {
+      font-size: 0.75rem; color: #94a3b8; font-weight: 500;
+    }
+    .dtable-toolbar-right {
+      display: flex; align-items: center; gap: 0.5rem;
+      flex-wrap: wrap;
+    }
     .dtable-perpage-label { font-size: 0.8125rem; color: #64748b; white-space: nowrap; }
-    .dtable-perpage-select { padding: 0.35rem 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8125rem; color: #334155; background: #f8fafc; cursor: pointer; outline: none; transition: border-color 0.2s; }
+    .dtable-perpage-select {
+      padding: 0.35rem 0.6rem; border-radius: 8px;
+      border: 1px solid #e2e8f0; font-size: 0.8125rem;
+      color: #334155; background: #f8fafc;
+      cursor: pointer; outline: none;
+      transition: border-color 0.2s;
+    }
     .dtable-perpage-select:focus { border-color: #083E40; }
-    #documentTableContainer .table-responsive { padding: 0; }
-    #documentTableContainer .pagination-perpage-top-wrapper { display: none !important; }
-    #documentTableContainer table.table-enhanced thead th {
-      font-size: 0.775rem !important; font-weight: 600 !important; letter-spacing: 0.04em !important;
-      color: rgba(255,255,255,0.95) !important; padding: 0.85rem 0.9rem !important;
-      border: none !important; white-space: nowrap;
+
+    /* Remove inner container border/background */
+    #documentTableContainer .table-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* Hide old pagination-perpage-top if it exists */
+    #documentTableContainer .pagination-perpage-top-wrapper {
+      display: none !important;
+    }
+
+    /* Cleaner thead — EXACT same as verifikasi */
+    #documentTableContainer .table-dokumen thead {
       background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
     }
-    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) td { background: #f8fafc; }
-    #documentTableContainer .table-enhanced td { border-top: 1px solid #f1f5f9 !important; border-bottom: none !important; }
-    #documentTableContainer .table-enhanced tbody tr:hover td { background: linear-gradient(90deg, rgba(8,62,64,0.05) 0%, transparent 100%) !important; border-left: 3px solid #083E40; }
+    #documentTableContainer .table-dokumen thead th {
+      font-size: 0.775rem !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      color: rgba(255,255,255,0.95) !important;
+      padding: 0.85rem 0.9rem !important;
+      border: none !important;
+      white-space: nowrap;
+    }
+    /* Zebra rows — subtle */
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) {
+      background: #f8fafc;
+    }
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(odd) {
+      background: #ffffff;
+    }
+    #documentTableContainer .table-enhanced tbody tr.main-row:hover {
+      background: linear-gradient(90deg, rgba(8,62,64,0.04) 0%, transparent 100%) !important;
+      border-left: 3px solid #083E40;
+    }
+    /* Remove double borders */
+    #documentTableContainer .table-enhanced td {
+      border-top: 1px solid #f1f5f9 !important;
+      border-bottom: none !important;
+    }
+    /* Pagination inside card */
+    #documentTableContainer .pagination-wrapper,
+    #documentTableContainer nav[aria-label],
+    #documentTableContainer .paginate-wrapper {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid #f1f5f9;
+    }
   </style>
+
 
   <div class="table-dokumen" id="documentTableContainer">
     <div class="dtable-toolbar">
