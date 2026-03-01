@@ -4018,20 +4018,152 @@
     </div>
   @endif
 
-  <!-- Tabel Dokumen -->
+  <!-- ===== REDESIGNED TABLE SECTION ===== -->
+  <style>
+    /* Override nested-table look — unified single card */
+    #documentTableContainer.table-dokumen {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+      overflow: hidden;
+    }
+
+    /* New unified toolbar header */
+    .dtable-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.35rem;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .dtable-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .dtable-toolbar-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.875rem; flex-shrink: 0;
+    }
+    .dtable-toolbar-title {
+      font-size: 1rem; font-weight: 700;
+      color: #0f172a; letter-spacing: -0.01em;
+    }
+    .dtable-toolbar-subtitle {
+      font-size: 0.75rem; color: #94a3b8; font-weight: 500;
+    }
+    .dtable-toolbar-right {
+      display: flex; align-items: center; gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .dtable-perpage-label { font-size: 0.8125rem; color: #64748b; white-space: nowrap; }
+    .dtable-perpage-select {
+      padding: 0.35rem 0.6rem; border-radius: 8px;
+      border: 1px solid #e2e8f0; font-size: 0.8125rem;
+      color: #334155; background: #f8fafc;
+      cursor: pointer; outline: none;
+      transition: border-color 0.2s;
+    }
+    .dtable-perpage-select:focus { border-color: #083E40; }
+
+    /* Remove inner container border/background — table is naked inside the card */
+    #documentTableContainer .table-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* Hide old pagination-perpage-top if it exists */
+    #documentTableContainer .pagination-perpage-top-wrapper {
+      display: none !important;
+    }
+
+    /* Cleaner thead */
+    #documentTableContainer .table-dokumen thead {
+      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+    }
+    #documentTableContainer .table-dokumen thead th {
+      font-size: 0.775rem !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      color: rgba(255,255,255,0.95) !important;
+      padding: 0.85rem 0.9rem !important;
+      border: none !important;
+      white-space: nowrap;
+    }
+    /* Zebra rows — subtle */
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) {
+      background: #f8fafc;
+    }
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(odd) {
+      background: #ffffff;
+    }
+    #documentTableContainer .table-enhanced tbody tr.main-row:hover {
+      background: linear-gradient(90deg, rgba(8,62,64,0.04) 0%, transparent 100%) !important;
+      border-left: 3px solid #083E40;
+    }
+    /* Remove double borders */
+    #documentTableContainer .table-enhanced td {
+      border-top: 1px solid #f1f5f9 !important;
+      border-bottom: none !important;
+    }
+    /* Pagination inside card */
+    #documentTableContainer .pagination-wrapper,
+    #documentTableContainer nav[aria-label],
+    #documentTableContainer .paginate-wrapper {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid #f1f5f9;
+    }
+  </style>
+
+  <!-- Tabel Dokumen — Unified Card Design -->
   <div class="table-dokumen" id="documentTableContainer">
-    <div class="table-container-header">
-      <h3 class="table-container-title">
-        <i class="fa-solid fa-file-lines"></i>
-        Daftar Dokumen Team Verifikasi
-      </h3>
+    <!-- Unified toolbar: title + per-page selector -->
+    <div class="dtable-toolbar">
+      <div class="dtable-toolbar-left">
+        <div class="dtable-toolbar-icon">
+          <i class="fa-solid fa-file-lines"></i>
+        </div>
+        <div>
+          <div class="dtable-toolbar-title">Daftar Dokumen Team Verifikasi</div>
+          <div class="dtable-toolbar-subtitle" id="dtable-count-info">
+            Menampilkan {{ $dokumens->firstItem() ?? 0 }}–{{ $dokumens->lastItem() ?? 0 }} dari {{ number_format($dokumens->total()) }} hasil
+          </div>
+        </div>
+      </div>
+      <div class="dtable-toolbar-right">
+        <span class="dtable-perpage-label">Baris per halaman:</span>
+        @php
+          $currentPerPage = request('per_page', session('verifikasi_per_page', 10));
+        @endphp
+        <form method="GET" action="{{ route('documents.verifikasi.index') }}" id="perPageForm" style="display:inline;">
+          @foreach(request()->except('per_page', 'page') as $key => $val)
+            @if(is_array($val))
+              @foreach($val as $v)
+                <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+              @endforeach
+            @else
+              <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+            @endif
+          @endforeach
+          <select name="per_page" class="dtable-perpage-select" onchange="this.form.submit()">
+            @foreach([10, 25, 50, 100] as $pp)
+              <option value="{{ $pp }}" {{ (int)$currentPerPage === $pp ? 'selected' : '' }}>{{ $pp }}</option>
+            @endforeach
+          </select>
+        </form>
+      </div>
     </div>
 
-
-
-    <!-- Per-page dropdown at the top -->
-    @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
-    <div class="table-responsive table-container">
+    <div class="table-responsive" style="overflow-x:auto;">
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>
