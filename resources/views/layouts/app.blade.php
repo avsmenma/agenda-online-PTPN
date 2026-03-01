@@ -409,6 +409,17 @@
       height: 20px;
     }
 
+    /* Sidebar logo image */
+    .sidebar h4 .sidebar-logo-img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: transparent;
+      border-radius: 0;
+      display: inline-flex;
+    }
+
     /* Hide title text when collapsed */
     .sidebar:not(:hover) h4 {
       justify-content: center;
@@ -420,6 +431,11 @@
     .sidebar:not(:hover) h4 i {
       font-size: 18px;
       line-height: 1;
+    }
+
+    .sidebar:not(:hover) h4 .sidebar-logo-img {
+      width: 36px;
+      height: 36px;
     }
 
     /* Show full title when expanded */
@@ -434,6 +450,12 @@
     .sidebar:hover h4 i {
       margin-right: 8px;
       font-size: 18px;
+    }
+
+    .sidebar:hover h4 .sidebar-logo-img {
+      margin-right: 10px;
+      width: 36px;
+      height: 36px;
     }
 
     /* Hide hr completely when collapsed */
@@ -3878,7 +3900,7 @@
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <h4 class="text-center mb-4"><i class="fa-solid fa-calendar-days"></i> Agenda Online</h4>
+    <h4 class="text-center mb-4"><img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN" class="sidebar-logo-img"> Agenda Online</h4>
     <hr>
 
     @php
