@@ -3671,8 +3671,12 @@
     <div class="vstat-card vstat-card--total">
       <div class="vstat-content">
         <div class="vstat-label">Total Dokumen Agenda</div>
-        <div class="vstat-value">{{ number_format($totalDokumenAgenda ?? 0) }}</div>
-        <div class="vstat-sub">Rp {{ number_format($totalNilaiRupiah ?? 0, 0, ',', '.') }}</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalDokumenAgenda ?? 0 }}"
+          data-duration="1400">0</div>
+        <div class="vstat-sub"
+          data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}"
+          data-duration="1600">Rp 0</div>
       </div>
       <div class="vstat-icon" style="background:rgba(255,255,255,0.2);color:white;">
         <i class="fas fa-layer-group"></i>
@@ -3683,7 +3687,9 @@
     <a href="{{ route('documents.verifikasi.index') }}" class="vstat-card">
       <div class="vstat-content">
         <div class="vstat-label">Total Dokumen Verifikasi</div>
-        <div class="vstat-value">{{ number_format($totalDokumenVerifikasi ?? 0) }}</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalDokumenVerifikasi ?? 0 }}"
+          data-duration="1200">0</div>
         <div class="vstat-sub">Dokumen di verifikasi</div>
       </div>
       <div class="vstat-icon vstat-icon--verifikasi">
@@ -3695,7 +3701,9 @@
     <a href="{{ route('documents.verifikasi.index', ['status' => 'sedang_proses']) }}" class="vstat-card">
       <div class="vstat-content">
         <div class="vstat-label">Dokumen Diproses</div>
-        <div class="vstat-value">{{ number_format($totalDokumenDiproses ?? 0) }}</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalDokumenDiproses ?? 0 }}"
+          data-duration="1200">0</div>
         <div class="vstat-sub">Sedang diproses</div>
       </div>
       <div class="vstat-icon vstat-icon--proses">
@@ -3707,7 +3715,9 @@
     <a href="{{ route('documents.verifikasi.index', ['status' => 'terkirim']) }}" class="vstat-card">
       <div class="vstat-content">
         <div class="vstat-label">Total Terkirim</div>
-        <div class="vstat-value">{{ number_format($totalTerkirim ?? 0) }}</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalTerkirim ?? 0 }}"
+          data-duration="1200">0</div>
         <div class="vstat-sub">Dikirim ke tahap selanjutnya</div>
       </div>
       <div class="vstat-icon vstat-icon--terkirim">
@@ -3722,7 +3732,9 @@
       <div class="vdeadline-icon"><i class="fas fa-shield-alt"></i></div>
       <div class="vdeadline-content">
         <div class="vdeadline-label">Aman</div>
-        <div class="vdeadline-value">{{ number_format($dokumenLessThan24h ?? 0) }}</div>
+        <div class="vdeadline-value"
+          data-counter="{{ $dokumenLessThan24h ?? 0 }}"
+          data-duration="1000">0</div>
         <div class="vdeadline-desc">Diterima &lt; 24 jam</div>
       </div>
       @if($filterKeterlambatan === 'aman')
@@ -3736,7 +3748,9 @@
       <div class="vdeadline-icon"><i class="fas fa-exclamation-triangle"></i></div>
       <div class="vdeadline-content">
         <div class="vdeadline-label">Peringatan</div>
-        <div class="vdeadline-value">{{ number_format($dokumen24to72h ?? 0) }}</div>
+        <div class="vdeadline-value"
+          data-counter="{{ $dokumen24to72h ?? 0 }}"
+          data-duration="1000">0</div>
         <div class="vdeadline-desc">Diterima 1–3 hari lalu</div>
       </div>
       @if($filterKeterlambatan === 'peringatan')
@@ -3750,7 +3764,9 @@
       <div class="vdeadline-icon"><i class="fas fa-times-circle"></i></div>
       <div class="vdeadline-content">
         <div class="vdeadline-label">Terlambat</div>
-        <div class="vdeadline-value">{{ number_format($dokumenMoreThan72h ?? 0) }}</div>
+        <div class="vdeadline-value"
+          data-counter="{{ $dokumenMoreThan72h ?? 0 }}"
+          data-duration="1000">0</div>
         <div class="vdeadline-desc">Diterima &gt; 3 hari lalu</div>
       </div>
       @if($filterKeterlambatan === 'terlambat')
@@ -3760,6 +3776,106 @@
 
   </div>
   <!-- ===== END BENTO GRID STATS ===== -->
+
+  <script>
+    (function() {
+      // Easing function: easeOutExpo
+      function easeOutExpo(t) {
+        return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+      }
+
+      // Format number with comma separator (e.g. 1,452)
+      function formatNumber(n) {
+        return Math.floor(n).toLocaleString('id-ID').replace(/\./g, ',');
+      }
+
+      // Format rupiah with period separator (e.g. Rp 253.911.613.570)
+      function formatRupiah(n) {
+        return 'Rp ' + Math.floor(n).toLocaleString('id-ID');
+      }
+
+      // Animate a single counter element
+      function animateCounter(el, target, duration, isRupiah) {
+        const start = performance.now();
+        target = parseInt(target) || 0;
+
+        function step(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeOutExpo(progress);
+          const current = eased * target;
+
+          if (isRupiah) {
+            el.textContent = formatRupiah(current);
+          } else {
+            el.textContent = formatNumber(current);
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            // Ensure exact final value
+            el.textContent = isRupiah ? formatRupiah(target) : formatNumber(target);
+          }
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      // Use IntersectionObserver to trigger animation when visible
+      function initCounters() {
+        const observers = [];
+
+        // Regular counters [data-counter]
+        document.querySelectorAll('[data-counter]').forEach(function(el) {
+          const target = el.getAttribute('data-counter');
+          const duration = parseInt(el.getAttribute('data-duration')) || 1200;
+          let animated = false;
+
+          const obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting && !animated) {
+                animated = true;
+                animateCounter(el, target, duration, false);
+                obs.disconnect();
+              }
+            });
+          }, { threshold: 0.3 });
+
+          obs.observe(el);
+          observers.push(obs);
+        });
+
+        // Rupiah counters [data-counter-rupiah]
+        document.querySelectorAll('[data-counter-rupiah]').forEach(function(el) {
+          const target = el.getAttribute('data-counter-rupiah');
+          const duration = parseInt(el.getAttribute('data-duration')) || 1600;
+          let animated = false;
+
+          const obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting && !animated) {
+                animated = true;
+                animateCounter(el, target, duration, true);
+                obs.disconnect();
+              }
+            });
+          }, { threshold: 0.3 });
+
+          obs.observe(el);
+          observers.push(obs);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCounters);
+      } else {
+        initCounters();
+      }
+    })();
+  </script>
+
+
 
 
   <!-- Enhanced Search & Filter Box -->
