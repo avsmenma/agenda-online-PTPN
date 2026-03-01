@@ -290,20 +290,24 @@
         }
 
         .login-header .logo {
-            width: 72px;
-            height: 72px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
+            width: 90px;
+            height: 90px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
             margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+            padding: 4px;
         }
 
-        .login-header .logo i {
-            font-size: 32px;
-            color: white;
+        .login-header .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .login-header h1 {
@@ -599,7 +603,7 @@
             <div class="login-card">
                 <div class="login-header">
                     <div class="logo">
-                        <i class="fas fa-calendar-check"></i>
+                        <img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN4 Regional 5">
                     </div>
                     <h1>Agenda Online PTPN</h1>
                     <p>Sistem Manajemen Dokumen</p>
