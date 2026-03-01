@@ -3272,18 +3272,20 @@
       display: none !important;
     }
 
-    /* Cleaner thead — EXACT same as verifikasi */
-    #documentTableContainer .table-dokumen thead {
+    /* Cleaner thead — direct selectors (no descendant .table-dokumen needed) */
+    div#documentTableContainer thead tr {
       background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
     }
-    #documentTableContainer .table-dokumen thead th {
+    div#documentTableContainer thead th {
+      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+      color: rgba(255,255,255,0.95) !important;
       font-size: 0.775rem !important;
       font-weight: 600 !important;
       letter-spacing: 0.04em !important;
-      color: rgba(255,255,255,0.95) !important;
       padding: 0.85rem 0.9rem !important;
       border: none !important;
       white-space: nowrap;
+      text-transform: uppercase;
     }
     /* Zebra rows — subtle */
     #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) {
@@ -3308,7 +3310,22 @@
       padding: 0.75rem 1rem;
       border-top: 1px solid #f1f5f9;
     }
+    /* Force all header th styling — highest specificity override */
+    #documentTableContainer table thead th,
+    #documentTableContainer table thead tr th {
+      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+      color: rgba(255,255,255,0.95) !important;
+      font-size: 0.775rem !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+      padding: 0.85rem 0.9rem !important;
+      border: none !important;
+      border-bottom: none !important;
+      white-space: nowrap !important;
+    }
   </style>
+
 
 
   <div class="table-dokumen" id="documentTableContainer">
@@ -3343,9 +3360,11 @@
     </div>
     <div class="table-responsive">
       <table class="table table-enhanced mb-0">
-
+        <thead style="background: linear-gradient(135deg, #083E40 0%, #0d5254 100%); color: white;">
           <tr>
-            <th class="col-checkbox" style="width: 50px;">
+
+            <th class="col-checkbox" style="width: 50px; background: transparent; color: white; border: none; padding: 0.85rem 0.9rem; font-size: 0.775rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;">
+
               <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
             </th>
             <th class="col-no">No</th>
