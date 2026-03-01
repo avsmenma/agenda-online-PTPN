@@ -353,11 +353,7 @@ Route::get('dashboard/akutansi', [DashboardAkutansiController::class, 'index'])
     ->middleware('auth', 'role:admin,akutansi,Akutansi')
     ->name('dashboard.akutansi');
 
-// dashboard/perpajakan removed - redirected to documents/perpajakan
-Route::get('dashboard/perpajakan', function () {
-    return redirect()->route('documents.perpajakan.index', [], 301);
-})->middleware('auth', 'role:admin,perpajakan,Perpajakan')
-    ->name('dashboard.perpajakan');
+
 
 
 // Backward compatibility - redirect old URLs to new professional URLs
