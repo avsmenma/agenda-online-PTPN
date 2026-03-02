@@ -5054,7 +5054,8 @@
           .then(data => {
             if (data.success) {
               // Show success message
-              alert('Dokumen berhasil dikembalikan ke ' + (data.return_source || 'Bidang'));
+              // Show animated success notification
+              showNotification('Dokumen berhasil dikembalikan ke ' + (data.return_source || 'Bidang'), 'success');
               closeReturnToBidangModal();
 
               // Remove row from table
@@ -5075,12 +5076,12 @@
               // Optionally reload the page
               // window.location.reload();
             } else {
-              alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+              showNotification('Gagal: ' + (data.message || 'Terjadi kesalahan'), 'error');
             }
           })
           .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat mengembalikan dokumen');
+            showNotification('Terjadi kesalahan saat mengembalikan dokumen', 'error');
           })
           .finally(() => {
             // Re-enable button
