@@ -2802,50 +2802,51 @@
   {{-- ===== BENTO GRID INFORMASI AKUTANSI ===== --}}
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    .bento-info-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      grid-template-rows: auto auto;
+
+    /* ===== SCOPED: only affects #akutansi-bento-grid ===== */
+    #akutansi-bento-grid {
+      display: flex;
+      flex-direction: column;
       gap: 16px;
       margin-bottom: 24px;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    /* Stat cards — span 3 cols each */
-    .bento-stat-card { grid-column: span 3; }
-    /* Deadline cards — span 4 cols each */
-    .bento-deadline-card { grid-column: span 4; }
+    #akutansi-bento-grid .akt-row {
+      display: grid;
+      gap: 16px;
+    }
+    #akutansi-bento-grid .akt-row.row-stats {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    #akutansi-bento-grid .akt-row.row-deadline {
+      grid-template-columns: repeat(3, 1fr);
+    }
 
-    /* === BASE CARD === */
-    .bento-card {
+    /* Base card */
+    #akutansi-bento-grid .akt-card {
       background: #fff;
       border-radius: 16px;
       padding: 20px 22px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(8,62,64,0.07);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(8,62,64,0.07);
       border: 1px solid #f0f4f4;
       position: relative;
       overflow: hidden;
       transition: box-shadow 0.25s, transform 0.25s;
-      cursor: default;
+      display: flex;
+      flex-direction: column;
     }
-    .bento-card:hover {
-      box-shadow: 0 4px 20px rgba(8,62,64,0.14), 0 1px 4px rgba(0,0,0,0.06);
+    #akutansi-bento-grid .akt-card:hover {
+      box-shadow: 0 4px 20px rgba(8,62,64,0.13), 0 1px 4px rgba(0,0,0,0.05);
       transform: translateY(-2px);
     }
 
-    /* First stat card — dark accent */
-    .bento-stat-card:first-child .bento-card {
+    /* Dark card (first stat) */
+    #akutansi-bento-grid .akt-card.dark {
       background: linear-gradient(135deg, #083E40 0%, #0d5254 100%);
       border-color: transparent;
       color: #fff;
     }
-    .bento-stat-card:first-child .bento-card .bento-label { color: rgba(255,255,255,0.7); }
-    .bento-stat-card:first-child .bento-card .bento-number { color: #fff; }
-    .bento-stat-card:first-child .bento-card .bento-sub { color: rgba(255,255,255,0.6); }
-    .bento-stat-card:first-child .bento-card .bento-icon-circle {
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-    }
-    .bento-stat-card:first-child .bento-card::before {
+    #akutansi-bento-grid .akt-card.dark::before {
       content: '';
       position: absolute;
       top: -40px; right: -40px;
@@ -2853,161 +2854,175 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.06);
     }
+    #akutansi-bento-grid .akt-card.dark .akt-label { color: rgba(255,255,255,0.7); }
+    #akutansi-bento-grid .akt-card.dark .akt-number { color: #fff; }
+    #akutansi-bento-grid .akt-card.dark .akt-sub { color: rgba(255,255,255,0.6); }
+    #akutansi-bento-grid .akt-card.dark .akt-icon { background: rgba(255,255,255,0.15); color: #fff; }
 
-    /* Other stat cards */
-    .bento-label {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em;
-      text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;
+    /* Icon circle */
+    #akutansi-bento-grid .akt-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      flex-shrink: 0;
     }
-    .bento-number {
+    #akutansi-bento-grid .akt-icon.purple { background: #f3f0ff; color: #7c3aed; }
+    #akutansi-bento-grid .akt-icon.yellow { background: #fffbeb; color: #d97706; }
+    #akutansi-bento-grid .akt-icon.blue   { background: #eff6ff; color: #2563eb; }
+
+    /* Text parts stat card */
+    #akutansi-bento-grid .akt-label {
+      font-size: 0.695rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: #94a3b8; margin-bottom: 4px;
+    }
+    #akutansi-bento-grid .akt-number {
       font-size: 2rem; font-weight: 800; color: #0f172a;
       line-height: 1; margin-bottom: 4px; letter-spacing: -0.03em;
     }
-    .bento-sub {
-      font-size: 0.76rem; color: #64748b; font-weight: 500;
+    #akutansi-bento-grid .akt-sub {
+      font-size: 0.75rem; color: #64748b; font-weight: 500;
     }
-    .bento-icon-circle {
-      width: 40px; height: 40px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; margin-bottom: 12px;
-    }
-    .bento-icon-circle.purple { background: #f3f0ff; color: #7c3aed; }
-    .bento-icon-circle.yellow { background: #fffbeb; color: #d97706; }
-    .bento-icon-circle.blue   { background: #eff6ff; color: #2563eb; }
 
-    /* === DEADLINE CARDS === */
-    .bento-deadline-card .bento-card {
+    /* === DEADLINE CARDS (row 2) === */
+    #akutansi-bento-grid .akt-deadline-card {
+      text-decoration: none !important;
+      color: inherit !important;
       border-left: 4px solid transparent;
-      cursor: pointer;
-      text-decoration: none;
     }
-    .bento-deadline-card .bento-card:hover { color: inherit; }
-    .bento-deadline-card.dl-green .bento-card { border-left-color: #10b981; }
-    .bento-deadline-card.dl-yellow .bento-card { border-left-color: #f59e0b; }
-    .bento-deadline-card.dl-red .bento-card { border-left-color: #ef4444; }
+    #akutansi-bento-grid .akt-deadline-card:hover { color: inherit !important; }
+    #akutansi-bento-grid .akt-deadline-card.dl-green { border-left-color: #10b981 !important; }
+    #akutansi-bento-grid .akt-deadline-card.dl-yellow { border-left-color: #f59e0b !important; }
+    #akutansi-bento-grid .akt-deadline-card.dl-red { border-left-color: #ef4444 !important; }
 
-    .dl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .dl-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; }
-    .dl-green .dl-icon { background: #ecfdf5; color: #10b981; }
-    .dl-yellow .dl-icon { background: #fffbeb; color: #f59e0b; }
-    .dl-red .dl-icon { background: #fef2f2; color: #ef4444; }
-    .dl-title { font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
-    .dl-number { font-size: 1.75rem; font-weight: 800; color: #0f172a; line-height: 1; letter-spacing: -0.03em; }
-    .dl-sub { font-size: 0.73rem; color: #94a3b8; font-weight: 500; margin-top: 4px; }
-    .dl-badge { display: inline-block; margin-top: 8px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
-    .dl-green .dl-badge { background: #ecfdf5; color: #059669; }
-    .dl-yellow .dl-badge { background: #fffbeb; color: #b45309; }
-    .dl-red .dl-badge { background: #fef2f2; color: #dc2626; }
-
-    /* Active filter state */
-    .bento-deadline-card .bento-card.active-filter {
-      box-shadow: 0 0 0 3px currentColor, 0 4px 20px rgba(8,62,64,0.15);
+    #akutansi-bento-grid .dl-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
     }
-    .dl-green .bento-card.active-filter { box-shadow: 0 0 0 3px #10b981, 0 4px 20px rgba(16,185,129,0.2); }
-    .dl-yellow .bento-card.active-filter { box-shadow: 0 0 0 3px #f59e0b, 0 4px 20px rgba(245,158,11,0.2); }
-    .dl-red .bento-card.active-filter { box-shadow: 0 0 0 3px #ef4444, 0 4px 20px rgba(239,68,68,0.2); }
-
-    @media (max-width: 1200px) {
-      .bento-stat-card { grid-column: span 6; }
-      .bento-deadline-card { grid-column: span 4; }
+    #akutansi-bento-grid .dl-ic {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; flex-shrink: 0;
     }
-    @media (max-width: 768px) {
-      .bento-stat-card, .bento-deadline-card { grid-column: span 12; }
+    #akutansi-bento-grid .dl-green .dl-ic { background: #ecfdf5; color: #10b981; }
+    #akutansi-bento-grid .dl-yellow .dl-ic { background: #fffbeb; color: #f59e0b; }
+    #akutansi-bento-grid .dl-red .dl-ic { background: #fef2f2; color: #ef4444; }
+    #akutansi-bento-grid .dl-ttl {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #475569;
+    }
+    #akutansi-bento-grid .dl-num {
+      font-size: 1.8rem; font-weight: 800; color: #0f172a;
+      line-height: 1; letter-spacing: -0.03em; margin-bottom: 3px;
+    }
+    #akutansi-bento-grid .dl-sub {
+      font-size: 0.72rem; color: #94a3b8; font-weight: 500;
+    }
+    #akutansi-bento-grid .dl-badge {
+      display: inline-block; margin-top: 8px;
+      font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+    }
+    #akutansi-bento-grid .dl-green .dl-badge { background: #ecfdf5; color: #059669; }
+    #akutansi-bento-grid .dl-yellow .dl-badge { background: #fffbeb; color: #b45309; }
+    #akutansi-bento-grid .dl-red .dl-badge { background: #fef2f2; color: #dc2626; }
+
+    /* Active filter highlight */
+    #akutansi-bento-grid .dl-green.active-filter { box-shadow: 0 0 0 3px #10b981, 0 4px 20px rgba(16,185,129,0.15) !important; }
+    #akutansi-bento-grid .dl-yellow.active-filter { box-shadow: 0 0 0 3px #f59e0b, 0 4px 20px rgba(245,158,11,0.15) !important; }
+    #akutansi-bento-grid .dl-red.active-filter { box-shadow: 0 0 0 3px #ef4444, 0 4px 20px rgba(239,68,68,0.15) !important; }
+
+    @media (max-width: 1100px) {
+      #akutansi-bento-grid .akt-row.row-stats { grid-template-columns: repeat(2, 1fr); }
+      #akutansi-bento-grid .akt-row.row-deadline { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px) {
+      #akutansi-bento-grid .akt-row.row-stats,
+      #akutansi-bento-grid .akt-row.row-deadline { grid-template-columns: 1fr; }
     }
   </style>
 
-  <div class="bento-info-grid">
-    {{-- Card 1: Total Dokumen Agenda (dark) --}}
-    <div class="bento-stat-card">
-      <div class="bento-card">
-        <div class="bento-icon-circle" style="background:rgba(255,255,255,0.15);color:#fff;">
+  <div id="akutansi-bento-grid">
+    {{-- ROW 1: Stat Cards --}}
+    <div class="akt-row row-stats">
+
+      {{-- Card 1: Total Dokumen Agenda (dark) --}}
+      <div class="akt-card dark">
+        <div class="akt-icon" style="background:rgba(255,255,255,0.15);color:#fff;">
           <i class="fa-solid fa-book-open"></i>
         </div>
-        <div class="bento-label">Total Dokumen Agenda</div>
-        <div class="bento-number" data-counter="{{ $totalDokumenAgenda ?? 0 }}">0</div>
-        <div class="bento-sub">Rp <span data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}">0</span></div>
+        <div class="akt-label">Total Dokumen Agenda</div>
+        <div class="akt-number" data-counter="{{ $totalDokumenAgenda ?? 0 }}">0</div>
+        <div class="akt-sub">Rp <span data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}">0</span></div>
+      </div>
+
+      {{-- Card 2: Total Dokumen Akutansi --}}
+      <div class="akt-card">
+        <div class="akt-icon purple"><i class="fa-solid fa-calculator"></i></div>
+        <div class="akt-label">Total Dokumen Akutansi</div>
+        <div class="akt-number" data-counter="{{ $totalDokumenAkutansi ?? 0 }}">0</div>
+        <div class="akt-sub">Dokumen di akutansi</div>
+      </div>
+
+      {{-- Card 3: Dokumen Diproses --}}
+      <div class="akt-card">
+        <div class="akt-icon yellow"><i class="fa-solid fa-clock"></i></div>
+        <div class="akt-label">Dokumen Diproses</div>
+        <div class="akt-number" data-counter="{{ $totalDokumenDiproses ?? 0 }}">0</div>
+        <div class="akt-sub">Sedang diproses</div>
+      </div>
+
+      {{-- Card 4: Total Terkirim --}}
+      <div class="akt-card">
+        <div class="akt-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="akt-label">Total Terkirim</div>
+        <div class="akt-number" data-counter="{{ $totalTerkirim ?? 0 }}">0</div>
+        <div class="akt-sub">Dikirim ke tahap selanjutnya</div>
       </div>
     </div>
 
-    {{-- Card 2: Total Dokumen Akutansi --}}
-    <div class="bento-stat-card">
-      <div class="bento-card">
-        <div class="bento-icon-circle purple">
-          <i class="fa-solid fa-calculator"></i>
-        </div>
-        <div class="bento-label">Total Dokumen Akutansi</div>
-        <div class="bento-number" data-counter="{{ $totalDokumenAkutansi ?? 0 }}">0</div>
-        <div class="bento-sub">Dokumen di akutansi</div>
-      </div>
-    </div>
-
-    {{-- Card 3: Dokumen Diproses --}}
-    <div class="bento-stat-card">
-      <div class="bento-card">
-        <div class="bento-icon-circle yellow">
-          <i class="fa-solid fa-clock"></i>
-        </div>
-        <div class="bento-label">Dokumen Diproses</div>
-        <div class="bento-number" data-counter="{{ $totalDokumenDiproses ?? 0 }}">0</div>
-        <div class="bento-sub">Sedang diproses</div>
-      </div>
-    </div>
-
-    {{-- Card 4: Total Terkirim --}}
-    <div class="bento-stat-card">
-      <div class="bento-card">
-        <div class="bento-icon-circle blue">
-          <i class="fa-solid fa-paper-plane"></i>
-        </div>
-        <div class="bento-label">Total Terkirim</div>
-        <div class="bento-number" data-counter="{{ $totalTerkirim ?? 0 }}">0</div>
-        <div class="bento-sub">Dikirim ke tahap selanjutnya</div>
-      </div>
-    </div>
-
-    {{-- Deadline Card: Aman --}}
+    {{-- ROW 2: Deadline/Keterlambatan Cards --}}
     @php $currentFilter = request('keterlambatan'); @endphp
-    <div class="bento-deadline-card dl-green">
+    <div class="akt-row row-deadline">
+
+      {{-- Aman --}}
       <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
-         class="bento-card text-decoration-none {{ $currentFilter === 'aman' ? 'active-filter' : '' }}">
-        <div class="dl-header">
-          <div class="dl-icon"><i class="fa-solid fa-shield-halved"></i></div>
-          <div class="dl-title">Aman</div>
+         class="akt-card akt-deadline-card dl-green {{ $currentFilter === 'aman' ? 'active-filter' : '' }}">
+        <div class="dl-head">
+          <div class="dl-ic"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="dl-ttl">Aman</div>
         </div>
-        <div class="dl-number" data-counter="{{ $dokumenLessThan24h ?? 0 }}">0</div>
+        <div class="dl-num" data-counter="{{ $dokumenLessThan24h ?? 0 }}">0</div>
         <div class="dl-sub">Diterima &lt; 24 jam</div>
         <div class="dl-badge">{{ $currentFilter === 'aman' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
       </a>
-    </div>
 
-    {{-- Deadline Card: Peringatan --}}
-    <div class="bento-deadline-card dl-yellow">
+      {{-- Peringatan --}}
       <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
-         class="bento-card text-decoration-none {{ $currentFilter === 'peringatan' ? 'active-filter' : '' }}">
-        <div class="dl-header">
-          <div class="dl-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <div class="dl-title">Peringatan</div>
+         class="akt-card akt-deadline-card dl-yellow {{ $currentFilter === 'peringatan' ? 'active-filter' : '' }}">
+        <div class="dl-head">
+          <div class="dl-ic"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="dl-ttl">Peringatan</div>
         </div>
-        <div class="dl-number" data-counter="{{ $dokumen24to72h ?? 0 }}">0</div>
+        <div class="dl-num" data-counter="{{ $dokumen24to72h ?? 0 }}">0</div>
         <div class="dl-sub">Diterima 1–3 hari lalu</div>
         <div class="dl-badge">{{ $currentFilter === 'peringatan' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
       </a>
-    </div>
 
-    {{-- Deadline Card: Terlambat --}}
-    <div class="bento-deadline-card dl-red">
+      {{-- Terlambat --}}
       <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
-         class="bento-card text-decoration-none {{ $currentFilter === 'terlambat' ? 'active-filter' : '' }}">
-        <div class="dl-header">
-          <div class="dl-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-          <div class="dl-title">Terlambat</div>
+         class="akt-card akt-deadline-card dl-red {{ $currentFilter === 'terlambat' ? 'active-filter' : '' }}">
+        <div class="dl-head">
+          <div class="dl-ic"><i class="fa-solid fa-circle-xmark"></i></div>
+          <div class="dl-ttl">Terlambat</div>
         </div>
-        <div class="dl-number" data-counter="{{ $dokumenMoreThan72h ?? 0 }}">0</div>
+        <div class="dl-num" data-counter="{{ $dokumenMoreThan72h ?? 0 }}">0</div>
         <div class="dl-sub">Diterima &gt; 3 hari lalu</div>
         <div class="dl-badge">{{ $currentFilter === 'terlambat' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
       </a>
     </div>
   </div>
+
 
   <script>
   (function() {
