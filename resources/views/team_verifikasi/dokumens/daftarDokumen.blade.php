@@ -4622,15 +4622,10 @@
                     </span>
                   @else
                     {{-- Dokumen ditolak dari inbox (oleh Team Verifikasi sendiri) --}}
-                    <span class="badge-status badge-dikembalikan" style="position: relative;">
-                      <i class="fa-solid fa-times-circle me-1"></i>
-                      <span>Dokumen Ditolak,
-                        <a href="{{ route('api.documents.verifikasi.rejected.show', $dokumen) }}"
-                          class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
-                          style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
-                          Alasan
-                        </a>
-                      </span>
+                    {{-- Status "Draft": dokumen dikembalikan ke operator, belum masuk ke daftar verifikasi --}}
+                    <span class="badge-status badge-draft" style="position: relative;">
+                      <i class="fa-solid fa-file-lines me-1"></i>
+                      <span>Draft</span>
                     </span>
                   @endif
                 @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi')

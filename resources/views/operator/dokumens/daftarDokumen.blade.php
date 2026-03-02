@@ -2701,12 +2701,27 @@
                     <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah }}</strong>
                   @elseif($col == 'status')
                     @php
+                      // === CHECK PRIORITAS: Apakah dokumen ditolak oleh Team Verifikasi dari inbox? ===
+                      // Ini harus dicek PERTAMA karena rejection bisa terjadi setelah display_status diset
+                      $teamVerifikasiRejectedStatus = $dokumen->roleStatuses()
+                        ->where('role_code', 'team_verifikasi')
+                        ->where('status', 'rejected')
+                        ->latest('status_changed_at')
+                        ->first();
+                      $isRejectedByTeamVerifikasi = $teamVerifikasiRejectedStatus !== null;
+                      $rejectionReasonVerifikasi = $isRejectedByTeamVerifikasi ? ($teamVerifikasiRejectedStatus->notes ?? null) : null;
+
                       // === PERBAIKAN: Gunakan display_status dari dokumen_role_data untuk stabilitas ===
                       // Operator ('operator') memiliki display_status tersendiri yang tidak terpengaruh downstream
                       $OperatorDisplayStatus = $dokumen->getDisplayStatusForRole('operator');
 
+                      // OVERRIDE: Jika ditolak oleh team verifikasi, selalu tampilkan status ditolak
+                      // (override display_status yang mungkin masih menunjuk ke 'menunggu_approval_verifikasi')
+                      if ($isRejectedByTeamVerifikasi) {
+                        $OperatorDisplayStatus = 'ditolak_verifikasi';
+                      }
                       // Fallback logic jika display_status belum diset
-                      if (!$OperatorDisplayStatus) {
+                      elseif (!$OperatorDisplayStatus) {
                         $handlerLower = strtolower($dokumen->current_handler ?? '');
                         $isWithOperator = in_array($handlerLower, ['operator', 'Operator', 'operator']);
                         $statusLower = strtolower($dokumen->status ?? 'draft');
@@ -2755,6 +2770,7 @@
                       $statusLabel = match ($OperatorDisplayStatus) {
                         'draft' => 'Belum Dikirim',
                         'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
+                        'ditolak_verifikasi' => 'Dokumen Ditolak oleh Team Verifikasi',
                         'terkirim', 'terkirim_verifikasi', 'terkirim_perpajakan', 'terkirim_akutansi', 'terkirim_pembayaran' => 'Terkirim',
                         'selesai', 'dibayar' => 'Selesai',
                         default => 'Terkirim'
@@ -2765,6 +2781,21 @@
                         <i class="fa-solid fa-file-lines me-1"></i>
                         <span>Belum Dikirim</span>
                       </span>
+                    @elseif($OperatorDisplayStatus === 'ditolak_verifikasi')
+                      <span class="badge-status badge-dikembalikan"
+                        style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; cursor: pointer;"
+                        onclick="showRejectionModal({{ $dokumen->id }})">
+                        <i class="fa-solid fa-times-circle me-1"></i>
+                        <span>Dokumen Ditolak,
+                          <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
+                        </span>
+                      </span>
+                      @if($rejectionReasonVerifikasi)
+                        <div style="font-size: 10px; color: #ef4444; margin-top: 4px; max-width: 160px; word-wrap: break-word;">
+                          <i class="fa-solid fa-comment-dots me-1"></i>
+                          {{ Str::limit($rejectionReasonVerifikasi, 50) }}
+                        </div>
+                      @endif
                     @elseif($OperatorDisplayStatus === 'menunggu_approval_verifikasi')
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">

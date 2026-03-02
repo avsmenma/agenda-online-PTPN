@@ -477,7 +477,15 @@ class InboxController extends Controller
             // Tentukan ke mana dokumen harus dikembalikan berdasarkan alur workflow
             // Alur: Ibu Tarapul -> Verifikasi -> Perpajakan -> Akutansi -> Pembayaran
 
-            if ($roleCode === 'perpajakan') {
+            if ($roleCode === 'team_verifikasi') {
+                // Team Verifikasi menolak dari inbox -> dikembalikan ke Operator
+                $dokumen->current_handler = 'operator';
+                $dokumen->status = 'returned_to_operator';
+                $dokumen->return_source = 'team_verifikasi';
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
+                $dokumen->save();
+            } elseif ($roleCode === 'perpajakan') {
                 // Perpajakan menolak -> kembali ke Verifikasi
                 $dokumen->current_handler = 'team_verifikasi';
                 $dokumen->status = 'returned_to_department';
