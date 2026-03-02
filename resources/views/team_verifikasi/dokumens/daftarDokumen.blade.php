@@ -4596,16 +4596,14 @@
                       default => Str::title($dokumen->return_source ?? 'Bidang'),
                     };
                   @endphp
-                  <span class="badge-status badge-dikembalikan" style="position: relative;">
+                  <span class="badge-status badge-dikembalikan"
+                    style="position: relative; cursor: pointer;"
+                    onclick="event.stopPropagation(); showRejectionModal({{ $dokumen->id }})">
                     <i class="fa-solid fa-rotate-left me-1"></i>
-                    <span>Dikembalikan oleh {{ $returnedByLabel }}</span>
+                    <span>Dikembalikan,
+                      <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
+                    </span>
                   </span>
-                  @if($dokumen->return_reason)
-                    <div style="font-size: 10px; color: #ef4444; margin-top: 4px; max-width: 160px; word-wrap: break-word;">
-                      <i class="fa-solid fa-comment-dots me-1"></i>
-                      {{ Str::limit($dokumen->return_reason, 50) }}
-                    </div>
-                  @endif
                 @elseif($isRejected)
                   {{-- Dokumen ditolak dari inbox atau dari perpajakan/akutansi --}}
                   @if($isRejectedByOtherRole && $rejectedByRole)
@@ -8764,6 +8762,162 @@
                       setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
                     }
                   </script>
+
+  <!-- Modal: Rejection Detail - Team Verifikasi -->
+  <div class="modal fade" id="rejectionDetailModal" tabindex="-1" aria-labelledby="rejectionDetailModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div class="modal-header"
+          style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; padding: 1.5rem 2rem;">
+          <h5 class="modal-title" id="rejectionDetailModalLabel" style="font-size: 1.25rem; font-weight: 600;">
+            <i class="fa-solid fa-times-circle me-2"></i>Detail Penolakan Dokumen
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+            style="opacity: 0.9;"></button>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+          <div id="rejectionModalLoading" class="text-center py-4">
+            <div class="spinner-border text-danger" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Memuat detail penolakan...</p>
+          </div>
+          <div id="rejectionModalContent" style="display: none;">
+            <div class="card mb-4" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 12px;">
+              <div class="card-body" style="padding: 1.5rem;">
+                <h6 class="card-title mb-3"
+                  style="color: #083E40; font-weight: 600; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <i class="fa-solid fa-file-lines me-2" style="color: #889717;"></i>Informasi Dokumen
+                </h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <span class="info-label">Nomor Agenda</span>
+                      <span class="info-value" id="rejectionNomorAgenda">-</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <span class="info-label">Nomor SPP</span>
+                      <span class="info-value" id="rejectionNomorSpp">-</span>
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="info-item">
+                      <span class="info-label">Uraian SPP</span>
+                      <span class="info-value" id="rejectionUraianSpp">-</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <span class="info-label">Nilai Rupiah</span>
+                      <span class="info-value text-success fw-bold" id="rejectionNilaiRupiah">-</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <span class="info-label">Tanggal Ditolak</span>
+                      <span class="info-value" id="rejectionTanggal">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card"
+              style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 12px; background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); border-left: 4px solid #dc3545;">
+              <div class="card-body" style="padding: 1.5rem;">
+                <h6 class="card-title mb-3"
+                  style="color: #dc3545; font-weight: 600; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <i class="fa-solid fa-user-xmark me-2"></i>Informasi Penolakan
+                </h6>
+                <div class="mb-3">
+                  <span class="info-label">Ditolak Oleh</span>
+                  <div class="mt-1">
+                    <span class="badge"
+                      style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 0.5rem 1rem; font-size: 0.875rem; border-radius: 8px;">
+                      <i class="fa-solid fa-user-shield me-2"></i>
+                      <span id="rejectionBy">-</span>
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span class="info-label mb-2 d-block">Alasan Penolakan</span>
+                  <div class="rejection-reason-box" id="rejectionReason"
+                    style="background: white; padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(220, 53, 69, 0.2); min-height: 80px; line-height: 1.6; color: #333; white-space: pre-wrap; word-wrap: break-word;">
+                    -
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="rejectionModalError" style="display: none;" class="text-center py-4">
+            <i class="fa-solid fa-exclamation-triangle" style="font-size: 48px; color: #dc3545; margin-bottom: 1rem;"></i>
+            <p class="text-danger mb-0" id="rejectionErrorMessage">Gagal memuat detail penolakan</p>
+          </div>
+        </div>
+        <div class="modal-footer border-0 justify-content-center" style="padding: 1.5rem 2rem; background: #f8f9fa;">
+          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal"
+            style="border-radius: 8px; font-weight: 500;">
+            <i class="fa-solid fa-times me-2"></i>Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Show rejection modal - Team Verifikasi
+    window.showRejectionModal = function(dokumenId) {
+      const modalEl = document.getElementById('rejectionDetailModal');
+      if (!modalEl) return;
+
+      const modal = new bootstrap.Modal(modalEl);
+      const loadingEl = document.getElementById('rejectionModalLoading');
+      const contentEl = document.getElementById('rejectionModalContent');
+      const errorEl   = document.getElementById('rejectionModalError');
+
+      loadingEl.style.display = 'block';
+      contentEl.style.display = 'none';
+      errorEl.style.display   = 'none';
+      modal.show();
+
+      fetch(`/api/documents/rejected/${dokumenId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          document.getElementById('rejectionNomorAgenda').textContent = data.dokumen.nomor_agenda || '-';
+          document.getElementById('rejectionNomorSpp').textContent    = data.dokumen.nomor_spp    || '-';
+          document.getElementById('rejectionUraianSpp').textContent   = data.dokumen.uraian_spp   || '-';
+          document.getElementById('rejectionNilaiRupiah').textContent = data.dokumen.nilai_rupiah  || '-';
+          document.getElementById('rejectionTanggal').textContent     = data.rejected_at           || '-';
+          document.getElementById('rejectionBy').textContent          = data.rejected_by           || 'Unknown';
+          document.getElementById('rejectionReason').textContent      = data.rejection_reason      || 'Tidak ada alasan yang diberikan';
+
+          loadingEl.style.display = 'none';
+          contentEl.style.display = 'block';
+        } else {
+          throw new Error(data.message || 'Gagal memuat data');
+        }
+      })
+      .catch(error => {
+        loadingEl.style.display = 'none';
+        errorEl.style.display   = 'block';
+        document.getElementById('rejectionErrorMessage').textContent =
+          'Gagal memuat detail penolakan: ' + (error.message || 'Terjadi kesalahan');
+      });
+    };
+  </script>
 
 @endsection
 
