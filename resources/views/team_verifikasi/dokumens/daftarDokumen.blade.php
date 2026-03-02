@@ -4622,11 +4622,8 @@
                     </span>
                   @else
                     {{-- Dokumen ditolak dari inbox (oleh Team Verifikasi sendiri) --}}
-                    {{-- Status "Draft": dokumen dikembalikan ke operator, belum masuk ke daftar verifikasi --}}
-                    <span class="badge-status badge-draft" style="position: relative;">
-                      <i class="fa-solid fa-file-lines me-1"></i>
-                      <span>Draft</span>
-                    </span>
+                    {{-- Status "Draft": sama persis dengan tampilan draft pertama kali --}}
+                    <span class="badge-status badge-proses">⏳ Draft</span>
                   @endif
                 @elseif($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi')
                   {{-- Dokumen yang benar-benar sudah selesai diproses --}}
