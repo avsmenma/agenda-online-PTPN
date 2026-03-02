@@ -2799,269 +2799,292 @@
 
   <h2>{{ $title }}</h2>
 
-  {{-- ===== BENTO GRID INFORMASI AKUTANSI ===== --}}
+  {{-- ===== PREMIUM BENTO GRID STATS (IDENTIK VERIFIKASI) ===== --}}
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-    /* ===== SCOPED: only affects #akutansi-bento-grid ===== */
-    #akutansi-bento-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 24px;
+    /* Bento Grid for Akutansi Stats — identical to Verifikasi */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    .vstat-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.1rem;
+      margin-bottom: 1.5rem;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    #akutansi-bento-grid .akt-row {
-      display: grid;
-      gap: 16px;
-    }
-    #akutansi-bento-grid .akt-row.row-stats {
-      grid-template-columns: repeat(4, 1fr);
-    }
-    #akutansi-bento-grid .akt-row.row-deadline {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    /* Base card */
-    #akutansi-bento-grid .akt-card {
-      background: #fff;
+    .vstat-card {
+      background: #ffffff;
       border-radius: 16px;
-      padding: 20px 22px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(8,62,64,0.07);
-      border: 1px solid #f0f4f4;
+      padding: 1.35rem 1.5rem;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: 250ms cubic-bezier(0.4,0,0.2,1);
       position: relative;
       overflow: hidden;
-      transition: box-shadow 0.25s, transform 0.25s;
+      text-decoration: none;
+      color: inherit;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      grid-column: span 3;
     }
-    #akutansi-bento-grid .akt-card:hover {
-      box-shadow: 0 4px 20px rgba(8,62,64,0.13), 0 1px 4px rgba(0,0,0,0.05);
-      transform: translateY(-2px);
+    .vstat-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .vstat-card--total {
+      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
+      border: none;
+      box-shadow: 0 4px 20px rgba(8,62,64,0.35);
     }
-
-    /* Dark card (first stat) */
-    #akutansi-bento-grid .akt-card.dark {
-      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%);
-      border-color: transparent;
-      color: #fff;
-    }
-    #akutansi-bento-grid .akt-card.dark::before {
-      content: '';
-      position: absolute;
-      top: -40px; right: -40px;
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.06);
-    }
-    #akutansi-bento-grid .akt-card.dark .akt-label { color: rgba(255,255,255,0.7); }
-    #akutansi-bento-grid .akt-card.dark .akt-number { color: #fff; }
-    #akutansi-bento-grid .akt-card.dark .akt-sub { color: rgba(255,255,255,0.6); }
-    #akutansi-bento-grid .akt-card.dark .akt-icon { background: rgba(255,255,255,0.15); color: #fff; }
-
-    /* Icon circle */
-    #akutansi-bento-grid .akt-icon {
-      width: 40px; height: 40px;
-      border-radius: 12px;
+    .vstat-card--total:hover { box-shadow: 0 8px 30px rgba(8,62,64,0.45); transform: translateY(-3px); }
+    .vstat-card--total .vstat-label, .vstat-card--total .vstat-value, .vstat-card--total .vstat-sub { color: white; }
+    .vstat-card--total .vstat-label { opacity: 0.9; }
+    .vstat-card--total .vstat-sub { opacity: 0.85; }
+    .vstat-card--total .vstat-icon { background: rgba(255,255,255,0.2); color: white; }
+    .vstat-content { display: flex; flex-direction: column; }
+    .vstat-icon {
+      width: 52px; height: 52px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem;
-      margin-bottom: 12px;
-      flex-shrink: 0;
+      font-size: 1.25rem; flex-shrink: 0;
     }
-    #akutansi-bento-grid .akt-icon.purple { background: #f3f0ff; color: #7c3aed; }
-    #akutansi-bento-grid .akt-icon.yellow { background: #fffbeb; color: #d97706; }
-    #akutansi-bento-grid .akt-icon.blue   { background: #eff6ff; color: #2563eb; }
-
-    /* Text parts stat card */
-    #akutansi-bento-grid .akt-label {
-      font-size: 0.695rem; font-weight: 700; letter-spacing: 0.07em;
-      text-transform: uppercase; color: #94a3b8; margin-bottom: 4px;
+    .vstat-icon--akutansi { background: rgba(8,62,64,0.1); color: #083E40; }
+    .vstat-icon--proses { background: rgba(245,158,11,0.12); color: #f59e0b; }
+    .vstat-icon--terkirim { background: rgba(59,130,246,0.12); color: #3b82f6; }
+    .vstat-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+    .vstat-value { font-size: 1.875rem; font-weight: 700; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.2rem; }
+    .vstat-sub { font-size: 0.8125rem; color: #10b981; font-weight: 600; }
+    /* Deadline cards */
+    .vdeadline-card {
+      grid-column: span 4;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.2rem 1.5rem;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: 250ms cubic-bezier(0.4,0,0.2,1);
+      display: flex; align-items: center; gap: 1rem;
+      cursor: pointer; text-decoration: none; color: inherit;
+      position: relative; overflow: hidden;
     }
-    #akutansi-bento-grid .akt-number {
-      font-size: 2rem; font-weight: 800; color: #0f172a;
-      line-height: 1; margin-bottom: 4px; letter-spacing: -0.03em;
+    .vdeadline-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; transition: 250ms; }
+    .vdeadline-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .vdeadline-card--aman::before { background: #10b981; }
+    .vdeadline-card--peringatan::before { background: #f59e0b; }
+    .vdeadline-card--terlambat::before { background: #f43f5e; }
+    .vdeadline-card--aman:hover { box-shadow: 0 0 20px rgba(16,185,129,0.2), 0 8px 32px rgba(0,0,0,0.08); }
+    .vdeadline-card--peringatan:hover { box-shadow: 0 0 20px rgba(245,158,11,0.2), 0 8px 32px rgba(0,0,0,0.08); }
+    .vdeadline-card--terlambat:hover { box-shadow: 0 0 20px rgba(244,63,94,0.2), 0 8px 32px rgba(0,0,0,0.08); }
+    .vdeadline-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .vdeadline-card--aman .vdeadline-icon { background: rgba(16,185,129,0.12); color: #10b981; }
+    .vdeadline-card--peringatan .vdeadline-icon { background: rgba(245,158,11,0.12); color: #f59e0b; }
+    .vdeadline-card--terlambat .vdeadline-icon { background: rgba(244,63,94,0.12); color: #f43f5e; }
+    .vdeadline-content { flex: 1; }
+    .vdeadline-label { font-size: 0.8125rem; font-weight: 500; color: #94a3b8; margin-bottom: 0.2rem; }
+    .vdeadline-value { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
+    .vdeadline-desc { font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem; }
+    /* Active state when card filter is applied */
+    .vdeadline-card.vdeadline-active { transform: translateY(-2px); }
+    .vdeadline-card--aman.vdeadline-active { background: rgba(16,185,129,0.1); border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 6px 20px rgba(16,185,129,0.15); }
+    .vdeadline-card--aman.vdeadline-active::before { width: 6px; background: #10b981; }
+    .vdeadline-card--aman.vdeadline-active .vdeadline-value { color: #059669; }
+    .vdeadline-card--peringatan.vdeadline-active { background: rgba(245,158,11,0.1); border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.3), 0 6px 20px rgba(245,158,11,0.15); }
+    .vdeadline-card--peringatan.vdeadline-active::before { width: 6px; background: #f59e0b; }
+    .vdeadline-card--peringatan.vdeadline-active .vdeadline-value { color: #d97706; }
+    .vdeadline-card--terlambat.vdeadline-active { background: rgba(244,63,94,0.1); border-color: #f43f5e; box-shadow: 0 0 0 2px rgba(244,63,94,0.3), 0 6px 20px rgba(244,63,94,0.15); }
+    .vdeadline-card--terlambat.vdeadline-active::before { width: 6px; background: #f43f5e; }
+    .vdeadline-card--terlambat.vdeadline-active .vdeadline-value { color: #e11d48; }
+    @media (max-width: 1280px) {
+      .vstat-card { grid-column: span 6; }
+      .vdeadline-card { grid-column: span 4; }
     }
-    #akutansi-bento-grid .akt-sub {
-      font-size: 0.75rem; color: #64748b; font-weight: 500;
-    }
-
-    /* === DEADLINE CARDS (row 2) === */
-    #akutansi-bento-grid .akt-deadline-card {
-      text-decoration: none !important;
-      color: inherit !important;
-      border-left: 4px solid transparent;
-    }
-    #akutansi-bento-grid .akt-deadline-card:hover { color: inherit !important; }
-    #akutansi-bento-grid .akt-deadline-card.dl-green { border-left-color: #10b981 !important; }
-    #akutansi-bento-grid .akt-deadline-card.dl-yellow { border-left-color: #f59e0b !important; }
-    #akutansi-bento-grid .akt-deadline-card.dl-red { border-left-color: #ef4444 !important; }
-
-    #akutansi-bento-grid .dl-head {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-    }
-    #akutansi-bento-grid .dl-ic {
-      width: 30px; height: 30px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.85rem; flex-shrink: 0;
-    }
-    #akutansi-bento-grid .dl-green .dl-ic { background: #ecfdf5; color: #10b981; }
-    #akutansi-bento-grid .dl-yellow .dl-ic { background: #fffbeb; color: #f59e0b; }
-    #akutansi-bento-grid .dl-red .dl-ic { background: #fef2f2; color: #ef4444; }
-    #akutansi-bento-grid .dl-ttl {
-      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.05em; color: #475569;
-    }
-    #akutansi-bento-grid .dl-num {
-      font-size: 1.8rem; font-weight: 800; color: #0f172a;
-      line-height: 1; letter-spacing: -0.03em; margin-bottom: 3px;
-    }
-    #akutansi-bento-grid .dl-sub {
-      font-size: 0.72rem; color: #94a3b8; font-weight: 500;
-    }
-    #akutansi-bento-grid .dl-badge {
-      display: inline-block; margin-top: 8px;
-      font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em;
-      text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
-    }
-    #akutansi-bento-grid .dl-green .dl-badge { background: #ecfdf5; color: #059669; }
-    #akutansi-bento-grid .dl-yellow .dl-badge { background: #fffbeb; color: #b45309; }
-    #akutansi-bento-grid .dl-red .dl-badge { background: #fef2f2; color: #dc2626; }
-
-    /* Active filter highlight */
-    #akutansi-bento-grid .dl-green.active-filter { box-shadow: 0 0 0 3px #10b981, 0 4px 20px rgba(16,185,129,0.15) !important; }
-    #akutansi-bento-grid .dl-yellow.active-filter { box-shadow: 0 0 0 3px #f59e0b, 0 4px 20px rgba(245,158,11,0.15) !important; }
-    #akutansi-bento-grid .dl-red.active-filter { box-shadow: 0 0 0 3px #ef4444, 0 4px 20px rgba(239,68,68,0.15) !important; }
-
-    @media (max-width: 1100px) {
-      #akutansi-bento-grid .akt-row.row-stats { grid-template-columns: repeat(2, 1fr); }
-      #akutansi-bento-grid .akt-row.row-deadline { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 640px) {
-      #akutansi-bento-grid .akt-row.row-stats,
-      #akutansi-bento-grid .akt-row.row-deadline { grid-template-columns: 1fr; }
+    @media (max-width: 992px) { .vdeadline-card { grid-column: span 6; } }
+    @media (max-width: 768px) {
+      .vstat-grid { gap: 0.75rem; }
+      .vstat-card, .vdeadline-card { grid-column: span 12; }
     }
   </style>
 
-  <div id="akutansi-bento-grid">
-    {{-- ROW 1: Stat Cards --}}
-    <div class="akt-row row-stats">
-
-      {{-- Card 1: Total Dokumen Agenda (dark) --}}
-      <div class="akt-card dark">
-        <div class="akt-icon" style="background:rgba(255,255,255,0.15);color:#fff;">
-          <i class="fa-solid fa-book-open"></i>
-        </div>
-        <div class="akt-label">Total Dokumen Agenda</div>
-        <div class="akt-number" data-counter="{{ $totalDokumenAgenda ?? 0 }}">0</div>
-        <div class="akt-sub">Rp <span data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}">0</span></div>
+  <div class="vstat-grid">
+    <!-- Card 1: Total Dokumen Agenda (hijau solid - besar) -->
+    <div class="vstat-card vstat-card--total">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Dokumen Agenda</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalDokumenAgenda ?? 0 }}"
+          data-duration="1400">0</div>
+        <div class="vstat-sub"
+          data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}"
+          data-duration="1600">Rp 0</div>
       </div>
-
-      {{-- Card 2: Total Dokumen Akutansi --}}
-      <div class="akt-card">
-        <div class="akt-icon purple"><i class="fa-solid fa-calculator"></i></div>
-        <div class="akt-label">Total Dokumen Akutansi</div>
-        <div class="akt-number" data-counter="{{ $totalDokumenAkutansi ?? 0 }}">0</div>
-        <div class="akt-sub">Dokumen di akutansi</div>
-      </div>
-
-      {{-- Card 3: Dokumen Diproses --}}
-      <div class="akt-card">
-        <div class="akt-icon yellow"><i class="fa-solid fa-clock"></i></div>
-        <div class="akt-label">Dokumen Diproses</div>
-        <div class="akt-number" data-counter="{{ $totalDokumenDiproses ?? 0 }}">0</div>
-        <div class="akt-sub">Sedang diproses</div>
-      </div>
-
-      {{-- Card 4: Total Terkirim --}}
-      <div class="akt-card">
-        <div class="akt-icon blue"><i class="fa-solid fa-paper-plane"></i></div>
-        <div class="akt-label">Total Terkirim</div>
-        <div class="akt-number" data-counter="{{ $totalTerkirim ?? 0 }}">0</div>
-        <div class="akt-sub">Dikirim ke tahap selanjutnya</div>
+      <div class="vstat-icon" style="background:rgba(255,255,255,0.2);color:white;">
+        <i class="fas fa-layer-group"></i>
       </div>
     </div>
 
-    {{-- ROW 2: Deadline/Keterlambatan Cards --}}
-    @php $currentFilter = request('keterlambatan'); @endphp
-    <div class="akt-row row-deadline">
+    <!-- Card 2: Total Dokumen Akutansi -->
+    <a href="{{ route('documents.akutansi.index') }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Dokumen Akutansi</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalDokumenAkutansi ?? 0 }}"
+          data-duration="1200">0</div>
+        <div class="vstat-sub">Dokumen di akutansi</div>
+      </div>
+      <div class="vstat-icon vstat-icon--akutansi">
+        <i class="fas fa-calculator"></i>
+      </div>
+    </a>
 
-      {{-- Aman --}}
-      <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
-         class="akt-card akt-deadline-card dl-green {{ $currentFilter === 'aman' ? 'active-filter' : '' }}">
-        <div class="dl-head">
-          <div class="dl-ic"><i class="fa-solid fa-shield-halved"></i></div>
-          <div class="dl-ttl">Aman</div>
-        </div>
-        <div class="dl-num" data-counter="{{ $dokumenLessThan24h ?? 0 }}">0</div>
-        <div class="dl-sub">Diterima &lt; 24 jam</div>
-        <div class="dl-badge">{{ $currentFilter === 'aman' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
-      </a>
+    <!-- Card 3: Dokumen Diproses -->
+    <a href="{{ route('documents.akutansi.index', ['status' => 'sedang_proses']) }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Dokumen Diproses</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalDokumenDiproses ?? 0 }}"
+          data-duration="1200">0</div>
+        <div class="vstat-sub">Sedang diproses</div>
+      </div>
+      <div class="vstat-icon vstat-icon--proses">
+        <i class="fas fa-clock"></i>
+      </div>
+    </a>
 
-      {{-- Peringatan --}}
-      <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
-         class="akt-card akt-deadline-card dl-yellow {{ $currentFilter === 'peringatan' ? 'active-filter' : '' }}">
-        <div class="dl-head">
-          <div class="dl-ic"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <div class="dl-ttl">Peringatan</div>
-        </div>
-        <div class="dl-num" data-counter="{{ $dokumen24to72h ?? 0 }}">0</div>
-        <div class="dl-sub">Diterima 1–3 hari lalu</div>
-        <div class="dl-badge">{{ $currentFilter === 'peringatan' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
-      </a>
+    <!-- Card 4: Total Terkirim -->
+    <a href="{{ route('documents.akutansi.index', ['status' => 'terkirim_pembayaran']) }}" class="vstat-card">
+      <div class="vstat-content">
+        <div class="vstat-label">Total Terkirim</div>
+        <div class="vstat-value"
+          data-counter="{{ $totalTerkirim ?? 0 }}"
+          data-duration="1200">0</div>
+        <div class="vstat-sub">Dikirim ke tahap selanjutnya</div>
+      </div>
+      <div class="vstat-icon vstat-icon--terkirim">
+        <i class="fas fa-paper-plane"></i>
+      </div>
+    </a>
 
-      {{-- Terlambat --}}
-      <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
-         class="akt-card akt-deadline-card dl-red {{ $currentFilter === 'terlambat' ? 'active-filter' : '' }}">
-        <div class="dl-head">
-          <div class="dl-ic"><i class="fa-solid fa-circle-xmark"></i></div>
-          <div class="dl-ttl">Terlambat</div>
-        </div>
-        <div class="dl-num" data-counter="{{ $dokumenMoreThan72h ?? 0 }}">0</div>
-        <div class="dl-sub">Diterima &gt; 3 hari lalu</div>
-        <div class="dl-badge">{{ $currentFilter === 'terlambat' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
-      </a>
-    </div>
+    <!-- Deadline Card: Aman -->
+    @php $filterKeterlambatan = request('keterlambatan'); @endphp
+    <a href="{{ route('documents.akutansi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
+      class="vdeadline-card vdeadline-card--aman {{ $filterKeterlambatan === 'aman' ? 'vdeadline-active' : '' }}">
+      <div class="vdeadline-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Aman</div>
+        <div class="vdeadline-value"
+          data-counter="{{ $dokumenLessThan24h ?? 0 }}"
+          data-duration="1000">0</div>
+        <div class="vdeadline-desc">Diterima &lt; 24 jam</div>
+      </div>
+      @if($filterKeterlambatan === 'aman')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(16,185,129,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
+    </a>
+
+    <!-- Deadline Card: Peringatan -->
+    <a href="{{ route('documents.akutansi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
+      class="vdeadline-card vdeadline-card--peringatan {{ $filterKeterlambatan === 'peringatan' ? 'vdeadline-active' : '' }}">
+      <div class="vdeadline-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Peringatan</div>
+        <div class="vdeadline-value"
+          data-counter="{{ $dokumen24to72h ?? 0 }}"
+          data-duration="1000">0</div>
+        <div class="vdeadline-desc">Diterima 1–3 hari lalu</div>
+      </div>
+      @if($filterKeterlambatan === 'peringatan')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(245,158,11,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
+    </a>
+
+    <!-- Deadline Card: Terlambat -->
+    <a href="{{ route('documents.akutansi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
+      class="vdeadline-card vdeadline-card--terlambat {{ $filterKeterlambatan === 'terlambat' ? 'vdeadline-active' : '' }}">
+      <div class="vdeadline-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="vdeadline-content">
+        <div class="vdeadline-label">Terlambat</div>
+        <div class="vdeadline-value"
+          data-counter="{{ $dokumenMoreThan72h ?? 0 }}"
+          data-duration="1000">0</div>
+        <div class="vdeadline-desc">Diterima &gt; 3 hari lalu</div>
+      </div>
+      @if($filterKeterlambatan === 'terlambat')
+        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(244,63,94,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
+      @endif
+    </a>
+
   </div>
-
+  {{-- ===== END BENTO GRID STATS ===== --}}
 
   <script>
-  (function() {
-    function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
-    function animateCounter(el, target, duration) {
-      var start = null;
-      function step(ts) {
-        if (!start) start = ts;
-        var progress = Math.min((ts - start) / duration, 1);
-        el.textContent = Math.floor(easeOutExpo(progress) * target).toLocaleString('id-ID');
-        if (progress < 1) requestAnimationFrame(step);
-        else el.textContent = target.toLocaleString('id-ID');
+    (function() {
+      function easeOutExpo(t) {
+        return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
       }
-      requestAnimationFrame(step);
-    }
-    function animateRupiah(el, target, duration) {
-      var start = null;
-      function step(ts) {
-        if (!start) start = ts;
-        var progress = Math.min((ts - start) / duration, 1);
-        var val = Math.floor(easeOutExpo(progress) * target);
-        el.textContent = val.toLocaleString('id-ID');
-        if (progress < 1) requestAnimationFrame(step);
-        else el.textContent = target.toLocaleString('id-ID');
+      function formatNumber(n) {
+        return Math.floor(n).toLocaleString('id-ID').replace(/\./g, ',');
       }
-      requestAnimationFrame(step);
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('[data-counter]').forEach(function(el) {
-        animateCounter(el, parseInt(el.dataset.counter) || 0, 1400);
-      });
-      document.querySelectorAll('[data-counter-rupiah]').forEach(function(el) {
-        animateRupiah(el, parseFloat(el.dataset.counterRupiah) || 0, 1800);
-      });
-    });
-  })();
+      function formatRupiah(n) {
+        return 'Rp ' + Math.floor(n).toLocaleString('id-ID');
+      }
+      function animateCounter(el, target, duration, isRupiah) {
+        const start = performance.now();
+        target = parseInt(target) || 0;
+        function step(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeOutExpo(progress);
+          const current = eased * target;
+          el.textContent = isRupiah ? formatRupiah(current) : formatNumber(current);
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            el.textContent = isRupiah ? formatRupiah(target) : formatNumber(target);
+          }
+        }
+        requestAnimationFrame(step);
+      }
+      function initCounters() {
+        document.querySelectorAll('[data-counter]').forEach(function(el) {
+          const target = el.getAttribute('data-counter');
+          const duration = parseInt(el.getAttribute('data-duration')) || 1200;
+          let animated = false;
+          const obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting && !animated) {
+                animated = true;
+                animateCounter(el, target, duration, false);
+                obs.disconnect();
+              }
+            });
+          }, { threshold: 0.3 });
+          obs.observe(el);
+        });
+        document.querySelectorAll('[data-counter-rupiah]').forEach(function(el) {
+          const target = el.getAttribute('data-counter-rupiah');
+          const duration = parseInt(el.getAttribute('data-duration')) || 1600;
+          let animated = false;
+          const obs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting && !animated) {
+                animated = true;
+                animateCounter(el, target, duration, true);
+                obs.disconnect();
+              }
+            });
+          }, { threshold: 0.3 });
+          obs.observe(el);
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCounters);
+      } else {
+        initCounters();
+      }
+    })();
   </script>
 
+
+
   {{-- ===== REDESIGNED TABLE SECTION AKUTANSI ===== --}}
+
   <style>
     /* Override nested-table look — unified single card */
     #documentTableContainer.table-dokumen {
