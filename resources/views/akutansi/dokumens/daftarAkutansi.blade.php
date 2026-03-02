@@ -2799,273 +2799,348 @@
 
   <h2>{{ $title }}</h2>
 
-  <!-- Enhanced Search & Filter Box -->
-  <div class="search-box">
-    <form action="{{ route('documents.akutansi.index') }}" method="GET" class="d-flex align-items-center flex-wrap gap-3"
-      id="filterForm">
-      <div class="input-group" style="flex: 1; min-width: 300px;">
-        <span class="input-group-text">
-          <i class="fa-solid fa-magnifying-glass text-muted"></i>
-        </span>
-        <input type="text" id="akutansiSearchInput" class="form-control" name="search"
-          placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..." value="{{ request('search') }}">
-      </div>
-      <div class="filter-section">
-        <div class="year-filter-wrapper" style="position: relative;">
-          <button type="button" class="btn-year-filter" id="yearFilterBtn" onclick="openYearFilterModal()">
-            <i class="fa-solid fa-calendar-alt me-2"></i>
-            <span id="yearFilterBtnText">
-              @php
-                $year = request('year');
-                $filterType = request('year_filter_type', 'tanggal_spp');
-                $filterTypeLabels = [
-                  'tanggal_spp' => 'Tgl SPP',
-                  'tanggal_masuk' => 'Tgl Masuk',
-                  'nomor_spp' => 'No SPP'
-                ];
-              @endphp
-              @if($year)
-                {{ $year }} ({{ $filterTypeLabels[$filterType] ?? 'Tgl SPP' }})
-              @else
-                Filter Tahun
-              @endif
-            </span>
-            <i class="fa-solid fa-chevron-down ms-2"></i>
-          </button>
-          <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
-          <input type="hidden" name="year_filter_type" id="yearFilterType"
-            value="{{ request('year_filter_type', 'tanggal_spp') }}">
-        </div>
-      </div>
-      <div class="filter-section">
-        <select name="status" class="form-select">
-          <option value="">Semua Status</option>
-          <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
-          <option value="terkirim_pembayaran" {{ request('status') == 'terkirim_pembayaran' ? 'selected' : '' }}>Terkirim ke
-            Pembayaran</option>
-          <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve
-          </option>
-          <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
-        </select>
-      </div>
-      <button type="submit" class="btn-filter">
-        <i class="fa-solid fa-magnifying-glass me-2"></i>Cari
-      </button>
-      <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
-        <i class="fa-solid fa-arrows-rotate"></i> Refresh
-      </button>
-      <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
-        <i class="fa-solid fa-table-columns me-2"></i>
-        Kustomisasi Kolom Tabel
-      </button>
-    </form>
-  </div>
+  {{-- ===== BENTO GRID INFORMASI AKUTANSI ===== --}}
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    .bento-info-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto auto;
+      gap: 16px;
+      margin-bottom: 24px;
+      font-family: 'Inter', sans-serif;
+    }
+    /* Stat cards — span 3 cols each */
+    .bento-stat-card { grid-column: span 3; }
+    /* Deadline cards — span 4 cols each */
+    .bento-deadline-card { grid-column: span 4; }
 
-  @if(isset($suggestions) && !empty($suggestions) && request('search'))
-    <!-- Search Suggestions Alert -->
-    <div class="alert alert-info alert-dismissible fade show suggestion-alert" role="alert"
-      style="margin-bottom: 20px; border-left: 4px solid #0dcaf0; background-color: #e7f3ff;">
-      <div class="d-flex align-items-start">
-        <i class="fa-solid fa-lightbulb me-2 mt-1" style="color: #0dcaf0; font-size: 18px;"></i>
-        <div style="flex: 1;">
-          <strong style="color: #0a58ca;">Apakah yang Anda maksud?</strong>
-          <p class="mb-2 mt-2" style="color: #055160;">
-            Tidak ada hasil ditemukan untuk "<strong>{{ request('search') }}</strong>". Mungkin maksud Anda:
-          </p>
-          <div class="suggestion-buttons d-flex flex-wrap gap-2">
-            @foreach($suggestions as $suggestion)
-              <button type="button" class="btn btn-sm btn-outline-primary suggestion-btn" data-suggestion="{{ $suggestion }}"
-                style="border-color: #0dcaf0; color: #0dcaf0;">
-                <i class="fa-solid fa-magnifying-glass me-1"></i>{{ $suggestion }}
-              </button>
-            @endforeach
-          </div>
+    /* === BASE CARD === */
+    .bento-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(8,62,64,0.07);
+      border: 1px solid #f0f4f4;
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow 0.25s, transform 0.25s;
+      cursor: default;
+    }
+    .bento-card:hover {
+      box-shadow: 0 4px 20px rgba(8,62,64,0.14), 0 1px 4px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+    }
+
+    /* First stat card — dark accent */
+    .bento-stat-card:first-child .bento-card {
+      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%);
+      border-color: transparent;
+      color: #fff;
+    }
+    .bento-stat-card:first-child .bento-card .bento-label { color: rgba(255,255,255,0.7); }
+    .bento-stat-card:first-child .bento-card .bento-number { color: #fff; }
+    .bento-stat-card:first-child .bento-card .bento-sub { color: rgba(255,255,255,0.6); }
+    .bento-stat-card:first-child .bento-card .bento-icon-circle {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .bento-stat-card:first-child .bento-card::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* Other stat cards */
+    .bento-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;
+    }
+    .bento-number {
+      font-size: 2rem; font-weight: 800; color: #0f172a;
+      line-height: 1; margin-bottom: 4px; letter-spacing: -0.03em;
+    }
+    .bento-sub {
+      font-size: 0.76rem; color: #64748b; font-weight: 500;
+    }
+    .bento-icon-circle {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; margin-bottom: 12px;
+    }
+    .bento-icon-circle.purple { background: #f3f0ff; color: #7c3aed; }
+    .bento-icon-circle.yellow { background: #fffbeb; color: #d97706; }
+    .bento-icon-circle.blue   { background: #eff6ff; color: #2563eb; }
+
+    /* === DEADLINE CARDS === */
+    .bento-deadline-card .bento-card {
+      border-left: 4px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .bento-deadline-card .bento-card:hover { color: inherit; }
+    .bento-deadline-card.dl-green .bento-card { border-left-color: #10b981; }
+    .bento-deadline-card.dl-yellow .bento-card { border-left-color: #f59e0b; }
+    .bento-deadline-card.dl-red .bento-card { border-left-color: #ef4444; }
+
+    .dl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .dl-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; }
+    .dl-green .dl-icon { background: #ecfdf5; color: #10b981; }
+    .dl-yellow .dl-icon { background: #fffbeb; color: #f59e0b; }
+    .dl-red .dl-icon { background: #fef2f2; color: #ef4444; }
+    .dl-title { font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dl-number { font-size: 1.75rem; font-weight: 800; color: #0f172a; line-height: 1; letter-spacing: -0.03em; }
+    .dl-sub { font-size: 0.73rem; color: #94a3b8; font-weight: 500; margin-top: 4px; }
+    .dl-badge { display: inline-block; margin-top: 8px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+    .dl-green .dl-badge { background: #ecfdf5; color: #059669; }
+    .dl-yellow .dl-badge { background: #fffbeb; color: #b45309; }
+    .dl-red .dl-badge { background: #fef2f2; color: #dc2626; }
+
+    /* Active filter state */
+    .bento-deadline-card .bento-card.active-filter {
+      box-shadow: 0 0 0 3px currentColor, 0 4px 20px rgba(8,62,64,0.15);
+    }
+    .dl-green .bento-card.active-filter { box-shadow: 0 0 0 3px #10b981, 0 4px 20px rgba(16,185,129,0.2); }
+    .dl-yellow .bento-card.active-filter { box-shadow: 0 0 0 3px #f59e0b, 0 4px 20px rgba(245,158,11,0.2); }
+    .dl-red .bento-card.active-filter { box-shadow: 0 0 0 3px #ef4444, 0 4px 20px rgba(239,68,68,0.2); }
+
+    @media (max-width: 1200px) {
+      .bento-stat-card { grid-column: span 6; }
+      .bento-deadline-card { grid-column: span 4; }
+    }
+    @media (max-width: 768px) {
+      .bento-stat-card, .bento-deadline-card { grid-column: span 12; }
+    }
+  </style>
+
+  <div class="bento-info-grid">
+    {{-- Card 1: Total Dokumen Agenda (dark) --}}
+    <div class="bento-stat-card">
+      <div class="bento-card">
+        <div class="bento-icon-circle" style="background:rgba(255,255,255,0.15);color:#fff;">
+          <i class="fa-solid fa-book-open"></i>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="bento-label">Total Dokumen Agenda</div>
+        <div class="bento-number" data-counter="{{ $totalDokumenAgenda ?? 0 }}">0</div>
+        <div class="bento-sub">Rp <span data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}">0</span></div>
       </div>
     </div>
-  @endif
 
-  <!-- Tabel Dokumen dengan Horizontal Scroll -->
-  <div class="table-dokumen" id="documentTableContainer">
-    <div class="table-container-header">
-      <h3 class="table-container-title">
-        <i class="fa-solid fa-file-lines"></i>
-        Daftar Dokumen Team Akutansi
-      </h3>
-    </div>
-
-    <!-- Stats Cards Row -->
-    <style>
-      .dokumen-stats-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 20px;
-        padding: 0 5px;
-      }
-      .dokumen-stat-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f5f9f5 100%);
-        border-radius: 14px;
-        padding: 18px 20px;
-        box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 2px 8px rgba(8, 62, 64, 0.04);
-        border: 1px solid rgba(8, 62, 64, 0.08);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-      .dokumen-stat-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(8, 62, 64, 0.04) 0%, transparent 70%);
-        transition: all 0.5s ease;
-      }
-      .dokumen-stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 32px rgba(8, 62, 64, 0.15), 0 4px 16px rgba(8, 62, 64, 0.08);
-        border-color: rgba(8, 62, 64, 0.12);
-      }
-      .dokumen-stat-card:hover::before {
-        top: -60%;
-        right: -60%;
-      }
-      .dokumen-stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        flex-shrink: 0;
-        position: relative;
-        z-index: 1;
-      }
-      .dokumen-stat-icon.agenda {
-        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
-      }
-      .dokumen-stat-icon.akutansi {
-        background: linear-gradient(135deg, #083E40 0%, #065456 100%);
-      }
-      .dokumen-stat-icon.proses {
-        background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
-      }
-      .dokumen-stat-icon.terkirim {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-      }
-      .dokumen-stat-info {
-        position: relative;
-        z-index: 1;
-        flex: 1;
-        min-width: 0;
-      }
-      .dokumen-stat-info .stat-number {
-        font-size: 26px;
-        font-weight: 800;
-        color: #083E40;
-        line-height: 1.1;
-        margin-bottom: 2px;
-      }
-      .dokumen-stat-info .stat-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #6b7c8a;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      /* Dark mode support */
-      body.dark-mode .dokumen-stat-card {
-        background: linear-gradient(135deg, #1e2a35 0%, #243240 100%);
-        border-color: rgba(8, 151, 156, 0.15);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      }
-      body.dark-mode .dokumen-stat-card:hover {
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-        border-color: rgba(8, 151, 156, 0.25);
-      }
-      body.dark-mode .dokumen-stat-card::before {
-        background: radial-gradient(circle, rgba(8, 151, 156, 0.06) 0%, transparent 70%);
-      }
-      body.dark-mode .dokumen-stat-info .stat-number {
-        color: #6fd4d8;
-      }
-      body.dark-mode .dokumen-stat-info .stat-label {
-        color: #8899a6;
-      }
-
-      /* Responsive */
-      @media (max-width: 992px) {
-        .dokumen-stats-row {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-      @media (max-width: 576px) {
-        .dokumen-stats-row {
-          grid-template-columns: 1fr;
-        }
-        .dokumen-stat-card {
-          padding: 14px 16px;
-        }
-        .dokumen-stat-info .stat-number {
-          font-size: 22px;
-        }
-      }
-    </style>
-    <div class="dokumen-stats-row">
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon agenda">
-          <i class="fa-solid fa-book"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalDokumenAgenda ?? 0 }}</div>
-          <div class="stat-label">Total Dokumen Agenda</div>
-        </div>
-      </div>
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon akutansi">
+    {{-- Card 2: Total Dokumen Akutansi --}}
+    <div class="bento-stat-card">
+      <div class="bento-card">
+        <div class="bento-icon-circle purple">
           <i class="fa-solid fa-calculator"></i>
         </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalDokumenAkutansi ?? 0 }}</div>
-          <div class="stat-label">Total Dokumen Akutansi</div>
-        </div>
-      </div>
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon proses">
-          <i class="fa-solid fa-clock"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalDokumenDiproses ?? 0 }}</div>
-          <div class="stat-label">Dokumen Diproses</div>
-        </div>
-      </div>
-      <div class="dokumen-stat-card">
-        <div class="dokumen-stat-icon terkirim">
-          <i class="fa-solid fa-paper-plane"></i>
-        </div>
-        <div class="dokumen-stat-info">
-          <div class="stat-number">{{ $totalTerkirim ?? 0 }}</div>
-          <div class="stat-label">Total Terkirim</div>
-        </div>
+        <div class="bento-label">Total Dokumen Akutansi</div>
+        <div class="bento-number" data-counter="{{ $totalDokumenAkutansi ?? 0 }}">0</div>
+        <div class="bento-sub">Dokumen di akutansi</div>
       </div>
     </div>
-    <!-- Per-page dropdown at the top -->
-    @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
-    <div class="table-responsive">
+
+    {{-- Card 3: Dokumen Diproses --}}
+    <div class="bento-stat-card">
+      <div class="bento-card">
+        <div class="bento-icon-circle yellow">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="bento-label">Dokumen Diproses</div>
+        <div class="bento-number" data-counter="{{ $totalDokumenDiproses ?? 0 }}">0</div>
+        <div class="bento-sub">Sedang diproses</div>
+      </div>
+    </div>
+
+    {{-- Card 4: Total Terkirim --}}
+    <div class="bento-stat-card">
+      <div class="bento-card">
+        <div class="bento-icon-circle blue">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div class="bento-label">Total Terkirim</div>
+        <div class="bento-number" data-counter="{{ $totalTerkirim ?? 0 }}">0</div>
+        <div class="bento-sub">Dikirim ke tahap selanjutnya</div>
+      </div>
+    </div>
+
+    {{-- Deadline Card: Aman --}}
+    @php $currentFilter = request('keterlambatan'); @endphp
+    <div class="bento-deadline-card dl-green">
+      <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
+         class="bento-card text-decoration-none {{ $currentFilter === 'aman' ? 'active-filter' : '' }}">
+        <div class="dl-header">
+          <div class="dl-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="dl-title">Aman</div>
+        </div>
+        <div class="dl-number" data-counter="{{ $dokumenLessThan24h ?? 0 }}">0</div>
+        <div class="dl-sub">Diterima &lt; 24 jam</div>
+        <div class="dl-badge">{{ $currentFilter === 'aman' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
+      </a>
+    </div>
+
+    {{-- Deadline Card: Peringatan --}}
+    <div class="bento-deadline-card dl-yellow">
+      <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
+         class="bento-card text-decoration-none {{ $currentFilter === 'peringatan' ? 'active-filter' : '' }}">
+        <div class="dl-header">
+          <div class="dl-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="dl-title">Peringatan</div>
+        </div>
+        <div class="dl-number" data-counter="{{ $dokumen24to72h ?? 0 }}">0</div>
+        <div class="dl-sub">Diterima 1–3 hari lalu</div>
+        <div class="dl-badge">{{ $currentFilter === 'peringatan' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
+      </a>
+    </div>
+
+    {{-- Deadline Card: Terlambat --}}
+    <div class="bento-deadline-card dl-red">
+      <a href="{{ route('documents.akutansi.index', array_merge(request()->except(['keterlambatan','page']), $currentFilter === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
+         class="bento-card text-decoration-none {{ $currentFilter === 'terlambat' ? 'active-filter' : '' }}">
+        <div class="dl-header">
+          <div class="dl-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+          <div class="dl-title">Terlambat</div>
+        </div>
+        <div class="dl-number" data-counter="{{ $dokumenMoreThan72h ?? 0 }}">0</div>
+        <div class="dl-sub">Diterima &gt; 3 hari lalu</div>
+        <div class="dl-badge">{{ $currentFilter === 'terlambat' ? '✓ Aktif' : 'Klik untuk filter' }}</div>
+      </a>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
+    function animateCounter(el, target, duration) {
+      var start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        el.textContent = Math.floor(easeOutExpo(progress) * target).toLocaleString('id-ID');
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target.toLocaleString('id-ID');
+      }
+      requestAnimationFrame(step);
+    }
+    function animateRupiah(el, target, duration) {
+      var start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var val = Math.floor(easeOutExpo(progress) * target);
+        el.textContent = val.toLocaleString('id-ID');
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target.toLocaleString('id-ID');
+      }
+      requestAnimationFrame(step);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[data-counter]').forEach(function(el) {
+        animateCounter(el, parseInt(el.dataset.counter) || 0, 1400);
+      });
+      document.querySelectorAll('[data-counter-rupiah]').forEach(function(el) {
+        animateRupiah(el, parseFloat(el.dataset.counterRupiah) || 0, 1800);
+      });
+    });
+  })();
+  </script>
+
+  {{-- ===== REDESIGNED TABLE SECTION AKUTANSI ===== --}}
+  <style>
+    /* Override nested-table look — unified single card */
+    #documentTableContainer.table-dokumen {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+      overflow: hidden;
+      padding: 0 !important;
+    }
+    .dtable-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.35rem; border-bottom: 1px solid #f1f5f9;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .dtable-toolbar-left { display: flex; align-items: center; gap: 0.65rem; }
+    .dtable-toolbar-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.875rem; flex-shrink: 0;
+    }
+    .dtable-toolbar-title { font-size: 1rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; }
+    .dtable-toolbar-subtitle { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+    .dtable-toolbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .dtable-perpage-label { font-size: 0.8125rem; color: #64748b; white-space: nowrap; }
+    .dtable-perpage-select {
+      padding: 0.35rem 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0;
+      font-size: 0.8125rem; color: #334155; background: #f8fafc;
+      cursor: pointer; outline: none; transition: border-color 0.2s;
+    }
+    .dtable-perpage-select:focus { border-color: #083E40; }
+    /* Hide old pagination-perpage-top */
+    #documentTableContainer .pagination-perpage-top-wrapper { display: none !important; }
+    /* thead styling */
+    div#documentTableContainer thead tr { background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important; }
+    div#documentTableContainer table thead th,
+    div#documentTableContainer table thead tr th {
+      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+      color: rgba(255,255,255,0.95) !important;
+      font-size: 0.775rem !important; font-weight: 600 !important;
+      letter-spacing: 0.04em !important; text-transform: uppercase !important;
+      padding: 0.85rem 0.9rem !important; border: none !important; white-space: nowrap !important;
+    }
+    /* Zebra rows */
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) { background: #f8fafc; }
+    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(odd) { background: #ffffff; }
+    #documentTableContainer .table-enhanced tbody tr.main-row:hover {
+      background: linear-gradient(90deg, rgba(8,62,64,0.04) 0%, transparent 100%) !important;
+      border-left: 3px solid #083E40;
+    }
+    #documentTableContainer .table-enhanced td { border-top: 1px solid #f1f5f9 !important; border-bottom: none !important; }
+    #documentTableContainer .pagination-wrapper,
+    #documentTableContainer nav[aria-label],
+    #documentTableContainer .paginate-wrapper { padding: 0.75rem 1rem; border-top: 1px solid #f1f5f9; }
+  </style>
+
+  <!-- Tabel Dokumen — Unified Card Design -->
+  <div class="table-dokumen" id="documentTableContainer">
+    <!-- Unified toolbar: title + per-page selector -->
+    <div class="dtable-toolbar">
+      <div class="dtable-toolbar-left">
+        <div class="dtable-toolbar-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <div>
+          <div class="dtable-toolbar-title">Daftar Dokumen Team Akutansi</div>
+          <div class="dtable-toolbar-subtitle">
+            Menampilkan {{ $dokumens->firstItem() ?? 0 }}–{{ $dokumens->lastItem() ?? 0 }} dari {{ number_format($dokumens->total()) }} hasil
+          </div>
+        </div>
+      </div>
+      <div class="dtable-toolbar-right">
+        <span class="dtable-perpage-label">Baris per halaman:</span>
+        @php $currentPerPage = request('per_page', session('akutansi_per_page', 10)); @endphp
+        <form method="GET" action="{{ route('documents.akutansi.index') }}" style="display:inline;">
+          @foreach(request()->except('per_page', 'page') as $key => $val)
+            @if(is_array($val))
+              @foreach($val as $v)<input type="hidden" name="{{ $key }}[]" value="{{ $v }}">@endforeach
+            @else
+              <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+            @endif
+          @endforeach
+          <select name="per_page" class="dtable-perpage-select" onchange="this.form.submit()">
+            @foreach([10, 25, 50, 100] as $pp)
+              <option value="{{ $pp }}" {{ (int)$currentPerPage === $pp ? 'selected' : '' }}>{{ $pp }}</option>
+            @endforeach
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <div class="table-responsive" style="overflow-x:auto;">
+
       <table class="table table-enhanced mb-0">
+
         <thead>
           <tr>
             <th class="col-checkbox" style="width: 50px;">

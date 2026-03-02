@@ -19,122 +19,11 @@ use App\Models\DocumentTracking;
 
 class DashboardAkutansiController extends Controller
 {
-    public function index()
-    {
-        $now = Carbon::now();
-
-        // Get all documents that have been assigned to akutansi at any point
-        $akutansiDocs = Dokumen::where(function ($query) {
-            $query->where('current_handler', 'akutansi')
-                ->orWhere('status', 'sent_to_akutansi');
-        })
-            ->excludeCsvImports()
-            ->get();
-
-        // 1. Total dokumen
-        $totalDokumen = $akutansiDocs->count();
-
-        // 2. Total dokumen diproses - dokumen yang sedang diproses di akutansi
-        $totalDokumenProses = $akutansiDocs
-            ->where('current_handler', 'akutansi')
-            ->filter(function ($doc) {
-                return in_array($doc->status, ['sent_to_akutansi', 'sedang diproses']);
-            })
-            ->count();
-
-        // 3-5. Dokumen berdasarkan waktu sejak diterima (using roleData received_at)
-        // Include both active documents and sent documents for accurate statistics
-        $akutansiDocsWithRoleData = Dokumen::where(function ($query) {
-            $query->where('current_handler', 'akutansi')
-                ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran']);
-        })
-            ->excludeCsvImports()
-            ->with([
-                'roleData' => function ($q) {
-                    $q->where('role_code', 'akutansi');
-                }
-            ])
-            ->get();
-
-        $dokumenLessThan24h = 0;  // < 24 jam (green)
-        $dokumen24to72h = 0;      // 24-72 jam (yellow)
-        $dokumenMoreThan72h = 0;  // > 72 jam (red)
-
-        foreach ($akutansiDocsWithRoleData as $doc) {
-            $roleData = $doc->roleData->first();
-            if ($roleData && $roleData->received_at) {
-                $receivedAt = Carbon::parse($roleData->received_at);
-
-                // Check if document is sent - use processed_at as end time (frozen)
-                // For active documents - use now as end time (counting up)
-                $isSent = in_array($doc->status, ['sent_to_pembayaran', 'selesai']) || $doc->current_handler !== 'akutansi';
-
-                if ($isSent && $roleData->processed_at) {
-                    // Sent documents: calculate time taken (frozen)
-                    $endTime = Carbon::parse($roleData->processed_at);
-                    $hoursDiff = $receivedAt->diffInHours($endTime);
-                } else {
-                    // Active documents: calculate time since received (counting)
-                    $hoursDiff = $receivedAt->diffInHours($now);
-                }
-
-                if ($hoursDiff < 24) {
-                    $dokumenLessThan24h++;
-                } elseif ($hoursDiff < 72) {
-                    $dokumen24to72h++;
-                } else {
-                    $dokumenMoreThan72h++;
-                }
-            } else {
-                // No roleData for akutansi - check if document was bypassed (tembak)
-                // Bypassed documents that already moved past akutansi should count as AMAN (0 time)
-                $isBypassed = in_array($doc->status, ['sent_to_pembayaran', 'completed', 'selesai'])
-                    || $doc->current_handler !== 'akutansi';
-                if ($isBypassed) {
-                    $dokumenLessThan24h++; // AMAN - 0 processing time
-                } else {
-                    $dokumenMoreThan72h++;
-                }
-            }
-        }
-
-        // 6. Total dokumen terkirim - sudah dikirim ke pembayaran atau selesai
-        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_pembayaran', 'selesai'])
-            ->where('current_handler', '!=', 'akutansi')
-            ->excludeCsvImports()
-            ->count();
-
-        // 7. Total dokumen agenda - semua dokumen yang ada di sistem (operator)
-        $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
-
-        // Get latest documents currently handled by akutansi
-        $dokumenTerbaru = Dokumen::where('current_handler', 'akutansi')
-            ->excludeCsvImports()
-            ->with(['dokumenPos', 'dokumenPrs'])
-            ->latest('tanggal_masuk')
-            ->take(5)
-            ->get();
-
-        $data = array(
-            "title" => "Dashboard Team Akutansi",
-            "module" => "akutansi",
-            "menuDashboard" => "Active",
-            'menuDokumen' => '',
-            'totalDokumen' => $totalDokumen,
-            'totalDokumenProses' => $totalDokumenProses,
-            'dokumenLessThan24h' => $dokumenLessThan24h,
-            'dokumen24to72h' => $dokumen24to72h,
-            'dokumenMoreThan72h' => $dokumenMoreThan72h,
-            'totalTerkirim' => $totalTerkirim,
-            'totalDokumenAgenda' => $totalDokumenAgenda,
-            'dokumenTerbaru' => $dokumenTerbaru,
-        );
-        return view('akutansi.dashboardAkutansi', $data);
-    }
 
     /**
      * Check for new documents assigned to akutansi
      */
+
     public function checkUpdates(Request $request)
     {
         try {
@@ -569,7 +458,7 @@ class DashboardAkutansiController extends Controller
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         }
 
-        // Calculate 4 dashboard-style stats for the document list header
+        // Calculate 4 dashboard-style stats + delay stats + total rupiah for bento grid
         // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
         $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
 
@@ -598,8 +487,93 @@ class DashboardAkutansiController extends Controller
             ->excludeCsvImports()
             ->count();
 
+        // 5. Total Nilai Rupiah - sum semua dokumen yang dikerjakan akutansi
+        $totalNilaiRupiah = Dokumen::where(function ($query) {
+            $query->where('current_handler', 'akutansi')
+                ->orWhereIn('status', ['sent_to_pembayaran', 'selesai']);
+        })
+            ->excludeCsvImports()
+            ->sum('nilai_rupiah');
+
+        // 6. Delay stats - based on roleData received_at for keterlambatan cards
+        $now = Carbon::now();
+        $akutansiDocsForDelay = Dokumen::where(function ($query) {
+            $query->where('current_handler', 'akutansi')
+                ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran']);
+        })
+            ->excludeCsvImports()
+            ->with([
+                'roleData' => function ($q) {
+                    $q->where('role_code', 'akutansi');
+                }
+            ])
+            ->get();
+
+        $dokumenLessThan24h = 0;
+        $dokumen24to72h = 0;
+        $dokumenMoreThan72h = 0;
+
+        foreach ($akutansiDocsForDelay as $doc) {
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $isSent = in_array($doc->status, ['sent_to_pembayaran', 'selesai']) || $doc->current_handler !== 'akutansi';
+                if ($isSent && $roleData->processed_at) {
+                    $hoursDiff = $receivedAt->diffInHours(Carbon::parse($roleData->processed_at));
+                } else {
+                    $hoursDiff = $receivedAt->diffInHours($now);
+                }
+                if ($hoursDiff < 24) {
+                    $dokumenLessThan24h++;
+                } elseif ($hoursDiff < 72) {
+                    $dokumen24to72h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            } else {
+                $isBypassed = in_array($doc->status, ['sent_to_pembayaran', 'completed', 'selesai'])
+                    || $doc->current_handler !== 'akutansi';
+                if ($isBypassed) {
+                    $dokumenLessThan24h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            }
+        }
+
+        // 7. Apply keterlambatan filter if requested
+        $filterKeterlambatan = $request->get('keterlambatan');
+        if ($filterKeterlambatan) {
+            $akutansiDocsFiltered = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'akutansi')
+                    ->orWhereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran']);
+            })
+                ->excludeCsvImports()
+                ->with(['roleData' => function ($q) { $q->where('role_code', 'akutansi'); }])
+                ->get();
+
+            $filteredIds = $akutansiDocsFiltered->filter(function ($doc) use ($filterKeterlambatan, $now) {
+                $roleData = $doc->roleData->first();
+                if ($roleData && $roleData->received_at) {
+                    $receivedAt = Carbon::parse($roleData->received_at);
+                    $isSent = in_array($doc->status, ['sent_to_pembayaran', 'selesai']) || $doc->current_handler !== 'akutansi';
+                    $hoursDiff = ($isSent && $roleData->processed_at)
+                        ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
+                        : $receivedAt->diffInHours($now);
+                    if ($filterKeterlambatan === 'aman') return $hoursDiff < 24;
+                    if ($filterKeterlambatan === 'peringatan') return $hoursDiff >= 24 && $hoursDiff < 72;
+                    if ($filterKeterlambatan === 'terlambat') return $hoursDiff >= 72;
+                }
+                return false;
+            })->pluck('id')->toArray();
+
+            if (!empty($filteredIds)) {
+                $dokumens = $dokumens->paginator ?? $dokumens;
+            }
+        }
+
         $data = array(
-            "title" => "Daftar Team Akutansi",
+            "title" => "Daftar Dokumen Team Akutansi",
             "module" => "akutansi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
@@ -609,6 +583,10 @@ class DashboardAkutansiController extends Controller
             'totalDokumenAkutansi' => $totalDokumenAkutansi,
             'totalDokumenDiproses' => $totalDokumenDiproses,
             'totalTerkirim' => $totalTerkirim,
+            'totalNilaiRupiah' => $totalNilaiRupiah,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
@@ -617,6 +595,7 @@ class DashboardAkutansiController extends Controller
         );
         return view('akutansi.dokumens.daftarAkutansi', $data);
     }
+
 
     public function createDokumen()
     {

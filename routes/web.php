@@ -349,9 +349,7 @@ Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index
     ->middleware('auth', 'role:admin,Pembayaran,pembayaran')
     ->name('dashboard.pembayaran');
 
-Route::get('dashboard/akutansi', [DashboardAkutansiController::class, 'index'])
-    ->middleware('auth', 'role:admin,akutansi,Akutansi')
-    ->name('dashboard.akutansi');
+
 
 
 
