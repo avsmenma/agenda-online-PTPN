@@ -2784,18 +2784,12 @@
                     @elseif($OperatorDisplayStatus === 'ditolak_verifikasi')
                       <span class="badge-status badge-dikembalikan"
                         style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; cursor: pointer;"
-                        onclick="showRejectionModal({{ $dokumen->id }})">
+                        onclick="event.stopPropagation(); showRejectionModal({{ $dokumen->id }})">
                         <i class="fa-solid fa-times-circle me-1"></i>
                         <span>Dokumen Ditolak,
                           <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
                         </span>
                       </span>
-                      @if($rejectionReasonVerifikasi)
-                        <div style="font-size: 10px; color: #ef4444; margin-top: 4px; max-width: 160px; word-wrap: break-word;">
-                          <i class="fa-solid fa-comment-dots me-1"></i>
-                          {{ Str::limit($rejectionReasonVerifikasi, 50) }}
-                        </div>
-                      @endif
                     @elseif($OperatorDisplayStatus === 'menunggu_approval_verifikasi')
                       <span class="badge-status"
                         style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
