@@ -1109,8 +1109,8 @@
                   'tanggal_berakhir_spk' => $doc->tanggal_berakhir_spk ? $doc->tanggal_berakhir_spk->format('d/m/Y') : '-',
                   'no_berita_acara' => $doc->no_berita_acara ?? '-',
                   'tanggal_berita_acara' => $doc->tanggal_berita_acara ? $doc->tanggal_berita_acara->format('d/m/Y') : '-',
-                  'no_po' => $doc->NO_PO ?? '-',
-                  'no_miro' => $doc->nomor_miro_display ?? '-',
+                  'dokumen_pos' => $doc->dokumenPos ? $doc->dokumenPos->map(fn($po) => ['nomor_po' => $po->nomor_po])->values() : [],
+                  'dokumen_prs' => $doc->dokumenPrs ? $doc->dokumenPrs->map(fn($pr) => ['nomor_pr' => $pr->nomor_pr])->values() : [],
                   'kriteria_cf' => $doc->kategori ?? '-',
                   'sub_kriteria' => $doc->jenis_dokumen ?? '-',
                   'item_sub_kriteria' => $doc->jenis_sub_pekerjaan ?? '-',
@@ -1841,7 +1841,7 @@
           <div class="detail-section">
             <div class="section-header">
               <i class="fa-solid fa-receipt"></i>
-              <h5>Data PO & MIRO</h5>
+              <h5>Data PO & PR</h5>
             </div>
             <div class="section-grid cols-2">
               <div class="info-card">
@@ -1849,8 +1849,8 @@
                 <span class="info-value mono" id="modal-no-po">-</span>
               </div>
               <div class="info-card">
-                <span class="info-label">No. Miro/SES</span>
-                <span class="info-value mono" id="modal-no-miro">-</span>
+                <span class="info-label">No. PR</span>
+                <span class="info-value mono" id="modal-no-pr">-</span>
               </div>
             </div>
           </div>
@@ -2837,8 +2837,17 @@
       document.getElementById('modal-tanggal-berakhir-spk').textContent = doc.tanggal_berakhir_spk || '-';
       document.getElementById('modal-no-berita-acara').textContent = doc.no_berita_acara || '-';
       document.getElementById('modal-tanggal-berita-acara').textContent = doc.tanggal_berita_acara || '-';
-      document.getElementById('modal-no-po').textContent = doc.no_po || '-';
-      document.getElementById('modal-no-miro').textContent = doc.no_miro || '-';
+      // PO: dokumen_pos is an array of {nomor_po: '...'}
+      const poList = (doc.dokumen_pos && doc.dokumen_pos.length > 0)
+        ? doc.dokumen_pos.map(p => p.nomor_po).filter(Boolean).join(', ')
+        : '-';
+      document.getElementById('modal-no-po').textContent = poList;
+
+      // PR: dokumen_prs is an array of {nomor_pr: '...'}
+      const prList = (doc.dokumen_prs && doc.dokumen_prs.length > 0)
+        ? doc.dokumen_prs.map(p => p.nomor_pr).filter(Boolean).join(', ')
+        : '-';
+      document.getElementById('modal-no-pr').textContent = prList;
 
       // Reset to first tab
       switchTab('info');
