@@ -3297,7 +3297,7 @@
       contentEl.style.display = 'none';
       errorEl.style.display   = 'none';
       modal.show();
-      fetch(`/api/documents/rejected/${dokumenId}`, {
+      fetch(`/api/bagian/documents/${dokumenId}/return-detail`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

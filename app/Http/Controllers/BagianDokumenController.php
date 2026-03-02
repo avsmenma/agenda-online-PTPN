@@ -985,6 +985,43 @@ class BagianDokumenController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Get return/rejection detail for the rejection modal (bagian view)
+     * Reads directly from dokumens.return_reason and returned_at
+     * because returnToBidang stores data there, not in DokumenStatus
+     */
+    public function getReturnDetail(Dokumen $dokumen)
+    {
+        $bagianCode = $this->getBagianCode();
+
+        if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        if ($dokumen->status !== 'returned_to_bidang') {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak dalam status dikembalikan'], 404);
+        }
+
+        $returnedBy = 'Team Verifikasi';
+        $returnReason = $dokumen->return_reason ?? 'Tidak ada alasan yang diberikan';
+        $returnedAt = $dokumen->returned_at
+            ? \Carbon\Carbon::parse($dokumen->returned_at)->format('d/m/Y H:i')
+            : '-';
+
+        return response()->json([
+            'success' => true,
+            'dokumen' => [
+                'nomor_agenda' => $dokumen->nomor_agenda ?? '-',
+                'nomor_spp'    => $dokumen->nomor_spp ?? '-',
+                'uraian_spp'   => $dokumen->uraian_spp ?? '-',
+                'nilai_rupiah' => 'Rp ' . number_format((float) ($dokumen->nilai_rupiah ?? 0), 0, ',', '.'),
+            ],
+            'rejected_by'      => $returnedBy,
+            'rejection_reason' => $returnReason,
+            'rejected_at'      => $returnedAt,
+        ]);
+    }
 }
 
 
