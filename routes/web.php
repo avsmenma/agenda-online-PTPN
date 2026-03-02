@@ -998,6 +998,10 @@ Route::middleware(['auth', 'bagian'])
         // Tracking
         Route::get('bagian/tracking', [\App\Http\Controllers\BagianDokumenController::class, 'tracking'])
             ->name('bagian.tracking');
+
+        // Rejected document detail API (for showing rejection popup)
+        Route::get('/api/documents/rejected/{dokumen}', [\App\Http\Controllers\DashboardController::class, 'showRejectedDocument'])
+            ->name('api.documents.rejected.show.bagian');
     });
 
 // =============================================================================

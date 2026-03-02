@@ -396,46 +396,38 @@ class DashboardController extends Controller
         try {
             $user = auth()->user();
 
-            // Allow Operator role - support both old and new role names
-            $operatorRoles = ['operator', 'operator', 'Operator', 'operator'];
-            if (!$user || !in_array(strtolower($user->role), $operatorRoles)) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access'
                 ], 403);
             }
 
-            // Validasi: dokumen harus di-reject dan dikembalikan ke Operator
-            // Check if rejected using new status system by checking if ANY role rejected it
+            // Validate: document must have a rejection status record
             $hasRejection = \App\Models\DokumenStatus::where('dokumen_id', $dokumen->id)
                 ->where('status', 'rejected')
                 ->exists();
 
-            // More flexible validation - allow if document is rejected OR returned to Operator
             $isValid = false;
             $validationErrors = [];
 
-            // Check if document is created by Operator (case-insensitive)
-            $createdByOperator = in_array(strtolower($dokumen->created_by ?? ''), $operatorRoles);
+            $operatorRoles = ['operator', 'Operator'];
+            $isOperatorUser = in_array(strtolower($user->role ?? ''), array_map('strtolower', $operatorRoles));
 
-            // Check if document is currently with Operator (case-insensitive)
-            $currentHandlerOperator = in_array(strtolower($dokumen->current_handler ?? ''), $operatorRoles);
-
-            // Check if document is returned or has rejection status
+            // For operator users: document must be created by operator and returned/rejected
+            $createdByOperator = in_array(strtolower($dokumen->created_by ?? ''), array_map('strtolower', $operatorRoles));
             $isReturned = in_array($dokumen->status, ['returned_to_operator', 'returned_to_Operator']);
 
-            if (!$createdByOperator) {
-                $validationErrors[] = 'Dokumen tidak dOperatort oleh Operator';
-            }
-            if (!$currentHandlerOperator) {
-                $validationErrors[] = 'Dokumen tidak sedang ditangani oleh Operator';
-            }
-            if (!$isReturned && !$hasRejection) {
-                $validationErrors[] = 'Dokumen tidak dalam status ditolak atau dikembalikan';
-            }
+            // For bagian users: document must be returned_to_bidang with a rejection
+            $isReturnedToBidang = $dokumen->status === 'returned_to_bidang';
 
-            // Allow if document is created by Operator and has rejection status
-            if ($createdByOperator && ($hasRejection || $isReturned)) {
+            if ($isOperatorUser && $createdByOperator && ($hasRejection || $isReturned)) {
+                $isValid = true;
+            } elseif (!$isOperatorUser && $isReturnedToBidang && $hasRejection) {
+                // Bagian user viewing their returned document
+                $isValid = true;
+            } elseif (!$isOperatorUser && $hasRejection) {
+                // Fallback: allow any authenticated non-operator user if document has rejection
                 $isValid = true;
             }
 
