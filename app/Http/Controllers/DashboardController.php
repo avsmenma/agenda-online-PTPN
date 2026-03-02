@@ -25,11 +25,11 @@ class DashboardController extends Controller
             }
 
             if ($role === 'perpajakan') {
-                return redirect()->route('dashboard.perpajakan');
+                return redirect()->route('documents.perpajakan.index');
             }
 
             if ($role === 'akutansi') {
-                return redirect()->route('dashboard.akutansi');
+                return redirect()->route('documents.akutansi.index');
             }
 
             if ($role === 'pembayaran') {

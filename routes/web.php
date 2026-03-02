@@ -364,12 +364,24 @@ Route::get('dashboardPembayaran', function () {
 })->name('dashboard.pembayaran.old');
 
 Route::get('dashboardAkutansi', function () {
-    return redirect()->route('dashboard.akutansi', [], 301);
+    return redirect()->route('documents.akutansi.index', [], 301);
 })->name('dashboard.akutansi.old');
 
+// dashboard/akutansi redirect for backward-compat (old links/bookmarks)
+Route::get('dashboard/akutansi', function () {
+    return redirect()->route('documents.akutansi.index', [], 301);
+})->middleware('auth', 'role:admin,akutansi,Akutansi')
+  ->name('dashboard.akutansi');
+
 Route::get('dashboardPerpajakan', function () {
-    return redirect()->route('dashboard.perpajakan', [], 301);
+    return redirect()->route('documents.perpajakan.index', [], 301);
 })->name('dashboard.perpajakan.old');
+
+// dashboard/perpajakan redirect for backward-compat (old links/bookmarks)
+Route::get('dashboard/perpajakan', function () {
+    return redirect()->route('documents.perpajakan.index', [], 301);
+})->middleware('auth', 'role:admin,perpajakan,Perpajakan')
+  ->name('dashboard.perpajakan');
 
 Route::get('dashboardVerifikasi', function () {
     return redirect()->route('documents.verifikasi.index', [], 301);
