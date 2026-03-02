@@ -392,7 +392,7 @@ Route::get('/api/documents/rejected/check', [DashboardController::class, 'checkR
     ->middleware('auth', 'role:admin,Operator,Operator')
     ->name('api.documents.rejected.check');
 Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,Operator,Operator')
+    ->middleware('auth', 'role:admin,Operator,operator,bagian')
     ->name('api.documents.rejected.show');
 Route::get('/api/documents/verifikasi/rejected/check', [TeamVerifikasiController::class, 'checkRejectedDocuments'])
     ->middleware('auth', 'role:admin,team_verifikasi')
