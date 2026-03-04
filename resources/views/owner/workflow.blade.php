@@ -1539,7 +1539,9 @@
             @endphp
             <div class="map-checkpoint {{ $canClick?'clickable':'' }}"
               style="left:{{ $stage['left'] }}%; top:{{ $stage['top'] }}%;"
-              @if($canClick) onclick="openCpDetail({{ $ci }}" @endif
+              @if($canClick) onclick="openCpDetail({{ $ci }})" @endif
+              onmouseenter="showMapTip({{ $ci }}, this)"
+              onmouseleave="hideMapTip()"
               data-ci="{{ $ci }}">
 
               {{-- Icon dot --}}
@@ -1568,26 +1570,9 @@
                   <div class="cp-date"><i class="far fa-clock"></i> {{ $stage['timestamp'] }}</div>
                 @endif
               </div>
-
-              {{-- Tooltip --}}
-              <div class="cp-tooltip">
-                <div class="tt-name">{{ $stage['name'] }}</div>
-                <div class="tt-row"><i class="fas fa-tag"></i><span>{{ $stage['badgeTxt'] }}</span></div>
-                @if($stage['description'])
-                  <div class="tt-row"><i class="fas fa-info-circle"></i><span>{{ $stage['description'] }}</span></div>
-                @endif
-                @if($stage['timestamp'])
-                  <div class="tt-row"><i class="far fa-clock"></i><span>{{ $stage['timestamp'] }}</span></div>
-                @endif
-                @if($stage['duration'])
-                  <div class="tt-row"><i class="fas fa-stopwatch"></i><span>{{ $stage['duration'] }}</span></div>
-                @endif
-                @if($stage['isOverdue'])
-                  <div class="tt-row" style="color:#dc2626"><i class="fas fa-exclamation-circle"></i><span>Terlambat dari deadline</span></div>
-                @endif
-              </div>
             </div>
           @endforeach
+
 
           {{-- Compass decoration --}}
           <div class="map-deco map-compass">
@@ -1619,6 +1604,23 @@
 
         </div>{{-- /map-canvas --}}
       </div>{{-- /map-outer --}}
+
+      {{-- Shared tooltip (outside map-canvas to escape overflow:hidden) --}}
+      <div id="mapSharedTooltip" style="
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        display: none;
+        background: rgba(255,253,244,.97);
+        border: 1px solid #d9c89a;
+        border-radius: 14px;
+        padding: 13px 15px;
+        box-shadow: 0 10px 32px rgba(80,55,15,.22);
+        font-size: 12px;
+        text-align: left;
+        max-width: 240px;
+        transition: opacity .15s ease;
+      "></div>
 
       {{-- Detail panel --}}
       <div id="cpDetailPanel">
@@ -1654,6 +1656,60 @@
     {{-- JS stage data for detail panel --}}
     <script>
     var MAP_STAGES = @json($jsStages);
+
+    /* ── Shared Tooltip helpers ── */
+    var _tipEl = null;
+    function showMapTip(idx, node) {
+      var s = MAP_STAGES[idx];
+      if (!s) return;
+      if (!_tipEl) _tipEl = document.getElementById('mapSharedTooltip');
+
+      /* Build html */
+      var html = '<div style="font-weight:800;color:#1a0f00;margin-bottom:6px;font-size:13px">' + s.name + '</div>';
+      html += tipRow('fas fa-tag', s.badgeTxt);
+      if (s.description) html += tipRow('fas fa-info-circle', s.description);
+      if (s.timestamp)   html += tipRow('far fa-clock',       s.timestamp);
+      if (s.duration)    html += tipRow('fas fa-stopwatch',   s.duration);
+      if (s.isOverdue)   html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#dc2626"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>Terlambat dari deadline</span></div>';
+      _tipEl.innerHTML = html;
+      _tipEl.style.display = 'block';
+      _tipEl.style.opacity = '0';
+
+      /* Position: get node bounding rect */
+      var r = node.getBoundingClientRect();
+      var tw = 240, th = _tipEl.offsetHeight || 130;
+      var margin = 10;
+      var vpW = window.innerWidth, vpH = window.innerHeight;
+
+      /* Horizontal: prefer centre-aligned; flip if off-screen */
+      var left = r.left + r.width / 2 - tw / 2;
+      if (left + tw > vpW - margin) left = vpW - tw - margin;
+      if (left < margin) left = margin;
+
+      /* Vertical: prefer above node; flip to below if no space */
+      var top = r.top - th - 12;
+      var arrowDir = 'bottom'; /* arrow points down (tooltip above) */
+      if (top < margin) {
+        top = r.bottom + 12;
+        arrowDir = 'top'; /* arrow points up (tooltip below) */
+      }
+
+      _tipEl.style.left = left + 'px';
+      _tipEl.style.top  = top  + 'px';
+      _tipEl.style.opacity = '1';
+    }
+
+    function tipRow(iconClass, text) {
+      return '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#4b3b22">' +
+             '<i class="' + iconClass + '" style="margin-top:2px;flex-shrink:0;color:#7a5c2e"></i>' +
+             '<span>' + text + '</span></div>';
+    }
+
+    function hideMapTip() {
+      if (!_tipEl) return;
+      _tipEl.style.opacity = '0';
+      setTimeout(function() { if(_tipEl) _tipEl.style.display = 'none'; }, 150);
+    }
 
     /* ── Animate paths on load ── */
     document.addEventListener('DOMContentLoaded', function() {
