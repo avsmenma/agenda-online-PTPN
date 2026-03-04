@@ -15,13 +15,13 @@ return new class extends Migration
     {
         Schema::table('dokumens', function (Blueprint $table) {
             // Flag: is urgency currently active for this document?
-            $table->boolean('urgency_active')->default(false)->after('csv_imported_at');
+            $table->boolean('urgency_active')->default(false);
 
             // When was the urgency alert sent?
-            $table->timestamp('urgency_sent_at')->nullable()->after('urgency_active');
+            $table->timestamp('urgency_sent_at')->nullable();
 
             // Which admin sent the urgency alert?
-            $table->unsignedBigInteger('urgency_sent_by')->nullable()->after('urgency_sent_at');
+            $table->unsignedBigInteger('urgency_sent_by')->nullable();
 
             // Index for fast filtering of urgency-active documents
             $table->index('urgency_active', 'idx_urgency_active');
