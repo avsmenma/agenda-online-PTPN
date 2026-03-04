@@ -75,6 +75,16 @@
             line-height: 1.2;
         }
 
+        /* Total Nilai card — smaller font, no line break */
+        .summary-card.nilai .value {
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+
         .summary-card .icon {
             width: 48px;
             height: 48px;
@@ -271,7 +281,7 @@
         /* Bagian Cards Grid */
         .bagian-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1.25rem;
             width: 100%;
         }
