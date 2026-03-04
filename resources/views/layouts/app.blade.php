@@ -6740,6 +6740,141 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 @endif
 
+{{-- ===================================================
+     DRAG-TO-SCROLL: Global horizontal drag scroll
+     Works on DataTable scroll bodies + .table-responsive
+     =================================================== --}}
+<style>
+  /* Grab cursor on all horizontal scroll containers */
+  .dataTables_scrollBody,
+  .table-responsive,
+  .table-wrapper {
+    cursor: grab;
+    scroll-behavior: auto !important;
+  }
+  .dataTables_scrollBody.is-dragging,
+  .table-responsive.is-dragging,
+  .table-wrapper.is-dragging {
+    cursor: grabbing !important;
+    user-select: none !important;
+  }
+</style>
+
+<script>
+(function () {
+  const DRAG_THRESHOLD = 5;   // px – below this = click, above = drag
+  const SPEED_FACTOR   = 1.4; // scroll multiplier for responsiveness
+
+  // Selectors to enable drag-scroll on
+  const SCROLL_SELECTORS = [
+    '.dataTables_scrollBody',
+    '.table-responsive',
+    '.table-wrapper',
+  ];
+
+  function initDragScroll(el) {
+    if (el._dragScrollInited) return;
+    el._dragScrollInited = true;
+
+    let isDragging = false;
+    let didDrag    = false;   // true once movement exceeds threshold
+    let startX     = 0;
+    let startScrollLeft = 0;
+
+    // ── Mouse events ──────────────────────────────────────────
+    el.addEventListener('mousedown', function (e) {
+      // Only trigger on left button, ignore inputs/buttons/links
+      if (e.button !== 0) return;
+      if (e.target.closest('a, button, input, select, textarea, label')) return;
+      isDragging = true;
+      didDrag    = false;
+      startX     = e.clientX;
+      startScrollLeft = el.scrollLeft;
+      e.stopPropagation();
+    }, { passive: true });
+
+    el.addEventListener('mousemove', function (e) {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD) return;
+      didDrag = true;
+      el.classList.add('is-dragging');
+      el.scrollLeft = startScrollLeft - deltaX * SPEED_FACTOR;
+      e.preventDefault();
+    });
+
+    el.addEventListener('mouseup', function (e) {
+      if (!isDragging) return;
+      isDragging = false;
+      el.classList.remove('is-dragging');
+      // If actual drag happened, block the click on the child element
+      if (didDrag) {
+        e.stopPropagation();
+        const blocker = function (ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          el.removeEventListener('click', blocker, true);
+        };
+        el.addEventListener('click', blocker, true);
+      }
+      didDrag = false;
+    });
+
+    el.addEventListener('mouseleave', function () {
+      if (isDragging) {
+        isDragging = false;
+        didDrag    = false;
+        el.classList.remove('is-dragging');
+      }
+    });
+
+    // ── Touch events (mobile/tablet) ──────────────────────────
+    let touchStartX = 0;
+    let touchScrollLeft = 0;
+
+    el.addEventListener('touchstart', function (e) {
+      touchStartX    = e.touches[0].clientX;
+      touchScrollLeft = el.scrollLeft;
+    }, { passive: true });
+
+    el.addEventListener('touchmove', function (e) {
+      const deltaX = e.touches[0].clientX - touchStartX;
+      if (Math.abs(deltaX) < DRAG_THRESHOLD) return;
+      el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
+    }, { passive: true });
+  }
+
+  function activateOnAllContainers() {
+    SCROLL_SELECTORS.forEach(function (selector) {
+      document.querySelectorAll(selector).forEach(function (el) {
+        // Only activate if element has horizontal overflow
+        if (el.scrollWidth > el.clientWidth + 5) {
+          initDragScroll(el);
+        }
+      });
+    });
+  }
+
+  // Initial activation
+  document.addEventListener('DOMContentLoaded', function () {
+    activateOnAllContainers();
+
+    // Re-run after DataTables finishes rendering (uses MutationObserver)
+    const mo = new MutationObserver(function () {
+      activateOnAllContainers();
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    // Also catch DataTable draw events (jQuery)
+    if (window.jQuery) {
+      jQuery(document).on('draw.dt', function () {
+        activateOnAllContainers();
+      });
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
 
