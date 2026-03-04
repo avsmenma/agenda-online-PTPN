@@ -81,10 +81,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/search/presets/{id}', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'deletePreset'])
             ->name('search.presets.destroy');
     });
-
-    // Document History / Timeline API
-    Route::get('/owner/dokumen/{id}/history', [\App\Http\Controllers\OwnerDashboardController::class, 'getHistory'])
-        ->name('owner.dokumen.history');
 });
 
 // SECURITY FIX: Custom broadcast authentication route with CSRF protection
@@ -494,6 +490,11 @@ Route::post('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'sen
 Route::delete('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'resetUrgency'])
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dokumen.urgency.reset');
+
+// Document History / Timeline API
+Route::get('owner/dokumen/{id}/history', [OwnerDashboardController::class, 'getHistory'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.dokumen.history');
 
 // Active urgencies polling API – all authenticated roles can call this
 Route::get('/api/documents/urgency/active', [OwnerDashboardController::class, 'getActiveUrgencies'])
