@@ -165,39 +165,284 @@
       color: #64748b;
     }
 
-    /* Professional Vertical Timeline */
-    .workflow-timeline {
+    /* ═══════════════════════════════════════
+       TREASURE MAP CANVAS — Journey of a Document
+       ═══════════════════════════════════════ */
+
+    /* ── Wrapper ── */
+    .map-section {
+      margin-bottom: 12px;
+    }
+    .map-section-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: #8a7555; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .map-section-title::before, .map-section-title::after {
+      content: ''; flex: 1; height: 1px; background: #c9b48a;
+    }
+
+    /* ── Canvas outer: scrollable for small screens ── */
+    .map-outer {
+      overflow-x: auto;
+      border-radius: 18px;
+      box-shadow: 0 8px 40px rgba(80,60,20,.20),
+                  inset 0 0 0 3px rgba(160,120,70,.3);
+    }
+
+    /* ── Parchment canvas ── */
+    .map-canvas {
       position: relative;
-      padding: 40px 0;
+      width: 100%; min-width: 700px;
+      aspect-ratio: 2 / 1;
+      background-color: #F5EAC8;
+      background-image:
+        radial-gradient(ellipse at 20% 80%, rgba(190,150,80,.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 15%, rgba(170,130,60,.14) 0%, transparent 55%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.08'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+      border-radius: 16px;
+      overflow: hidden;
     }
 
-    .timeline-line {
-      position: absolute;
-      left: 40px;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
-      border-radius: 2px;
+    /* ── SVG path overlay ── */
+    .map-svg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 1;
+    }
+    .map-path {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 14 8;
+    }
+    .map-path.done   { stroke: #2d7a4a; opacity: .85; }
+    .map-path.active { stroke: #083E40; opacity: .9;
+                       animation: ant-walk 0.7s linear infinite; }
+    .map-path.waiting{ stroke: #b8a880; opacity: .45; }
+    .map-path.draw   { stroke-dasharray: 2000; stroke-dashoffset: 2000;
+                       transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+    @keyframes ant-walk {
+      to { stroke-dashoffset: -22; }
     }
 
-    .timeline-line-progress {
-      position: absolute;
-      left: 40px;
-      top: 0;
-      width: 4px;
-      background: linear-gradient(180deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-      border-radius: 2px;
-      transition: height 1s ease-out;
-      box-shadow: 0 0 10px rgba(8, 62, 64, 0.3);
+    /* ── Checkpoint nodes ── */
+    .map-checkpoint {
+      position: absolute; z-index: 10;
+      display: flex; flex-direction: column; align-items: center;
+      transform: translate(-50%, -50%);
+      cursor: default;
     }
+    .map-checkpoint.clickable { cursor: pointer; }
 
-    /* Timeline Stage Item */
-    .timeline-stage {
+    /* dot */
+    .cp-dot {
+      width: 68px; height: 68px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; color: #fff;
       position: relative;
-      display: flex;
-      gap: 32px;
-      margin-bottom: 48px;
+      transition: transform .2s ease, box-shadow .2s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+    }
+    .map-checkpoint.clickable .cp-dot:hover {
+      transform: scale(1.12);
+      box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    }
+
+    /* state colors */
+    .cp-dot.done    { background: linear-gradient(135deg,#1a6b40,#2d9f5c); }
+    .cp-dot.active  { background: linear-gradient(135deg,#083E40,#0a6060); }
+    .cp-dot.returned{ background: linear-gradient(135deg,#c47c1a,#e09a30); }
+    .cp-dot.waiting { background: linear-gradient(135deg,#a09580,#c4b898); }
+
+    /* checkmark badge */
+    .cp-check {
+      position: absolute; bottom: -2px; right: -2px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #fff; color: #1a6b40; font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+      font-weight: 900;
+    }
+
+    /* pulse ring for active */
+    .cp-dot.active::after {
+      content: '';
+      position: absolute; inset: -6px;
+      border-radius: 50%;
+      animation: cp-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes cp-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(8,62,64,.45); }
+      50%      { box-shadow: 0 0 0 12px rgba(8,62,64,0); }
+    }
+
+    /* entry pop animation */
+    .cp-dot {
+      animation: cp-pop .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .map-checkpoint:nth-child(2) .cp-dot  { animation-delay:.1s; }
+    .map-checkpoint:nth-child(3) .cp-dot  { animation-delay:.25s; }
+    .map-checkpoint:nth-child(4) .cp-dot  { animation-delay:.4s; }
+    .map-checkpoint:nth-child(5) .cp-dot  { animation-delay:.55s; }
+    .map-checkpoint:nth-child(6) .cp-dot  { animation-delay:.7s; }
+    @keyframes cp-pop {
+      0%   { transform: scale(0) rotate(-15deg); opacity:0; }
+      100% { transform: scale(1) rotate(0deg);   opacity:1; }
+    }
+
+    /* label below dot */
+    .cp-label {
+      margin-top: 8px; text-align: center; width: 120px;
+    }
+    .cp-name {
+      font-size: 12px; font-weight: 800; color: #3b2a0e;
+      line-height: 1.2; margin-bottom: 3px;
+    }
+    .cp-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .cp-badge.done   { background:#d1fae5; color:#065f46; }
+    .cp-badge.active { background:linear-gradient(135deg,#083E40,#889717); color:#fff; }
+    .cp-badge.returned{ background:#fef3c7; color:#92400e; }
+    .cp-badge.waiting{ background:#f1f5f9; color:#64748b; }
+    .cp-date {
+      font-size: 10px; color: #7a6345; margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    /* ── Tooltip ── */
+    .cp-tooltip {
+      position: absolute; bottom: calc(100% + 14px); left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      width: 220px;
+      background: #fff;
+      border: 1px solid #e2d9c0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 28px rgba(80,60,20,.18);
+      opacity: 0; pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 99;
+      font-size: 12px;
+      text-align: left;
+    }
+    .map-checkpoint:hover .cp-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .cp-tooltip::after {
+      content: '';
+      position: absolute; top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #fff;
+    }
+    .tt-name {
+      font-weight: 800; color: #0f172a; margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .tt-row {
+      display: flex; gap: 6px; align-items: flex-start;
+      margin-bottom: 4px; color: #475569; line-height: 1.4;
+    }
+    .tt-row i { color: #083E40; margin-top: 2px; flex-shrink:0; }
+
+    /* ── Decorative elements ── */
+    .map-deco {
+      position: absolute; pointer-events: none; z-index: 2;
+    }
+    .map-compass {
+      top: 12px; right: 14px;
+      opacity: .7;
+    }
+    .map-start-marker {
+      font-size: 11px; font-weight: 800;
+      color: #5a3e1b; background: rgba(255,255,255,.55);
+      padding: 3px 8px; border-radius: 8px; border: 1px solid #c9b48a;
+      white-space: nowrap;
+    }
+    .map-finish-x {
+      font-size: 28px; color: #c0392b;
+      text-shadow: 1px 1px 0 rgba(0,0,0,.1);
+      font-weight: 900;
+      line-height: 1;
+    }
+    .map-filler-icon {
+      opacity: .25; font-size: 20px; color: #5a3e1b;
+    }
+
+    /* ── Detail panel (below map) ── */
+    #cpDetailPanel {
+      display: none;
+      margin-top: 16px;
+      background: #fff;
+      border: 1px solid #e2d9c0;
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 20px rgba(80,60,20,.10);
+      animation: panel-in .25s ease;
+    }
+    @keyframes panel-in {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    #cpDetailPanel.open { display: block; }
+    .cp-detail-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 1px solid #f1ead9;
+    }
+    .cp-detail-title {
+      font-size: 16px; font-weight: 800; color: #0f172a;
+    }
+    .cp-detail-close {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: #f1f5f9; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #64748b; font-size: 13px;
+    }
+    .cp-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+      gap: 16px;
+    }
+    .cp-detail-item label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: #94a3b8; display: block; margin-bottom: 2px;
+    }
+    .cp-detail-item span {
+      font-size: 14px; font-weight: 600; color: #0f172a;
+    }
+
+    /* ── Mobile fallback ── */
+    .map-mobile-fallback { display: none; }
+    @media (max-width: 640px) {
+      .map-outer { display: none; }
+      .map-mobile-fallback { display: block; }
+      .mob-stage {
+        display: flex; gap: 16px; margin-bottom: 20px;
+        align-items: flex-start;
+      }
+      .mob-dot {
+        width: 44px; height: 44px; border-radius: 50%;
+        display:flex; align-items:center; justify-content:center;
+        color:#fff; font-size:18px; flex-shrink:0;
+      }
+      .mob-dot.done    { background: #1a6b40; }
+      .mob-dot.active  { background: #083E40; }
+      .mob-dot.returned{ background: #c47c1a; }
+      .mob-dot.waiting { background: #a09580; }
+      .mob-info { flex: 1; }
+      .mob-name { font-weight: 800; color: #0f172a; font-size: 15px; }
+      .mob-desc { font-size: 13px; color: #475569; margin-top: 2px; }
+      .mob-date { font-size: 12px; color: #64748b; margin-top: 4px; }
+    }
       padding-left: 0;
       animation: fadeInUp 0.6s ease-out;
       animation-fill-mode: both;
@@ -1132,10 +1377,238 @@
       </div>
     </div>
 
-    {{-- Professional Vertical Timeline --}}
-    <div class="workflow-timeline">
-      {{-- Background Timeline Line --}}
-      <div class="timeline-line"></div>
+    {{-- ═══ TREASURE MAP JOURNEY ═══ --}}
+    @php
+      /* Build stage data for JS in a clean JSON format */
+      $stagePositions = [
+        ['left'=>'8','top'=>'72'],
+        ['left'=>'28','top'=>'22'],
+        ['left'=>'50','top'=>'68'],
+        ['left'=>'70','top'=>'18'],
+        ['left'=>'88','top'=>'68'],
+      ];
+      $jsStages = [];
+      foreach($workflowStages as $idx => $stage) {
+        $st = $stage['status'] ?? 'pending';
+        $isComp = ($st==='completed'||$st==='selesai');
+        $isAct  = ($st==='processing'||$st==='active');
+        $isRet  = ($st==='returned');
+        $stateKey = $isComp ? 'done' : ($isAct ? 'active' : ($isRet ? 'returned' : 'waiting'));
+        $jsStages[] = [
+          'name'       => $stage['name'] ?? 'Tahap '.($idx+1),
+          'description'=> $stage['description'] ?? '',
+          'state'      => $stateKey,
+          'timestamp'  => !empty($stage['timestamp']) ? \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') : null,
+          'duration'   => $stage['duration']['display'] ?? null,
+          'icon'       => $stage['icon'] ?? 'fa-circle',
+          'badgeTxt'   => $isComp?'Selesai':($isAct?'Sedang Diproses':($isRet?'Dikembalikan':'Menunggu')),
+          'isOverdue'  => $stage['isOverdue'] ?? false,
+          'clickable'  => $isComp || $isAct,
+          'left'       => $stagePositions[$idx]['left'] ?? '50',
+          'top'        => $stagePositions[$idx]['top']  ?? '50',
+        ];
+      }
+    @endphp
+
+    <div class="map-section">
+      <div class="map-section-title">🗺️ Peta Perjalanan Dokumen</div>
+
+      {{-- DESKTOP: SVG Treasure Map --}}
+      <div class="map-outer">
+        <div class="map-canvas" id="mapCanvas">
+
+          {{-- SVG path layer --}}
+          <svg class="map-svg" id="mapSvg" viewBox="0 0 1000 500" preserveAspectRatio="none">
+            @php
+              $coords = [];
+              foreach($jsStages as $s) {
+                $coords[] = ['x' => (float)$s['left'] * 10, 'y' => (float)$s['top'] * 5];
+              }
+              /* Determine state for each path segment */
+              $stateList = array_column($jsStages, 'state');
+            @endphp
+            @for($pi = 0; $pi < count($coords)-1; $pi++)
+              @php
+                $x1 = $coords[$pi]['x'];
+                $y1 = $coords[$pi]['y'];
+                $x2 = $coords[$pi+1]['x'];
+                $y2 = $coords[$pi+1]['y'];
+                $cx1 = $x1 + ($x2-$x1)*0.5;
+                $cy1 = $y1;
+                $cx2 = $x1 + ($x2-$x1)*0.5;
+                $cy2 = $y2;
+                $segState = ($stateList[$pi]==='done') ? 'done' :
+                            ($stateList[$pi]==='active' ? 'active' :
+                            ($stateList[$pi]==='returned' ? 'done' : 'waiting'));
+              @endphp
+              <path id="seg-{{ $pi }}"
+                class="map-path draw {{ $segState }}"
+                d="M {{ $x1 }} {{ $y1 }} C {{ $cx1 }} {{ $cy1 }}, {{ $cx2 }} {{ $cy2 }}, {{ $x2 }} {{ $y2 }}"
+              />
+            @endfor
+          </svg>
+
+          {{-- Checkpoints --}}
+          @foreach($jsStages as $ci => $stage)
+            @php
+              $canClick = $stage['clickable'];
+            @endphp
+            <div class="map-checkpoint {{ $canClick?'clickable':'' }}"
+              style="left:{{ $stage['left'] }}%; top:{{ $stage['top'] }}%;"
+              @if($canClick) onclick="openCpDetail({{ $ci }}" @endif
+              data-ci="{{ $ci }}">
+
+              {{-- Icon dot --}}
+              <div class="cp-dot {{ $stage['state'] }}">
+                @if($stage['state']==='done')
+                  <i class="fas fa-check" style="font-size:26px"></i>
+                @elseif($stage['state']==='returned')
+                  <i class="fas fa-undo-alt"></i>
+                @else
+                  @php
+                    $rawIcon = $stage['icon'];
+                    $faIcon = strpos($rawIcon,'fa-')===0 ? 'fas '.$rawIcon : 'fas fa-'.$rawIcon;
+                  @endphp
+                  <i class="{{ $faIcon }}"></i>
+                @endif
+                @if($stage['state']==='done')
+                  <span class="cp-check"><i class="fas fa-check"></i></span>
+                @endif
+              </div>
+
+              {{-- Label --}}
+              <div class="cp-label">
+                <div class="cp-name">{{ $stage['name'] }}</div>
+                <span class="cp-badge {{ $stage['state'] }}">{{ $stage['badgeTxt'] }}</span>
+                @if($stage['timestamp'])
+                  <div class="cp-date"><i class="far fa-clock"></i> {{ $stage['timestamp'] }}</div>
+                @endif
+              </div>
+
+              {{-- Tooltip --}}
+              <div class="cp-tooltip">
+                <div class="tt-name">{{ $stage['name'] }}</div>
+                <div class="tt-row"><i class="fas fa-tag"></i><span>{{ $stage['badgeTxt'] }}</span></div>
+                @if($stage['description'])
+                  <div class="tt-row"><i class="fas fa-info-circle"></i><span>{{ $stage['description'] }}</span></div>
+                @endif
+                @if($stage['timestamp'])
+                  <div class="tt-row"><i class="far fa-clock"></i><span>{{ $stage['timestamp'] }}</span></div>
+                @endif
+                @if($stage['duration'])
+                  <div class="tt-row"><i class="fas fa-stopwatch"></i><span>{{ $stage['duration'] }}</span></div>
+                @endif
+                @if($stage['isOverdue'])
+                  <div class="tt-row" style="color:#dc2626"><i class="fas fa-exclamation-circle"></i><span>Terlambat dari deadline</span></div>
+                @endif
+              </div>
+            </div>
+          @endforeach
+
+          {{-- Compass decoration --}}
+          <div class="map-deco map-compass">
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" opacity=".7">
+              <circle cx="26" cy="26" r="24" stroke="#8a7555" stroke-width="1.5"/>
+              <circle cx="26" cy="26" r="3" fill="#8a7555"/>
+              <polygon points="26,4 29,24 26,22 23,24" fill="#c0392b"/>
+              <polygon points="26,48 29,28 26,30 23,28" fill="#8a7555"/>
+              <polygon points="4,26 24,23 22,26 24,29" fill="#8a7555"/>
+              <polygon points="48,26 28,23 30,26 28,29" fill="#8a7555"/>
+              <text x="26" y="11" text-anchor="middle" font-size="7" fill="#c0392b" font-weight="800" font-family="serif">N</text>
+            </svg>
+          </div>
+
+          {{-- Start marker --}}
+          <div class="map-deco map-start-marker" style="left:1.5%; bottom:10%;">
+            ➤ Mulai
+          </div>
+
+          {{-- Finish X --}}
+          <div class="map-deco map-finish-x" style="right:1%; bottom:8%;">
+            ✕
+          </div>
+
+          {{-- Filler icons --}}
+          <div class="map-deco map-filler-icon" style="left:38%; top:40%;"><i class="fas fa-mountain"></i></div>
+          <div class="map-deco map-filler-icon" style="left:61%; top:43%;"><i class="fas fa-tree"></i></div>
+          <div class="map-deco map-filler-icon" style="left:18%; top:48%;"><i class="fas fa-star"></i></div>
+
+        </div>{{-- /map-canvas --}}
+      </div>{{-- /map-outer --}}
+
+      {{-- Detail panel --}}
+      <div id="cpDetailPanel">
+        <div class="cp-detail-header">
+          <div class="cp-detail-title" id="cpDetailTitle">Detail Tahap</div>
+          <button class="cp-detail-close" onclick="closeCpDetail()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cp-detail-grid" id="cpDetailGrid"></div>
+      </div>
+
+      {{-- MOBILE FALLBACK --}}
+      <div class="map-mobile-fallback">
+        @foreach($jsStages as $stage)
+          <div class="mob-stage">
+            <div class="mob-dot {{ $stage['state'] }}">
+              @if($stage['state']==='done')<i class="fas fa-check"></i>
+              @elseif($stage['state']==='returned')<i class="fas fa-undo-alt"></i>
+              @else
+                @php $faIcon2 = strpos($stage['icon'],'fa-')===0 ? 'fas '.$stage['icon'] : 'fas fa-'.$stage['icon']; @endphp
+                <i class="{{ $faIcon2 }}"></i>
+              @endif
+            </div>
+            <div class="mob-info">
+              <div class="mob-name">{{ $stage['name'] }}</div>
+              <div class="mob-desc">{{ $stage['description'] }}</div>
+              @if($stage['timestamp'])<div class="mob-date"><i class="far fa-clock"></i> {{ $stage['timestamp'] }}</div>@endif
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </div>{{-- /map-section --}}
+
+    {{-- JS stage data for detail panel --}}
+    <script>
+    var MAP_STAGES = @json($jsStages);
+
+    /* ── Animate paths on load ── */
+    document.addEventListener('DOMContentLoaded', function() {
+      var paths = document.querySelectorAll('#mapSvg .map-path.draw');
+      paths.forEach(function(path, i) {
+        var len = path.getTotalLength ? path.getTotalLength() : 800;
+        path.style.strokeDasharray  = len;
+        path.style.strokeDashoffset = len;
+        setTimeout(function() {
+          path.style.strokeDashoffset = '0';
+        }, 120 + i * 280);
+      });
+    });
+
+    /* ── Detail panel ── */
+    function openCpDetail(idx) {
+      var s = MAP_STAGES[idx];
+      if (!s || !s.clickable) return;
+      document.getElementById('cpDetailTitle').textContent = s.name + ' — ' + s.badgeTxt;
+      var rows = '';
+      if (s.description) rows += field('Deskripsi', s.description);
+      if (s.timestamp)   rows += field('Waktu Proses', s.timestamp);
+      if (s.duration)    rows += field('Durasi', s.duration);
+      rows += field('Status', s.badgeTxt);
+      if (s.isOverdue)   rows += field('Keterlambatan', '⚠ Terlambat dari deadline');
+      document.getElementById('cpDetailGrid').innerHTML = rows;
+      var panel = document.getElementById('cpDetailPanel');
+      panel.classList.add('open');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function closeCpDetail() {
+      document.getElementById('cpDetailPanel').classList.remove('open');
+    }
+    function field(lbl, val) {
+      return '<div class="cp-detail-item"><label>' + lbl + '</label><span>' + val + '</span></div>';
+    }
+    </script>
+
+
 
       {{-- Progress Timeline Line --}}
       @php
