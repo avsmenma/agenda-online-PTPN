@@ -6945,6 +6945,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function () {
+  var FS_KEY            = 'agenda_fs_active'; // sessionStorage key
   let isFullscreen      = false;
   let fsArea            = null;
   let hiddenElements    = [];   // [{el, prev}] – page sections above filter
@@ -7064,6 +7065,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // ── Enter fullscreen ──────────────────────────────────────────
   function enterFullscreen(fsBtn) {
     isFullscreen = true;
+    try { sessionStorage.setItem(FS_KEY, '1'); } catch(e) {}
 
     fsArea = findContentArea(fsBtn);
     if (fsArea) {
@@ -7086,6 +7088,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function exitFullscreen() {
     if (!isFullscreen) return;
     isFullscreen = false;
+    try { sessionStorage.removeItem(FS_KEY); } catch(e) {}
 
     restoreAll();
 
@@ -7144,10 +7147,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // ── Restore fullscreen state after filter/reload ─────────────
+  function restoreFullscreenIfNeeded() {
+    let saved = false;
+    try { saved = sessionStorage.getItem(FS_KEY) === '1'; } catch(e) {}
+    if (!saved) return;
+
+    // Wait for the fullscreen button to be injected before restoring
+    const fsBtn = document.querySelector('.btn-fullscreen-toggle');
+    if (fsBtn) {
+      enterFullscreen(fsBtn);
+    } else {
+      // Button not yet injected — wait a tick and retry
+      setTimeout(restoreFullscreenIfNeeded, 50);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     scanAndInject();
     const mo = new MutationObserver(scanAndInject);
     mo.observe(document.body, { childList: true, subtree: true });
+
+    // Restore fullscreen after page reload (filter/pagination/refresh)
+    restoreFullscreenIfNeeded();
   });
 })();
 </script>
