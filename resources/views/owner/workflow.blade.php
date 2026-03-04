@@ -165,69 +165,108 @@
       color: #64748b;
     }
 
-    /* ═══════════════════════════════════════
-       TREASURE MAP CANVAS — Journey of a Document
-       ═══════════════════════════════════════ */
+    /* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n       TREASURE MAP CANVAS \u2014 Enhanced Visual v2
+       \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
 
-    /* ── Wrapper ── */
-    .map-section {
-      margin-bottom: 12px;
-    }
+    /* \u2500\u2500 Section wrapper \u2500\u2500 */
+    .map-section { margin-bottom: 12px; }
     .map-section-title {
       font-size: 13px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1.5px; color: #8a7555; margin-bottom: 12px;
-      display: flex; align-items: center; gap: 8px;
+      letter-spacing: 1.8px; color: #7a6338; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
     }
     .map-section-title::before, .map-section-title::after {
-      content: ''; flex: 1; height: 1px; background: #c9b48a;
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, #c9a96a, transparent);
     }
 
-    /* ── Canvas outer: scrollable for small screens ── */
+    /* \u2500\u2500 Outer container \u2500\u2500 */
     .map-outer {
       overflow-x: auto;
-      border-radius: 18px;
-      box-shadow: 0 8px 40px rgba(80,60,20,.20),
-                  inset 0 0 0 3px rgba(160,120,70,.3);
+      border-radius: 20px;
+      box-shadow: 0 12px 50px rgba(80,55,15,.22),
+                  0 2px 8px rgba(80,55,15,.12),
+                  inset 0 0 0 2px rgba(180,140,70,.35);
     }
 
-    /* ── Parchment canvas ── */
+    /* \u2500\u2500 Parchment canvas \u2500\u2500 */
     .map-canvas {
       position: relative;
       width: 100%; min-width: 700px;
       aspect-ratio: 2 / 1;
-      background-color: #F5EAC8;
+      /* Paper grain via SVG noise + warm corner gradients */
+      background-color: #F5EFD7;
       background-image:
-        radial-gradient(ellipse at 20% 80%, rgba(190,150,80,.18) 0%, transparent 55%),
-        radial-gradient(ellipse at 80% 15%, rgba(170,130,60,.14) 0%, transparent 55%),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.08'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-      border-radius: 16px;
+        radial-gradient(ellipse at 0%   0%,   rgba(120,80,20,.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 0%,   rgba(120,80,20,.09) 0%, transparent 50%),
+        radial-gradient(ellipse at 0%   100%, rgba(120,80,20,.11) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 100%, rgba(120,80,20,.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 25% 75%, rgba(180,130,60,.14) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 25%, rgba(160,110,50,.11) 0%, transparent 55%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.11'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      border-radius: 18px;
       overflow: hidden;
+      /* Vignette via box-shadow inset */
+      box-shadow: inset 0 0 80px rgba(139,100,40,.22),
+                  inset 0 0 16px rgba(100,65,15,.15);
     }
 
-    /* ── SVG path overlay ── */
+    /* \u2500\u2500 SVG path overlay \u2500\u2500 */
     .map-svg {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
       pointer-events: none; z-index: 1;
-    }
-    .map-path {
-      fill: none;
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 14 8;
-    }
-    .map-path.done   { stroke: #2d7a4a; opacity: .85; }
-    .map-path.active { stroke: #083E40; opacity: .9;
-                       animation: ant-walk 0.7s linear infinite; }
-    .map-path.waiting{ stroke: #b8a880; opacity: .45; }
-    .map-path.draw   { stroke-dasharray: 2000; stroke-dashoffset: 2000;
-                       transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
-    @keyframes ant-walk {
-      to { stroke-dashoffset: -22; }
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.12));
     }
 
-    /* ── Checkpoint nodes ── */
+    /* Base path style */
+    .map-path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* DONE — solid thick line, green glow */
+    .map-path.done {
+      stroke: #27864e;
+      stroke-width: 4;
+      stroke-dasharray: none;
+      opacity: .9;
+      filter: drop-shadow(0 0 4px rgba(39,134,78,.5));
+    }
+
+    /* ACTIVE — amber dashed, ant-march animation */
+    .map-path.active {
+      stroke: #d97706;
+      stroke-width: 3.5;
+      stroke-dasharray: 10 7;
+      opacity: 1;
+      animation: ant-march .9s linear infinite;
+      filter: drop-shadow(0 0 5px rgba(217,119,6,.5));
+    }
+    @keyframes ant-march { to { stroke-dashoffset: -34; } }
+
+    /* WAITING — thin faded dashes */
+    .map-path.waiting {
+      stroke: #b5a07a;
+      stroke-width: 2;
+      stroke-dasharray: 7 9;
+      opacity: .35;
+    }
+
+    /* Draw-on animation setup (overrides above for animating segment) */
+    .map-path.draw {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+      transition: stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1);
+    }
+    /* After JS sets dashoffset to 0, restore proper visual styles */
+    .map-path.done.drawn   { stroke-dasharray: none; stroke-dashoffset: 0; }
+    .map-path.active.drawn { stroke-dasharray: 10 7; stroke-dashoffset: 0;
+                             animation: ant-march .9s linear infinite; }
+    .map-path.waiting.drawn{ stroke-dasharray: 7 9;  stroke-dashoffset: 0; }
+
+    /* \u2500\u2500 Checkpoint nodes \u2500\u2500 */
     .map-checkpoint {
       position: absolute; z-index: 10;
       display: flex; flex-direction: column; align-items: center;
@@ -236,155 +275,206 @@
     }
     .map-checkpoint.clickable { cursor: pointer; }
 
-    /* dot */
+    /* Base dot */
     .cp-dot {
-      width: 68px; height: 68px; border-radius: 50%;
+      width: 72px; height: 72px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 26px; color: #fff;
       position: relative;
-      transition: transform .2s ease, box-shadow .2s ease;
-      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+      transition: transform .22s ease, box-shadow .22s ease;
     }
+
+    /* DONE — double ring + green glow */
+    .cp-dot.done {
+      background: linear-gradient(140deg, #16a34a, #22c55e);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.7),
+                  0 0 0 7px rgba(22,163,74,.35),
+                  0 6px 20px rgba(22,163,74,.45);
+    }
+    .cp-dot.done:hover { transform: scale(1.1); }
+
+    /* ACTIVE — teal + large pulse glow, slightly bigger */
+    .cp-dot.active {
+      background: linear-gradient(140deg, #083E40, #0e7070);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.65),
+                  0 6px 20px rgba(8,62,64,.4);
+      transform: scale(1.15);
+      animation: cp-pulse-glow 2s ease-in-out infinite;
+    }
+    .cp-dot.active:hover { transform: scale(1.22); }
+    @keyframes cp-pulse-glow {
+      0%,100% { box-shadow: 0 0 0 4px rgba(255,255,255,.65), 0 0 0  0px rgba(20,184,166,.7), 0 6px 20px rgba(8,62,64,.4); }
+      50%      { box-shadow: 0 0 0 4px rgba(255,255,255,.65), 0 0 0 14px rgba(20,184,166,0),   0 6px 20px rgba(8,62,64,.4); }
+    }
+
+    /* RETURNED — amber glow */
+    .cp-dot.returned {
+      background: linear-gradient(140deg, #b45309, #f59e0b);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.6),
+                  0 6px 18px rgba(180,83,9,.4);
+    }
+
+    /* WAITING — grayscale + dimmed */
+    .cp-dot.waiting {
+      background: linear-gradient(140deg, #9ca3af, #d1d5db);
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+      opacity: .55;
+      filter: grayscale(60%);
+    }
+
+    /* Hover lift for clickable nodes */
     .map-checkpoint.clickable .cp-dot:hover {
-      transform: scale(1.12);
-      box-shadow: 0 8px 24px rgba(0,0,0,.22);
+      transform: scale(1.12) translateY(-2px);
     }
 
-    /* state colors */
-    .cp-dot.done    { background: linear-gradient(135deg,#1a6b40,#2d9f5c); }
-    .cp-dot.active  { background: linear-gradient(135deg,#083E40,#0a6060); }
-    .cp-dot.returned{ background: linear-gradient(135deg,#c47c1a,#e09a30); }
-    .cp-dot.waiting { background: linear-gradient(135deg,#a09580,#c4b898); }
-
-    /* checkmark badge */
+    /* Checkmark mini badge */
     .cp-check {
-      position: absolute; bottom: -2px; right: -2px;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: #fff; color: #1a6b40; font-size: 10px;
+      position: absolute; bottom: -3px; right: -3px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; color: #16a34a; font-size: 10px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,.15);
-      font-weight: 900;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+      font-weight: 900; border: 1.5px solid rgba(22,163,74,.3);
     }
 
-    /* pulse ring for active */
-    .cp-dot.active::after {
-      content: '';
-      position: absolute; inset: -6px;
-      border-radius: 50%;
-      animation: cp-pulse 1.8s ease-in-out infinite;
-    }
-    @keyframes cp-pulse {
-      0%,100% { box-shadow: 0 0 0 0 rgba(8,62,64,.45); }
-      50%      { box-shadow: 0 0 0 12px rgba(8,62,64,0); }
-    }
-
-    /* entry pop animation */
+    /* Entry pop animation (staggered via nth-child) */
     .cp-dot {
-      animation: cp-pop .4s cubic-bezier(.34,1.56,.64,1) both;
+      animation: cp-pop .5s cubic-bezier(.34,1.56,.64,1) both;
     }
-    .map-checkpoint:nth-child(2) .cp-dot  { animation-delay:.1s; }
-    .map-checkpoint:nth-child(3) .cp-dot  { animation-delay:.25s; }
-    .map-checkpoint:nth-child(4) .cp-dot  { animation-delay:.4s; }
-    .map-checkpoint:nth-child(5) .cp-dot  { animation-delay:.55s; }
-    .map-checkpoint:nth-child(6) .cp-dot  { animation-delay:.7s; }
+    .map-checkpoint:nth-child(2)  .cp-dot { animation-delay: .30s; }
+    .map-checkpoint:nth-child(3)  .cp-dot { animation-delay: .60s; }
+    .map-checkpoint:nth-child(4)  .cp-dot { animation-delay: .90s; }
+    .map-checkpoint:nth-child(5)  .cp-dot { animation-delay:1.20s; }
+    .map-checkpoint:nth-child(6)  .cp-dot { animation-delay:1.50s; }
     @keyframes cp-pop {
-      0%   { transform: scale(0) rotate(-15deg); opacity:0; }
-      100% { transform: scale(1) rotate(0deg);   opacity:1; }
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+    /* Preserve active scale after pop */
+    .map-checkpoint .cp-dot.active { animation: cp-pop-active .5s cubic-bezier(.34,1.56,.64,1) both,
+                                                cp-pulse-glow 2s ease-in-out 0.5s infinite; }
+    @keyframes cp-pop-active {
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      100% { transform: scale(1.15) rotate(0deg); opacity: 1; }
     }
 
-    /* label below dot */
+    /* \u2500\u2500 Label below dot \u2500\u2500 */
     .cp-label {
-      margin-top: 8px; text-align: center; width: 120px;
+      margin-top: 10px; text-align: center; width: 130px;
     }
     .cp-name {
-      font-size: 12px; font-weight: 800; color: #3b2a0e;
-      line-height: 1.2; margin-bottom: 3px;
+      display: inline-block;
+      font-size: 13px; font-weight: 800; color: #2c1d08;
+      line-height: 1.25; margin-bottom: 4px;
+      /* frosted glass pill */
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border-radius: 8px; padding: 3px 9px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
     }
     .cp-badge {
       display: inline-flex; align-items: center; gap: 4px;
-      padding: 2px 8px; border-radius: 20px;
-      font-size: 9px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .4px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.12);
     }
-    .cp-badge.done   { background:#d1fae5; color:#065f46; }
-    .cp-badge.active { background:linear-gradient(135deg,#083E40,#889717); color:#fff; }
-    .cp-badge.returned{ background:#fef3c7; color:#92400e; }
-    .cp-badge.waiting{ background:#f1f5f9; color:#64748b; }
+    .cp-badge.done    { background: #dcfce7; color: #15803d;
+                        border: 1px solid rgba(22,163,74,.25); }
+    .cp-badge.active  { background: linear-gradient(135deg,#083E40,#0e9080);
+                        color: #fff; border: none; }
+    .cp-badge.returned{ background: #fef3c7; color: #92400e;
+                        border: 1px solid rgba(180,83,9,.2); }
+    .cp-badge.waiting { background: rgba(255,255,255,.6); color: #6b7280;
+                        border: 1px solid rgba(0,0,0,.08); }
     .cp-date {
-      font-size: 10px; color: #7a6345; margin-top: 3px;
-      line-height: 1.3;
+      display: inline-block; font-size: 10px; color: #6b563a;
+      margin-top: 3px; line-height: 1.4;
+      background: rgba(255,255,255,.6); border-radius: 6px;
+      padding: 1px 6px;
     }
 
-    /* ── Tooltip ── */
+    /* \u2500\u2500 Tooltip \u2500\u2500 */
     .cp-tooltip {
-      position: absolute; bottom: calc(100% + 14px); left: 50%;
-      transform: translateX(-50%) translateY(6px);
-      width: 220px;
-      background: #fff;
-      border: 1px solid #e2d9c0;
-      border-radius: 12px;
-      padding: 12px 14px;
-      box-shadow: 0 8px 28px rgba(80,60,20,.18);
+      position: absolute; bottom: calc(100% + 16px); left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      width: 230px;
+      background: rgba(255,253,244,.97);
+      border: 1px solid #d9c89a;
+      border-radius: 14px;
+      padding: 13px 15px;
+      box-shadow: 0 10px 32px rgba(80,55,15,.2);
       opacity: 0; pointer-events: none;
       transition: opacity .18s ease, transform .18s ease;
-      z-index: 99;
-      font-size: 12px;
-      text-align: left;
+      z-index: 99; font-size: 12px; text-align: left;
     }
     .map-checkpoint:hover .cp-tooltip {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      opacity: 1; transform: translateX(-50%) translateY(0);
       pointer-events: auto;
     }
     .cp-tooltip::after {
-      content: '';
-      position: absolute; top: 100%; left: 50%;
+      content: ''; position: absolute; top: 100%; left: 50%;
       transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: #fff;
+      border: 7px solid transparent;
+      border-top-color: rgba(255,253,244,.97);
     }
-    .tt-name {
-      font-weight: 800; color: #0f172a; margin-bottom: 6px;
-      font-size: 13px;
-    }
-    .tt-row {
-      display: flex; gap: 6px; align-items: flex-start;
-      margin-bottom: 4px; color: #475569; line-height: 1.4;
-    }
-    .tt-row i { color: #083E40; margin-top: 2px; flex-shrink:0; }
+    .tt-name { font-weight: 800; color: #1a0f00; margin-bottom: 7px; font-size: 13.5px; }
+    .tt-row  { display: flex; gap: 7px; align-items: flex-start;
+               margin-bottom: 4px; color: #4b3b22; line-height: 1.45; }
+    .tt-row i { color: #7a5c2e; margin-top: 2px; flex-shrink: 0; }
 
-    /* ── Decorative elements ── */
+    /* \u2500\u2500 Decorative elements \u2500\u2500 */
     .map-deco {
-      position: absolute; pointer-events: none; z-index: 2;
+      position: absolute; pointer-events: none; z-index: 3;
     }
+
+    /* Compass — slow rotate */
     .map-compass {
-      top: 12px; right: 14px;
-      opacity: .7;
+      top: 10px; right: 12px; opacity: .65;
+      animation: compass-spin 20s linear infinite;
+      transform-origin: center center;
     }
+    @keyframes compass-spin {
+      /* Only rotate the needle, not the ring — done via SVG group inside */
+      to { } /* noop — the inner SVG <g> handles the needle */
+    }
+    /* We'll rotate the whole compass slowly */
+    .map-compass svg { animation: compass-slow 60s linear infinite; }
+    @keyframes compass-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Start marker */
     .map-start-marker {
       font-size: 11px; font-weight: 800;
-      color: #5a3e1b; background: rgba(255,255,255,.55);
-      padding: 3px 8px; border-radius: 8px; border: 1px solid #c9b48a;
+      color: #3d2600;
+      background: rgba(255,245,220,.9);
+      padding: 4px 10px; border-radius: 8px;
+      border: 1.5px solid #c9a050;
       white-space: nowrap;
-    }
-    .map-finish-x {
-      font-size: 28px; color: #c0392b;
-      text-shadow: 1px 1px 0 rgba(0,0,0,.1);
-      font-weight: 900;
-      line-height: 1;
-    }
-    .map-filler-icon {
-      opacity: .25; font-size: 20px; color: #5a3e1b;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      backdrop-filter: blur(2px);
     }
 
-    /* ── Detail panel (below map) ── */
+    /* Finish flag */
+    .map-finish-flag {
+      font-size: 24px; line-height: 1;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.2));
+    }
+
+    /* Filler icons */
+    .map-filler-icon {
+      opacity: .18; font-size: 22px; color: #4a3010;
+      filter: sepia(40%);
+    }
+
+    /* \u2500\u2500 Detail panel \u2500\u2500 */
     #cpDetailPanel {
-      display: none;
-      margin-top: 16px;
-      background: #fff;
-      border: 1px solid #e2d9c0;
-      border-radius: 16px;
-      padding: 20px 24px;
+      display: none; margin-top: 16px;
+      background: #fff; border: 1px solid #e2d9c0;
+      border-radius: 16px; padding: 20px 24px;
       box-shadow: 0 4px 20px rgba(80,60,20,.10);
       animation: panel-in .25s ease;
     }
@@ -398,9 +488,7 @@
       margin-bottom: 16px; padding-bottom: 12px;
       border-bottom: 1px solid #f1ead9;
     }
-    .cp-detail-title {
-      font-size: 16px; font-weight: 800; color: #0f172a;
-    }
+    .cp-detail-title { font-size: 16px; font-weight: 800; color: #0f172a; }
     .cp-detail-close {
       width: 28px; height: 28px; border-radius: 8px;
       background: #f1f5f9; border: none; cursor: pointer;
@@ -416,33 +504,29 @@
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: .8px; color: #94a3b8; display: block; margin-bottom: 2px;
     }
-    .cp-detail-item span {
-      font-size: 14px; font-weight: 600; color: #0f172a;
-    }
+    .cp-detail-item span { font-size: 14px; font-weight: 600; color: #0f172a; }
 
-    /* ── Mobile fallback ── */
+    /* \u2500\u2500 Mobile fallback \u2500\u2500 */
     .map-mobile-fallback { display: none; }
     @media (max-width: 640px) {
       .map-outer { display: none; }
       .map-mobile-fallback { display: block; }
-      .mob-stage {
-        display: flex; gap: 16px; margin-bottom: 20px;
-        align-items: flex-start;
-      }
+      .mob-stage { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
       .mob-dot {
         width: 44px; height: 44px; border-radius: 50%;
         display:flex; align-items:center; justify-content:center;
         color:#fff; font-size:18px; flex-shrink:0;
       }
-      .mob-dot.done    { background: #1a6b40; }
+      .mob-dot.done    { background: #16a34a; }
       .mob-dot.active  { background: #083E40; }
-      .mob-dot.returned{ background: #c47c1a; }
-      .mob-dot.waiting { background: #a09580; }
+      .mob-dot.returned{ background: #b45309; }
+      .mob-dot.waiting { background: #9ca3af; }
       .mob-info { flex: 1; }
       .mob-name { font-weight: 800; color: #0f172a; font-size: 15px; }
       .mob-desc { font-size: 13px; color: #475569; margin-top: 2px; }
       .mob-date { font-size: 12px; color: #64748b; margin-top: 4px; }
     }
+
       padding-left: 0;
       animation: fadeInUp 0.6s ease-out;
       animation-fill-mode: both;
@@ -1523,9 +1607,9 @@
             ➤ Mulai
           </div>
 
-          {{-- Finish X --}}
-          <div class="map-deco map-finish-x" style="right:1%; bottom:8%;">
-            ✕
+          {{-- Finish flag --}}
+          <div class="map-deco map-finish-flag" style="right:1.5%; bottom:10%;">
+            🏁
           </div>
 
           {{-- Filler icons --}}
@@ -1576,11 +1660,18 @@
       var paths = document.querySelectorAll('#mapSvg .map-path.draw');
       paths.forEach(function(path, i) {
         var len = path.getTotalLength ? path.getTotalLength() : 800;
+        /* Set up draw animation */
         path.style.strokeDasharray  = len;
         path.style.strokeDashoffset = len;
         setTimeout(function() {
           path.style.strokeDashoffset = '0';
-        }, 120 + i * 280);
+          /* After transition completes, restore correct per-state styles */
+          setTimeout(function() {
+            path.classList.add('drawn');
+            path.style.strokeDasharray  = '';
+            path.style.strokeDashoffset = '';
+          }, 1400); /* slightly > transition duration 1.3s */
+        }, 120 + i * 300);
       });
     });
 
