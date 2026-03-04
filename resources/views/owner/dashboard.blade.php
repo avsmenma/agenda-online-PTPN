@@ -1714,6 +1714,25 @@
         if (isOverdue) html += '<span class="overdue-badge">TERLAMBAT</span>';
         if (isPaid) html += '<span class="paid-stamp">SUDAH DIBAYAR</span>';
 
+        // Bell urgency button
+        const urgencyActive = doc.urgency_active;
+        const bellTitle = urgencyActive
+          ? 'Notifikasi sudah dikirim – menunggu penyelesaian'
+          : 'Kirim pengingat darurat ke penanggung jawab dokumen ini';
+        const bellClass = 'urgency-bell-btn' + (urgencyActive ? ' active' : '');
+        const bellDisabled = urgencyActive ? 'disabled' : '';
+        const handlerDisplay = (doc.current_handler_display || '-').replace(/'/g, "\\'");
+        const nomorAgendaEsc = (doc.nomor_agenda || '-').replace(/'/g, "\\'");
+        html += `<button
+          class="${bellClass}"
+          onclick="event.stopPropagation(); openUrgencyModal('${doc.id}', '${nomorAgendaEsc}', '${handlerDisplay}')"
+          title="${bellTitle}"
+          ${bellDisabled}
+          data-doc-id="${doc.id}"
+          id="bell-btn-${doc.id}">
+          <i class="fas fa-bell"></i>
+        </button>`;
+
         html += '<div class="doc-card-header"><div>';
         html += `<div class="doc-card-title">${doc.nomor_agenda || '-'}</div>`;
         html += `<div class="doc-card-subtitle">SPP: ${doc.nomor_spp || '-'}</div>`;
