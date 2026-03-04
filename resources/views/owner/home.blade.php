@@ -7,6 +7,8 @@
             padding: 2rem;
             min-height: 100vh;
             background-color: #f8fafc;
+            box-sizing: border-box;
+            width: 100%;
         }
 
         /* Header Section */
@@ -33,17 +35,21 @@
         /* Summary Cards */
         .summary-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1.25rem;
             margin-bottom: 2.5rem;
+            width: 100%;
         }
 
         .summary-card {
             background: white;
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1.25rem 1.25rem 2.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-width: 0;          /* prevent grid overflow */
+            box-sizing: border-box;
+            width: 100%;
         }
 
         .summary-card:hover {
@@ -61,9 +67,12 @@
         }
 
         .summary-card .value {
-            font-size: 2rem;
+            font-size: clamp(1.4rem, 2vw, 2rem);
             font-weight: 700;
             color: #1e293b;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.2;
         }
 
         .summary-card .icon {
@@ -262,20 +271,24 @@
         /* Bagian Cards Grid */
         .bagian-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 1.25rem;
+            width: 100%;
         }
 
         .bagian-card {
             background: white;
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1.25rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
             text-decoration: none;
             display: block;
+            min-width: 0;          /* prevent grid overflow */
+            box-sizing: border-box;
+            width: 100%;
         }
 
         .bagian-card:hover {
@@ -338,6 +351,12 @@
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+            .summary-cards {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
             .home-dashboard {
                 padding: 1rem;
