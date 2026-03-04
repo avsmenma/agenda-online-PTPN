@@ -25,3 +25,11 @@ Schedule::command('notifications:send-late-documents')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/late-document-notifications.log'));
+
+// Auto-forward dokumen ke Pembayaran ketika status_pembayaran = sudah_dibayar
+// oleh project eksternal. Jalan setiap menit, tidak boleh overlap.
+Schedule::command('dokumen:process-auto-forward')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/auto-forward-dokumen.log'));

@@ -104,6 +104,8 @@ class Dokumen extends Model
         'urgency_active',
         'urgency_sent_at',
         'urgency_sent_by',
+        // Auto-forward tracking
+        'auto_forwarded_at',
     ];
 
     protected $casts = [
@@ -149,6 +151,8 @@ class Dokumen extends Model
         // Urgency alert casts
         'urgency_active' => 'boolean',
         'urgency_sent_at' => 'datetime',
+        // Auto-forward cast
+        'auto_forwarded_at' => 'datetime',
     ];
 
     public function dokumenPos(): HasMany
