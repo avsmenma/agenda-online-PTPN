@@ -6945,11 +6945,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function () {
-  let isFullscreen   = false;
-  let fsArea         = null;   // the .content div we fullscreen
-  let hiddenElements = [];     // [{el, prevDisplay}] – restore on exit
+  let isFullscreen      = false;
+  let fsArea            = null;
+  let hiddenElements    = [];   // [{el, prev}] – page sections above filter
+  let hiddenSidebars    = [];   // [{el, prev}] – sidebars
+  let savedAreaStyles   = {};   // saved inline styles of the content area
 
-  // ── Find the shared content wrapper ──────────────────────────
+  // ── Find content wrapper (.content / main) ─────────────────────
   function findContentArea(btn) {
     let el = btn;
     for (let i = 0; i < 15; i++) {
@@ -6964,33 +6966,99 @@ document.addEventListener('DOMContentLoaded', function() {
     return document.querySelector('.content') || null;
   }
 
-  // ── Find the direct child of contentArea that contains the button ─
+  // ── Direct child of contentArea that wraps the filter row ─────
   function findFilterAnchor(fsBtn, contentArea) {
     let el = fsBtn;
     while (el && el.parentElement !== contentArea) {
       el = el.parentElement;
     }
-    return el; // direct child of contentArea holding the filter row
+    return el;
   }
 
-  // ── Hide all preceding siblings of anchor inside contentArea ──
-  function hideElementsAboveAnchor(anchor, contentArea) {
+  // ── Hide siblings above the filter-row anchor ─────────────────
+  function hideAbove(anchor, contentArea) {
     hiddenElements = [];
     let child = contentArea.firstElementChild;
     while (child && child !== anchor) {
-      const prev = child.style.display;
+      hiddenElements.push({ el: child, prev: child.style.display });
       child.style.display = 'none';
-      hiddenElements.push({ el: child, prev: prev });
       child = child.nextElementSibling;
     }
   }
 
-  // ── Restore hidden elements ───────────────────────────────────
-  function restoreHiddenElements() {
+  // ── Hide sidebars via JS (covers all class-name variations) ───
+  function hideSidebars() {
+    hiddenSidebars = [];
+    const selectors = [
+      '.sidebar',
+      '.secondary-sidebar',
+      '.side-nav',
+      '[class*="sidebar"]',
+      '[class*="side-bar"]',
+    ];
+    const seen = new WeakSet();
+    selectors.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        if (seen.has(el)) return;
+        seen.add(el);
+        // Skip if it's inside the content area (don't hide content children)
+        if (fsArea && fsArea.contains(el)) return;
+        hiddenSidebars.push({ el: el, prev: el.style.display });
+        el.style.display = 'none';
+      });
+    });
+  }
+
+  // ── Save & override content area positioning ──────────────────
+  function lockContentArea(area) {
+    savedAreaStyles = {
+      position:   area.style.position,
+      top:        area.style.top,
+      left:       area.style.left,
+      width:      area.style.width,
+      height:     area.style.height,
+      zIndex:     area.style.zIndex,
+      overflow:   area.style.overflow,
+      background: area.style.background,
+      padding:    area.style.padding,
+      margin:     area.style.margin,
+      marginLeft: area.style.marginLeft,
+      boxSizing:  area.style.boxSizing,
+    };
+    const bg = document.documentElement.classList.contains('dark')
+      ? '#0f172a' : '#F8FAFC';
+    Object.assign(area.style, {
+      position:   'fixed',
+      top:        '0',
+      left:       '0',
+      width:      '100vw',
+      height:     '100vh',
+      zIndex:     '9990',
+      overflow:   'auto',
+      background: bg,
+      padding:    '10px 14px',
+      margin:     '0',
+      marginLeft: '0',
+      boxSizing:  'border-box',
+    });
+  }
+
+  // ── Restore content area ──────────────────────────────────────
+  function unlockContentArea(area) {
+    Object.assign(area.style, savedAreaStyles);
+    savedAreaStyles = {};
+  }
+
+  // ── Restore all hidden elements ───────────────────────────────
+  function restoreAll() {
     hiddenElements.forEach(function (item) {
       item.el.style.display = item.prev || '';
     });
+    hiddenSidebars.forEach(function (item) {
+      item.el.style.display = item.prev || '';
+    });
     hiddenElements = [];
+    hiddenSidebars = [];
   }
 
   // ── Enter fullscreen ──────────────────────────────────────────
@@ -6999,11 +7067,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fsArea = findContentArea(fsBtn);
     if (fsArea) {
-      fsArea.classList.add('fs-content-area');
-
       const anchor = findFilterAnchor(fsBtn, fsArea);
-      if (anchor) hideElementsAboveAnchor(anchor, fsArea);
+      if (anchor) hideAbove(anchor, fsArea);
+      lockContentArea(fsArea);          // ← inline fixed positioning
     }
+
+    hideSidebars();                     // ← hide all sidebars via JS
 
     document.body.classList.add('is-fullscreen');
     document.body.style.overflow = 'hidden';
@@ -7018,10 +7087,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!isFullscreen) return;
     isFullscreen = false;
 
-    restoreHiddenElements();
+    restoreAll();
 
     if (fsArea) {
-      fsArea.classList.remove('fs-content-area');
+      unlockContentArea(fsArea);
       fsArea = null;
     }
 
