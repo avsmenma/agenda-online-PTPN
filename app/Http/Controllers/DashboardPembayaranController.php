@@ -10,6 +10,7 @@ use App\Models\TuTkVd;
 use App\Models\TuTkTan;
 use App\Models\PaymentLog;
 use App\Models\DocumentPositionTracking;
+use App\Models\DocumentTracking;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1463,6 +1464,20 @@ class DashboardPembayaranController extends Controller
                     Log::info('Urgency auto-reset on payment completion', ['document_id' => $dokumen->id]);
                 } catch (\Exception $urgencyEx) {
                     Log::warning('Could not auto-reset urgency: ' . $urgencyEx->getMessage());
+                }
+            }
+
+            // Log timeline tracking when document is fully paid
+            if (!empty($dokumen->tanggal_dibayar)) {
+                try {
+                    DocumentTracking::logAction(
+                        $dokumen->id,
+                        'processed_pembayaran',
+                        'pembayaran',
+                        ['tanggal_dibayar' => optional($dokumen->tanggal_dibayar)->format('d/m/Y'), 'nomor_agenda' => $dokumen->nomor_agenda]
+                    );
+                } catch (\Exception $trackEx) {
+                    Log::error('DocumentTracking logAction failed (updatePembayaran): ' . $trackEx->getMessage());
                 }
             }
 

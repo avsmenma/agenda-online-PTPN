@@ -4465,7 +4465,148 @@ class OwnerDashboardController extends Controller
             return response()->json(['success' => false, 'urgencies' => [], 'count' => 0], 500);
         }
     }
+
+    /**
+     * GET /owner/dokumen/{id}/history
+     * Returns the DocumentTracking timeline for a Dokumen record.
+     */
+    public function getHistory(int $id): \Illuminate\Http\JsonResponse
+    {
+        $dokumen = Dokumen::findOrFail($id);
+
+        $entries = \App\Models\DocumentTracking::where('document_id', $id)
+            ->orderBy('action_at', 'asc')
+            ->get();
+
+        $actorLabels = [
+            'operator'       => 'Operator',
+            'team_verifikasi'=> 'Team Verifikasi',
+            'perpajakan'     => 'Perpajakan',
+            'akutansi'       => 'Akutansi',
+            'pembayaran'     => 'Pembayaran',
+            'system'         => 'System',
+        ];
+
+        $actionLabels = [
+            'created'                    => 'Dokumen Dibuat',
+            'sent_to_team_verifikasi'    => 'Dikirim ke Team Verifikasi',
+            'sent_to_perpajakan'         => 'Dikirim ke Perpajakan',
+            'sent_to_akutansi'           => 'Dikirim ke Akutansi',
+            'sent_to_pembayaran'         => 'Dikirim ke Pembayaran',
+            'returned_to_perpajakan'     => 'Dikembalikan ke Perpajakan',
+            'returned_to_akutansi'       => 'Dikembalikan ke Akutansi',
+            'returned_to_operator'       => 'Dikembalikan ke Operator',
+            'returned_to_verifikasi'     => 'Dikembalikan ke Verifikasi',
+            'deadline_set'               => 'Deadline Ditetapkan',
+            'processed_perpajakan'       => 'Diproses Perpajakan',
+            'processed_akutansi'         => 'Diproses Akutansi',
+            'processed_pembayaran'       => 'Pembayaran Dikonfirmasi',
+            'urgency_sent'               => 'Urgency Dikirim',
+        ];
+
+        $actionColors = [
+            'created'                 => '#10b981', // green
+            'sent_to_team_verifikasi' => '#3b82f6', // blue
+            'sent_to_perpajakan'      => '#6366f1', // indigo
+            'sent_to_akutansi'        => '#f59e0b', // amber
+            'sent_to_pembayaran'      => '#14b8a6', // teal
+            'returned_to_perpajakan'  => '#ef4444', // red
+            'returned_to_akutansi'    => '#ef4444',
+            'returned_to_operator'    => '#ef4444',
+            'deadline_set'            => '#f59e0b',
+            'processed_perpajakan'    => '#6366f1',
+            'processed_akutansi'      => '#f59e0b',
+            'processed_pembayaran'    => '#10b981',
+            'urgency_sent'            => '#f97316', // orange
+        ];
+
+        $actionIcons = [
+            'created'                 => 'fa-plus-circle',
+            'sent_to_team_verifikasi' => 'fa-paper-plane',
+            'sent_to_perpajakan'      => 'fa-file-invoice',
+            'sent_to_akutansi'        => 'fa-calculator',
+            'sent_to_pembayaran'      => 'fa-money-bill-wave',
+            'returned_to_perpajakan'  => 'fa-undo',
+            'returned_to_akutansi'    => 'fa-undo',
+            'returned_to_operator'    => 'fa-undo',
+            'deadline_set'            => 'fa-clock',
+            'processed_perpajakan'    => 'fa-stamp',
+            'processed_akutansi'      => 'fa-check-double',
+            'processed_pembayaran'    => 'fa-check-circle',
+            'urgency_sent'            => 'fa-bell',
+        ];
+
+        $nodes = $entries->map(function ($entry, $index) use (
+            $entries, $actionLabels, $actorLabels, $actionColors, $actionIcons
+        ) {
+            $next      = $entries->get($index + 1);
+            $durationSec = $next
+                ? $entry->action_at->diffInSeconds($next->action_at)
+                : null;
+
+            return [
+                'id'           => $entry->id,
+                'action'       => $entry->action,
+                'action_label' => $actionLabels[$entry->action] ?? ucfirst(str_replace('_', ' ', $entry->action)),
+                'actor'        => $entry->actor,
+                'actor_label'  => $actorLabels[$entry->actor] ?? $entry->actor,
+                'action_at'    => $entry->action_at->format('d M Y H:i'),
+                'action_at_iso'=> $entry->action_at->toISOString(),
+                'metadata'     => $entry->metadata ?? [],
+                'color'        => $actionColors[$entry->action] ?? '#64748b',
+                'icon'         => $actionIcons[$entry->action]  ?? 'fa-circle',
+                'duration_sec' => $durationSec,
+                'duration_label' => $durationSec !== null ? $this->formatDuration($durationSec) : null,
+                'is_last'      => $index === $entries->count() - 1,
+            ];
+        })->values();
+
+        // Identify slowest stage (for red highlight)
+        $maxDuration = $nodes->max('duration_sec');
+
+        $nodes = $nodes->map(function ($node) use ($maxDuration) {
+            $node['is_slowest'] = $maxDuration && $node['duration_sec'] === $maxDuration && $maxDuration > 86400;
+            return $node;
+        });
+
+        // Summary
+        $totalSec = $entries->count() > 1
+            ? $entries->first()->action_at->diffInSeconds($entries->last()->action_at)
+            : null;
+
+        return response()->json([
+            'success'       => true,
+            'document'      => [
+                'id'           => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp'    => $dokumen->nomor_spp,
+                'dibayar_kepada' => $dokumen->dibayar_kepada,
+                'status'       => $dokumen->status,
+            ],
+            'nodes'         => $nodes,
+            'summary'       => [
+                'total_events'  => $entries->count(),
+                'total_duration'=> $totalSec ? $this->formatDuration($totalSec) : '-',
+                'total_sec'     => $totalSec,
+            ],
+        ]);
+    }
+
+    /** Format seconds into "X hari Y jam Z menit" */
+    private function formatDuration(int $seconds): string
+    {
+        $days    = intdiv($seconds, 86400);
+        $hours   = intdiv($seconds % 86400, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+
+        $parts = [];
+        if ($days)    $parts[] = "{$days} hari";
+        if ($hours)   $parts[] = "{$hours} jam";
+        if ($minutes) $parts[] = "{$minutes} menit";
+        return $parts ? implode(' ', $parts) : 'Kurang dari 1 menit';
+    }
 }
+
 
 
 

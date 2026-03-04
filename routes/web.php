@@ -81,6 +81,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/search/presets/{id}', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'deletePreset'])
             ->name('search.presets.destroy');
     });
+
+    // Document History / Timeline API
+    Route::get('/owner/dokumen/{id}/history', [\App\Http\Controllers\OwnerDashboardController::class, 'getHistory'])
+        ->name('owner.dokumen.history');
 });
 
 // SECURITY FIX: Custom broadcast authentication route with CSRF protection

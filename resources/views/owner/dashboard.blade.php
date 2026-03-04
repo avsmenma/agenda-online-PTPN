@@ -845,9 +845,15 @@
                     <div class="progress-text">{{ $dokumen['progress_percentage'] }}%</div>
                   </td>
                   <td>
-                    <button class="btn-view" onclick="event.stopPropagation(); navigateToWorkflow('{{ $dokumen['id'] }}')">
-                      Lihat
-                    </button>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                      <button class="btn-view" onclick="event.stopPropagation(); navigateToWorkflow('{{ $dokumen['id'] }}')">
+                        Lihat
+                      </button>
+                      <button class="btn-riwayat" title="Riwayat Perjalanan Dokumen"
+                        onclick="event.stopPropagation(); openTimelineModal({{ $dokumen['id'] }}, '{{ addslashes($dokumen['nomor_agenda']) }}')">
+                        <i class="fas fa-history"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               @endforeach
@@ -2060,4 +2066,267 @@
       color: #64748b;
     }
   </style>
+{{-- ===== Timeline / Riwayat Modal ===== --}}
+<style>
+  /* ── Riwayat button in table ── */
+  .btn-riwayat {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #f1f5f9; border: 1px solid #e2e8f0;
+    color: #64748b; cursor: pointer; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.18s ease; padding: 0; flex-shrink: 0;
+  }
+  .btn-riwayat:hover { background: #e0f2fe; border-color: #38bdf8; color: #0284c7; transform: scale(1.08); }
+
+  /* ── Modal backdrop + box ── */
+  #timelineModal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); z-index: 10999;
+    align-items: center; justify-content: center;
+    animation: tlFade .2s ease;
+  }
+  #timelineModal.open { display: flex; }
+  @keyframes tlFade { from { opacity: 0; } to { opacity: 1; } }
+
+  .tl-box {
+    background: #fff; border-radius: 18px; width: 560px; max-width: 95vw;
+    max-height: 85vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    animation: tlSlide .25s ease;
+  }
+  @keyframes tlSlide { from { transform: translateY(24px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+  html.dark .tl-box { background: #1e293b; color: #f1f5f9; }
+
+  /* ── Header ── */
+  .tl-header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  html.dark .tl-header { border-color: #334155; }
+  .tl-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; }
+  html.dark .tl-header h3 { color: #f1f5f9; }
+  .tl-header p { margin: 2px 0 0; font-size: 12px; color: #64748b; }
+  .tl-close-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #f1f5f9; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #64748b; font-size: 15px; transition: all .18s;
+  }
+  .tl-close-btn:hover { background: #fee2e2; color: #ef4444; }
+  html.dark .tl-close-btn { background: #334155; color: #94a3b8; }
+
+  /* ── Body scroll ── */
+  .tl-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+
+  /* ── Empty state ── */
+  .tl-empty {
+    text-align: center; padding: 40px 20px; color: #94a3b8;
+  }
+  .tl-empty i { font-size: 36px; margin-bottom: 10px; display: block; }
+
+  /* ── Timeline nodes ── */
+  .tl-list { list-style: none; margin: 0; padding: 0; position: relative; }
+  .tl-list::before {
+    content: ''; position: absolute;
+    left: 19px; top: 28px; bottom: 20px; width: 2px;
+    background: #e2e8f0;
+  }
+  html.dark .tl-list::before { background: #334155; }
+
+  .tl-item {
+    display: flex; gap: 14px; margin-bottom: 22px;
+    position: relative;
+  }
+
+  /* dot */
+  .tl-dot {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px; position: relative; z-index: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+
+  /* pulse for last node */
+  .tl-dot.pulse::after {
+    content: ''; position: absolute;
+    width: 100%; height: 100%; border-radius: 50%;
+    animation: dotPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(59,130,246,.5); }
+    70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
+    100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+  }
+
+  /* card */
+  .tl-card {
+    flex: 1; background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 10px 14px;
+    transition: border-color .15s;
+  }
+  html.dark .tl-card { background: #0f172a; border-color: #334155; }
+  .tl-card:hover { border-color: #94a3b8; }
+
+  .tl-card.slowest { border-color: #f87171 !important; background: #fff5f5 !important; }
+  html.dark .tl-card.slowest { background: #2d1515 !important; border-color: #b91c1c !important; }
+
+  .tl-action { font-weight: 700; font-size: 13.5px; color: #1e293b; }
+  html.dark .tl-action { color: #f1f5f9; }
+  .tl-meta { font-size: 12px; color: #64748b; margin-top: 3px; }
+  .tl-duration {
+    display: inline-block; margin-top: 5px;
+    font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 9999px; background: #e0f2fe; color: #0284c7;
+  }
+  .tl-duration.slow { background: #fee2e2; color: #b91c1c; }
+  .tl-urgency-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 4px; font-size: 11px; font-weight: 600;
+    color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa;
+    border-radius: 9999px; padding: 2px 8px;
+  }
+
+  /* ── Summary footer ── */
+  .tl-summary {
+    margin-top: 18px; padding: 14px 16px;
+    background: #f1f5f9; border-radius: 10px;
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  html.dark .tl-summary { background: #0f172a; }
+  .tl-stat { display: flex; flex-direction: column; }
+  .tl-stat-val { font-size: 18px; font-weight: 800; color: #0f172a; }
+  html.dark .tl-stat-val { color: #f1f5f9; }
+  .tl-stat-lbl { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+  /* ── Loading spinner ── */
+  .tl-loading {
+    text-align: center; padding: 48px 20px; color: #94a3b8;
+  }
+  .tl-spinner {
+    width: 36px; height: 36px; border: 3px solid #e2e8f0;
+    border-top-color: #0284c7; border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+{{-- Modal shell --}}
+<div id="timelineModal" onclick="if(event.target===this)closeTimelineModal()" aria-modal="true" role="dialog">
+  <div class="tl-box">
+    <div class="tl-header">
+      <div>
+        <h3><i class="fas fa-history" style="margin-right:8px;color:#0284c7;"></i>Riwayat Perjalanan Dokumen</h3>
+        <p id="tlModalSubtitle">Memuat data...</p>
+      </div>
+      <button class="tl-close-btn" onclick="closeTimelineModal()" title="Tutup"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="tl-body" id="tlModalBody">
+      <div class="tl-loading">
+        <div class="tl-spinner"></div>
+        <div>Memuat riwayat...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const modal = document.getElementById('timelineModal');
+  const body  = document.getElementById('tlModalBody');
+  const sub   = document.getElementById('tlModalSubtitle');
+
+  window.openTimelineModal = function(docId, nomorAgenda) {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    sub.textContent = 'Agenda: ' + nomorAgenda;
+    body.innerHTML = '<div class="tl-loading"><div class="tl-spinner"></div><div>Memuat riwayat...</div></div>';
+
+    fetch('/owner/dokumen/' + docId + '/history', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.success) { body.innerHTML = '<div class="tl-empty"><i class="fas fa-exclamation-circle"></i>Gagal memuat data.</div>'; return; }
+      renderTimeline(data);
+    })
+    .catch(function() {
+      body.innerHTML = '<div class="tl-empty"><i class="fas fa-wifi"></i>Koneksi gagal. Coba lagi.</div>';
+    });
+  };
+
+  window.closeTimelineModal = function() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeTimelineModal();
+  });
+
+  function renderTimeline(data) {
+    const nodes   = data.nodes   || [];
+    const doc     = data.document || {};
+    const summary = data.summary  || {};
+
+    sub.textContent = 'Agenda: ' + (doc.nomor_agenda || '-') + '  •  ' + (doc.dibayar_kepada || '');
+
+    if (!nodes.length) {
+      body.innerHTML = '<div class="tl-empty"><i class="fas fa-clock"></i><div>Belum ada riwayat untuk dokumen ini.<br><small style="color:#94a3b8">Riwayat akan tercatat mulai dari sekarang.</small></div></div>';
+      return;
+    }
+
+    // Build list
+    let html = '<ul class="tl-list">';
+    nodes.forEach(function(node, idx) {
+      const isLast    = node.is_last;
+      const isSlowest = node.is_slowest;
+      const dotStyle  = 'background:' + node.color + ';';
+      const dotClass  = isLast ? 'tl-dot pulse' : 'tl-dot';
+      const cardClass = 'tl-card' + (isSlowest ? ' slowest' : '');
+
+      // Check urgency marker in metadata
+      const meta = node.metadata || {};
+      const urgencyHtml = meta.urgency ? '<span class="tl-urgency-badge"><i class="fas fa-bolt"></i> Urgency dikirim</span>' : '';
+
+      // Duration badge
+      let durationHtml = '';
+      if (node.duration_label) {
+        const cls = isSlowest ? 'tl-duration slow' : 'tl-duration';
+        durationHtml = '<span class="' + cls + '">' + (isSlowest ? '⚠ Terlama: ' : '⏱ Durasi: ') + node.duration_label + '</span>';
+      }
+
+      html += '<li class="tl-item">' +
+        '<div class="' + dotClass + '" style="' + dotStyle + '"><i class="fas ' + node.icon + '"></i></div>' +
+        '<div class="' + cardClass + '">' +
+          '<div class="tl-action">' + escHtml(node.action_label) + '</div>' +
+          '<div class="tl-meta"><i class="fas fa-user" style="margin-right:4px"></i>' + escHtml(node.actor_label) + ' &nbsp;·&nbsp; <i class="fas fa-calendar" style="margin-right:4px"></i>' + escHtml(node.action_at) + '</div>' +
+          urgencyHtml +
+          durationHtml +
+        '</div>' +
+      '</li>';
+    });
+    html += '</ul>';
+
+    // Summary
+    html += '<div class="tl-summary">' +
+      '<div class="tl-stat"><div class="tl-stat-val">' + summary.total_events + '</div><div class="tl-stat-lbl">Events Tercatat</div></div>' +
+      '<div class="tl-stat"><div class="tl-stat-val">' + (summary.total_duration || '-') + '</div><div class="tl-stat-lbl">Total Durasi</div></div>' +
+    '</div>';
+
+    body.innerHTML = html;
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+})();
+</script>
+
 @endsection

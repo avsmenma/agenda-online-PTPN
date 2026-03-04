@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use App\Http\Requests\SetDeadlineRequest;
 use App\Models\Dokumen;
+use App\Models\DocumentTracking;
 use App\Models\DokumenStatus;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
@@ -1737,6 +1738,19 @@ class TeamVerifikasiController extends Controller
 
             \DB::commit();
 
+            // Log timeline tracking
+            try {
+                $actionKey = 'sent_to_' . $request->next_handler;
+                DocumentTracking::logAction(
+                    $dokumen->id,
+                    $actionKey,
+                    'team_verifikasi',
+                    ['nomor_agenda' => $dokumen->nomor_agenda, 'next_handler' => $request->next_handler]
+                );
+            } catch (\Exception $trackEx) {
+                \Log::error('DocumentTracking logAction failed (sendToNextHandler): ' . $trackEx->getMessage());
+            }
+
             // Map handler name for success message
             $nextHandlerNameMap = [
                 'perpajakan' => 'Team Perpajakan',
@@ -2053,6 +2067,18 @@ class TeamVerifikasiController extends Controller
             ]);
 
             \DB::commit();
+
+            // Log timeline tracking
+            try {
+                DocumentTracking::logAction(
+                    $dokumen->id,
+                    'returned_to_' . $request->return_source,
+                    'team_verifikasi',
+                    ['reason' => $request->department_return_reason, 'return_source' => $request->return_source]
+                );
+            } catch (\Exception $trackEx) {
+                \Log::error('DocumentTracking logAction failed (returnToDepartment): ' . $trackEx->getMessage());
+            }
 
             \Log::info('Document returned to department', [
                 'document_id' => $dokumen->id,

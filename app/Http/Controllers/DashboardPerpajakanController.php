@@ -11,6 +11,7 @@ use App\Models\DibayarKepada;
 use App\Models\DokumenStatus;
 use App\Helpers\SearchHelper;
 use App\Models\Bagian;
+use App\Models\DocumentTracking;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
@@ -1603,6 +1604,18 @@ class DashboardPerpajakanController extends Controller
             \DB::commit();
 
             $handlerName = $request->next_handler === 'akutansi' ? 'Akutansi' : 'Pembayaran';
+
+            // Log timeline tracking
+            try {
+                DocumentTracking::logAction(
+                    $dokumen->id,
+                    'sent_to_' . $request->next_handler,
+                    'perpajakan',
+                    ['nomor_agenda' => $dokumen->nomor_agenda, 'next_handler' => $request->next_handler]
+                );
+            } catch (\Exception $trackEx) {
+                \Log::error('DocumentTracking logAction failed (sendToNext perpajakan): ' . $trackEx->getMessage());
+            }
 
             // Log activity: dokumen dikirim dari Perpajakan ke handler berikutnya
             try {
