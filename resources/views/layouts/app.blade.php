@@ -6741,11 +6741,11 @@ document.addEventListener('DOMContentLoaded', function() {
 @endif
 
 {{-- ===================================================
-     DRAG-TO-SCROLL: Global horizontal drag scroll
+     DRAG-TO-SCROLL: Global horizontal + vertical drag scroll
      Works on DataTable scroll bodies + .table-responsive
      =================================================== --}}
 <style>
-  /* Grab cursor on all horizontal scroll containers */
+  /* Grab cursor on all scroll containers */
   .dataTables_scrollBody,
   .table-responsive,
   .table-wrapper {
@@ -6765,7 +6765,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const DRAG_THRESHOLD = 5;   // px – below this = click, above = drag
   const SPEED_FACTOR   = 1.4; // scroll multiplier for responsiveness
 
-  // Selectors to enable drag-scroll on
   const SCROLL_SELECTORS = [
     '.dataTables_scrollBody',
     '.table-responsive',
@@ -6777,29 +6776,34 @@ document.addEventListener('DOMContentLoaded', function() {
     el._dragScrollInited = true;
 
     let isDragging = false;
-    let didDrag    = false;   // true once movement exceeds threshold
+    let didDrag    = false;
     let startX     = 0;
+    let startY     = 0;
     let startScrollLeft = 0;
+    let startScrollTop  = 0;
 
     // ── Mouse events ──────────────────────────────────────────
     el.addEventListener('mousedown', function (e) {
-      // Only trigger on left button, ignore inputs/buttons/links
       if (e.button !== 0) return;
       if (e.target.closest('a, button, input, select, textarea, label')) return;
       isDragging = true;
       didDrag    = false;
       startX     = e.clientX;
+      startY     = e.clientY;
       startScrollLeft = el.scrollLeft;
+      startScrollTop  = el.scrollTop;
       e.stopPropagation();
     }, { passive: true });
 
     el.addEventListener('mousemove', function (e) {
       if (!isDragging) return;
       const deltaX = e.clientX - startX;
-      if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD) return;
+      const deltaY = e.clientY - startY;
+      if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
       didDrag = true;
       el.classList.add('is-dragging');
       el.scrollLeft = startScrollLeft - deltaX * SPEED_FACTOR;
+      el.scrollTop  = startScrollTop  - deltaY * SPEED_FACTOR;
       e.preventDefault();
     });
 
@@ -6807,7 +6811,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!isDragging) return;
       isDragging = false;
       el.classList.remove('is-dragging');
-      // If actual drag happened, block the click on the child element
       if (didDrag) {
         e.stopPropagation();
         const blocker = function (ev) {
@@ -6828,44 +6831,49 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    // ── Touch events (mobile/tablet) ──────────────────────────
+    // ── Touch events ──────────────────────────────────────────
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchScrollLeft = 0;
+    let touchScrollTop  = 0;
 
     el.addEventListener('touchstart', function (e) {
-      touchStartX    = e.touches[0].clientX;
+      touchStartX     = e.touches[0].clientX;
+      touchStartY     = e.touches[0].clientY;
       touchScrollLeft = el.scrollLeft;
+      touchScrollTop  = el.scrollTop;
     }, { passive: true });
 
     el.addEventListener('touchmove', function (e) {
       const deltaX = e.touches[0].clientX - touchStartX;
-      if (Math.abs(deltaX) < DRAG_THRESHOLD) return;
+      const deltaY = e.touches[0].clientY - touchStartY;
+      if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
       el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
+      el.scrollTop  = touchScrollTop  - deltaY * SPEED_FACTOR;
     }, { passive: true });
   }
 
   function activateOnAllContainers() {
     SCROLL_SELECTORS.forEach(function (selector) {
       document.querySelectorAll(selector).forEach(function (el) {
-        // Only activate if element has horizontal overflow
-        if (el.scrollWidth > el.clientWidth + 5) {
+        // Activate if element has scrollable content in any direction
+        const hasHScroll = el.scrollWidth  > el.clientWidth  + 5;
+        const hasVScroll = el.scrollHeight > el.clientHeight + 5;
+        if (hasHScroll || hasVScroll) {
           initDragScroll(el);
         }
       });
     });
   }
 
-  // Initial activation
   document.addEventListener('DOMContentLoaded', function () {
     activateOnAllContainers();
 
-    // Re-run after DataTables finishes rendering (uses MutationObserver)
     const mo = new MutationObserver(function () {
       activateOnAllContainers();
     });
     mo.observe(document.body, { childList: true, subtree: true });
 
-    // Also catch DataTable draw events (jQuery)
     if (window.jQuery) {
       jQuery(document).on('draw.dt', function () {
         activateOnAllContainers();
