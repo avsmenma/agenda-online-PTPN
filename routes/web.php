@@ -482,6 +482,20 @@ Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin')
     ->name('admin.monitoring');
 
+// Urgency Alert Routes (Admin/Owner only for send/reset)
+Route::post('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'sendUrgency'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.dokumen.urgency.send');
+
+Route::delete('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'resetUrgency'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.dokumen.urgency.reset');
+
+// Active urgencies polling API – all authenticated roles can call this
+Route::get('/api/documents/urgency/active', [OwnerDashboardController::class, 'getActiveUrgencies'])
+    ->middleware('auth')
+    ->name('api.documents.urgency.active');
+
 // Professional Document Routes - Operator (Owner)
 Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('documents.')->group(function () {
     Route::get('/', [DokumenController::class, 'index'])->name('index');

@@ -6587,6 +6587,159 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+{{-- ===================================================
+     URGENCY NOTIFICATION WIDGET (Global – all roles)
+     Polls /api/documents/urgency/active every 60s.
+     Only shown to non-admin/non-owner roles who have
+     urgency-active documents assigned to them.
+     =================================================== --}}
+@php
+    $currentUserRole = strtolower(auth()->user()->role ?? '');
+    $isRecipientRole = in_array($currentUserRole, ['operator', 'team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
+@endphp
+
+@if($isRecipientRole)
+<style>
+  /* Urgency Banner (recipient role) */
+  #urgencyGlobalBanner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 99998;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    padding: 0;
+    box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  #urgencyGlobalBanner.visible { transform: translateY(0); }
+  #urgencyGlobalBanner .urgency-banner-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; gap: 12px;
+  }
+  #urgencyGlobalBanner .urgency-banner-left {
+    display: flex; align-items: center; gap: 10px; flex: 1;
+  }
+  #urgencyGlobalBanner .urgency-banner-icon {
+    font-size: 20px; animation: urgencyPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes urgencyPulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.2); }
+  }
+  #urgencyGlobalBanner .urgency-banner-text {
+    font-size: 0.88rem; font-weight: 600; line-height: 1.4;
+  }
+  #urgencyGlobalBanner .urgency-banner-text strong { font-size: 1rem; }
+  #urgencyGlobalBanner .urgency-banner-links {
+    display: flex; gap: 8px; flex-shrink: 0;
+  }
+  #urgencyGlobalBanner .urgency-banner-link {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+    color: #fff; border-radius: 6px; padding: 5px 12px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    text-decoration: none; transition: all 0.2s;
+  }
+  #urgencyGlobalBanner .urgency-banner-link:hover { background: rgba(255,255,255,0.35); color: #fff; }
+  #urgencyGlobalBanner .urgency-banner-dismiss {
+    background: none; border: none; color: rgba(255,255,255,0.8);
+    font-size: 18px; cursor: pointer; line-height: 1; padding: 0 4px;
+    transition: color 0.2s;
+  }
+  #urgencyGlobalBanner .urgency-banner-dismiss:hover { color: #fff; }
+  /* Push main content down when banner is visible */
+  body.urgency-banner-visible { padding-top: 52px !important; }
+  /* Urgency badge in DataTable rows */
+  .urgency-row-badge {
+    display: inline-block;
+    background: #ef4444; color: #fff;
+    border-radius: 10px; padding: 2px 8px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.5px; margin-left: 4px;
+    vertical-align: middle; animation: urgencyPulse 2s infinite;
+  }
+</style>
+
+<div id="urgencyGlobalBanner">
+  <div class="urgency-banner-inner">
+    <div class="urgency-banner-left">
+      <span class="urgency-banner-icon">⚡</span>
+      <div class="urgency-banner-text">
+        <span id="urgencyBannerMsg">Anda memiliki <strong id="urgencyBannerCount">...</strong> dokumen yang memerlukan penyelesaian segera!</span><br>
+        <small id="urgencyBannerList" style="opacity:0.85;font-weight:400;"></small>
+      </div>
+    </div>
+    <div class="urgency-banner-links">
+      <a href="{{ url('/inbox') }}" class="urgency-banner-link">
+        <i class="fas fa-inbox"></i> Buka Inbox
+      </a>
+    </div>
+    <button class="urgency-banner-dismiss" onclick="dismissUrgencyBanner()" title="Tutup (muncul kembali dalam 5 menit)">×</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const POLL_INTERVAL_MS = 60000;   // 60 seconds
+  const DISMISS_COOLDOWN = 300000;  // 5 minutes after dismiss
+  let urgencyDismissedAt = 0;
+  let urgencyPollTimer = null;
+
+  function dismissUrgencyBanner() {
+    urgencyDismissedAt = Date.now();
+    hideBanner();
+  }
+  window.dismissUrgencyBanner = dismissUrgencyBanner;
+
+  function showBanner(count, list) {
+    if (Date.now() - urgencyDismissedAt < DISMISS_COOLDOWN) return;
+    const banner = document.getElementById('urgencyGlobalBanner');
+    const countEl = document.getElementById('urgencyBannerCount');
+    const listEl  = document.getElementById('urgencyBannerList');
+    if (!banner) return;
+    countEl.textContent = count;
+    if (list && list.length > 0) {
+      const preview = list.slice(0, 3).map(u => u.nomor_agenda).join(', ');
+      listEl.textContent = 'Dokumen: ' + preview + (list.length > 3 ? ' +' + (list.length - 3) + ' lainnya' : '');
+    } else {
+      listEl.textContent = '';
+    }
+    banner.classList.add('visible');
+    document.body.classList.add('urgency-banner-visible');
+  }
+
+  function hideBanner() {
+    const banner = document.getElementById('urgencyGlobalBanner');
+    if (banner) banner.classList.remove('visible');
+    document.body.classList.remove('urgency-banner-visible');
+  }
+
+  function pollUrgencies() {
+    fetch('/api/documents/urgency/active', {
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && data.success && data.count > 0) {
+        showBanner(data.count, data.urgencies);
+      } else {
+        hideBanner();
+      }
+    })
+    .catch(() => {}); // fail silently
+  }
+
+  // Start polling after page is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initial poll after 2 seconds so page can finish loading first
+    setTimeout(pollUrgencies, 2000);
+    // Then poll every 60 seconds
+    urgencyPollTimer = setInterval(pollUrgencies, POLL_INTERVAL_MS);
+  });
+})();
+</script>
+@endif
+
 </body>
 </html>
 

@@ -100,6 +100,10 @@ class Dokumen extends Model
         'imported_from_csv',
         'csv_import_batch_id',
         'csv_imported_at',
+        // Urgency alert fields
+        'urgency_active',
+        'urgency_sent_at',
+        'urgency_sent_by',
     ];
 
     protected $casts = [
@@ -142,6 +146,9 @@ class Dokumen extends Model
         // CSV Import casts
         'imported_from_csv' => 'boolean',
         'csv_imported_at' => 'datetime',
+        // Urgency alert casts
+        'urgency_active' => 'boolean',
+        'urgency_sent_at' => 'datetime',
     ];
 
     public function dokumenPos(): HasMany

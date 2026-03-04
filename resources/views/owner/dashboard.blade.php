@@ -673,13 +673,24 @@
             <div class="doc-card {{ $dokumen['is_overdue'] ? 'overdue' : '' }} {{ $dokumen['is_paid'] ? 'completed' : '' }}"
               onclick="navigateToWorkflow('{{ $dokumen['id'] }}')">
 
-              @if($dokumen['is_overdue'])
+          @if($dokumen['is_overdue'])
                 <span class="overdue-badge">TERLAMBAT</span>
               @endif
 
               @if($dokumen['is_paid'])
                 <span class="paid-stamp">SUDAH DIBAYAR</span>
               @endif
+
+              {{-- Bell Urgency Button --}}
+              <button
+                class="urgency-bell-btn {{ ($dokumen['urgency_active'] ?? false) ? 'active' : '' }}"
+                onclick="event.stopPropagation(); openUrgencyModal({{ $dokumen['id'] }}, '{{ addslashes($dokumen['nomor_agenda']) }}', '{{ addslashes($dokumen['current_handler_display'] ?? '-') }}')"
+                title="{{ ($dokumen['urgency_active'] ?? false) ? 'Notifikasi sudah dikirim – menunggu penyelesaian' : 'Kirim pengingat darurat ke penanggung jawab dokumen ini' }}"
+                {{ ($dokumen['urgency_active'] ?? false) ? 'disabled' : '' }}
+                data-doc-id="{{ $dokumen['id'] }}"
+                id="bell-btn-{{ $dokumen['id'] }}">
+                <i class="fas fa-bell"></i>
+              </button>
 
               <div class="doc-card-header">
                 <div>
@@ -850,6 +861,193 @@
     </div>
 
   </div>
+
+  {{-- ===== Urgency Bell CSS ===== --}}
+  <style>
+    /* Bell button on doc-cards */
+    .urgency-bell-btn {
+      position: absolute; top: 8px; right: 8px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: transparent; border: 1px solid #cbd5e1;
+      color: #94a3b8; cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease; z-index: 10; padding: 0;
+    }
+    .urgency-bell-btn:hover:not(:disabled) {
+      background: #fff7ed; border-color: #f59e0b; color: #f59e0b; transform: scale(1.1);
+    }
+    .urgency-bell-btn.active {
+      background: #fef3c7; border-color: #f59e0b; color: #d97706;
+      animation: bell-ring 0.65s ease-in-out;
+    }
+    .urgency-bell-btn:disabled { opacity: 0.8; cursor: not-allowed; }
+    @keyframes bell-ring {
+      0%, 100% { transform: rotate(0deg); }
+      20% { transform: rotate(-15deg); }
+      40% { transform: rotate(15deg); }
+      60% { transform: rotate(-10deg); }
+      80% { transform: rotate(10deg); }
+    }
+    /* Urgency Modal */
+    .urgency-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .urgency-modal {
+      background: #fff; border-radius: 16px; padding: 28px 32px;
+      max-width: 420px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      text-align: center; animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    html.dark .urgency-modal { background: #1e293b; color: #f1f5f9; }
+    .urgency-modal-icon { font-size: 38px; margin-bottom: 10px; animation: bell-ring 0.8s ease; }
+    .urgency-modal h4 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    html.dark .urgency-modal h4 { color: #f1f5f9; }
+    .urgency-modal p { font-size: 0.88rem; color: #64748b; margin-bottom: 20px; line-height: 1.55; }
+    html.dark .urgency-modal p { color: #94a3b8; }
+    .urgency-modal strong { color: #0f172a; }
+    html.dark .urgency-modal strong { color: #e2e8f0; }
+    .urgency-modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .urgency-modal-actions .btn-cancel {
+      padding: 9px 20px; border-radius: 8px; border: 1px solid #e2e8f0;
+      background: transparent; color: #64748b; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .urgency-modal-actions .btn-cancel:hover { background: #f8fafc; }
+    .urgency-modal-actions .btn-confirm {
+      padding: 9px 20px; border-radius: 8px; border: none;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .urgency-modal-actions .btn-confirm:hover { background: linear-gradient(135deg, #d97706, #b45309); transform: translateY(-1px); }
+    .urgency-modal-actions .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    /* Toast */
+    .urgency-toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 10000;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .urgency-toast {
+      background: #fff; border-radius: 10px; padding: 12px 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.85rem; font-weight: 600; color: #1e293b;
+      animation: toastIn 0.3s ease; pointer-events: auto;
+      min-width: 260px; max-width: 380px; border-left: 4px solid #10b981;
+    }
+    .urgency-toast.error { border-left-color: #ef4444; }
+    @keyframes toastIn  { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(40px); opacity: 0; } }
+  </style>
+
+  {{-- ===== Urgency Confirmation Modal ===== --}}
+  <div id="urgencyModalOverlay" style="display:none" class="urgency-modal-overlay" onclick="closeUrgencyModalOverlay(event)">
+    <div class="urgency-modal" onclick="event.stopPropagation()">
+      <div class="urgency-modal-icon">🔔</div>
+      <h4>Kirim Pengingat Urgency</h4>
+      <p id="urgencyModalBody">Mengirim pengingat...</p>
+      <div class="urgency-modal-actions">
+        <button class="btn-cancel" onclick="document.getElementById('urgencyModalOverlay').style.display='none'">Batalkan</button>
+        <button class="btn-confirm" id="urgencyConfirmBtn" onclick="confirmSendUrgency()">
+          <i class="fas fa-paper-plane"></i> Ya, Kirim Pengingat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {{-- ===== Toast Container ===== --}}
+  <div class="urgency-toast-container" id="urgencyToastContainer"></div>
+
+  {{-- ===== Urgency JavaScript ===== --}}
+  <script>
+    let _urgencyDocId = null;
+
+    function openUrgencyModal(docId, nomorAgenda, handler) {
+      _urgencyDocId = docId;
+      document.getElementById('urgencyModalBody').innerHTML =
+        'Kirim pengingat urgency ke <strong>' + handler + '</strong> untuk dokumen <strong>' + nomorAgenda + '</strong>?<br><br>' +
+        '<span style="color:#f59e0b;font-size:0.8rem;">⚡ Penanggung jawab akan melihat notifikasi darurat pada daftar dokumen mereka.</span>';
+      const btn = document.getElementById('urgencyConfirmBtn');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Ya, Kirim Pengingat';
+      document.getElementById('urgencyModalOverlay').style.display = 'flex';
+    }
+
+    function closeUrgencyModalOverlay(event) {
+      if (event && event.target !== document.getElementById('urgencyModalOverlay')) return;
+      document.getElementById('urgencyModalOverlay').style.display = 'none';
+      _urgencyDocId = null;
+    }
+
+    function confirmSendUrgency() {
+      if (!_urgencyDocId) return;
+      const btn = document.getElementById('urgencyConfirmBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+      fetch('/owner/dokumen/' + _urgencyDocId + '/urgency', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({})
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('urgencyModalOverlay').style.display = 'none';
+        if (data.success) {
+          const bellBtn = document.getElementById('bell-btn-' + _urgencyDocId);
+          if (bellBtn) {
+            bellBtn.classList.add('active');
+            bellBtn.disabled = true;
+            bellBtn.title = 'Notifikasi sudah dikirim – menunggu penyelesaian';
+          }
+          showUrgencyToast('✅ Pengingat berhasil dikirim!', 'success');
+        } else {
+          showUrgencyToast('❌ ' + (data.message || 'Gagal mengirim pengingat.'), 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-paper-plane"></i> Ya, Kirim Pengingat';
+        }
+        _urgencyDocId = null;
+      })
+      .catch(() => {
+        document.getElementById('urgencyModalOverlay').style.display = 'none';
+        showUrgencyToast('❌ Terjadi kesalahan. Silakan coba lagi.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Ya, Kirim Pengingat';
+        _urgencyDocId = null;
+      });
+    }
+
+    function showUrgencyToast(message, type = 'success') {
+      const container = document.getElementById('urgencyToastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'urgency-toast' + (type === 'error' ? ' error' : '');
+      toast.innerHTML = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('urgencyModalOverlay').style.display !== 'none') {
+        document.getElementById('urgencyModalOverlay').style.display = 'none';
+        _urgencyDocId = null;
+      }
+    });
+  </script>
 
   <script>
     // ===== Navigati  on ==       ===

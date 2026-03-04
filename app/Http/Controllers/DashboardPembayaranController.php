@@ -1452,6 +1452,20 @@ class DashboardPembayaranController extends Controller
                 'has_link_bukti' => !empty($dokumen->link_bukti_pembayaran),
             ]);
 
+            // Auto-reset urgency when document is marked as paid (completed)
+            if (!empty($dokumen->tanggal_dibayar) && $dokumen->urgency_active) {
+                try {
+                    $dokumen->update([
+                        'urgency_active'  => false,
+                        'urgency_sent_at' => null,
+                        'urgency_sent_by' => null,
+                    ]);
+                    Log::info('Urgency auto-reset on payment completion', ['document_id' => $dokumen->id]);
+                } catch (\Exception $urgencyEx) {
+                    Log::warning('Could not auto-reset urgency: ' . $urgencyEx->getMessage());
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Data pembayaran berhasil diperbarui.',

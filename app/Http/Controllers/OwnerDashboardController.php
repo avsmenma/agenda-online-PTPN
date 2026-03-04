@@ -598,6 +598,10 @@ class OwnerDashboardController extends Controller
                 'umur_dokumen' => $this->calculateDocumentAge($dokumen),
                 'kebun' => $dokumen->kebun ?? '-',
                 'vendor' => $dokumen->dibayar_kepada ?? ($dokumen->dibayarKepadas->first()->nama_penerima ?? '-'),
+                // Urgency alert fields
+                'urgency_active'       => (bool) ($dokumen->urgency_active ?? false),
+                'urgency_sent_at_human'=> $dokumen->urgency_sent_at ? $dokumen->urgency_sent_at->diffForHumans() : null,
+                'urgency_sent_at'      => $dokumen->urgency_sent_at ? $dokumen->urgency_sent_at->toISOString() : null,
             ];
         });
 
@@ -4328,7 +4332,141 @@ class OwnerDashboardController extends Controller
             }
         }
     }
+
+    // =========================================================================
+    //  URGENCY ALERT METHODS
+    // =========================================================================
+
+    /**
+     * POST /owner/dokumen/{id}/urgency
+     * Send an urgency alert for a document. Only admin/owner can call this.
+     */
+    public function sendUrgency(Request $request, $id): JsonResponse
+    {
+        try {
+            $dokumen = Dokumen::findOrFail($id);
+
+            // Prevent sending if urgency is already active
+            if ($dokumen->urgency_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notifikasi urgency sudah aktif untuk dokumen ini. Tunggu hingga dokumen diselesaikan.',
+                ], 422);
+            }
+
+            $dokumen->update([
+                'urgency_active'  => true,
+                'urgency_sent_at' => now(),
+                'urgency_sent_by' => auth()->id(),
+            ]);
+
+            \Log::info('Urgency alert sent', [
+                'dokumen_id'   => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'handler'      => $dokumen->current_handler,
+                'sent_by'      => auth()->user()?->name,
+                'sent_at'      => now()->toDateTimeString(),
+            ]);
+
+            return response()->json([
+                'success'               => true,
+                'message'               => 'Pengingat urgency berhasil dikirim!',
+                'urgency_sent_at_human' => now()->diffForHumans(),
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error sending urgency: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan. Silakan coba lagi.'], 500);
+        }
+    }
+
+    /**
+     * DELETE /owner/dokumen/{id}/urgency
+     * Reset (deactivate) urgency for a document.
+     */
+    public function resetUrgency(Request $request, $id): JsonResponse
+    {
+        try {
+            $dokumen = Dokumen::findOrFail($id);
+
+            $dokumen->update([
+                'urgency_active'  => false,
+                'urgency_sent_at' => null,
+                'urgency_sent_by' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Urgency berhasil direset.',
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error resetting urgency: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan.'], 500);
+        }
+    }
+
+    /**
+     * GET /api/documents/urgency/active
+     * Returns urgency-active documents for the logged-in user's role.
+     * Used by recipient-role dashboards for polling.
+     */
+    public function getActiveUrgencies(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            }
+
+            $role = strtolower($user->role ?? '');
+
+            // Map role to current_handler values stored in dokumens
+            $roleHandlerMap = [
+                'operator'        => ['operator'],
+                'team_verifikasi' => ['team_verifikasi', 'verifikasi'],
+                'verifikasi'      => ['team_verifikasi', 'verifikasi'],
+                'perpajakan'      => ['perpajakan'],
+                'akutansi'        => ['akutansi'],
+                'pembayaran'      => ['pembayaran'],
+            ];
+
+            $handlers = $roleHandlerMap[$role] ?? [];
+
+            $query = Dokumen::where('urgency_active', true)
+                ->select('id', 'nomor_agenda', 'nomor_spp', 'current_handler', 'urgency_sent_at', 'urgency_sent_by');
+
+            if (!empty($handlers)) {
+                $query->whereIn('current_handler', $handlers);
+            }
+
+            $urgencies = $query->orderBy('urgency_sent_at', 'asc')->get()->map(function ($dok) {
+                return [
+                    'id'            => $dok->id,
+                    'nomor_agenda'  => $dok->nomor_agenda,
+                    'nomor_spp'     => $dok->nomor_spp,
+                    'sent_at_human' => $dok->urgency_sent_at ? $dok->urgency_sent_at->diffForHumans() : null,
+                    'sent_at'       => $dok->urgency_sent_at ? $dok->urgency_sent_at->toISOString() : null,
+                ];
+            });
+
+            return response()->json([
+                'success'   => true,
+                'count'     => $urgencies->count(),
+                'urgencies' => $urgencies,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching active urgencies: ' . $e->getMessage());
+            return response()->json(['success' => false, 'urgencies' => [], 'count' => 0], 500);
+        }
+    }
 }
+
 
 
 
