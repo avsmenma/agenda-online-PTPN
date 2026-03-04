@@ -6888,7 +6888,7 @@ document.addEventListener('DOMContentLoaded', function() {
      Auto-injects button next to .btn-customize-columns-inline
      =================================================== --}}
 <style>
-  /* ── Fullscreen button ── */
+  /* ── Fullscreen button styles ── */
   .btn-fullscreen-toggle {
     padding: 10px 20px;
     background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
@@ -6917,67 +6917,26 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
   }
 
-  /* ── Fullscreen container overlay ── */
-  .fullscreen-container {
-    transition: all 0.25s ease-in-out;
+  /* ── Container when fullscreen ── */
+  body.is-fullscreen .fs-content-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9990 !important;
+    overflow: auto !important;
+    background: #F8FAFC !important;
+    padding: 10px 14px !important;
+    box-sizing: border-box !important;
   }
-  body.is-fullscreen .fullscreen-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9990;
-    overflow: auto;
-    background: #F8FAFC;
-    padding: 10px 14px;
-    box-sizing: border-box;
+  html.dark body.is-fullscreen .fs-content-area {
+    background: #0f172a !important;
   }
-  html.dark body.is-fullscreen .fullscreen-container {
-    background: #0f172a;
-  }
-
-  /* ── Hide elements when fullscreen ── */
+  /* ── Always hide sidebar/secondary nav in fullscreen ── */
   body.is-fullscreen .sidebar,
-  body.is-fullscreen .secondary-sidebar,
-  body.is-fullscreen .topbar,
-  body.is-fullscreen .navbar,
-  body.is-fullscreen .stats-section,
-  body.is-fullscreen .stat-cards,
-  body.is-fullscreen .status-section,
-  body.is-fullscreen .status-bar,
-  body.is-fullscreen .page-title-section,
-  body.is-fullscreen .deadline-section,
-  body.is-fullscreen h2.page-heading,
-  body.is-fullscreen .header-section,
-  body.is-fullscreen [data-fullscreen-hide] {
+  body.is-fullscreen .secondary-sidebar {
     display: none !important;
-  }
-
-  /* ── Sticky filter bar in fullscreen ── */
-  body.is-fullscreen .filter-row,
-  body.is-fullscreen .search-box,
-  body.is-fullscreen .search-filter-form,
-  body.is-fullscreen .filter-section,
-  body.is-fullscreen [data-fullscreen-sticky] {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: #F8FAFC;
-    padding: 8px 0;
-    margin-bottom: 8px;
-  }
-  html.dark body.is-fullscreen .filter-row,
-  html.dark body.is-fullscreen .search-box,
-  html.dark body.is-fullscreen .search-filter-form,
-  html.dark body.is-fullscreen .filter-section {
-    background: #0f172a;
-  }
-
-  /* ── Hint tooltip on button ── */
-  .btn-fullscreen-toggle::after {
-    content: attr(data-hint);
-    display: none;
   }
   .btn-fullscreen-toggle:focus-visible {
     outline: 2px solid #f59e0b;
@@ -6986,56 +6945,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function () {
-  let isFullscreen = false;
-  let fsContainer  = null;
+  let isFullscreen   = false;
+  let fsArea         = null;   // the .content div we fullscreen
+  let hiddenElements = [];     // [{el, prevDisplay}] – restore on exit
 
-  function findScrollableContainer(btn) {
-    // Walk up from the button looking for table-dokumen / search-box / content wrappers
+  // ── Find the shared content wrapper ──────────────────────────
+  function findContentArea(btn) {
     let el = btn;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       el = el.parentElement;
       if (!el) break;
-      // Look for a class that wraps: search + table together
       if (
         el.classList.contains('content') ||
         el.classList.contains('main-content') ||
-        el.classList.contains('table-dokumen') ||
         el.tagName === 'MAIN'
-      ) {
-        return el;
-      }
+      ) return el;
     }
-    // Fallback: find the nearest .content div in the document
-    return document.querySelector('.content') || document.body;
+    return document.querySelector('.content') || null;
   }
 
-  function enterFullscreen(btn) {
+  // ── Find the direct child of contentArea that contains the button ─
+  function findFilterAnchor(fsBtn, contentArea) {
+    let el = fsBtn;
+    while (el && el.parentElement !== contentArea) {
+      el = el.parentElement;
+    }
+    return el; // direct child of contentArea holding the filter row
+  }
+
+  // ── Hide all preceding siblings of anchor inside contentArea ──
+  function hideElementsAboveAnchor(anchor, contentArea) {
+    hiddenElements = [];
+    let child = contentArea.firstElementChild;
+    while (child && child !== anchor) {
+      const prev = child.style.display;
+      child.style.display = 'none';
+      hiddenElements.push({ el: child, prev: prev });
+      child = child.nextElementSibling;
+    }
+  }
+
+  // ── Restore hidden elements ───────────────────────────────────
+  function restoreHiddenElements() {
+    hiddenElements.forEach(function (item) {
+      item.el.style.display = item.prev || '';
+    });
+    hiddenElements = [];
+  }
+
+  // ── Enter fullscreen ──────────────────────────────────────────
+  function enterFullscreen(fsBtn) {
     isFullscreen = true;
 
-    // Mark the container
-    fsContainer = findScrollableContainer(btn);
-    fsContainer.classList.add('fullscreen-container');
+    fsArea = findContentArea(fsBtn);
+    if (fsArea) {
+      fsArea.classList.add('fs-content-area');
+
+      const anchor = findFilterAnchor(fsBtn, fsArea);
+      if (anchor) hideElementsAboveAnchor(anchor, fsArea);
+    }
+
     document.body.classList.add('is-fullscreen');
     document.body.style.overflow = 'hidden';
 
-    // Update button
-    btn.classList.add('active');
-    btn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
-    btn.title = 'Keluar dari mode fullscreen (Esc)';
+    fsBtn.classList.add('active');
+    fsBtn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
+    fsBtn.title = 'Keluar dari mode fullscreen (Esc)';
   }
 
+  // ── Exit fullscreen ───────────────────────────────────────────
   function exitFullscreen() {
     if (!isFullscreen) return;
     isFullscreen = false;
 
-    if (fsContainer) {
-      fsContainer.classList.remove('fullscreen-container');
-      fsContainer = null;
+    restoreHiddenElements();
+
+    if (fsArea) {
+      fsArea.classList.remove('fs-content-area');
+      fsArea = null;
     }
+
     document.body.classList.remove('is-fullscreen');
     document.body.style.overflow = '';
 
-    // Reset all fullscreen buttons
     document.querySelectorAll('.btn-fullscreen-toggle').forEach(function (b) {
       b.classList.remove('active');
       b.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
@@ -7044,47 +7036,38 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function toggleFullscreen(btn) {
-    if (isFullscreen) {
-      exitFullscreen();
-    } else {
-      enterFullscreen(btn);
-    }
+    isFullscreen ? exitFullscreen() : enterFullscreen(btn);
   }
 
+  // ── Inject button ─────────────────────────────────────────────
   function injectFullscreenButton(customizeBtn) {
     if (customizeBtn._fullscreenInjected) return;
     customizeBtn._fullscreenInjected = true;
 
     const fsBtn = document.createElement('button');
-    fsBtn.type  = 'button';
+    fsBtn.type      = 'button';
     fsBtn.className = 'btn-fullscreen-toggle';
     fsBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
-    fsBtn.title = 'Tampilan layar penuh (Ctrl+Shift+F)';
-    fsBtn.setAttribute('data-hint', 'Ctrl+Shift+F');
+    fsBtn.title     = 'Tampilan layar penuh (Ctrl+Shift+F)';
 
     fsBtn.addEventListener('click', function (e) {
       e.preventDefault();
       toggleFullscreen(fsBtn);
     });
 
-    // Insert right after the Kustomisasi button
     customizeBtn.parentNode.insertBefore(fsBtn, customizeBtn.nextSibling);
   }
 
   function scanAndInject() {
-    document.querySelectorAll('.btn-customize-columns-inline').forEach(function (btn) {
-      injectFullscreenButton(btn);
-    });
+    document.querySelectorAll('.btn-customize-columns-inline').forEach(injectFullscreenButton);
   }
 
-  // Keyboard shortcuts
+  // ── Keyboard shortcuts ────────────────────────────────────────
   document.addEventListener('keydown', function (e) {
-    // Escape → exit fullscreen
     if (e.key === 'Escape' && isFullscreen) {
       exitFullscreen();
       return;
     }
-    // Ctrl+Shift+F → toggle fullscreen
     if (e.key === 'F' && e.ctrlKey && e.shiftKey) {
       e.preventDefault();
       const fsBtn = document.querySelector('.btn-fullscreen-toggle');
@@ -7094,11 +7077,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.addEventListener('DOMContentLoaded', function () {
     scanAndInject();
-
-    // Watch for dynamic injections
-    const mo = new MutationObserver(function () {
-      scanAndInject();
-    });
+    const mo = new MutationObserver(scanAndInject);
     mo.observe(document.body, { childList: true, subtree: true });
   });
 })();
