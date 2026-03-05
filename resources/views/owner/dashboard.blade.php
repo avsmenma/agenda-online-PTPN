@@ -748,6 +748,23 @@
                     $currentStep = min(5, max(1, ceil($progress / 20)));
                     $isPaid = $dokumen['is_paid'] ?? false;
                     $stepLabels = ['Operator', 'Verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+
+                    // Determine deadline status class for the active node
+                    $deadlineClass = '';
+                    $deadlineTooltipSuffix = '';
+                    if (!$isPaid && isset($dokumen['deadline_info'])) {
+                      $dlClass = $dokumen['deadline_info']['class'] ?? 'safe';
+                      $dlElapsed = $dokumen['deadline_info']['elapsed'] ?? '';
+                      if ($dlClass === 'warning') {
+                        $deadlineClass = 'warning';
+                        $deadlineTooltipSuffix = ' · ⚠️ Mendekati batas waktu (' . $dlElapsed . ')';
+                      } elseif ($dlClass === 'danger') {
+                        $deadlineClass = 'overdue';
+                        $deadlineTooltipSuffix = ' · 🔴 Melewati batas waktu (' . $dlElapsed . ')';
+                      } else {
+                        $deadlineTooltipSuffix = ' · Dalam batas waktu';
+                      }
+                    }
                   @endphp
                   @for($i = 1; $i <= 5; $i++)
                     @if($isPaid)
@@ -755,8 +772,12 @@
                         <i class="fas fa-check"></i>
                       </div>
                     @else
-                      <div class="stepper-step {{ $i < $currentStep ? 'completed' : ($i == $currentStep ? 'active' : '') }}"
-                        data-tooltip="{{ $stepLabels[$i - 1] }}">
+                      @php
+                        $stepClass = $i < $currentStep ? 'completed' : ($i == $currentStep ? 'active ' . $deadlineClass : '');
+                        $stepTooltip = $stepLabels[$i - 1] . ($i == $currentStep ? $deadlineTooltipSuffix : '');
+                      @endphp
+                      <div class="stepper-step {{ $stepClass }}"
+                        data-tooltip="{{ $stepTooltip }}">
                         @if($i < $currentStep)
                           <i class="fas fa-check"></i>
                         @else

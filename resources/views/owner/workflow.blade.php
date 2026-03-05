@@ -307,6 +307,46 @@
       50%      { box-shadow: 0 0 0 4px rgba(255,255,255,.65), 0 0 0 14px rgba(20,184,166,0),   0 6px 20px rgba(8,62,64,.4); }
     }
 
+    /* ACTIVE + PERINGATAN — amber pulse */
+    .cp-dot.active.deadline-peringatan {
+      background: linear-gradient(140deg, #D97706, #F59E0B);
+      border: 3px solid #D97706;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+      animation: cp-pulse-warning 2s ease-in-out infinite;
+    }
+    @keyframes cp-pulse-warning {
+      0%,100% { box-shadow: 0 4px 15px rgba(245,158,11,.4), 0 0 0  0px rgba(245,158,11,.6); }
+      50%      { box-shadow: 0 4px 15px rgba(245,158,11,.4), 0 0 0 14px rgba(245,158,11,0); }
+    }
+
+    /* ACTIVE + TERLAMBAT — red intense pulse */
+    .cp-dot.active.deadline-terlambat {
+      background: linear-gradient(140deg, #DC2626, #EF4444);
+      border: 3px solid #DC2626;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
+      animation: cp-pulse-overdue 1.5s ease-in-out infinite;
+    }
+    @keyframes cp-pulse-overdue {
+      0%,100% { box-shadow: 0 4px 20px rgba(239,68,68,.5), 0 0 0  0px rgba(239,68,68,.7); }
+      50%      { box-shadow: 0 4px 20px rgba(239,68,68,.5), 0 0 0 16px rgba(239,68,68,0); }
+    }
+
+    /* Deadline time badges */
+    .badge-warning-time {
+      background-color: #FEF3C7; color: #92400E;
+      border: 1px solid #F59E0B;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+      margin-top: 3px; display: inline-block;
+    }
+    .badge-overdue-time {
+      background-color: #FEE2E2; color: #991B1B;
+      border: 1px solid #EF4444;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+      margin-top: 3px; display: inline-block;
+    }
+
     /* RETURNED — amber glow */
     .cp-dot.returned {
       background: linear-gradient(140deg, #b45309, #f59e0b);
@@ -1478,18 +1518,29 @@
         $isAct  = ($st==='processing'||$st==='active');
         $isRet  = ($st==='returned');
         $stateKey = $isComp ? 'done' : ($isAct ? 'active' : ($isRet ? 'returned' : 'waiting'));
+        $dlLevel = $stage['deadlineLevel'] ?? null;
+        $dlInfo  = $stage['deadlineInfo'] ?? null;
+        $dlHours = $dlInfo['hours_elapsed'] ?? 0;
+        $dlDays  = floor($dlHours / 24);
+        $dlRemH  = round($dlHours - ($dlDays * 24));
+        $dlReceivedAt = isset($dlInfo['received_at']) ? \Carbon\Carbon::parse($dlInfo['received_at'])->format('d M Y, H:i') : null;
+
         $jsStages[] = [
-          'name'       => $stage['name'] ?? 'Tahap '.($idx+1),
-          'description'=> $stage['description'] ?? '',
-          'state'      => $stateKey,
-          'timestamp'  => !empty($stage['timestamp']) ? \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') : null,
-          'duration'   => $stage['duration']['display'] ?? null,
-          'icon'       => $stage['icon'] ?? 'fa-circle',
-          'badgeTxt'   => $isComp?'Selesai':($isAct?'Sedang Diproses':($isRet?'Dikembalikan':'Menunggu')),
-          'isOverdue'  => $stage['isOverdue'] ?? false,
-          'clickable'  => $isComp || $isAct,
-          'left'       => $stagePositions[$idx]['left'] ?? '50',
-          'top'        => $stagePositions[$idx]['top']  ?? '50',
+          'name'          => $stage['name'] ?? 'Tahap '.($idx+1),
+          'description'   => $stage['description'] ?? '',
+          'state'         => $stateKey,
+          'timestamp'     => !empty($stage['timestamp']) ? \Carbon\Carbon::parse($stage['timestamp'])->format('d M Y, H:i') : null,
+          'duration'      => $stage['duration']['display'] ?? null,
+          'icon'          => $stage['icon'] ?? 'fa-circle',
+          'badgeTxt'      => $isComp?'Selesai':($isAct?'Sedang Diproses':($isRet?'Dikembalikan':'Menunggu')),
+          'isOverdue'     => $stage['isOverdue'] ?? false,
+          'clickable'     => $isComp || $isAct,
+          'left'          => $stagePositions[$idx]['left'] ?? '50',
+          'top'           => $stagePositions[$idx]['top']  ?? '50',
+          'deadlineLevel' => $isAct ? $dlLevel : null,
+          'deadlineHours' => $isAct ? round($dlHours) : null,
+          'deadlineDays'  => $isAct ? $dlDays : null,
+          'deadlineReceivedAt' => $isAct ? $dlReceivedAt : null,
         ];
       }
     @endphp
@@ -1545,7 +1596,14 @@
               data-ci="{{ $ci }}">
 
               {{-- Icon dot --}}
-              <div class="cp-dot {{ $stage['state'] }}">
+              @php
+                $dlCssClass = '';
+                if ($stage['state'] === 'active' && !empty($stage['deadlineLevel'])) {
+                  if ($stage['deadlineLevel'] === 'peringatan') $dlCssClass = 'deadline-peringatan';
+                  elseif ($stage['deadlineLevel'] === 'terlambat') $dlCssClass = 'deadline-terlambat';
+                }
+              @endphp
+              <div class="cp-dot {{ $stage['state'] }} {{ $dlCssClass }}">
                 @if($stage['state']==='done')
                   <i class="fas fa-check" style="font-size:26px"></i>
                 @elseif($stage['state']==='returned')
@@ -1566,6 +1624,11 @@
               <div class="cp-label">
                 <div class="cp-name">{{ $stage['name'] }}</div>
                 <span class="cp-badge {{ $stage['state'] }}">{{ $stage['badgeTxt'] }}</span>
+                @if($stage['state'] === 'active' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'peringatan')
+                  <span class="badge-warning-time">⚠️ PERINGATAN</span>
+                @elseif($stage['state'] === 'active' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'terlambat')
+                  <span class="badge-overdue-time">🔴 TERLAMBAT</span>
+                @endif
                 @if($stage['timestamp'])
                   <div class="cp-date"><i class="far fa-clock"></i> {{ $stage['timestamp'] }}</div>
                 @endif
@@ -1670,7 +1733,22 @@
       if (s.description) html += tipRow('fas fa-info-circle', s.description);
       if (s.timestamp)   html += tipRow('far fa-clock',       s.timestamp);
       if (s.duration)    html += tipRow('fas fa-stopwatch',   s.duration);
-      if (s.isOverdue)   html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#dc2626"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>Terlambat dari deadline</span></div>';
+      /* Deadline status info */
+      if (s.deadlineLevel === 'aman') {
+        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#16a34a"><i class="fas fa-check-circle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: AMAN</span></div>';
+      } else if (s.deadlineLevel === 'peringatan') {
+        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#d97706"><i class="fas fa-exclamation-triangle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: ⚠️ PERINGATAN</span></div>';
+      } else if (s.deadlineLevel === 'terlambat') {
+        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#dc2626"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: 🔴 TERLAMBAT</span></div>';
+      }
+      if (s.deadlineReceivedAt) {
+        var agoText = '';
+        if (s.deadlineDays > 0) agoText = s.deadlineDays + ' hari';
+        if (s.deadlineHours && (s.deadlineHours - (s.deadlineDays||0)*24) > 0) agoText += (agoText ? ' ' : '') + Math.round(s.deadlineHours - (s.deadlineDays||0)*24) + ' jam';
+        if (agoText) agoText += ' yang lalu';
+        html += tipRow('fas fa-calendar-alt', '📅 Diterima: ' + agoText);
+      }
+      if (s.isOverdue && !s.deadlineLevel) html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#dc2626"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>Terlambat dari deadline</span></div>';
       _tipEl.innerHTML = html;
       _tipEl.style.display = 'block';
       _tipEl.style.opacity = '0';
@@ -1741,7 +1819,17 @@
       if (s.timestamp)   rows += field('Waktu Proses', s.timestamp);
       if (s.duration)    rows += field('Durasi', s.duration);
       rows += field('Status', s.badgeTxt);
-      if (s.isOverdue)   rows += field('Keterlambatan', '⚠ Terlambat dari deadline');
+      /* Deadline status */
+      if (s.deadlineLevel === 'aman') rows += field('Status Waktu', '🟢 AMAN');
+      else if (s.deadlineLevel === 'peringatan') rows += field('Status Waktu', '🟡 PERINGATAN');
+      else if (s.deadlineLevel === 'terlambat') rows += field('Status Waktu', '🔴 TERLAMBAT');
+      if (s.deadlineReceivedAt) {
+        var agoText2 = '';
+        if (s.deadlineDays > 0) agoText2 = s.deadlineDays + ' hari';
+        if (s.deadlineHours && (s.deadlineHours - (s.deadlineDays||0)*24) > 0) agoText2 += (agoText2 ? ' ' : '') + Math.round(s.deadlineHours - (s.deadlineDays||0)*24) + ' jam';
+        if (agoText2) rows += field('Diterima', agoText2 + ' yang lalu');
+      }
+      if (s.isOverdue && !s.deadlineLevel) rows += field('Keterlambatan', '⚠ Terlambat dari deadline');
       document.getElementById('cpDetailGrid').innerHTML = rows;
       var panel = document.getElementById('cpDetailPanel');
       panel.classList.add('open');
