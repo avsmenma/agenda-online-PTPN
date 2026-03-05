@@ -347,6 +347,24 @@
       margin-top: 3px; display: inline-block;
     }
 
+    /* Historical deadline badges — smaller and softer */
+    .badge-historis-peringatan {
+      background-color: #FEF3C7; color: #B45309;
+      border: 1px solid #FDE68A;
+      font-size: 9px; font-weight: 600;
+      padding: 1px 5px; border-radius: 4px;
+      margin-top: 2px; display: inline-block;
+      opacity: 0.85;
+    }
+    .badge-historis-terlambat {
+      background-color: #FEE2E2; color: #B91C1C;
+      border: 1px solid #FECACA;
+      font-size: 9px; font-weight: 600;
+      padding: 1px 5px; border-radius: 4px;
+      margin-top: 2px; display: inline-block;
+      opacity: 0.85;
+    }
+
     /* RETURNED — amber glow */
     .cp-dot.returned {
       background: linear-gradient(140deg, #b45309, #f59e0b);
@@ -1537,10 +1555,11 @@
           'clickable'     => $isComp || $isAct,
           'left'          => $stagePositions[$idx]['left'] ?? '50',
           'top'           => $stagePositions[$idx]['top']  ?? '50',
-          'deadlineLevel' => $isAct ? $dlLevel : null,
-          'deadlineHours' => $isAct ? round($dlHours) : null,
-          'deadlineDays'  => $isAct ? $dlDays : null,
-          'deadlineReceivedAt' => $isAct ? $dlReceivedAt : null,
+          'deadlineLevel' => $dlLevel,
+          'deadlineHours' => round($dlHours),
+          'deadlineDays'  => $dlDays,
+          'deadlineReceivedAt' => $dlReceivedAt,
+          'isHistorical'  => ($dlInfo['is_historical'] ?? false) ? true : false,
         ];
       }
     @endphp
@@ -1628,6 +1647,10 @@
                   <span class="badge-warning-time">⚠️ PERINGATAN</span>
                 @elseif($stage['state'] === 'active' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'terlambat')
                   <span class="badge-overdue-time">🔴 TERLAMBAT</span>
+                @elseif($stage['state'] === 'done' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'peringatan' && ($stage['isHistorical'] ?? false))
+                  <span class="badge-historis-peringatan">⚠️ PERINGATAN SAAT ITU</span>
+                @elseif($stage['state'] === 'done' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'terlambat' && ($stage['isHistorical'] ?? false))
+                  <span class="badge-historis-terlambat">🔴 TERLAMBAT SAAT ITU</span>
                 @endif
                 @if($stage['timestamp'])
                   <div class="cp-date"><i class="far fa-clock"></i> {{ $stage['timestamp'] }}</div>
@@ -1734,12 +1757,22 @@
       if (s.timestamp)   html += tipRow('far fa-clock',       s.timestamp);
       if (s.duration)    html += tipRow('fas fa-stopwatch',   s.duration);
       /* Deadline status info */
-      if (s.deadlineLevel === 'aman') {
-        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#16a34a"><i class="fas fa-check-circle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: AMAN</span></div>';
-      } else if (s.deadlineLevel === 'peringatan') {
-        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#d97706"><i class="fas fa-exclamation-triangle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: ⚠️ PERINGATAN</span></div>';
-      } else if (s.deadlineLevel === 'terlambat') {
-        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#dc2626"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: 🔴 TERLAMBAT</span></div>';
+      if (s.deadlineLevel && !s.isHistorical) {
+        /* Active/real-time status */
+        if (s.deadlineLevel === 'aman') {
+          html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#16a34a"><i class="fas fa-check-circle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: AMAN</span></div>';
+        } else if (s.deadlineLevel === 'peringatan') {
+          html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#d97706"><i class="fas fa-exclamation-triangle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: ⚠️ PERINGATAN</span></div>';
+        } else if (s.deadlineLevel === 'terlambat') {
+          html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#dc2626"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>⏱️ Status Waktu: 🔴 TERLAMBAT</span></div>';
+        }
+      } else if (s.deadlineLevel && s.isHistorical) {
+        /* Historical status for completed nodes */
+        if (s.deadlineLevel === 'peringatan') {
+          html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#b45309;opacity:.85"><i class="fas fa-exclamation-triangle" style="margin-top:2px;flex-shrink:0"></i><span>⚠️ Dokumen peringatan saat diproses di role ini</span></div>';
+        } else if (s.deadlineLevel === 'terlambat') {
+          html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;color:#b91c1c;opacity:.85"><i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0"></i><span>🔴 Dokumen terlambat saat diproses di role ini</span></div>';
+        }
       }
       if (s.deadlineReceivedAt) {
         var agoText = '';
@@ -1820,9 +1853,15 @@
       if (s.duration)    rows += field('Durasi', s.duration);
       rows += field('Status', s.badgeTxt);
       /* Deadline status */
-      if (s.deadlineLevel === 'aman') rows += field('Status Waktu', '🟢 AMAN');
-      else if (s.deadlineLevel === 'peringatan') rows += field('Status Waktu', '🟡 PERINGATAN');
-      else if (s.deadlineLevel === 'terlambat') rows += field('Status Waktu', '🔴 TERLAMBAT');
+      if (s.deadlineLevel && !s.isHistorical) {
+        if (s.deadlineLevel === 'aman') rows += field('Status Waktu', '🟢 AMAN');
+        else if (s.deadlineLevel === 'peringatan') rows += field('Status Waktu', '🟡 PERINGATAN');
+        else if (s.deadlineLevel === 'terlambat') rows += field('Status Waktu', '🔴 TERLAMBAT');
+      } else if (s.deadlineLevel && s.isHistorical) {
+        if (s.deadlineLevel === 'aman') rows += field('Status Waktu Saat Itu', '🟢 AMAN');
+        else if (s.deadlineLevel === 'peringatan') rows += field('Status Waktu Saat Itu', '🟡 PERINGATAN');
+        else if (s.deadlineLevel === 'terlambat') rows += field('Status Waktu Saat Itu', '🔴 TERLAMBAT');
+      }
       if (s.deadlineReceivedAt) {
         var agoText2 = '';
         if (s.deadlineDays > 0) agoText2 = s.deadlineDays + ' hari';

@@ -908,6 +908,42 @@ html.dark .doc-card.overdue {
   color: white;
 }
 
+/* Completed but was late — small red dot indicator */
+.stepper-step.completed.was-late {
+  position: relative;
+}
+
+.stepper-step.completed.was-late::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #EF4444;
+  border-radius: 50%;
+  border: 1.5px solid white;
+  z-index: 2;
+}
+
+/* Completed but was warned — small amber dot indicator */
+.stepper-step.completed.was-warning {
+  position: relative;
+}
+
+.stepper-step.completed.was-warning::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #F59E0B;
+  border-radius: 50%;
+  border: 1.5px solid white;
+  z-index: 2;
+}
+
 .stepper-step.active {
   background: var(--primary-color);
   border-color: var(--primary-color);

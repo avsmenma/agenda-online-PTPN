@@ -594,6 +594,7 @@ class OwnerDashboardController extends Controller
                 'is_paid' => $dokumen->status_pembayaran === 'sudah_dibayar' || $dokumen->status === 'completed' || !empty($dokumen->tanggal_dibayar),
                 'tanggal_dibayar' => $dokumen->tanggal_dibayar,
                 'deadline_info' => $this->getDeadlineInfo($dokumen),
+                'step_deadline_levels' => $this->getStepDeadlineLevels($dokumen),
                 'workflow_timeline' => $this->getWorkflowTimeline($dokumen),
                 'umur_dokumen' => $this->calculateDocumentAge($dokumen),
                 'kebun' => $dokumen->kebun ?? '-',
@@ -1186,6 +1187,43 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * Get per-step deadline levels for the stepper component
+     * Returns array indexed by step number (1-5) with deadline level for each
+     */
+    private function getStepDeadlineLevels($dokumen)
+    {
+        $levels = [1 => 'aman']; // Step 1 (Operator) is always aman
+        $roles = [
+            2 => 'team_verifikasi',
+            3 => 'perpajakan',
+            4 => 'akutansi',
+            5 => 'pembayaran',
+        ];
+
+        foreach ($roles as $step => $roleCode) {
+            $roleData = null;
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $roleData = $dokumen->getDataForRole($roleCode);
+            }
+
+            if ($roleData && $roleData->received_at) {
+                $endTime = $roleData->processed_at ?? now();
+                $hoursElapsed = $roleData->received_at->diffInHours($endTime);
+
+                if ($hoursElapsed >= 72) {
+                    $levels[$step] = 'terlambat';
+                } elseif ($hoursElapsed >= 24) {
+                    $levels[$step] = 'peringatan';
+                } else {
+                    $levels[$step] = 'aman';
+                }
+            }
+        }
+
+        return $levels;
+    }
+
+    /**
      * Calculate duration between two dates
      * Returns an array with minutes and display keys for workflow stages
      */
@@ -1697,16 +1735,17 @@ class OwnerDashboardController extends Controller
         $reviewerDeadlineInfo = null;
         $reviewerDeadlineLevel = null;
 
-        // Only calculate for documents received but not yet processed at this role
-        if ($reviewerRoleData && $reviewerRoleData->received_at && !$reviewerRoleData->processed_at) {
-            $hoursElapsed = $reviewerRoleData->received_at->diffInHours(now());
+        // Calculate for both active (vs now) and completed (vs processed_at) stages
+        if ($reviewerRoleData && $reviewerRoleData->received_at) {
+            // For completed: use processed_at as endpoint; for active: use now()
+            $endTime = $reviewerRoleData->processed_at ?? now();
+            $hoursElapsed = $reviewerRoleData->received_at->diffInHours($endTime);
             $daysElapsed = floor($hoursElapsed / 24);
 
             if ($hoursElapsed >= 72) {
-                $reviewerIsOverdue = true;
+                if (!$reviewerRoleData->processed_at) $reviewerIsOverdue = true;
                 $reviewerDeadlineLevel = 'terlambat';
 
-                // Calculate overdue time: hours beyond the 72-hour threshold
                 $hoursOverdue = $hoursElapsed - 72;
                 $daysOverdue = floor($hoursOverdue / 24);
                 $remainingHours = $hoursOverdue % 24;
@@ -1717,7 +1756,8 @@ class OwnerDashboardController extends Controller
                     'days_elapsed' => $daysElapsed,
                     'days_overdue' => $daysOverdue,
                     'hours_overdue' => $remainingHours,
-                    'deadline_at' => $reviewerRoleData->received_at->addHours(72), // 3 days deadline
+                    'deadline_at' => $reviewerRoleData->received_at->copy()->addHours(72),
+                    'is_historical' => $reviewerRoleData->processed_at ? true : false,
                 ];
             } elseif ($hoursElapsed >= 24) {
                 $reviewerDeadlineLevel = 'peringatan';
@@ -1727,7 +1767,8 @@ class OwnerDashboardController extends Controller
                     'days_elapsed' => $daysElapsed,
                     'days_overdue' => 0,
                     'hours_overdue' => 0,
-                    'deadline_at' => $reviewerRoleData->received_at->addHours(72),
+                    'deadline_at' => $reviewerRoleData->received_at->copy()->addHours(72),
+                    'is_historical' => $reviewerRoleData->processed_at ? true : false,
                 ];
             } else {
                 $reviewerDeadlineLevel = 'aman';
@@ -1736,6 +1777,7 @@ class OwnerDashboardController extends Controller
                     'hours_elapsed' => $hoursElapsed,
                     'days_overdue' => 0,
                     'hours_overdue' => 0,
+                    'is_historical' => $reviewerRoleData->processed_at ? true : false,
                 ];
             }
         }
@@ -1832,18 +1874,20 @@ class OwnerDashboardController extends Controller
         $taxDeadlineInfo = null;
         $taxDeadlineLevel = null;
 
-        // Only calculate for documents still being processed
-        if ($taxRoleData && $taxRoleData->received_at && !$taxRoleData->processed_at) {
-            $hoursElapsed = $taxRoleData->received_at->diffInHours(now());
+        // Calculate for both active (vs now) and completed (vs processed_at) stages
+        if ($taxRoleData && $taxRoleData->received_at) {
+            $endTime = $taxRoleData->processed_at ?? now();
+            $hoursElapsed = $taxRoleData->received_at->diffInHours($endTime);
             $daysElapsed = floor($hoursElapsed / 24);
 
             if ($hoursElapsed >= 72) {
-                $taxIsOverdue = true;
+                if (!$taxRoleData->processed_at) $taxIsOverdue = true;
                 $taxDeadlineLevel = 'terlambat';
                 $taxDeadlineInfo = [
                     'received_at' => $taxRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'is_historical' => $taxRoleData->processed_at ? true : false,
                 ];
             } elseif ($hoursElapsed >= 24) {
                 $taxDeadlineLevel = 'peringatan';
@@ -1851,12 +1895,14 @@ class OwnerDashboardController extends Controller
                     'received_at' => $taxRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'is_historical' => $taxRoleData->processed_at ? true : false,
                 ];
             } else {
                 $taxDeadlineLevel = 'aman';
                 $taxDeadlineInfo = [
                     'received_at' => $taxRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
+                    'is_historical' => $taxRoleData->processed_at ? true : false,
                 ];
             }
         }
@@ -1932,18 +1978,20 @@ class OwnerDashboardController extends Controller
         $accountingDeadlineInfo = null;
         $accountingDeadlineLevel = null;
 
-        // Only calculate for documents still being processed
-        if ($accountingRoleData && $accountingRoleData->received_at && !$accountingRoleData->processed_at) {
-            $hoursElapsed = $accountingRoleData->received_at->diffInHours(now());
+        // Calculate for both active (vs now) and completed (vs processed_at) stages
+        if ($accountingRoleData && $accountingRoleData->received_at) {
+            $endTime = $accountingRoleData->processed_at ?? now();
+            $hoursElapsed = $accountingRoleData->received_at->diffInHours($endTime);
             $daysElapsed = floor($hoursElapsed / 24);
 
             if ($hoursElapsed >= 72) {
-                $accountingIsOverdue = true;
+                if (!$accountingRoleData->processed_at) $accountingIsOverdue = true;
                 $accountingDeadlineLevel = 'terlambat';
                 $accountingDeadlineInfo = [
                     'received_at' => $accountingRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'is_historical' => $accountingRoleData->processed_at ? true : false,
                 ];
             } elseif ($hoursElapsed >= 24) {
                 $accountingDeadlineLevel = 'peringatan';
@@ -1951,12 +1999,14 @@ class OwnerDashboardController extends Controller
                     'received_at' => $accountingRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'is_historical' => $accountingRoleData->processed_at ? true : false,
                 ];
             } else {
                 $accountingDeadlineLevel = 'aman';
                 $accountingDeadlineInfo = [
                     'received_at' => $accountingRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
+                    'is_historical' => $accountingRoleData->processed_at ? true : false,
                 ];
             }
         }
@@ -2035,18 +2085,21 @@ class OwnerDashboardController extends Controller
         $paymentDeadlineInfo = null;
         $paymentDeadlineLevel = null;
 
-        // Only calculate for documents still being processed
-        if ($paymentRoleData && $paymentRoleData->received_at && !$paymentRoleData->processed_at && $paymentStatus !== 'completed') {
-            $hoursElapsed = $paymentRoleData->received_at->diffInHours(now());
+        // Calculate for both active (vs now) and completed (vs processed_at/tanggal_dibayar) stages
+        if ($paymentRoleData && $paymentRoleData->received_at) {
+            $isPaymentCompleted = $paymentRoleData->processed_at || $paymentStatus === 'completed';
+            $endTime = $paymentRoleData->processed_at ?? ($paymentStatus === 'completed' ? ($dokumen->tanggal_dibayar ?? now()) : now());
+            $hoursElapsed = $paymentRoleData->received_at->diffInHours($endTime);
             $daysElapsed = floor($hoursElapsed / 24);
 
             if ($hoursElapsed >= 72) {
-                $paymentIsOverdue = true;
+                if (!$isPaymentCompleted) $paymentIsOverdue = true;
                 $paymentDeadlineLevel = 'terlambat';
                 $paymentDeadlineInfo = [
                     'received_at' => $paymentRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'is_historical' => $isPaymentCompleted,
                 ];
             } elseif ($hoursElapsed >= 24) {
                 $paymentDeadlineLevel = 'peringatan';
@@ -2054,12 +2107,14 @@ class OwnerDashboardController extends Controller
                     'received_at' => $paymentRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
                     'days_elapsed' => $daysElapsed,
+                    'is_historical' => $isPaymentCompleted,
                 ];
             } else {
                 $paymentDeadlineLevel = 'aman';
                 $paymentDeadlineInfo = [
                     'received_at' => $paymentRoleData->received_at,
                     'hours_elapsed' => $hoursElapsed,
+                    'is_historical' => $isPaymentCompleted,
                 ];
             }
         }

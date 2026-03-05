@@ -773,8 +773,31 @@
                       </div>
                     @else
                       @php
-                        $stepClass = $i < $currentStep ? 'completed' : ($i == $currentStep ? 'active ' . $deadlineClass : '');
-                        $stepTooltip = $stepLabels[$i - 1] . ($i == $currentStep ? $deadlineTooltipSuffix : '');
+                        $stepDeadlineLevels = $dokumen['step_deadline_levels'] ?? [];
+                        $thisStepLevel = $stepDeadlineLevels[$i] ?? null;
+                        
+                        // Build class
+                        if ($i < $currentStep) {
+                          $completedExtra = '';
+                          if ($thisStepLevel === 'terlambat') $completedExtra = ' was-late';
+                          elseif ($thisStepLevel === 'peringatan') $completedExtra = ' was-warning';
+                          $stepClass = 'completed' . $completedExtra;
+                        } elseif ($i == $currentStep) {
+                          $stepClass = 'active ' . $deadlineClass;
+                        } else {
+                          $stepClass = '';
+                        }
+
+                        // Build tooltip
+                        if ($i == $currentStep) {
+                          $stepTooltip = $stepLabels[$i - 1] . $deadlineTooltipSuffix;
+                        } elseif ($i < $currentStep && $thisStepLevel === 'terlambat') {
+                          $stepTooltip = $stepLabels[$i - 1] . ' · 🔴 Terlambat saat diproses';
+                        } elseif ($i < $currentStep && $thisStepLevel === 'peringatan') {
+                          $stepTooltip = $stepLabels[$i - 1] . ' · ⚠️ Peringatan saat diproses';
+                        } else {
+                          $stepTooltip = $stepLabels[$i - 1];
+                        }
                       @endphp
                       <div class="stepper-step {{ $stepClass }}"
                         data-tooltip="{{ $stepTooltip }}">
