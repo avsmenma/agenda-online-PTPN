@@ -33,3 +33,11 @@ Schedule::command('dokumen:process-auto-forward')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/auto-forward-dokumen.log'));
+
+// Sinkronisasi data perubahan Agenda Online -> Cash Bank (fallback pola observer)
+// Berjalan setiap menit untuk mencari data yang gagal tersync via observer
+Schedule::command('dokumen:sync-cashbank --since="5 minutes ago"')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/sync-cashbank.log'));

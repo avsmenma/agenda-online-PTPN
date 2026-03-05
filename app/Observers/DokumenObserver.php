@@ -28,29 +28,48 @@ class DokumenObserver
      */
     public function updated(Dokumen $dokumen): void
     {
-        // Deteksi: status_pembayaran baru saja berubah menjadi 'sudah_dibayar'
+        // 1. Deteksi: status_pembayaran baru saja berubah menjadi 'sudah_dibayar'
         if (
             $dokumen->wasChanged('status_pembayaran') &&
             $dokumen->status_pembayaran === 'sudah_dibayar'
         ) {
             // Skip jika sudah pernah di-auto-forward (guard clause)
-            if ($dokumen->auto_forwarded_at !== null) {
-                return;
+            if ($dokumen->auto_forwarded_at === null) {
+                Log::info('DokumenObserver: Mendeteksi status_pembayaran = sudah_dibayar via Eloquent', [
+                    'dokumen_id'   => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                ]);
+
+                try {
+                    $this->autoForwardService->forwardToPembayaran($dokumen);
+                } catch (\Throwable $e) {
+                    // Log error tapi jangan throw — jangan interrupt alur utama
+                    Log::error('DokumenObserver: AutoForward gagal', [
+                        'dokumen_id' => $dokumen->id,
+                        'error'      => $e->getMessage(),
+                        'trace'      => $e->getTraceAsString(),
+                    ]);
+                }
             }
+        }
 
-            Log::info('DokumenObserver: Mendeteksi status_pembayaran = sudah_dibayar via Eloquent', [
-                'dokumen_id'   => $dokumen->id,
-                'nomor_agenda' => $dokumen->nomor_agenda,
-            ]);
+        // 2. Deteksi perubahan untuk Sync ke Cash Bank
+        // Hanya sync jika proses update BUKAN dipicu oleh sync dari Cash Bank itu sendiri
+        if (! ($dokumen->_syncing ?? false)) {
+            $changedFields = array_keys($dokumen->getChanges());
+            
+            // Cek apakah ada field yang changed termasuk di SYNCABLE_FIELDS
+            $syncableFields = \App\Services\DokumenSyncService::SYNCABLE_FIELDS;
+            $needsSync = count(array_intersect($changedFields, $syncableFields)) > 0;
 
-            try {
-                $this->autoForwardService->forwardToPembayaran($dokumen);
-            } catch (\Throwable $e) {
-                // Log error tapi jangan throw — jangan interrupt alur utama
-                Log::error('DokumenObserver: AutoForward gagal', [
-                    'dokumen_id' => $dokumen->id,
-                    'error'      => $e->getMessage(),
-                    'trace'      => $e->getTraceAsString(),
+            if ($needsSync) {
+                // Dispatch job ke background untuk Sync ke CB agar tidak memblokir response
+                \App\Jobs\SyncDokumenToCashBankJob::dispatch($dokumen);
+                
+                Log::info('DokumenObserver: Dispatch job SyncDokumenToCashBankJob', [
+                    'dokumen_id'   => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'changed'      => array_intersect($changedFields, $syncableFields),
                 ]);
             }
         }
