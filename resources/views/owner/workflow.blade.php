@@ -1650,7 +1650,7 @@
                 @elseif($stage['state'] === 'done' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'peringatan' && ($stage['isHistorical'] ?? false))
                   <span class="badge-historis-peringatan">⚠️ PERINGATAN SAAT ITU</span>
                 @elseif($stage['state'] === 'done' && !empty($stage['deadlineLevel']) && $stage['deadlineLevel'] === 'terlambat' && ($stage['isHistorical'] ?? false))
-                  <span class="badge-historis-terlambat">🔴 TERLAMBAT SAAT ITU</span>
+                  <span class="badge-historis-terlambat">🔴 TERLAMBAT</span>
                 @endif
                 @if($stage['timestamp'])
                   <div class="cp-date"><i class="far fa-clock"></i> {{ $stage['timestamp'] }}</div>
