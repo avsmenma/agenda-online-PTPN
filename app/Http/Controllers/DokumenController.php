@@ -1190,15 +1190,22 @@ class DokumenController extends Controller
                     }
                     if ($dokumen->nilai_rupiah !== null) {
                         $syncPayload['nilai_rupiah'] = $dokumen->nilai_rupiah;
-                        $syncFields[] = 'nilai_rupiah';
+                        $syncPayload['kredit'] = $dokumen->nilai_rupiah;
+                        $syncFields[] = 'nilai_rupiah→nilai_rupiah+kredit';
                     }
                     if ($dokumen->nomor_agenda !== null) {
                         $syncPayload['no_agenda'] = $dokumen->nomor_agenda;
                         $syncFields[] = 'nomor_agenda→no_agenda';
                     }
-                    if ($request->jenis_pembayaran !== null) {
-                        $syncPayload['jenis_pembayaran'] = $request->jenis_pembayaran;
-                        $syncFields[] = 'jenis_pembayaran';
+
+                    // Sync jenis_pembayaran (name → ID lookup)
+                    $jenisPembayaranNama = $dokumen->jenis_pembayaran;
+                    if (!empty($jenisPembayaranNama)) {
+                        $jpModel = \App\Models\JenisPembayaran::where('nama_jenis_pembayaran', $jenisPembayaranNama)->first();
+                        if ($jpModel) {
+                            $syncPayload['id_jenis_pembayaran'] = $jpModel->id_jenis_pembayaran;
+                            $syncFields[] = 'jenis_pembayaran→id_jenis_pembayaran';
+                        }
                     }
 
                     // Sync kategori IDs langsung dari request (tanpa reverse lookup)
