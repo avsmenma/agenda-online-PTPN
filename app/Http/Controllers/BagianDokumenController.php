@@ -669,6 +669,77 @@ class BagianDokumenController extends Controller
 
             DB::commit();
 
+            // === Direct Sync ke Cash Bank ===
+            // Bypass Observer/Job pipeline — langsung update bank_keluars di Cash Bank
+            try {
+                $cbConnection = config('sync.cashbank_connection', 'cash_bank_new');
+                $agendaKey = $dokumen->nomor_agenda;
+
+                if ($agendaKey) {
+                    $syncPayload = [];
+                    $syncFields = [];
+
+                    // Map basic fields
+                    if ($dokumen->uraian_spp !== null) {
+                        $syncPayload['uraian'] = $dokumen->uraian_spp;
+                        $syncFields[] = 'uraian_spp→uraian';
+                    }
+                    if ($dokumen->nilai_rupiah !== null) {
+                        $syncPayload['nilai_rupiah'] = $dokumen->nilai_rupiah;
+                        $syncFields[] = 'nilai_rupiah';
+                    }
+                    if ($dokumen->nomor_agenda !== null) {
+                        $syncPayload['no_agenda'] = $dokumen->nomor_agenda;
+                        $syncFields[] = 'nomor_agenda→no_agenda';
+                    }
+                    if ($request->jenis_pembayaran !== null) {
+                        $syncPayload['jenis_pembayaran'] = $request->jenis_pembayaran;
+                        $syncFields[] = 'jenis_pembayaran';
+                    }
+
+                    // Sync kategori IDs langsung dari request (tanpa reverse lookup)
+                    if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                        $syncPayload['id_kategori_kriteria'] = $request->kriteria_cf;
+                        $syncFields[] = 'kriteria_cf→id_kategori_kriteria';
+                    }
+                    if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                        $syncPayload['id_sub_kriteria'] = $request->sub_kriteria;
+                        $syncFields[] = 'sub_kriteria→id_sub_kriteria';
+                    }
+                    if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                        $syncPayload['id_item_sub_kriteria'] = $request->item_sub_kriteria;
+                        $syncFields[] = 'item_sub_kriteria→id_item_sub_kriteria';
+                    }
+
+                    if (!empty($syncPayload)) {
+                        $syncPayload['updated_at'] = now();
+
+                        $affected = DB::connection($cbConnection)
+                            ->table('bank_keluars')
+                            ->where(function ($q) use ($dokumen, $agendaKey) {
+                                $q->where('dokumen_id', $dokumen->id)
+                                  ->orWhere('no_agenda', $agendaKey)
+                                  ->orWhere('agenda_tahun', $agendaKey);
+                            })
+                            ->update($syncPayload);
+
+                        \Log::info('[BagianSync] Direct sync AO → CB berhasil.', [
+                            'dokumen_id'    => $dokumen->id,
+                            'agenda_key'    => $agendaKey,
+                            'fields'        => $syncFields,
+                            'rows_affected' => $affected,
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Jangan interrupt — sync gagal tidak boleh menghentikan alur utama
+                \Log::error('[BagianSync] Direct sync AO → CB GAGAL.', [
+                    'dokumen_id' => $dokumen->id,
+                    'error'      => $e->getMessage(),
+                ]);
+            }
+            // === End Direct Sync ===
+
             return redirect()->route('bagian.documents.index')
                 ->with('success', 'Dokumen berhasil diperbarui.');
 
