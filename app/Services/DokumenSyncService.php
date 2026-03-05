@@ -83,16 +83,22 @@ class DokumenSyncService
         try {
             $cbConnection = config('sync.cashbank_connection', 'cash_bank_new');
 
-            // Cari record di bank_keluars berdasarkan dokumen_id atau nomor_agenda
-            $bankKeluar = DB::connection($cbConnection)
-                ->table('bank_keluars')
-                ->where(function ($q) use ($dokumen) {
-                    $q->where('dokumen_id', $dokumen->id)
-                      ->orWhere('no_agenda', $this->buildAgendaKey($dokumen));
-                })
-                ->first();
+            // Cari record di bank_keluars berdasarkan dokumen_id, no_agenda, atau agenda_tahun
+            $agendaKey = $this->buildAgendaKey($dokumen);
 
-            if (! $bankKeluar) {
+            $matchQuery = DB::connection($cbConnection)
+                ->table('bank_keluars')
+                ->where(function ($q) use ($dokumen, $agendaKey) {
+                    $q->where('dokumen_id', $dokumen->id);
+                    if ($agendaKey) {
+                        $q->orWhere('no_agenda', $agendaKey)
+                          ->orWhere('agenda_tahun', $agendaKey);
+                    }
+                });
+
+            $matchCount = $matchQuery->count();
+
+            if ($matchCount === 0) {
                 // Dokumen belum ada di Cash Bank — tidak ada yang perlu diupdate
                 Log::info('[DokumenSync] Dokumen tidak ditemukan di Cash Bank, skip.', [
                     'dokumen_id'    => $dokumen->id,
@@ -173,15 +179,21 @@ class DokumenSyncService
                 return;
             }
 
-            // Eksekusi update ke Cash Bank
+            // Eksekusi update ke SEMUA record yang cocok di Cash Bank
             $affected = DB::connection($cbConnection)
                 ->table('bank_keluars')
-                ->where('id_bank_keluar', $bankKeluar->id_bank_keluar)
+                ->where(function ($q) use ($dokumen, $agendaKey) {
+                    $q->where('dokumen_id', $dokumen->id);
+                    if ($agendaKey) {
+                        $q->orWhere('no_agenda', $agendaKey)
+                          ->orWhere('agenda_tahun', $agendaKey);
+                    }
+                })
                 ->update($updatePayload);
 
             Log::info('[DokumenSync] Push AO → CB berhasil.', [
                 'dokumen_id'   => $dokumen->id,
-                'bank_keluar'  => $bankKeluar->id_bank_keluar,
+                'agenda_key'   => $agendaKey,
                 'fields'       => $fieldsSynced,
                 'rows_affected'=> $affected,
             ]);
