@@ -6751,12 +6751,21 @@ document.addEventListener('DOMContentLoaded', function() {
   .table-wrapper {
     cursor: grab;
     scroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
   .dataTables_scrollBody.is-dragging,
   .table-responsive.is-dragging,
   .table-wrapper.is-dragging {
     cursor: grabbing !important;
     user-select: none !important;
+    will-change: scroll-position;
+  }
+  /* Kill ALL transitions inside table during drag — prevents hover lag */
+  .is-dragging * {
+    transition: none !important;
+    pointer-events: none !important;
   }
 </style>
 
@@ -6782,7 +6791,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let startScrollLeft = 0;
     let startScrollTop  = 0;
 
-    // ── Mouse events ──────────────────────────────────────────
+    // ── Mouse events (rAF-optimised) ───────────────────────────
+    var rafId = 0;
+    var lastMoveX = 0;
+    var lastMoveY = 0;
+
     el.addEventListener('mousedown', function (e) {
       if (e.button !== 0) return;
       if (e.target.closest('a, button, input, select, textarea, label')) return;
@@ -6792,18 +6805,28 @@ document.addEventListener('DOMContentLoaded', function() {
       startY     = e.clientY;
       startScrollLeft = el.scrollLeft;
       startScrollTop  = el.scrollTop;
+      el.style.willChange = 'scroll-position';
       e.stopPropagation();
     }, { passive: true });
 
     el.addEventListener('mousemove', function (e) {
       if (!isDragging) return;
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
+      var deltaX = e.clientX - startX;
+      var deltaY = e.clientY - startY;
       if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
-      didDrag = true;
-      el.classList.add('is-dragging');
-      el.scrollLeft = startScrollLeft - deltaX * SPEED_FACTOR;
-      el.scrollTop  = startScrollTop  - deltaY * SPEED_FACTOR;
+      if (!didDrag) {
+        didDrag = true;
+        el.classList.add('is-dragging');
+      }
+      lastMoveX = deltaX;
+      lastMoveY = deltaY;
+      if (!rafId) {
+        rafId = requestAnimationFrame(function () {
+          el.scrollLeft = startScrollLeft - lastMoveX * SPEED_FACTOR;
+          el.scrollTop  = startScrollTop  - lastMoveY * SPEED_FACTOR;
+          rafId = 0;
+        });
+      }
       e.preventDefault();
     });
 
@@ -6811,9 +6834,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!isDragging) return;
       isDragging = false;
       el.classList.remove('is-dragging');
+      el.style.willChange = 'auto';
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       if (didDrag) {
         e.stopPropagation();
-        const blocker = function (ev) {
+        var blocker = function (ev) {
           ev.stopPropagation();
           ev.preventDefault();
           el.removeEventListener('click', blocker, true);
@@ -6828,6 +6853,8 @@ document.addEventListener('DOMContentLoaded', function() {
         isDragging = false;
         didDrag    = false;
         el.classList.remove('is-dragging');
+        el.style.willChange = 'auto';
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       }
     });
 
@@ -6959,13 +6986,25 @@ document.addEventListener('DOMContentLoaded', function() {
   html.dark body.is-fullscreen .fs-content-area {
     background: #0f172a !important;
   }
-  /* ── Always hide sidebar/secondary nav in fullscreen ── */
+  /* ── Sidebar/secondary nav — smooth hide on fullscreen ── */
+  .sidebar,
+  .secondary-sidebar {
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
   body.is-fullscreen .sidebar,
   body.is-fullscreen .secondary-sidebar {
-    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
   }
   .btn-fullscreen-toggle:focus-visible {
     outline: 2px solid #f59e0b;
+  }
+
+  /* ── Fullscreen transition overlay (smooth fade) ── */
+  body.fullscreen-transitioning .sidebar,
+  body.fullscreen-transitioning .secondary-sidebar {
+    display: block !important; /* keep in DOM for transition to work */
   }
 </style>
 
@@ -7093,6 +7132,8 @@ document.addEventListener('DOMContentLoaded', function() {
     isFullscreen = true;
     try { sessionStorage.setItem(FS_KEY, '1'); } catch(e) {}
 
+    document.body.classList.add('fullscreen-transitioning');
+
     fsArea = findContentArea(fsBtn);
     if (fsArea) {
       const anchor = findFilterAnchor(fsBtn, fsArea);
@@ -7104,6 +7145,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.body.classList.add('is-fullscreen');
     document.body.style.overflow = 'hidden';
+
+    setTimeout(function () {
+      document.body.classList.remove('fullscreen-transitioning');
+    }, 250);
 
     fsBtn.classList.add('active');
     fsBtn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
@@ -7135,15 +7180,21 @@ document.addEventListener('DOMContentLoaded', function() {
     isFullscreen = false;
     try { sessionStorage.removeItem(FS_KEY); } catch(e) {}
 
-    restoreAll();
-
-    if (fsArea) {
-      unlockContentArea(fsArea);
-      fsArea = null;
-    }
-
+    document.body.classList.add('fullscreen-transitioning');
     document.body.classList.remove('is-fullscreen');
-    document.body.style.overflow = '';
+
+    // Wait for CSS transition then clean up
+    setTimeout(function () {
+      document.body.classList.remove('fullscreen-transitioning');
+      restoreAll();
+
+      if (fsArea) {
+        unlockContentArea(fsArea);
+        fsArea = null;
+      }
+
+      document.body.style.overflow = '';
+    }, 250);
 
     // ── Remove "Tambah Dokumen" button ──
     var tambahBtn = document.getElementById('btn-tambah-dokumen-fs');
@@ -7235,8 +7286,188 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+{{-- ===================================================
+     GLOBAL PERFORMANCE CSS: micro-animations, smooth scroll,
+     GPU hints, skeleton loading, button feedback
+     =================================================== --}}
+<style>
+  /* ── Smooth page scroll (except table containers) ── */
+  html { scroll-behavior: smooth; }
+
+  /* ── Button micro-animations ── */
+  button,
+  .btn,
+  [role="button"] {
+    transition: transform 0.1s ease,
+                opacity 0.1s ease,
+                box-shadow 0.15s ease,
+                background 0.2s ease,
+                color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button:active:not(:disabled),
+  .btn:active:not(:disabled),
+  [role="button"]:active:not(:disabled) {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  /* Subtle ripple flash on click */
+  button::after,
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.18);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  button:active::after,
+  .btn:active::after {
+    opacity: 1;
+    transition: none;
+  }
+
+  /* ── GPU hints for dynamic elements ── */
+  .modal,
+  .dropdown-menu,
+  .tooltip,
+  .popover,
+  .notification-toast,
+  .global-notification-toast,
+  #urgencyGlobalBanner {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  /* ── Smooth transitions for status/navigation ── */
+  .badge,
+  .status-indicator,
+  .nav-item,
+  .nav-link,
+  .sidebar a,
+  .sidebar .nav-link,
+  .sidebar .menu-item {
+    transition: background-color 0.15s ease,
+                color 0.15s ease,
+                opacity 0.15s ease;
+  }
+
+  /* ── DataTable row hover — GPU-friendly ── */
+  .dataTables_wrapper tbody tr {
+    transition: background-color 0.12s ease;
+  }
+
+  /* ── DataTable skeleton shimmer ── */
+  @keyframes skeleton-shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+  }
+
+  .dt-skeleton-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 5;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .dt-skeleton-overlay.visible { opacity: 1; }
+
+  html.dark .dt-skeleton-overlay {
+    background: rgba(15,23,42,0.85);
+  }
+
+  .dt-skeleton-row {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 600px 100%;
+    animation: skeleton-shimmer 1.5s infinite linear;
+    border-radius: 6px;
+    height: 38px;
+    min-width: 100%;
+  }
+  html.dark .dt-skeleton-row {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 600px 100%;
+  }
+
+  /* Fade-in after data loads */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .dt-data-loaded tbody tr {
+    animation: fadeInUp 0.2s ease forwards;
+  }
+</style>
+
+{{-- ===================================================
+     DATATABLE SKELETON LOADING: show shimmer during AJAX
+     =================================================== --}}
+<script>
+(function () {
+  if (!window.jQuery) return;
+
+  function createSkeleton(wrapper) {
+    if (wrapper.querySelector('.dt-skeleton-overlay')) return;
+    var body = wrapper.querySelector('.dataTables_scrollBody') ||
+               wrapper.querySelector('tbody');
+    if (!body) return;
+    body.style.position = 'relative';
+
+    var overlay = document.createElement('div');
+    overlay.className = 'dt-skeleton-overlay';
+    for (var i = 0; i < 6; i++) {
+      var row = document.createElement('div');
+      row.className = 'dt-skeleton-row';
+      overlay.appendChild(row);
+    }
+    body.appendChild(overlay);
+    // Trigger reflow then show
+    overlay.offsetHeight;
+    overlay.classList.add('visible');
+  }
+
+  function removeSkeleton(wrapper) {
+    var overlay = wrapper.querySelector('.dt-skeleton-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('visible');
+    setTimeout(function () { overlay.remove(); }, 150);
+    wrapper.classList.add('dt-data-loaded');
+    setTimeout(function () { wrapper.classList.remove('dt-data-loaded'); }, 300);
+  }
+
+  jQuery(document).on('preXhr.dt', function (e, settings) {
+    var wrapper = jQuery(settings.nTableWrapper)[0];
+    if (wrapper) createSkeleton(wrapper);
+  });
+
+  jQuery(document).on('xhr.dt', function (e, settings) {
+    var wrapper = jQuery(settings.nTableWrapper)[0];
+    if (wrapper) {
+      // Small delay so skeleton doesn't flash for very fast requests
+      setTimeout(function () { removeSkeleton(wrapper); }, 100);
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
+
+
+
 
 
 
