@@ -6917,6 +6917,32 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
   }
 
+  /* ── Tambah Dokumen button (fullscreen only) ── */
+  .btn-tambah-dokumen-fs {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    white-space: nowrap;
+    text-decoration: none;
+    margin-left: 8px;
+  }
+  .btn-tambah-dokumen-fs:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+    color: white;
+  }
+
   /* ── Container when fullscreen ── */
   body.is-fullscreen .fs-content-area {
     position: fixed !important;
@@ -7082,6 +7108,25 @@ document.addEventListener('DOMContentLoaded', function() {
     fsBtn.classList.add('active');
     fsBtn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
     fsBtn.title = 'Keluar dari mode fullscreen (Esc)';
+
+    // ── Inject "Tambah Dokumen" button next to fullscreen button ──
+    if (!document.getElementById('btn-tambah-dokumen-fs')) {
+      var tambahBtn = document.createElement('button');
+      tambahBtn.type = 'button';
+      tambahBtn.id = 'btn-tambah-dokumen-fs';
+      tambahBtn.className = 'btn-tambah-dokumen-fs';
+      tambahBtn.innerHTML = '✚ Tambah Dokumen';
+      tambahBtn.title = 'Tambah dokumen baru';
+      tambahBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        try {
+          sessionStorage.setItem('return_to_fullscreen', '1');
+          sessionStorage.setItem('return_url', window.location.pathname + window.location.search);
+        } catch(err) {}
+        window.location.href = '/documents/create';
+      });
+      fsBtn.parentNode.insertBefore(tambahBtn, fsBtn.nextSibling);
+    }
   }
 
   // ── Exit fullscreen ───────────────────────────────────────────
@@ -7099,6 +7144,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.body.classList.remove('is-fullscreen');
     document.body.style.overflow = '';
+
+    // ── Remove "Tambah Dokumen" button ──
+    var tambahBtn = document.getElementById('btn-tambah-dokumen-fs');
+    if (tambahBtn) tambahBtn.remove();
 
     document.querySelectorAll('.btn-fullscreen-toggle').forEach(function (b) {
       b.classList.remove('active');
@@ -7149,6 +7198,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ── Restore fullscreen state after filter/reload ─────────────
   function restoreFullscreenIfNeeded() {
+    // Check ?fullscreen=1 URL param (from redirect after document creation)
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('fullscreen') === '1') {
+        sessionStorage.setItem(FS_KEY, '1');
+        params.delete('fullscreen');
+        var newUrl = window.location.pathname +
+                     (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+    } catch(e) {}
+
     let saved = false;
     try { saved = sessionStorage.getItem(FS_KEY) === '1'; } catch(e) {}
     if (!saved) return;

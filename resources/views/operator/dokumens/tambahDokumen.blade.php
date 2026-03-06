@@ -318,6 +318,10 @@
     <form action="{{ route('documents.store') }}" method="POST">
       @csrf
 
+      {{-- Hidden inputs for fullscreen return state --}}
+      <input type="hidden" name="return_to_fullscreen" id="return_to_fullscreen" value="">
+      <input type="hidden" name="return_url" id="return_url" value="">
+
       <!-- Input Dokumen Baru -->
       <div class="section-title">Input Dokumen Baru</div>
 
@@ -1781,5 +1785,26 @@
       background: #555;
     }
   </style>
+
+  {{-- Script: populate fullscreen return state from sessionStorage --}}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        var returnFs = sessionStorage.getItem('return_to_fullscreen');
+        var returnUrl = sessionStorage.getItem('return_url');
+
+        if (returnFs) {
+          var fsInput = document.getElementById('return_to_fullscreen');
+          var urlInput = document.getElementById('return_url');
+          if (fsInput) fsInput.value = '1';
+          if (urlInput) urlInput.value = returnUrl || '';
+
+          // Clear so Batal / browser back won't trigger fullscreen
+          sessionStorage.removeItem('return_to_fullscreen');
+          sessionStorage.removeItem('return_url');
+        }
+      } catch(e) {}
+    });
+  </script>
 
 @endsection

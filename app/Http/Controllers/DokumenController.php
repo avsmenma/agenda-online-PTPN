@@ -742,6 +742,19 @@ class DokumenController extends Controller
                 $successMessage .= ' Nomor agenda: ' . $dokumen->nomor_agenda;
             }
 
+            // Check if user should return to fullscreen mode
+            $returnFullscreen = $request->input('return_to_fullscreen', false);
+            $returnUrl = $request->input('return_url', route('documents.index'));
+
+            if ($returnFullscreen) {
+                $urlWithFullscreen = $returnUrl .
+                    (str_contains($returnUrl, '?') ? '&' : '?') .
+                    'fullscreen=1';
+
+                return redirect($urlWithFullscreen)
+                    ->with('success', $successMessage);
+            }
+
             return redirect()->route('documents.index')
                 ->with('success', $successMessage);
 
