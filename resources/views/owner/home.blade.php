@@ -240,7 +240,7 @@
                 <div>
                     <div class="banner-greeting">
                         <span style="font-size:20px">📊</span>
-                        <span>{{ $greeting }}, <strong>{{ auth()->user()->name }}</strong></span>
+                        <span>{{ $greeting }}, <strong>Pak Herry</strong></span>
                     </div>
                     <h1 class="banner-title">Dashboard Kabag Keuangan</h1>
                     <p class="banner-subtitle">Pantau dan kelola semua dokumen perusahaan dengan mudah</p>
