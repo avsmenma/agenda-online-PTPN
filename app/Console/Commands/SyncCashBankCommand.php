@@ -30,15 +30,19 @@ class SyncCashBankCommand extends Command
         $since = $this->option('since');
         
         $this->info("Memulai sinkronisasi Agenda Online -> Cash Bank untuk data yang berubah sejak: {$since}");
-        Log::info("[DokumenSyncCommand] Memulai sync dari Artisan", ['since' => $since]);
+        // [FIX LOG BLOATING] Dihapus: Log::info duplikat (output console sudah cukup)
 
         try {
             $count = $syncService->syncAllChanged($since);
             $this->info("Sinkronisasi selesai. {$count} dokumen berhasil di proses.");
-            Log::info("[DokumenSyncCommand] Selesai", ['count' => $count]);
+            // [FIX LOG BLOATING] Hanya log jika ada yang diproses, tanpa trace
+            if ($count > 0) {
+                Log::info("[DokumenSyncCommand] Selesai", ['count' => $count]);
+            }
         } catch (\Throwable $e) {
             $this->error("Terjadi kesalahan saat sinkronisasi: " . $e->getMessage());
-            Log::error("[DokumenSyncCommand] Error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            // [FIX LOG BLOATING] Hapus trace dari log error
+            Log::error("[DokumenSyncCommand] Error: " . $e->getMessage());
             return Command::FAILURE;
         }
 

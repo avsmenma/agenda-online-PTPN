@@ -145,7 +145,7 @@ class ProcessAutoForwardQueue extends Command
                 'dokumen_id'   => $dokumenId,
                 'nomor_agenda' => $dokumen->nomor_agenda,
                 'error'        => $errorMsg,
-                'trace'        => $e->getTraceAsString(),
+                // [FIX LOG BLOATING] Dihapus: 'trace' => $e->getTraceAsString() (hemat ~2-5KB/entry)
             ]);
 
             $this->updateQueueStatus($dokumenId, 'failed', $errorMsg);

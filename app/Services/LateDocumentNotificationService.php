@@ -39,7 +39,8 @@ class LateDocumentNotificationService
         ];
 
         foreach ($this->notifyRoles as $roleCode) {
-            Log::info("[LateDocumentNotification] Checking role: {$roleCode}");
+            // [FIX LOG BLOATING] Routine check → debug
+            Log::debug("[LateDocumentNotification] Checking role: {$roleCode}");
 
             $roleResult = $this->processRoleNotifications($roleCode, $dryRun);
 
@@ -71,7 +72,8 @@ class LateDocumentNotificationService
         $result['checked'] = $lateDocuments->count();
 
         if ($lateDocuments->isEmpty()) {
-            Log::info("[LateDocumentNotification] No late documents for role: {$roleCode}");
+            // [FIX LOG BLOATING] Tidak ada dokumen late = normal, tidak perlu log info
+            Log::debug("[LateDocumentNotification] No late documents for role: {$roleCode}");
             return $result;
         }
 

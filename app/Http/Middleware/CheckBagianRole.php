@@ -76,12 +76,8 @@ final class CheckBagianRole
                 ->with('error', 'Konfigurasi akun Bagian tidak lengkap. Hubungi administrator.');
         }
 
-        Log::info('Bagian role check passed', [
-            'user_id' => $user->id,
-            'user_role' => $user->role,
-            'bagian_code' => $user->bagian_code,
-            'path' => $request->path(),
-        ]);
+        // [FIX LOG BLOATING] Dihapus: Log::info('Bagian role check passed') 
+        // yang sebelumnya menulis log di SETIAP request user bagian
 
         return $next($request);
     }

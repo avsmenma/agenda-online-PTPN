@@ -47,19 +47,18 @@ class AutoForwardDokumenService
 
         // Double-check: pastikan memang sudah_dibayar
         if ($dokumen->status_pembayaran !== 'sudah_dibayar') {
-            Log::info('AutoForward skipped: status_pembayaran bukan sudah_dibayar', [
+            // [FIX LOG BLOATING] Guard clause skip → debug (bukan info)
+            Log::debug('AutoForward skipped: status_pembayaran bukan sudah_dibayar', [
                 'dokumen_id'        => $dokumen->id,
-                'nomor_agenda'      => $dokumen->nomor_agenda,
-                'status_pembayaran' => $dokumen->status_pembayaran,
             ]);
             return false;
         }
 
         // Skip jika sudah pernah di-auto-forward
         if ($dokumen->auto_forwarded_at !== null) {
-            Log::info('AutoForward skipped: dokumen sudah pernah di-auto-forward', [
-                'dokumen_id'        => $dokumen->id,
-                'auto_forwarded_at' => $dokumen->auto_forwarded_at,
+            // [FIX LOG BLOATING] Guard clause skip → debug
+            Log::debug('AutoForward skipped: dokumen sudah pernah di-auto-forward', [
+                'dokumen_id' => $dokumen->id,
             ]);
             return false;
         }
@@ -68,7 +67,8 @@ class AutoForwardDokumenService
         if ($dokumen->current_handler === 'pembayaran') {
             $pembayaranStatus = $dokumen->getStatusForRole('pembayaran');
             if ($pembayaranStatus && $pembayaranStatus->status === DokumenStatus::STATUS_APPROVED) {
-                Log::info('AutoForward skipped: dokumen sudah di role pembayaran (approved)', [
+                // [FIX LOG BLOATING] Guard clause skip → debug
+                Log::debug('AutoForward skipped: dokumen sudah di role pembayaran (approved)', [
                     'dokumen_id' => $dokumen->id,
                 ]);
                 return false;
@@ -91,7 +91,8 @@ class AutoForwardDokumenService
 
         // Jika sudah di pembayaran (index akhir), tidak perlu forward
         if ($currentIndex >= count(self::ROLE_ORDER) - 1) {
-            Log::info('AutoForward skipped: dokumen sudah di pembayaran', [
+            // [FIX LOG BLOATING] Guard clause skip → debug
+            Log::debug('AutoForward skipped: dokumen sudah di pembayaran', [
                 'dokumen_id' => $dokumen->id,
             ]);
             return false;

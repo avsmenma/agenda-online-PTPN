@@ -99,13 +99,10 @@ class DokumenSyncService
             $matchCount = $matchQuery->count();
 
             if ($matchCount === 0) {
-                // Dokumen belum ada di Cash Bank — tidak ada yang perlu diupdate
-                Log::info('[DokumenSync] Dokumen tidak ditemukan di Cash Bank, skip.', [
+                // [FIX LOG BLOATING] Turunkan ke debug — log ini muncul tiap menit per dokumen
+                Log::debug('[DokumenSync] Dokumen tidak ditemukan di Cash Bank, skip.', [
                     'dokumen_id'    => $dokumen->id,
-                    'nomor_agenda'  => $dokumen->nomor_agenda,
                 ]);
-                $this->log($dokumen->id, 'ao_to_cb', 'skipped_no_change', [], null, null,
-                    'Record tidak ditemukan di bank_keluars');
                 return;
             }
 
@@ -201,10 +198,10 @@ class DokumenSyncService
             $this->log($dokumen->id, 'ao_to_cb', 'success', $fieldsSynced);
 
         } catch (\Throwable $e) {
+            // [FIX LOG BLOATING] Hapus trace (hemat ~500 byte/entry), cukup pesan error
             Log::error('[DokumenSync] Push AO → CB GAGAL.', [
                 'dokumen_id' => $dokumen->id,
                 'error'      => $e->getMessage(),
-                'trace'      => $e->getTraceAsString(),
             ]);
 
             $this->log($dokumen->id, 'ao_to_cb', 'failed', [], null, null,
@@ -226,15 +223,22 @@ class DokumenSyncService
             \Carbon\Carbon::createFromTimestamp(strtotime($since))
         ));
 
-        $dokumens = Dokumen::where('updated_at', '>=', $sinceTime)
-            ->whereNotNull('nomor_agenda')
-            ->get();
-
         $count = 0;
-        foreach ($dokumens as $dokumen) {
-            $this->pushToCashBank($dokumen);
-            $count++;
-        }
+
+        // [FIX LOG BLOATING] Gunakan chunk(100) agar tidak load semua dokumen ke memori
+        // Sebelumnya menggunakan get() yang bisa memuat ribuan record sekaligus
+        Dokumen::where('updated_at', '>=', $sinceTime)
+            ->whereNotNull('nomor_agenda')
+            ->select(['id', 'nomor_agenda', 'uraian_spp', 'nilai_rupiah', 'dibayar_kepada',
+                      'status_pembayaran', 'tanggal_dibayar', 'link_bukti_pembayaran',
+                      'kategori', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran',
+                      'keterangan', 'updated_at'])
+            ->chunk(100, function ($dokumens) use (&$count) {
+                foreach ($dokumens as $dokumen) {
+                    $this->pushToCashBank($dokumen);
+                    $count++;
+                }
+            });
 
         return $count;
     }

@@ -66,9 +66,9 @@ class DokumenObserver
                 // Dispatch job ke background untuk Sync ke CB agar tidak memblokir response
                 \App\Jobs\SyncDokumenToCashBankJob::dispatch($dokumen);
                 
-                Log::info('DokumenObserver: Dispatch job SyncDokumenToCashBankJob', [
+                // [FIX LOG BLOATING] Dispatch log → debug (muncul setiap Dokumen update)
+                Log::debug('DokumenObserver: Dispatch job SyncDokumenToCashBankJob', [
                     'dokumen_id'   => $dokumen->id,
-                    'nomor_agenda' => $dokumen->nomor_agenda,
                     'changed'      => array_intersect($changedFields, $syncableFields),
                 ]);
             }
