@@ -261,13 +261,13 @@ class OwnerDashboardController extends Controller
                 ->orWhereNotNull('tanggal_dibayar');
         })->count();
 
+        // Dokumen Belum Siap Bayar (sama dengan query di index())
         $dokumenProses = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                })
-                ->whereNull('tanggal_dibayar');
+                        ->orWhere('status_pembayaran', 'belum_dibayar');
+                });
         })->count();
 
         $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
