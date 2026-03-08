@@ -1013,7 +1013,7 @@
     /* Information Grid */
     .info-grid {
       display: block;
-      margin-top: 48px;
+      margin-top: 32px;
     }
 
     .info-card {
@@ -2679,8 +2679,8 @@
       const modalSubtitle = document.getElementById('modal-subtitle');
       const modalIcon = document.getElementById('modal-icon');
 
-      // Check if elements exist
-      if (!modal || !modalClose || !documentCard || !taxCard || !modalTitle || !modalSubtitle || !modalIcon) {
+      // Check if essential elements exist (taxCard is optional — may not exist after restructure)
+      if (!modal || !modalClose || !documentCard || !modalTitle || !modalSubtitle || !modalIcon) {
         console.error('Modal elements not found');
         return;
       }
