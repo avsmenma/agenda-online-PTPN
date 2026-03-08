@@ -1012,9 +1012,7 @@
 
     /* Information Grid */
     .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
+      display: block;
       margin-top: 48px;
     }
 
