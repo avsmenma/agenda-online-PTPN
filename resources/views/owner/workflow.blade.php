@@ -1019,35 +1019,40 @@
     .info-card {
       background: white;
       border-radius: 20px;
-      padding: 28px;
+      padding: 0;
       box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08);
       border: 1px solid rgba(8, 62, 64, 0.1);
+      overflow: hidden;
     }
 
     .info-card-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #f1f5f9;
+      gap: 14px;
+      padding: 20px 32px;
+      background: #083E40;
     }
 
     .info-card-icon {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 18px;
       color: white;
+      background: rgba(255, 255, 255, 0.15) !important;
     }
 
     .info-card-title {
       font-size: 18px;
       font-weight: 700;
-      color: #0f172a;
+      color: white;
+    }
+
+    .info-card-body {
+      padding: 28px 32px;
     }
 
     /* Hero Financial Card */
@@ -1913,6 +1918,7 @@
           <div class="info-card-title">Informasi Dokumen</div>
         </div>
 
+        <div class="info-card-body">
         {{-- Informasi Umum --}}
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
           <div>
@@ -2025,6 +2031,7 @@
             <p style="font-size: 14px; margin: 0;">Belum ada data</p>
           </div>
         @endif
+        </div>
       </div>
     </div>
   </div>
@@ -2263,7 +2270,7 @@
         <div class="modal-section">
           <div class="modal-section-title">
             <i class="fas fa-building"></i>
-            Informasi Pengirim & Penerima
+            Informasi Pengirim
           </div>
           <div class="modal-grid">
             ${formatField('Kebun', documentData.kebun) ? `
