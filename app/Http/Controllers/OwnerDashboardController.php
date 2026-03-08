@@ -245,6 +245,7 @@ class OwnerDashboardController extends Controller
                               })->count(),
             'terlambat' => Dokumen::where('created_at', '<', now()->subDays(3))
                               ->whereNull('tanggal_dibayar')
+                              ->where('current_handler', '!=', 'operator')
                               ->where(function($q) {
                                   $q->whereNull('status_pembayaran')
                                     ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
@@ -368,6 +369,7 @@ class OwnerDashboardController extends Controller
             $terlambat = (clone $baseQuery)
                 ->where('created_at', '<', now()->subDays(3))
                 ->whereNull('tanggal_dibayar')
+                ->where('current_handler', '!=', 'operator')
                 ->where(function($q) {
                     $q->whereNull('status_pembayaran')
                       ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
