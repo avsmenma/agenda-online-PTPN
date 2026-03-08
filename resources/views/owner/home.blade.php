@@ -17,10 +17,12 @@
 
         /* HEADER BANNER */
         .dash-banner {
-            background: linear-gradient(135deg, #0D4F4A 0%, #0D9488 60%, #14B8A6 100%);
+            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
             padding: 28px 36px 24px;
             position: relative;
             overflow: hidden;
+            border-radius: 16px;
+            margin: 24px 24px 0;
         }
         .dash-banner .circle-decor {
             position: absolute;
@@ -273,9 +275,11 @@
                         <div>
                             <div class="stat-label">Total Dokumen</div>
                             <div class="stat-value" data-counter="{{ $totalDokumen }}">0</div>
-                            <div class="stat-change {{ $totalDokumenTrend > 0 ? 'pos' : ($totalDokumenTrend < 0 ? 'neg' : 'neutral') }}">
-                                {{ $totalDokumenTrend > 0 ? '↑ +'.$totalDokumenTrend.'%' : ($totalDokumenTrend < 0 ? '↓ '.$totalDokumenTrend.'%' : '→ Sama') }} vs bulan lalu
+                            @if($totalDokumenTrend != 0)
+                            <div class="stat-change {{ $totalDokumenTrend > 0 ? 'pos' : 'neg' }}">
+                                {{ $totalDokumenTrend > 0 ? '↑ +'.$totalDokumenTrend.'%' : '↓ '.$totalDokumenTrend.'%' }} vs bulan lalu
                             </div>
+                            @endif
                         </div>
                         <div class="stat-icon" style="background:#0D948818">📄</div>
                     </div>
@@ -288,9 +292,11 @@
                         <div>
                             <div class="stat-label">Belum Dibayar</div>
                             <div class="stat-value" data-counter="{{ $dokumenProses }}">0</div>
-                            <div class="stat-change {{ $prosesTrend > 0 ? 'neg' : ($prosesTrend < 0 ? 'pos' : 'neutral') }}">
-                                {{ $prosesTrend > 0 ? '↑ +'.$prosesTrend.'%' : ($prosesTrend < 0 ? '↓ '.$prosesTrend.'%' : '→ Sama') }} vs bulan lalu
+                            @if($prosesTrend != 0)
+                            <div class="stat-change {{ $prosesTrend > 0 ? 'neg' : 'pos' }}">
+                                {{ $prosesTrend > 0 ? '↑ +'.$prosesTrend.'%' : '↓ '.$prosesTrend.'%' }} vs bulan lalu
                             </div>
+                            @endif
                         </div>
                         <div class="stat-icon" style="background:#F59E0B18">⏳</div>
                     </div>
@@ -303,9 +309,11 @@
                         <div>
                             <div class="stat-label">Siap Dibayar</div>
                             <div class="stat-value" data-counter="{{ $dokumenSiapBayar }}">0</div>
-                            <div class="stat-change {{ $siapTrend > 0 ? 'pos' : ($siapTrend < 0 ? 'neg' : 'neutral') }}">
-                                {{ $siapTrend > 0 ? '↑ +'.$siapTrend.'%' : ($siapTrend < 0 ? '↓ '.$siapTrend.'%' : '→ Sama') }} vs bulan lalu
+                            @if($siapTrend != 0)
+                            <div class="stat-change {{ $siapTrend > 0 ? 'pos' : 'neg' }}">
+                                {{ $siapTrend > 0 ? '↑ +'.$siapTrend.'%' : '↓ '.$siapTrend.'%' }} vs bulan lalu
                             </div>
+                            @endif
                         </div>
                         <div class="stat-icon" style="background:#3B82F618">✅</div>
                     </div>
@@ -318,9 +326,11 @@
                         <div>
                             <div class="stat-label">Sudah Dibayar</div>
                             <div class="stat-value" data-counter="{{ $dokumenSelesai }}">0</div>
-                            <div class="stat-change {{ $selesaiTrend > 0 ? 'pos' : ($selesaiTrend < 0 ? 'neg' : 'neutral') }}">
-                                {{ $selesaiTrend > 0 ? '↑ +'.$selesaiTrend.'%' : ($selesaiTrend < 0 ? '↓ '.$selesaiTrend.'%' : '→ Sama') }} vs bulan lalu
+                            @if($selesaiTrend != 0)
+                            <div class="stat-change {{ $selesaiTrend > 0 ? 'pos' : 'neg' }}">
+                                {{ $selesaiTrend > 0 ? '↑ +'.$selesaiTrend.'%' : '↓ '.$selesaiTrend.'%' }} vs bulan lalu
                             </div>
+                            @endif
                         </div>
                         <div class="stat-icon" style="background:#10B98118">💳</div>
                     </div>
@@ -331,9 +341,11 @@
                 <div class="stat-card gradient">
                     <div class="stat-label">Total Nilai (RP)</div>
                     <div class="stat-value" data-counter="{{ $totalNilai }}" data-prefix="Rp ">0</div>
+                    @if($nilaiTrend != 0)
                     <div class="stat-change">
-                        {{ $nilaiTrend > 0 ? '↑ +'.$nilaiTrend.'%' : ($nilaiTrend < 0 ? '↓ '.$nilaiTrend.'%' : '→ Sama') }} vs bulan lalu
+                        {{ $nilaiTrend > 0 ? '↑ +'.$nilaiTrend.'%' : '↓ '.$nilaiTrend.'%' }} vs bulan lalu
                     </div>
+                    @endif
                     <div style="margin-top:12px; font-size:20px">💰</div>
                 </div>
             </div>
