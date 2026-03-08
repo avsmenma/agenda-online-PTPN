@@ -87,13 +87,14 @@ class OwnerDashboardController extends Controller
                 ->orWhereNotNull('tanggal_dibayar');
         })->count();
 
-        // Dokumen Belum Siap Bayar: dokumen yang belum selesai dan belum siap dibayar
+        // Dokumen Belum Siap Bayar: belum selesai dan belum dibayar
         $dokumenBelumSiapBayar = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', 'belum_dibayar');
-                });
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
         })->count();
 
         // Dokumen Siap Bayar: dokumen dengan status_pembayaran = siap_dibayar, tapi belum punya tanggal_dibayar
@@ -266,8 +267,9 @@ class OwnerDashboardController extends Controller
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
-                        ->orWhere('status_pembayaran', 'belum_dibayar');
-                });
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
         })->count();
 
         $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
