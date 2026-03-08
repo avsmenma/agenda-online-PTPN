@@ -517,6 +517,18 @@ class OwnerDashboardController extends Controller
             $query->where('bagian', $request->filter_bagian);
         }
 
+        // Filter by umur dokumen (terlambat) — exclude Operator role
+        if ($request && $request->has('filter_umur') && !empty($request->filter_umur)) {
+            $days = (int) $request->filter_umur;
+            $query->where('created_at', '<', now()->subDays($days))
+                  ->where('current_handler', '!=', 'operator')
+                  ->whereNull('tanggal_dibayar')
+                  ->where(function ($q) {
+                      $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                  });
+        }
+
         // Filter by vendor/dibayar_kepada
         if ($request && $request->has('filter_vendor') && !empty($request->filter_vendor)) {
             $query->where(function ($q) use ($request) {
