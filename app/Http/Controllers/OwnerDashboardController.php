@@ -225,20 +225,41 @@ class OwnerDashboardController extends Controller
      */
     public function home()
     {
-        // Get document counts per bagian
-        $bagianStats = $this->getBagianStatistics();
+        // === GREETING DINAMIS ===
+        $hour = now()->hour;
+        $greeting = match(true) {
+            $hour < 12 => 'Selamat Pagi',
+            $hour < 15 => 'Selamat Siang',
+            $hour < 18 => 'Selamat Sore',
+            default    => 'Selamat Malam',
+        };
 
-        // Get overall statistics
+        // === RINGKASAN HARI INI ===
+        $hariIni = [
+            'masuk'     => Dokumen::whereDate('created_at', today())->count(),
+            'mendekati' => Dokumen::whereBetween('created_at', [now()->subDays(3), now()->subDay()])
+                              ->whereNull('tanggal_dibayar')
+                              ->where(function($q) {
+                                  $q->whereNull('status_pembayaran')
+                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                              })->count(),
+            'terlambat' => Dokumen::where('created_at', '<', now()->subDays(3))
+                              ->whereNull('tanggal_dibayar')
+                              ->where(function($q) {
+                                  $q->whereNull('status_pembayaran')
+                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                              })->count(),
+        ];
+
+        // === STATISTIK UTAMA ===
         $totalDokumen = Dokumen::count();
 
-        // Dokumen Selesai
         $dokumenSelesai = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->orWhere('status_pembayaran', 'sudah_dibayar')
                 ->orWhereNotNull('tanggal_dibayar');
         })->count();
 
-        // Dokumen Proses
         $dokumenProses = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
@@ -248,66 +269,122 @@ class OwnerDashboardController extends Controller
                 ->whereNull('tanggal_dibayar');
         })->count();
 
-        // Dokumen Siap Bayar
         $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
             ->whereNull('tanggal_dibayar')
             ->count();
 
-        // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
-        // Calculate trend indicators (compare with last week)
-        $oneWeekAgo = Carbon::now()->subWeek();
+        // === PERSENTASE PERUBAHAN VS BULAN LALU ===
+        $bulanIni = now()->month;
+        $tahunIni = now()->year;
+        $bulanLaluDate = now()->subMonth();
 
-        $totalDokumenLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->count();
-        $totalDokumenTrend = $totalDokumenLastWeek > 0
-            ? round((($totalDokumen - $totalDokumenLastWeek) / $totalDokumenLastWeek) * 100, 1)
-            : 0;
+        $totalBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->count();
+        $totalBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)->count();
+        $totalDokumenTrend = $totalBulanLalu > 0 ? round((($totalBulanIni - $totalBulanLalu) / $totalBulanLalu) * 100) : 0;
+
+        $prosesBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)
+            ->where(function($q) { $q->whereNull('status_pembayaran')->orWhere('status_pembayaran', '!=', 'sudah_dibayar'); })
+            ->whereNull('tanggal_dibayar')->count();
+        $prosesBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)
+            ->where(function($q) { $q->whereNull('status_pembayaran')->orWhere('status_pembayaran', '!=', 'sudah_dibayar'); })
+            ->whereNull('tanggal_dibayar')->count();
+        $prosesTrend = $prosesBulanLalu > 0 ? round((($prosesBulanIni - $prosesBulanLalu) / $prosesBulanLalu) * 100) : 0;
+
+        $siapBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->where('status_pembayaran', 'siap_dibayar')->whereNull('tanggal_dibayar')->count();
+        $siapBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)->where('status_pembayaran', 'siap_dibayar')->whereNull('tanggal_dibayar')->count();
+        $siapTrend = $siapBulanLalu > 0 ? round((($siapBulanIni - $siapBulanLalu) / $siapBulanLalu) * 100) : 0;
+
+        $selesaiBulanIni  = Dokumen::whereMonth('updated_at', $bulanIni)->whereYear('updated_at', $tahunIni)
+            ->where(function($q) { $q->where('status_pembayaran', 'sudah_dibayar')->orWhereNotNull('tanggal_dibayar'); })->count();
+        $selesaiBulanLalu = Dokumen::whereMonth('updated_at', $bulanLaluDate->month)->whereYear('updated_at', $bulanLaluDate->year)
+            ->where(function($q) { $q->where('status_pembayaran', 'sudah_dibayar')->orWhereNotNull('tanggal_dibayar'); })->count();
+        $selesaiTrend = $selesaiBulanLalu > 0 ? round((($selesaiBulanIni - $selesaiBulanLalu) / $selesaiBulanLalu) * 100) : 0;
+
+        $nilaiBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->sum('nilai_rupiah') ?? 0;
+        $nilaiBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)->sum('nilai_rupiah') ?? 0;
+        $nilaiTrend = $nilaiBulanLalu > 0 ? round((($nilaiBulanIni - $nilaiBulanLalu) / $nilaiBulanLalu) * 100) : 0;
+
+        // === TREN 30 HARI (Area Chart) ===
+        $trend = Dokumen::selectRaw('DATE(created_at) as tgl, COUNT(*) as total')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('tgl')->orderBy('tgl')->get();
+        $chartLabels = $trend->pluck('tgl')->map(fn($d) => Carbon::parse($d)->format('d M'))->toArray();
+        $chartData   = $trend->pluck('total')->toArray();
+
+        // === BAGIAN STATS (Bar Chart + Progress) ===
+        $bagianStats = $this->getBagianStatistics();
+        $maxBagian = collect($bagianStats)->max('count') ?: 1;
 
         return view('owner.home', compact(
+            'greeting',
+            'hariIni',
             'bagianStats',
+            'maxBagian',
             'totalDokumen',
             'dokumenProses',
             'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
-            'totalDokumenTrend'
+            'totalDokumenTrend',
+            'prosesTrend',
+            'siapTrend',
+            'selesaiTrend',
+            'nilaiTrend',
+            'chartLabels',
+            'chartData'
         ))
             ->with('title', 'Dashboard Kabag Keuangan - Home')
             ->with('module', 'owner')
             ->with('menuHome', 'active')
             ->with('menuDokumen', '')
-            ->with('menuRekapanKeterlambatan', '')
-            ->with('welcomeMessage', '👋 Selamat datang, Kabag Keuangan');
+            ->with('menuRekapanKeterlambatan', '');
     }
 
     /**
-     * Get document statistics per bagian
+     * Get document statistics per bagian (with terlambat count)
      */
     private function getBagianStatistics(): array
     {
         $bagianList = [
-            'AKN' => ['icon' => 'fa-calculator', 'color' => '#6366f1'],
-            'DPM' => ['icon' => 'fa-chart-line', 'color' => '#22c55e'],
-            'KPL' => ['icon' => 'fa-crown', 'color' => '#f59e0b'],
-            'PMO' => ['icon' => 'fa-tasks', 'color' => '#06b6d4'],
-            'SDM' => ['icon' => 'fa-users', 'color' => '#8b5cf6'],
-            'SKH' => ['icon' => 'fa-building', 'color' => '#ec4899'],
-            'TAN' => ['icon' => 'fa-seedling', 'color' => '#10b981'],
-            'TEP' => ['icon' => 'fa-cogs', 'color' => '#64748b'],
-            'PTI' => ['icon' => 'fa-laptop-code', 'color' => '#0ea5e9'],
+            'AKN' => ['icon' => 'fa-calculator', 'emoji' => '🧮', 'color' => '#7C3AED'],
+            'DPM' => ['icon' => 'fa-chart-line', 'emoji' => '📈', 'color' => '#22c55e'],
+            'KPL' => ['icon' => 'fa-crown', 'emoji' => '👑', 'color' => '#f59e0b'],
+            'PMO' => ['icon' => 'fa-tasks', 'emoji' => '📋', 'color' => '#06b6d4'],
+            'SDM' => ['icon' => 'fa-users', 'emoji' => '👥', 'color' => '#8b5cf6'],
+            'SKH' => ['icon' => 'fa-building', 'emoji' => '🏢', 'color' => '#ec4899'],
+            'TAN' => ['icon' => 'fa-seedling', 'emoji' => '🌿', 'color' => '#10b981'],
+            'TEP' => ['icon' => 'fa-cogs', 'emoji' => '⚙️', 'color' => '#6366f1'],
+            'PTI' => ['icon' => 'fa-laptop-code', 'emoji' => '🖥', 'color' => '#3B82F6'],
         ];
 
         $stats = [];
         foreach ($bagianList as $code => $info) {
-            $count = Dokumen::where('bagian', $code)->count();
+            $baseQuery = Dokumen::where('bagian', $code);
+            $count = (clone $baseQuery)->count();
+
+            // Terlambat: dokumen > 3 hari dan belum selesai
+            $terlambat = (clone $baseQuery)
+                ->where('created_at', '<', now()->subDays(3))
+                ->whereNull('tanggal_dibayar')
+                ->where(function($q) {
+                    $q->whereNull('status_pembayaran')
+                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })->count();
+
             $stats[] = [
-                'code' => $code,
-                'icon' => $info['icon'],
-                'color' => $info['color'],
-                'count' => $count,
+                'code'      => $code,
+                'icon'      => $info['icon'],
+                'emoji'     => $info['emoji'],
+                'color'     => $info['color'],
+                'count'     => $count,
+                'terlambat' => $terlambat,
             ];
         }
+
+        // Sort by count descending
+        usort($stats, fn($a, $b) => $b['count'] - $a['count']);
 
         return $stats;
     }
