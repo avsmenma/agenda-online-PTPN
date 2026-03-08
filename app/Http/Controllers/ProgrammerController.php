@@ -966,5 +966,56 @@ final class ProgrammerController extends Controller
         }
         return $result;
     }
+
+    // ============================================
+    // ACTIVITY LOGS METHODS
+    // ============================================
+
+    /**
+     * Activity Logs page - view all document activity history
+     */
+    public function activityLogs(Request $request): View
+    {
+        $query = DokumenActivityLog::with('dokumen:id,nomor_agenda,nomor_spp,bagian,uraian_spp')
+            ->orderBy('action_at', 'desc');
+
+        // Filter by nomor_agenda or nomor_spp
+        if ($search = $request->get('search')) {
+            $query->whereHas('dokumen', function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                  ->orWhere('nomor_spp', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by bagian
+        if ($bagian = $request->get('bagian')) {
+            $query->whereHas('dokumen', function ($q) use ($bagian) {
+                $q->where('bagian', $bagian);
+            });
+        }
+
+        // Filter by performed_by (role)
+        if ($performedBy = $request->get('performed_by')) {
+            $query->where('performed_by', $performedBy);
+        }
+
+        // Filter by date range
+        if ($dateFrom = $request->get('date_from')) {
+            $query->where('action_at', '>=', $dateFrom . ' 00:00:00');
+        }
+        if ($dateTo = $request->get('date_to')) {
+            $query->where('action_at', '<=', $dateTo . ' 23:59:59');
+        }
+
+        $logs = $query->paginate(25)->withQueryString();
+
+        // Get unique bagian values for filter dropdown
+        $bagianList = Dokumen::select('bagian')->distinct()->whereNotNull('bagian')->orderBy('bagian')->pluck('bagian');
+
+        // Get unique performed_by values for filter dropdown
+        $performerList = DokumenActivityLog::select('performed_by')->distinct()->whereNotNull('performed_by')->orderBy('performed_by')->pluck('performed_by');
+
+        return view('programmer.activity-logs', compact('logs', 'bagianList', 'performerList'));
+    }
 }
 

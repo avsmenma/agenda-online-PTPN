@@ -1906,7 +1906,7 @@
         </div>
       </div>
 
-      {{-- Document Information Card --}}
+      {{-- Single Combined Information Card --}}
       <div class="info-card clickable" id="document-info-card" data-modal-type="document">
         <div class="info-card-header">
           <div class="info-card-icon" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%);">
@@ -1914,6 +1914,8 @@
           </div>
           <div class="info-card-title">Informasi Dokumen</div>
         </div>
+
+        {{-- Informasi Umum --}}
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
           <div>
             <div class="stage-label">Uraian SPP</div>
@@ -1936,186 +1938,95 @@
             <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->bagian ?? '-' }}</div>
           </div>
         </div>
-      </div>
 
-      {{-- Combined Data Card: Perpajakan + Akutansi + Pembayaran --}}
-      <div class="info-card clickable" id="tax-data-card" data-modal-type="tax">
-        <div class="info-card-header">
-          <div class="info-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-            <i class="fas fa-calculator"></i>
-          </div>
-          <div class="info-card-title">Data Perpajakan, Akutansi & Pembayaran</div>
+        {{-- Divider: Data Perpajakan, Akutansi & Pembayaran --}}
+        <div style="margin: 28px 0 20px; border-top: 2px solid #e2e8f0; position: relative;">
+          <span style="position: absolute; top: -12px; left: 16px; background: white; padding: 0 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #f59e0b; letter-spacing: 0.5px;">
+            <i class="fas fa-calculator" style="margin-right: 6px;"></i>Data Perpajakan, Akutansi & Pembayaran
+          </span>
         </div>
-        <div style="space-y: 16px;">
-          @php
-            $hasPerpajakanData = $dokumen->npwp || $dokumen->no_faktur || $dokumen->jenis_pph;
-            $hasAkutansiData = $dokumen->nomor_miro;
-            $hasPembayaranData = $dokumen->tanggal_dibayar || $dokumen->link_bukti_pembayaran;
-            $hasAnyData = $hasPerpajakanData || $hasAkutansiData || $hasPembayaranData;
-          @endphp
 
-          @if($hasAnyData)
-            {{-- Data Perpajakan Section --}}
-            @if($hasPerpajakanData)
-              <div style="margin-bottom: 20px;">
-                <div
-                  style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #f59e0b; margin-bottom: 12px; letter-spacing: 0.5px;">
-                  <i class="fas fa-calculator" style="margin-right: 6px;"></i>Data Perpajakan
-                </div>
-                @if($dokumen->npwp)
-                  <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px;">
-                    <div class="stage-label" style="font-size: 11px;">NPWP</div>
-                    <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">
-                      {{ $dokumen->npwp }}</div>
-                  </div>
-                @endif
-                @if($dokumen->no_faktur)
-                  <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px;">
-                    <div class="stage-label" style="font-size: 11px;">No. Faktur</div>
-                    <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">
-                      {{ $dokumen->no_faktur }}</div>
-                  </div>
-                @endif
-                @if($dokumen->jenis_pph)
-                  <div
-                    style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; border: 1px solid #86efac;">
-                    <div class="stage-label" style="color: #059669; font-size: 11px;">Jenis PPh</div>
-                    <div style="font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->jenis_pph }}
-                    </div>
-                  </div>
-                @endif
-              </div>
-            @endif
+        @php
+          $hasPerpajakanData = $dokumen->npwp || $dokumen->no_faktur || $dokumen->jenis_pph;
+          $hasAkutansiData = $dokumen->nomor_miro;
+          $hasPembayaranData = $dokumen->tanggal_dibayar || $dokumen->link_bukti_pembayaran;
+          $hasAnyData = $hasPerpajakanData || $hasAkutansiData || $hasPembayaranData;
+        @endphp
 
-            {{-- Data Akutansi Section --}}
-            @if($hasAkutansiData)
-              <div style="margin-bottom: 20px;">
-                <div
-                  style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #083E40; margin-bottom: 12px; letter-spacing: 0.5px;">
-                  <i class="fas fa-file-invoice-dollar" style="margin-right: 6px;"></i>Data Akutansi
-                </div>
-                @if($dokumen->nomor_miro)
-                  <div
-                    style="padding: 12px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-radius: 8px; border: 1px solid #7dd3fc;">
-                    <div class="stage-label" style="color: #0369a1; font-size: 11px;">Nomor MIRO</div>
-                    <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">
-                      {{ $dokumen->nomor_miro }}</div>
-                  </div>
-                @endif
+        @if($hasAnyData)
+          {{-- Data Perpajakan Section --}}
+          @if($hasPerpajakanData)
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #f59e0b; margin-bottom: 12px; letter-spacing: 0.5px;">
+                <i class="fas fa-calculator" style="margin-right: 6px;"></i>Data Perpajakan
               </div>
-            @endif
-
-            {{-- Data Pembayaran Section --}}
-            @if($hasPembayaranData)
-              <div style="margin-bottom: 20px;">
-                <div
-                  style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #059669; margin-bottom: 12px; letter-spacing: 0.5px;">
-                  <i class="fas fa-money-bill-wave" style="margin-right: 6px;"></i>Data Pembayaran
+              @if($dokumen->npwp)
+                <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px;">
+                  <div class="stage-label" style="font-size: 11px;">NPWP</div>
+                  <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->npwp }}</div>
                 </div>
-                @if($dokumen->tanggal_dibayar)
-                  <div
-                    style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; margin-bottom: 8px; border: 1px solid #86efac;">
-                    <div class="stage-label" style="color: #059669; font-size: 11px;">Tanggal Pembayaran</div>
-                    <div style="font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">
-                      {{ \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d M Y') }}</div>
-                  </div>
-                @endif
-                @if($dokumen->link_bukti_pembayaran)
-                  <div
-                    style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; border: 1px solid #86efac;">
-                    <div class="stage-label" style="color: #059669; font-size: 11px;">Link Google Drive Bukti Pembayaran</div>
-                    <div style="margin-top: 4px;">
-                      <a href="{{ $dokumen->link_bukti_pembayaran }}" target="_blank"
-                        style="color: #059669; font-weight: 600; text-decoration: none; font-size: 13px; word-break: break-all;">
-                        <i class="fas fa-external-link-alt"
-                          style="margin-right: 4px;"></i>{{ \Illuminate\Support\Str::limit($dokumen->link_bukti_pembayaran, 50) }}
-                      </a>
-                    </div>
-                  </div>
-                @endif
-              </div>
-            @endif
-          @else
-            <div style="text-align: center; padding: 40px; color: #94a3b8;">
-              <i class="fas fa-search-dollar" style="font-size: 48px; opacity: 0.3; margin-bottom: 12px;"></i>
-              <p style="font-size: 14px;">Belum ada data perpajakan, akutansi, atau pembayaran</p>
+              @endif
+              @if($dokumen->no_faktur)
+                <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px;">
+                  <div class="stage-label" style="font-size: 11px;">No. Faktur</div>
+                  <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->no_faktur }}</div>
+                </div>
+              @endif
+              @if($dokumen->jenis_pph)
+                <div style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; border: 1px solid #86efac;">
+                  <div class="stage-label" style="color: #059669; font-size: 11px;">Jenis PPh</div>
+                  <div style="font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->jenis_pph }}</div>
+                </div>
+              @endif
             </div>
           @endif
-        </div>
-      </div>
 
-      {{-- Activity Logs Card --}}
-      <div class="info-card">
-        <div class="info-card-header">
-          <div class="info-card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-            <i class="fas fa-history"></i>
-          </div>
-          <div class="info-card-title">Riwayat Aktivitas</div>
-        </div>
-        <div class="activity-log-container custom-scrollbar">
-          @forelse($dokumen->activityLogs->sortByDesc('action_at')->take(15) as $log)
-            @php
-              // Map performed_by to display name
-              $performedByMap = [
-                'operator' => 'Ibu Tara',
-                'operator' => 'Ibu Tara',
-                'team_verifikasi' => 'Team Verifikasi',
-                'team_verifikasi' => 'Team Verifikasi',
-                'perpajakan' => 'Team Perpajakan',
-                'Perpajakan' => 'Team Perpajakan',
-                'akutansi' => 'Team Akutansi',
-                'Akutansi' => 'Team Akutansi',
-                'pembayaran' => 'Pembayaran',
-                'Pembayaran' => 'Pembayaran',
-              ];
-              $performedByDisplay = $performedByMap[$log->performed_by ?? ''] ?? ($log->performed_by ?? 'System');
-
-              // Format action_at
-              $actionAt = $log->action_at ?? $log->created_at;
-              $actionAtFormatted = $actionAt->format('d M Y, H:i');
-              $actionAtRelative = $actionAt->locale('id')->diffForHumans();
-
-              // Transform action_description to replace role codes with display names
-              $actionDesc = $log->action_description ?? 'Aktivitas';
-              $roleReplacements = [
-                'inbox Team Verifikasi' => 'inbox Team Verifikasi',
-                'inbox Team Verifikasi' => 'inbox Team Verifikasi',
-                'inbox Team Verifikasi' => 'inbox Team Verifikasi',
-                'inbox Operator' => 'inbox Bagian',
-                'inbox Operator' => 'inbox Bagian',
-                'inbox Operator' => 'inbox Bagian',
-                'inbox perpajakan' => 'inbox Team Perpajakan',
-                'inbox akutansi' => 'inbox Team Akutansi',
-                'inbox pembayaran' => 'inbox Team Pembayaran',
-                'oleh Team Verifikasi' => 'oleh Team Verifikasi',
-                'oleh Team Verifikasi' => 'oleh Team Verifikasi',
-                'oleh Team Verifikasi' => 'oleh Team Verifikasi',
-                'oleh Operator' => 'oleh Bagian',
-                'oleh Operator' => 'oleh Bagian',
-              ];
-              $actionDescDisplay = str_replace(array_keys($roleReplacements), array_values($roleReplacements), $actionDesc);
-            @endphp
-            <div class="activity-log-item" onclick="showActivityDetail({{ $log->id }})" data-activity-id="{{ $log->id }}"
-              data-action-description="{{ htmlspecialchars($actionDescDisplay, ENT_QUOTES, 'UTF-8') }}"
-              data-performed-by="{{ htmlspecialchars($performedByDisplay, ENT_QUOTES, 'UTF-8') }}"
-              data-action-at="{{ htmlspecialchars($actionAtFormatted, ENT_QUOTES, 'UTF-8') }}"
-              data-action-at-relative="{{ htmlspecialchars($actionAtRelative, ENT_QUOTES, 'UTF-8') }}"
-              data-stage="{{ htmlspecialchars($log->stage ?? '-', ENT_QUOTES, 'UTF-8') }}"
-              data-action="{{ htmlspecialchars($log->action ?? '-', ENT_QUOTES, 'UTF-8') }}"
-              data-details="{{ htmlspecialchars(json_encode($log->details ?? []), ENT_QUOTES, 'UTF-8') }}">
-              <div class="activity-log-text">{{ $actionDescDisplay }}</div>
-              <div class="activity-log-time">
-                <i class="far fa-clock mr-1"></i>
-                {{ $actionAtRelative }}
+          {{-- Data Akutansi Section --}}
+          @if($hasAkutansiData)
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #083E40; margin-bottom: 12px; letter-spacing: 0.5px;">
+                <i class="fas fa-file-invoice-dollar" style="margin-right: 6px;"></i>Data Akutansi
               </div>
+              @if($dokumen->nomor_miro)
+                <div style="padding: 12px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-radius: 8px; border: 1px solid #7dd3fc;">
+                  <div class="stage-label" style="color: #0369a1; font-size: 11px;">Nomor MIRO</div>
+                  <div style="font-family: monospace; font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ $dokumen->nomor_miro }}</div>
+                </div>
+              @endif
             </div>
-          @empty
-            <div style="text-align: center; padding: 40px; color: #94a3b8;">
-              <i class="fas fa-inbox" style="font-size: 48px; opacity: 0.3; margin-bottom: 12px;"></i>
-              <p style="font-size: 14px;">Tidak ada activity log</p>
+          @endif
+
+          {{-- Data Pembayaran Section --}}
+          @if($hasPembayaranData)
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #059669; margin-bottom: 12px; letter-spacing: 0.5px;">
+                <i class="fas fa-money-bill-wave" style="margin-right: 6px;"></i>Data Pembayaran
+              </div>
+              @if($dokumen->tanggal_dibayar)
+                <div style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; margin-bottom: 8px; border: 1px solid #86efac;">
+                  <div class="stage-label" style="color: #059669; font-size: 11px;">Tanggal Pembayaran</div>
+                  <div style="font-weight: 600; color: #0f172a; margin-top: 4px; font-size: 13px;">{{ \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d M Y') }}</div>
+                </div>
+              @endif
+              @if($dokumen->link_bukti_pembayaran)
+                <div style="padding: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; border: 1px solid #86efac;">
+                  <div class="stage-label" style="color: #059669; font-size: 11px;">Link Google Drive Bukti Pembayaran</div>
+                  <div style="margin-top: 4px;">
+                    <a href="{{ $dokumen->link_bukti_pembayaran }}" target="_blank"
+                      style="color: #059669; font-weight: 600; text-decoration: none; font-size: 13px; word-break: break-all;">
+                      <i class="fas fa-external-link-alt" style="margin-right: 4px;"></i>{{ \Illuminate\Support\Str::limit($dokumen->link_bukti_pembayaran, 50) }}
+                    </a>
+                  </div>
+                </div>
+              @endif
             </div>
-          @endforelse
-        </div>
+          @endif
+        @else
+          <div style="text-align: center; padding: 30px; color: #94a3b8;">
+            <i class="fas fa-search-dollar" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
+            <p style="font-size: 14px; margin: 0;">Belum ada data</p>
+          </div>
+        @endif
       </div>
     </div>
   </div>

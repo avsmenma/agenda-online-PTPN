@@ -116,6 +116,17 @@
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>
+                            <a href="{{ route('programmer.activity-logs') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-history fa-2x text-secondary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Riwayat Aktivitas</h6>
+                                    <small class="text-muted">Lihat seluruh log aktivitas dokumen per role</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
                             <a href="{{ route('programmer.database-tools') }}"
                                 class="list-group-item list-group-item-action d-flex align-items-center">
                                 <div class="me-3">

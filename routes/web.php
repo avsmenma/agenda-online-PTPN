@@ -1097,5 +1097,9 @@ Route::middleware(['auth', 'role:programmer'])
             ->name('database-tools.preview');
         Route::post('/database-tools/cleanup', [\App\Http\Controllers\ProgrammerController::class, 'performCleanup'])
             ->name('database-tools.cleanup');
+
+        // Activity Logs - Riwayat Aktivitas Dokumen
+        Route::get('/activity-logs', [\App\Http\Controllers\ProgrammerController::class, 'activityLogs'])
+            ->name('activity-logs');
     });
 
