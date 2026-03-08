@@ -158,7 +158,15 @@
             width: 32px; height: 32px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             font-size: 11px; font-weight: 700; flex-shrink: 0;
+            text-decoration: none;
+            transition: all 0.15s ease;
         }
+        .bagian-badge:hover { cursor: pointer; opacity: 0.8; transform: scale(1.05); }
+        .terlambat-link {
+            color: #EF4444; font-size: 11px; font-weight: 600;
+            text-decoration: none; transition: all 0.15s ease;
+        }
+        .terlambat-link:hover { cursor: pointer; text-decoration: underline; opacity: 0.8; color: #EF4444; }
         .bagian-info { flex: 1; }
         .bagian-meta { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
         .progress-bar { height: 5px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
@@ -412,16 +420,20 @@
                     <p class="chart-sub" style="margin-bottom:14px">Dengan indikator keterlambatan</p>
                     @foreach($bagianStats as $b)
                         <div class="bagian-row">
-                            <div class="bagian-badge" style="background:{{ $b['color'] }}20; color:{{ $b['color'] }}">
+                            <a href="{{ url('/owner/dokumen?filter_bagian=' . $b['code']) }}"
+                               class="bagian-badge" style="background:{{ $b['color'] }}20; color:{{ $b['color'] }}"
+                               title="Lihat semua dokumen bagian {{ $b['code'] }}">
                                 {{ $b['code'] }}
-                            </div>
+                            </a>
                             <div class="bagian-info">
                                 <div class="bagian-meta">
                                     <span style="font-weight:600; color:#0f172a">{{ number_format($b['count']) }} dokumen</span>
                                     @if($b['terlambat'] > 0)
-                                        <span style="color:#EF4444; font-size:11px; font-weight:600">
+                                        <a href="{{ url('/owner/dokumen?filter_bagian=' . $b['code'] . '&filter_umur=3') }}"
+                                           class="terlambat-link"
+                                           title="Lihat {{ $b['terlambat'] }} dokumen terlambat di bagian {{ $b['code'] }}">
                                             ⚠ {{ $b['terlambat'] }} terlambat
-                                        </span>
+                                        </a>
                                     @endif
                                 </div>
                                 <div class="progress-bar">
