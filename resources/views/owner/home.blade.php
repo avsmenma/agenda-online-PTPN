@@ -370,7 +370,7 @@
 
                 {{-- Donut Chart --}}
                 <div class="chart-card">
-                    <h3>Proporsi Status</h3>
+                    <h3>Overview Status</h3>
                     <p class="chart-sub">Distribusi status pembayaran</p>
                     <div style="display:flex; justify-content:center; margin-top:12px;">
                         <canvas id="donutChart" width="160" height="160"></canvas>
