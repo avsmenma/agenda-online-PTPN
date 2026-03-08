@@ -1052,7 +1052,61 @@
     }
 
     .info-card-body {
-      padding: 28px 32px;
+      padding: 0;
+    }
+
+    .info-section {
+      padding: 24px 32px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .info-section:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .field-item {
+      min-width: 0;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .field-value {
+      font-size: 14px;
+      color: #1e293b;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .field-value.highlight {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .field-value.monospace {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
     }
 
     /* Hero Financial Card */
@@ -1919,36 +1973,183 @@
         </div>
 
         <div class="info-card-body">
-        {{-- Informasi Umum --}}
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-          <div>
-            <div class="stage-label">Uraian SPP</div>
-            <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->uraian_spp ?? '-' }}</div>
+
+        {{-- Section 1: Informasi Umum --}}
+        <div class="info-section">
+          <div class="section-title">
+            <i class="fas fa-info-circle" style="color: #083E40;"></i> Informasi Umum
           </div>
-          <div>
-            <div class="stage-label">Nomor Agenda</div>
-            <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->nomor_agenda ?? '-' }}</div>
-          </div>
-          <div>
-            <div class="stage-label">Jenis Dokumen</div>
-            <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->jenis_dokumen ?? '-' }}</div>
-          </div>
-          <div>
-            <div class="stage-label">Kategori</div>
-            <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->kategori ?? '-' }}</div>
-          </div>
-          <div>
-            <div class="stage-label">Bagian Pengirim</div>
-            <div style="font-weight: 600; color: #0f172a; margin-top: 4px;">{{ $dokumen->bagian ?? '-' }}</div>
+          <div class="field-grid">
+            <div class="field-item">
+              <div class="field-label">Nomor Agenda</div>
+              <div class="field-value highlight">{{ $dokumen->nomor_agenda ?? '-' }}</div>
+            </div>
+            <div class="field-item">
+              <div class="field-label">Nomor SPP</div>
+              <div class="field-value monospace highlight">{{ $dokumen->nomor_spp ?? '-' }}</div>
+            </div>
+            <div class="field-item">
+              <div class="field-label">Tanggal SPP</div>
+              <div class="field-value">{{ $dokumen->tanggal_spp ? \Carbon\Carbon::parse($dokumen->tanggal_spp)->format('d M Y') : '-' }}</div>
+            </div>
+            <div class="field-item">
+              <div class="field-label">Tanggal Masuk</div>
+              <div class="field-value">{{ $dokumen->tanggal_masuk ? \Carbon\Carbon::parse($dokumen->tanggal_masuk)->format('d M Y, H:i') : '-' }}</div>
+            </div>
+            <div class="field-item">
+              <div class="field-label">Status</div>
+              <div class="field-value highlight">
+                @php
+                  $statusMap = [
+                    'draft' => 'Draft',
+                    'sedang diproses' => 'Sedang Diproses',
+                    'menunggu_verifikasi' => 'Menunggu Verifikasi',
+                    'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
+                    'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
+                    'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
+                    'proses_perpajakan' => 'Diproses Team Perpajakan',
+                    'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
+                    'proses_akutansi' => 'Diproses Team Akutansi',
+                    'proses_pembayaran' => 'Diproses Team Pembayaran',
+                    'sent_to_pembayaran' => 'Terkirim ke Team Pembayaran',
+                    'selesai' => 'Selesai',
+                    'returned_to_operator' => 'Dikembalikan ke Operator',
+                  ];
+                @endphp
+                {{ $statusMap[$dokumen->status] ?? ucfirst(str_replace('_', ' ', $dokumen->status ?? '-')) }}
+              </div>
+            </div>
           </div>
         </div>
 
-        {{-- Divider: Data Perpajakan, Akutansi & Pembayaran --}}
-        <div style="margin: 28px 0 20px; border-top: 2px solid #e2e8f0; position: relative;">
-          <span style="position: absolute; top: -12px; left: 16px; background: white; padding: 0 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #f59e0b; letter-spacing: 0.5px;">
-            <i class="fas fa-calculator" style="margin-right: 6px;"></i>Data Perpajakan, Akutansi & Pembayaran
-          </span>
+        {{-- Section 2: Detail Dokumen --}}
+        <div class="info-section">
+          <div class="section-title">
+            <i class="fas fa-file-invoice-dollar" style="color: #083E40;"></i> Detail Dokumen
+          </div>
+          <div class="field-grid">
+            @if($dokumen->uraian_spp)
+            <div class="field-item" style="grid-column: 1 / -1;">
+              <div class="field-label">Uraian SPP</div>
+              <div class="field-value">{{ $dokumen->uraian_spp }}</div>
+            </div>
+            @endif
+            @if($dokumen->nilai_rupiah)
+            <div class="field-item">
+              <div class="field-label">Nilai Rupiah</div>
+              <div class="field-value highlight">Rp {{ number_format((float) $dokumen->nilai_rupiah, 0, ',', '.') }}</div>
+            </div>
+            @endif
+            @if($dokumen->kategori)
+            <div class="field-item">
+              <div class="field-label">Kategori</div>
+              <div class="field-value">{{ $dokumen->kategori }}</div>
+            </div>
+            @endif
+            @if($dokumen->jenis_dokumen)
+            <div class="field-item">
+              <div class="field-label">Jenis Dokumen</div>
+              <div class="field-value">{{ $dokumen->jenis_dokumen }}</div>
+            </div>
+            @endif
+            @if($dokumen->jenis_sub_pekerjaan)
+            <div class="field-item">
+              <div class="field-label">Jenis Sub Pekerjaan</div>
+              <div class="field-value">{{ $dokumen->jenis_sub_pekerjaan }}</div>
+            </div>
+            @endif
+            @if($dokumen->jenis_pembayaran)
+            <div class="field-item">
+              <div class="field-label">Jenis Pembayaran</div>
+              <div class="field-value">{{ $dokumen->jenis_pembayaran }}</div>
+            </div>
+            @endif
+          </div>
         </div>
+
+        {{-- Section 3: Informasi Pengirim --}}
+        <div class="info-section">
+          <div class="section-title">
+            <i class="fas fa-building" style="color: #083E40;"></i> Informasi Pengirim
+          </div>
+          <div class="field-grid">
+            @if($dokumen->kebun)
+            <div class="field-item">
+              <div class="field-label">Kebun</div>
+              <div class="field-value">{{ $dokumen->kebun }}</div>
+            </div>
+            @endif
+            <div class="field-item">
+              <div class="field-label">Bagian Pengirim</div>
+              <div class="field-value">{{ $dokumen->bagian ?? '-' }}</div>
+            </div>
+            @if($dokumen->nama_pengirim)
+            <div class="field-item">
+              <div class="field-label">Nama Pengirim</div>
+              <div class="field-value">{{ $dokumen->nama_pengirim }}</div>
+            </div>
+            @endif
+            @if($dokumen->dibayarKepadas->first()?->nama_penerima ?? $dokumen->dibayar_kepada)
+            <div class="field-item">
+              <div class="field-label">Dibayar Kepada</div>
+              <div class="field-value highlight">{{ $dokumen->dibayarKepadas->first()?->nama_penerima ?? $dokumen->dibayar_kepada }}</div>
+            </div>
+            @endif
+          </div>
+        </div>
+
+        {{-- Section 4: Dokumen Pendukung (jika ada) --}}
+        @if($dokumen->no_berita_acara || $dokumen->no_spk || $dokumen->nomor_miro || $dokumen->keterangan)
+        <div class="info-section">
+          <div class="section-title">
+            <i class="fas fa-file-contract" style="color: #083E40;"></i> Dokumen Pendukung
+          </div>
+          <div class="field-grid">
+            @if($dokumen->no_berita_acara)
+            <div class="field-item">
+              <div class="field-label">No. Berita Acara</div>
+              <div class="field-value monospace">{{ $dokumen->no_berita_acara }}</div>
+            </div>
+            @endif
+            @if($dokumen->tanggal_berita_acara)
+            <div class="field-item">
+              <div class="field-label">Tanggal Berita Acara</div>
+              <div class="field-value">{{ \Carbon\Carbon::parse($dokumen->tanggal_berita_acara)->format('d M Y') }}</div>
+            </div>
+            @endif
+            @if($dokumen->no_spk)
+            <div class="field-item">
+              <div class="field-label">No. SPK</div>
+              <div class="field-value monospace">{{ $dokumen->no_spk }}</div>
+            </div>
+            @endif
+            @if($dokumen->tanggal_spk)
+            <div class="field-item">
+              <div class="field-label">Tanggal SPK</div>
+              <div class="field-value">{{ \Carbon\Carbon::parse($dokumen->tanggal_spk)->format('d M Y') }}</div>
+            </div>
+            @endif
+            @if($dokumen->tanggal_berakhir_spk)
+            <div class="field-item">
+              <div class="field-label">Tanggal Berakhir SPK</div>
+              <div class="field-value">{{ \Carbon\Carbon::parse($dokumen->tanggal_berakhir_spk)->format('d M Y') }}</div>
+            </div>
+            @endif
+            @if($dokumen->keterangan)
+            <div class="field-item" style="grid-column: 1 / -1;">
+              <div class="field-label">Keterangan</div>
+              <div class="field-value">{{ $dokumen->keterangan }}</div>
+            </div>
+            @endif
+          </div>
+        </div>
+        @endif
+
+        {{-- Divider: Data Perpajakan, Akutansi & Pembayaran --}}
+        <div class="info-section" style="border-bottom: none;">
+          <div class="section-title" style="color: #f59e0b;">
+            <i class="fas fa-calculator"></i> Data Perpajakan, Akutansi & Pembayaran
+          </div>
 
         @php
           $hasPerpajakanData = $dokumen->npwp || $dokumen->no_faktur || $dokumen->jenis_pph;
@@ -2031,6 +2232,7 @@
             <p style="font-size: 14px; margin: 0;">Belum ada data</p>
           </div>
         @endif
+        </div>
         </div>
       </div>
     </div>
