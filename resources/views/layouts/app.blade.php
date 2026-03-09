@@ -4447,11 +4447,12 @@
 
   <!-- Global UX Helper: Prevent Navigation During Text Selection -->
   <script>
-  /        *         * * Global Handler untuk mencegah navigasi saat user sedang menyeleksi te         ks
-        * Digunakan pada Card dan Table Row yangbisa diklik
-   * 
+  /**
+   * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
+   * Digunakan pada Card dan Table Row yang bisa diklik
+   *
    * @param {Event} event - Click event
-   * @param {string} url - URL tujua    nnavigasi
+   * @param {string} url - URL tujuan navigasi
    */
   window.handleItemClick = function(event, url) {
     // 1. Cek apakah user sedang menyeleksi teks
@@ -5453,15 +5454,15 @@
     });
 
     // Check if user is Team Verifikasi
-    const isTeam Verifikasi = ['team_verifikasi', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
+    const isTeamVerifikasi = ['team_verifikasi', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
 
     // Debug logging
     console.log('Notification System Init:', {
         userRole: userRole,
         userRoleLower: userRoleLower,
         hasInboxAccess: hasInboxAccess,
-        isOperator: isoperator,
-        isTeam Verifikasi: isTeam Verifikasi
+        isOperator: isOperator,
+        isTeamVerifikasi: isTeamVerifikasi
     });
 
     // Initialize Operator rejected documents notification if applicable
@@ -5473,7 +5474,7 @@
     }
 
     // Initialize Team Verifikasi rejected documents notification if applicable
-    if (isTeam Verifikasi) {
+    if (isTeamVerifikasi) {
         console.log('Initializing Team Verifikasi rejected notifications');
         initTeamVerifikasiRejectedNotifications();
     }

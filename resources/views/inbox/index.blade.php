@@ -2160,7 +2160,7 @@
 
         // Notification Toast Function
         function showNotification(type, title, message) {
-            const container = document.getElementById('notificationContainer');
+            let container = document.getElementById('notificationContainer');
             if (!container) {
                 // Create container if it doesn't exist
                 const newContainer = document.createElement('div');
@@ -2216,7 +2216,7 @@
 
         // Notification Toast Function with Action Button
         function showNotificationWithAction(type, title, message, actionUrl, actionText) {
-            const container = document.getElementById('notificationContainer');
+            let container = document.getElementById('notificationContainer');
             if (!container) {
                 // Create container if it doesn't exist
                 const newContainer = document.createElement('div');
