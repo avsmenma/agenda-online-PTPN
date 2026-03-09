@@ -4585,12 +4585,19 @@ class OwnerDashboardController extends Controller
 
             $handlers = $roleHandlerMap[$role] ?? [];
 
-            $query = Dokumen::where('urgency_active', true)
-                ->select('id', 'nomor_agenda', 'nomor_spp', 'current_handler', 'urgency_sent_at', 'urgency_sent_by');
+        // If the role is not in the handler map, return empty results
+        // This prevents non-recipient roles (e.g., programmer, owner) from seeing ALL urgency documents
+        if (empty($handlers)) {
+            return response()->json([
+                'success'   => true,
+                'count'     => 0,
+                'urgencies' => [],
+            ]);
+        }
 
-            if (!empty($handlers)) {
-                $query->whereIn('current_handler', $handlers);
-            }
+        $query = Dokumen::where('urgency_active', true)
+            ->select('id', 'nomor_agenda', 'nomor_spp', 'current_handler', 'urgency_sent_at', 'urgency_sent_by')
+            ->whereIn('current_handler', $handlers);
 
             $urgencies = $query->orderBy('urgency_sent_at', 'asc')->get()->map(function ($dok) {
                 return [
