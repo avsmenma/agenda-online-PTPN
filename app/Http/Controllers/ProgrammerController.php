@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DibayarKepada;
 use App\Models\Dokumen;
+use App\Models\DocumentTracking;
 use App\Models\DokumenActivityLog;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
@@ -697,6 +698,8 @@ final class ProgrammerController extends Controller
 
             // Truncate all document-related tables in correct order
             // Note: TRUNCATE is DDL in MySQL (auto-commit), so we don't wrap in transaction
+            // DocumentTracking must be truncated to prevent orphaned tracking records
+            DocumentTracking::truncate();
             DokumenActivityLog::truncate();
             DokumenRoleData::truncate();
             DokumenStatus::truncate();

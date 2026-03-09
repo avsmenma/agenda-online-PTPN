@@ -1297,12 +1297,18 @@ class DokumenController extends Controller
         try {
             DB::beginTransaction();
 
-            // Delete related records first
-            $dokumen->dokumenPos()->delete();
-            $dokumen->dokumenPrs()->delete();
+        // Delete ALL related records first to avoid FK constraint issues
+        // and prevent orphaned urgency/tracking data
+        \App\Models\DocumentTracking::where('document_id', $dokumen->id)->delete();
+        $dokumen->dokumenPos()->delete();
+        $dokumen->dokumenPrs()->delete();
+        $dokumen->dibayarKepadas()->delete();
+        $dokumen->roleData()->delete();
+        $dokumen->roleStatuses()->delete();
+        $dokumen->activityLogs()->delete();
 
-            // Delete dokumen
-            $dokumen->delete();
+        // Delete dokumen (urgency_active column is deleted with the row)
+        $dokumen->delete();
 
             DB::commit();
 
