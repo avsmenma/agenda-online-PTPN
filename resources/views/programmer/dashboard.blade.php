@@ -134,7 +134,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-1">Database Tools</h6>
-                                    <small class="text-muted">Cleanup dan reset data dokumen</small>
+                                    <small class="text-muted">Backup/export database SQL dan cleanup data dokumen</small>
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>

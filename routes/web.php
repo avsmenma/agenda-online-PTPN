@@ -1097,6 +1097,9 @@ Route::middleware(['auth', 'role:programmer'])
             ->name('database-tools.preview');
         Route::post('/database-tools/cleanup', [\App\Http\Controllers\ProgrammerController::class, 'performCleanup'])
             ->name('database-tools.cleanup');
+        Route::get('/database-tools/export/{database}', [\App\Http\Controllers\ProgrammerController::class, 'exportDatabase'])
+            ->name('database-tools.export')
+            ->where('database', 'agenda|cashbank');
 
         // Activity Logs - Riwayat Aktivitas Dokumen
         Route::get('/activity-logs', [\App\Http\Controllers\ProgrammerController::class, 'activityLogs'])

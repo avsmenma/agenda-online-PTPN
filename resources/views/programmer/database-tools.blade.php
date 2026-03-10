@@ -16,6 +16,12 @@
             border-radius: 12px 12px 0 0;
         }
 
+        .db-export-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
         .table-count {
             padding: 4px 12px;
             border-radius: 20px;
@@ -63,6 +69,89 @@
             border-color: #dc2626;
             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
         }
+
+        .export-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.12);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .export-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(37, 99, 235, 0.18);
+        }
+
+        .btn-export {
+            border: none;
+            padding: 16px 24px;
+            font-weight: 600;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-export-agenda {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+        }
+
+        .btn-export-agenda:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            color: white;
+        }
+
+        .btn-export-cashbank {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+        }
+
+        .btn-export-cashbank:hover {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+            color: white;
+        }
+
+        .btn-export:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .export-db-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .export-db-icon.agenda {
+            background: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+        }
+
+        .export-db-icon.cashbank {
+            background: rgba(5, 150, 105, 0.1);
+            color: #059669;
+        }
+
+        .export-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+
+        .dark .export-info {
+            background: #1e293b;
+            border-color: #334155;
+        }
     </style>
 
     <div class="container-fluid">
@@ -74,8 +163,68 @@
                         <li class="breadcrumb-item active" aria-current="page">Database Tools</li>
                     </ol>
                 </nav>
-                <h2><i class="fas fa-database text-danger me-2"></i>Database Tools</h2>
-                <p class="text-muted">Kelola dan bersihkan database dokumen</p>
+                <h2><i class="fas fa-database text-primary me-2"></i>Database Tools</h2>
+                <p class="text-muted">Backup, export, dan kelola database</p>
+            </div>
+        </div>
+
+        {{-- Database Export/Backup Section --}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card export-card">
+                    <div class="card-header db-export-header">
+                        <h5 class="mb-0"><i class="fas fa-download me-2"></i>Database Backup / Export</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="export-info mb-4">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            Download file <code>.sql</code> backup database langsung dari server.
+                            File dapat digunakan untuk restore database menggunakan <code>mysql</code> command atau phpMyAdmin.
+                        </div>
+
+                        <div class="row g-4">
+                            {{-- Agenda PTPN Database --}}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="export-db-icon agenda me-3">
+                                        <i class="fas fa-book"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Agenda PTPN</h6>
+                                        <small class="text-muted">Database: {{ config('database.connections.mysql.database') }}</small>
+                                    </div>
+                                </div>
+                                <a href="{{ route('programmer.database-tools.export', 'agenda') }}"
+                                   class="btn btn-export btn-export-agenda"
+                                   id="btn-export-agenda"
+                                   onclick="handleExportClick(this, 'Agenda PTPN')">
+                                    <i class="fas fa-download"></i>
+                                    <span>Download Backup SQL</span>
+                                </a>
+                            </div>
+
+                            {{-- Cash Bank Database --}}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="export-db-icon cashbank me-3">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Cash Bank</h6>
+                                        <small class="text-muted">Database: {{ config('database.connections.cash_bank_new.database') }}</small>
+                                    </div>
+                                </div>
+                                <a href="{{ route('programmer.database-tools.export', 'cashbank') }}"
+                                   class="btn btn-export btn-export-cashbank"
+                                   id="btn-export-cashbank"
+                                   onclick="handleExportClick(this, 'Cash Bank')">
+                                    <i class="fas fa-download"></i>
+                                    <span>Download Backup SQL</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -175,6 +324,16 @@
                 $('#btn-cleanup').prop('disabled', value !== 'HAPUS SEMUA');
             });
         });
+
+        function handleExportClick(btn, dbName) {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Mengunduh ' + dbName + '...</span>';
+
+            // Re-enable after 30 seconds (the download will have started by then)
+            setTimeout(function () {
+                btn.innerHTML = originalHtml;
+            }, 30000);
+        }
 
         function loadPreview() {
             $('#preview-loading').show();

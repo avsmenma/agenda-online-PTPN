@@ -1020,5 +1020,114 @@ final class ProgrammerController extends Controller
 
         return view('programmer.activity-logs', compact('logs', 'bagianList', 'performerList'));
     }
+
+    // ============================================
+    // DATABASE EXPORT/BACKUP METHODS
+    // ============================================
+
+    /**
+     * Export/download database as .sql file using mysqldump
+     */
+    public function exportDatabase(string $database): \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\JsonResponse
+    {
+        // Map parameter to DB connection name
+        $connectionMap = [
+            'agenda' => 'mysql',
+            'cashbank' => 'cash_bank_new',
+        ];
+
+        if (!isset($connectionMap[$database])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Database tidak valid. Pilih: agenda atau cashbank',
+            ], 422);
+        }
+
+        $connectionName = $connectionMap[$database];
+        $config = config("database.connections.{$connectionName}");
+
+        if (!$config) {
+            return response()->json([
+                'success' => false,
+                'message' => "Konfigurasi database '{$connectionName}' tidak ditemukan.",
+            ], 500);
+        }
+
+        $host = $config['host'] ?? '127.0.0.1';
+        $port = $config['port'] ?? '3306';
+        $username = $config['username'] ?? 'root';
+        $password = $config['password'] ?? '';
+        $dbName = $config['database'];
+
+        // Build mysqldump command
+        $command = [
+            'mysqldump',
+            '--host=' . $host,
+            '--port=' . $port,
+            '--user=' . $username,
+            '--single-transaction',
+            '--routines',
+            '--triggers',
+            '--add-drop-table',
+            $dbName,
+        ];
+
+        // Add password if set
+        if (!empty($password)) {
+            $command[] = '--password=' . $password;
+        }
+
+        Log::info("Database export started", [
+            'database' => $database,
+            'connection' => $connectionName,
+            'db_name' => $dbName,
+            'by' => Auth::user()->name ?? 'Programmer',
+        ]);
+
+        // Generate filename with timestamp
+        $timestamp = now()->format('Y-m-d_H-i');
+        $filename = "{$dbName}_{$timestamp}.sql";
+
+        try {
+            // Test that mysqldump is available first
+            $testProcess = new \Symfony\Component\Process\Process(['mysqldump', '--version']);
+            $testProcess->setTimeout(10);
+            $testProcess->run();
+
+            if (!$testProcess->isSuccessful()) {
+                Log::error("mysqldump not available", ['output' => $testProcess->getErrorOutput()]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'mysqldump tidak tersedia di server. Pastikan mysql-client sudah terinstall.',
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error("mysqldump check failed: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'mysqldump tidak tersedia di server: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        // Stream the dump as a download
+        return response()->streamDownload(function () use ($command, $dbName) {
+            $process = new \Symfony\Component\Process\Process($command);
+            $process->setTimeout(600); // 10 minutes timeout for large databases
+            $process->run(function ($type, $buffer) {
+                if ($type === \Symfony\Component\Process\Process::OUT) {
+                    echo $buffer;
+                }
+            });
+
+            if (!$process->isSuccessful()) {
+                Log::error("mysqldump failed for {$dbName}", [
+                    'error' => $process->getErrorOutput(),
+                ]);
+            }
+        }, $filename, [
+            'Content-Type' => 'application/sql',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
 }
 

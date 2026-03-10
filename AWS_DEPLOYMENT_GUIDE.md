@@ -167,7 +167,7 @@ CREATE DATABASE agenda_ptpn_new CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 CREATE DATABASE cash_bank_new CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Buat user untuk aplikasi
-CREATE USER 'agenda_user'@'localhost' IDENTIFIED BY 'PASSWORD_ANDA_YANG_KUAT';
+CREATE USER 'agenda_user'@'localhost' IDENTIFIED BY 'PasswordSuperKuat123!';
 
 -- Berikan akses ke kedua database
 GRANT ALL PRIVILEGES ON agenda_ptpn_new.* TO 'agenda_user'@'localhost';
@@ -232,7 +232,7 @@ sudo chown -R ubuntu:ubuntu /var/www/agenda_online_ptpn
 
 # Clone dari GitHub
 cd /var/www
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git agenda_online_ptpn
+git clone https://github.com/avsmenma/agenda-online-PTPN agenda_online_ptpn
 cd agenda_online_ptpn
 ```
 
@@ -259,7 +259,7 @@ APP_NAME="Agenda Online PTPN"
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
-APP_URL=https://yourdomain.com
+APP_URL=http://3.80.239.131
 
 # ========================================
 # DATABASE UTAMA (Agenda Online)
@@ -269,7 +269,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=agenda_ptpn_new
 DB_USERNAME=agenda_user
-DB_PASSWORD=PASSWORD_ANDA_YANG_KUAT
+DB_PASSWORD=@Menma080205
 
 # ========================================
 # DATABASE CASH BANK NEW
@@ -278,7 +278,7 @@ CASH_BANK_NEW_DB_HOST=127.0.0.1
 CASH_BANK_NEW_DB_PORT=3306
 CASH_BANK_NEW_DB_DATABASE=cash_bank_new
 CASH_BANK_NEW_DB_USERNAME=agenda_user
-CASH_BANK_NEW_DB_PASSWORD=PASSWORD_ANDA_YANG_KUAT
+CASH_BANK_NEW_DB_PASSWORD=@Menma080205
 
 # ========================================
 # DATABASE CASH BANK (Legacy — arahkan ke cash_bank_new juga)
@@ -287,7 +287,7 @@ CASH_BANK_DB_HOST=127.0.0.1
 CASH_BANK_DB_PORT=3306
 CASH_BANK_DB_DATABASE=cash_bank_new
 CASH_BANK_DB_USERNAME=agenda_user
-CASH_BANK_DB_PASSWORD=PASSWORD_ANDA_YANG_KUAT
+CASH_BANK_DB_PASSWORD=@Menma080205
 
 # ========================================
 # SESSION & CACHE
