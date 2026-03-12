@@ -3998,7 +3998,9 @@
         <a href="{{ route('bagian.dashboard') }}" class="{{ $isBagianDashboardActive ? 'active' : '' }}"><i
             class="fa-solid fa-house"></i> Home</a>
       @else
-        <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
+        @if(!in_array($module, ['team_verifikasi', 'perpajakan', 'akutansi']))
+          <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
+        @endif
       @endif
 
       <!-- Owner Dashboard - Only for Admin users -->
