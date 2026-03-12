@@ -118,7 +118,10 @@
     {{-- ===== Document Age Filter Section ===== --}}
     <div class="age-filter-section">
       <div class="age-filter-header">
-        <h3><i class="fas fa-hourglass-half"></i> Filter Umur Dokumen</h3>
+        <div>
+          <h3>📋 Total Dokumen Belum Dibayar</h3>
+          <p style="font-size:12px; color:#94a3b8; margin:0">Dokumen berstatus Belum Siap Bayar dan Siap Dibayar</p>
+        </div>
         <button class="age-settings-btn" onclick="openAgeSettingsModal()">
           <i class="fas fa-cog"></i>
           <span>Pengaturan</span>
@@ -133,8 +136,8 @@
           </div>
           <div class="age-info-card-content">
             <div class="age-info-card-label">Umur &gt; <span id="ageLabel1">3</span> Hari</div>
-            <div class="age-info-card-value" id="ageCount1">-</div>
-            <div class="age-info-card-count">dokumen</div>
+            <div class="age-info-card-value" id="ageCount1">{{ number_format($belumBayarUmur3 ?? 0, 0, ',', '.') }}</div>
+            <div class="age-info-card-count">dokumen belum dibayar</div>
           </div>
         </div>
 
@@ -144,8 +147,8 @@
           </div>
           <div class="age-info-card-content">
             <div class="age-info-card-label">Umur &gt; <span id="ageLabel2">7</span> Hari</div>
-            <div class="age-info-card-value" id="ageCount2">-</div>
-            <div class="age-info-card-count">dokumen</div>
+            <div class="age-info-card-value" id="ageCount2">{{ number_format($belumBayarUmur7 ?? 0, 0, ',', '.') }}</div>
+            <div class="age-info-card-count">dokumen belum dibayar</div>
           </div>
         </div>
 
@@ -155,8 +158,8 @@
           </div>
           <div class="age-info-card-content">
             <div class="age-info-card-label">Umur &gt; <span id="ageLabel3">30</span> Hari</div>
-            <div class="age-info-card-value" id="ageCount3">-</div>
-            <div class="age-info-card-count">dokumen</div>
+            <div class="age-info-card-value" id="ageCount3">{{ number_format($belumBayarUmur30 ?? 0, 0, ',', '.') }}</div>
+            <div class="age-info-card-count">dokumen belum dibayar</div>
           </div>
         </div>
       </div>

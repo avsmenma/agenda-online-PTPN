@@ -179,6 +179,28 @@ class OwnerDashboardController extends Controller
             })
             ->toArray();
 
+        // Total dokumen belum dibayar per umur
+        $belumBayarQuery = function () {
+            return Dokumen::where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhereNotIn('status_pembayaran', ['sudah_dibayar']);
+            })
+                ->whereNull('tanggal_dibayar')
+                ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
+        };
+
+        $belumBayarUmur3 = $belumBayarQuery()
+            ->where('created_at', '<', now()->subDays(3))
+            ->count();
+
+        $belumBayarUmur7 = $belumBayarQuery()
+            ->where('created_at', '<', now()->subDays(7))
+            ->count();
+
+        $belumBayarUmur30 = $belumBayarQuery()
+            ->where('created_at', '<', now()->subDays(30))
+            ->count();
+
         return view('owner.dashboard', compact(
             'documents',
             'totalDokumen',
@@ -194,7 +216,10 @@ class OwnerDashboardController extends Controller
             'dokumenProsesTrend',
             'totalNilaiTrend',
             'filterData',
-            'allDokumenUmur'
+            'allDokumenUmur',
+            'belumBayarUmur3',
+            'belumBayarUmur7',
+            'belumBayarUmur30'
         ))
             ->with('title', 'Dashboard Kabag Keuangan - Dokumen')
             ->with('module', 'owner')
