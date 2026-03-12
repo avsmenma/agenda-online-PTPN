@@ -71,7 +71,7 @@
       <div class="stat-card proses clickable" data-filter="belum_siap" onclick="filterByCard('belum_siap')"
         title="Klik untuk filter dokumen belum siap bayar">
         <div class="stat-content">
-          <div class="stat-label">Dokumen Belum Siap Bayar</div>
+          <div class="stat-label">Belum Siap Bayar</div>
           <div class="stat-value">{{ number_format($dokumenBelumSiapBayar ?? 0, 0, ',', '.') }}</div>
           <div class="stat-nilai">Rp {{ number_format($nilaiBelumSiapBayar ?? 0, 0, ',', '.') }}</div>
         </div>
@@ -83,7 +83,7 @@
       <div class="stat-card siap clickable" data-filter="siap_dibayar" onclick="filterByCard('siap_dibayar')"
         title="Klik untuk filter dokumen siap bayar">
         <div class="stat-content">
-          <div class="stat-label">Dokumen Siap Bayar</div>
+          <div class="stat-label">Siap Bayar</div>
           <div class="stat-value">{{ number_format($dokumenSiapBayar ?? 0, 0, ',', '.') }}</div>
           <div class="stat-nilai">Rp {{ number_format($nilaiSiapBayar ?? 0, 0, ',', '.') }}</div>
         </div>
@@ -95,7 +95,7 @@
       <div class="stat-card selesai clickable" data-filter="sudah_dibayar" onclick="filterByCard('sudah_dibayar')"
         title="Klik untuk filter dokumen sudah dibayar">
         <div class="stat-content">
-          <div class="stat-label">Dokumen Sudah Dibayar</div>
+          <div class="stat-label">Sudah Dibayar</div>
           <div class="stat-value">{{ number_format($dokumenSelesai ?? 0, 0, ',', '.') }}</div>
           <div class="stat-nilai">Rp {{ number_format($nilaiSelesai ?? 0, 0, ',', '.') }}</div>
         </div>
