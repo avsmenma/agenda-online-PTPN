@@ -3953,6 +3953,8 @@
       }
     @endphp
 
+    <script>window._userModule = @json($module);</script>
+
     @if($isOwner)
       <!-- Owner Menu - Clean and Simple -->
       <div style="flex: 1; display: flex; flex-direction: column;">
@@ -7196,8 +7198,10 @@ document.addEventListener('DOMContentLoaded', function() {
     fsBtn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
     fsBtn.title = 'Keluar dari mode fullscreen (Esc)';
 
-    // ── Inject "Tambah Dokumen" button next to fullscreen button ──
-    if (!document.getElementById('btn-tambah-dokumen-fs')) {
+    // ── Inject "Tambah Dokumen" button only for operator role ──
+    var _mod = (window._userModule || '').toLowerCase();
+    var _noTambah = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+    if (_noTambah.indexOf(_mod) === -1 && !document.getElementById('btn-tambah-dokumen-fs')) {
       var tambahBtn = document.createElement('button');
       tambahBtn.type = 'button';
       tambahBtn.id = 'btn-tambah-dokumen-fs';
