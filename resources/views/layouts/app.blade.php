@@ -7374,8 +7374,7 @@ document.addEventListener('DOMContentLoaded', function() {
   .tooltip,
   .popover,
   .notification-toast,
-  .global-notification-toast,
-  #urgencyGlobalBanner {
+  .global-notification-toast {
     transform: translateZ(0);
     will-change: transform, opacity;
   }
