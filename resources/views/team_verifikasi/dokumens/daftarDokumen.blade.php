@@ -12,34 +12,8 @@
 
       console.log('🚀 Initializing critical functions...');
 
-      // Wrapper function untuk handle row click dengan text selection check
+      // Wrapper function untuk handle row double-click
       function handleRowClick(event, docId) {
-        // Cek apakah user sedang menyeleksi teks
-        const selection = window.getSelection();
-        const selectedText = selection.toString().trim();
-
-        // Jika ada text yang diseleksi, jangan toggle detail
-        if (selectedText.length > 0) {
-          console.log('Text selection detected, preventing detail toggle');
-          event.preventDefault();
-          event.stopPropagation();
-          return false;
-        }
-
-        // Cek apakah ini adalah double-click (biasanya untuk select word)
-        if (event.detail === 2) {
-          // Double-click biasanya untuk select word, tunggu sebentar untuk cek selection
-          setTimeout(() => {
-            const newSelection = window.getSelection();
-            if (newSelection.toString().trim().length > 0) {
-              console.log('Double-click text selection detected, preventing detail toggle');
-              return false;
-            }
-          }, 50);
-          // Untuk double-click, kita biarkan default behavior (select word) dulu
-          return false;
-        }
-
         // Cek apakah yang diklik adalah link/tombol/input/select/textarea
         const target = event.target;
         const tagName = target.tagName.toLowerCase();
@@ -64,14 +38,12 @@
           return true;
         }
 
-        // Cek apakah user sedang melakukan drag (mouse drag selection)
-        // Jika event.which === 0, ini biasanya adalah programmatic click atau drag
-        if (event.detail === 0 || (event.which === 0 && event.button === 0)) {
-          console.log('Drag detected, preventing detail toggle');
-          return false;
+        // Clear text selection yang otomatis terjadi saat double-click
+        if (window.getSelection) {
+          window.getSelection().removeAllRanges();
         }
 
-        // Jika aman, panggil openViewDocumentModal
+        // Buka modal view detail dokumen
         openViewDocumentModal(docId);
         return true;
       }

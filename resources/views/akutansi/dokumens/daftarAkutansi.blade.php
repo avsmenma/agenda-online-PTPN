@@ -4261,19 +4261,8 @@
             </script>
 
             <script>
-            // Wrapper function untuk handle row click dengan text selection check
+            // Wrapper function untuk handle row double-click
             function handleRowClick(event, docId) {
-              // Cek apakah user sedang menyeleksi teks
-              const selection = window.getSelection();
-              const selectedText = selection.toString().trim();
-
-              if (selectedText.length > 0) {
-                // User sedang menyeleksi teks, jangan toggle detail
-                event.preventDefault();
-                event.stopPropagation();
-                return false;
-              }
-
               // Cek apakah yang diklik adalah link/tombol/input/select/textarea
               const target = event.target;
               const tagName = target.tagName.toLowerCase();
@@ -4292,6 +4281,11 @@
               if (isInteractiveElement) {
                 // User klik elemen interaktif, biarkan default behavior
                 return true;
+              }
+
+              // Clear text selection yang otomatis terjadi saat double-click
+              if (window.getSelection) {
+                window.getSelection().removeAllRanges();
               }
 
               // Buka modal view detail dokumen

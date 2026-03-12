@@ -3524,8 +3524,7 @@
          function showSendSuccessModal(message) {     const modalEl = document.getElementById('sendSuccessModal');     if (!modalEl) {       location.reload();       return;     }
            const textEl = document.getElementById('sendSuccessMessage');     if (textEl) {       textEl.textContent = message || 'Dokumen berhasil dikirim dan akan diproses oleh Team Verifikasi.';     }
            shouldReloadAfterSendSuccess = true;     const modal = new bootstrap.Modal(modalEl);     modal.show();   }
-         /* Wrapper function untuk handle row click dengan text selection check */   function handleRowClick(event, documentId) {     /* Cek apakah user sedang menyeleksi teks */     const selection = window.getSelection();     const selectedText = selection.toString().trim();
-           if (selectedText.length > 0) {       /* User sedang menyeleksi teks, jangan toggle detail */       event.preventDefault();       event.stopPropagation();       return false;     }
+         /* Wrapper function untuk handle row double-click */   function handleRowClick(event, documentId) {
            /* Cek apakah yang diklik adalah link/tombol/input/select/textarea */     const target = event.target;     const tagName = target.tagName.toLowerCase();     const isInteractiveElement         = 
               tagName === 'a' || 
               tagName === 'button' || 
@@ -3541,6 +3540,11 @@
             if (isInteractiveElement) {
               /* User klik elemen interaktif, biarkan default behavior */
               return true;
+            }
+
+            /* Clear text selection yang otomatis terjadi saat double-click */
+            if (window.getSelection) {
+              window.getSelection().removeAllRanges();
             }
 
             /* Buka modal popup untuk menampilkan detail dokumen */
