@@ -491,6 +491,10 @@ Route::delete('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'r
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dokumen.urgency.reset');
 
+Route::delete('owner/urgency/reset-all', [OwnerDashboardController::class, 'resetAllUrgencies'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.urgency.reset-all');
+
 // Document History / Timeline API
 Route::get('owner/dokumen/{id}/history', [OwnerDashboardController::class, 'getHistory'])
     ->middleware('auth', 'role:admin,owner')

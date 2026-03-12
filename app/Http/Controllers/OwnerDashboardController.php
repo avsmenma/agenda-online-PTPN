@@ -4630,6 +4630,31 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * DELETE /owner/urgency/reset-all
+     * Bulk-reset ALL urgency flags across all documents.
+     */
+    public function resetAllUrgencies(Request $request): JsonResponse
+    {
+        try {
+            $affected = Dokumen::where('urgency_active', true)->update([
+                'urgency_active'  => false,
+                'urgency_sent_at' => null,
+                'urgency_sent_by' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Semua urgency berhasil direset ({$affected} dokumen).",
+                'affected' => $affected,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error resetting all urgencies: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan.'], 500);
+        }
+    }
+
+    /**
      * GET /api/documents/urgency/active
      * Returns urgency-active documents for the logged-in user's role.
      * Used by recipient-role dashboards for polling.

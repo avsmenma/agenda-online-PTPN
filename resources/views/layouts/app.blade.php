@@ -6675,32 +6675,62 @@ document.addEventListener('DOMContentLoaded', function() {
         <i class="fas fa-inbox"></i> Buka Inbox
       </a>
     </div>
-    <button class="urgency-banner-dismiss" onclick="dismissUrgencyBanner()" title="Tutup (muncul kembali dalam 5 menit)">×</button>
+    <button class="urgency-banner-dismiss" onclick="dismissUrgencyBanner()" title="Tutup (muncul kembali jika ada urgency baru)">×</button>
   </div>
 </div>
 
 <script>
 (function() {
   const POLL_INTERVAL_MS = 60000;   // 60 seconds
-  const DISMISS_COOLDOWN = 300000;  // 5 minutes after dismiss
-  let urgencyDismissedAt = 0;
+  const LS_KEY_DISMISSED_COUNT = 'urgency_dismissed_count';
+  const LS_KEY_DISMISSED_IDS   = 'urgency_dismissed_ids';
   let urgencyPollTimer = null;
 
+  function getDismissedIds() {
+    try {
+      const raw = localStorage.getItem(LS_KEY_DISMISSED_IDS);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
   function dismissUrgencyBanner() {
-    urgencyDismissedAt = Date.now();
+    // Store current urgency IDs so banner stays hidden until new ones arrive
+    const countEl = document.getElementById('urgencyBannerCount');
+    const currentCount = countEl ? countEl.textContent : '0';
+    localStorage.setItem(LS_KEY_DISMISSED_COUNT, currentCount);
+    // Also store the IDs of dismissed urgencies (set by last poll)
+    if (window._lastUrgencyIds) {
+      localStorage.setItem(LS_KEY_DISMISSED_IDS, JSON.stringify(window._lastUrgencyIds));
+    }
     hideBanner();
   }
   window.dismissUrgencyBanner = dismissUrgencyBanner;
 
+  function shouldShowBanner(currentIds) {
+    const dismissedIds = getDismissedIds();
+    if (dismissedIds.length === 0) return true;
+    // Show banner if there are any NEW urgency IDs not in the dismissed set
+    const dismissedSet = new Set(dismissedIds);
+    for (let i = 0; i < currentIds.length; i++) {
+      if (!dismissedSet.has(currentIds[i])) return true;
+    }
+    return false;
+  }
+
   function showBanner(count, list) {
-    if (Date.now() - urgencyDismissedAt < DISMISS_COOLDOWN) return;
+    const currentIds = list ? list.map(function(u) { return u.id; }) : [];
+    window._lastUrgencyIds = currentIds;
+
+    // Don't show if user dismissed these same urgencies
+    if (!shouldShowBanner(currentIds)) return;
+
     const banner = document.getElementById('urgencyGlobalBanner');
     const countEl = document.getElementById('urgencyBannerCount');
     const listEl  = document.getElementById('urgencyBannerList');
     if (!banner) return;
     countEl.textContent = count;
     if (list && list.length > 0) {
-      const preview = list.slice(0, 3).map(u => u.nomor_agenda).join(', ');
+      const preview = list.slice(0, 3).map(function(u) { return u.nomor_agenda; }).join(', ');
       listEl.textContent = 'Dokumen: ' + preview + (list.length > 3 ? ' +' + (list.length - 3) + ' lainnya' : '');
     } else {
       listEl.textContent = '';
@@ -6719,15 +6749,18 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/documents/urgency/active', {
       headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
       if (data && data.success && data.count > 0) {
         showBanner(data.count, data.urgencies);
       } else {
+        // No urgencies at all — hide banner and clear dismissed state
         hideBanner();
+        localStorage.removeItem(LS_KEY_DISMISSED_COUNT);
+        localStorage.removeItem(LS_KEY_DISMISSED_IDS);
       }
     })
-    .catch(() => {}); // fail silently
+    .catch(function() {}); // fail silently
   }
 
   // Start polling after page is ready
