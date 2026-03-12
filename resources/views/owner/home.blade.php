@@ -109,6 +109,15 @@
         .stat-change.neg { color: #EF4444; }
         .stat-change.neutral { color: #94a3b8; }
         .stat-card .stat-detail { margin-top: 12px; font-size: 12px; color: #0D9488; cursor: pointer; font-weight: 500; }
+        .stat-nilai {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin: 4px 0 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* Total Nilai card */
         .stat-card.gradient {
@@ -308,6 +317,7 @@
                         </div>
                         <div class="stat-icon" style="background:#F59E0B18">⏳</div>
                     </div>
+                    <div class="stat-nilai">Rp {{ number_format($nilaiBelumDibayar, 0, ',', '.') }}</div>
                     <div class="stat-detail">Lihat Detail →</div>
                 </a>
 
@@ -325,6 +335,7 @@
                         </div>
                         <div class="stat-icon" style="background:#3B82F618">✅</div>
                     </div>
+                    <div class="stat-nilai">Rp {{ number_format($nilaiSiapDibayar, 0, ',', '.') }}</div>
                     <div class="stat-detail">Lihat Detail →</div>
                 </a>
 
@@ -342,6 +353,7 @@
                         </div>
                         <div class="stat-icon" style="background:#10B98118">💳</div>
                     </div>
+                    <div class="stat-nilai">Rp {{ number_format($nilaiSudahDibayar, 0, ',', '.') }}</div>
                     <div class="stat-detail">Lihat Detail →</div>
                 </a>
 

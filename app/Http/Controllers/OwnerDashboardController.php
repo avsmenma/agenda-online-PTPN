@@ -278,6 +278,26 @@ class OwnerDashboardController extends Controller
 
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
+        // === NILAI RUPIAH PER STATUS ===
+        $nilaiBelumDibayar = Dokumen::where(function ($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSiapDibayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSudahDibayar = Dokumen::where(function ($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
         // === PERSENTASE PERUBAHAN VS BULAN LALU ===
         $bulanIni = now()->month;
         $tahunIni = now()->year;
@@ -330,6 +350,9 @@ class OwnerDashboardController extends Controller
             'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
+            'nilaiBelumDibayar',
+            'nilaiSiapDibayar',
+            'nilaiSudahDibayar',
             'totalDokumenTrend',
             'prosesTrend',
             'siapTrend',
