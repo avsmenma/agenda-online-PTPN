@@ -3223,7 +3223,7 @@
               $canBulkSelect = !$isSentToPembayaranBulk && $dokumen->current_handler === 'akutansi';
             @endphp
             <tr class="main-row clickable-row {{ $dokumen->lock_status_class }}"
-              onclick="handleRowClick(event, {{ $dokumen->id }})" title="{{ $dokumen->lock_status_message }}">
+              ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               <td class="col-checkbox" onclick="event.stopPropagation();">
                 @if($canBulkSelect)
                   <input type="checkbox" class="doc-checkbox bulk-checkbox" data-id="{{ $dokumen->id }}"

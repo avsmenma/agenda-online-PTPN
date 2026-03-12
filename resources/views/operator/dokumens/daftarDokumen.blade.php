@@ -2666,7 +2666,7 @@
               data-nomor-spp="{{ $dokumen->nomor_spp }}"
               data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
               data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
-              onclick="handleRowClick(event, {{ $dokumen->id }})">
+              ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               <td class="col-checkbox" onclick="event.stopPropagation()">
                 @if($canSendForBulk)
                   <input type="checkbox" 

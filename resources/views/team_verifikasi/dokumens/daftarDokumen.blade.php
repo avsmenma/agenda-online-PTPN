@@ -4324,7 +4324,7 @@
               $rowClass = $isLocked ? 'locked-row' : '';
             @endphp
             <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
-              onclick="handleRowClick(event, {{ $dokumen->id }})">
+              ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               {{-- Checkbox Column --}}
               <td class="col-checkbox text-center">
                 <input type="checkbox" class="document-checkbox" value="{{ $dokumen->id }}"

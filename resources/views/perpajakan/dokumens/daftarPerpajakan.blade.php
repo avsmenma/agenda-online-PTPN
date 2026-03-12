@@ -3547,7 +3547,7 @@
               }
             @endphp
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
-              onclick="handleRowClick(event, {{ $dokumen->id }})" title="Klik untuk melihat detail lengkap dokumen">
+              ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               <td class="col-checkbox" onclick="event.stopPropagation();">
                 @if($canSend && !$isSentToAkutansi && !$isSentToPembayaran && !$isPendingApprovalAkutansi && !$isPendingApprovalPembayaran)
                   <input type="checkbox" class="doc-checkbox bulk-checkbox" data-id="{{ $dokumen->id }}"
