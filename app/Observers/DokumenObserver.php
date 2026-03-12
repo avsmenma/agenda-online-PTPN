@@ -28,6 +28,27 @@ class DokumenObserver
      */
     public function updated(Dokumen $dokumen): void
     {
+        // 0. Auto-reset urgency when current_handler changes (document forwarded to next role)
+        if (
+            $dokumen->wasChanged('current_handler') &&
+            $dokumen->urgency_active
+        ) {
+            // Silently reset urgency — the previous handler has finished processing
+            $dokumen->withoutEvents(function () use ($dokumen) {
+                $dokumen->updateQuietly([
+                    'urgency_active'  => false,
+                    'urgency_sent_at' => null,
+                    'urgency_sent_by' => null,
+                ]);
+            });
+
+            Log::debug('DokumenObserver: Urgency auto-reset karena current_handler berubah', [
+                'dokumen_id'      => $dokumen->id,
+                'old_handler'     => $dokumen->getOriginal('current_handler'),
+                'new_handler'     => $dokumen->current_handler,
+            ]);
+        }
+
         // 1. Deteksi: status_pembayaran baru saja berubah menjadi 'sudah_dibayar'
         if (
             $dokumen->wasChanged('status_pembayaran') &&

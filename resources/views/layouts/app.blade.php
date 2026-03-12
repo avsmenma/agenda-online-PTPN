@@ -6609,11 +6609,17 @@ document.addEventListener('DOMContentLoaded', function() {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff;
     padding: 0;
-    box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+    box-shadow: none;
     transform: translateY(-100%);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    visibility: hidden;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0s 0.4s;
   }
-  #urgencyGlobalBanner.visible { transform: translateY(0); }
+  #urgencyGlobalBanner.visible {
+    transform: translateY(0);
+    visibility: visible;
+    box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0s 0s;
+  }
   #urgencyGlobalBanner .urgency-banner-inner {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 20px; gap: 12px;
