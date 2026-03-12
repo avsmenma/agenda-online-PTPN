@@ -105,6 +105,26 @@ class OwnerDashboardController extends Controller
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
+        // Nilai Rupiah per Status
+        $nilaiBelumSiapBayar = Dokumen::where(function ($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSelesai = Dokumen::where(function ($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
         // Calculate trend indicators (compare with last week)
         $oneWeekAgo = Carbon::now()->subWeek();
 
@@ -166,6 +186,9 @@ class OwnerDashboardController extends Controller
             'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
+            'nilaiBelumSiapBayar',
+            'nilaiSiapBayar',
+            'nilaiSelesai',
             'totalDokumenTrend',
             'dokumenSelesaiTrend',
             'dokumenProsesTrend',

@@ -310,6 +310,16 @@ html.dark .header-action-btn .theme-icon-sun {
   font-size: 1.25rem;
 }
 
+.stat-content .stat-nilai {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .stat-icon {
   width: 48px;
   height: 48px;

@@ -73,6 +73,7 @@
         <div class="stat-content">
           <div class="stat-label">Dokumen Belum Siap Bayar</div>
           <div class="stat-value">{{ number_format($dokumenBelumSiapBayar ?? 0, 0, ',', '.') }}</div>
+          <div class="stat-nilai">Rp {{ number_format($nilaiBelumSiapBayar ?? 0, 0, ',', '.') }}</div>
         </div>
         <div class="stat-icon proses">
           <i class="fas fa-clock"></i>
@@ -84,6 +85,7 @@
         <div class="stat-content">
           <div class="stat-label">Dokumen Siap Bayar</div>
           <div class="stat-value">{{ number_format($dokumenSiapBayar ?? 0, 0, ',', '.') }}</div>
+          <div class="stat-nilai">Rp {{ number_format($nilaiSiapBayar ?? 0, 0, ',', '.') }}</div>
         </div>
         <div class="stat-icon siap">
           <i class="fas fa-clipboard-check"></i>
@@ -95,6 +97,7 @@
         <div class="stat-content">
           <div class="stat-label">Dokumen Sudah Dibayar</div>
           <div class="stat-value">{{ number_format($dokumenSelesai ?? 0, 0, ',', '.') }}</div>
+          <div class="stat-nilai">Rp {{ number_format($nilaiSelesai ?? 0, 0, ',', '.') }}</div>
         </div>
         <div class="stat-icon selesai">
           <i class="fas fa-check-circle"></i>
