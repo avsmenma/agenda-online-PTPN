@@ -651,6 +651,12 @@
       border-right: none;
     }
 
+    /* Fix for Nilai Rupiah column in preview table */
+    .preview-table td.col-nilai,
+    .preview-table th.col-nilai {
+      border-right: none !important;
+    }
+
     .empty-preview {
       text-align: center;
       padding: 60px 20px;
@@ -1073,6 +1079,26 @@
     th.col-nilai[style] {
       border-right: none !important;
       border-left: none !important;
+    }
+
+    /* FINAL OVERRIDE - This should be the last CSS rule loaded */
+    .table-dokumen td.col-nilai,
+    .table-dokumen th.col-nilai,
+    .table-enhanced td.col-nilai,
+    .table-enhanced th.col-nilai,
+    .preview-table td.col-nilai,
+    .preview-table th.col-nilai,
+    table td.col-nilai,
+    table th.col-nilai,
+    td.col-nilai,
+    th.col-nilai {
+      border-right: none !important;
+      border-left: none !important;
+      border-image: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+      background-clip: padding-box !important;
+      visibility: visible !important;
     }
 
     /* Responsive design improvements */
@@ -5697,6 +5723,37 @@
 
             // Apply fix periodically to catch any dynamic changes
             setInterval(fixNilaiRupiahColumnBorders, 1000);
+
+            // Additional CSS injection for maximum override
+            const style = document.createElement('style');
+            style.innerHTML = `
+              /* MAXIMUM PRIORITY OVERRIDE FOR NILAI RUPIAH COLUMN */
+              .table-dokumen thead th.col-nilai,
+              .table-dokumen tbody td.col-nilai,
+              .table-enhanced thead th.col-nilai,
+              .table-enhanced tbody td.col-nilai,
+              .preview-table thead th.col-nilai,
+              .preview-table tbody td.col-nilai,
+              table thead th.col-nilai,
+              table tbody td.col-nilai,
+              td.col-nilai, th.col-nilai {
+                border-right: none !important;
+                border-left: none !important;
+                border-image: none !important;
+                box-shadow: none !important;
+                outline: none !important;
+                background-clip: padding-box !important;
+              }
+
+              /* Override any inline styles */
+              [style].col-nilai,
+              td.col-nilai[style*="border"],
+              th.col-nilai[style*="border"] {
+                border-right: none !important;
+                border-left: none !important;
+              }
+            `;
+            document.head.appendChild(style);
           </script>
 
 @endsection
