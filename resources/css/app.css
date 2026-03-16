@@ -82,3 +82,28 @@
     visibility: visible !important;
     background: #f1f5f9 !important; /* Force visible track */
 }
+
+/* Fix for Nilai Rupiah column vertical line issue */
+.table-enhanced td.col-nilai,
+.table-dokumen td.col-nilai,
+.table tbody td.col-nilai {
+    border-right: none !important;
+    border-left: none !important;
+    border-image: none !important;
+    box-shadow: none !important;
+}
+
+.table-enhanced th.col-nilai,
+.table-dokumen th.col-nilai {
+    border-right: none !important;
+    border-left: none !important;
+    border-image: none !important;
+}
+
+/* Additional override for any table with Nilai Rupiah content */
+td[colspan*="nilai"],
+th[colspan*="nilai"],
+td:contains("Nilai Rupiah"),
+th:contains("Nilai Rupiah") {
+    border-right: none !important;
+}

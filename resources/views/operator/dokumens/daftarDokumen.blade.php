@@ -2,6 +2,30 @@
 @section('content')
 
   <style>
+    /* CRITICAL FIX: Override all possible border styles for Nilai Rupiah column */
+    td.col-nilai, th.col-nilai,
+    .table-enhanced td.col-nilai, .table-enhanced th.col-nilai,
+    .table-dokumen td.col-nilai, .table-dokumen th.col-nilai,
+    .table tbody td.col-nilai, .table thead th.col-nilai,
+    [class*="col-nilai"], [class*="col-nilai"] td, [class*="col-nilai"] th {
+      border-right: none !important;
+      border-left: none !important;
+      border-image: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    /* Additional override for any element containing "Nilai Rupiah" */
+    td:has(strong:contains("Rp.")), th:contains("Nilai") {
+      border-right: none !important;
+    }
+
+    /* Force override inline styles */
+    td.col-nilai[style], th.col-nilai[style] {
+      border-right: none !important;
+      border-left: none !important;
+    }
+
     h2 {
       background: linear-gradient(135deg, #083E40 0%, #889717 100%);
       -webkit-background-clip: text;
@@ -1020,6 +1044,35 @@
       border-right: none !important;
       border-left: none !important;
       border-image: none !important;
+    }
+
+    /* Dark mode support for Nilai Rupiah column */
+    .dark .table-enhanced td.col-nilai,
+    .dark .table-dokumen td.col-nilai,
+    .dark .table tbody td.col-nilai {
+      border-right: none !important;
+      border-left: none !important;
+      border-color: transparent !important;
+    }
+
+    .dark .table-enhanced th.col-nilai,
+    .dark .table-dokumen th.col-nilai {
+      border-right: none !important;
+      border-left: none !important;
+      border-color: transparent !important;
+    }
+
+    /* Force override for any inline styles or Bootstrap defaults */
+    [class*="col-nilai"] {
+      border-right: none !important;
+      border-left: none !important;
+    }
+
+    /* Specific override for table cells that might have inline styles */
+    td.col-nilai[style],
+    th.col-nilai[style] {
+      border-right: none !important;
+      border-left: none !important;
     }
 
     /* Responsive design improvements */
@@ -5606,6 +5659,44 @@
               document.body.appendChild(toast);
               setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
             }
+
+            // Fix for Nilai Rupiah column vertical line - Force remove borders
+            function fixNilaiRupiahColumnBorders() {
+              // Target all possible selectors for Nilai Rupiah column
+              const selectors = [
+                'td.col-nilai',
+                'th.col-nilai',
+                '.table-enhanced td.col-nilai',
+                '.table-dokumen td.col-nilai',
+                '.table tbody td.col-nilai',
+                '[class*="col-nilai"]'
+              ];
+
+              selectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => {
+                  element.style.borderRight = 'none';
+                  element.style.borderLeft = 'none';
+                  element.style.borderImage = 'none';
+                  element.style.boxShadow = 'none';
+                });
+              });
+            }
+
+            // Apply fix when DOM is loaded
+            document.addEventListener('DOMContentLoaded', fixNilaiRupiahColumnBorders);
+            
+            // Apply fix after any AJAX calls or table updates
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+              return originalFetch.apply(this, args).then(response => {
+                setTimeout(fixNilaiRupiahColumnBorders, 100);
+                return response;
+              });
+            };
+
+            // Apply fix periodically to catch any dynamic changes
+            setInterval(fixNilaiRupiahColumnBorders, 1000);
           </script>
 
 @endsection
