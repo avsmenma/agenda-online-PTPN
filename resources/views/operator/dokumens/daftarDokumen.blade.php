@@ -2770,6 +2770,17 @@
   <!-- Per-page dropdown at the top -->
   @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
 
+  <!-- AJAX All-rows progress bar -->
+  <div id="ajaxLoadBar" style="display:none; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#fffdf0; border:1px solid #c8d000; border-radius:10px;">
+      <div style="flex:1; height:8px; background:#e9ecef; border-radius:4px; overflow:hidden;">
+        <div id="ajaxLoadBarFill" style="height:100%; width:0%; background:linear-gradient(90deg,#083E40,#889717); border-radius:4px; transition:width .3s ease;"></div>
+      </div>
+      <span id="ajaxLoadBarText" style="font-size:12px; color:#495057; white-space:nowrap; min-width:130px; text-align:right;">Memuat data...</span>
+      <button id="ajaxLoadCancel" onclick="cancelAjaxLoad()" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:12px;padding:0 4px;" title="Batalkan">&#10005;</button>
+    </div>
+  </div>
+
   <!-- Enhanced Tabel Dokumen -->
   <div class="table-dokumen" id="documentTableContainer">
     <div class="table-responsive table-container">
@@ -2801,7 +2812,7 @@
             <th class="col-action">Aksi</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="dokumenTableBody">
           @forelse($dokumens as $index => $dokumen)
             @php
               // === Compute canSend early for checkbox ===
@@ -2809,15 +2820,15 @@
               $isSentToTeamVerifikasiForCheck = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
                 || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
 
-              // Check if approved by Team Verifikasi
-              $teamVerifikasiStatusForCheck = $dokumen->roleStatuses()
+              // Check if approved by Team Verifikasi (use eager-loaded collection, no extra query)
+              $teamVerifikasiStatusForCheck = $dokumen->roleStatuses
                 ->where('role_code', 'team_verifikasi')
                 ->where('status', 'approved')
                 ->first();
               $isApprovedByTeamVerifikasiForCheck = $teamVerifikasiStatusForCheck !== null;
 
               // Check if rejected
-              $teamVerifikasiRejectedForCheck = $dokumen->roleStatuses()
+              $teamVerifikasiRejectedForCheck = $dokumen->roleStatuses
                 ->where('role_code', 'team_verifikasi')
                 ->where('status', 'rejected')
                 ->first();
@@ -2825,7 +2836,7 @@
 
               // Check if returned
               if (!$isRejectedForCheck && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
-                $hasAnyRejectionForCheck = $dokumen->roleStatuses()->where('status', 'rejected')->exists();
+                $hasAnyRejectionForCheck = $dokumen->roleStatuses->where('status', 'rejected')->isNotEmpty();
                 if ($hasAnyRejectionForCheck) {
                   $isRejectedForCheck = true;
                 }
@@ -2939,10 +2950,10 @@
                     @php
                       // === CHECK PRIORITAS: Apakah dokumen ditolak oleh Team Verifikasi dari inbox? ===
                       // Ini harus dicek PERTAMA karena rejection bisa terjadi setelah display_status diset
-                      $teamVerifikasiRejectedStatus = $dokumen->roleStatuses()
+                      $teamVerifikasiRejectedStatus = $dokumen->roleStatuses
                         ->where('role_code', 'team_verifikasi')
                         ->where('status', 'rejected')
-                        ->latest('status_changed_at')
+                        ->sortByDesc('status_changed_at')
                         ->first();
                       $isRejectedByTeamVerifikasi = $teamVerifikasiRejectedStatus !== null;
                       $rejectionReasonVerifikasi = $isRejectedByTeamVerifikasi ? ($teamVerifikasiRejectedStatus->notes ?? null) : null;
@@ -2967,19 +2978,19 @@
                           $OperatorDisplayStatus = 'draft';
                         } else {
                           // Check team verifikasi statuses
-                          $isPendingInTeamVerifikasi = $dokumen->roleStatuses()
+                          $isPendingInTeamVerifikasi = $dokumen->roleStatuses
                             ->where('role_code', 'team_verifikasi')
                             ->where('status', 'pending')
-                            ->exists();
+                            ->isNotEmpty();
 
-                          $teamVerifikasiHasApproved = $dokumen->roleStatuses()
+                          $teamVerifikasiHasApproved = $dokumen->roleStatuses
                             ->where('role_code', 'team_verifikasi')
                             ->where('status', 'approved')
-                            ->exists();
+                            ->isNotEmpty();
 
-                          $hasPerpajakanStatus = $dokumen->roleStatuses()
+                          $hasPerpajakanStatus = $dokumen->roleStatuses
                             ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
-                            ->exists();
+                            ->isNotEmpty();
 
                           // === FIX: Pending di inbox Team Verifikasi = Menunggu Approval (regardless of current_handler) ===
                           // When document is sent to Team Verifikasi inbox for approval,
@@ -3130,24 +3141,25 @@
                     $isSentToTeamVerifikasi = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
                       || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
 
-                    // Check if document has been approved by Team Verifikasi and sent to other roles
-                    $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+                    // Check if document has been approved by Team Verifikasi (use eager-loaded collection)
+                    $teamVerifikasiStatus = $dokumen->roleStatuses
+                      ->whereIn('role_code', ['verifikasi', 'team_verifikasi'])
+                      ->first();
                     $isApprovedByTeamVerifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
 
-                    // Check if document is rejected - check from roleStatuses
-                    // More comprehensive check to ensure we catch all rejected documents
+                    // Check if document is rejected
                     $isRejected = false;
 
-                    // Method 1: Check from getStatusForRole
+                    // Method 1: Check from eager-loaded collection
                     if ($teamVerifikasiStatus && strtolower($teamVerifikasiStatus->status ?? '') === 'rejected') {
                       $isRejected = true;
                     }
 
                     // Method 2: Fallback - check from dokumen_statuses directly (case-insensitive)
                     if (!$isRejected) {
-                      $rejectedStatus = $dokumen->roleStatuses()
+                      $rejectedStatus = $dokumen->roleStatuses
                         ->where('status', 'rejected')
-                        ->whereIn('role_code', ['team_verifikasi', 'team_verifikasi', 'team_verifikasi', 'team_verifikasi'])
+                        ->where('role_code', 'team_verifikasi')
                         ->first();
                       $isRejected = $rejectedStatus !== null;
                     }
@@ -3156,9 +3168,9 @@
                     // This catches documents that were rejected but status might not be set correctly
                     if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
                       // Check if there's any rejection status in roleStatuses relationship
-                      $hasAnyRejection = $dokumen->roleStatuses()
+                      $hasAnyRejection = $dokumen->roleStatuses
                         ->where('status', 'rejected')
-                        ->exists();
+                        ->isNotEmpty();
                       if ($hasAnyRejection) {
                         $isRejected = true;
                       }
@@ -3317,7 +3329,7 @@
   @if(isset($dokumens))
     @foreach($dokumens as $dokumen)
       @php
-        $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+        $teamVerifikasiStatus = $dokumen->roleStatuses->whereIn('role_code', ['verifikasi','team_verifikasi'])->first();
         $isRejected = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
         $rejectReason = $teamVerifikasiStatus?->notes ?? null;
       @endphp
@@ -6191,6 +6203,176 @@
               }, true);
 
             })();
+          </script>
+
+          {{-- ============================================================
+               AJAX "Semua" loader — no page reload, progressive loading
+               ============================================================ --}}
+          <script>
+          (function() {
+            'use strict';
+
+            // Base URL for ajax-rows endpoint
+            const AJAX_ROWS_URL = "{{ route('documents.ajax-rows') }}";
+            const CSRF_TOKEN    = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            let _ajaxController = null; // AbortController for cancellation
+
+            /* ---- Override per-page selectors ---- */
+            window.changePerPageTop = function(value) {
+              if (value === 'all') { startAjaxLoad(); }
+              else {
+                const params = new URLSearchParams(window.location.search);
+                params.set('per_page', value); params.set('page', '1');
+                window.location.href = window.location.pathname + '?' + params.toString();
+              }
+            };
+            window.changePerPageEnhanced = function(value) {
+              if (value === 'all') { startAjaxLoad(); }
+              else {
+                const params = new URLSearchParams(window.location.search);
+                params.set('per_page', value); params.set('page', '1');
+                window.location.href = window.location.pathname + '?' + params.toString();
+              }
+            };
+
+            /* ---- Cancel button ---- */
+            window.cancelAjaxLoad = function() {
+              if (_ajaxController) { _ajaxController.abort(); }
+              hideBar();
+              // Restore select to previous value
+              document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select')
+                .forEach(s => { s.value = '{{ $dokumens->perPage() >= $dokumens->total() ? "all" : $dokumens->perPage() }}'; });
+            };
+
+            /* ---- Main loader ---- */
+            async function startAjaxLoad() {
+              const tbody    = document.getElementById('dokumenTableBody');
+              const bar      = document.getElementById('ajaxLoadBar');
+              const fill     = document.getElementById('ajaxLoadBarFill');
+              const txt      = document.getElementById('ajaxLoadBarText');
+              if (!tbody || !bar) return;
+
+              // Save scroll position
+              const scrollY = window.scrollY;
+
+              // Show bar, clear table
+              bar.style.display = 'block';
+              fill.style.width  = '0%';
+              txt.textContent   = 'Memuat data...';
+
+              // Empty tbody but keep header spacer
+              tbody.innerHTML = '<tr><td colspan="50" style="text-align:center;padding:20px;color:#6c757d;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat semua dokumen...</td></tr>';
+
+              // Hide existing pagination while loading
+              const paginationWrapper = document.querySelector('.pagination-enhanced-wrapper');
+              if (paginationWrapper) paginationWrapper.style.display = 'none';
+
+              // Build base params from current URL (preserve filters)
+              const baseParams = new URLSearchParams(window.location.search);
+              baseParams.delete('per_page');
+              baseParams.delete('page');
+              baseParams.set('chunk_size', '200');
+
+              _ajaxController = new AbortController();
+              const signal = _ajaxController.signal;
+
+              let total   = 0;
+              let loaded  = 0;
+              let allHtml = '';
+
+              try {
+                // First request to get total
+                const firstParams = new URLSearchParams(baseParams);
+                firstParams.set('chunk_page', '1');
+                const firstRes  = await fetch(AJAX_ROWS_URL + '?' + firstParams.toString(), {
+                  signal,
+                  headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
+                });
+                if (!firstRes.ok) throw new Error('Server error: ' + firstRes.status);
+                const firstData = await firstRes.json();
+
+                total    = firstData.total;
+                loaded   = firstData.to ?? 0;
+                allHtml  = firstData.html;
+                const lastPage = firstData.last_page;
+
+                // Update progress
+                updateBar(fill, txt, loaded, total);
+
+                // Load remaining chunks sequentially
+                for (let p = 2; p <= lastPage; p++) {
+                  if (signal.aborted) return;
+                  const params = new URLSearchParams(baseParams);
+                  params.set('chunk_page', String(p));
+                  const res  = await fetch(AJAX_ROWS_URL + '?' + params.toString(), {
+                    signal,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
+                  });
+                  if (!res.ok) throw new Error('Server error: ' + res.status);
+                  const data = await res.json();
+                  allHtml += data.html;
+                  loaded   = data.to ?? loaded;
+                  updateBar(fill, txt, loaded, total);
+                }
+
+                // Inject all rows at once
+                tbody.innerHTML = allHtml;
+
+                // Show "viewing all" summary, hide pagination
+                fill.style.width = '100%';
+                txt.textContent  = 'Menampilkan semua ' + total.toLocaleString('id-ID') + ' dokumen';
+                setTimeout(hideBar, 1500);
+
+                // Update summary texts in per-page bars
+                document.querySelectorAll('.pagination-enhanced-summary, .perpage-top-bar span').forEach(el => {
+                  el.textContent = 'Menampilkan 1 - ' + total.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' hasil';
+                });
+
+                // Mark selects as "all"
+                document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select').forEach(s => { s.value = 'all'; });
+
+                // Update browser URL without reload
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('per_page', 'all');
+                newUrl.searchParams.delete('page');
+                history.replaceState(null, '', newUrl.toString());
+
+                // Restore scroll
+                window.scrollTo({ top: scrollY, behavior: 'instant' });
+
+              } catch(err) {
+                if (err.name === 'AbortError') return;
+                console.error('AJAX load failed:', err);
+                tbody.innerHTML = '<tr><td colspan="50" class="text-center py-4 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Gagal memuat data. <a href="?per_page=all">Coba reload</a></td></tr>';
+                fill.style.width = '0%';
+                txt.textContent  = 'Gagal memuat';
+                setTimeout(hideBar, 3000);
+                // Restore pagination
+                if (paginationWrapper) paginationWrapper.style.display = '';
+              }
+            }
+
+            function updateBar(fill, txt, loaded, total) {
+              const pct = total > 0 ? Math.min(100, Math.round(loaded / total * 100)) : 0;
+              fill.style.width = pct + '%';
+              txt.textContent  = 'Memuat ' + loaded.toLocaleString('id-ID') + ' / ' + total.toLocaleString('id-ID') + ' dokumen (' + pct + '%)';
+            }
+
+            function hideBar() {
+              const bar = document.getElementById('ajaxLoadBar');
+              if (bar) bar.style.display = 'none';
+            }
+
+            // Auto-trigger if current URL already has per_page=all
+            document.addEventListener('DOMContentLoaded', function() {
+              const currentPerPage = new URLSearchParams(window.location.search).get('per_page');
+              @if($dokumens->perPage() >= $dokumens->total() && $dokumens->total() > 0)
+              // Page was loaded server-side with all rows already present — just mark selects
+              document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select').forEach(s => { s.value = 'all'; });
+              @endif
+            });
+          })();
           </script>
 
 @endsection

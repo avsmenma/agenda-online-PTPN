@@ -22,134 +22,106 @@ use App\Helpers\ActivityLogHelper;
 
 class DokumenController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Build the base operator document query (shared between index and ajaxRows)
+     */
+    private function buildOperatorQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
-        // Operator sees:
-        // 1. Documents created by Operator
-        // 2. Documents sent from Bagian where current_handler is 'operator'
-        // 3. Documents with pending/approved status for operator role in dokumen_statuses
-        // Order by nomor_agenda descending (numerically) - so new documents with lower numbers appear in correct position
-        // Example: 2010, 2009, 2006 (new), 2005, 2004, 2003
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs', 'roleStatuses'])
             ->where(function ($q) {
-                // Documents created by Operator
                 $q->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['operator', 'Operator', 'operator'])
                     ->orWhere('created_by', 'operator')
-                    // Documents sent from Bagian with current_handler = 'operator'
                     ->orWhere('current_handler', 'operator')
-                    // Documents with status record for operator role
                     ->orWhereHas('roleStatuses', function ($subQ) {
-                    $subQ->where('role_code', 'operator');
-                });
+                        $subQ->where('role_code', 'operator');
+                    });
             });
 
-        // === Sort/Order handling ===
+        // Sort
         if ($request->has('sort') || $request->has('order')) {
             $sortColumn = $request->get('sort', 'nomor_agenda');
-            $sortOrder = $request->get('order', 'desc');
-            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+            $sortOrder  = $request->get('order', 'desc');
+            $sortOrder  = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
             session(['operator_sort_column' => $sortColumn, 'operator_sort_order' => $sortOrder]);
         } else {
             $sortColumn = session('operator_sort_column', 'nomor_agenda');
-            $sortOrder = session('operator_sort_order', 'desc');
-            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
+            $sortOrder  = session('operator_sort_order', 'desc');
+            $sortOrder  = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
         }
 
-        // Apply sorting based on column
         if ($sortColumn === 'nomor_agenda') {
-            $query->orderByRaw("CASE 
-                WHEN nomor_agenda REGEXP '^[0-9]+(_[0-9]+)?$' THEN 
-                    CAST(SUBSTRING_INDEX(nomor_agenda, '_', 1) AS UNSIGNED)
-                WHEN nomor_agenda REGEXP '^[0-9]+' THEN 
-                    CAST(nomor_agenda AS UNSIGNED)
+            $query->orderByRaw("CASE
+                WHEN nomor_agenda REGEXP '^[0-9]+(_[0-9]+)?\$' THEN CAST(SUBSTRING_INDEX(nomor_agenda, '_', 1) AS UNSIGNED)
+                WHEN nomor_agenda REGEXP '^[0-9]+' THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
-            END {$sortOrder}")
-                ->orderBy('nomor_agenda', $sortOrder);
+            END {$sortOrder}")->orderBy('nomor_agenda', $sortOrder);
         } else {
-            // Allow sorting by any valid column
-            $allowedColumns = ['nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'tanggal_spp', 'uraian_spp', 'kategori', 'kebun', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran', 'nama_pengirim', 'dibayar_kepada', 'no_berita_acara', 'tanggal_berita_acara', 'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'status'];
-            if (in_array($sortColumn, $allowedColumns)) {
+            $allowed = ['nomor_spp','tanggal_masuk','nilai_rupiah','tanggal_spp','uraian_spp','kategori','kebun','jenis_dokumen','jenis_sub_pekerjaan','jenis_pembayaran','nama_pengirim','dibayar_kepada','no_berita_acara','tanggal_berita_acara','no_spk','tanggal_spk','tanggal_berakhir_spk','status'];
+            if (in_array($sortColumn, $allowed)) {
                 $query->orderBy($sortColumn, $sortOrder);
             }
-            // Always add secondary sort by nomor_agenda DESC
-            $query->orderByRaw("CASE 
-                WHEN nomor_agenda REGEXP '^[0-9]+(_[0-9]+)?$' THEN 
-                    CAST(SUBSTRING_INDEX(nomor_agenda, '_', 1) AS UNSIGNED)
-                WHEN nomor_agenda REGEXP '^[0-9]+' THEN 
-                    CAST(nomor_agenda AS UNSIGNED)
+            $query->orderByRaw("CASE
+                WHEN nomor_agenda REGEXP '^[0-9]+(_[0-9]+)?\$' THEN CAST(SUBSTRING_INDEX(nomor_agenda, '_', 1) AS UNSIGNED)
+                WHEN nomor_agenda REGEXP '^[0-9]+' THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC");
         }
 
-        // Enhanced search functionality - search across all relevant fields
-        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
-            $search = trim((string) $request->search);
+        // Search
+        if ($request->filled('search') && trim((string)$request->search) !== '') {
+            $search = trim((string)$request->search);
             $query->where(function ($q) use ($search) {
-                // Text fields
-                $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
-                    ->orWhere('bagian', 'like', '%' . $search . '%')
-                    ->orWhere('kategori', 'like', '%' . $search . '%')
-                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
-                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
-                    ->orWhere('no_spk', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
-                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
-
-                // Search in nilai_rupiah - handle various formats
-                $numericSearch = preg_replace('/[^0-9]/', '', $search);
-                if (is_numeric($numericSearch) && $numericSearch > 0) {
-                    $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
+                $q->where('nomor_agenda', 'like', "%{$search}%")
+                    ->orWhere('nomor_spp', 'like', "%{$search}%")
+                    ->orWhere('uraian_spp', 'like', "%{$search}%")
+                    ->orWhere('nama_pengirim', 'like', "%{$search}%")
+                    ->orWhere('bagian', 'like', "%{$search}%")
+                    ->orWhere('kategori', 'like', "%{$search}%")
+                    ->orWhere('jenis_dokumen', 'like', "%{$search}%")
+                    ->orWhere('no_berita_acara', 'like', "%{$search}%")
+                    ->orWhere('no_spk', 'like', "%{$search}%")
+                    ->orWhere('nomor_miro', 'like', "%{$search}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+                $numeric = preg_replace('/[^0-9]/', '', $search);
+                if (is_numeric($numeric) && $numeric > 0) {
+                    $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ["%{$numeric}%"]);
                 }
-            })
-                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
-                    $q->where('nama_penerima', 'like', '%' . $search . '%');
-                });
+            })->orWhereHas('dibayarKepadas', fn($q) => $q->where('nama_penerima', 'like', "%{$search}%"));
         }
 
-        // Filter by year
-        if ($request->has('year') && $request->year) {
+        // Year filter
+        if ($request->filled('year')) {
             $query->where('tahun', $request->year);
         }
 
-        // Filter by status using new dokumen_statuses table
-        if ($request->has('status_filter') && $request->status_filter) {
-            $statusFilter = $request->status_filter;
-
-            switch ($statusFilter) {
+        // Status filter
+        if ($request->filled('status_filter')) {
+            switch ($request->status_filter) {
                 case 'belum_dikirim':
-                    // Dokumen yang belum dikirim - no status record for Team Verifikasi exists
-                    $query->whereDoesntHave('roleStatuses', function ($q) {
-                        $q->where('role_code', 'team_verifikasi');
-                    })->where('status', 'draft');
+                    $query->whereDoesntHave('roleStatuses', fn($q) => $q->where('role_code', 'team_verifikasi'))
+                          ->where('status', 'draft');
                     break;
-
                 case 'menunggu_approval':
-                    // Dokumen yang menunggu approval dari Reviewer (Team Verifikasi)
-                    $query->whereHas('roleStatuses', function ($q) {
-                        $q->where('role_code', 'team_verifikasi')
-                            ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
-                    });
+                    $query->whereHas('roleStatuses', fn($q) => $q->where('role_code', 'team_verifikasi')
+                          ->where('status', \App\Models\DokumenStatus::STATUS_PENDING));
                     break;
-
                 case 'terkirim':
-                    // Dokumen yang sudah di-approve oleh Reviewer atau diteruskan ke department lain
-                    $query->where(function ($q) {
-                        // Approved by Team Verifikasi
-                        $q->whereHas('roleStatuses', function ($q2) {
-                            $q2->where('role_code', 'team_verifikasi')
-                                ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED);
-                        })
-                            // OR has status record for other departments (sent to them)
-                            ->orWhereHas('roleStatuses', function ($q3) {
-                                $q3->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
-                            });
-                    });
+                    $query->where(fn($q) => $q
+                        ->whereHas('roleStatuses', fn($q2) => $q2->where('role_code', 'team_verifikasi')
+                            ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED))
+                        ->orWhereHas('roleStatuses', fn($q3) => $q3->whereIn('role_code', ['perpajakan','akutansi','pembayaran'])));
                     break;
             }
         }
+
+        return $query;
+    }
+
+    public function index(Request $request)
+    {
+        $query = $this->buildOperatorQuery($request);
+        $sortColumn = session('operator_sort_column', 'nomor_agenda');
+        $sortOrder  = session('operator_sort_order', 'desc');
 
         $perPage = $request->get('per_page', session('operator_per_page', 10));
         if ($perPage === 'all') {
@@ -162,7 +134,7 @@ class DokumenController extends Controller
 
         // Get suggestions if no results found
         $suggestions = [];
-        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
+        if ($request->filled('search') && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
             $searchTerm = trim((string) $request->search);
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year);
         }
@@ -279,6 +251,61 @@ class DokumenController extends Controller
         );
 
         return view('operator.dokumens.daftarDokumen', $data);
+    }
+
+    /**
+     * AJAX chunked row loader — returns only <tr> HTML for "Semua" mode
+     * Accepts: ?chunk_page=1&chunk_size=200 + all existing filter params
+     */
+    public function ajaxRows(Request $request)
+    {
+        $query = $this->buildOperatorQuery($request);
+
+        $chunkSize = min((int) $request->get('chunk_size', 200), 500);
+        $chunkPage = max(1, (int) $request->get('chunk_page', 1));
+
+        $paginator = $query->paginate($chunkSize, ['*'], 'page', $chunkPage)
+                           ->appends($request->except(['chunk_page', 'chunk_size']));
+
+        // Available columns (mirrors index())
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda', 'bulan' => 'Bulan', 'tahun' => 'Tahun',
+            'kategori' => 'Kriteria CF', 'jenis_dokumen' => 'Sub Kriteria',
+            'jenis_sub_pekerjaan' => 'Item Sub Kriteria', 'jenis_pembayaran' => 'Jenis Pembayaran',
+            'nomor_spp' => 'Nomor SPP', 'tanggal_spp' => 'Tanggal SPP',
+            'tanggal_masuk' => 'Tanggal Masuk', 'dibayar_kepada' => 'Dibayar Kepada',
+            'uraian_spp' => 'Uraian SPP', 'nilai_rupiah' => 'Nilai Rupiah',
+            'tanggal_paraf' => 'Tanggal Paraf', 'pemaraf' => 'Pemaraf',
+            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses', 'kepala_sub_bagian' => 'Kepala Sub Bagian',
+            'status_dokumen_custom' => 'Status Dokumen', 'tanggal_dibayar' => 'Tanggal Bayar',
+            'bagian' => 'Bagian', 'nama_pengirim' => 'Nama Pengirim',
+            'no_spk' => 'No SPK', 'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tgl Berakhir SPK', 'kebun' => 'Kebun',
+            'no_berita_acara' => 'No Berita Acara', 'tanggal_berita_acara' => 'Tgl Berita Acara',
+            'status' => 'Status', 'no_faktur' => 'No Faktur', 'tanggal_faktur' => 'Tgl Faktur',
+            'nomor_miro' => 'Nomor MIRO',
+        ];
+
+        $selectedColumns = session('dokumens_table_columns', [
+            'nomor_agenda', 'tanggal_masuk', 'uraian_spp', 'nilai_rupiah', 'status',
+        ]);
+        $selectedColumns = array_filter($selectedColumns, fn($c) => isset($availableColumns[$c]));
+
+        $html = view('operator.dokumens._tableRowsAjax', [
+            'dokumens'        => $paginator,
+            'selectedColumns' => array_values($selectedColumns),
+            'availableColumns'=> $availableColumns,
+        ])->render();
+
+        return response()->json([
+            'html'      => $html,
+            'total'     => $paginator->total(),
+            'page'      => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'has_more'  => $paginator->hasMorePages(),
+            'from'      => $paginator->firstItem() ?? 0,
+            'to'        => $paginator->lastItem() ?? 0,
+        ]);
     }
 
     public function create()
