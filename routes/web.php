@@ -558,11 +558,17 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::get('/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
     Route::put('/{dokumen}', [DokumenController::class, 'update'])->name('update');
-    Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
     Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeamVerifikasi'])->name('send-to-verifikasi');
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
 });
+
+// Inline edit — accessible by all roles that can handle documents
+Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpajakan,akutansi'])
+    ->prefix('documents')->name('documents.')
+    ->group(function () {
+        Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
+    });
 
 // Professional Reports Routes
 Route::middleware(['auth', 'role:admin,operator'])->prefix('reports')->name('reports.')->group(function () {
