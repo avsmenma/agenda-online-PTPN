@@ -865,6 +865,7 @@
       vertical-align: middle;
       white-space: nowrap;
       border-bottom: 2px solid #083E40;
+      border-right: none;
       padding: 16px 12px;
       font-size: 13px;
     }
@@ -886,6 +887,7 @@
       text-align: center;
       vertical-align: middle;
       white-space: nowrap;
+      border-right: none;
     }
 
     .table-enhanced .col-no {
@@ -911,6 +913,8 @@
     .table-enhanced .col-nilai {
       width: 120px;
       min-width: 120px;
+      border-right: none !important;
+      border-left: none !important;
     }
 
     .table-enhanced .col-mirror {
@@ -994,6 +998,30 @@
       box-shadow: none !important;
     }
 
+    /* Fix for Nilai Rupiah column vertical line issue */
+    .table-enhanced td.col-nilai,
+    .table-dokumen td.col-nilai {
+      border-right: none !important;
+      border-left: none !important;
+      border-image: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Override any global table border styles for Nilai Rupiah column */
+    .table tbody td.col-nilai,
+    .table-enhanced tbody td.col-nilai {
+      border-right: none !important;
+      border-left: none !important;
+    }
+
+    /* Fix for Nilai Rupiah column header vertical line issue */
+    .table-enhanced th.col-nilai,
+    .table-dokumen th.col-nilai {
+      border-right: none !important;
+      border-left: none !important;
+      border-image: none !important;
+    }
+
     /* Responsive design improvements */
     @media (max-width: 768px) {
       .table-dokumen {
@@ -1039,6 +1067,8 @@
       .table-enhanced .col-nilai {
         width: 100px;
         min-width: 100px;
+        border-right: none !important;
+        border-left: none !important;
       }
 
       .table-enhanced .col-mirror {
@@ -1120,6 +1150,8 @@
       .table-enhanced .col-nilai {
         width: 80px;
         min-width: 80px;
+        border-right: none !important;
+        border-left: none !important;
       }
 
       .table-enhanced .col-mirror {
@@ -1195,6 +1227,7 @@
       font-size: 13px;
       vertical-align: middle;
       border-bottom: 1px solid rgba(8, 62, 64, 0.05);
+      border-right: none;
     }
 
     /* Enhanced Detail Row Styles - Adopted from Team Verifikasi */
