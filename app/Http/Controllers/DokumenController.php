@@ -222,12 +222,44 @@ class DokumenController extends Controller
         $ieItemSubKriteriaList = [];
         $ieJenisPembayaranList = [];
         try {
-            $ieKategoriList = KategoriKriteria::where('tipe', 'Keluar')->get(['id', 'nama_kriteria'])->toArray();
-            $ieSubKriteriaList = SubKriteria::all(['id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
-            $ieItemSubKriteriaList = ItemSubKriteria::all(['id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
+            $ieKategoriList = KategoriKriteria::where('tipe', 'Keluar')->get(['id_kategori_kriteria as id', 'nama_kriteria'])->toArray();
+            $ieSubKriteriaList = SubKriteria::all(['id_sub_kriteria as id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
+            $ieItemSubKriteriaList = ItemSubKriteria::all(['id_item_sub_kriteria as id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
             $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
         } catch (\Exception $e) {
             \Log::error('Error loading inline edit dropdown options: ' . $e->getMessage());
+        }
+
+        // Fallback: load distinct values from dokumens table if cash_bank connection unavailable
+        if (empty($ieKategoriList)) {
+            $ieKategoriList = Dokumen::whereNotNull('kategori')->where('kategori', '!=', '')
+                ->distinct()->orderBy('kategori')
+                ->pluck('kategori')
+                ->map(fn($v) => ['id' => $v, 'nama_kriteria' => $v])
+                ->toArray();
+        }
+        if (empty($ieSubKriteriaList)) {
+            $ieSubKriteriaList = Dokumen::whereNotNull('jenis_dokumen')->where('jenis_dokumen', '!=', '')
+                ->distinct()->orderBy('jenis_dokumen')
+                ->get(['jenis_dokumen', 'kategori'])
+                ->map(fn($d) => ['id' => $d->jenis_dokumen, 'nama_sub_kriteria' => $d->jenis_dokumen, 'id_kategori_kriteria' => $d->kategori])
+                ->unique('nama_sub_kriteria')->values()
+                ->toArray();
+        }
+        if (empty($ieItemSubKriteriaList)) {
+            $ieItemSubKriteriaList = Dokumen::whereNotNull('jenis_sub_pekerjaan')->where('jenis_sub_pekerjaan', '!=', '')
+                ->distinct()->orderBy('jenis_sub_pekerjaan')
+                ->get(['jenis_sub_pekerjaan', 'jenis_dokumen'])
+                ->map(fn($d) => ['id' => $d->jenis_sub_pekerjaan, 'nama_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'id_sub_kriteria' => $d->jenis_dokumen])
+                ->unique('nama_item_sub_kriteria')->values()
+                ->toArray();
+        }
+        if (empty($ieJenisPembayaranList)) {
+            $ieJenisPembayaranList = Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran', '!=', '')
+                ->distinct()->orderBy('jenis_pembayaran')
+                ->pluck('jenis_pembayaran')
+                ->map(fn($v) => ['id_jenis_pembayaran' => $v, 'nama_jenis_pembayaran' => $v])
+                ->toArray();
         }
 
         $data = array(
@@ -320,12 +352,30 @@ class DokumenController extends Controller
             $isDropdownAvailable = $kategoriKriteria->count() > 0;
         } catch (\Exception $e) {
             \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
-            // Fallback: gunakan collection kosong jika error
             $kategoriKriteria = collect([]);
             $subKriteria = collect([]);
             $itemSubKriteria = collect([]);
-            $isDropdownAvailable = false;
         }
+
+        // Fallback: load distinct values from dokumens table when cash_bank is unavailable
+        if ($kategoriKriteria->isEmpty()) {
+            $kategoriKriteria = Dokumen::whereNotNull('kategori')->where('kategori', '!=', '')
+                ->distinct()->orderBy('kategori')->pluck('kategori')
+                ->map(fn($v) => (object)['id_kategori_kriteria' => $v, 'nama_kriteria' => $v, 'tipe' => 'Keluar']);
+        }
+        if ($subKriteria->isEmpty()) {
+            $subKriteria = Dokumen::whereNotNull('jenis_dokumen')->where('jenis_dokumen', '!=', '')
+                ->distinct()->orderBy('jenis_dokumen')->get(['jenis_dokumen', 'kategori'])
+                ->unique('jenis_dokumen')
+                ->map(fn($d) => (object)['id_sub_kriteria' => $d->jenis_dokumen, 'nama_sub_kriteria' => $d->jenis_dokumen, 'id_kategori_kriteria' => $d->kategori]);
+        }
+        if ($itemSubKriteria->isEmpty()) {
+            $itemSubKriteria = Dokumen::whereNotNull('jenis_sub_pekerjaan')->where('jenis_sub_pekerjaan', '!=', '')
+                ->distinct()->orderBy('jenis_sub_pekerjaan')->get(['jenis_sub_pekerjaan', 'jenis_dokumen'])
+                ->unique('jenis_sub_pekerjaan')
+                ->map(fn($d) => (object)['id_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'nama_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'id_sub_kriteria' => $d->jenis_dokumen]);
+        }
+        $isDropdownAvailable = $kategoriKriteria->isNotEmpty();
 
         // Ambil data jenis pembayaran dari database cash_bank_new
         $jenisPembayaranList = collect([]);
@@ -333,13 +383,15 @@ class DokumenController extends Controller
         try {
             $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
             $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
-            \Log::info('Jenis Pembayaran fetched (create): ' . $jenisPembayaranList->count() . ' records');
         } catch (\Exception $e) {
             \Log::error('Error fetching jenis pembayaran data (create): ' . $e->getMessage());
-            \Log::error('Error trace: ' . $e->getTraceAsString());
-            // Fallback: gunakan collection kosong jika error
             $jenisPembayaranList = collect([]);
-            $isJenisPembayaranAvailable = false;
+        }
+        if ($jenisPembayaranList->isEmpty()) {
+            $jenisPembayaranList = Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran', '!=', '')
+                ->distinct()->orderBy('jenis_pembayaran')->pluck('jenis_pembayaran')
+                ->map(fn($v) => (object)['id_jenis_pembayaran' => $v, 'nama_jenis_pembayaran' => $v]);
+            $isJenisPembayaranAvailable = $jenisPembayaranList->isNotEmpty();
         }
 
         // Ambil data bagian dari database
@@ -831,7 +883,7 @@ class DokumenController extends Controller
         // Load relationships
         $dokumen->load(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
-        // Ambil data dari database cash_bank_new untuk dropdown baru
+        // Ambil data dari database cash_bank untuk dropdown
         $isDropdownAvailable = false;
         try {
             $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
@@ -840,26 +892,46 @@ class DokumenController extends Controller
             $isDropdownAvailable = $kategoriKriteria->count() > 0;
         } catch (\Exception $e) {
             \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
-            // Fallback: gunakan collection kosong jika error
             $kategoriKriteria = collect([]);
             $subKriteria = collect([]);
             $itemSubKriteria = collect([]);
-            $isDropdownAvailable = false;
         }
 
-        // Ambil data jenis pembayaran dari database cash_bank_new
+        // Fallback: load distinct values from dokumens table when cash_bank is unavailable
+        if ($kategoriKriteria->isEmpty()) {
+            $kategoriKriteria = Dokumen::whereNotNull('kategori')->where('kategori', '!=', '')
+                ->distinct()->orderBy('kategori')->pluck('kategori')
+                ->map(fn($v) => (object)['id_kategori_kriteria' => $v, 'nama_kriteria' => $v, 'tipe' => 'Keluar']);
+        }
+        if ($subKriteria->isEmpty()) {
+            $subKriteria = Dokumen::whereNotNull('jenis_dokumen')->where('jenis_dokumen', '!=', '')
+                ->distinct()->orderBy('jenis_dokumen')->get(['jenis_dokumen', 'kategori'])
+                ->unique('jenis_dokumen')
+                ->map(fn($d) => (object)['id_sub_kriteria' => $d->jenis_dokumen, 'nama_sub_kriteria' => $d->jenis_dokumen, 'id_kategori_kriteria' => $d->kategori]);
+        }
+        if ($itemSubKriteria->isEmpty()) {
+            $itemSubKriteria = Dokumen::whereNotNull('jenis_sub_pekerjaan')->where('jenis_sub_pekerjaan', '!=', '')
+                ->distinct()->orderBy('jenis_sub_pekerjaan')->get(['jenis_sub_pekerjaan', 'jenis_dokumen'])
+                ->unique('jenis_sub_pekerjaan')
+                ->map(fn($d) => (object)['id_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'nama_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'id_sub_kriteria' => $d->jenis_dokumen]);
+        }
+        $isDropdownAvailable = $kategoriKriteria->isNotEmpty();
+
+        // Ambil data jenis pembayaran
         $jenisPembayaranList = collect([]);
         $isJenisPembayaranAvailable = false;
         try {
             $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
             $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
-            \Log::info('Jenis Pembayaran fetched (edit): ' . $jenisPembayaranList->count() . ' records');
         } catch (\Exception $e) {
             \Log::error('Error fetching jenis pembayaran data (edit): ' . $e->getMessage());
-            \Log::error('Error trace: ' . $e->getTraceAsString());
-            // Fallback: gunakan collection kosong jika error
             $jenisPembayaranList = collect([]);
-            $isJenisPembayaranAvailable = false;
+        }
+        if ($jenisPembayaranList->isEmpty()) {
+            $jenisPembayaranList = Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran', '!=', '')
+                ->distinct()->orderBy('jenis_pembayaran')->pluck('jenis_pembayaran')
+                ->map(fn($v) => (object)['id_jenis_pembayaran' => $v, 'nama_jenis_pembayaran' => $v]);
+            $isJenisPembayaranAvailable = $jenisPembayaranList->isNotEmpty();
         }
 
         // Ambil data bagian dari database
