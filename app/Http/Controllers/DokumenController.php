@@ -1414,33 +1414,38 @@ class DokumenController extends Controller
      */
     public function inlineUpdate(Request $request, Dokumen $dokumen)
     {
-        // Validate permission: only operator can inline-edit
+        // Validate permission: user's role must match document's current_handler
+        $userRole = strtolower(auth()->user()->role ?? '');
         $currentHandler = strtolower($dokumen->current_handler ?? '');
-        $operatorAliases = ['operator'];
-        if (!in_array($currentHandler, $operatorAliases)) {
+        $editableRoles = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
+        if (!in_array($userRole, $editableRoles) || $currentHandler !== $userRole) {
             return response()->json(['success' => false, 'message' => 'Anda tidak memiliki izin untuk mengedit dokumen ini.'], 403);
         }
 
-        // Only allow editing for draft / returned statuses
-        $status = strtolower($dokumen->status ?? '');
-        $allowedStatuses = ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'];
-        $isRejected = $dokumen->roleStatuses()->where('status', 'rejected')->whereIn('role_code', ['team_verifikasi'])->exists();
-        if (!$isRejected && !in_array($status, $allowedStatuses)) {
-            return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
+        // For operator: enforce status whitelist
+        if ($userRole === 'operator') {
+            $status = strtolower($dokumen->status ?? '');
+            $allowedStatuses = ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'];
+            $isRejected = $dokumen->roleStatuses()->where('status', 'rejected')->whereIn('role_code', ['team_verifikasi'])->exists();
+            if (!$isRejected && !in_array($status, $allowedStatuses)) {
+                return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
+            }
         }
 
         $field = $request->input('field');
         $value = $request->input('value');
 
-        // Whitelist of editable fields
+        // Whitelist of editable fields (all roles)
         $editableFields = [
             'nomor_agenda', 'nomor_spp', 'tanggal_spp', 'uraian_spp', 'nilai_rupiah',
             'kategori', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran',
             'kebun', 'bagian', 'nama_pengirim', 'dibayar_kepada',
             'no_berita_acara', 'tanggal_berita_acara',
             'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk',
-            'nomor_miro', 'no_faktur', 'tanggal_faktur',
-            'tanggal_paraf', 'pemaraf',
+            'nomor_miro', 'tanggal_miro', 'no_faktur', 'tanggal_faktur',
+            'tanggal_paraf', 'pemaraf', 'bulan', 'tahun',
+            // Perpajakan-specific
+            'jenis_pph', 'dpp_pph', 'ppn_terhutang', 'tanggal_selesai_verifikasi_pajak',
         ];
 
         if (!in_array($field, $editableFields)) {
@@ -1466,7 +1471,10 @@ class DokumenController extends Controller
                     $dokumen->tahun = $tgl->year;
                 }
                 $saveValue = !empty($value) ? $value : null;
-            } elseif (in_array($field, ['tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_paraf', 'tanggal_miro'])) {
+            } elseif (in_array($field, ['dpp_pph', 'ppn_terhutang'])) {
+                $saveValue = $value ? (float) preg_replace('/[^0-9]/', '', $value) : null;
+                if ($saveValue <= 0) $saveValue = null;
+            } elseif (in_array($field, ['tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_paraf', 'tanggal_miro', 'tanggal_selesai_verifikasi_pajak'])) {
                 $saveValue = !empty($value) ? $value : null;
             } elseif ($field === 'nomor_agenda') {
                 // Check uniqueness
@@ -1494,7 +1502,7 @@ class DokumenController extends Controller
 
             // Log the change
             try {
-                ActivityLogHelper::logDataEdited($dokumen, $field, $oldValue, $saveValue, 'operator');
+                ActivityLogHelper::logDataEdited($dokumen, $field, $oldValue, $saveValue, $userRole);
             } catch (\Exception $e) {
                 \Log::error('Inline edit log failed: ' . $e->getMessage());
             }
@@ -1522,8 +1530,10 @@ class DokumenController extends Controller
                 $displayValue = 'Rp. ' . number_format($saveValue, 0, ',', '.');
             } elseif ($field === 'tanggal_spp' && $saveValue) {
                 $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
-            } elseif (in_array($field, ['tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf']) && $saveValue) {
+            } elseif (in_array($field, ['tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_selesai_verifikasi_pajak']) && $saveValue) {
                 $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
+            } elseif (in_array($field, ['dpp_pph', 'ppn_terhutang']) && $saveValue) {
+                $displayValue = number_format($saveValue, 0, ',', '.');
             }
 
             return response()->json([

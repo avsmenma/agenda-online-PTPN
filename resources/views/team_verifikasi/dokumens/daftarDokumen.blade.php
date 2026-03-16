@@ -4294,8 +4294,12 @@
             @endphp
             @php
               $rowClass = $isLocked ? 'locked-row' : '';
+              $canInlineEdit = $dokumen->current_handler === 'team_verifikasi';
+              $dateCols = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro','tanggal_selesai_verifikasi_pajak'];
             @endphp
             <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
+              data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
+              data-dokumen-id="{{ $dokumen->id }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               {{-- Checkbox Column --}}
               <td class="col-checkbox text-center">
@@ -4308,7 +4312,18 @@
               </td>
               @foreach($selectedColumns as $col)
                 @if($col !== 'status')
-                  <td class="col-{{ $col }}">
+                  @php
+                    $nonEditableCols = ['tanggal_masuk','status','nomor_mirror','keterangan'];
+                    $isCellEditable  = $canInlineEdit && !in_array($col, $nonEditableCols);
+                    if ($isCellEditable) {
+                      if (in_array($col, ['nilai_rupiah','dpp_pph','ppn_terhutang'])) { $ieRaw = $dokumen->$col ?? ''; }
+                      elseif (in_array($col, $dateCols)) { $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : ''; }
+                      elseif ($col === 'dibayar_kepada') { $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode("\n"); }
+                      else { $ieRaw = $dokumen->$col ?? ''; }
+                    }
+                  @endphp
+                  <td class="col-{{ $col }}{{ $isCellEditable ? ' ie-cell' : '' }}"
+                      @if($isCellEditable) data-field="{{ $col }}" data-raw="{{ $ieRaw }}" @endif>
                     @if($col == 'nomor_agenda')
                       <span class="select-text">{{ $dokumen->nomor_agenda }}</span>
                     @elseif($col == 'nomor_spp')
@@ -8891,6 +8906,7 @@
     };
   </script>
 
+@include('partials._inlineEditEngine')
 @endsection
 
 

@@ -3545,8 +3545,12 @@
                   $sendButtonTooltip = 'Dokumen tidak dapat dikirim';
                 }
               }
+              $canInlineEdit = $dokumen->current_handler === 'perpajakan';
+              $dateCols = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro','tanggal_selesai_verifikasi_pajak'];
             @endphp
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
+              data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
+              data-dokumen-id="{{ $dokumen->id }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               <td class="col-checkbox" onclick="event.stopPropagation();">
                 @if($canSend && !$isSentToAkutansi && !$isSentToPembayaran && !$isPendingApprovalAkutansi && !$isPendingApprovalPembayaran)
@@ -3557,7 +3561,18 @@
               <td class="col-no" style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
               @foreach($selectedColumns as $col)
                 @if($col !== 'status')
-                  <td class="col-{{ $col }}">
+                  @php
+                    $nonEditableCols = ['tanggal_masuk','status','nomor_mirror','keterangan'];
+                    $isCellEditable  = $canInlineEdit && !in_array($col, $nonEditableCols);
+                    if ($isCellEditable) {
+                      if (in_array($col, ['nilai_rupiah','dpp_pph','ppn_terhutang'])) { $ieRaw = $dokumen->$col ?? ''; }
+                      elseif (in_array($col, $dateCols)) { $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : ''; }
+                      elseif ($col === 'dibayar_kepada') { $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode("\n"); }
+                      else { $ieRaw = $dokumen->$col ?? ''; }
+                    }
+                  @endphp
+                  <td class="col-{{ $col }}{{ $isCellEditable ? ' ie-cell' : '' }}"
+                      @if($isCellEditable) data-field="{{ $col }}" data-raw="{{ $ieRaw }}" @endif>
                     @if($col == 'nomor_agenda')
                       <strong>{{ $dokumen->nomor_agenda }}</strong>
                       <br>
@@ -7024,6 +7039,7 @@
                 }
               </script>
 
+@include('partials._inlineEditEngine')
 @endsection
 
 
