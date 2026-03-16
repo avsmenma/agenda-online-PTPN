@@ -244,6 +244,20 @@ class DokumenController extends Controller
             session(['dokumens_table_columns' => $selectedColumns]);
         }
 
+        // Load dropdown options for inline editing
+        $ieKategoriList = [];
+        $ieSubKriteriaList = [];
+        $ieItemSubKriteriaList = [];
+        $ieJenisPembayaranList = [];
+        try {
+            $ieKategoriList = KategoriKriteria::where('tipe', 'Keluar')->get(['id', 'nama_kriteria'])->toArray();
+            $ieSubKriteriaList = SubKriteria::all(['id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
+            $ieItemSubKriteriaList = ItemSubKriteria::all(['id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
+            $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Error loading inline edit dropdown options: ' . $e->getMessage());
+        }
+
         $data = array(
             "title" => "Daftar Dokumen",
             "module" => "Operator",
@@ -258,6 +272,10 @@ class DokumenController extends Controller
             "selectedColumns" => $selectedColumns,
             "sortColumn" => $sortColumn,
             "sortOrder" => $sortOrder,
+            "ieKategoriList" => $ieKategoriList,
+            "ieSubKriteriaList" => $ieSubKriteriaList,
+            "ieItemSubKriteriaList" => $ieItemSubKriteriaList,
+            "ieJenisPembayaranList" => $ieJenisPembayaranList,
         );
 
         return view('operator.dokumens.daftarDokumen', $data);
@@ -1289,6 +1307,136 @@ class DokumenController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('error', $errorMessage);
+        }
+    }
+
+    /**
+     * Inline update a single field via AJAX (spreadsheet-style editing)
+     */
+    public function inlineUpdate(Request $request, Dokumen $dokumen)
+    {
+        // Validate permission: only operator can inline-edit
+        $currentHandler = strtolower($dokumen->current_handler ?? '');
+        $operatorAliases = ['operator'];
+        if (!in_array($currentHandler, $operatorAliases)) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki izin untuk mengedit dokumen ini.'], 403);
+        }
+
+        // Only allow editing for draft / returned statuses
+        $status = strtolower($dokumen->status ?? '');
+        $allowedStatuses = ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'];
+        $isRejected = $dokumen->roleStatuses()->where('status', 'rejected')->whereIn('role_code', ['team_verifikasi'])->exists();
+        if (!$isRejected && !in_array($status, $allowedStatuses)) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
+        }
+
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        // Whitelist of editable fields
+        $editableFields = [
+            'nomor_agenda', 'nomor_spp', 'tanggal_spp', 'uraian_spp', 'nilai_rupiah',
+            'kategori', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran',
+            'kebun', 'bagian', 'nama_pengirim', 'dibayar_kepada',
+            'no_berita_acara', 'tanggal_berita_acara',
+            'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk',
+            'nomor_miro', 'no_faktur', 'tanggal_faktur',
+            'tanggal_paraf', 'pemaraf',
+        ];
+
+        if (!in_array($field, $editableFields)) {
+            return response()->json(['success' => false, 'message' => 'Field tidak dapat diedit.'], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $oldValue = $dokumen->$field;
+            $saveValue = $value;
+
+            // Special processing per field
+            if ($field === 'nilai_rupiah') {
+                $saveValue = $value ? (float) preg_replace('/[^0-9]/', '', $value) : null;
+                if ($saveValue <= 0) $saveValue = null;
+            } elseif ($field === 'tanggal_spp') {
+                // Update bulan & tahun when tanggal_spp changes
+                if (!empty($value)) {
+                    $tgl = \Carbon\Carbon::parse($value);
+                    $bulanMap = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'May',6=>'Juni',7=>'July',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+                    $dokumen->bulan = $bulanMap[$tgl->month];
+                    $dokumen->tahun = $tgl->year;
+                }
+                $saveValue = !empty($value) ? $value : null;
+            } elseif (in_array($field, ['tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_paraf', 'tanggal_miro'])) {
+                $saveValue = !empty($value) ? $value : null;
+            } elseif ($field === 'nomor_agenda') {
+                // Check uniqueness
+                $exists = Dokumen::where('nomor_agenda', $value)->where('id', '!=', $dokumen->id)->exists();
+                if ($exists) {
+                    return response()->json(['success' => false, 'message' => 'Nomor agenda sudah digunakan.'], 422);
+                }
+            } elseif ($field === 'dibayar_kepada') {
+                // Save to dibayarKepadas relation
+                $dokumen->dibayarKepadas()->delete();
+                $names = array_filter(array_map('trim', explode("\n", $value ?? '')));
+                foreach ($names as $nama) {
+                    if (!empty($nama)) {
+                        \App\Models\DibayarKepada::create(['dokumen_id' => $dokumen->id, 'nama_penerima' => $nama]);
+                    }
+                }
+                DB::commit();
+                // Return formatted display value
+                $displayValue = $dokumen->dibayarKepadas()->pluck('nama_penerima')->implode(', ');
+                return response()->json(['success' => true, 'display_value' => $displayValue ?: '-']);
+            }
+
+            $dokumen->$field = $saveValue;
+            $dokumen->save();
+
+            // Log the change
+            try {
+                ActivityLogHelper::logDataEdited($dokumen, $field, $oldValue, $saveValue, 'operator');
+            } catch (\Exception $e) {
+                \Log::error('Inline edit log failed: ' . $e->getMessage());
+            }
+
+            // Sync to Cash Bank for relevant fields
+            try {
+                $cbConnection = config('sync.cashbank_connection', 'cash_bank_new');
+                $cbMap = ['nilai_rupiah' => 'nilai_rupiah', 'uraian_spp' => 'uraian', 'nomor_agenda' => 'no_agenda'];
+                if (isset($cbMap[$field]) && $dokumen->nomor_agenda) {
+                    DB::connection($cbConnection)->table('bank_keluars')
+                        ->where(function ($q) use ($dokumen) {
+                            $q->where('dokumen_id', $dokumen->id)->orWhere('no_agenda', $dokumen->nomor_agenda);
+                        })
+                        ->update([$cbMap[$field] => $saveValue, 'updated_at' => now()]);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('[InlineSync] CB sync gagal: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            // Build display value for frontend
+            $displayValue = $saveValue;
+            if ($field === 'nilai_rupiah' && $saveValue) {
+                $displayValue = 'Rp. ' . number_format($saveValue, 0, ',', '.');
+            } elseif ($field === 'tanggal_spp' && $saveValue) {
+                $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
+            } elseif (in_array($field, ['tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf']) && $saveValue) {
+                $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
+            }
+
+            return response()->json([
+                'success'       => true,
+                'display_value' => $displayValue ?: '-',
+                'raw_value'     => $saveValue,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Inline update error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan: ' . $e->getMessage()], 500);
         }
     }
 

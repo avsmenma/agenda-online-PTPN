@@ -26,6 +26,102 @@
       border-left: none !important;
     }
 
+    /* =============================================
+       INLINE EDITING - Spreadsheet Style
+       ============================================= */
+    .ie-cell {
+      position: relative;
+      cursor: text;
+      transition: background 0.15s ease;
+    }
+    .ie-cell:hover {
+      background: rgba(136, 151, 23, 0.08) !important;
+    }
+    .ie-cell:hover::after {
+      content: '\f044';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      font-size: 10px;
+      color: #889717;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    /* Active editing state */
+    .ie-cell.ie-editing {
+      padding: 2px !important;
+      background: #fffdf0 !important;
+      outline: 2px solid #889717 !important;
+      box-shadow: 0 0 0 4px rgba(136,151,23,0.15) !important;
+      z-index: 10;
+    }
+    /* Saving state */
+    .ie-cell.ie-saving {
+      background: rgba(136,151,23,0.07) !important;
+      outline: 2px solid #adb5bd !important;
+    }
+    /* Success flash */
+    .ie-cell.ie-saved {
+      animation: ie-flash-ok 0.6s ease forwards;
+    }
+    @keyframes ie-flash-ok {
+      0%   { background: rgba(40,167,69,0.25); }
+      100% { background: transparent; }
+    }
+    /* Error flash */
+    .ie-cell.ie-error {
+      animation: ie-flash-err 0.6s ease forwards;
+      outline: 2px solid #dc3545 !important;
+    }
+    @keyframes ie-flash-err {
+      0%   { background: rgba(220,53,69,0.25); }
+      100% { background: transparent; }
+    }
+    /* Input/textarea/select inside cell */
+    .ie-input {
+      width: 100%;
+      min-width: 80px;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 13px;
+      font-family: inherit;
+      color: #212529;
+      padding: 4px 6px;
+      box-sizing: border-box;
+      resize: none;
+    }
+    .ie-input:focus { outline: none; }
+    .ie-input.ie-textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+    /* Saving spinner overlay */
+    .ie-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #adb5bd;
+      border-top-color: #889717;
+      border-radius: 50%;
+      animation: ie-spin 0.6s linear infinite;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    @keyframes ie-spin { to { transform: rotate(360deg); } }
+    /* Edit mode badge on editable rows */
+    tr[data-editable="true"] td.col-no::after {
+      content: '\f044';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 9px;
+      color: #889717;
+      margin-left: 4px;
+      opacity: 0.5;
+    }
+
     h2 {
       background: linear-gradient(135deg, #083E40 0%, #889717 100%);
       -webkit-background-clip: text;
@@ -2773,11 +2869,16 @@
                 $canSendForBulk = true;
               }
             @endphp
+            @php
+              $canInlineEdit = $currentHandlerOperatorForCheck && in_array(strtolower($dokumen->status ?? ''), ['draft','returned_to_operator','belum_dikirim','belum dikirim','menunggu_approval_keuangan']) || ($isRejectedForCheck && $currentHandlerOperatorForCheck);
+            @endphp
             <tr class="main-row clickable-row" data-id="{{ $dokumen->id }}"
               data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
               data-nomor-spp="{{ $dokumen->nomor_spp }}"
               data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
               data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
+              data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
+              data-dokumen-id="{{ $dokumen->id }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               <td class="col-checkbox" onclick="event.stopPropagation()">
                 @if($canSendForBulk)
@@ -2799,7 +2900,30 @@
                 });
               @endphp
               @foreach($filteredColumns as $col)
-                <td class="col-{{ $col }}">
+                @php
+                  $nonEditableCols = ['tanggal_masuk','status','nomor_mirror','keterangan'];
+                  $isCellEditable = $canInlineEdit && !in_array($col, $nonEditableCols);
+                @endphp
+                @php
+                  $dateCols = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro'];
+                  if ($isCellEditable) {
+                    if ($col === 'nilai_rupiah') {
+                      $ieRaw = $dokumen->nilai_rupiah ?? '';
+                    } elseif (in_array($col, $dateCols)) {
+                      $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : '';
+                    } elseif ($col === 'dibayar_kepada') {
+                      $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode("\n");
+                    } else {
+                      $ieRaw = $dokumen->$col ?? '';
+                    }
+                  }
+                @endphp
+                <td class="col-{{ $col }}{{ $isCellEditable ? ' ie-cell' : '' }}"
+                  @if($isCellEditable)
+                    data-field="{{ $col }}"
+                    data-raw="{{ $ieRaw }}"
+                  @endif
+                  >
                   @if($col == 'nomor_agenda')
                     <strong>{{ $dokumen->nomor_agenda }}</strong>
                     <br>
@@ -5754,6 +5878,319 @@
               }
             `;
             document.head.appendChild(style);
+          </script>
+
+          <script>
+            // =========================================================
+            // INLINE EDITING ENGINE - Spreadsheet Style
+            // =========================================================
+            (function () {
+              'use strict';
+
+              // ---- Dropdown data passed from Laravel ----
+              const IE_KATEGORI   = @json($ieKategoriList ?? []);
+              const IE_SUB        = @json($ieSubKriteriaList ?? []);
+              const IE_ITEM       = @json($ieItemSubKriteriaList ?? []);
+              const IE_JENIS_BAYAR= @json($ieJenisPembayaranList ?? []);
+
+              const BULAN_LIST = ['Januari','Februari','Maret','April','May','Juni','July','Agustus','September','Oktober','November','Desember'];
+
+              // ---- Field type map ----
+              const FIELD_TYPE = {
+                nomor_agenda        : 'text',
+                nomor_spp           : 'text',
+                uraian_spp          : 'textarea',
+                nilai_rupiah        : 'number',
+                tanggal_spp         : 'date',
+                tanggal_berita_acara: 'date',
+                tanggal_spk         : 'date',
+                tanggal_berakhir_spk: 'date',
+                tanggal_faktur      : 'date',
+                tanggal_paraf       : 'date',
+                kebun               : 'text',
+                bagian              : 'text',
+                nama_pengirim       : 'text',
+                no_berita_acara     : 'text',
+                no_spk              : 'text',
+                nomor_miro          : 'text',
+                no_faktur           : 'text',
+                pemaraf             : 'text',
+                dibayar_kepada      : 'textarea',
+                kategori            : 'select_kategori',
+                jenis_dokumen       : 'select_sub',
+                jenis_sub_pekerjaan : 'select_item',
+                jenis_pembayaran    : 'select_jenis',
+                bulan               : 'select_bulan',
+                tahun               : 'text',
+              };
+
+              let activeCell = null;
+              let activeInput = null;
+
+              // ---- Build select options ----
+              function buildSelect(field, currentVal) {
+                const sel = document.createElement('select');
+                sel.className = 'ie-input';
+
+                let options = [];
+                if (field === 'select_kategori') {
+                  options = IE_KATEGORI.map(k => ({ value: k.nama_kriteria, label: k.nama_kriteria }));
+                } else if (field === 'select_sub') {
+                  options = IE_SUB.map(k => ({ value: k.nama_sub_kriteria, label: k.nama_sub_kriteria }));
+                } else if (field === 'select_item') {
+                  options = IE_ITEM.map(k => ({ value: k.nama_item_sub_kriteria, label: k.nama_item_sub_kriteria }));
+                } else if (field === 'select_jenis') {
+                  options = IE_JENIS_BAYAR.map(k => ({ value: k.nama_jenis_pembayaran, label: k.nama_jenis_pembayaran }));
+                } else if (field === 'select_bulan') {
+                  options = BULAN_LIST.map(b => ({ value: b, label: b }));
+                }
+
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = '-- Pilih --';
+                sel.appendChild(emptyOpt);
+
+                options.forEach(opt => {
+                  const o = document.createElement('option');
+                  o.value = opt.value;
+                  o.textContent = opt.label;
+                  if (opt.value === currentVal) o.selected = true;
+                  sel.appendChild(o);
+                });
+                return sel;
+              }
+
+              // ---- Create input for a given field type ----
+              function createInput(fieldType, rawValue) {
+                let el;
+                if (fieldType === 'textarea') {
+                  el = document.createElement('textarea');
+                  el.className = 'ie-input ie-textarea';
+                  el.value = rawValue ?? '';
+                  el.rows = 3;
+                } else if (fieldType.startsWith('select_')) {
+                  el = buildSelect(fieldType, rawValue ?? '');
+                } else if (fieldType === 'date') {
+                  el = document.createElement('input');
+                  el.type = 'date';
+                  el.className = 'ie-input';
+                  el.value = rawValue ?? '';
+                } else if (fieldType === 'number') {
+                  el = document.createElement('input');
+                  el.type = 'text';
+                  el.className = 'ie-input';
+                  // Display numeric only for editing
+                  const num = rawValue ? String(rawValue).replace(/[^0-9]/g, '') : '';
+                  el.value = num;
+                  el.placeholder = '0';
+                } else {
+                  el = document.createElement('input');
+                  el.type = 'text';
+                  el.className = 'ie-input';
+                  el.value = rawValue ?? '';
+                }
+                return el;
+              }
+
+              // ---- Activate a cell ----
+              function activateCell(cell) {
+                if (activeCell && activeCell !== cell) {
+                  commitCell(activeCell);
+                }
+                if (activeCell === cell) return;
+
+                const field = cell.dataset.field;
+                if (!field) return;
+
+                const fieldType = FIELD_TYPE[field] || 'text';
+                const rawValue = cell.dataset.raw ?? '';
+
+                // Save original HTML for cancel
+                cell.dataset.originalHtml = cell.innerHTML;
+                cell.dataset.originalRaw  = rawValue;
+
+                activeCell  = cell;
+                activeInput = createInput(fieldType, rawValue);
+
+                cell.classList.add('ie-editing');
+                cell.innerHTML = '';
+                cell.appendChild(activeInput);
+
+                // Focus after short delay for select
+                setTimeout(() => {
+                  activeInput.focus();
+                  if (activeInput.tagName === 'INPUT' && activeInput.type === 'text') {
+                    activeInput.select();
+                  }
+                }, 20);
+
+                // ---- Event listeners ----
+                activeInput.addEventListener('keydown', onKeyDown);
+
+                if (activeInput.tagName === 'SELECT') {
+                  activeInput.addEventListener('change', () => commitCell(cell));
+                } else {
+                  activeInput.addEventListener('blur', (e) => {
+                    // Small delay to allow Tab navigation to set activeCell
+                    setTimeout(() => {
+                      if (activeCell === cell) commitCell(cell);
+                    }, 80);
+                  });
+                }
+              }
+
+              // ---- Commit (save) a cell ----
+              function commitCell(cell) {
+                if (!cell || !activeInput) return;
+                const field    = cell.dataset.field;
+                const newValue = activeInput.value;
+                const oldRaw   = cell.dataset.originalRaw ?? '';
+
+                // No change — just cancel
+                if (newValue === oldRaw) {
+                  cancelCell(cell);
+                  return;
+                }
+
+                const dokumenId = cell.closest('tr').dataset.dokumenId;
+                if (!dokumenId) { cancelCell(cell); return; }
+
+                // Show saving state
+                cell.classList.remove('ie-editing');
+                cell.classList.add('ie-saving');
+                cell.innerHTML = (cell.dataset.originalHtml || newValue) + '<span class="ie-spinner"></span>';
+
+                activeCell  = null;
+                activeInput = null;
+
+                fetch(`/documents/${dokumenId}/inline-update`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                  },
+                  body: JSON.stringify({ field, value: newValue }),
+                })
+                .then(r => r.json())
+                .then(data => {
+                  cell.classList.remove('ie-saving');
+                  if (data.success) {
+                    const display = data.display_value ?? newValue ?? '-';
+                    cell.dataset.raw = data.raw_value ?? newValue;
+                    // Rebuild display HTML
+                    cell.innerHTML = buildDisplayHtml(field, display, cell.dataset.raw);
+                    cell.classList.add('ie-saved');
+                    setTimeout(() => cell.classList.remove('ie-saved'), 700);
+                    // Update row-level data attributes for nomor_agenda
+                    if (field === 'nomor_agenda') {
+                      cell.closest('tr').dataset.nomorAgenda = newValue;
+                    }
+                  } else {
+                    cell.innerHTML = cell.dataset.originalHtml;
+                    cell.classList.add('ie-error');
+                    setTimeout(() => cell.classList.remove('ie-error'), 700);
+                    showIeToast('error', data.message || 'Gagal menyimpan.');
+                  }
+                })
+                .catch(err => {
+                  cell.classList.remove('ie-saving');
+                  cell.innerHTML = cell.dataset.originalHtml;
+                  cell.classList.add('ie-error');
+                  setTimeout(() => cell.classList.remove('ie-error'), 700);
+                  showIeToast('error', 'Koneksi gagal. Coba lagi.');
+                });
+              }
+
+              // ---- Cancel a cell ----
+              function cancelCell(cell) {
+                if (!cell) return;
+                cell.classList.remove('ie-editing', 'ie-saving');
+                cell.innerHTML = cell.dataset.originalHtml || '';
+                activeCell  = null;
+                activeInput = null;
+              }
+
+              // ---- Build display HTML after save ----
+              function buildDisplayHtml(field, displayValue, rawValue) {
+                if (field === 'nilai_rupiah') {
+                  return `<strong class="select-text">${displayValue}</strong>`;
+                } else if (field === 'nomor_spp' || field === 'dibayar_kepada') {
+                  return `<span class="select-text">${displayValue}</span>`;
+                } else if (field === 'uraian_spp') {
+                  return `<span>${displayValue}</span>`;
+                }
+                return displayValue || '-';
+              }
+
+              // ---- Keyboard handler ----
+              function onKeyDown(e) {
+                if (!activeCell) return;
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  cancelCell(activeCell);
+                } else if (e.key === 'Enter' && activeInput && activeInput.tagName !== 'TEXTAREA') {
+                  e.preventDefault();
+                  commitCell(activeCell);
+                } else if (e.key === 'Tab') {
+                  e.preventDefault();
+                  const direction = e.shiftKey ? -1 : 1;
+                  const currentCell = activeCell;
+                  commitCell(activeCell);
+                  // Navigate to next/prev ie-cell in same row or next row
+                  setTimeout(() => navigateCell(currentCell, direction), 100);
+                }
+              }
+
+              // ---- Navigate to adjacent cell ----
+              function navigateCell(fromCell, direction) {
+                const row     = fromCell.closest('tr');
+                const allCells = Array.from(document.querySelectorAll('tr[data-editable="true"] .ie-cell'));
+                const idx     = allCells.indexOf(fromCell);
+                if (idx === -1) return;
+                const next = allCells[idx + direction];
+                if (next) activateCell(next);
+              }
+
+              // ---- Toast notification ----
+              function showIeToast(type, message) {
+                const existing = document.getElementById('ie-toast');
+                if (existing) existing.remove();
+                const t = document.createElement('div');
+                t.id = 'ie-toast';
+                t.style.cssText = `
+                  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+                  background:${type === 'error' ? '#dc3545' : '#28a745'};
+                  color:#fff; padding:10px 20px; border-radius:8px;
+                  font-size:13px; z-index:99999; box-shadow:0 4px 12px rgba(0,0,0,.2);
+                  animation: fadeInUp .25s ease;
+                `;
+                t.textContent = message;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 3500);
+              }
+
+              // ---- Attach click listeners ----
+              document.addEventListener('click', function(e) {
+                const cell = e.target.closest('.ie-cell');
+                if (cell) {
+                  e.stopPropagation();
+                  activateCell(cell);
+                } else if (activeCell) {
+                  commitCell(activeCell);
+                }
+              });
+
+              // ---- Block dblclick on ie-cell so row detail modal doesn't open ----
+              document.addEventListener('dblclick', function(e) {
+                const cell = e.target.closest('.ie-cell');
+                if (cell) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }
+              }, true);
+
+            })();
           </script>
 
 @endsection
