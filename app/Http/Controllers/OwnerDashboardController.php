@@ -590,11 +590,10 @@ class OwnerDashboardController extends Controller
             $query->where('bagian', $request->filter_bagian);
         }
 
-        // Filter by umur dokumen (terlambat) — exclude Operator role
+        // Filter by umur dokumen — tampilkan semua dokumen belum dibayar berumur > X hari
         if ($request && $request->has('filter_umur') && !empty($request->filter_umur)) {
             $days = (int) $request->filter_umur;
             $query->where('created_at', '<', now()->subDays($days))
-                  ->where('current_handler', '!=', 'operator')
                   ->whereNull('tanggal_dibayar')
                   ->where(function ($q) {
                       $q->whereNull('status_pembayaran')
