@@ -1532,23 +1532,32 @@
       document.getElementById('ageChip' + level).classList.add('active');
       document.getElementById('ageChipClear').style.display = 'flex';
 
-      // Sisipkan filter_umur ke dalam form agar terbawa oleh applyFilter()
-      let hiddenUmur = document.getElementById('hiddenFilterUmur');
-      if (!hiddenUmur) {
-        hiddenUmur = document.createElement('input');
-        hiddenUmur.type = 'hidden';
-        hiddenUmur.name = 'filter_umur';
-        hiddenUmur.id = 'hiddenFilterUmur';
-        document.getElementById('filterForm').appendChild(hiddenUmur);
-      }
-      hiddenUmur.value = minDays;
-
-      // Set status = 'semua' agar filter umur tidak terbatasi oleh filter status workflow
-      // (filter_umur sudah mengandung kondisi belum_dibayar sendiri di controller)
+      // ── Reset semua filter lain agar tidak konflik dengan filter_umur ──
+      const form = document.getElementById('filterForm');
+      // Reset seluruh <select> dalam form ke value kosong
+      form.querySelectorAll('select').forEach(s => { s.value = ''; });
+      // Reset search
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      // Set status = 'semua'
       const statusInput = document.getElementById('statusInput');
       if (statusInput) statusInput.value = 'semua';
+      // Remove any previous filter_umur hidden input
+      const oldUmur = document.getElementById('hiddenFilterUmur');
+      if (oldUmur) oldUmur.remove();
 
-      // Kirim ke server via AJAX (sama seperti filter lainnya)
+      // Reset stat card highlight
+      highlightActiveStatCard(null);
+
+      // Sisipkan filter_umur baru ke form
+      const hiddenUmur = document.createElement('input');
+      hiddenUmur.type  = 'hidden';
+      hiddenUmur.name  = 'filter_umur';
+      hiddenUmur.id    = 'hiddenFilterUmur';
+      hiddenUmur.value = minDays;
+      form.appendChild(hiddenUmur);
+
+      // Kirim ke server via AJAX
       applyFilter();
     }
 
