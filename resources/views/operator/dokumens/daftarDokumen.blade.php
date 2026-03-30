@@ -5918,6 +5918,44 @@
                 border-right: none !important;
                 border-left: none !important;
               }
+
+              /* ---- Inline edit: Textarea besar untuk Uraian SPP ---- */
+              .ie-cell {
+                position: relative;
+              }
+
+              /* Textarea uraian muncul sebagai overlay floating */
+              .ie-textarea-large {
+                position: absolute;
+                z-index: 1000;
+                top: 0;
+                left: 0;
+                min-width: 420px;
+                max-width: 600px;
+                width: max-content;
+                min-height: 140px;
+                resize: both;
+                background: #fff;
+                border: 2px solid #083E40;
+                border-radius: 8px;
+                box-shadow: 0 8px 24px rgba(8, 62, 64, 0.25);
+                padding: 10px 12px;
+                font-size: 13.5px;
+                line-height: 1.6;
+                color: #1a1a2e;
+                font-family: inherit;
+              }
+
+              .ie-textarea-large:focus {
+                outline: none;
+                border-color: #889717;
+                box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.2), 0 8px 24px rgba(8, 62, 64, 0.2);
+              }
+
+              /* Saat cell sedang diedit dengan textarea besar, beri overflow visible */
+              .ie-cell.ie-editing:has(.ie-textarea-large) {
+                overflow: visible;
+              }
             `;
             document.head.appendChild(style);
           </script>
@@ -6003,13 +6041,17 @@
               }
 
               // ---- Create input for a given field type ----
-              function createInput(fieldType, rawValue) {
+              function createInput(fieldType, rawValue, fieldName) {
                 let el;
                 if (fieldType === 'textarea') {
                   el = document.createElement('textarea');
                   el.className = 'ie-input ie-textarea';
                   el.value = rawValue ?? '';
-                  el.rows = 3;
+                  // Uraian SPP butuh ruang lebih besar
+                  el.rows = (fieldName === 'uraian_spp') ? 6 : 3;
+                  if (fieldName === 'uraian_spp') {
+                    el.classList.add('ie-textarea-large');
+                  }
                 } else if (fieldType.startsWith('select_')) {
                   el = buildSelect(fieldType, rawValue ?? '');
                 } else if (fieldType === 'date') {
@@ -6056,7 +6098,7 @@
                 cell.dataset.originalRaw  = rawValue;
 
                 activeCell  = cell;
-                activeInput = createInput(fieldType, rawValue);
+                activeInput = createInput(fieldType, rawValue, field);
 
                 cell.classList.add('ie-editing');
                 cell.innerHTML = '';
