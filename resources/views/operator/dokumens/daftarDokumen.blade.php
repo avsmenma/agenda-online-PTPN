@@ -2670,7 +2670,7 @@
         <span class="input-group-text">
           <i class="fa-solid fa-magnifying-glass text-muted"></i>
         </span>
-        <input type="text" class="form-control" name="search" placeholder="Cari nomor agenda, SPP, nilai rupia"
+        <input type="text" class="form-control" id="searchInput" name="search" placeholder="Cari nomor agenda, SPP, nilai rupia"
           value="{{ request('search') }}">
       </div>
       <div class="year-dropdown-wrapper" style="position: relative;">
@@ -4750,6 +4750,36 @@
                   if (modal && modal.classList.contains('show')) {
                     closeColumnCustomizationModal();
                   }
+                }
+
+                // Ctrl+F → fokus ke kolom pencarian
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                  const searchInput = document.getElementById('searchInput');
+                  if (!searchInput) return;
+
+                  // Cek apakah tidak ada modal yang terbuka
+                  const anyModalOpen = document.querySelector('.modal.show');
+                  if (anyModalOpen) return;
+
+                  e.preventDefault(); // Cegah browser search bawaan
+
+                  // Scroll ke atas dengan smooth
+                  searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                  // Fokus & select semua teks agar langsung bisa mengetik
+                  setTimeout(() => {
+                    searchInput.focus();
+                    searchInput.select();
+
+                    // Efek highlight singkat
+                    searchInput.style.transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
+                    searchInput.style.boxShadow = '0 0 0 3px rgba(136, 151, 23, 0.4)';
+                    searchInput.style.borderColor = '#889717';
+                    setTimeout(() => {
+                      searchInput.style.boxShadow = '';
+                      searchInput.style.borderColor = '';
+                    }, 1500);
+                  }, 100);
                 }
               });
 
