@@ -5888,9 +5888,11 @@
             };
 
             // Apply fix periodically to catch any dynamic changes
-            setInterval(fixNilaiRupiahColumnBorders, 1000);
+            // [PERF FIX] setInterval dihapus — border sudah di-override CSS !important di atas
+            // Cukup run sekali setelah AJAX load, tidak perlu polling setiap detik
+            // (setInterval(fixNilaiRupiahColumnBorders, 1000) menyebabkan lag saat "Semua" aktif)
 
-            // Additional CSS injection for maximum override
+            // Additional CSS injection for maximum override + perf optimizations
             const style = document.createElement('style');
             style.innerHTML = `
               /* MAXIMUM PRIORITY OVERRIDE FOR NILAI RUPIAH COLUMN */
@@ -5955,6 +5957,29 @@
               /* Saat cell sedang diedit dengan textarea besar, beri overflow visible */
               .ie-cell.ie-editing:has(.ie-textarea-large) {
                 overflow: visible;
+              }
+
+              /* =====================================================
+                 SCROLL PERFORMANCE — mirip virtual scrolling
+                 =====================================================
+                 content-visibility: auto → browser SKIP paint/layout
+                 untuk baris yang tidak terlihat di layar.
+                 Ini setara dengan virtual scrolling tapi cukup CSS.
+                 Efek: 2000 baris → render seperti ~20-30 baris aktif.
+              */
+              #dokumenTableBody tr.main-row {
+                content-visibility: auto;
+                contain-intrinsic-size: auto 64px; /* estimasi tinggi 1 baris */
+              }
+
+              /* GPU composite layer untuk scroll container */
+              .table-container {
+                will-change: scroll-position;
+              }
+
+              /* Isolasi layout per-baris agar reflow tidak menyebar */
+              #dokumenTableBody tr {
+                contain: layout style;
               }
             `;
             document.head.appendChild(style);
