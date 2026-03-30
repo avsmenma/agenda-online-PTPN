@@ -6302,22 +6302,159 @@
 
             let _ajaxController = null; // AbortController for cancellation
 
+            /* ============================================================
+               AJAX Per-Page Changer — no full-page reload
+               ============================================================ */
+
+            // ---- Loading Popup (singleton) ----
+            function showPerPageLoading(perPageValue) {
+              let overlay = document.getElementById('perpage-loading-overlay');
+              if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'perpage-loading-overlay';
+                overlay.innerHTML = `
+                  <div id="perpage-loading-card">
+                    <div class="perpage-spinner-ring">
+                      <div></div><div></div><div></div><div></div>
+                    </div>
+                    <div id="perpage-loading-title">Memuat Data</div>
+                    <div id="perpage-loading-sub">Menampilkan <strong id="perpage-loading-val">—</strong> baris per halaman...</div>
+                    <div class="perpage-glimmer-bar"><div class="perpage-glimmer-fill"></div></div>
+                  </div>
+                  <style>
+                    #perpage-loading-overlay {
+                      position: fixed; inset: 0; z-index: 99998;
+                      background: rgba(8, 40, 42, 0.55);
+                      backdrop-filter: blur(4px);
+                      display: flex; align-items: center; justify-content: center;
+                      animation: ppFadeIn .2s ease;
+                    }
+                    @keyframes ppFadeIn { from { opacity:0 } to { opacity:1 } }
+                    #perpage-loading-card {
+                      background: #fff;
+                      border-radius: 20px;
+                      padding: 40px 48px;
+                      text-align: center;
+                      box-shadow: 0 24px 64px rgba(8,62,64,.35), 0 4px 16px rgba(0,0,0,.15);
+                      min-width: 300px;
+                      animation: ppSlideUp .25s cubic-bezier(.34,1.56,.64,1);
+                    }
+                    @keyframes ppSlideUp { from { transform:translateY(24px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+                    .perpage-spinner-ring {
+                      display: inline-block; width: 56px; height: 56px;
+                      position: relative; margin-bottom: 20px;
+                    }
+                    .perpage-spinner-ring div {
+                      box-sizing: border-box; display: block; position: absolute;
+                      width: 56px; height: 56px; border: 5px solid transparent;
+                      border-top-color: #083E40; border-right-color: #889717;
+                      border-radius: 50%;
+                      animation: ppSpin 0.9s cubic-bezier(.5,0,.5,1) infinite;
+                    }
+                    .perpage-spinner-ring div:nth-child(1) { animation-delay: -0.3s; }
+                    .perpage-spinner-ring div:nth-child(2) { animation-delay: -0.2s; }
+                    .perpage-spinner-ring div:nth-child(3) { animation-delay: -0.1s; }
+                    @keyframes ppSpin { to { transform: rotate(360deg); } }
+                    #perpage-loading-title {
+                      font-size: 18px; font-weight: 700; color: #083E40; margin-bottom: 8px;
+                    }
+                    #perpage-loading-sub {
+                      font-size: 14px; color: #6c757d; margin-bottom: 20px;
+                    }
+                    .perpage-glimmer-bar {
+                      height: 5px; background: #e9ecef; border-radius: 99px; overflow: hidden;
+                    }
+                    .perpage-glimmer-fill {
+                      height: 100%;
+                      background: linear-gradient(90deg, #083E40 0%, #889717 50%, #083E40 100%);
+                      background-size: 200% 100%;
+                      border-radius: 99px;
+                      animation: ppGlimmer 1.4s linear infinite;
+                      width: 100%;
+                    }
+                    @keyframes ppGlimmer {
+                      0%   { background-position: 200% center; }
+                      100% { background-position: -200% center; }
+                    }
+                  </style>
+                `;
+                document.body.appendChild(overlay);
+              }
+              const labelEl = document.getElementById('perpage-loading-val');
+              if (labelEl) labelEl.textContent = (perPageValue === 'all') ? 'Semua' : perPageValue;
+              overlay.style.display = 'flex';
+            }
+
+            function hidePerPageLoading() {
+              const overlay = document.getElementById('perpage-loading-overlay');
+              if (overlay) {
+                overlay.style.animation = 'ppFadeIn .15s ease reverse forwards';
+                setTimeout(() => { overlay.style.display = 'none'; }, 150);
+              }
+            }
+
+            // ---- Core AJAX per-page loader ----
+            async function changePerPageAjax(value) {
+              if (value === 'all') { startAjaxLoad(); return; }
+
+              showPerPageLoading(value);
+
+              const params = new URLSearchParams(window.location.search);
+              params.set('per_page', value);
+              params.set('page', '1');
+              const newUrl = window.location.pathname + '?' + params.toString();
+
+              try {
+                const response = await fetch(newUrl, {
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                  }
+                });
+                if (!response.ok) throw new Error('Server error ' + response.status);
+                const html = response.text ? await response.text() : '';
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Update table body
+                const newTbody = doc.getElementById('dokumenTableBody');
+                const localTbody = document.getElementById('dokumenTableBody');
+                if (newTbody && localTbody) localTbody.innerHTML = newTbody.innerHTML;
+
+                // Update per-page top bar
+                const newPerpageBar = doc.querySelector('.perpage-top-bar');
+                const localPerpageBar = document.querySelector('.perpage-top-bar');
+                if (newPerpageBar && localPerpageBar) localPerpageBar.outerHTML = newPerpageBar.outerHTML;
+
+                // Update pagination bottom
+                const newPaginationWrapper = doc.querySelector('.pagination-enhanced-wrapper');
+                const localPaginationWrapper = document.querySelector('.pagination-enhanced-wrapper');
+                if (newPaginationWrapper && localPaginationWrapper) {
+                  localPaginationWrapper.outerHTML = newPaginationWrapper.outerHTML;
+                }
+
+                // Update browser URL without reload
+                window.history.pushState({}, '', newUrl);
+
+                // Sync selects to chosen value
+                document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select')
+                  .forEach(s => { s.value = value; });
+
+              } catch (err) {
+                console.error('Per-page AJAX failed:', err);
+                // Fallback: redirect
+                window.location.href = newUrl;
+              } finally {
+                hidePerPageLoading();
+              }
+            }
+
             /* ---- Override per-page selectors ---- */
             window.changePerPageTop = function(value) {
-              if (value === 'all') { startAjaxLoad(); }
-              else {
-                const params = new URLSearchParams(window.location.search);
-                params.set('per_page', value); params.set('page', '1');
-                window.location.href = window.location.pathname + '?' + params.toString();
-              }
+              changePerPageAjax(value);
             };
             window.changePerPageEnhanced = function(value) {
-              if (value === 'all') { startAjaxLoad(); }
-              else {
-                const params = new URLSearchParams(window.location.search);
-                params.set('per_page', value); params.set('page', '1');
-                window.location.href = window.location.pathname + '?' + params.toString();
-              }
+              changePerPageAjax(value);
             };
 
             /* ---- Cancel button ---- */
