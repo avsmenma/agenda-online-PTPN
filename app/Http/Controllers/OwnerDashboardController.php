@@ -1806,9 +1806,13 @@ class OwnerDashboardController extends Controller
             $dashboardUrl = '/owner/dokumen';
         }
 
-        // If a return_url was passed (e.g., from Rekapan Keterlambatan with filters), use it
+        // If a return_url was passed (e.g., from document list with filters), use it
+        // Only accept relative URLs starting with / to prevent open redirect
         if ($request->has('return_url') && $request->return_url) {
-            $dashboardUrl = $request->return_url;
+            $returnUrl = $request->return_url;
+            if (str_starts_with($returnUrl, '/') && !str_starts_with($returnUrl, '//')) {
+                $dashboardUrl = $returnUrl;
+            }
         }
 
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))

@@ -1037,7 +1037,8 @@
             <div
               class="smart-document-card {{ $dokumen['is_overdue'] ?? false ? 'overdue' : '' }} {{ $isPaid ? 'paid' : '' }}"
               data-document-url="{{ url('/owner/workflow/' . $dokumen['id']) }}"
-              onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')">
+              onclick="handleCardClick(event, '{{ url('/owner/workflow/' . $dokumen['id']) }}')"
+              data-document-id="{{ $dokumen['id'] }}">
 
               @if($isPaid)
                 <div class="paid-stamp">
@@ -1225,7 +1226,7 @@
                     </div>
                   </td>
                   <td>
-                    <a href="{{ url('/owner/workflow/' . $dokumen['id']) }}" class="table-action-btn">
+                    <a href="{{ url('/owner/workflow/' . $dokumen['id']) }}" class="table-action-btn" onclick="event.preventDefault(); navigateToWorkflow('{{ $dokumen['id'] }}')">
                       <i class="fas fa-eye"></i> Lihat
                     </a>
                   </td>
@@ -1262,6 +1263,13 @@
       event.target.closest('.view-switcher-btn').classList.add('active');
     }
 
+    // Navigate to workflow with return_url to preserve filters
+    function navigateToWorkflow(id) {
+      const currentUrl = window.location.pathname + window.location.search;
+      const returnParam = encodeURIComponent(currentUrl);
+      window.location.href = '{{ url("/owner/workflow") }}/' + id + '?return_url=' + returnParam;
+    }
+
     function handleCardClick(event, url) {
       // Check if user is selecting text
       const selection = window.getSelection();
@@ -1289,8 +1297,14 @@
         return false;
       }
 
-      // Navigate to document detail
-      window.location.href = url;
+      // Navigate to document detail with return_url to preserve filters
+      const card = event.currentTarget;
+      const docId = card.getAttribute('data-document-id');
+      if (docId) {
+        navigateToWorkflow(docId);
+      } else {
+        window.location.href = url;
+      }
       return true;
     }
 

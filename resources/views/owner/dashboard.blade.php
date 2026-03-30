@@ -1106,9 +1106,12 @@
   </script>
 
   <script>
-    // ===== Navigati  on ==       ===
+    // ===== Navigation =====
     function navigateToWorkflow(id) {
-      window.location.href = '{{ url("/owner/workflow") }}/' + id;
+      // Pass current URL (with filters) as return_url so "Kembali" preserves filters
+      const currentUrl = window.location.pathname + window.location.search;
+      const returnParam = encodeURIComponent(currentUrl);
+      window.location.href = '{{ url("/owner/workflow") }}/' + id + '?return_url=' + returnParam;
     }
 
 
