@@ -23,6 +23,33 @@ class DokumenObserver
     ) {}
 
     /**
+     * Handle model saving event (before INSERT & UPDATE).
+     *
+     * Otomatis set status_pembayaran = 'sudah_dibayar' jika:
+     *   - tanggal_dibayar diisi, ATAU
+     *   - link_bukti_pembayaran diisi
+     *
+     * Menggunakan nilai aktual attribute (bukan hanya isDirty) agar
+     * mencakup semua jalur: create baru, update dari form, sync CSV, dll.
+     */
+    public function saving(Dokumen $dokumen): void
+    {
+        $hasTanggal = !empty($dokumen->getAttributes()['tanggal_dibayar'] ?? null);
+        $hasLink    = !empty($dokumen->getAttributes()['link_bukti_pembayaran'] ?? null);
+
+        if (($hasTanggal || $hasLink) && $dokumen->status_pembayaran !== 'sudah_dibayar') {
+            $dokumen->status_pembayaran = 'sudah_dibayar';
+
+            Log::debug('DokumenObserver [saving]: Auto-set status_pembayaran = sudah_dibayar', [
+                'dokumen_id'   => $dokumen->id ?? '(baru)',
+                'nomor_agenda' => $dokumen->nomor_agenda ?? '-',
+                'has_tanggal'  => $hasTanggal,
+                'has_link'     => $hasLink,
+            ]);
+        }
+    }
+
+    /**
      * Handle model updated event.
      * Dipicu setiap kali Dokumen di-update melalui Eloquent.
      */
@@ -78,7 +105,7 @@ class DokumenObserver
         // Hanya sync jika proses update BUKAN dipicu oleh sync dari Cash Bank itu sendiri
         if (! ($dokumen->_syncing ?? false)) {
             $changedFields = array_keys($dokumen->getChanges());
-            
+
             // Cek apakah ada field yang changed termasuk di SYNCABLE_FIELDS
             $syncableFields = \App\Services\DokumenSyncService::SYNCABLE_FIELDS;
             $needsSync = count(array_intersect($changedFields, $syncableFields)) > 0;
@@ -86,11 +113,11 @@ class DokumenObserver
             if ($needsSync) {
                 // Dispatch job ke background untuk Sync ke CB agar tidak memblokir response
                 \App\Jobs\SyncDokumenToCashBankJob::dispatch($dokumen);
-                
+
                 // [FIX LOG BLOATING] Dispatch log → debug (muncul setiap Dokumen update)
                 Log::debug('DokumenObserver: Dispatch job SyncDokumenToCashBankJob', [
-                    'dokumen_id'   => $dokumen->id,
-                    'changed'      => array_intersect($changedFields, $syncableFields),
+                    'dokumen_id' => $dokumen->id,
+                    'changed'    => array_intersect($changedFields, $syncableFields),
                 ]);
             }
         }

@@ -5991,8 +5991,12 @@
                   el = document.createElement('input');
                   el.type = 'text';
                   el.className = 'ie-input';
-                  // Display numeric only for editing
-                  const num = rawValue ? String(rawValue).replace(/[^0-9]/g, '') : '';
+                  // Parse as float then round to integer before stripping non-digits.
+                  // This prevents the decimal:2 cast ("4832149.00") from becoming
+                  // "483214900" when dots are stripped — the two trailing zeros must go first.
+                  const num = rawValue
+                    ? String(Math.round(parseFloat(String(rawValue).replace(/[^0-9.]/g, '')) || 0))
+                    : '';
                   el.value = num;
                   el.placeholder = '0';
                 } else {
@@ -6058,8 +6062,16 @@
                 const newValue = activeInput.value;
                 const oldRaw   = cell.dataset.originalRaw ?? '';
 
-                // No change — just cancel
-                if (newValue === oldRaw) {
+                // No change — just cancel.
+                // For number fields, normalize oldRaw by rounding to integer
+                // so that "4832149.00" (decimal:2 cast) matches "4832149" from the input.
+                let compareOld = oldRaw;
+                if (FIELD_TYPE[field] === 'number') {
+                  compareOld = oldRaw
+                    ? String(Math.round(parseFloat(String(oldRaw).replace(/[^0-9.]/g, '')) || 0))
+                    : '';
+                }
+                if (newValue === compareOld) {
                   cancelCell(cell);
                   return;
                 }
