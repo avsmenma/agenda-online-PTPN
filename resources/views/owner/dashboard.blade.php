@@ -1447,22 +1447,17 @@
       return new Intl.NumberFormat('id-ID').format(num || 0);
     }
 
-    // Count documents by age - uses data passed from PHP
+    // Count documents by age - uses accurate server-side counts from PHP
+    // (hanya dokumen belum dibayar, tidak termasuk sudah_dibayar)
     function countDocumentsByAge() {
-      const thresholds = getAgeThresholds();
-      const allDokumenAge = @json($allDokumenUmur ?? []);
+      // Gunakan data dari server yang sudah terfilter benar
+      const serverCount1 = {{ $belumBayarUmur3 ?? 0 }};
+      const serverCount2 = {{ $belumBayarUmur7 ?? 0 }};
+      const serverCount3 = {{ $belumBayarUmur30 ?? 0 }};
 
-      let count1 = 0, count2 = 0, count3 = 0;
-
-      allDokumenAge.forEach(days => {
-        if (days > thresholds.age1) count1++;
-        if (days > thresholds.age2) count2++;
-        if (days > thresholds.age3) count3++;
-      });
-
-      document.getElementById('ageCount1').textContent = count1;
-      document.getElementById('ageCount2').textContent = count2;
-      document.getElementById('ageCount3').textContent = count3;
+      document.getElementById('ageCount1').textContent = serverCount1.toLocaleString('id-ID');
+      document.getElementById('ageCount2').textContent = serverCount2.toLocaleString('id-ID');
+      document.getElementById('ageCount3').textContent = serverCount3.toLocaleString('id-ID');
     }
 
     // Open age settings modal
@@ -1510,7 +1505,7 @@
       document.getElementById('ageSetting3').value = DEFAULT_AGE_THRESHOLDS.age3;
     }
 
-    // Filter by age
+    // Filter by age — server-side via AJAX (bukan client-side DOM hide/show)
     function filterByAge(level) {
       const thresholds = getAgeThresholds();
       let minDays;
@@ -1519,9 +1514,10 @@
         case 1: minDays = thresholds.age1; break;
         case 2: minDays = thresholds.age2; break;
         case 3: minDays = thresholds.age3; break;
+        default: return;
       }
 
-      // Toggle filter
+      // Toggle: klik lagi pada filter yang sama → clear
       if (currentAgeFilter === level) {
         clearAgeFilter();
         return;
@@ -1529,52 +1525,48 @@
 
       currentAgeFilter = level;
 
-      // Update UI
-      document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
-      document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
+      // Update UI (highlight card & chip)
+      document.querySelectorAll('.age-info-card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.age-chip').forEach(c => c.classList.remove('active'));
       document.getElementById('ageCard' + level).classList.add('active');
       document.getElementById('ageChip' + level).classList.add('active');
       document.getElementById('ageChipClear').style.display = 'flex';
 
-      // Apply filter to visible cards
-      filterDocumentsByDays(minDays);
+      // Sisipkan filter_umur ke dalam form agar terbawa oleh applyFilter()
+      let hiddenUmur = document.getElementById('hiddenFilterUmur');
+      if (!hiddenUmur) {
+        hiddenUmur = document.createElement('input');
+        hiddenUmur.type = 'hidden';
+        hiddenUmur.name = 'filter_umur';
+        hiddenUmur.id = 'hiddenFilterUmur';
+        document.getElementById('filterForm').appendChild(hiddenUmur);
+      }
+      hiddenUmur.value = minDays;
+
+      // Set status = 'semua' agar filter umur tidak terbatasi oleh filter status workflow
+      // (filter_umur sudah mengandung kondisi belum_dibayar sendiri di controller)
+      const statusInput = document.getElementById('statusInput');
+      if (statusInput) statusInput.value = 'semua';
+
+      // Kirim ke server via AJAX (sama seperti filter lainnya)
+      applyFilter();
     }
 
     // Clear age filter
     function clearAgeFilter() {
       currentAgeFilter = null;
-      document.querySelectorAll('.age-info-card').forEach(card => card.classList.remove('active'));
-      document.querySelectorAll('.age-chip').forEach(chip => chip.classList.remove('active'));
+
+      // Hapus chip & card highlight
+      document.querySelectorAll('.age-info-card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.age-chip').forEach(c => c.classList.remove('active'));
       document.getElementById('ageChipClear').style.display = 'none';
 
-      // Show all cards
-      document.querySelectorAll('.doc-card').forEach(card => {
-        card.style.display = '';
-      });
-      document.querySelectorAll('.data-table tbody tr').forEach(row => {
-        row.style.display = '';
-      });
-    }
+      // Hapus hidden input filter_umur dari form
+      const hiddenUmur = document.getElementById('hiddenFilterUmur');
+      if (hiddenUmur) hiddenUmur.remove();
 
-    // Filter documents by minimum days
-    function filterDocumentsByDays(minDays) {
-      // Filter card view
-      document.querySelectorAll('.doc-card').forEach(card => {
-        const ageText = card.querySelector('.doc-card-meta-item .fa-hourglass-half')?.parentElement?.textContent || '';
-        const match = ageText.match(/(\d+)\s*hari/);
-        const days = match ? parseInt(match[1]) : 0;
-
-        card.style.display = days > minDays ? '' : 'none';
-      });
-
-      // Filter table view
-      document.querySelectorAll('.data-table tbody tr').forEach(row => {
-        const ageCell = row.querySelector('td:nth-child(6)')?.textContent || '';
-        const match = ageCell.match(/(\d+)\s*hari/);
-        const days = match ? parseInt(match[1]) : 0;
-
-        row.style.display = days > minDays ? '' : 'none';
-      });
+      // Re-fetch data tanpa filter umur
+      applyFilter();
     }
 
     // ===== Owner Header Theme Toggle =====
