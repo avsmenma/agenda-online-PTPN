@@ -7291,7 +7291,48 @@ document.addEventListener('DOMContentLoaded', function() {
       const fsBtn = document.querySelector('.btn-fullscreen-toggle');
       if (fsBtn) toggleFullscreen(fsBtn);
     }
+
+    // Ctrl+F → fokus ke kolom pencarian di semua role
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      // Jangan override jika user sedang mengetik di input/textarea
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      // Cari modal terbuka — jika ada, biarkan browser/modal yg handle
+      const anyModalOpen = document.querySelector('.modal.show');
+      if (anyModalOpen) return;
+
+      // Cari search input — urutan prioritas sesuai ID di berbagai role view
+      const searchInput =
+        document.getElementById('searchInput') ||
+        document.getElementById('search') ||
+        document.querySelector('input[name="search"]') ||
+        document.querySelector('input[type="search"]') ||
+        document.querySelector('.search-input[type="text"]');
+
+      if (!searchInput) return; // tidak ada search input di halaman ini
+
+      e.preventDefault(); // cegah browser search bawaan
+
+      // Scroll smooth ke input
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      setTimeout(function () {
+        searchInput.focus();
+        searchInput.select();
+
+        // Efek highlight singkat (warna utama tema)
+        searchInput.style.transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
+        searchInput.style.boxShadow  = '0 0 0 3px rgba(8, 62, 64, 0.35)';
+        searchInput.style.borderColor = '#083E40';
+        setTimeout(function () {
+          searchInput.style.boxShadow  = '';
+          searchInput.style.borderColor = '';
+        }, 1500);
+      }, 80);
+    }
   });
+
 
   // ── Restore fullscreen state after filter/reload ─────────────
   function restoreFullscreenIfNeeded() {
