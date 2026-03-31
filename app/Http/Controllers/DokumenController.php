@@ -1417,8 +1417,16 @@ class DokumenController extends Controller
         // Validate permission: user's role must match document's current_handler
         $userRole = strtolower(auth()->user()->role ?? '');
         $currentHandler = strtolower($dokumen->current_handler ?? '');
-        $editableRoles = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
-        if (!in_array($userRole, $editableRoles) || $currentHandler !== $userRole) {
+        $editableRoles = ['operator', 'team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi'];
+
+        // Normalize role aliases: 'verifikasi' and 'team_verifikasi' are the same role
+        $normaliseRole = function (string $r): string {
+            return in_array($r, ['verifikasi', 'team_verifikasi']) ? 'team_verifikasi' : $r;
+        };
+        $userRoleNorm  = $normaliseRole($userRole);
+        $handlerNorm   = $normaliseRole($currentHandler);
+
+        if (!in_array($userRole, $editableRoles) || $handlerNorm !== $userRoleNorm) {
             return response()->json(['success' => false, 'message' => 'Anda tidak memiliki izin untuk mengedit dokumen ini.'], 403);
         }
 
@@ -1428,6 +1436,19 @@ class DokumenController extends Controller
             $allowedStatuses = ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'];
             $isRejected = $dokumen->roleStatuses()->where('status', 'rejected')->whereIn('role_code', ['team_verifikasi'])->exists();
             if (!$isRejected && !in_array($status, $allowedStatuses)) {
+                return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
+            }
+        }
+
+        // For team_verifikasi / verifikasi: allow editing when document is at their hand
+        if (in_array($userRole, ['team_verifikasi', 'verifikasi'])) {
+            $docStatus = strtolower($dokumen->status ?? '');
+            $verifikasiAllowedStatuses = [
+                'sedang diproses', 'sedang_diproses', 'sent_to_team_verifikasi',
+                'menunggu_di_approve', 'returned_to_verifikasi', 'returned_to_department',
+            ];
+            // Also allow when current_handler is team_verifikasi regardless of status
+            if ($handlerNorm !== 'team_verifikasi' && !in_array($docStatus, $verifikasiAllowedStatuses)) {
                 return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
             }
         }
