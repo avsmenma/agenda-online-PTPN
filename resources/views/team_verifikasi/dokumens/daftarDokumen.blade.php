@@ -4294,15 +4294,20 @@
             @endphp
             @php
               $rowClass = $isLocked ? 'locked-row' : '';
-              // Allow inline edit when document is at team_verifikasi's hand (including alias + returned docs)
-              $handlerIsVerifikasi = in_array($dokumen->current_handler, ['team_verifikasi', 'verifikasi']);
-              $statusAllowsEdit = in_array($dokumen->status, [
-                  'returned_to_verifikasi', 'returned_to_department', 'sedang diproses',
-                  'sedang_diproses', 'sent_to_team_verifikasi', 'menunggu_di_approve',
-              ]);
-              $canInlineEdit = $handlerIsVerifikasi || ($statusAllowsEdit && $handlerIsVerifikasi);
-              // Simplify: doc is editable if handler is verifikasi (any alias)
-              $canInlineEdit = $handlerIsVerifikasi;
+              // Editable jika dokumen sedang berada di tangan team verifikasi.
+              // Gunakan is_at_my_role (dihitung controller) ATAU status yang menandakan
+              // dokumen sedang diproses oleh team verifikasi — tidak bergantung pada
+              // nilai current_handler saja karena bisa berbeda alias ('verifikasi', dll.)
+              $editableStatuses = [
+                  'sent_to_team_verifikasi',
+                  'sedang diproses',
+                  'sedang_diproses',
+                  'returned_to_verifikasi',
+                  'returned_to_department',
+                  'menunggu_di_approve',
+              ];
+              $canInlineEdit = ($dokumen->is_at_my_role ?? false)
+                  && in_array($dokumen->status, $editableStatuses);
               $dateCols = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro','tanggal_selesai_verifikasi_pajak'];
             @endphp
             <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"

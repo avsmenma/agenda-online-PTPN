@@ -1426,32 +1426,40 @@ class DokumenController extends Controller
         $userRoleNorm  = $normaliseRole($userRole);
         $handlerNorm   = $normaliseRole($currentHandler);
 
-        if (!in_array($userRole, $editableRoles) || $handlerNorm !== $userRoleNorm) {
+        // Statuses that indicate the document is currently at team_verifikasi's stage
+        $verifikasiAllowedStatuses = [
+            'sedang diproses', 'sedang_diproses', 'sent_to_team_verifikasi',
+            'menunggu_di_approve', 'returned_to_verifikasi', 'returned_to_department',
+        ];
+        $docStatus = strtolower($dokumen->status ?? '');
+
+        // For team_verifikasi / verifikasi:
+        //   Allow if handler matches OR if document status indicates it's at their stage
+        $isVerifikasiUser = in_array($userRole, ['team_verifikasi', 'verifikasi']);
+        $isVerifikasiHandler = $handlerNorm === 'team_verifikasi';
+        $isVerifikasiStatus  = in_array($docStatus, $verifikasiAllowedStatuses);
+
+        // Primary gate: role must be in editableRoles AND (handler matches OR verifikasi status check passes)
+        $handlerMatchesUser = $handlerNorm === $userRoleNorm;
+        $passedGate = in_array($userRole, $editableRoles)
+            && ($handlerMatchesUser || ($isVerifikasiUser && $isVerifikasiStatus));
+
+        if (!$passedGate) {
             return response()->json(['success' => false, 'message' => 'Anda tidak memiliki izin untuk mengedit dokumen ini.'], 403);
         }
 
         // For operator: enforce status whitelist
         if ($userRole === 'operator') {
-            $status = strtolower($dokumen->status ?? '');
             $allowedStatuses = ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'];
             $isRejected = $dokumen->roleStatuses()->where('status', 'rejected')->whereIn('role_code', ['team_verifikasi'])->exists();
-            if (!$isRejected && !in_array($status, $allowedStatuses)) {
+            if (!$isRejected && !in_array($docStatus, $allowedStatuses)) {
                 return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
             }
         }
 
-        // For team_verifikasi / verifikasi: allow editing when document is at their hand
-        if (in_array($userRole, ['team_verifikasi', 'verifikasi'])) {
-            $docStatus = strtolower($dokumen->status ?? '');
-            $verifikasiAllowedStatuses = [
-                'sedang diproses', 'sedang_diproses', 'sent_to_team_verifikasi',
-                'menunggu_di_approve', 'returned_to_verifikasi', 'returned_to_department',
-            ];
-            // Also allow when current_handler is team_verifikasi regardless of status
-            if ($handlerNorm !== 'team_verifikasi' && !in_array($docStatus, $verifikasiAllowedStatuses)) {
-                return response()->json(['success' => false, 'message' => 'Dokumen tidak dapat diedit pada status ini.'], 403);
-            }
-        }
+        // For team_verifikasi / verifikasi: must have valid status (already checked in gate above via $isVerifikasiStatus)
+        // No separate block needed — if they passed the gate with status check, they're allowed.
+
 
         $field = $request->input('field');
         $value = $request->input('value');
