@@ -7886,24 +7886,18 @@
                         }
                       });
 
-                      // ===== LIVE SEARCH FUNCTIONALITY =====
-                      // Debounce function to limit the rate of function calls
-                      function debounce(func, wait) {
-                          let timeout;
-                          return function executedFunction(...args) {
-                              const later = () => {
-                                  clearTimeout(timeout);
-                                  func(...args);
-                              };
-                              clearTimeout(timeout);
-                              timeout = setTimeout(later, wait);
-                          };
-                      }
-
-                      // Live search handler
+                      // ===== SEARCH ON ENTER ONLY =====
+                      // (Auto-search dimatikan — user harus tekan Enter untuk mencari)
                       const searchInput = document.querySelector('input[name="search"]');
                       if (searchInput) {
-                          const liveSearchHandler = debounce(function() {
+                          // Pastikan placeholder memberi tahu user cara search
+                          if (!searchInput.dataset.hintSet) {
+                              searchInput.dataset.hintSet = '1';
+                              const originalPlaceholder = searchInput.placeholder || 'Cari...';
+                              searchInput.placeholder = originalPlaceholder.replace(/\.\.\.$/, '') + '… (tekan Enter)';
+                          }
+
+                          function doSearch() {
                               const form = searchInput.closest('form');
                               if (!form) return;
 
@@ -7951,11 +7945,27 @@
 
                               // Navigate to the new URL
                               window.location.href = url.toString();
-                          }, 500); // 500ms debounce delay
+                          }
 
-                          // Attach input event listener
-                          searchInput.addEventListener('input', liveSearchHandler);
+                          // Hanya trigger saat Enter ditekan
+                          searchInput.addEventListener('keydown', function(e) {
+                              if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  doSearch();
+                              }
+                          });
+
+                          // Tombol search (ikon 🔍) jika ada — tetap bisa diklik
+                          const searchBtn = searchInput.closest('.input-group, .search-box')
+                              ?.querySelector('button[type="submit"], .btn-search, .input-group-text[role="button"]');
+                          if (searchBtn) {
+                              searchBtn.addEventListener('click', function(e) {
+                                  e.preventDefault();
+                                  doSearch();
+                              });
+                          }
                       }
+
                       </script>
 
                   {{-- ===== MULTI-SELECT BULK SEND COMPONENTS (Operator-style) ===== --}}
