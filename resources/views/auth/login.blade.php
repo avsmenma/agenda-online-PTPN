@@ -88,22 +88,21 @@
         }
 
         .login-card {
-            background: rgba(10, 25, 50, 0.55);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
+            background: rgba(26, 35, 50, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow:
-                0 32px 80px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 40px 36px;
         }
 
         /* ==================== LOGIN HEADER ==================== */
         .login-header {
-            padding: 36px 32px 28px;
+            padding: 0 0 24px 0;
             text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: none;
         }
 
         .login-header .logo-wrap {
@@ -145,7 +144,7 @@
 
         /* ==================== LOGIN BODY ==================== */
         .login-body {
-            padding: 28px 32px;
+            padding: 24px 0 0 0;
         }
 
         .form-group {
@@ -177,12 +176,11 @@
 
         .form-control {
             width: 100%;
-            height: 46px;
+            height: 44px;
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding-left: 40px;
-            padding-right: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 14px 10px 40px;
             font-size: 14px;
             color: #ffffff;
             font-family: 'Poppins', sans-serif;
@@ -197,7 +195,7 @@
             outline: none;
             border-color: rgba(255, 255, 255, 0.45);
             background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
             color: #ffffff;
         }
 
@@ -272,10 +270,10 @@
         .btn-login {
             width: 100%;
             height: 48px;
-            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            background: #28a745;
             border: none;
-            border-radius: 12px;
-            color: white;
+            border-radius: 8px;
+            color: #ffffff;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
@@ -285,14 +283,14 @@
             justify-content: center;
             gap: 8px;
             font-family: 'Poppins', sans-serif;
-            box-shadow: 0 4px 20px rgba(13, 148, 136, 0.35);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
             letter-spacing: 0.3px;
         }
 
         .btn-login:hover {
-            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            background: #218838;
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(13, 148, 136, 0.5);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.55);
         }
 
         .btn-login:active {
@@ -342,7 +340,7 @@
         /* ==================== FOOTER ==================== */
         .login-footer {
             text-align: center;
-            padding: 0 32px 24px;
+            padding: 20px 0 0 0;
             font-size: 12px;
             color: rgba(255, 255, 255, 0.3);
         }
@@ -358,16 +356,8 @@
 
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 480px) {
-            .login-header {
-                padding: 28px 24px 22px;
-            }
-
-            .login-body {
-                padding: 22px 24px;
-            }
-
-            .login-footer {
-                padding: 0 24px 20px;
+            .login-card {
+                padding: 28px 24px;
             }
 
             .login-header h1 {
