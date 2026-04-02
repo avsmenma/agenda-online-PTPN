@@ -17,8 +17,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Preload Landing Background Image -->
-    <link rel="preload" as="image" href="{{ asset('images/landing-bg.png') }}" fetchpriority="high">
+    <!-- Preload hint for video -->
+    <link rel="preload" as="video" href="{{ asset('videos/landing-bg.mp4') }}">
 
     <style>
         * {
@@ -90,7 +90,7 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background: linear-gradient(to bottom, #4fc3f7 0%, #29b6f6 50%, #03a9f4 100%);
+            background: #0a0a1a;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -100,20 +100,18 @@
             overflow: hidden;
         }
 
-        .landing-bg-image {
+        .landing-bg-video {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 50%;
+            left: 50%;
             width: 100%;
             height: 100%;
+            min-width: 100%;
+            min-height: 100%;
             object-fit: cover;
             object-position: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .landing-bg-image.loaded {
-            opacity: 1;
+            transform: translate(-50%, -50%);
+            z-index: 0;
         }
 
         .landing-page.hidden {
@@ -201,8 +199,7 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background: url('{{ asset('images/landing-bg.png') }}') no-repeat center center;
-            background-size: cover;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -211,6 +208,37 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        /* Video background behind login overlay */
+        .video-bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 19;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .video-bg-layer.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .video-bg-layer video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            transform: translate(-50%, -50%);
         }
 
         .login-overlay::before {
@@ -582,14 +610,23 @@
 
     <!-- Landing Page -->
     <div class="landing-page" id="landingPage">
-        <!-- Image will be set via JavaScript after preloading -->
-        <img src="" alt="Agenda Online" class="landing-bg-image" id="landingBgImage">
+        <!-- Video Background -->
+        <video class="landing-bg-video" id="landingBgVideo" autoplay muted loop playsinline preload="auto">
+            <source src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
+        </video>
         <div class="landing-content">
             <button class="btn-login-landing" id="showLoginBtn">
                 <i class="fas fa-sign-in-alt"></i>
                 <span>Masuk</span>
             </button>
         </div>
+    </div>
+
+    <!-- Video Background Layer for Login Overlay -->
+    <div class="video-bg-layer" id="videoBgLayer">
+        <video autoplay muted loop playsinline>
+            <source src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
+        </video>
     </div>
 
     <!-- Login Form Overlay -->
@@ -689,25 +726,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Image URL to preload
-        const imageUrl = "{{ asset('images/landing-bg.png') }}";
-
         // Elements
         const loadingScreen = document.getElementById('loadingScreen');
-        const landingBgImage = document.getElementById('landingBgImage');
         const landingContent = document.querySelector('.landing-content');
+        const landingBgVideo = document.getElementById('landingBgVideo');
 
-        // Function to show content after image is fully loaded
+        // Function to show content after video starts playing
         function showContent() {
-            // Set the preloaded image to the visible img element
-            landingBgImage.src = imageUrl;
-
-            // Force browser to complete rendering
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    landingBgImage.classList.add('loaded');
                     loadingScreen.classList.add('loaded');
-
                     setTimeout(() => {
                         landingContent.classList.add('visible');
                     }, 100);
@@ -715,26 +743,18 @@
             });
         }
 
-        // Preload image in memory (hidden) before displaying
-        const preloadImage = new Image();
-        preloadImage.onload = function () {
-            // Image is fully downloaded in memory, now show it
-            showContent();
-        };
-        preloadImage.onerror = function () {
-            // Show content even if image fails to load
-            showContent();
-        };
+        // Show content when video can play
+        if (landingBgVideo) {
+            landingBgVideo.addEventListener('canplay', showContent, { once: true });
+            landingBgVideo.addEventListener('loadeddata', showContent, { once: true });
+        }
 
-        // Start preloading
-        preloadImage.src = imageUrl;
-
-        // Fallback: show content after 5 seconds maximum
+        // Fallback: show content after 3 seconds maximum
         setTimeout(() => {
             if (!loadingScreen.classList.contains('loaded')) {
                 showContent();
             }
-        }, 5000);
+        }, 3000);
 
         // Elements
         const landingPage = document.getElementById('landingPage');
@@ -746,9 +766,12 @@
         const loginForm = document.getElementById('loginForm');
         const loginBtn = document.getElementById('loginBtn');
 
+        const videoBgLayer = document.getElementById('videoBgLayer');
+
         // Show login form
         showLoginBtn.addEventListener('click', function () {
             landingPage.classList.add('hidden');
+            videoBgLayer.classList.add('active');
             loginOverlay.classList.add('active');
         });
 
@@ -756,6 +779,7 @@
         backBtn.addEventListener('click', function (e) {
             e.preventDefault();
             loginOverlay.classList.remove('active');
+            videoBgLayer.classList.remove('active');
             landingPage.classList.remove('hidden');
         });
 
