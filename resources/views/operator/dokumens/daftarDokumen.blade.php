@@ -2,6 +2,219 @@
 @section('content')
 
   <style>
+    /* ═══════════════════════════════════════════════════════════════
+       SPREADSHEET MODE OVERRIDES — applied when body has op-spreadsheet-mode
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+      --ss-teal:       #0d6b5e;
+      --ss-teal-mid:   #1a8a79;
+      --ss-teal-light: #e6f4f2;
+      --ss-teal-glow:  #2cbfac33;
+      --ss-accent:     #f5a623;
+      --ss-danger:     #e05c5c;
+      --ss-success:    #27ae60;
+      --ss-text:       #1a2a28;
+      --ss-muted:      #6b8c88;
+      --ss-border:     #d0e8e5;
+      --ss-bg:         #f4fbfa;
+      --ss-cell-h:     38px;
+      --ss-cell-focus: #fff9ed;
+    }
+
+    /* ── Spreadsheet wrapper ── */
+    body.op-spreadsheet-mode .content {
+      background: var(--ss-bg) !important;
+    }
+
+    /* ── Toolbar band (below topbar) ── */
+    .ss-toolbar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; background: #fff;
+      border-bottom: 1px solid var(--ss-border); flex-wrap: wrap;
+    }
+    .ss-toolbar input[type="text"] {
+      border: 1px solid var(--ss-border); border-radius: 6px;
+      padding: 6px 12px; font: 13px 'DM Sans', sans-serif;
+      color: var(--ss-text); width: 260px; outline: none; transition: .15s;
+    }
+    .ss-toolbar input[type="text"]:focus {
+      border-color: var(--ss-teal-mid); box-shadow: 0 0 0 3px var(--ss-teal-glow);
+    }
+    .ss-toolbar .ss-select {
+      border: 1px solid var(--ss-border); border-radius: 6px;
+      padding: 6px 10px; font: 13px 'DM Sans', sans-serif;
+      color: var(--ss-teal); background: #fff; cursor: pointer;
+    }
+    .ss-toolbar .ss-row-count {
+      font-size: 12px; color: var(--ss-muted); margin-left: auto; white-space: nowrap;
+    }
+
+    /* ── Hint bar ── */
+    .ss-hints {
+      display: flex; gap: 16px; align-items: center;
+      background: var(--ss-teal-light); border-bottom: 1px solid var(--ss-border);
+      padding: 6px 20px; font-size: 11.5px; color: var(--ss-teal); flex-wrap: wrap;
+    }
+    .ss-hints kbd {
+      display: inline-block; background: #fff; border: 1px solid var(--ss-teal-mid);
+      border-radius: 4px; padding: 1px 5px; font: 11px 'DM Mono', monospace;
+      color: var(--ss-teal); box-shadow: 0 1px 0 var(--ss-teal-mid);
+    }
+
+    /* ── Sheet wrapper ── */
+    body.op-spreadsheet-mode .table-dokumen,
+    body.op-spreadsheet-mode #documentTableContainer {
+      border-radius: 0 !important; margin: 0 !important; box-shadow: none !important;
+      border: none !important;
+    }
+    body.op-spreadsheet-mode .table-responsive {
+      overflow-x: auto; overflow-y: auto;
+      max-height: calc(100vh - 190px);
+      border-radius: 0 !important;
+    }
+    body.op-spreadsheet-mode .table-responsive::-webkit-scrollbar { width: 8px; height: 8px; }
+    body.op-spreadsheet-mode .table-responsive::-webkit-scrollbar-track { background: var(--ss-bg); }
+    body.op-spreadsheet-mode .table-responsive::-webkit-scrollbar-thumb { background: var(--ss-border); border-radius: 4px; }
+    body.op-spreadsheet-mode .table-responsive::-webkit-scrollbar-thumb:hover { background: var(--ss-teal-mid); }
+
+    /* ── Table ── */
+    body.op-spreadsheet-mode .table-enhanced {
+      border-collapse: collapse !important;
+      min-width: 100% !important;
+    }
+    body.op-spreadsheet-mode .table-enhanced thead th {
+      background: var(--ss-teal) !important;
+      color: #fff !important;
+      font: 600 12px 'DM Sans', sans-serif !important;
+      text-align: left; padding: 0 8px !important; height: 36px !important;
+      position: sticky !important; top: 0 !important; z-index: 10 !important;
+      border-right: 1px solid rgba(255,255,255,.13) !important;
+      border-bottom: none !important; user-select: none; white-space: nowrap;
+    }
+    body.op-spreadsheet-mode .table-enhanced thead th.col-checkbox,
+    body.op-spreadsheet-mode .table-enhanced thead th.col-no {
+      text-align: center !important;
+    }
+
+    /* ── Rows ── */
+    body.op-spreadsheet-mode .table-enhanced tbody tr {
+      height: var(--ss-cell-h) !important;
+      border-bottom: 1px solid var(--ss-border) !important;
+      transition: background .1s;
+    }
+    body.op-spreadsheet-mode .table-enhanced tbody tr:nth-child(even) {
+      background: #f9fdfc !important;
+    }
+    body.op-spreadsheet-mode .table-enhanced tbody tr:hover {
+      background: var(--ss-teal-light) !important;
+    }
+    body.op-spreadsheet-mode .table-enhanced tbody tr.row-active {
+      background: #fffdf5 !important;
+    }
+
+    /* ── Cells ── */
+    body.op-spreadsheet-mode .table-enhanced tbody td {
+      padding: 0 6px !important; font-size: 13px !important;
+      border-right: 1px solid var(--ss-border) !important;
+      border-bottom: none !important;
+      vertical-align: middle !important;
+      position: relative; cursor: cell;
+    }
+    body.op-spreadsheet-mode .table-enhanced tbody td.col-no {
+      text-align: center !important;
+      font: 500 12px 'DM Mono', monospace !important;
+      color: var(--ss-muted) !important;
+      cursor: default !important;
+      background: var(--ss-teal-light) !important;
+    }
+
+    /* ── Cell focus (override old editing styles) ── */
+    body.op-spreadsheet-mode .ie-cell:hover {
+      background: rgba(13,107,94,.06) !important;
+    }
+    body.op-spreadsheet-mode .ie-cell:hover::after {
+      content: none !important;
+    }
+    body.op-spreadsheet-mode td.focused,
+    body.op-spreadsheet-mode .ie-cell.ie-editing {
+      outline: 2px solid var(--ss-teal-mid) !important;
+      outline-offset: -2px !important;
+      background: var(--ss-cell-focus) !important;
+      box-shadow: none !important;
+      z-index: 2;
+    }
+    body.op-spreadsheet-mode td.focused::after,
+    body.op-spreadsheet-mode .ie-cell.ie-editing::after {
+      content: '' !important;
+      position: absolute !important;
+      right: -4px !important; bottom: -4px !important;
+      width: 7px !important; height: 7px !important;
+      background: var(--ss-teal-mid) !important;
+      border-radius: 1px !important;
+      z-index: 3; font-family: unset !important;
+      opacity: 1 !important; color: transparent !important;
+    }
+
+    /* ── Nilai column ── */
+    body.op-spreadsheet-mode .col-nilai {
+      font: 500 12px 'DM Mono', monospace !important;
+      color: var(--ss-teal) !important;
+    }
+
+    /* ── + Baris Baru row ── */
+    .ss-add-row-btn {
+      display: flex; align-items: center; gap: 6px;
+      width: 100%; padding: 8px 14px; background: #fff; border: none;
+      border-top: 1px solid var(--ss-border);
+      color: var(--ss-muted); font: 13px 'DM Sans', sans-serif;
+      cursor: pointer; text-align: left; transition: .15s;
+    }
+    .ss-add-row-btn:hover { background: var(--ss-teal-light); color: var(--ss-teal); }
+
+    /* ── Status bar (bottom) ── */
+    .ss-statusbar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--ss-teal); color: rgba(255,255,255,.8);
+      display: flex; align-items: center; gap: 20px;
+      padding: 4px 20px; font-size: 11.5px; z-index: 100;
+    }
+    .ss-statusbar strong { color: #fff; }
+    .ss-statusbar .cell-ref {
+      font: 600 12px 'DM Mono', monospace; color: var(--ss-accent);
+      min-width: 60px;
+    }
+
+    /* ── Toast notifications ── */
+    .ss-toast {
+      position: fixed; top: 60px; right: 20px;
+      background: var(--ss-teal); color: #fff;
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,.2);
+      transform: translateY(-10px); opacity: 0;
+      transition: .25s; z-index: 200;
+      display: flex; align-items: center; gap: 8px;
+      pointer-events: none;
+    }
+    .ss-toast.show { transform: translateY(0); opacity: 1; }
+    .ss-toast.save { background: var(--ss-success); }
+
+    /* ── Hide old elements when in spreadsheet mode ── */
+    body.op-spreadsheet-mode .search-box,
+    body.op-spreadsheet-mode h2,
+    body.op-spreadsheet-mode .tab-status-summary,
+    body.op-spreadsheet-mode .page-header-card,
+    body.op-spreadsheet-mode .card-header-gradient { display: none !important; }
+
+    /* ── Pagination muted ── */
+    body.op-spreadsheet-mode .simple-pagination-bottom {
+      padding: 6px 20px !important;
+      background: #fff !important;
+      border-top: 1px solid var(--ss-border) !important;
+      margin: 0 !important; border-radius: 0 !important;
+    }
+  </style>
+  <style>
     /* CRITICAL FIX: Override all possible border styles for Nilai Rupiah column */
     td.col-nilai, th.col-nilai,
     .table-enhanced td.col-nilai, .table-enhanced th.col-nilai,
@@ -2781,41 +2994,36 @@
     </div>
   </div>
 
-  <!-- ===== Spreadsheet Mode Toolbar ===== -->
-  <div id="sgToolbar" style="
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, rgba(8,62,64,0.04) 0%, rgba(136,151,23,0.06) 100%);
-    border: 1px solid rgba(136,151,23,0.2);
-    border-radius: 10px;
-    flex-wrap: wrap;
-  ">
-    <button id="sgAddRowBtn" onclick="sgAddNewRow()" style="
-      display:inline-flex; align-items:center; gap:6px;
-      padding:8px 16px;
-      background: linear-gradient(135deg,#083E40,#0a4f52);
-      color:white; border:none; border-radius:8px; font-size:13px; font-weight:600;
-      cursor:pointer; transition:all 0.2s;
-      box-shadow: 0 2px 8px rgba(8,62,64,0.2);
-    " title="Tambah baris baru (Alt+N)">
-      <i class="fa-solid fa-plus"></i> Tambah Baris
+  <!-- ===== Spreadsheet Mode Toolbar (reference design) ===== -->
+  <div class="ss-toolbar" id="sgToolbar">
+    <input type="text" id="ssSearchInput" placeholder="🔍 Cari nomor agenda, SPP, pengirim..."
+      value="{{ request('search') }}"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();let p=new URLSearchParams(window.location.search);p.set('search',this.value);window.location.search=p.toString();}">
+    <select class="ss-select" id="ssStatusFilter" onchange="let p=new URLSearchParams(window.location.search);if(this.value)p.set('status',this.value);else p.delete('status');window.location.search=p.toString();">
+      <option value="">Semua Status</option>
+      <option value="belum_dikirim" {{ request('status')=='belum_dikirim'?'selected':'' }}>Belum Dikirim</option>
+      <option value="sent_to_team_verifikasi" {{ request('status')=='sent_to_team_verifikasi'?'selected':'' }}>Terkirim</option>
+      <option value="sedang diproses" {{ request('status')=='sedang diproses'?'selected':'' }}>Diproses</option>
+      <option value="returned_to_operator" {{ request('status')=='returned_to_operator'?'selected':'' }}>Dikembalikan</option>
+    </select>
+    <button onclick="sgAddNewRow()" class="btn btn-sm" style="background:var(--ss-accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font:500 13px 'DM Sans',sans-serif;cursor:pointer;">
+      + Baris Baru
     </button>
-    <span id="sgStatusBar" style="
-      font-size:12px; color:#6c757d; flex:1; min-width:120px;
-    ">
-      <i class="fa-solid fa-info-circle me-1" style="color:#889717;"></i>
-      Klik sel untuk edit · Tab/Enter pindah sel · Esc batalkan · F2 buka editor penuh
-    </span>
-    <span style="font-size:11px; color:#adb5bd; white-space:nowrap;">
-      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">Tab</kbd>
-      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">Enter</kbd>
-      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">Esc</kbd>
-      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">↑↓←→</kbd>
-    </span>
+    <span class="ss-row-count" id="ssRowCount">{{ $dokumens->total() ?? 0 }} baris</span>
   </div>
+
+  <!-- Hint bar -->
+  <div class="ss-hints">
+    <span><kbd>Tab</kbd> sel berikutnya</span>
+    <span><kbd>Enter</kbd> simpan & turun</span>
+    <span><kbd>Esc</kbd> batalkan</span>
+    <span><kbd>F2</kbd> editor penuh</span>
+    <span><kbd>↑↓←→</kbd> navigasi</span>
+    <span><kbd>Ctrl+F</kbd> cari</span>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="ss-toast" id="ssToast"></div>
 
   <!-- Enhanced Tabel Dokumen -->
 
@@ -7198,6 +7406,73 @@
     observer.observe(tbody, { childList: true, subtree: false });
   }
 
+})();
+</script>
+
+<!-- ===== Spreadsheet Status Bar (bottom, fixed) ===== -->
+<div class="ss-statusbar" id="ssStatusbar">
+  <span class="cell-ref" id="ssCellRef">—</span>
+  <span id="ssEditMode">Mode: Siap</span>
+  <span style="margin-left:auto;" id="ssSaveStatus">✓ Tersimpan</span>
+</div>
+
+<script>
+/* ── Status bar & toast helpers for spreadsheet mode ── */
+(function(){
+  const bar = document.getElementById('ssStatusbar');
+  const ref = document.getElementById('ssCellRef');
+  const mode = document.getElementById('ssEditMode');
+  const save = document.getElementById('ssSaveStatus');
+  const toast = document.getElementById('ssToast');
+  if (!bar) return;
+
+  // Column letters helper
+  function colLetter(idx) {
+    let s = ''; idx++;
+    while (idx > 0) { idx--; s = String.fromCharCode(65 + (idx % 26)) + s; idx = Math.floor(idx / 26); }
+    return s;
+  }
+
+  // Update cell ref on focus
+  document.addEventListener('click', function(e) {
+    const td = e.target.closest('td.ie-cell, td');
+    if (!td) return;
+    const tr = td.closest('tr');
+    if (!tr) return;
+    const rowIdx = Array.from(tr.parentElement.children).indexOf(tr) + 1;
+    const colIdx = Array.from(tr.children).indexOf(td);
+    if (ref) ref.textContent = colLetter(colIdx) + rowIdx;
+  });
+
+  // Listen for editing state
+  const origSgSetStatus = window.sgSetStatus;
+  window.sgSetStatus = function(msg) {
+    if (mode) mode.textContent = 'Mode: ' + (msg || 'Siap');
+    if (origSgSetStatus) origSgSetStatus(msg);
+  };
+
+  // Toast helper
+  window.ssShowToast = function(msg, type) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.className = 'ss-toast' + (type === 'save' ? ' save show' : ' show');
+    toast.style.pointerEvents = 'auto';
+    setTimeout(() => { toast.className = 'ss-toast'; toast.style.pointerEvents = 'none'; }, 2500);
+  };
+
+  // Patch save states
+  const origPatch = window.XMLHttpRequest.prototype.send;
+  window.XMLHttpRequest.prototype.send = function() {
+    if (save) save.textContent = '⏳ Menyimpan...';
+    this.addEventListener('load', function() {
+      if (save) save.textContent = '✓ Tersimpan';
+      if (this.status >= 200 && this.status < 300) window.ssShowToast('✓ Disimpan', 'save');
+    });
+    this.addEventListener('error', function() {
+      if (save) save.textContent = '✕ Gagal menyimpan';
+    });
+    return origPatch.apply(this, arguments);
+  };
 })();
 </script>
 

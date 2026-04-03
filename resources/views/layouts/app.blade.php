@@ -3851,16 +3851,158 @@
       }
     }
     $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
+    $isOperatorSpreadsheet = strtolower($module ?? '') === 'operator' && !$isOwner && !($isBagianUser ?? false);
   @endphp
-  @if(($module ?? '') !== 'owner')
+
+  {{-- ═══════════════════════════════════════════════════════════════════
+       OPERATOR SPREADSHEET MODE — Full-width topbar, no sidebar
+       ═══════════════════════════════════════════════════════════════════ --}}
+  @if($isOperatorSpreadsheet)
+    <style>
+      /* Operator Spreadsheet Mode — override layout */
+      .op-ss-topbar {
+        background: linear-gradient(135deg, #0d6b5e 0%, #083e40 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 20px;
+        height: 52px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.25);
+        position: sticky; top: 0; z-index: 1050;
+      }
+      .op-ss-topbar .op-logo {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 15px; font-weight: 600; letter-spacing: .3px;
+        white-space: nowrap;
+      }
+      .op-ss-topbar .op-logo img {
+        height: 28px; width: auto; filter: brightness(10);
+      }
+      .op-ss-topbar .op-nav {
+        display: flex; align-items: center; gap: 4px;
+        margin-left: 24px;
+      }
+      .op-ss-topbar .op-nav a,
+      .op-ss-topbar .op-nav button {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 6px; border: none;
+        font: 500 13px 'Inter', 'DM Sans', sans-serif;
+        cursor: pointer; transition: .15s;
+        text-decoration: none;
+        background: rgba(255,255,255,.12); color: #fff;
+      }
+      .op-ss-topbar .op-nav a:hover,
+      .op-ss-topbar .op-nav button:hover {
+        background: rgba(255,255,255,.22);
+      }
+      .op-ss-topbar .op-nav a.active {
+        background: rgba(255,255,255,.25);
+        font-weight: 600;
+      }
+      .op-ss-topbar .op-nav .badge-count {
+        background: #f5a623; color: #fff;
+        font-size: 10px; font-weight: 700;
+        padding: 1px 6px; border-radius: 10px;
+        min-width: 18px; text-align: center;
+      }
+      .op-ss-topbar .op-right {
+        margin-left: auto;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .op-ss-topbar .op-right .theme-toggle-btn {
+        color: #ffffffcc !important;
+      }
+      .op-ss-topbar .op-right .profile-icon {
+        color: #ffffffcc !important;
+        font-size: 18px; cursor: pointer;
+      }
+      /* Hide sidebar & secondary sidebar for operator */
+      body.op-spreadsheet-mode .sidebar,
+      body.op-spreadsheet-mode .secondary-sidebar {
+        display: none !important;
+      }
+      /* Full-width content for operator */
+      body.op-spreadsheet-mode .content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      body.op-spreadsheet-mode footer {
+        display: none !important;
+      }
+    </style>
+    <script>document.body.classList.add('op-spreadsheet-mode');</script>
+
+    <div class="op-ss-topbar">
+      <div class="op-logo">
+        <img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN">
+        <span>Agenda Online PTPN</span>
+      </div>
+
+      <div class="op-nav">
+        {{-- Daftar Dokumen (always active on /documents) --}}
+        <a href="{{ url('/documents') }}" class="{{ request()->is('documents*') && !request()->is('documents/import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-table-cells"></i> Spreadsheet
+        </a>
+
+        {{-- Inbox --}}
+        @php
+          try {
+            $opInboxCount = \App\Models\Dokumen::where('inbox_approval_for', 'operator')
+              ->where('inbox_approval_status', 'pending')
+              ->count();
+          } catch (\Exception $e) { $opInboxCount = 0; }
+        @endphp
+        <a href="{{ url('/inbox') }}" class="{{ request()->is('inbox*') ? 'active' : '' }}">
+          <i class="fa-solid fa-inbox"></i> Inbox
+          @if($opInboxCount > 0)
+            <span class="badge-count">{{ $opInboxCount }}</span>
+          @endif
+        </a>
+
+        {{-- Import CSV --}}
+        <a href="{{ url('/documents/import') }}" class="{{ request()->is('documents/import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-import"></i> Import CSV
+        </a>
+      </div>
+
+      <div class="op-right">
+        <!-- Dark Mode Toggle -->
+        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode" style="background:none;border:none;">
+          <i class="fas fa-moon theme-toggle-icon moon"></i>
+          <i class="fas fa-sun theme-toggle-icon sun"></i>
+        </button>
+
+        <!-- Profile Dropdown -->
+        <div class="profile-dropdown-container" style="position: relative;">
+          <i class="fa-solid fa-user profile-icon" id="profileDropdownToggle"
+             style="position: relative;"></i>
+          <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
+            <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
+              <i class="fa-solid fa-user-circle me-2"></i> Akun
+            </a>
+            <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
+              <i class="fa-solid fa-shield-alt me-2"></i> Keamanan 2FA
+            </a>
+            <div class="profile-dropdown-divider"></div>
+            <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+              @csrf
+              <button type="submit" class="profile-dropdown-item"
+                style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
+                <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {{-- ═══════ OTHER ROLES — standard header with topbar ═══════ --}}
+  @elseif(($module ?? '') !== 'owner')
     <header>
       <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
-        @if(($module ?? '') !== 'owner')
-          <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
-        @else
-          {{-- Spacer to push icons to the right for owner pages --}}
-          <div class="flex-grow-1"></div>
-        @endif
+        <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
         <div class="d-flex align-items-center ms-auto">
           <!-- Dark Mode Toggle Button -->
           <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
@@ -3898,7 +4040,8 @@
     </header>
   @endif
 
-  <!-- Sidebar -->
+  <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
+  @if(!($isOperatorSpreadsheet ?? false))
   <div class="sidebar">
     <h4 class="text-center mb-4"><img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN" class="sidebar-logo-img"> Agenda Online</h4>
     <hr>
@@ -4176,6 +4319,7 @@
     @endunless
     @endif
   </div>
+  @endif {{-- end !isOperatorSpreadsheet --}}
 
   <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
   @if($isOwner)
@@ -4271,6 +4415,7 @@
       $submenuTitle = 'MENU DOKUMEN';
     }
   @endphp
+  @if(!($isOperatorSpreadsheet ?? false))
   <div class="secondary-sidebar {{ $shouldShowSecondarySidebar ? 'active' : '' }}" id="sidebar-pembayaran"
     role="complementary" aria-label="Submenu Panel">
     <div class="secondary-sidebar-header">
@@ -4395,10 +4540,11 @@
       @endif
     </div>
   </div>
+  @endif {{-- end !isOperatorSpreadsheet for secondary sidebar --}}
   @endunless
 
   <!-- Content -->
-  <div class="content {{ ($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '' }}">
+  <div class="content {{ ($isOperatorSpreadsheet ?? false) ? '' : (($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '') }}">
     <!-- Notifikasi Success/Error -->
     @if(session('success'))
       <div class="alert alert-success alert-dismissible fade show" role="alert"
