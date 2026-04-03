@@ -3851,7 +3851,15 @@
       }
     }
     $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
-    $isOperatorSpreadsheet = strtolower($module ?? '') === 'operator' && !$isOwner && !($isBagianUser ?? false);
+
+    // Define $isBagianUser early so it's available everywhere (not just inside sidebar block)
+    $isBagianUser = false;
+    if (auth()->check()) {
+      $userRoleLower = strtolower(auth()->user()->role ?? '');
+      $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
+    }
+
+    $isOperatorSpreadsheet = strtolower($module ?? '') === 'operator' && !$isOwner && !$isBagianUser;
   @endphp
 
   {{-- ═══════════════════════════════════════════════════════════════════
