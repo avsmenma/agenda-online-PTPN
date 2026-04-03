@@ -1985,6 +1985,65 @@ class DokumenController extends Controller
         return null;
     }
 
+
+
+
+    /**
+     * Spreadsheet Mode: Create a new document inline from a new row
+     * Route: POST /documents/inline-store
+     */
+    public function inlineStore(Request $request)
+    {
+        $validated = $request->validate([
+            'nomor_agenda'      => 'required|string|max:100',
+            'nomor_spp'         => 'nullable|string|max:200',
+            'tanggal_spp'       => 'nullable|date',
+            'uraian_spp'        => 'nullable|string|max:1000',
+            'nilai_rupiah'      => 'nullable|numeric|min:0',
+            'kebun'             => 'nullable|string|max:150',
+            'bagian'            => 'nullable|string|max:150',
+            'nama_pengirim'     => 'nullable|string|max:200',
+            'jenis_pembayaran'  => 'nullable|string|max:150',
+            'kategori'          => 'nullable|string|max:200',
+            'jenis_dokumen'     => 'nullable|string|max:200',
+            'jenis_sub_pekerjaan' => 'nullable|string|max:200',
+        ]);
+
+        // Strip purified nilai_rupiah (might come as formatted string)
+        if (isset($validated['nilai_rupiah']) && is_string($validated['nilai_rupiah'])) {
+            $cleaned = preg_replace('/[^0-9]/', '', $validated['nilai_rupiah']);
+            $validated['nilai_rupiah'] = strlen($cleaned) > 0 ? (float) $cleaned : null;
+        }
+
+        $now        = Carbon::now();
+        $bulanNames = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',
+                       7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
+        $dokumen = Dokumen::create(array_merge($validated, [
+            'bulan'           => $bulanNames[$now->month],
+            'tahun'           => $now->year,
+            'tanggal_masuk'   => $now,
+            'status'          => 'draft',
+            'created_by'      => 'operator',
+            'current_handler' => 'operator',
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'id'              => $dokumen->id,
+                'nomor_agenda'    => $dokumen->nomor_agenda,
+                'nomor_spp'       => $dokumen->nomor_spp,
+                'nilai_rupiah'    => $dokumen->nilai_rupiah,
+                'formatted_nilai' => $dokumen->formatted_nilai_rupiah,
+                'tanggal_masuk'   => $dokumen->tanggal_masuk->format('d-m-Y H:i'),
+                'status'          => $dokumen->status,
+                'edit_url'        => route('documents.edit', $dokumen->id),
+                'send_url'        => route('documents.send-to-verifikasi', $dokumen->id),
+            ],
+        ], 201);
+    }
+
     /**
      * Get search suggestions when no results found
      */

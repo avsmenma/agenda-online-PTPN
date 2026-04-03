@@ -2781,7 +2781,44 @@
     </div>
   </div>
 
+  <!-- ===== Spreadsheet Mode Toolbar ===== -->
+  <div id="sgToolbar" style="
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, rgba(8,62,64,0.04) 0%, rgba(136,151,23,0.06) 100%);
+    border: 1px solid rgba(136,151,23,0.2);
+    border-radius: 10px;
+    flex-wrap: wrap;
+  ">
+    <button id="sgAddRowBtn" onclick="sgAddNewRow()" style="
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 16px;
+      background: linear-gradient(135deg,#083E40,#0a4f52);
+      color:white; border:none; border-radius:8px; font-size:13px; font-weight:600;
+      cursor:pointer; transition:all 0.2s;
+      box-shadow: 0 2px 8px rgba(8,62,64,0.2);
+    " title="Tambah baris baru (Alt+N)">
+      <i class="fa-solid fa-plus"></i> Tambah Baris
+    </button>
+    <span id="sgStatusBar" style="
+      font-size:12px; color:#6c757d; flex:1; min-width:120px;
+    ">
+      <i class="fa-solid fa-info-circle me-1" style="color:#889717;"></i>
+      Klik sel untuk edit · Tab/Enter pindah sel · Esc batalkan · F2 buka editor penuh
+    </span>
+    <span style="font-size:11px; color:#adb5bd; white-space:nowrap;">
+      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">Tab</kbd>
+      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">Enter</kbd>
+      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">Esc</kbd>
+      <kbd style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:3px;padding:1px 5px;">↑↓←→</kbd>
+    </span>
+  </div>
+
   <!-- Enhanced Tabel Dokumen -->
+
   <div class="table-dokumen" id="documentTableContainer">
     <div class="table-responsive table-container">
       <table class="table table-enhanced mb-0">
@@ -6621,7 +6658,551 @@
           })();
           </script>
 
+
+<script>
+/* ================================================================
+   SPREADSHEET GRID ENGINE — Operator Daftar Dokumen
+   ================================================================ */
+(function() {
+
+  'use strict';
+
+  // ── Config ──────────────────────────────────────────────────────
+  const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+  const PATCH_BASE = '/documents'; // /{id}/inline-update
+  const STORE_URL  = '/documents/inline-store';
+
+  // Dropdown options for select-type fields
+  const SELECT_OPTIONS = {
+    kategori: [
+      'Berita Acara','Bon Sementara','Bukti Anggaran','Faktur Pajak','Invoice',
+      'Kuitansi','MIRO','NPK','PO','SPK','SPP','Tagihan Rekanan'
+    ],
+    jenis_dokumen: [
+      'CAPEX','OPEX','INVESTASI','OVERHEAD'
+    ],
+    jenis_pembayaran: [
+      'Transfer Bank','Tunai','Cek','Giro'
+    ],
+    bulan: [
+      'Januari','Februari','Maret','April','Mei','Juni',
+      'Juli','Agustus','September','Oktober','November','Desember'
+    ],
+  };
+
+  const DATE_FIELDS = [
+    'tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk',
+    'tanggal_faktur','tanggal_paraf','tanggal_miro',
+  ];
+
+  const NUMBER_FIELDS = ['nilai_rupiah','dpp_pph','ppn_terhutang'];
+
+  // ── State ──────────────────────────────────────────────────────
+  let activeCell = null; // currently-editing TD
+  let activeInput = null;
+
+  // ── Helpers ────────────────────────────────────────────────────
+  function csrfHeaders() {
+    return { 'Content-Type':'application/json', 'Accept':'application/json', 'X-CSRF-TOKEN': CSRF };
+  }
+
+  function setStatus(msg, isError) {
+    const bar = document.getElementById('sgStatusBar');
+    if (!bar) return;
+    bar.innerHTML = `<i class="fa-solid fa-${isError ? 'triangle-exclamation' : 'info-circle'} me-1" style="color:${isError ? '#dc3545' : '#889717'};"></i>${msg}`;
+  }
+
+  function editableCells(row) {
+    return [...row.querySelectorAll('td.ie-cell')];
+  }
+
+  function allRows() {
+    return [...document.querySelectorAll('#dokumenTableBody tr.main-row')];
+  }
+
+  function rowIndex(row) { return allRows().indexOf(row); }
+
+  function cellIndex(td) {
+    return editableCells(td.closest('tr')).indexOf(td);
+  }
+
+  // ── Activate a cell ───────────────────────────────────────────
+  function activateCell(td) {
+    if (activeCell === td) return;
+    if (activeCell) commitCell(activeCell, true);
+
+    const row = td.closest('tr');
+    if (!row || row.dataset.editable !== 'true') return;
+
+    activeCell = td;
+    td.classList.add('ie-editing');
+
+    const field   = td.dataset.field;
+    const rawVal  = td.dataset.raw ?? '';
+    const display = td.innerHTML;
+
+    // Remember original display for cancel
+    td.dataset.origDisplay = display;
+
+    let input;
+
+    if (SELECT_OPTIONS[field]) {
+      // ─ SELECT ─
+      input = document.createElement('select');
+      input.className = 'ie-input';
+      const blank = document.createElement('option');
+      blank.value = '';
+      blank.textContent = '— Pilih —';
+      input.appendChild(blank);
+      SELECT_OPTIONS[field].forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt; o.textContent = opt;
+        if (opt === rawVal) o.selected = true;
+        input.appendChild(o);
+      });
+    } else if (DATE_FIELDS.includes(field)) {
+      // ─ DATE ─
+      input = document.createElement('input');
+      input.type = 'date';
+      input.className = 'ie-input';
+      input.value = rawVal;
+    } else if (NUMBER_FIELDS.includes(field)) {
+      // ─ NUMBER ─
+      input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.className = 'ie-input';
+      // strip formatting
+      input.value = rawVal.toString().replace(/[^0-9]/g, '');
+    } else if (field === 'uraian_spp' || field === 'dibayar_kepada') {
+      // ─ TEXTAREA ─
+      input = document.createElement('textarea');
+      input.className = 'ie-input ie-textarea';
+      input.rows = 3;
+      input.value = rawVal;
+    } else {
+      // ─ TEXT ─
+      input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'ie-input';
+      input.value = rawVal;
+    }
+
+    // Key handlers on input
+    input.addEventListener('keydown', onInputKeydown);
+    input.addEventListener('blur', () => {
+      setTimeout(() => { if (activeCell === td) commitCell(td); }, 150);
+    });
+
+    td.innerHTML = '';
+    td.appendChild(input);
+    input.focus();
+    if (input.select) input.select();
+
+    activeInput = input;
+  }
+
+  // ── Key handler inside input ──────────────────────────────────
+  function onInputKeydown(e) {
+    const td  = activeCell;
+    if (!td) return;
+    const row = td.closest('tr');
+
+    switch(e.key) {
+      case 'Escape':
+        e.preventDefault();
+        cancelCell(td);
+        td.focus();
+        break;
+      case 'Enter':
+        if (!(e.target.tagName === 'TEXTAREA' && !e.shiftKey && !e.ctrlKey)) {
+          // textarea: Enter inserts newline; Shift+Enter or non-textarea — move down
+        }
+        if (e.target.tagName !== 'TEXTAREA' || e.shiftKey || e.ctrlKey) {
+          e.preventDefault();
+          commitCell(td);
+          moveFocus(row, cellIndex(td), 1, 0); // move down
+        }
+        break;
+      case 'Tab':
+        e.preventDefault();
+        commitCell(td);
+        moveFocus(row, cellIndex(td), 0, e.shiftKey ? -1 : 1);
+        break;
+      case 'ArrowDown':
+        if (e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          commitCell(td);
+          moveFocus(row, cellIndex(td), 1, 0);
+        }
+        break;
+      case 'ArrowUp':
+        if (e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          commitCell(td);
+          moveFocus(row, cellIndex(td), -1, 0);
+        }
+        break;
+      case 'F2':
+        e.preventDefault();
+        // Already open — do nothing (full editor available)
+        break;
+    }
+  }
+
+  // Navigate focus to another cell
+  function moveFocus(row, colIdx, rowDelta, colDelta) {
+    const rows = allRows();
+    let ri = rowIndex(row) + rowDelta;
+    let ci = colIdx + colDelta;
+
+    // Wrap columns
+    const cells0 = editableCells(rows[rowIndex(row)]);
+    const maxCol  = cells0.length - 1;
+
+    if (ci < 0) { ci = maxCol; ri--; }
+    if (ci > maxCol) { ci = 0; ri++; }
+
+    if (ri < 0 || ri >= rows.length) return;
+
+    const targetCells = editableCells(rows[ri]);
+    if (ci >= targetCells.length) return;
+
+    if (rows[ri].dataset.editable === 'true') {
+      activateCell(targetCells[ci]);
+    } else {
+      targetCells[ci]?.focus();
+    }
+  }
+
+  // ── Cancel editing a cell ─────────────────────────────────────
+  function cancelCell(td) {
+    if (!td) return;
+    td.innerHTML = td.dataset.origDisplay ?? '';
+    td.classList.remove('ie-editing', 'ie-saving', 'ie-saved', 'ie-error');
+    if (activeCell === td) { activeCell = null; activeInput = null; }
+  }
+
+  // ── Commit cell — save if changed ─────────────────────────────
+  function commitCell(td, silent = false) {
+    if (!td) return;
+    const input = td.querySelector('input,select,textarea');
+    if (!input) { return closeActiveCell(td); }
+
+    const field  = td.dataset.field;
+    const row    = td.closest('tr');
+    const dokId  = row.dataset.id || row.dataset.dokumenId;
+    let newVal   = input.value.trim();
+
+    // Validate required field (nomor_agenda)
+    if (field === 'nomor_agenda' && newVal === '') {
+      if (!silent) {
+        td.classList.add('ie-error');
+        setStatus('Nomor Agenda wajib diisi.', true);
+        setTimeout(() => td.classList.remove('ie-error'), 1200);
+        input.focus();
+        return;
+      }
+    }
+
+    // Strip number formatting
+    if (NUMBER_FIELDS.includes(field)) {
+      newVal = newVal.replace(/[^0-9]/g, '');
+    }
+
+    const origRaw = td.dataset.raw ?? '';
+    const changed  = (newVal !== origRaw);
+
+    closeActiveCell(td);
+
+    if (!changed || !dokId || dokId === 'new') {
+      // For new row - just update raw value
+      td.dataset.raw = newVal;
+      return;
+    }
+
+    // ── SAVE via AJAX ─────────────────────────────────────────
+    td.classList.add('ie-saving');
+    const spinner = document.createElement('span');
+    spinner.className = 'ie-spinner';
+    td.appendChild(spinner);
+
+    fetch(`${PATCH_BASE}/${dokId}/inline-update`, {
+      method: 'PATCH',
+      headers: csrfHeaders(),
+      body: JSON.stringify({ field, value: newVal }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      td.classList.remove('ie-saving');
+      spinner.remove();
+
+      if (data.success) {
+        td.dataset.raw = newVal;
+        td.classList.add('ie-saved');
+        setTimeout(() => td.classList.remove('ie-saved'), 800);
+        setStatus('Tersimpan ✔', false);
+        // Update display if needed
+        if (NUMBER_FIELDS.includes(field) && data.data?.formatted_nilai) {
+          td.innerHTML = `<strong class="select-text">${data.data.formatted_nilai}</strong>`;
+        }
+      } else {
+        td.classList.add('ie-error');
+        setTimeout(() => td.classList.remove('ie-error'), 1200);
+        setStatus('Gagal: ' + (data.message ?? 'Error'), true);
+        // Restore original display
+        td.innerHTML = td.dataset.origDisplay ?? newVal;
+      }
+    })
+    .catch(err => {
+      td.classList.remove('ie-saving');
+      spinner.remove();
+      td.classList.add('ie-error');
+      setTimeout(() => td.classList.remove('ie-error'), 1200);
+      setStatus('Error jaringan: ' + err.message, true);
+      td.innerHTML = td.dataset.origDisplay ?? '';
+    });
+  }
+
+  function closeActiveCell(td) {
+    td.classList.remove('ie-editing');
+    if (activeCell === td) { activeCell = null; activeInput = null; }
+  }
+
+  // ── Click handler ─────────────────────────────────────────────
+  function onCellClick(e) {
+    const td = e.currentTarget;
+    e.stopPropagation();
+
+    // Don't activate if clicking inside an already-active input
+    if (td.classList.contains('ie-editing')) return;
+
+    // Prevent row's dblclick from firing
+    e.stopImmediatePropagation();
+
+    if (td.closest('tr')?.dataset.editable !== 'true') return;
+    activateCell(td);
+  }
+
+  // ── Delegate clicks to all ie-cell elements ───────────────────
+  function bindCells(root) {
+    root.querySelectorAll('td.ie-cell').forEach(td => {
+      td.removeEventListener('click', onCellClick);
+      td.addEventListener('click', onCellClick);
+    });
+  }
+
+  // ── Add new row ───────────────────────────────────────────────
+  window.sgAddNewRow = function() {
+    const tbody = document.getElementById('dokumenTableBody');
+    if (!tbody) return;
+
+    const existingRow = document.querySelector('tr[data-id="new"]');
+    if (existingRow) {
+      // Already has a new row — focus first editable cell
+      const firstCell = existingRow.querySelector('td.ie-cell');
+      if (firstCell) activateCell(firstCell);
+      return;
+    }
+
+    // Build column count from header
+    const headers = [...document.querySelectorAll('.table-enhanced thead th')];
+    const colCount = headers.length;
+
+    // Build cells from existing first data row as template
+    const existingDataRow = tbody.querySelector('tr.main-row');
+    const newTr = document.createElement('tr');
+    newTr.className = 'main-row';
+    newTr.dataset.id = 'new';
+    newTr.dataset.editable = 'true';
+    newTr.style.background = 'linear-gradient(135deg,rgba(136,151,23,0.06) 0%,rgba(8,62,64,0.04) 100%)';
+
+    // Checkbox col
+    const tdChk = document.createElement('td');
+    tdChk.className = 'col-checkbox';
+    tdChk.innerHTML = '<input type="checkbox" class="bulk-checkbox" disabled>';
+    newTr.appendChild(tdChk);
+
+    // No col
+    const tdNo = document.createElement('td');
+    tdNo.className = 'col-no';
+    tdNo.innerHTML = '<i class="fa-solid fa-asterisk text-warning" style="font-size:10px;" title="Baris baru"></i>';
+    newTr.appendChild(tdNo);
+
+    // Add editable cells matching the existing data row columns
+    if (existingDataRow) {
+      const existingCells = [...existingDataRow.querySelectorAll('td')];
+      // Start from index 2 (skip checkbox + no), stop before last (action col)
+      for (let i = 2; i < existingCells.length - 1; i++) {
+        const origTd = existingCells[i];
+        const td = document.createElement('td');
+        td.className = origTd.className.replace('ie-cell', '') + ' ie-cell new-row-cell';
+        td.dataset.field = origTd.dataset.field ?? '';
+        td.dataset.raw   = '';
+        td.dataset.origDisplay = '';
+        td.innerHTML     = '<span class="text-muted" style="font-size:11px;">—</span>';
+        newTr.appendChild(td);
+      }
+    }
+
+    // Action col: Save + Cancel
+    const tdAct = document.createElement('td');
+    tdAct.className = 'col-action';
+    tdAct.innerHTML = `
+      <div class="action-buttons" style="flex-direction:column; gap:4px;">
+        <button class="btn-action btn-send" onclick="sgSaveNewRow(this)" style="font-size:11px; padding:6px 10px; min-height:32px;">
+          <i class="fa-solid fa-check"></i> Simpan
+        </button>
+        <button class="btn-action" style="background:#6c757d;color:white;font-size:11px; padding:6px 10px; min-height:32px;" onclick="sgCancelNewRow(this)">
+          <i class="fa-solid fa-xmark"></i> Batal
+        </button>
+      </div>
+    `;
+    newTr.appendChild(tdAct);
+
+    // Prepend to top of tbody
+    tbody.insertBefore(newTr, tbody.firstChild);
+
+    // Bind click handlers
+    bindCells(newTr);
+
+    // Activate first editable cell
+    const firstCell = newTr.querySelector('td.ie-cell');
+    if (firstCell) activateCell(firstCell);
+
+    setStatus('Isi setidaknya Nomor Agenda, lalu klik Simpan.', false);
+  };
+
+  // ── Save new row ──────────────────────────────────────────────
+  window.sgSaveNewRow = function(btn) {
+    if (activeCell) commitCell(activeCell, true);
+
+    const row = btn.closest('tr');
+    const cells = [...row.querySelectorAll('td.ie-cell')];
+
+    const payload = {};
+    cells.forEach(td => {
+      const f = td.dataset.field;
+      const v = td.dataset.raw ?? '';
+      if (f && v !== '') payload[f] = v;
+    });
+
+    if (!payload.nomor_agenda) {
+      setStatus('Nomor Agenda wajib diisi!', true);
+      const agendaCell = row.querySelector('td.ie-cell[data-field="nomor_agenda"]');
+      if (agendaCell) activateCell(agendaCell);
+      return;
+    }
+
+    // Disable buttons while saving
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ie-spinner"></span>';
+
+    fetch(STORE_URL, {
+      method: 'POST',
+      headers: csrfHeaders(),
+      body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('Dokumen baru berhasil disimpan! ✔', false);
+        // Replace temp row with real permalink
+        const d = data.data;
+        row.dataset.id = d.id;
+        row.dataset.dokumenId = d.id;
+        row.dataset.editable = 'true';
+        row.dataset.canSend  = 'true';
+        row.removeAttribute('style');
+
+        // Update action column
+        const actTd = row.querySelector('.col-action');
+        if (actTd) {
+          actTd.innerHTML = `
+            <div class="action-buttons">
+              <a href="${d.edit_url}" class="btn-action btn-edit" title="Edit lengkap">
+                <i class="fa-solid fa-pen-to-square"></i> <span>Edit</span>
+              </a>
+              <button onclick="sendToVerifikasi(${d.id})" class="btn-action btn-send" title="Kirim ke Verifikasi">
+                <i class="fa-solid fa-paper-plane"></i> <span>Kirim</span>
+              </button>
+            </div>
+          `;
+        }
+
+        // Re-bind cells (now has real dokumen id from parent row)
+        bindCells(row);
+      } else {
+        const errMessages = data.errors
+          ? Object.values(data.errors).flat().join(', ')
+          : (data.message ?? 'Gagal menyimpan.');
+        setStatus('Gagal: ' + errMessages, true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan';
+      }
+    })
+    .catch(err => {
+      setStatus('Error: ' + err.message, true);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan';
+    });
+  };
+
+  // ── Cancel new row ────────────────────────────────────────────
+  window.sgCancelNewRow = function(btn) {
+    if (activeCell) cancelCell(activeCell);
+    const row = btn.closest('tr');
+    row.remove();
+    setStatus('Penambahan baris dibatalkan.', false);
+  };
+
+  // ── Global keyboard shortcuts ─────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    // Alt+N → Add Row
+    if (e.altKey && e.key === 'n') {
+      e.preventDefault();
+      window.sgAddNewRow();
+    }
+    // Ctrl+F → focus search
+    if (e.ctrlKey && e.key === 'f') {
+      e.preventDefault();
+      document.getElementById('searchInput')?.focus();
+    }
+    // Esc when cell active
+    if (e.key === 'Escape' && activeCell) {
+      cancelCell(activeCell);
+    }
+  });
+
+  // ── Click outside active cell dismisses it ────────────────────
+  document.addEventListener('mousedown', function(e) {
+    if (!activeCell) return;
+    if (!activeCell.contains(e.target) && !e.target.closest('.ie-cell')) {
+      commitCell(activeCell);
+    }
+  }, true);
+
+  // ── Init on load ──────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    bindCells(document.getElementById('dokumenTableBody') ?? document);
+  });
+
+  // Re-bind after AJAX full-row reload
+  const _origInner = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+  // Observe tbody mutations to re-bind new cells
+  const observer = new MutationObserver(() => {
+    bindCells(document.getElementById('dokumenTableBody') ?? document);
+  });
+  const tbody = document.getElementById('dokumenTableBody');
+  if (tbody) {
+    observer.observe(tbody, { childList: true, subtree: false });
+  }
+
+})();
+</script>
+
 @endsection
+
 
 
 

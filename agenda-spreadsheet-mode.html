@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda Online – Spreadsheet Mode</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:       #0d6b5e;
+    --teal-mid:   #1a8a79;
+    --teal-light: #e6f4f2;
+    --teal-glow:  #2cbfac33;
+    --accent:     #f5a623;
+    --danger:     #e05c5c;
+    --success:    #27ae60;
+    --text:       #1a2a28;
+    --muted:      #6b8c88;
+    --border:     #d0e8e5;
+    --bg:         #f4fbfa;
+    --cell-h:     38px;
+    --cell-focus: #fff9ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--teal);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    height: 52px;
+    box-shadow: 0 2px 8px #0004;
+  }
+  .topbar h1 { font-size: 15px; font-weight: 600; letter-spacing: .3px; }
+  .topbar .badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: .5px;
+  }
+  .topbar-right { margin-left: auto; display: flex; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 6px; border: none;
+    font: 500 13px 'DM Sans', sans-serif; cursor: pointer;
+    transition: .15s;
+  }
+  .btn-ghost { background: #ffffff22; color: #fff; }
+  .btn-ghost:hover { background: #ffffff33; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-accent:hover { filter: brightness(1.08); }
+  .btn-teal { background: var(--teal-mid); color: #fff; }
+  .btn-teal:hover { background: var(--teal); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; background: #fff;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .toolbar input {
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 12px; font: 13px 'DM Sans', sans-serif;
+    color: var(--text); width: 220px; outline: none;
+    transition: border .15s;
+  }
+  .toolbar input:focus { border-color: var(--teal-mid); }
+
+  /* ── SHORTCUT HINT BAR ── */
+  .hints {
+    display: flex; gap: 16px; align-items: center;
+    background: var(--teal-light); border-bottom: 1px solid var(--border);
+    padding: 6px 20px; font-size: 11.5px; color: var(--teal);
+    flex-wrap: wrap;
+  }
+  .hints kbd {
+    display: inline-block;
+    background: #fff; border: 1px solid var(--teal-mid);
+    border-radius: 4px; padding: 1px 5px;
+    font: 11px 'DM Mono', monospace; color: var(--teal);
+    box-shadow: 0 1px 0 var(--teal-mid);
+  }
+
+  /* ── SPREADSHEET WRAPPER ── */
+  .sheet-wrap {
+    overflow-x: auto; overflow-y: auto;
+    max-height: calc(100vh - 160px);
+    position: relative;
+  }
+
+  /* ── TABLE ── */
+  table {
+    border-collapse: collapse;
+    min-width: 100%;
+    table-layout: fixed;
+  }
+
+  /* Column widths */
+  col.c-no    { width: 44px; }
+  col.c-agenda{ width: 140px; }
+  col.c-spp   { width: 180px; }
+  col.c-bagian{ width: 150px; }
+  col.c-kebun { width: 130px; }
+  col.c-pengirim{ width: 150px; }
+  col.c-jenis { width: 150px; }
+  col.c-nilai { width: 130px; }
+  col.c-status{ width: 120px; }
+
+  thead th {
+    background: var(--teal);
+    color: #fff;
+    font: 600 12px 'DM Sans', sans-serif;
+    text-align: left;
+    padding: 0 8px;
+    height: 36px;
+    position: sticky; top: 0; z-index: 10;
+    border-right: 1px solid #ffffff22;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th.th-no { text-align: center; }
+
+  /* ── ROW ── */
+  tbody tr {
+    height: var(--cell-h);
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+  }
+  tbody tr:nth-child(even) { background: #f9fdfc; }
+  tbody tr:hover { background: var(--teal-light); }
+  tbody tr.row-active { background: #fffdf5 !important; }
+  tbody tr.row-new { background: #fffef8; }
+
+  /* ── CELL ── */
+  td {
+    padding: 0 6px;
+    font-size: 13px;
+    border-right: 1px solid var(--border);
+    vertical-align: middle;
+    position: relative;
+    cursor: cell;
+  }
+  td.td-no {
+    text-align: center;
+    font: 500 12px 'DM Mono', monospace;
+    color: var(--muted);
+    cursor: default;
+    background: var(--teal-light) !important;
+  }
+
+  /* CELL FOCUS STATE */
+  td.focused {
+    outline: 2px solid var(--teal-mid);
+    outline-offset: -2px;
+    background: var(--cell-focus) !important;
+    z-index: 2;
+  }
+  td.focused::after {
+    content: '';
+    position: absolute;
+    right: -4px; bottom: -4px;
+    width: 7px; height: 7px;
+    background: var(--teal-mid);
+    border-radius: 1px;
+    z-index: 3;
+  }
+
+  /* INLINE INPUT */
+  td input, td select {
+    width: 100%; height: 100%;
+    border: none; outline: none;
+    background: transparent;
+    font: 13px 'DM Sans', sans-serif;
+    color: var(--text);
+    padding: 0 2px;
+  }
+  td select { cursor: pointer; }
+  td.editing { padding: 0 4px; background: #fff !important; }
+  td.editing input, td.editing select { background: #fff; }
+
+  /* CELL DISPLAY TEXT */
+  .cell-display {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: block; height: 100%; line-height: var(--cell-h);
+    pointer-events: none;
+  }
+
+  /* STATUS BADGE */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .status-terkirim  { background: var(--teal); color: #fff; }
+  .status-belum     { background: #eee; color: var(--muted); }
+  .status-proses    { background: #fff3cd; color: #856404; }
+
+  /* NILAI formatting */
+  .cell-nilai { font: 500 12px 'DM Mono', monospace; color: var(--teal); }
+
+  /* ADD ROW BUTTON */
+  .add-row-btn {
+    display: flex; align-items: center; gap: 6px;
+    width: 100%; padding: 8px 14px;
+    background: #fff; border: none; border-top: 1px solid var(--border);
+    color: var(--muted); font: 13px 'DM Sans', sans-serif; cursor: pointer;
+    text-align: left; transition: .15s;
+    position: sticky; bottom: 0;
+  }
+  .add-row-btn:hover { background: var(--teal-light); color: var(--teal); }
+
+  /* ROW NUMBER RESIZE HANDLE */
+  .drag-handle {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    cursor: col-resize; background: transparent;
+  }
+
+  /* STATUS BAR */
+  .statusbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--teal); color: #ffffffcc;
+    display: flex; align-items: center; gap: 20px;
+    padding: 4px 20px; font-size: 11.5px;
+    z-index: 100;
+  }
+  .statusbar strong { color: #fff; }
+  .statusbar .cell-ref {
+    font: 600 12px 'DM Mono', monospace; color: var(--accent);
+    min-width: 60px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; top: 60px; right: 20px;
+    background: var(--teal); color: #fff;
+    padding: 10px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 4px 20px #0003;
+    transform: translateY(-10px); opacity: 0;
+    transition: .25s; z-index: 200;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.save { background: var(--success); }
+
+  /* SELECTION RANGE */
+  td.in-range {
+    background: rgba(13, 107, 94, .08) !important;
+  }
+
+  /* SCROLLBAR */
+  .sheet-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+  .sheet-wrap::-webkit-scrollbar-track { background: var(--bg); }
+  .sheet-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .sheet-wrap::-webkit-scrollbar-thumb:hover { background: var(--teal-mid); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+  <h1>Agenda Online PTPN — Spreadsheet Mode</h1>
+  <span class="badge">SIMULASI</span>
+  <div class="topbar-right">
+    <button class="btn btn-ghost btn-sm" onclick="saveAll()">💾 Simpan Semua</button>
+    <button class="btn btn-accent btn-sm" onclick="addRow()">+ Baris Baru</button>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <input type="text" id="search" placeholder="🔍 Cari nomor agenda, SPP..." oninput="filterRows()">
+  <select class="btn btn-ghost" style="color:var(--teal);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font:13px 'DM Sans',sans-serif;" onchange="filterRows()">
+    <option value="">Semua Status</option>
+    <option value="Terkirim">Terkirim</option>
+    <option value="Belum Dikirim">Belum Dikirim</option>
+    <option value="Diproses">Diproses</option>
+  </select>
+  <span style="font-size:12px;color:var(--muted);margin-left:auto;" id="row-count">Menampilkan 0 baris</span>
+</div>
+
+<!-- HINT BAR -->
+<div class="hints">
+  <span>⬆️⬇️⬅️➡️ Navigasi sel</span>
+  <span><kbd>Enter</kbd> Konfirmasi &amp; turun</span>
+  <span><kbd>Tab</kbd> Konfirmasi &amp; kanan</span>
+  <span><kbd>F2</kbd> Edit sel</span>
+  <span><kbd>Esc</kbd> Batalkan edit</span>
+  <span><kbd>Ctrl+Enter</kbd> Baris baru</span>
+  <span><kbd>Del</kbd> Hapus isi sel</span>
+  <span><kbd>Ctrl+S</kbd> Simpan semua</span>
+</div>
+
+<!-- SHEET -->
+<div class="sheet-wrap" id="sheetWrap">
+  <table id="grid">
+    <colgroup>
+      <col class="c-no">
+      <col class="c-agenda">
+      <col class="c-spp">
+      <col class="c-bagian">
+      <col class="c-kebun">
+      <col class="c-pengirim">
+      <col class="c-jenis">
+      <col class="c-nilai">
+      <col class="c-status">
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="th-no">#</th>
+        <th>Nomor Agenda</th>
+        <th>Nomor SPP</th>
+        <th>Bagian</th>
+        <th>Kebun</th>
+        <th>Nama Pengirim</th>
+        <th>Jenis Pembayaran</th>
+        <th>Nilai (Rp)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <button class="add-row-btn" onclick="addRow()">＋ Klik untuk tambah baris baru <span style="opacity:.5;font-size:11px;margin-left:4px">(atau tekan Ctrl+Enter di sel terakhir)</span></button>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span class="cell-ref" id="cellRef">—</span>
+  <span id="editHint">Klik sel atau tekan F2 untuk mulai edit</span>
+  <span style="margin-left:auto" id="saveStatus">● Belum disimpan</span>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── DATA ─── */
+const BAGIAN_OPTIONS  = ['Keuangan','HRD','Operasional','Teknik','Umum','Pemasaran','Logistik'];
+const KEBUN_OPTIONS   = ['Kebun Dolok Ilir','Kebun Gunung Pamela','Kebun Adolina','Kebun Bah Jambi','Kebun Marihat'];
+const STATUS_OPTIONS  = ['Belum Dikirim','Diproses','Terkirim'];
+const JENIS_OPTIONS   = ['SPP','SPM','Transfer','Reimburse','Lain-lain'];
+
+// Column config
+const COLS = [
+  { key: 'agenda',   label: 'Nomor Agenda',    type: 'text',   placeholder: 'cth: 2158_2026' },
+  { key: 'spp',      label: 'Nomor SPP',        type: 'text',   placeholder: 'cth: 5TEP/SPP/254/III/2026' },
+  { key: 'bagian',   label: 'Bagian',           type: 'select', options: BAGIAN_OPTIONS },
+  { key: 'kebun',    label: 'Kebun',            type: 'select', options: KEBUN_OPTIONS },
+  { key: 'pengirim', label: 'Nama Pengirim',    type: 'text',   placeholder: 'Nama pengirim dokumen' },
+  { key: 'jenis',    label: 'Jenis Pembayaran', type: 'select', options: JENIS_OPTIONS },
+  { key: 'nilai',    label: 'Nilai (Rp)',       type: 'number', placeholder: '0' },
+  { key: 'status',   label: 'Status',           type: 'select', options: STATUS_OPTIONS },
+];
+
+// Seed data
+let rows = [
+  { id:1, agenda:'2158_2026', spp:'5TEP/SPP/254/III/2026', bagian:'Keuangan', kebun:'Kebun Adolina',      pengirim:'Ahmad Fauzi',   jenis:'SPP', nilai:49116506, status:'Terkirim'     },
+  { id:2, agenda:'2157_2026', spp:'5TEP/SPP/259/III/2026', bagian:'HRD',      kebun:'Kebun Dolok Ilir',  pengirim:'Sari Dewi',     jenis:'SPM', nilai:44794533, status:'Belum Dikirim' },
+  { id:3, agenda:'2156_2026', spp:'5TEP/SPP/258/III/2026', bagian:'Umum',     kebun:'Kebun Marihat',     pengirim:'Budi Santoso',  jenis:'SPP', nilai:4832149,  status:'Belum Dikirim' },
+  { id:4, agenda:'2155_2026', spp:'5TEP/SPP/257/III/2026', bagian:'Teknik',   kebun:'Kebun Adolina',     pengirim:'Dewi Lestari',  jenis:'SPP', nilai:4832149,  status:'Diproses'      },
+  { id:5, agenda:'2154_2026', spp:'5TEP/SPP/256/III/2026', bagian:'Logistik', kebun:'Kebun Bah Jambi',   pengirim:'Rizki Pratama', jenis:'SPM', nilai:241446128,status:'Belum Dikirim' },
+];
+let nextId = 6;
+let dirty = false;
+
+/* ─── STATE ─── */
+let focusR = 0, focusC = 0;   // row index, col index (excluding #)
+let editingCell = null;        // { r, c, td, original }
+
+/* ─── RENDER ─── */
+function render() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  const visible = getVisible();
+  document.getElementById('row-count').textContent = `Menampilkan ${visible.length} dari ${rows.length} baris`;
+
+  visible.forEach((row, ri) => {
+    const tr = document.createElement('tr');
+    tr.dataset.rid = row.id;
+    tr.dataset.ri  = ri;
+
+    // No cell
+    const tdNo = document.createElement('td');
+    tdNo.className = 'td-no';
+    tdNo.textContent = ri + 1;
+    tr.appendChild(tdNo);
+
+    COLS.forEach((col, ci) => {
+      const td = document.createElement('td');
+      td.dataset.ri = ri;
+      td.dataset.ci = ci;
+      td.tabIndex = -1;
+
+      if (col.key === 'nilai') {
+        const span = document.createElement('span');
+        span.className = 'cell-display cell-nilai';
+        span.textContent = row.nilai ? 'Rp. ' + Number(row.nilai).toLocaleString('id-ID') : '';
+        td.appendChild(span);
+      } else if (col.key === 'status') {
+        const span = document.createElement('span');
+        span.className = 'cell-display';
+        const badge = document.createElement('span');
+        badge.className = 'status-badge ' + statusClass(row.status);
+        badge.textContent = row.status || '—';
+        span.appendChild(badge);
+        td.appendChild(span);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'cell-display';
+        span.textContent = row[col.key] || '';
+        td.appendChild(span);
+      }
+
+      td.addEventListener('mousedown', e => {
+        e.preventDefault();
+        commitEdit();
+        focusR = ri; focusC = ci;
+        setFocus();
+      });
+      td.addEventListener('dblclick', () => {
+        focusR = ri; focusC = ci;
+        startEdit();
+      });
+
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  setFocus();
+}
+
+function getVisible() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const filterEl = document.querySelector('select');
+  const statusFilter = filterEl ? filterEl.value : '';
+  return rows.filter(r => {
+    const matchQ = !q || Object.values(r).some(v => String(v).toLowerCase().includes(q));
+    const matchS = !statusFilter || r.status === statusFilter;
+    return matchQ && matchS;
+  });
+}
+
+function filterRows() {
+  commitEdit();
+  focusR = 0; focusC = 0;
+  render();
+}
+
+function statusClass(s) {
+  if (s === 'Terkirim')     return 'status-terkirim';
+  if (s === 'Diproses')     return 'status-proses';
+  return 'status-belum';
+}
+
+/* ─── FOCUS ─── */
+function setFocus() {
+  document.querySelectorAll('td.focused').forEach(t => t.classList.remove('focused'));
+  const td = getCell(focusR, focusC);
+  if (!td) return;
+  td.classList.add('focused');
+  td.scrollIntoView({ block:'nearest', inline:'nearest' });
+
+  const colNames = ['A','B','C','D','E','F','G','H'];
+  document.getElementById('cellRef').textContent = (colNames[focusC] || '?') + (focusR + 1);
+  document.getElementById('editHint').textContent = 'F2 / ketik langsung untuk edit • Arrows untuk navigasi';
+
+  // Row highlight
+  document.querySelectorAll('tbody tr.row-active').forEach(t => t.classList.remove('row-active'));
+  const row = td.closest('tr');
+  if (row) row.classList.add('row-active');
+}
+
+function getCell(r, c) {
+  const tr = document.querySelector(`tbody tr[data-ri="${r}"]`);
+  if (!tr) return null;
+  return tr.querySelector(`td[data-ci="${c}"]`);
+}
+
+/* ─── EDIT ─── */
+function startEdit(initChar = null) {
+  const td = getCell(focusR, focusC);
+  if (!td) return;
+
+  const visible = getVisible();
+  if (focusR >= visible.length) return;
+  const row = visible[focusR];
+  const col = COLS[focusC];
+
+  td.classList.add('editing');
+  td.innerHTML = '';
+  const original = row[col.key];
+
+  let input;
+  if (col.type === 'select') {
+    input = document.createElement('select');
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = ''; emptyOpt.textContent = '— Pilih —';
+    input.appendChild(emptyOpt);
+    col.options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o; opt.textContent = o;
+      if (o === row[col.key]) opt.selected = true;
+      input.appendChild(opt);
+    });
+    input.addEventListener('change', () => commitEdit(true));
+  } else {
+    input = document.createElement('input');
+    input.type = col.type === 'number' ? 'number' : 'text';
+    input.placeholder = col.placeholder || '';
+    input.value = initChar !== null ? initChar : (row[col.key] || '');
+    if (initChar !== null) setTimeout(() => { input.selectionStart = input.selectionEnd = input.value.length; }, 0);
+  }
+
+  editingCell = { r: focusR, c: focusC, td, original, rowId: row.id };
+  td.appendChild(input);
+  input.focus();
+  if (col.type !== 'select') input.select();
+
+  input.addEventListener('keydown', onInputKey);
+}
+
+function commitEdit(andStay = false) {
+  if (!editingCell) return;
+  const { r, c, td, original, rowId } = editingCell;
+  const col = COLS[c];
+  const input = td.querySelector('input, select');
+  const val = input ? input.value : original;
+
+  // Update data
+  const rowObj = rows.find(rw => rw.id === rowId);
+  if (rowObj) {
+    rowObj[col.key] = col.type === 'number' ? Number(val) : val;
+    dirty = true;
+    updateSaveStatus();
+  }
+
+  editingCell = null;
+  render();
+  if (!andStay) { focusR = r; focusC = c; setFocus(); }
+}
+
+function cancelEdit() {
+  if (!editingCell) return;
+  const { r, c } = editingCell;
+  editingCell = null;
+  render();
+  focusR = r; focusC = c;
+  setFocus();
+}
+
+/* ─── KEYBOARD ─── */
+document.addEventListener('keydown', onGridKey);
+
+function onGridKey(e) {
+  if (editingCell) return;            // handled by input listener
+  if (e.target.tagName === 'INPUT' && !e.target.closest('td')) return;
+
+  const visible = getVisible();
+  const maxR = visible.length - 1;
+  const maxC = COLS.length - 1;
+
+  switch (e.key) {
+    case 'ArrowUp':
+      e.preventDefault();
+      if (focusR > 0) { focusR--; setFocus(); }
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      if (focusR < maxR) { focusR++; setFocus(); }
+      else { addRow(); }             // auto add row at bottom ★
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      if (focusC > 0) { focusC--; setFocus(); }
+      break;
+    case 'ArrowRight':
+    case 'Tab':
+      e.preventDefault();
+      if (focusC < maxC) { focusC++; }
+      else if (focusR < maxR) { focusC = 0; focusR++; }
+      else { addRow(); focusC = 0; }
+      setFocus();
+      break;
+    case 'Enter':
+      if (e.ctrlKey) { addRow(); break; }
+      e.preventDefault();
+      startEdit();
+      break;
+    case 'F2':
+      e.preventDefault();
+      startEdit();
+      break;
+    case 'Delete':
+    case 'Backspace':
+      e.preventDefault();
+      clearCell();
+      break;
+    case 'Escape':
+      break;
+    default:
+      // Printable char → start typing directly
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        startEdit(e.key);
+      }
+  }
+
+  // Ctrl+S
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveAll(); }
+}
+
+function onInputKey(e) {
+  switch (e.key) {
+    case 'Enter':
+      e.preventDefault();
+      commitEdit();
+      if (focusR < getVisible().length - 1) { focusR++; }
+      else { addRow(); }
+      setFocus();
+      break;
+    case 'Tab':
+      e.preventDefault();
+      commitEdit();
+      const maxC = COLS.length - 1;
+      if (focusC < maxC) { focusC++; }
+      else { focusC = 0; if (focusR < getVisible().length - 1) focusR++; else { addRow(); } }
+      setFocus();
+      break;
+    case 'Escape':
+      e.preventDefault();
+      cancelEdit();
+      break;
+    case 'ArrowUp':
+      if (e.target.tagName !== 'SELECT') {
+        e.preventDefault();
+        commitEdit();
+        if (focusR > 0) focusR--;
+        setFocus();
+      }
+      break;
+    case 'ArrowDown':
+      if (e.target.tagName !== 'SELECT') {
+        e.preventDefault();
+        commitEdit();
+        if (focusR < getVisible().length - 1) focusR++;
+        else addRow();
+        setFocus();
+      }
+      break;
+  }
+}
+
+/* ─── ACTIONS ─── */
+function addRow() {
+  commitEdit();
+  const newRow = { id: nextId++, agenda: '', spp: '', bagian: '', kebun: '', pengirim: '', jenis: '', nilai: 0, status: 'Belum Dikirim' };
+  rows.push(newRow);
+  dirty = true;
+  updateSaveStatus();
+  render();
+  focusR = getVisible().length - 1;
+  focusC = 0;
+  setFocus();
+  showToast('✚ Baris baru ditambahkan');
+  setTimeout(() => startEdit(), 80);
+}
+
+function clearCell() {
+  const visible = getVisible();
+  if (focusR >= visible.length) return;
+  const row = visible[focusR];
+  const col = COLS[focusC];
+  const rowObj = rows.find(r => r.id === row.id);
+  if (rowObj) {
+    rowObj[col.key] = col.type === 'number' ? 0 : '';
+    dirty = true;
+    updateSaveStatus();
+    render();
+    focusR = focusR; focusC = focusC;
+    setFocus();
+  }
+}
+
+function saveAll() {
+  commitEdit();
+  showToast('💾 Semua perubahan disimpan!', 'save');
+  dirty = false;
+  updateSaveStatus();
+  document.getElementById('saveStatus').textContent = '✔ Tersimpan';
+}
+
+function updateSaveStatus() {
+  const el = document.getElementById('saveStatus');
+  el.textContent = dirty ? '● Belum disimpan (Ctrl+S)' : '✔ Tersimpan';
+  el.style.color = dirty ? '#f5a623' : '#adffd8';
+}
+
+function filterRows() {
+  commitEdit();
+  focusR = 0; focusC = 0;
+  render();
+}
+
+/* ─── TOAST ─── */
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 2000);
+}
+
+/* ─── INIT ─── */
+render();
+updateSaveStatus();
+
+// Click outside → commit
+document.addEventListener('mousedown', e => {
+  if (editingCell && !editingCell.td.contains(e.target)) {
+    commitEdit();
+  }
+});
+</script>
+</body>
+</html>

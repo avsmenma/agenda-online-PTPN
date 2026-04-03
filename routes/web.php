@@ -568,7 +568,9 @@ Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpa
     ->prefix('documents')->name('documents.')
     ->group(function () {
         Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
+        Route::post('/inline-store', [DokumenController::class, 'inlineStore'])->name('inline-store');
     });
+
 
 // Professional Reports Routes
 Route::middleware(['auth', 'role:admin,operator'])->prefix('reports')->name('reports.')->group(function () {
