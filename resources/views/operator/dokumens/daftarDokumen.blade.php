@@ -155,6 +155,14 @@
       opacity: 1 !important; color: transparent !important;
     }
 
+    /* ── Active row highlight ── */
+    body.op-spreadsheet-mode #dokumenTableBody tr.row-active {
+      background: #fffdf5 !important;
+    }
+    body.op-spreadsheet-mode .ie-cell {
+      cursor: cell !important;
+    }
+
     /* ── Nilai column ── */
     body.op-spreadsheet-mode .col-nilai {
       font: 500 12px 'DM Mono', monospace !important;
@@ -6906,8 +6914,11 @@
   const NUMBER_FIELDS = ['nilai_rupiah','dpp_pph','ppn_terhutang'];
 
   // ── State ──────────────────────────────────────────────────────
-  let activeCell = null; // currently-editing TD
+  let activeCell = null;   // currently-editing TD (has input/select inside)
   let activeInput = null;
+  let focusedCell = null;  // currently-focused TD (teal border, no editor)
+  let focusedRow = -1;     // row index of focused cell
+  let focusedCol = -1;     // column index of focused cell within ie-cells
 
   // ── Helpers ────────────────────────────────────────────────────
   function csrfHeaders() {
@@ -6934,13 +6945,73 @@
     return editableCells(td.closest('tr')).indexOf(td);
   }
 
-  // ── Activate a cell ───────────────────────────────────────────
-  function activateCell(td) {
+  // ── Focus a cell (visual selection, no editing) ───────────────
+  function focusCell(td) {
+    if (!td) return;
+    // Commit any active edit first
+    if (activeCell && activeCell !== td) commitCell(activeCell, true);
+    // Clear previous focus
+    clearFocus();
+
+    focusedCell = td;
+    td.classList.add('focused');
+    td.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+    // Track row/col indices
+    const row = td.closest('tr');
+    focusedRow = allRows().indexOf(row);
+    focusedCol = editableCells(row).indexOf(td);
+
+    // Highlight active row
+    document.querySelectorAll('#dokumenTableBody tr.row-active').forEach(r => r.classList.remove('row-active'));
+    if (row) row.classList.add('row-active');
+
+    // Update status bar cell reference
+    updateCellRef(focusedRow, focusedCol);
+    updateEditMode('Siap');
+  }
+
+  function clearFocus() {
+    if (focusedCell) {
+      focusedCell.classList.remove('focused');
+    }
+    document.querySelectorAll('td.focused').forEach(t => t.classList.remove('focused'));
+    document.querySelectorAll('#dokumenTableBody tr.row-active').forEach(r => r.classList.remove('row-active'));
+    focusedCell = null;
+    focusedRow = -1;
+    focusedCol = -1;
+  }
+
+  function updateCellRef(ri, ci) {
+    const colNames = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T'];
+    const ref = (colNames[ci] || '?') + (ri + 1);
+    const el = document.getElementById('ssCellRef');
+    if (el) el.textContent = ref;
+  }
+
+  function updateEditMode(mode) {
+    const el = document.getElementById('ssEditMode');
+    if (el) el.textContent = 'Mode: ' + mode;
+  }
+
+  // ── Activate a cell (open editor) ─────────────────────────────
+  function activateCell(td, initChar) {
     if (activeCell === td) return;
     if (activeCell) commitCell(activeCell, true);
 
     const row = td.closest('tr');
     if (!row || row.dataset.editable !== 'true') return;
+
+    // Also set focus state
+    clearFocus();
+    focusedCell = td;
+    td.classList.add('focused');
+    focusedRow = allRows().indexOf(row);
+    focusedCol = editableCells(row).indexOf(td);
+    document.querySelectorAll('#dokumenTableBody tr.row-active').forEach(r => r.classList.remove('row-active'));
+    if (row) row.classList.add('row-active');
+    updateCellRef(focusedRow, focusedCol);
+    updateEditMode('Edit');
 
     activeCell = td;
     td.classList.add('ie-editing');
@@ -7058,7 +7129,7 @@
     }
   }
 
-  // Navigate focus to another cell
+  // Navigate focus to another cell (after edit commit)
   function moveFocus(row, colIdx, rowDelta, colDelta) {
     const rows = allRows();
     let ri = rowIndex(row) + rowDelta;
@@ -7076,11 +7147,8 @@
     const targetCells = editableCells(rows[ri]);
     if (ci >= targetCells.length) return;
 
-    if (rows[ri].dataset.editable === 'true') {
-      activateCell(targetCells[ci]);
-    } else {
-      targetCells[ci]?.focus();
-    }
+    // Focus the next cell (don't immediately edit)
+    focusCell(targetCells[ci]);
   }
 
   // ── Cancel editing a cell ─────────────────────────────────────
@@ -7177,17 +7245,22 @@
     if (activeCell === td) { activeCell = null; activeInput = null; }
   }
 
-  // ── Click handler ─────────────────────────────────────────────
+  // ── Click handler → FOCUS (not edit) ──────────────────────────
   function onCellClick(e) {
     const td = e.currentTarget;
     e.stopPropagation();
 
-    // Don't activate if clicking inside an already-active input
+    // Don't re-focus if clicking inside an already-active editing input
     if (td.classList.contains('ie-editing')) return;
 
-    // Prevent row's dblclick from firing
-    e.stopImmediatePropagation();
+    // Single click → focus cell (show teal border, no editor)
+    focusCell(td);
+  }
 
+  // ── Double-click handler → EDIT ───────────────────────────────
+  function onCellDblClick(e) {
+    const td = e.currentTarget;
+    e.stopPropagation();
     if (td.closest('tr')?.dataset.editable !== 'true') return;
     activateCell(td);
   }
@@ -7197,6 +7270,8 @@
     root.querySelectorAll('td.ie-cell').forEach(td => {
       td.removeEventListener('click', onCellClick);
       td.addEventListener('click', onCellClick);
+      td.removeEventListener('dblclick', onCellDblClick);
+      td.addEventListener('dblclick', onCellDblClick);
     });
   }
 
@@ -7370,23 +7445,179 @@
     if (e.altKey && e.key === 'n') {
       e.preventDefault();
       window.sgAddNewRow();
+      return;
     }
     // Ctrl+F → focus search
     if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
       document.getElementById('searchInput')?.focus();
+      return;
     }
-    // Esc when cell active
-    if (e.key === 'Escape' && activeCell) {
-      cancelCell(activeCell);
+    // Ctrl+S → save (prevent browser save dialog)
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      return;
+    }
+
+    // ── If currently editing (activeCell has input), let input handler take over
+    if (activeCell) {
+      if (e.key === 'Escape') {
+        cancelCell(activeCell);
+        // Refocus the cell after cancel
+        if (focusedCell) {
+          updateEditMode('Siap');
+        }
+      }
+      return;
+    }
+
+    // ── If a cell is focused (but NOT editing), handle navigation
+    if (focusedCell) {
+      const rows = allRows();
+      const maxR = rows.length - 1;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          if (focusedRow > 0) {
+            focusedRow--;
+            const cells = editableCells(rows[focusedRow]);
+            if (focusedCol >= cells.length) focusedCol = cells.length - 1;
+            if (cells[focusedCol]) focusCell(cells[focusedCol]);
+          }
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (focusedRow < maxR) {
+            focusedRow++;
+            const cells = editableCells(rows[focusedRow]);
+            if (focusedCol >= cells.length) focusedCol = cells.length - 1;
+            if (cells[focusedCol]) focusCell(cells[focusedCol]);
+          }
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (focusedCol > 0) {
+            focusedCol--;
+            const cells = editableCells(rows[focusedRow]);
+            if (cells[focusedCol]) focusCell(cells[focusedCol]);
+          } else if (focusedRow > 0) {
+            // Wrap to end of previous row
+            focusedRow--;
+            const cells = editableCells(rows[focusedRow]);
+            focusedCol = cells.length - 1;
+            if (cells[focusedCol]) focusCell(cells[focusedCol]);
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          {
+            const cells = editableCells(rows[focusedRow]);
+            if (focusedCol < cells.length - 1) {
+              focusedCol++;
+              if (cells[focusedCol]) focusCell(cells[focusedCol]);
+            } else if (focusedRow < maxR) {
+              // Wrap to start of next row
+              focusedRow++;
+              focusedCol = 0;
+              const nextCells = editableCells(rows[focusedRow]);
+              if (nextCells[0]) focusCell(nextCells[0]);
+            }
+          }
+          break;
+        case 'Tab':
+          e.preventDefault();
+          {
+            const cells = editableCells(rows[focusedRow]);
+            if (e.shiftKey) {
+              // Shift+Tab → move left
+              if (focusedCol > 0) {
+                focusedCol--;
+              } else if (focusedRow > 0) {
+                focusedRow--;
+                const prevCells = editableCells(rows[focusedRow]);
+                focusedCol = prevCells.length - 1;
+              }
+            } else {
+              // Tab → move right
+              if (focusedCol < cells.length - 1) {
+                focusedCol++;
+              } else if (focusedRow < maxR) {
+                focusedRow++;
+                focusedCol = 0;
+              }
+            }
+            const targetCells = editableCells(rows[focusedRow]);
+            if (targetCells[focusedCol]) focusCell(targetCells[focusedCol]);
+          }
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (focusedCell.closest('tr')?.dataset.editable === 'true') {
+            activateCell(focusedCell);
+          }
+          break;
+        case 'F2':
+          e.preventDefault();
+          if (focusedCell.closest('tr')?.dataset.editable === 'true') {
+            activateCell(focusedCell);
+          }
+          break;
+        case 'Delete':
+        case 'Backspace':
+          e.preventDefault();
+          // Clear the cell content if editable
+          if (focusedCell.closest('tr')?.dataset.editable === 'true' && focusedCell.dataset.field) {
+            activateCell(focusedCell);
+            // Clear the input value
+            setTimeout(() => {
+              if (activeInput) {
+                activeInput.value = '';
+              }
+            }, 10);
+          }
+          break;
+        case 'Escape':
+          clearFocus();
+          updateEditMode('—');
+          document.getElementById('ssCellRef').textContent = '—';
+          break;
+        default:
+          // Printable character → start editing with that char
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (focusedCell.closest('tr')?.dataset.editable === 'true') {
+              activateCell(focusedCell, e.key);
+              // Replace input value with typed character
+              setTimeout(() => {
+                if (activeInput && activeInput.tagName !== 'SELECT') {
+                  activeInput.value = e.key;
+                  // Move cursor to end
+                  if (activeInput.setSelectionRange) {
+                    activeInput.setSelectionRange(e.key.length, e.key.length);
+                  }
+                }
+              }, 10);
+            }
+          }
+      }
+      return;
     }
   });
 
-  // ── Click outside active cell dismisses it ────────────────────
+  // ── Click outside active/focused cell dismisses it ────────────
   document.addEventListener('mousedown', function(e) {
-    if (!activeCell) return;
-    if (!activeCell.contains(e.target) && !e.target.closest('.ie-cell')) {
+    const clickedCell = e.target.closest('.ie-cell');
+    // If clicking on another cell, the cell's own handler will manage it
+    if (clickedCell) return;
+
+    if (activeCell) {
       commitCell(activeCell);
+    }
+    if (focusedCell && !e.target.closest('.ss-statusbar') && !e.target.closest('.ss-toolbar')) {
+      clearFocus();
+      updateEditMode('—');
+      const ref = document.getElementById('ssCellRef');
+      if (ref) ref.textContent = '—';
     }
   }, true);
 
