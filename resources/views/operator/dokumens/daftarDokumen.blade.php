@@ -22,8 +22,16 @@
     }
 
     /* ── Spreadsheet wrapper ── */
+    body.op-spreadsheet-mode {
+      overflow: hidden !important;
+      height: 100vh !important;
+    }
     body.op-spreadsheet-mode .content {
       background: var(--ss-bg) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      height: calc(100vh - 52px) !important; /* viewport minus topbar */
+      overflow: hidden !important;
     }
 
     /* ── Toolbar band (below topbar) ── */
@@ -31,6 +39,7 @@
       display: flex; align-items: center; gap: 10px;
       padding: 10px 20px; background: #fff;
       border-bottom: 1px solid var(--ss-border); flex-wrap: wrap;
+      flex-shrink: 0;  /* don't shrink in flex column layout */
     }
     .ss-toolbar input[type="text"] {
       border: 1px solid var(--ss-border); border-radius: 6px;
@@ -54,6 +63,7 @@
       display: flex; gap: 16px; align-items: center;
       background: var(--ss-teal-light); border-bottom: 1px solid var(--ss-border);
       padding: 6px 20px; font-size: 11.5px; color: var(--ss-teal); flex-wrap: wrap;
+      flex-shrink: 0;  /* don't shrink in flex column layout */
     }
     .ss-hints kbd {
       display: inline-block; background: #fff; border: 1px solid var(--ss-teal-mid);
@@ -66,10 +76,18 @@
     body.op-spreadsheet-mode #documentTableContainer {
       border-radius: 0 !important; margin: 0 !important; box-shadow: none !important;
       border: none !important;
+      padding: 0 !important;
+      overflow: hidden !important;  /* clip data rows so they can't leak above header */
+      flex: 1 !important;
+      min-height: 0 !important;  /* important for flex child shrinking */
+      display: flex !important;
+      flex-direction: column !important;
     }
     body.op-spreadsheet-mode .table-responsive {
       overflow-x: auto !important; overflow-y: auto !important;
-      max-height: calc(100vh - 220px) !important;
+      flex: 1 !important;
+      min-height: 0 !important;  /* allow flex shrink */
+      max-height: none !important;  /* let flex handle sizing, not max-height */
       border-radius: 0 !important;
       position: relative !important;
     }
@@ -224,6 +242,10 @@
     body.op-spreadsheet-mode .tab-status-summary,
     body.op-spreadsheet-mode .page-header-card,
     body.op-spreadsheet-mode .card-header-gradient { display: none !important; }
+    body.op-spreadsheet-mode .content > .alert {
+      flex-shrink: 0;
+      margin-bottom: 0 !important;
+    }
 
     /* ── Pagination muted ── */
     body.op-spreadsheet-mode .simple-pagination-bottom {
@@ -231,6 +253,7 @@
       background: #fff !important;
       border-top: 1px solid var(--ss-border) !important;
       margin: 0 !important; border-radius: 0 !important;
+      flex-shrink: 0;  /* don't shrink in flex column layout */
     }
   </style>
   <style>
