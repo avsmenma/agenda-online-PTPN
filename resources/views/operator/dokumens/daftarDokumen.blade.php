@@ -68,9 +68,10 @@
       border: none !important;
     }
     body.op-spreadsheet-mode .table-responsive {
-      overflow-x: auto; overflow-y: auto;
-      max-height: calc(100vh - 190px);
+      overflow-x: auto !important; overflow-y: auto !important;
+      max-height: calc(100vh - 220px) !important;
       border-radius: 0 !important;
+      position: relative !important;
     }
     body.op-spreadsheet-mode .table-responsive::-webkit-scrollbar { width: 8px; height: 8px; }
     body.op-spreadsheet-mode .table-responsive::-webkit-scrollbar-track { background: var(--ss-bg); }
@@ -79,7 +80,9 @@
 
     /* ── Table ── */
     body.op-spreadsheet-mode .table-enhanced {
-      border-collapse: collapse !important;
+      /* CRITICAL: Use border-collapse: separate for position: sticky to work */
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
       min-width: 100% !important;
     }
     body.op-spreadsheet-mode .table-enhanced thead th {
@@ -87,9 +90,10 @@
       color: #fff !important;
       font: 600 12px 'DM Sans', sans-serif !important;
       text-align: left; padding: 0 8px !important; height: 36px !important;
-      position: sticky !important; top: 0 !important; z-index: 10 !important;
+      position: sticky !important; top: 0 !important; z-index: 20 !important;
       border-right: 1px solid rgba(255,255,255,.13) !important;
-      border-bottom: none !important; user-select: none; white-space: nowrap;
+      border-bottom: 2px solid var(--ss-teal) !important;
+      user-select: none; white-space: nowrap;
     }
     body.op-spreadsheet-mode .table-enhanced thead th.col-checkbox,
     body.op-spreadsheet-mode .table-enhanced thead th.col-no {
@@ -116,9 +120,10 @@
     body.op-spreadsheet-mode .table-enhanced tbody td {
       padding: 0 6px !important; font-size: 13px !important;
       border-right: 1px solid var(--ss-border) !important;
-      border-bottom: none !important;
+      border-bottom: 1px solid var(--ss-border) !important;
       vertical-align: middle !important;
       position: relative; cursor: cell;
+      z-index: 1;
     }
     body.op-spreadsheet-mode .table-enhanced tbody td.col-no {
       text-align: center !important;
@@ -135,13 +140,19 @@
     body.op-spreadsheet-mode .ie-cell:hover::after {
       content: none !important;
     }
-    body.op-spreadsheet-mode td.focused,
-    body.op-spreadsheet-mode .ie-cell.ie-editing {
+    body.op-spreadsheet-mode td.focused {
       outline: 2px solid var(--ss-teal-mid) !important;
       outline-offset: -2px !important;
       background: var(--ss-cell-focus) !important;
       box-shadow: none !important;
       z-index: 2;
+    }
+    body.op-spreadsheet-mode .ie-cell.ie-editing {
+      outline: 2px solid var(--ss-teal-mid) !important;
+      outline-offset: -2px !important;
+      background: var(--ss-cell-focus) !important;
+      box-shadow: none !important;
+      z-index: 5;  /* Higher than focused (2) but LOWER than thead (20) */
     }
     body.op-spreadsheet-mode td.focused::after,
     body.op-spreadsheet-mode .ie-cell.ie-editing::after {
@@ -151,7 +162,7 @@
       width: 7px !important; height: 7px !important;
       background: var(--ss-teal-mid) !important;
       border-radius: 1px !important;
-      z-index: 3; font-family: unset !important;
+      z-index: 6; font-family: unset !important;
       opacity: 1 !important; color: transparent !important;
     }
 
@@ -276,7 +287,7 @@
       background: #fffdf0 !important;
       outline: 2px solid #889717 !important;
       box-shadow: 0 0 0 4px rgba(136,151,23,0.15) !important;
-      z-index: 10;
+      z-index: 5;  /* Must be BELOW thead z-index (20) so header is never covered */
     }
     /* Saving state */
     .ie-cell.ie-saving {
@@ -313,6 +324,8 @@
       padding: 4px 6px;
       box-sizing: border-box;
       resize: none;
+      position: relative;
+      z-index: 5;  /* Stay below header z-index (20) */
     }
     .ie-input:focus { outline: none; }
     .ie-input.ie-textarea {
@@ -6957,7 +6970,9 @@
 
     focusedCell = td;
     td.classList.add('focused');
-    td.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+    // Smart scroll that accounts for sticky header height
+    scrollToCell(td);
 
     // Track row/col indices
     const row = td.closest('tr');
@@ -6989,6 +7004,37 @@
     const ref = (colNames[ci] || '?') + (ri + 1);
     const el = document.getElementById('ssCellRef');
     if (el) el.textContent = ref;
+  }
+
+  // ── Scroll to cell accounting for sticky header ───────────────
+  function scrollToCell(td) {
+    if (!td) return;
+    const wrapper = td.closest('.table-responsive');
+    if (!wrapper) {
+      td.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      return;
+    }
+
+    const thead = wrapper.querySelector('thead');
+    const headerH = thead ? thead.offsetHeight : 0;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const tdRect = td.getBoundingClientRect();
+
+    // Vertical scroll — cell hidden behind sticky header
+    const tdTopRelative = tdRect.top - wrapperRect.top;
+    if (tdTopRelative < headerH) {
+      wrapper.scrollTop -= (headerH - tdTopRelative + 4);
+    } else if (tdRect.bottom > wrapperRect.bottom) {
+      wrapper.scrollTop += (tdRect.bottom - wrapperRect.bottom + 4);
+    }
+
+    // Horizontal scroll — cell hidden off-screen
+    const tdLeftRelative = tdRect.left - wrapperRect.left;
+    if (tdLeftRelative < 0) {
+      wrapper.scrollLeft += tdLeftRelative - 4;
+    } else if (tdRect.right > wrapperRect.right) {
+      wrapper.scrollLeft += (tdRect.right - wrapperRect.right + 4);
+    }
   }
 
   function updateEditMode(mode) {
