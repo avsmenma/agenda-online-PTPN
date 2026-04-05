@@ -31,7 +31,7 @@
       display: flex !important;
       flex-direction: column !important;
       height: calc(100vh - 52px) !important; /* viewport minus topbar */
-      overflow: hidden !important;
+      overflow: clip !important;  /* clip doesn't break sticky, unlike hidden */
     }
 
     /* ── Toolbar band (below topbar) ── */
@@ -77,7 +77,7 @@
       border-radius: 0 !important; margin: 0 !important; box-shadow: none !important;
       border: none !important;
       padding: 0 !important;
-      overflow: hidden !important;  /* clip data rows so they can't leak above header */
+      overflow: clip !important;  /* clip doesn't break sticky context, unlike overflow:hidden */
       flex: 1 !important;
       min-height: 0 !important;  /* important for flex child shrinking */
       display: flex !important;
@@ -104,15 +104,18 @@
       min-width: 100% !important;
     }
     body.op-spreadsheet-mode .table-enhanced thead th {
-      background: var(--ss-teal) !important;
+      background-color: #0d6b5e !important; /* MUST be solid, not transparent/rgba */
+      background: #0d6b5e !important;
       color: #fff !important;
       font: 600 12px 'DM Sans', sans-serif !important;
       text-align: left; padding: 0 8px !important; height: 36px !important;
       position: sticky !important; top: 0 !important; z-index: 20 !important;
       border-right: 1px solid rgba(255,255,255,.13) !important;
-      border-bottom: 2px solid var(--ss-teal) !important;
+      border-bottom: 2px solid #0d6b5e !important;
+      box-shadow: 0 1px 0 #0d6b5e; /* cover 1px gap in Chrome */
       user-select: none; white-space: nowrap;
     }
+    /* Ensure tbody rows stay below sticky header z-index */
     body.op-spreadsheet-mode .table-enhanced thead th.col-checkbox,
     body.op-spreadsheet-mode .table-enhanced thead th.col-no {
       text-align: center !important;
@@ -123,6 +126,8 @@
       height: var(--ss-cell-h) !important;
       border-bottom: 1px solid var(--ss-border) !important;
       transition: background .1s;
+      position: relative;
+      z-index: 1;  /* must be below thead z-index (20) */
     }
     body.op-spreadsheet-mode .table-enhanced tbody tr:nth-child(even) {
       background: #f9fdfc !important;
