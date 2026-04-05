@@ -3028,6 +3028,7 @@
     <span><kbd>F2</kbd> editor penuh</span>
     <span><kbd>↑↓←→</kbd> navigasi</span>
     <span><kbd>Ctrl+F</kbd> cari</span>
+    <span><kbd>Del</kbd> hapus isi sel</span>
   </div>
 
   <!-- Toast notification -->
@@ -6919,6 +6920,7 @@
   let focusedCell = null;  // currently-focused TD (teal border, no editor)
   let focusedRow = -1;     // row index of focused cell
   let focusedCol = -1;     // column index of focused cell within ie-cells
+  let isCommitting = false; // flag to prevent blur handler re-commit
 
   // ── Helpers ────────────────────────────────────────────────────
   function csrfHeaders() {
@@ -7070,6 +7072,8 @@
     // Key handlers on input
     input.addEventListener('keydown', onInputKeydown);
     input.addEventListener('blur', () => {
+      // Only auto-commit on blur if not already committed via keyboard
+      if (isCommitting) return;
       setTimeout(() => { if (activeCell === td) commitCell(td); }, 150);
     });
 
@@ -7086,46 +7090,56 @@
     const td  = activeCell;
     if (!td) return;
     const row = td.closest('tr');
+    const ci  = cellIndex(td);
 
     switch(e.key) {
       case 'Escape':
         e.preventDefault();
+        isCommitting = true;
         cancelCell(td);
-        td.focus();
+        // Keep focus on the cell in navigation mode
+        if (focusedCell) updateEditMode('Siap');
+        setTimeout(() => { isCommitting = false; }, 200);
         break;
       case 'Enter':
-        if (!(e.target.tagName === 'TEXTAREA' && !e.shiftKey && !e.ctrlKey)) {
-          // textarea: Enter inserts newline; Shift+Enter or non-textarea — move down
-        }
         if (e.target.tagName !== 'TEXTAREA' || e.shiftKey || e.ctrlKey) {
           e.preventDefault();
+          isCommitting = true;
           commitCell(td);
-          moveFocus(row, cellIndex(td), 1, 0); // move down
+          moveFocus(row, ci, 1, 0); // move down — focusCell only, no edit
+          setTimeout(() => { isCommitting = false; }, 200);
         }
         break;
       case 'Tab':
         e.preventDefault();
+        isCommitting = true;
         commitCell(td);
-        moveFocus(row, cellIndex(td), 0, e.shiftKey ? -1 : 1);
+        moveFocus(row, ci, 0, e.shiftKey ? -1 : 1);
+        setTimeout(() => { isCommitting = false; }, 200);
         break;
       case 'ArrowDown':
-        if (e.target.tagName !== 'TEXTAREA') {
+        if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
           e.preventDefault();
+          isCommitting = true;
           commitCell(td);
-          moveFocus(row, cellIndex(td), 1, 0);
+          moveFocus(row, ci, 1, 0);
+          setTimeout(() => { isCommitting = false; }, 200);
         }
         break;
       case 'ArrowUp':
-        if (e.target.tagName !== 'TEXTAREA') {
+        if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
           e.preventDefault();
+          isCommitting = true;
           commitCell(td);
-          moveFocus(row, cellIndex(td), -1, 0);
+          moveFocus(row, ci, -1, 0);
+          setTimeout(() => { isCommitting = false; }, 200);
         }
         break;
       case 'F2':
         e.preventDefault();
         // Already open — do nothing (full editor available)
         break;
+      // ArrowLeft & ArrowRight: DON'T capture — let cursor move within text
     }
   }
 
@@ -7189,12 +7203,27 @@
     const origRaw = td.dataset.raw ?? '';
     const changed  = (newVal !== origRaw);
 
+    // ── Immediately restore display (exit edit mode visually) ────
     closeActiveCell(td);
 
     if (!changed || !dokId || dokId === 'new') {
-      // For new row - just update raw value
+      // For new row or no change - just update raw value
       td.dataset.raw = newVal;
+      // Restore original display for unchanged values, or show new value for new rows
+      if (!changed && td.dataset.origDisplay) {
+        td.innerHTML = td.dataset.origDisplay;
+      } else if (dokId === 'new') {
+        td.innerHTML = newVal ? `<span class="select-text">${newVal}</span>` : '<span class="text-muted" style="font-size:11px;">—</span>';
+      }
       return;
+    }
+
+    // ── Optimistic display update (show new value immediately) ───
+    if (NUMBER_FIELDS.includes(field)) {
+      const num = parseInt(newVal) || 0;
+      td.innerHTML = `<strong class="select-text">Rp. ${num.toLocaleString('id-ID')}</strong>`;
+    } else {
+      td.innerHTML = `<span class="select-text">${newVal}</span>`;
     }
 
     // ── SAVE via AJAX ─────────────────────────────────────────
@@ -7211,14 +7240,14 @@
     .then(r => r.json())
     .then(data => {
       td.classList.remove('ie-saving');
-      spinner.remove();
+      if (td.contains(spinner)) spinner.remove();
 
       if (data.success) {
         td.dataset.raw = newVal;
         td.classList.add('ie-saved');
         setTimeout(() => td.classList.remove('ie-saved'), 800);
         setStatus('Tersimpan ✔', false);
-        // Update display if needed
+        // Update display with server-formatted value if available
         if (NUMBER_FIELDS.includes(field) && data.data?.formatted_nilai) {
           td.innerHTML = `<strong class="select-text">${data.data.formatted_nilai}</strong>`;
         }
@@ -7226,17 +7255,19 @@
         td.classList.add('ie-error');
         setTimeout(() => td.classList.remove('ie-error'), 1200);
         setStatus('Gagal: ' + (data.message ?? 'Error'), true);
-        // Restore original display
+        // Restore original display on failure
         td.innerHTML = td.dataset.origDisplay ?? newVal;
+        td.dataset.raw = origRaw; // revert raw too
       }
     })
     .catch(err => {
       td.classList.remove('ie-saving');
-      spinner.remove();
+      if (td.contains(spinner)) spinner.remove();
       td.classList.add('ie-error');
       setTimeout(() => td.classList.remove('ie-error'), 1200);
       setStatus('Error jaringan: ' + err.message, true);
       td.innerHTML = td.dataset.origDisplay ?? '';
+      td.dataset.raw = origRaw; // revert raw too
     });
   }
 
@@ -7566,15 +7597,53 @@
         case 'Delete':
         case 'Backspace':
           e.preventDefault();
-          // Clear the cell content if editable
+          // Clear the cell content directly WITHOUT entering edit mode
           if (focusedCell.closest('tr')?.dataset.editable === 'true' && focusedCell.dataset.field) {
-            activateCell(focusedCell);
-            // Clear the input value
-            setTimeout(() => {
-              if (activeInput) {
-                activeInput.value = '';
-              }
-            }, 10);
+            const clearTd = focusedCell;
+            const clearRow = clearTd.closest('tr');
+            const clearField = clearTd.dataset.field;
+            const clearDokId = clearRow.dataset.id || clearRow.dataset.dokumenId;
+            const clearOldRaw = clearTd.dataset.raw ?? '';
+            const clearNewVal = NUMBER_FIELDS.includes(clearField) ? '0' : '';
+
+            // Update display immediately
+            clearTd.dataset.origDisplay = clearTd.innerHTML;
+            clearTd.dataset.raw = clearNewVal;
+            if (NUMBER_FIELDS.includes(clearField)) {
+              clearTd.innerHTML = '<strong class="select-text">Rp. 0</strong>';
+            } else {
+              clearTd.innerHTML = '<span class="text-muted">—</span>';
+            }
+
+            // Save via AJAX if existing document
+            if (clearDokId && clearDokId !== 'new' && clearNewVal !== clearOldRaw) {
+              fetch(`${PATCH_BASE}/${clearDokId}/inline-update`, {
+                method: 'PATCH',
+                headers: csrfHeaders(),
+                body: JSON.stringify({ field: clearField, value: clearNewVal }),
+              })
+              .then(r => r.json())
+              .then(data => {
+                if (data.success) {
+                  clearTd.classList.add('ie-saved');
+                  setTimeout(() => clearTd.classList.remove('ie-saved'), 800);
+                  setStatus('Sel dikosongkan ✔', false);
+                } else {
+                  // Restore on failure
+                  clearTd.innerHTML = clearTd.dataset.origDisplay ?? '';
+                  clearTd.dataset.raw = clearOldRaw;
+                  setStatus('Gagal mengosongkan: ' + (data.message ?? 'Error'), true);
+                }
+              })
+              .catch(() => {
+                clearTd.innerHTML = clearTd.dataset.origDisplay ?? '';
+                clearTd.dataset.raw = clearOldRaw;
+                setStatus('Error jaringan', true);
+              });
+            }
+
+            // Re-focus the cleared cell
+            focusCell(clearTd);
           }
           break;
         case 'Escape':
@@ -7623,7 +7692,20 @@
 
   // ── Init on load ──────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function() {
-    bindCells(document.getElementById('dokumenTableBody') ?? document);
+    const tbody = document.getElementById('dokumenTableBody') ?? document;
+    bindCells(tbody);
+
+    // BUG #1 FIX: Auto-focus first editable cell on page load
+    // so user can start navigating with keyboard immediately
+    const tableWrap = document.querySelector('.table-responsive');
+    if (tableWrap) tableWrap.setAttribute('tabindex', '0');
+
+    setTimeout(() => {
+      const firstCell = tbody.querySelector('td.ie-cell');
+      if (firstCell) {
+        focusCell(firstCell);
+      }
+    }, 100);
   });
 
   // Re-bind after AJAX full-row reload
