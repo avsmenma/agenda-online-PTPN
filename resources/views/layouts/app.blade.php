@@ -4161,6 +4161,11 @@
         <a href="{{ url('/owner/dashboard') }}" class="nav-link">
           <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
         </a>
+        
+        <!-- Audit Trail Menu - Only for Admin users -->
+        <a href="{{ url('/owner/programmer-logs') }}" class="nav-link">
+          <i class="fa-solid fa-shield-halved"></i> Audit Trail
+        </a>
       @endif
 
       <!-- Inbox Menu - Untuk Team Verifikasi, Perpajakan, Akutansi -->
