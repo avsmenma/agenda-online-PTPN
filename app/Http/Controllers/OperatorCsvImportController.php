@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Dokumen;
 use Carbon\Carbon;
+use App\Traits\LogsProgrammerActivity;
 
 class OperatorCsvImportController extends Controller
 {
+    use LogsProgrammerActivity;
     /**
      * Show import page for Operator role
      */
@@ -374,6 +376,11 @@ class OperatorCsvImportController extends Controller
 
             $skipDuplicates = $request->skip_duplicates ?? true;
             $result = $this->executeImport($fullPath, $skipDuplicates);
+
+            // Catat ke audit trail - operasi import CSV
+            $this->logActivity('bulk_import_csv', null,
+                "Import CSV: {$result['imported']} berhasil, {$result['skipped']} dilewati, {$result['failed']} gagal (Batch ID: {$result['batch_id']})"
+            );
 
             return response()->json([
                 'success' => true,

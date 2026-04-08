@@ -138,6 +138,17 @@
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>
+                            <a href="{{ route('programmer.programmer-audit-trail') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-shield-alt fa-2x text-purple" style="color: #7c3aed;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Audit Trail Programmer</h6>
+                                    <small class="text-muted">Lihat log aktivitas sensitif yang dilakukan oleh programmer</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

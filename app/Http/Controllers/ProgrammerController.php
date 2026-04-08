@@ -13,6 +13,7 @@ use App\Models\DokumenPR;
 use App\Models\DokumenRoleData;
 use App\Models\DokumenStatus;
 use App\Models\User;
+use App\Traits\LogsProgrammerActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,7 @@ use Illuminate\View\View;
 
 final class ProgrammerController extends Controller
 {
+    use LogsProgrammerActivity;
     /**
      * Programmer Dashboard
      */
@@ -181,6 +183,12 @@ final class ProgrammerController extends Controller
         Log::info("Programmer bulk direct-to-payment: Completed. {$processed} processed, {$failed} failed", [
             'by' => $user->name ?? 'Programmer',
         ]);
+
+        // Catat ke audit trail
+        $this->logActivity('bulk_to_payment', null,
+            "Bulk ke Pembayaran: {$processed} dokumen berhasil" . ($failed > 0 ? ", {$failed} gagal" : '') .
+            (count($processedDocs) <= 10 ? ' [' . implode(', ', array_slice($processedDocs, 0, 10)) . ']' : '')
+        );
 
         return response()->json([
             'success' => true,
@@ -494,6 +502,12 @@ final class ProgrammerController extends Controller
             'updated_by' => Auth::user()->name ?? 'Programmer',
         ]);
 
+        // Catat ke audit trail
+        $this->logActivity('update_timestamps',
+            ['type' => 'Dokumen', 'id' => $dokumen->id, 'description' => $dokumen->nomor_agenda],
+            "Update timestamp role '{$role}' untuk dokumen {$dokumen->nomor_agenda}"
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Timestamps berhasil diupdate',
@@ -633,9 +647,147 @@ final class ProgrammerController extends Controller
             'updated_by' => Auth::user()->name ?? 'Programmer',
         ]);
 
+        // Catat ke audit trail
+        $this->logActivity('user_update', $user,
+            "Update user: {$user->name} (@{$user->username}), role: {$user->role}"
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'User berhasil diupdate',
+        ]);
+    }
+
+    /**
+     * Store (create) a new user
+     */
+    public function storeUser(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
+            'email' => 'required|email|max:255|unique:users,email',
+            'role' => 'required|string',
+            'bagian_code' => 'nullable|string|max:50',
+            'phone_number' => 'nullable|string|max:20',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'bagian_code' => $validated['bagian_code'] ?? null,
+            'phone_number' => $validated['phone_number'] ?? null,
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        Log::info("Programmer created user", [
+            'user_id' => $user->id,
+            'created_by' => Auth::user()->name ?? 'Programmer',
+        ]);
+
+        // Catat ke audit trail
+        $this->logActivity('user_create', $user,
+            "Buat user baru: {$user->name} (@{$user->username}), role: {$user->role}"
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User berhasil dibuat',
+        ]);
+    }
+
+    /**
+     * Delete a user
+     */
+    public function destroyUser(int $id): JsonResponse
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        // Prevent deleting self
+        if ($user->id === Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak bisa menghapus akun sendiri',
+            ], 403);
+        }
+
+        $userName = $user->name;
+        $userUsername = $user->username;
+        $userRole = $user->role;
+        $userId = $user->id;
+
+        // Catat ke audit trail SEBELUM delete (agar relasi masih ada)
+        $this->logActivity('user_delete',
+            ['type' => 'User', 'id' => $userId, 'description' => "{$userName} (@{$userUsername})"],
+            "Hapus user: {$userName} (@{$userUsername}), role: {$userRole}"
+        );
+
+        $user->delete();
+
+        Log::warning("Programmer deleted user", [
+            'deleted_user_id' => $userId,
+            'deleted_user_name' => $userName,
+            'deleted_by' => Auth::user()->name ?? 'Programmer',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "User {$userName} berhasil dihapus",
+        ]);
+    }
+
+    /**
+     * Reset 2FA for another user (admin action by programmer)
+     */
+    public function resetUserTwoFactor(int $id): JsonResponse
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        if (!$user->two_factor_enabled && !$user->two_factor_secret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User ini tidak mengaktifkan 2FA',
+            ], 422);
+        }
+
+        // Reset semua data 2FA
+        $user->two_factor_enabled = false;
+        $user->two_factor_secret = null;
+        $user->two_factor_confirmed_at = null;
+        $user->two_factor_recovery_codes = null;
+        $user->save();
+
+        Log::warning("Programmer reset 2FA for user", [
+            'target_user_id' => $user->id,
+            'target_user_name' => $user->name,
+            'reset_by' => Auth::user()->name ?? 'Programmer',
+        ]);
+
+        // Catat ke audit trail
+        $this->logActivity('reset_2fa', $user,
+            "Reset 2FA user: {$user->name} (@{$user->username})"
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "2FA berhasil direset untuk user {$user->name}",
         ]);
     }
 
@@ -715,6 +867,11 @@ final class ProgrammerController extends Controller
                 'performed_by' => Auth::user()->name ?? 'Programmer',
                 'performed_at' => now()->toDateTimeString(),
             ]);
+
+            // Catat ke audit trail (HIGH RISK)
+            $this->logActivity('database_cleanup', null,
+                'Melakukan TRUNCATE semua tabel dokumen (dokumens, dokumen_pos, dokumen_prs, dll)'
+            );
 
             return response()->json([
                 'success' => true,
@@ -933,6 +1090,12 @@ final class ProgrammerController extends Controller
             }
 
             DB::commit();
+
+            // Catat ke audit trail
+            $this->logActivity('bulk_set_date', null,
+                "Bulk set tanggal pembayaran: {$processed} dokumen berhasil" . ($failed > 0 ? ", {$failed} gagal" : '') .
+                (count($processedDocs) <= 10 ? ' [' . implode(', ', array_slice($processedDocs, 0, 10)) . ']' : '')
+            );
 
             return response()->json([
                 'success' => true,

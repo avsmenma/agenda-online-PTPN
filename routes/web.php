@@ -1102,8 +1102,14 @@ Route::middleware(['auth', 'role:programmer'])
             ->name('user-management');
         Route::get('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'getUserData'])
             ->name('user-management.get');
+        Route::post('/user-management/store', [\App\Http\Controllers\ProgrammerController::class, 'storeUser'])
+            ->name('user-management.store');
         Route::post('/user-management/update', [\App\Http\Controllers\ProgrammerController::class, 'updateUser'])
             ->name('user-management.update');
+        Route::delete('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'destroyUser'])
+            ->name('user-management.destroy');
+        Route::post('/user-management/{id}/reset-2fa', [\App\Http\Controllers\ProgrammerController::class, 'resetUserTwoFactor'])
+            ->name('user-management.reset-2fa');
 
         // Database Tools - Cleanup database
         Route::get('/database-tools', [\App\Http\Controllers\ProgrammerController::class, 'databaseTools'])
@@ -1119,5 +1125,18 @@ Route::middleware(['auth', 'role:programmer'])
         // Activity Logs - Riwayat Aktivitas Dokumen
         Route::get('/activity-logs', [\App\Http\Controllers\ProgrammerController::class, 'activityLogs'])
             ->name('activity-logs');
+
+        // Programmer Audit Trail - Log aktivitas sensitif programmer
+        Route::get('/programmer-audit-trail', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
+            ->name('programmer-audit-trail');
+    });
+
+// =============================================================================
+// OWNER: Lihat log aktivitas programmer (read-only)
+// =============================================================================
+Route::middleware(['auth', 'role:owner,admin'])
+    ->group(function () {
+        Route::get('/owner/programmer-logs', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
+            ->name('owner.programmer-logs');
     });
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Traits\LogsProgrammerActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,8 @@ use PragmaRX\Google2FA\Google2FA;
 
 final class TwoFactorController extends Controller
 {
+    use LogsProgrammerActivity;
+    
     protected Google2FA $google2fa;
 
     public function __construct()
@@ -303,6 +306,11 @@ final class TwoFactorController extends Controller
             'user_id' => $user->id,
             'username' => $user->username,
         ]);
+
+        // Catat ke audit trail - user menonaktifkan 2FA sendiri
+        $this->logActivity('disable_2fa', $user,
+            "User menonaktifkan 2FA sendiri: {$user->name} (@{$user->username})"
+        );
 
         return redirect()->route('2fa.setup')
             ->with('success', '2FA berhasil dinonaktifkan.');
