@@ -364,7 +364,7 @@
                 .html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
 
             $.ajax({
-                url: '{{ route("programmer.user-management.destroy") }}'.replace('{id}', userId),
+                url: '{{ route("programmer.user-management.destroy", ['id' => 'PLACEHOLDER_ID']) }}'.replace('PLACEHOLDER_ID', userId),
                 method: 'DELETE',
                 data: {
                     _token: '{{ csrf_token() }}'
