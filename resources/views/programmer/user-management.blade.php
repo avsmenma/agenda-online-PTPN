@@ -86,14 +86,12 @@
             background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color: white;
         }
-    </style>
 
-    <div class="container-fluid">
-        <div class="row mb-4">
-            <div class="col-12">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('programmer.dashboard') }}">Dashboard</a></li>
+        .btn-delete-user {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            color: white;
+        }
                         <li class="breadcrumb-item active" aria-current="page">User Management</li>
                     </ol>
                 </nav>
@@ -149,10 +147,16 @@
                                             </td>
                                             <td>{{ $user->bagian_code ?? '-' }}</td>
                                             <td>
-                                                <button class="btn btn-sm btn-edit-user" data-id="{{ $user->id }}"
-                                                    onclick="editUser({{ $user->id }})">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-edit-user" data-id="{{ $user->id }}"
+                                                        onclick="editUser({{ $user->id }})">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-sm btn-delete-user" data-id="{{ $user->id }}"
+                                                        onclick="deleteUser({{ $user->id }}, '{{ $user->name }}')">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
@@ -346,6 +350,41 @@
                     alert('Error: ' + (xhr.responseJSON?.message || 'Gagal menyimpan'));
                     $('#btn-save-user').prop('disabled', false).html(
                         '<i class="fas fa-save me-2"></i>Simpan');
+                }
+            });
+        }
+
+        function deleteUser(userId, userName) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus user "${userName}"? Tindakan ini tidak dapat dibatalkan!`)) {
+                return;
+            }
+
+            // Disable delete button and show loading
+            $(`button[data-id="${userId}"].btn-delete-user`).prop('disabled', true)
+                .html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+
+            $.ajax({
+                url: '{{ route("programmer.user-management.destroy") }}'.replace('{id}', userId),
+                method: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert('User berhasil dihapus!');
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Gagal menghapus user');
+                        // Restore button
+                        $(`button[data-id="${userId}"].btn-delete-user`).prop('disabled', false)
+                            .html('<i class="fas fa-trash"></i> Delete');
+                    }
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'Gagal menghapus user'));
+                    // Restore button
+                    $(`button[data-id="${userId}"].btn-delete-user`).prop('disabled', false)
+                        .html('<i class="fas fa-trash"></i> Delete');
                 }
             });
         }
