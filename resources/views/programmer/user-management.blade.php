@@ -92,6 +92,19 @@
             border: none;
             color: white;
         }
+
+        .btn-delete-user:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+        }
+    </style>
+
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('programmer.dashboard') }}">Dashboard</a></li>
                         <li class="breadcrumb-item active" aria-current="page">User Management</li>
                     </ol>
                 </nav>
