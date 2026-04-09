@@ -1129,6 +1129,9 @@ Route::middleware(['auth', 'role:programmer'])
         // Programmer Audit Trail - Log aktivitas sensitif programmer
         Route::get('/programmer-audit-trail', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
             ->name('programmer-audit-trail');
+
+        Route::get('/notification-logs', [\App\Http\Controllers\WhatsAppNotificationLogController::class, 'index'])
+            ->name('notification-logs');
     });
 
 // =============================================================================
@@ -1138,5 +1141,7 @@ Route::middleware(['auth', 'role:owner,admin'])
     ->group(function () {
         Route::get('/owner/programmer-logs', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
             ->name('owner.programmer-logs');
-    });
 
+        Route::get('/owner/notification-logs', [\App\Http\Controllers\WhatsAppNotificationLogController::class, 'index'])
+            ->name('owner.notification-logs');
+    });

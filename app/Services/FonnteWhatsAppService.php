@@ -51,7 +51,7 @@ class FonnteWhatsAppService
         $formattedPhone = $this->formatPhoneNumber($phoneNumber);
 
         try {
-            $response = Http::withHeaders([
+            $response = Http::timeout(10)->withHeaders([
                 'Authorization' => $this->apiToken,
             ])->asForm()->post($this->apiUrl, [
                         'target' => $formattedPhone,
@@ -59,9 +59,10 @@ class FonnteWhatsAppService
                         'countryCode' => $this->countryCode,
                     ]);
 
-            $result = $response->json();
+            $result = $response->json() ?? [];
+            $httpOk = $response->status() === 200;
 
-            if ($response->successful() && isset($result['status']) && $result['status'] === true) {
+            if ($httpOk && isset($result['status']) && $result['status'] === true) {
                 Log::info('[Fonnte] Message sent successfully', [
                     'phone' => $formattedPhone,
                     'response' => $result,
@@ -81,8 +82,9 @@ class FonnteWhatsAppService
             return [
                 'success' => false,
                 'reason' => 'api_error',
-                'message' => $result['reason'] ?? 'Unknown error',
+                'message' => $result['reason'] ?? ($result['message'] ?? 'Unknown error'),
                 'response' => $result,
+                'http_status' => $response->status(),
             ];
         } catch (\Exception $e) {
             Log::error('[Fonnte] Exception when sending message', [

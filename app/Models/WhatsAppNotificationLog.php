@@ -20,7 +20,9 @@ class WhatsAppNotificationLog extends Model
         'message_type',
         'message',
         'status',
+        'channel',
         'response',
+        'fallback_reason',
         'sent_at',
     ];
 
@@ -79,6 +81,17 @@ class WhatsAppNotificationLog extends Model
         $this->update([
             'status' => 'failed',
             'response' => $response,
+            'fallback_reason' => $response,
+            'sent_at' => now(),
+        ]);
+    }
+
+    public function markAsFailedWithReason(?string $response = null, ?string $fallbackReason = null): void
+    {
+        $this->update([
+            'status' => 'failed',
+            'response' => $response,
+            'fallback_reason' => $fallbackReason,
             'sent_at' => now(),
         ]);
     }

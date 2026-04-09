@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\DeadlineReminderMail;
 use App\Models\Dokumen;
 use App\Models\DokumenRoleData;
 use App\Models\User;
@@ -9,6 +10,7 @@ use App\Models\WhatsAppNotificationLog;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LateDocumentNotificationService
 {
@@ -216,7 +218,10 @@ class LateDocumentNotificationService
         $query->select(
             'dokumens.*',
             'dokumen_role_data.received_at as role_received_at',
-            'dokumen_role_data.processed_at as role_processed_at'
+            'dokumen_role_data.processed_at as role_processed_at',
+            'dokumen_role_data.deadline_at as role_deadline_at',
+            'dokumen_role_data.deadline_days as role_deadline_days',
+            'dokumen_role_data.deadline_note as role_deadline_note'
         );
 
         $documents = $query->get();
@@ -341,6 +346,9 @@ class LateDocumentNotificationService
         string $messageType,
         string $message
     ): bool {
+        $fallbackEnabled = filter_var(config('notifications.fallback_email_enabled', true), FILTER_VALIDATE_BOOL);
+        $userEmail = trim((string) ($user->email ?? ''));
+
         // Create log entry
         $log = WhatsAppNotificationLog::create([
             'dokumen_id' => $dokumen->id,
@@ -350,6 +358,7 @@ class LateDocumentNotificationService
             'message_type' => $messageType,
             'message' => $message,
             'status' => 'pending',
+            'channel' => 'whatsapp',
         ]);
 
         // Send message
@@ -365,15 +374,67 @@ class LateDocumentNotificationService
             return true;
         }
 
-        $log->markAsFailed($result['message'] ?? 'Unknown error');
-        Log::warning("[LateDocumentNotification] Failed to send notification", [
+        $fallbackReason = $result['message'] ?? 'Unknown error';
+        $responsePayload = array_key_exists('response', $result)
+            ? json_encode($result['response'])
+            : json_encode(['http_status' => $result['http_status'] ?? null]);
+
+        $log->markAsFailedWithReason($responsePayload, $fallbackReason);
+
+        Log::warning("[LateDocumentNotification] Failed to send WhatsApp notification", [
             'dokumen_id' => $dokumen->id,
             'user_id' => $user->id,
             'phone' => $user->phone_number,
-            'error' => $result['message'] ?? 'Unknown error',
+            'error' => $fallbackReason,
         ]);
 
-        return false;
+        if (!$fallbackEnabled || $userEmail === '') {
+            return false;
+        }
+
+        $emailLog = WhatsAppNotificationLog::create([
+            'dokumen_id' => $dokumen->id,
+            'role_code' => $roleCode,
+            'user_id' => $user->id,
+            'phone_number' => $user->phone_number,
+            'message_type' => $messageType,
+            'message' => $message,
+            'status' => 'pending',
+            'channel' => 'email',
+            'fallback_reason' => $fallbackReason,
+        ]);
+
+        try {
+            if (!($dokumen instanceof Dokumen)) {
+                $dokumen = Dokumen::find($dokumen->id);
+            }
+
+            if (!($dokumen instanceof Dokumen)) {
+                throw new \RuntimeException('Dokumen tidak ditemukan untuk pengiriman email fallback');
+            }
+
+            Mail::to($userEmail)->send(new DeadlineReminderMail($user, $dokumen, $message));
+            $emailLog->markAsSuccess(null);
+
+            Log::info("[LateDocumentNotification] Fallback email sent", [
+                'dokumen_id' => $dokumen->id,
+                'user_id' => $user->id,
+                'email' => $userEmail,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            $emailLog->markAsFailedWithReason(null, "WhatsApp gagal: {$fallbackReason}; Email gagal: {$e->getMessage()}");
+
+            Log::error("[LateDocumentNotification] Failed to send fallback email", [
+                'dokumen_id' => $dokumen->id,
+                'user_id' => $user->id,
+                'email' => $userEmail,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     /**
