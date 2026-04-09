@@ -3807,7 +3807,8 @@
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
-    $isOwner = auth()->check() && (auth()->user()->role === 'owner' || auth()->user()->role === 'Owner' || auth()->user()->role === 'OWNER' || auth()->user()->role === 'Admin' || auth()->user()->role === 'admin');
+    $userRoleLower = auth()->check() ? strtolower(auth()->user()->role ?? '') : '';
+    $isOwner = in_array($userRoleLower, ['owner', 'admin'], true);
 
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
@@ -4129,6 +4130,12 @@
         @endphp
         <a href="{{ url('/owner/analytics') }}" class="{{ $isAnalyticsActive ? 'active' : '' }}">
           <i class="fa-solid fa-chart-line"></i> Analisis Kinerja
+        </a>
+        @php
+          $isAuditTrailActive = request()->is('*owner/programmer-logs*') || request()->routeIs('owner.programmer-logs');
+        @endphp
+        <a href="{{ url('/owner/programmer-logs') }}" class="{{ $isAuditTrailActive ? 'active' : '' }}">
+          <i class="fa-solid fa-shield-halved"></i> Audit Trail
         </a>
       </div>
       <div style="margin-top: auto; padding-bottom: 20px;">
@@ -7710,8 +7717,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-
-
 
 
 
