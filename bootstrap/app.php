@@ -17,8 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'bagian' => \App\Http\Middleware\CheckBagianRole::class,
-            'autologin' => \App\Http\Middleware\AutoLoginMiddleware::class, // SECURITY: Now only checks auth, no auto-login
-            'prevent.url.manipulation' => \App\Http\Middleware\PreventUrlManipulation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -45,17 +45,6 @@ final class CheckRole
         $userRole = strtolower($user->role);
         $requiredRoles = array_map('strtolower', $roles);
 
-        // DEBUG LOGGING
-        Log::info('CheckRole Debug:', [
-            'user_id' => $user->id,
-            'user_role_raw' => $user->role,
-            'user_role_lower' => $userRole,
-            'required_roles_raw' => $roles,
-            'required_roles_lower' => $requiredRoles,
-            'is_empty_roles' => empty($roles),
-            'in_array_check' => in_array($userRole, $requiredRoles, true),
-        ]);
-
         if (empty($roles) || !in_array($userRole, $requiredRoles, true)) {
             Log::warning('Unauthorized access attempt - Role mismatch', [
                 'user_id' => $user->id,
@@ -78,20 +67,6 @@ final class CheckRole
                 ->with('error', 'Anda tidak memiliki akses ke halaman tersebut. Silakan login dengan akun yang sesuai.');
         }
 
-        Log::info('Role check passed', [
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'role' => $user->role,
-            'role_lower' => $userRole,
-            'required_roles' => $roles,
-            'path' => $request->path(),
-        ]);
-
         return $next($request);
     }
 }
-
-
-
-
-

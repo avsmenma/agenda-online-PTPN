@@ -85,73 +85,10 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// SECURITY FIX: Custom broadcast authentication route with CSRF protection
-Route::post('/custom-broadcasting/auth', function (\Illuminate\Http\Request $request) {
-    try {
-        // SECURITY: Validate CSRF token
-        if (!$request->has('_token') || !hash_equals(session()->token(), $request->input('_token'))) {
-            \Log::warning('SECURITY: CSRF token mismatch in broadcast auth', [
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ]);
-            return response()->json(['error' => 'Invalid CSRF token'], 403);
-        }
-
-        \Log::info('🔐 Custom broadcast auth attempt', [
-            'channel_name' => $request->input('channel_name'),
-            'socket_id' => $request->input('socket_id'),
-            'user_authenticated' => auth()->check(),
-            'session_id' => session()->getId(),
-        ]);
-
-        if (!auth()->check()) {
-            \Log::error('❌ Broadcast auth failed: User not authenticated');
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $channelName = $request->input('channel_name');
-        $socketId = $request->input('socket_id');
-
-        // SECURITY: Validate and sanitize inputs
-        if (empty($channelName) || empty($socketId)) {
-            \Log::warning('SECURITY: Empty channel_name or socket_id in broadcast auth');
-            return response()->json(['error' => 'Invalid request parameters'], 400);
-        }
-
-        // SECURITY: Sanitize channel name to prevent injection
-        $channelName = preg_replace('/[^a-zA-Z0-9\-_.]/', '', $channelName);
-        $socketId = preg_replace('/[^a-zA-Z0-9\-_.]/', '', $socketId);
-
-        // Only approve private channels for authenticated users
-        if (str_starts_with($channelName, 'private-')) {
-            $pusherKey = config('broadcasting.connections.pusher.key', '');
-            if (empty($pusherKey)) {
-                \Log::error('SECURITY: Pusher key not configured');
-                return response()->json(['error' => 'Server configuration error'], 500);
-            }
-
-            $authData = $socketId . ':' . md5($socketId . ':' . $pusherKey);
-
-            \Log::info('✅ Custom broadcast auth successful', [
-                'channel' => $channelName,
-                'socket_id' => $socketId,
-                'user_id' => auth()->id(),
-                'user_role' => auth()->user()->role,
-            ]);
-
-            return response()->json(['auth' => $authData]);
-        }
-
-        \Log::warning('⚠️ Non-private channel request', ['channel' => $channelName]);
-        return response()->json(['error' => 'Invalid channel type'], 400);
-
-    } catch (\Exception $e) {
-        \Log::error('💥 Custom broadcast auth error: ' . $e->getMessage(), [
-            'trace' => $e->getTraceAsString()
-        ]);
-        return response()->json(['error' => 'Authentication failed'], 403);
-    }
-})->middleware(['web', 'auth']); // SECURITY: Require authentication and CSRF protection
+// Broadcasting Authentication Route
+// Uses Laravel's built-in Pusher authentication (HMAC-SHA256)
+// Custom broadcast auth route removed — was using insecure MD5 hash instead of Pusher protocol
+Broadcast::routes(['middleware' => ['web', 'auth']]);
 
 Route::get('/', function () {
     return redirect('/login');
@@ -181,135 +118,10 @@ if (app()->environment('local', 'development')) {
 
 Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage'])->middleware('auth');
 
-// Broadcasting Authentication Route
-Broadcast::routes(['middleware' => ['web']]);
-
-// SECURITY: All API routes must be authenticated
 // Professional API routes for document updates
-Route::get('/api/documents/verifikasi/check-updates', function () {
-    // SECURITY: Validate user is authenticated
-    if (!auth()->check()) {
-        \Log::warning('SECURITY: Unauthenticated API access attempt', [
-            'route' => '/api/documents/verifikasi/check-updates',
-            'ip' => request()->ip(),
-        ]);
-        return response()->json(['error' => 'Unauthenticated'], 401);
-    }
-
-    try {
-        // SECURITY: Validate and sanitize input
-        $lastChecked = request()->input('last_checked', 0);
-        $lastChecked = is_numeric($lastChecked) ? (int) $lastChecked : 0;
-        $lastChecked = max(0, min($lastChecked, time())); // Prevent future timestamps
-        $lastCheckedDate = $lastChecked > 0
-            ? \Carbon\Carbon::createFromTimestamp($lastChecked)
-            : \Carbon\Carbon::now()->subDays(1);
-
-        // Cek dokumen yang berubah status setelah lastChecked
-        // Beda antara dokumen baru dari Operator vs dokumen yang sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
-        // Exclude documents imported from CSV to prevent notification spam
-        $newDocuments = \App\Models\Dokumen::where(function ($query) use ($lastCheckedDate) {
-            // Dokumen yang masih di Team Verifikasi dan updated setelah lastChecked (dokumen baru dari Operator)
-            $query->where(function ($q) use ($lastCheckedDate) {
-                $q->where('current_handler', 'team_verifikasi')
-                    ->where('updated_at', '>', $lastCheckedDate)
-                    ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'menunggu_di_approve']);
-            })
-                // Atau dokumen yang baru di-approve oleh perpajakan/akutansi/pembayaran setelah lastChecked
-                ->orWhere(function ($q) use ($lastCheckedDate) {
-                    $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
-                        ->where('updated_at', '>', $lastCheckedDate);
-                });
-        })
-            // Exclude CSV imported documents (only if column exists) - Applied outside main where to ensure proper filtering
-            ->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->with([
-                'roleData' => function ($query) {
-                    $query->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
-                }
-            ])
-            ->with([
-                'roleStatuses' => function ($query) {
-                    $query->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
-                }
-            ])
-            ->latest('updated_at')
-            ->take(10)
-            ->get();
-
-        $totalDocuments = \App\Models\Dokumen::where(function ($query) {
-            $query->where('current_handler', 'team_verifikasi')
-                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
-        })->count();
-
-        return response()->json([
-            'has_updates' => $newDocuments->count() > 0,
-            'new_count' => $newDocuments->count(),
-            'total_documents' => $totalDocuments,
-            'new_documents' => $newDocuments->map(function ($doc) {
-                $roleData = $doc->roleData->firstWhere('role_code', 'team_verifikasi');
-
-                // Tentukan apakah ini dokumen baru dari Operator atau dokumen yang sudah di-approve
-                $isNewFromOperator = $doc->current_handler === 'team_verifikasi' &&
-                    in_array($doc->status, ['sent_to_team_verifikasi', 'sedang diproses', 'menunggu_di_approve']);
-
-                // Cek apakah dokumen sudah di-approve oleh Perpajakan/Akutansi/Pembayaran
-                $approvedBy = null;
-                $approvedAt = null;
-                if (!$isNewFromOperator && in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])) {
-                    // Cek status dari role yang approve
-                    if ($doc->status === 'sent_to_perpajakan') {
-                        $perpajakanStatus = $doc->roleStatuses->firstWhere('role_code', 'perpajakan');
-                        if ($perpajakanStatus && $perpajakanStatus->status === 'approved') {
-                            $approvedBy = 'Perpajakan';
-                            $approvedAt = $perpajakanStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
-                        }
-                    } elseif ($doc->status === 'sent_to_akutansi') {
-                        $akutansiStatus = $doc->roleStatuses->firstWhere('role_code', 'akutansi');
-                        if ($akutansiStatus && $akutansiStatus->status === 'approved') {
-                            $approvedBy = 'Akutansi';
-                            $approvedAt = $akutansiStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
-                        }
-                    } elseif ($doc->status === 'sent_to_pembayaran') {
-                        $pembayaranStatus = $doc->roleStatuses->firstWhere('role_code', 'pembayaran');
-                        if ($pembayaranStatus && $pembayaranStatus->status === 'approved') {
-                            $approvedBy = 'Pembayaran';
-                            $approvedAt = $pembayaranStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
-                        }
-                    }
-                }
-
-                return [
-                    'id' => $doc->id,
-                    'nomor_agenda' => $doc->nomor_agenda,
-                    'nomor_spp' => $doc->nomor_spp,
-                    'uraian_spp' => $doc->uraian_spp,
-                    'nilai_rupiah' => $doc->nilai_rupiah,
-                    'status' => $doc->status,
-                    'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i'),
-                    'is_new_from_Operator' => $isNewFromOperator,
-                    'approved_by' => $approvedBy,
-                    'approved_at' => $approvedAt,
-                ];
-            }),
-            'last_checked' => time()
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Error in api/documents/verifikasi/check-updates: ' . $e->getMessage(), [
-            'trace' => $e->getTraceAsString()
-        ]);
-        return response()->json([
-            'error' => true,
-            'message' => 'Failed to check updates: ' . $e->getMessage()
-        ], 500);
-    }
-})->middleware('auth')->name('api.documents.verifikasi.check-updates');
+Route::get('/api/documents/verifikasi/check-updates', [TeamVerifikasiController::class, 'checkVerifikasiUpdates'])
+    ->middleware('auth')
+    ->name('api.documents.verifikasi.check-updates');
 
 Route::get('/api/documents/perpajakan/check-updates', [DashboardPerpajakanController::class, 'checkUpdates'])
     ->middleware('auth')
@@ -321,34 +133,22 @@ Route::get('/api/documents/pembayaran/check-updates', [DashboardPembayaranContro
     ->middleware('auth')
     ->name('api.documents.pembayaran.check-updates');
 
-// Backward compatibility for old check-updates routes
-Route::get('/dokumensB/check-updates', function () {
-    return redirect()->route('api.documents.verifikasi.check-updates', request()->query(), 301);
-})->name('dokumensB.check-updates.old');
-Route::get('/perpajakan/check-updates', function () {
-    return redirect()->route('api.documents.perpajakan.check-updates', request()->query(), 301);
-})->name('perpajakan.check-updates.old');
-Route::get('/akutansi/check-updates', function () {
-    return redirect()->route('api.documents.akutansi.check-updates', request()->query(), 301);
-})->name('akutansi.check-updates.old');
-Route::get('/pembayaran/check-updates', function () {
-    return redirect()->route('api.documents.pembayaran.check-updates', request()->query(), 301);
-})->name('pembayaran.check-updates.old');
+// Backward compatibility routes removed — old check-updates routes were redundant (Phase 2 cleanup)
 
 
 // Dashboard routes with role protection - Professional URLs
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth', 'role:admin,operator,Operator')
+    ->middleware('auth', 'role:admin,operator')
     ->name('dashboard.main');
 
 // dashboard/verifikasi removed - redirected to documents/verifikasi
 Route::get('dashboard/verifikasi', function () {
     return redirect()->route('documents.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')
+})->middleware('auth', 'role:admin,team_verifikasi,verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
-    ->middleware('auth', 'role:admin,Pembayaran,pembayaran')
+    ->middleware('auth', 'role:admin,pembayaran')
     ->name('dashboard.pembayaran');
 
 
@@ -356,45 +156,25 @@ Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index
 
 
 
-// Backward compatibility - redirect old URLs to new professional URLs
-Route::get('dashboardB', function () {
-    return redirect()->route('documents.verifikasi.index', [], 301);
-})->name('dashboard.team_verifikasi.old');
-
-Route::get('dashboardPembayaran', function () {
-    return redirect()->route('dashboard.pembayaran', [], 301);
-})->name('dashboard.pembayaran.old');
-
-Route::get('dashboardAkutansi', function () {
-    return redirect()->route('documents.akutansi.index', [], 301);
-})->name('dashboard.akutansi.old');
-
-// dashboard/akutansi redirect for backward-compat (old links/bookmarks)
+// Dashboard sub-routes for roles that redirect to document views
 Route::get('dashboard/akutansi', function () {
     return redirect()->route('documents.akutansi.index', [], 301);
-})->middleware('auth', 'role:admin,akutansi,Akutansi')
+})->middleware('auth', 'role:admin,akutansi')
   ->name('dashboard.akutansi');
 
-Route::get('dashboardPerpajakan', function () {
-    return redirect()->route('documents.perpajakan.index', [], 301);
-})->name('dashboard.perpajakan.old');
-
-// dashboard/perpajakan redirect for backward-compat (old links/bookmarks)
 Route::get('dashboard/perpajakan', function () {
     return redirect()->route('documents.perpajakan.index', [], 301);
-})->middleware('auth', 'role:admin,perpajakan,Perpajakan')
+})->middleware('auth', 'role:admin,perpajakan')
   ->name('dashboard.perpajakan');
 
-Route::get('dashboardVerifikasi', function () {
-    return redirect()->route('documents.verifikasi.index', [], 301);
-})->name('dashboard.verifikasi.old');
+// Backward compatibility routes removed — old dashboard URLs (Phase 2 cleanup)
 
 // Professional API routes for rejected documents
 Route::get('/api/documents/rejected/check', [DashboardController::class, 'checkRejectedDocuments'])
-    ->middleware('auth', 'role:admin,Operator,Operator')
+    ->middleware('auth', 'role:admin,operator')
     ->name('api.documents.rejected.check');
 Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,Operator,operator,bagian')
+    ->middleware('auth', 'role:admin,operator,bagian')
     ->name('api.documents.rejected.show');
 Route::get('/api/documents/verifikasi/rejected/check', [TeamVerifikasiController::class, 'checkRejectedDocuments'])
     ->middleware('auth', 'role:admin,team_verifikasi')
@@ -403,19 +183,7 @@ Route::get('/api/documents/verifikasi/rejected/{dokumen}', [TeamVerifikasiContro
     ->middleware('auth', 'role:admin,team_verifikasi')
     ->name('api.documents.verifikasi.rejected.show');
 
-// Backward compatibility for old rejected document routes
-Route::get('/Operator/check-rejected', function () {
-    return redirect()->route('api.documents.rejected.check', [], 301);
-})->name('operator.checkRejected.old');
-Route::get('/Operator/rejected/{dokumen}', function ($dokumen) {
-    return redirect()->route('api.documents.rejected.show', ['dokumen' => $dokumen], 301);
-})->name('operator.rejected.show.old');
-Route::get('/team-verifikasi/check-rejected', function () {
-    return redirect()->route('api.documents.verifikasi.rejected.check', [], 301);
-})->name('team_verifikasi.checkRejected.old');
-Route::get('/team-verifikasi/rejected/{dokumen}', function ($dokumen) {
-    return redirect()->route('api.documents.verifikasi.rejected.show', ['dokumen' => $dokumen], 301);
-})->name('team_verifikasi.rejected.show.old');
+// Backward compatibility routes removed — old rejected document URLs (Phase 2 cleanup)
 
 // Owner Dashboard routes (God View)
 // New Home page (main dashboard)
@@ -520,35 +288,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::post('/import', [\App\Http\Controllers\OperatorCsvImportController::class, 'import'])->name('import.execute');
 
     // API: Get next nomor agenda (auto-generate)
-    Route::get('/next-nomor-agenda', function () {
-        try {
-            $currentYear = \Carbon\Carbon::now()->year;
-
-            // Find the highest nomor_agenda number for the current year
-            $latestDokumen = \App\Models\Dokumen::where('nomor_agenda', 'like', '%_' . $currentYear)
-                ->get()
-                ->map(function ($doc) {
-                    // Extract the numeric part before the underscore
-                    $parts = explode('_', $doc->nomor_agenda);
-                    return isset($parts[0]) && is_numeric($parts[0]) ? (int) $parts[0] : 0;
-                })
-                ->max();
-
-            $nextNumber = ($latestDokumen ?? 0) + 1;
-            $nextNomorAgenda = $nextNumber . '_' . $currentYear;
-
-            return response()->json([
-                'success' => true,
-                'next_nomor_agenda' => $nextNomorAgenda,
-                'current_highest' => $latestDokumen ?? 0,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil nomor agenda: ' . $e->getMessage(),
-            ], 500);
-        }
-    })->name('next-nomor-agenda');
+    Route::get('/next-nomor-agenda', [DokumenController::class, 'nextNomorAgenda'])->name('next-nomor-agenda');
 
     // Bulk send route (static route, before parameterized routes)
     Route::post('/bulk-send-to-verifikasi', [DokumenController::class, 'bulkSendToTeamVerifikasi'])->name('bulk-send-to-verifikasi');
@@ -580,25 +320,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('reports')->name('rep
     Route::get('/analytics', [DokumenRekapanController::class, 'analytics'])->name('analytics');
 });
 
-// Backward compatibility for old document routes
-Route::get('/dokumens', function () {
-    return redirect()->route('documents.index', [], 301);
-})->name('dokumens.index.old');
-Route::get('/dokumens/create', function () {
-    return redirect()->route('documents.create', [], 301);
-})->name('dokumens.create.old');
-Route::get('/dokumens/{dokumen}/edit', function ($dokumen) {
-    return redirect()->route('documents.edit', ['dokumen' => $dokumen], 301);
-})->name('dokumens.edit.old');
-Route::get('/dokumens/{dokumen}/detail', function ($dokumen) {
-    return redirect()->route('documents.detail', ['dokumen' => $dokumen], 301);
-})->name('dokumens.detail.old');
-Route::get('/rekapan', function () {
-    return redirect()->route('reports.index', [], 301);
-})->name('rekapan.index.old');
-Route::get('/rekapan/analytics', function () {
-    return redirect()->route('reports.analytics', [], 301);
-})->name('rekapan.analytics.old');
+// Backward compatibility routes removed — old dokumen/rekapan URLs (Phase 2 cleanup)
 
 // Autocomplete Routes
 Route::get('/api/autocomplete/payment-recipients', [AutocompleteController::class, 'getPaymentRecipients'])->name('autocomplete.payment-recipients');
@@ -609,7 +331,7 @@ Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getP
 Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index']);
 
 // Professional Document Routes - Verifikasi (Team Verifikasi)
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [TeamVerifikasiController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/edit', [TeamVerifikasiController::class, 'editDokumen'])->name('edit');
@@ -623,13 +345,13 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])-
 });
 
 // Professional Reports Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'rekapan'])->name('index');
     Route::get('/analytics', [TeamVerifikasiController::class, 'rekapanAnalytics'])->name('analytics');
 });
 
 // Professional Returns Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'pengembalian'])->name('index');
     Route::get('/stats', [TeamVerifikasiController::class, 'getPengembalianKeBagianStats'])->name('stats');
     Route::get('/bagian', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bagian');
@@ -638,19 +360,10 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])-
 });
 
 
-// Backward compatibility for old Team Verifikasi routes
-Route::get('/dokumensB', function () {
-    return redirect()->route('documents.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')->name('dokumensB.index.old');
-Route::get('/rekapan-Team Verifikasi', function () {
-    return redirect()->route('reports.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')->name('dokumensB.rekapan.old');
-Route::get('/pengembalian-dokumensB', function () {
-    return redirect()->route('returns.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi')->name('pengembalianB.index.old');
+// Backward compatibility routes removed — old Team Verifikasi URLs (Phase 2 cleanup)
 
 // Professional Approval Routes - Verifikasi (Team Verifikasi)
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::post('/{dokumen}/accept', [TeamVerifikasiController::class, 'acceptDocument'])
         ->name('accept');
     Route::post('/{dokumen}/reject', [TeamVerifikasiController::class, 'rejectDocument'])
@@ -658,17 +371,6 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi,Verifikasi'])-
     Route::get('/pending-approval', [TeamVerifikasiController::class, 'pendingApproval'])
         ->name('pending-approval');
 });
-
-// Backward compatibility for old Team Verifikasi approval routes
-Route::post('/team-verifikasi/dokumen/{dokumen}/accept', function ($dokumen) {
-    return redirect()->route('documents.verifikasi.accept', ['dokumen' => $dokumen], 301);
-})->name('team_verifikasi.dokumen.accept.old');
-Route::post('/team-verifikasi/dokumen/{dokumen}/reject', function ($dokumen) {
-    return redirect()->route('documents.verifikasi.reject', ['dokumen' => $dokumen], 301);
-})->name('team_verifikasi.dokumen.reject.old');
-Route::get('/team-verifikasi/pending-approval', function () {
-    return redirect()->route('documents.verifikasi.pending-approval', [], 301);
-})->name('team_verifikasi.pending.approval.old');
 
 // Document Activity Tracking Routes
 Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
@@ -696,7 +398,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Inbox Routes - Untuk Operator, Team Verifikasi, Perpajakan, Akutansi, Pembayaran, Verifikasi
-Route::middleware(['auth', 'role:operator,Operator,team_verifikasi,verifikasi,Verifikasi,Perpajakan,perpajakan,Akutansi,akutansi,Pembayaran,pembayaran,admin'])->group(function () {
+Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran,admin'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
@@ -710,7 +412,7 @@ Route::middleware(['auth', 'role:operator,Operator,team_verifikasi,verifikasi,Ve
 });
 
 // Professional Document Routes - Pembayaran
-Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
+Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
     Route::get('/', [DashboardPembayaranController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('payment-data');
@@ -725,7 +427,7 @@ Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('documen
 });
 
 // Professional Reports Routes - Pembayaran
-Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
+Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
     // Redirect to dashboard - content is now on home page
     Route::get('/', fn() => redirect()->route('dashboard.pembayaran'))->name('index');
     Route::match(['get', 'post'], '/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('export');
@@ -735,37 +437,11 @@ Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('reports
 
 // Professional Returns Routes - Pembayaran
 Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengembalian'])
-    ->middleware(['auth', 'role:admin,Pembayaran,pembayaran'])
+    ->middleware(['auth', 'role:admin,pembayaran'])
     ->name('returns.pembayaran.index');
 
 
-// Backward compatibility for old Pembayaran routes
-Route::get('/dokumensPembayaran', function () {
-    return redirect()->route('documents.pembayaran.index', [], 301);
-})->name('dokumensPembayaran.index.old');
-Route::get('/rekapan-pembayaran', function () {
-    return redirect()->route('reports.pembayaran.index', [], 301);
-})->name('pembayaran.rekapan.old');
-Route::get('/rekapan-keterlambatan', function () {
-    return redirect()->route('reports.pembayaran.delays', [], 301);
-})->name('rekapanKeterlambatan.index.old');
-Route::get('/dokumensPembayaran/dokumens', [DashboardPembayaranController::class, 'dokumens'])->name('dokumensPembayaran.dokumens');
-Route::get('/payment/analytics', [DashboardPembayaranController::class, 'analytics'])->name('pembayaran.analytics');
-Route::get('/dokumensPembayaran/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('dokumensPembayaran.detail');
-Route::get('/dokumensPembayaran/{dokumen}/get-payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('dokumensPembayaran.getPaymentData');
-Route::post('/dokumensPembayaran/{dokumen}/set-deadline', [DashboardPembayaranController::class, 'setDeadline'])->name('dokumensPembayaran.setDeadline');
-Route::post('/dokumensPembayaran/{dokumen}/update-status', [DashboardPembayaranController::class, 'updateStatus'])->name('dokumensPembayaran.updateStatus');
-Route::post('/dokumensPembayaran/{dokumen}/upload-bukti', [DashboardPembayaranController::class, 'uploadBukti'])->name('dokumensPembayaran.uploadBukti');
-Route::post('/dokumensPembayaran/{dokumen}/update-pembayaran', [DashboardPembayaranController::class, 'updatePembayaran'])->name('dokumensPembayaran.updatePembayaran');
-Route::get('/dokumensPembayaran/create', [DashboardPembayaranController::class, 'createDokumen'])->name('dokumensPembayaran.create');
-Route::post('/dokumensPembayaran', [DashboardPembayaranController::class, 'storeDokumen'])->name('dokumensPembayaran.store');
-Route::get('/dokumensPembayaran/{dokumen}/edit', [DashboardPembayaranController::class, 'editDokumen'])->name('dokumensPembayaran.edit');
-Route::put('/dokumensPembayaran/{dokumen}', [DashboardPembayaranController::class, 'updateDokumen'])->name('dokumensPembayaran.update');
-Route::delete('/dokumensPembayaran/{dokumen}', [DashboardPembayaranController::class, 'destroyDokumen'])->name('dokumensPembayaran.destroy');
-Route::get('/pengembalian-dokumensPembayaran', [DashboardPembayaranController::class, 'pengembalian'])->name('pengembalianPembayaran.index');
-Route::get('/rekapan-keterlambatan', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('rekapanKeterlambatan.index');
-Route::get('/rekapan-pembayaran', [DashboardPembayaranController::class, 'rekapan'])->name('pembayaran.rekapan');
-Route::get('/rekapan-pembayaran/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('pembayaran.rekapan.export');
+// Backward compatibility routes removed — old Pembayaran URLs (Phase 2 cleanup)
 
 // Dashboard Pembayaran Routes
 Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {
@@ -777,7 +453,7 @@ Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pemba
 });
 
 // CSV Import Routes - Pembayaran
-Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {
+Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {
     Route::get('/', [\App\Http\Controllers\CsvImportController::class, 'index'])->name('index');
     Route::post('/upload', [\App\Http\Controllers\CsvImportController::class, 'upload'])->name('upload');
     Route::post('/preview', [\App\Http\Controllers\CsvImportController::class, 'preview'])->name('preview');
@@ -786,7 +462,7 @@ Route::middleware(['auth', 'role:admin,Pembayaran,pembayaran'])->prefix('csv-imp
 
 
 // Professional Document Routes - Akutansi
-Route::middleware(['auth', 'role:admin,akutansi,Akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
+Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
     Route::get('/', [DashboardAkutansiController::class, 'dokumens'])->name('index');
     Route::get('/create', [DashboardAkutansiController::class, 'createDokumen'])->name('create');
     Route::post('/', [DashboardAkutansiController::class, 'storeDokumen'])->name('store');
@@ -800,29 +476,20 @@ Route::middleware(['auth', 'role:admin,akutansi,Akutansi'])->prefix('documents/a
 });
 
 // Professional Reports Routes - Akutansi
-Route::middleware(['auth', 'role:admin,akutansi,Akutansi'])->prefix('reports/akutansi')->name('reports.akutansi.')->group(function () {
+Route::middleware(['auth', 'role:admin,akutansi'])->prefix('reports/akutansi')->name('reports.akutansi.')->group(function () {
     Route::get('/', [DashboardAkutansiController::class, 'rekapan'])->name('index');
 });
 
 // Professional Returns Routes - Akutansi
 Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembalian'])
-    ->middleware(['auth', 'role:admin,akutansi,Akutansi'])
+    ->middleware(['auth', 'role:admin,akutansi'])
     ->name('returns.akutansi.index');
 
 
-// Backward compatibility for old Akutansi routes
-Route::get('/dokumensAkutansi', function () {
-    return redirect()->route('documents.akutansi.index', [], 301);
-})->name('dokumensAkutansi.index.old');
-Route::get('/rekapan-akutansi', function () {
-    return redirect()->route('reports.akutansi.index', [], 301);
-})->name('akutansi.rekapan.old');
-Route::get('/pengembalian-dokumensAkutansi', function () {
-    return redirect()->route('returns.akutansi.index', [], 301);
-})->name('pengembalianAkutansi.index.old');
+// Backward compatibility routes removed — old Akutansi URLs (Phase 2 cleanup)
 
 // Professional Document Routes - Perpajakan
-Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
+Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPerpajakanController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/edit', [DashboardPerpajakanController::class, 'editDokumen'])->name('edit');
@@ -834,7 +501,7 @@ Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('documen
 });
 
 // Professional Reports Routes - Perpajakan
-Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('reports/perpajakan')->name('reports.perpajakan.')->group(function () {
+Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('reports/perpajakan')->name('reports.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'rekapan'])->name('index');
     Route::get('/export', [DashboardPerpajakanController::class, 'exportView'])->name('export');
     Route::get('/export/download', [DashboardPerpajakanController::class, 'exportData'])->name('export.download');
@@ -842,23 +509,10 @@ Route::middleware(['auth', 'role:admin,perpajakan,Perpajakan'])->prefix('reports
 
 // Professional Returns Routes - Perpajakan
 Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengembalian'])
-    ->middleware(['auth', 'role:admin,perpajakan,Perpajakan'])
+    ->middleware(['auth', 'role:admin,perpajakan'])
     ->name('returns.perpajakan.index');
 
-
-// Backward compatibility for old Perpajakan routes
-Route::get('/dokumensPerpajakan', function () {
-    return redirect()->route('documents.perpajakan.index', [], 301);
-})->name('dokumensPerpajakan.index.old');
-Route::get('/rekapan-perpajakan', function () {
-    return redirect()->route('reports.perpajakan.index', [], 301);
-})->name('perpajakan.rekapan.old');
-Route::get('/export-perpajakan', function () {
-    return redirect()->route('reports.perpajakan.export', [], 301);
-})->name('perpajakan.export.old');
-Route::get('/pengembalian-dokumensPerpajakan', function () {
-    return redirect()->route('returns.perpajakan.index', [], 301);
-})->name('pengembalianPerpajakan.index.old');
+// Backward compatibility routes removed — old Perpajakan URLs (Phase 2 cleanup)
 
 // SECURITY: Test routes removed or protected - Only available in development
 if (app()->environment('local', 'development')) {
@@ -1055,7 +709,7 @@ Route::middleware(['auth', 'role:team_verifikasi'])
 // =============================================================================
 // BULK OPERATIONS - Common route for all allowed roles
 // =============================================================================
-Route::middleware(['auth', 'role:team_verifikasi,verifikasi,Verifikasi,perpajakan,Perpajakan,akutansi,Akutansi'])
+Route::middleware(['auth', 'role:team_verifikasi,verifikasi,perpajakan,akutansi'])
     ->prefix('bulk-operations')
     ->name('bulk-operations.')
     ->group(function () {

@@ -2111,6 +2111,41 @@ class DokumenController extends Controller
 
         return $suggestions;
     }
+
+    /**
+     * Get the next available nomor agenda for auto-generation.
+     * Moved from routes/web.php closure for proper Separation of Concerns.
+     */
+    public function nextNomorAgenda()
+    {
+        try {
+            $currentYear = Carbon::now()->year;
+
+            // Find the highest nomor_agenda number for the current year
+            $latestDokumen = Dokumen::where('nomor_agenda', 'like', '%_' . $currentYear)
+                ->get()
+                ->map(function ($doc) {
+                    // Extract the numeric part before the underscore
+                    $parts = explode('_', $doc->nomor_agenda);
+                    return isset($parts[0]) && is_numeric($parts[0]) ? (int) $parts[0] : 0;
+                })
+                ->max();
+
+            $nextNumber = ($latestDokumen ?? 0) + 1;
+            $nextNomorAgenda = $nextNumber . '_' . $currentYear;
+
+            return response()->json([
+                'success' => true,
+                'next_nomor_agenda' => $nextNomorAgenda,
+                'current_highest' => $latestDokumen ?? 0,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil nomor agenda: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
 
 

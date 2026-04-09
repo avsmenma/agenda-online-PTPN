@@ -44,3 +44,16 @@ Aturan:
 - Middleware RBAC: CheckRole, CheckBagianRole
 - Helper: ActivityLogHelper, DokumenHelper
 - Trait: LogsProgrammerActivity (audit trail programmer)
+
+## 📚 Documentation
+SELALU gunakan Context7 untuk mengambil dokumentasi terbaru sebelum
+menulis kode yang berkaitan dengan library berikut:
+- Laravel 12
+- Tailwind CSS v4
+- Alpine.js
+- Pusher / Laravel Echo
+- pragmarx/google2fa
+- maatwebsite/excel
+
+Jangan mengandalkan pengetahuan internal — selalu resolve via Context7
+terlebih dahulu.

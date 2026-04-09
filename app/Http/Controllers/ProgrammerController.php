@@ -107,8 +107,8 @@ final class ProgrammerController extends Controller
             'nomor_agendas' => 'required|string',
         ]);
 
-        // Prevent PHP timeout for large batches
-        set_time_limit(0);
+        // Prevent PHP timeout for large batches (max 5 minutes for safety)
+        set_time_limit(300);
 
         // Disable query log to reduce memory usage
         DB::disableQueryLog();
@@ -593,7 +593,7 @@ final class ProgrammerController extends Controller
             'role' => 'required|string',
             'bagian_code' => 'nullable|string|max:50',
             'phone_number' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:8',
         ]);
 
         $user = User::find($validated['id']);
@@ -670,7 +670,7 @@ final class ProgrammerController extends Controller
             'role' => 'required|string',
             'bagian_code' => 'nullable|string|max:50',
             'phone_number' => 'nullable|string|max:20',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
         ]);
 
         $user = User::create([
