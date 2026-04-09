@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/update-username', [\App\Http\Controllers\ProfileController::class, 'updateUsername'])->name('update-username');
         Route::post('/update-email', [\App\Http\Controllers\ProfileController::class, 'updateEmail'])->name('update-email');
         Route::post('/update-password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('update-password');
+        Route::post('/2fa-reset-requests', [\App\Http\Controllers\TwoFactorResetRequestController::class, 'store'])
+            ->name('2fa-reset-requests.store');
     });
 
     // Document Preview API Routes (for all authenticated users)
@@ -1129,6 +1131,13 @@ Route::middleware(['auth', 'role:programmer'])
         // Programmer Audit Trail - Log aktivitas sensitif programmer
         Route::get('/programmer-audit-trail', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
             ->name('programmer-audit-trail');
+
+        Route::get('/2fa-reset-requests', [\App\Http\Controllers\TwoFactorResetController::class, 'index'])
+            ->name('2fa-reset-requests.index');
+        Route::post('/2fa-reset-requests/{id}/approve', [\App\Http\Controllers\TwoFactorResetController::class, 'approve'])
+            ->name('2fa-reset-requests.approve');
+        Route::post('/2fa-reset-requests/{id}/reject', [\App\Http\Controllers\TwoFactorResetController::class, 'reject'])
+            ->name('2fa-reset-requests.reject');
 
         Route::get('/notification-logs', [\App\Http\Controllers\WhatsAppNotificationLogController::class, 'index'])
             ->name('notification-logs');

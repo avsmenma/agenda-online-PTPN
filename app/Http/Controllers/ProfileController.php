@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\TwoFactorResetRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -28,8 +29,14 @@ final class ProfileController extends Controller
             return view('profile.require-2fa');
         }
 
+        $latestResetRequest = TwoFactorResetRequest::query()
+            ->where('requester_id', $user->id)
+            ->orderByDesc('id')
+            ->first();
+
         return view('profile.account', [
             'user' => $user,
+            'latestResetRequest' => $latestResetRequest,
         ]);
     }
 

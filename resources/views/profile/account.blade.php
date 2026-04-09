@@ -62,6 +62,39 @@
                                             <i class="fas fa-shield-alt me-1"></i>
                                             Aktif
                                         </span>
+                                        @php
+                                            $resetStatus = $latestResetRequest->status ?? null;
+                                            $resetBadgeClass = match ($resetStatus) {
+                                                'pending' => 'bg-warning text-dark',
+                                                'approved' => 'bg-success',
+                                                'rejected' => 'bg-danger',
+                                                default => 'bg-secondary',
+                                            };
+                                        @endphp
+
+                                        <div class="mt-2">
+                                            <div class="small text-muted mb-1">Pengajuan Reset 2FA</div>
+                                            @if($latestResetRequest)
+                                                <span class="badge {{ $resetBadgeClass }}">
+                                                    {{ strtoupper($resetStatus) }}
+                                                </span>
+                                                @if($resetStatus === 'rejected' && !empty($latestResetRequest->notes))
+                                                    <div class="small text-muted mt-1">Alasan penolakan: {{ $latestResetRequest->notes }}</div>
+                                                @endif
+                                            @else
+                                                <span class="badge bg-secondary">BELUM ADA</span>
+                                            @endif
+                                        </div>
+
+                                        @if(!($latestResetRequest && $latestResetRequest->status === 'pending'))
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#request2faResetModal">
+                                                Ajukan Reset 2FA
+                                            </button>
+                                        @else
+                                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" disabled>
+                                                Menunggu Persetujuan
+                                            </button>
+                                        @endif
                                     @else
                                         <span class="badge bg-danger">
                                             <i class="fas fa-exclamation-triangle me-1"></i>
@@ -218,6 +251,40 @@
         </div>
     </div>
 </div>
+
+    @if($user->hasTwoFactorEnabled())
+        <div class="modal fade" id="request2faResetModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Ajukan Reset 2FA</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ route('profile.2fa-reset-requests.store') }}">
+                        @csrf
+                        <div class="modal-body">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Reset 2FA akan menonaktifkan autentikasi dua faktor pada akun Anda setelah disetujui programmer.
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Alasan Reset (minimal 10 karakter)</label>
+                                <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="4" required minlength="10">{{ old('reason') }}</textarea>
+                                @error('reason')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-danger">Kirim Pengajuan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 @endsection
 
 

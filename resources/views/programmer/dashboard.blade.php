@@ -149,6 +149,17 @@
                                 </div>
                                 <i class="fas fa-chevron-right ms-auto"></i>
                             </a>
+                            <a href="{{ route('programmer.2fa-reset-requests.index') }}"
+                                class="list-group-item list-group-item-action d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-unlock-alt fa-2x" style="color: #ef4444;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">2FA Reset Requests</h6>
+                                    <small class="text-muted">Kelola pengajuan reset 2FA dari user</small>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

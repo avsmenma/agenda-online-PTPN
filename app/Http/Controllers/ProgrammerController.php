@@ -749,7 +749,7 @@ final class ProgrammerController extends Controller
     /**
      * Reset 2FA for another user (admin action by programmer)
      */
-    public function resetUserTwoFactor(int $id): JsonResponse
+    public function resetUserTwoFactor(int $id, \App\Services\FonnteWhatsAppService $whatsAppService): JsonResponse
     {
         $user = User::find($id);
 
@@ -760,19 +760,52 @@ final class ProgrammerController extends Controller
             ], 404);
         }
 
-        if (!$user->two_factor_enabled && !$user->two_factor_secret) {
+        $pendingRequest = \App\Models\TwoFactorResetRequest::query()
+            ->where('requester_id', $user->id)
+            ->where('status', 'pending')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$pendingRequest) {
             return response()->json([
                 'success' => false,
-                'message' => 'User ini tidak mengaktifkan 2FA',
-            ], 422);
+                'message' => 'Reset 2FA hanya bisa dilakukan jika ada request dari user (status pending).',
+            ], 403);
         }
 
-        // Reset semua data 2FA
-        $user->two_factor_enabled = false;
-        $user->two_factor_secret = null;
-        $user->two_factor_confirmed_at = null;
-        $user->two_factor_recovery_codes = null;
-        $user->save();
+        $programmer = Auth::user();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $pendingRequest, $programmer) {
+            $user->refresh();
+            $user->two_factor_enabled = false;
+            $user->two_factor_secret = null;
+            $user->two_factor_confirmed_at = null;
+            $user->two_factor_recovery_codes = null;
+            $user->save();
+
+            $pendingRequest->refresh();
+            $pendingRequest->status = 'approved';
+            $pendingRequest->programmer_id = $programmer?->id;
+            $pendingRequest->handled_at = now();
+            $pendingRequest->save();
+        });
+
+        try {
+            $message = 'Pengajuan reset 2FA Anda telah disetujui. 2FA pada akun Anda sudah dinonaktifkan. Silakan aktifkan kembali 2FA setelah login.';
+            $userPhone = trim((string) ($user->phone_number ?? ''));
+            if ($userPhone !== '' && config('fonnte.enabled', true)) {
+                $whatsAppService->sendMessage($userPhone, $message);
+            }
+
+            $fallbackEnabled = filter_var(config('notifications.fallback_email_enabled', true), FILTER_VALIDATE_BOOL);
+            $userEmail = trim((string) ($user->email ?? ''));
+            if ($fallbackEnabled && $userEmail !== '') {
+                \Illuminate\Support\Facades\Mail::to($userEmail)->send(
+                    new \App\Mail\TwoFactorResetStatusMail($user, $pendingRequest, 'approved')
+                );
+            }
+        } catch (\Throwable $e) {
+        }
 
         Log::warning("Programmer reset 2FA for user", [
             'target_user_id' => $user->id,
@@ -781,9 +814,7 @@ final class ProgrammerController extends Controller
         ]);
 
         // Catat ke audit trail
-        $this->logActivity('reset_2fa', $user,
-            "Reset 2FA user: {$user->name} (@{$user->username})"
-        );
+        $this->logActivity('reset_2fa', $user, "Reset 2FA user via request #{$pendingRequest->id}: {$user->name} (@{$user->username})");
 
         return response()->json([
             'success' => true,
