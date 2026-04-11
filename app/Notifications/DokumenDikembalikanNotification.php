@@ -45,7 +45,7 @@ class DokumenDikembalikanNotification extends Notification
             'bidang_name'   => $this->bidangName,
             'alasan'        => $this->alasan,
             'returned_at'   => now()->toDateTimeString(),
-            'url'           => route('bagian.dokumen.show', $this->dokumen->id),
+            'url'           => route('inbox.show', $this->dokumen->id),
             'message'       => "Dokumen {$this->dokumen->nomor_agenda} dikembalikan dari Team Verifikasi ke Bidang {$this->bidangName}.",
         ];
     }

@@ -2495,7 +2495,7 @@ class TeamVerifikasiController extends Controller
                     ->get();
 
                 if ($bagianUsers->isNotEmpty()) {
-                    $docUrl  = url(route('bagian.dokumen.show', $dokumen->id, false));
+                    $docUrl  = url(route('inbox.show', $dokumen->id, false));
                     $reason  = $request->bidang_return_reason;
                     $agenda  = $dokumen->nomor_agenda ?? 'N/A';
                     $message = "🔔 *NOTIFIKASI SISTEM AGENDA ONLINE*\n\n"
