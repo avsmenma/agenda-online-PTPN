@@ -27,9 +27,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Force HTTPS on production to prevent redirect loops
-        if ($this->app->environment('production')) {
-            \URL::forceScheme('https');
-        }
+        // DINONAKTIFKAN KARENA SERVER MENGGUNAKAN IP ADDRESS (HTTP)
+        // if ($this->app->environment('production')) {
+        //     \URL::forceScheme('https');
+        // }
 
         // Register welcome message composer for all views
         View::composer('*', WelcomeMessageComposer::class);
