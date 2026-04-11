@@ -47,7 +47,7 @@ class DashboardController extends Controller
                 // Support both old and new role codes
                 $query->whereIn('role_code', ['team_verifikasi', 'team_verifikasi']);
             })
-            ->whereNotIn('status', ['returned_to_operator', 'returned_to_Operator'])
+            ->whereNotIn('status', ['returned_to_operator'])
             ->count();
 
         // Total dokumen sudah dikirim = dokumen yang sudah dikirim ke team_verifikasi
@@ -56,13 +56,13 @@ class DashboardController extends Controller
                 // Support both old and new role codes
                 $query->whereIn('role_code', ['team_verifikasi', 'team_verifikasi']);
             })
-            ->whereNotIn('status', ['returned_to_operator', 'returned_to_Operator'])
+            ->whereNotIn('status', ['returned_to_operator'])
             ->count();
 
         // Total dokumen yang di-reject dari inbox dan dikembalikan ke Operator
         $totalDitolakInbox = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
             ->whereIn(\DB::raw('LOWER(current_handler)'), $operatorRoles)
-            ->whereIn('status', ['returned_to_operator', 'returned_to_Operator'])
+            ->whereIn('status', ['returned_to_operator'])
             ->whereHas('roleStatuses', function ($query) {
                 $query->where('status', 'rejected');
             })
@@ -150,7 +150,7 @@ class DashboardController extends Controller
             })
                 ->where(function ($query) {
                     // DAN status returned ke Operator
-                    $query->whereIn('status', ['returned_to_operator', 'returned_to_Operator'])
+                    $query->whereIn('status', ['returned_to_operator'])
                         ->whereHas('roleStatuses', function ($q) use ($checkFrom) {
                         // Filter by rejected status and check time from status_changed_at
                         $q->where('status', 'rejected')
@@ -249,7 +249,7 @@ class DashboardController extends Controller
             // Hitung total rejected - support both old and new role names
             $totalRejected = Dokumen::whereIn(\DB::raw('LOWER(created_by)'), $operatorRoles)
                 ->whereIn(\DB::raw('LOWER(current_handler)'), $operatorRoles)
-                ->whereIn('status', ['returned_to_operator', 'returned_to_Operator'])
+                ->whereIn('status', ['returned_to_operator'])
                 ->whereHas('roleStatuses', function ($q) {
                     $q->where('status', 'rejected');
                 })
@@ -416,7 +416,7 @@ class DashboardController extends Controller
 
             // For operator users: document must be created by operator and returned/rejected
             $createdByOperator = in_array(strtolower($dokumen->created_by ?? ''), array_map('strtolower', $operatorRoles));
-            $isReturned = in_array($dokumen->status, ['returned_to_operator', 'returned_to_Operator']);
+            $isReturned = in_array($dokumen->status, ['returned_to_operator']);
 
             // For bagian users: document must be returned_to_bidang with a rejection
             $isReturnedToBidang = $dokumen->status === 'returned_to_bidang';

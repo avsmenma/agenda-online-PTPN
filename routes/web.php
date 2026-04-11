@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\DashboardController;
@@ -33,6 +34,16 @@ Route::middleware('guest')->group(function () {
     Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify.store');
     Route::post('/2fa/verify-recovery', [\App\Http\Controllers\TwoFactorController::class, 'verifyRecoveryCode'])->name('2fa.verify.recovery');
 });
+
+// GET logout - accessible without CSRF token (fixes 419 PAGE EXPIRED)
+Route::get('/logout', function (Request $request) {
+    if (Auth::check()) {
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
+    return redirect('/login')->with('success', 'Anda telah berhasil keluar dari sistem.');
+})->name('logout.get');
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

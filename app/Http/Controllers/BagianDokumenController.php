@@ -550,6 +550,15 @@ class BagianDokumenController extends Controller
             abort(403, 'Anda tidak memiliki akses ke dokumen ini');
         }
 
+        // R8: Proteksi edit — Bagian hanya boleh edit dokumen yang belum dikirim atau dikembalikan
+        $allowedEditStatuses = ['belum dikirim', 'returned_to_bidang'];
+        if (!in_array($dokumen->status, $allowedEditStatuses)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Dokumen tidak dapat diedit. Status saat ini adalah "' . $dokumen->status . '". '
+                    . 'Dokumen hanya dapat diedit jika berstatus "Belum Dikirim" atau "Dikembalikan ke Bidang".');
+        }
+
         $validated = $request->validate([
             'nomor_agenda' => 'nullable|string|max:255',
             'nomor_spp' => 'required|string|max:255',
@@ -816,8 +825,26 @@ class BagianDokumenController extends Controller
                 ->with('error', 'Dokumen sudah pernah dikirim sebelumnya.');
         }
 
-        // Conditional routing: if returned by Team Verifikasi, send directly back to them
-        if ($dokumen->return_source === 'team_verifikasi') {
+        // R4: Validasi dokumen harus diubah sebelum dikirim ulang
+        // Jika dokumen dikembalikan, pastikan ada perubahan setelah dikembalikan
+        if ($dokumen->status === 'returned_to_bidang' && $dokumen->returned_at) {
+            if (!$dokumen->updated_at || $dokumen->updated_at->lte($dokumen->returned_at)) {
+                $message = 'Harap lakukan perubahan pada dokumen terlebih dahulu sebelum mengirim ulang. '
+                    . 'Dokumen dikembalikan pada ' . $dokumen->returned_at->format('d/m/Y H:i')
+                    . ', namun belum ada perubahan setelah tanggal tersebut.';
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+        }
+
+        // R5: Conditional routing — more robust check using BOTH status AND return_source.
+        // Prevents mis-routing when return_source is stale or null.
+        // - status MUST be 'returned_to_bidang' (confirming this is a return flow)
+        // - AND return_source MUST be 'team_verifikasi' (confirming who returned it)
+        // If return_source is null or belongs to another handler, fall through to normal Operator flow.
+        if ($dokumen->status === 'returned_to_bidang' && $dokumen->return_source === 'team_verifikasi') {
             return $this->sendBackToVerifikasi($request, $dokumen, $bagianCode);
         }
 
@@ -886,6 +913,26 @@ class BagianDokumenController extends Controller
             DB::beginTransaction();
 
             $now = Carbon::now();
+
+            // R3: Simpan history pengembalian ke activity log SEBELUM dihapus
+            // Agar Team Verifikasi bisa melihat riwayat alasan pengembalian saat review ulang
+            try {
+                \App\Helpers\ActivityLogHelper::log(
+                    $dokumen,
+                    'resent_after_return',
+                    'Dokumen dikirim ulang setelah revisi ke Team Verifikasi',
+                    'bagian',
+                    'bagian_' . strtolower($bagianCode),
+                    [
+                        'previous_return_reason' => $dokumen->return_reason,
+                        'previous_returned_at'   => $dokumen->returned_at ? $dokumen->returned_at->toDateTimeString() : null,
+                        'previous_return_source' => $dokumen->return_source,
+                        'resent_at'              => $now->toDateTimeString(),
+                    ]
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log resent_after_return history: ' . $logException->getMessage());
+            }
 
             // Update document status - Send directly to Team Verifikasi
             $dokumen->update([

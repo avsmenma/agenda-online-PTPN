@@ -113,7 +113,7 @@ class DokumenRekapanController extends Controller
                 'sent_to_team_verifikasi' => $query->where('status', 'sent_to_team_verifikasi')->count(),
                 'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
                 'selesai' => $query->where('status', 'selesai')->count(),
-                'returned_to_Operator' => $query->where('status', 'returned_to_Operator')->count(),
+                'returned_to_operator' => $query->where('status', 'returned_to_operator')->count(),
             ]
         ];
     }

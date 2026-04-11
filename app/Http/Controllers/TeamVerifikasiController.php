@@ -809,7 +809,7 @@ class TeamVerifikasiController extends Controller
 
         // Only allow editing if current_handler is Team Verifikasi or document is returned_to_verifikasi
         if (
-            !in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])
+            !in_array($dokumen->current_handler, ['team_verifikasi', 'verifikasi'])
             && $dokumen->status !== 'returned_to_verifikasi'
         ) {
             return redirect()->route('documents.verifikasi.index')
@@ -904,7 +904,7 @@ class TeamVerifikasiController extends Controller
     {
         // Only allow updating if current_handler is Team Verifikasi or document is returned_to_verifikasi
         if (
-            !in_array($dokumen->current_handler, ['team_verifikasi', 'team_verifikasi'])
+            !in_array($dokumen->current_handler, ['team_verifikasi', 'verifikasi'])
             && $dokumen->status !== 'returned_to_verifikasi'
         ) {
             return redirect()->route('documents.verifikasi.index')
@@ -1143,7 +1143,7 @@ class TeamVerifikasiController extends Controller
             ]);
 
             $allowedHandlers = ['team_verifikasi', 'team_verifikasi', 'perpajakan', 'akutansi', 'operator', 'pembayaran'];
-            $allowedStatuses = ['sent_to_team_verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_verifikasi', 'returned_to_bidang', 'returned_to_Operator'];
+            $allowedStatuses = ['sent_to_team_verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_verifikasi', 'returned_to_bidang', 'returned_to_operator'];
 
             // Allow if rejected by Team Verifikasi
             $isInboxRejected = false;
@@ -2430,8 +2430,10 @@ class TeamVerifikasiController extends Controller
 
             // Validate optional reason (only if provided)
             $request->validate([
-                'bidang_return_reason' => 'nullable|string|max:1000'
+                'bidang_return_reason' => 'required|string|min:10|max:1000'
             ], [
+                'bidang_return_reason.required' => 'Alasan pengembalian ke bidang wajib diisi.',
+                'bidang_return_reason.min' => 'Alasan pengembalian minimal 10 karakter.',
                 'bidang_return_reason.max' => 'Alasan pengembalian maksimal 1000 karakter.'
             ]);
 
@@ -2443,7 +2445,7 @@ class TeamVerifikasiController extends Controller
                 'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
                 'return_source' => $targetBidang,
                 // Unified return fields
-                'return_reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
+                'return_reason' => $request->bidang_return_reason,
                 'returned_at' => now(),
             ]);
 
@@ -2454,7 +2456,7 @@ class TeamVerifikasiController extends Controller
                 \App\Helpers\ActivityLogHelper::logReturned(
                     $dokumen,
                     $targetBidang,
-                    $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal',
+                    $request->bidang_return_reason,
                     'team_verifikasi'
                 );
             } catch (\Exception $logException) {
@@ -2484,12 +2486,64 @@ class TeamVerifikasiController extends Controller
 
             $bidangName = $bidangNames[$targetBidang] ?? $targetBidang;
 
+            // R6: Kirim notifikasi ke user Bagian setelah dokumen dikembalikan
+            try {
+                // Cari user dengan bagian_code yang sesuai
+                $bagianUsers = \App\Models\User::where('bagian_code', $targetBidang)
+                    ->whereNotNull('phone_number')
+                    ->where('phone_number', '!=', '')
+                    ->get();
+
+                if ($bagianUsers->isNotEmpty()) {
+                    $docUrl  = url(route('bagian.dokumen.show', $dokumen->id, false));
+                    $reason  = $request->bidang_return_reason;
+                    $agenda  = $dokumen->nomor_agenda ?? 'N/A';
+                    $message = "🔔 *NOTIFIKASI SISTEM AGENDA ONLINE*\n\n"
+                        . "Dokumen dengan nomor agenda *{$agenda}* telah *dikembalikan* ke Bidang {$bidangName}.\n\n"
+                        . "📋 *Alasan Pengembalian:*\n{$reason}\n\n"
+                        . "Silakan lakukan perbaikan dan kirim ulang dokumen.\n\n"
+                        . "🔗 Lihat dokumen: {$docUrl}";
+
+                    $whatsAppService = app(\App\Services\FonnteWhatsAppService::class);
+
+                    foreach ($bagianUsers as $bagianUser) {
+                        $whatsAppService->sendMessage($bagianUser->phone_number, $message);
+                    }
+
+                    \Log::info('[R6] WhatsApp notification sent for returnToBidang', [
+                        'dokumen_id'   => $dokumen->id,
+                        'target_bidang' => $targetBidang,
+                        'notified_count' => $bagianUsers->count(),
+                    ]);
+                } else {
+                    // Fallback: Database notification (in-app) jika tidak ada nomor HP
+                    $bagianUsersAll = \App\Models\User::where('bagian_code', $targetBidang)->get();
+                    foreach ($bagianUsersAll as $bagianUser) {
+                        $bagianUser->notify(new \App\Notifications\DokumenDikembalikanNotification(
+                            $dokumen,
+                            $request->bidang_return_reason,
+                            $bidangName
+                        ));
+                    }
+
+                    \Log::info('[R6] In-app notification sent (no phone) for returnToBidang', [
+                        'dokumen_id'    => $dokumen->id,
+                        'target_bidang' => $targetBidang,
+                    ]);
+                }
+            } catch (\Exception $notifException) {
+                // Notifikasi gagal tidak boleh menghentikan alur utama
+                \Log::error('[R6] Failed to send return notification: ' . $notifException->getMessage(), [
+                    'dokumen_id' => $dokumen->id,
+                ]);
+            }
+
             return response()->json([
-                'success' => true,
-                'message' => "Dokumen berhasil dikembalikan ke bidang {$bidangName}.",
+                'success'      => true,
+                'message'      => "Dokumen berhasil dikembalikan ke bidang {$bidangName}.",
                 'return_source' => $targetBidang,
-                'bidang_name' => $bidangName,
-                'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
+                'bidang_name'  => $bidangName,
+                'reason'       => $request->bidang_return_reason
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -2534,6 +2588,24 @@ class TeamVerifikasiController extends Controller
             ]);
 
             \DB::commit();
+
+            // R7: Log aktivitas pemulihan dokumen dari status dikembalikan
+            try {
+                \App\Helpers\ActivityLogHelper::log(
+                    $dokumen,
+                    'restored_from_bidang',
+                    'Dokumen dipulihkan dari status dikembalikan ke daftar utama oleh Team Verifikasi',
+                    'team_verifikasi',
+                    'team_verifikasi',
+                    [
+                        'previous_return_source' => $dokumen->return_source,
+                        'previous_return_reason' => $dokumen->return_reason,
+                        'restored_at' => now()->toDateTimeString(),
+                    ]
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log restored_from_bidang activity: ' . $logException->getMessage());
+            }
 
             \Log::info('Document sent back to main list from bidang return', [
                 'document_id' => $dokumen->id,
@@ -2583,7 +2655,7 @@ class TeamVerifikasiController extends Controller
 
             // Update document with return to Operator information
             $dokumen->update([
-                'status' => 'returned_to_Operator',
+                'status' => 'returned_to_operator',
                 'current_handler' => 'operator',
                 // Unified return fields
                 'return_source' => 'team_verifikasi',
@@ -3157,7 +3229,7 @@ class TeamVerifikasiController extends Controller
                 'sent_to_team_verifikasi' => $query->where('status', 'sent_to_team_verifikasi')->count(),
                 'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
                 'selesai' => $query->where('status', 'selesai')->count(),
-                'returned_to_Operator' => $query->where('status', 'returned_to_Operator')->count(),
+                'returned_to_operator' => $query->where('status', 'returned_to_operator')->count(),
             ]
         ];
     }

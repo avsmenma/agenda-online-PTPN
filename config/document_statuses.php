@@ -132,7 +132,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Role → Next Handler Mapping — Document forwarding rules
+    | Role to Next Handler Mapping — Document forwarding rules
     |--------------------------------------------------------------------------
     */
     'forwarding' => [
@@ -141,5 +141,87 @@ return [
         'perpajakan'        => 'akutansi',
         'akutansi'          => 'pembayaran',
         'pembayaran'        => null,  // Terminal state
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | R9: Known Ambiguous Statuses — Dokumentasi Perbedaan Status
+    |--------------------------------------------------------------------------
+    |
+    | Terdapat dua status "return" yang terlihat mirip namun memiliki makna
+    | berbeda dalam alur dokumen. Perbedaan ini HARUS diketahui oleh semua
+    | developer yang bekerja pada modul ini.
+    |
+    | == returned_to_department ==
+    | SIAPA yang menggunakan:
+    |   - Perpajakan, Akutansi, Pembayaran -> mengembalikan dokumen ke Team Verifikasi
+    | SIAPA yang menerima:
+    |   - Team Verifikasi (current_handler segera pindah ke 'team_verifikasi')
+    | CARA membedakan asal pengembalian:
+    |   - Lihat field `return_source`:
+    |     * 'perpajakan' = dikembalikan dari Perpajakan
+    |     * 'akutansi'   = dikembalikan dari Akutansi
+    |     * 'pembayaran' = dikembalikan dari Pembayaran
+    | SKENARIO: Handler menemukan masalah, mengembalikan untuk ditinjau ulang.
+    |
+    | == returned_to_verifikasi ==
+    | SIAPA yang menggunakan:
+    |   - Perpajakan, Akutansi -> mengembalikan untuk klarifikasi
+    | SIAPA yang menerima:
+    |   - Team Verifikasi (tapi current_handler BELUM berpindah)
+    | PERBEDAAN vs returned_to_department:
+    |   1. returned_to_department  -> current_handler segera pindah ke 'team_verifikasi'
+    |   2. returned_to_verifikasi  -> current_handler BELUM pindah, dokumen masih
+    |      "dipegang" Perpajakan/Akutansi sampai Team Verifikasi mengambil alih
+    |      via sendBackToMainList().
+    | SKENARIO: Handler butuh klarifikasi, tapi belum sepenuhnya melepas dokumen.
+    |
+    | == returned_to_bidang ==
+    | SIAPA yang menggunakan:
+    |   - Team Verifikasi -> mengembalikan ke Bagian (sub-unit internal)
+    | SIAPA yang menerima:
+    |   - User dengan role 'bagian_XXX' sesuai return_source
+    |
+    | == returned_to_operator ==
+    | SIAPA yang menggunakan:
+    |   - Team Verifikasi -> mengembalikan ke Operator (pembuat dokumen)
+    | SIAPA yang menerima:
+    |   - User dengan role 'operator'
+    |
+    | == REKOMENDASI REFACTORING (future work) ==
+    | Jika ingin dikonsolidasi, pertimbangkan menggabungkan returned_to_department
+    | dan returned_to_verifikasi menjadi satu status 'returned_to_verifikasi'
+    | dengan field 'return_mode':
+    |   - return_mode = 'immediate' -> current_handler langsung berpindah
+    |   - return_mode = 'pending'   -> menunggu Team Verifikasi ambil alih
+    |
+    | PERINGATAN: Jangan konsolidasi tanpa migration + testing menyeluruh!
+    |
+    */
+    'known_ambiguities' => [
+        'returned_to_department' => [
+            'description'   => 'Dikembalikan oleh Perpajakan/Akutansi/Pembayaran ke Team Verifikasi. current_handler segera berpindah ke team_verifikasi.',
+            'set_by'        => ['perpajakan', 'akutansi', 'pembayaran'],
+            'received_by'   => 'team_verifikasi',
+            'discriminator' => 'return_source: perpajakan|akutansi|pembayaran',
+        ],
+        'returned_to_verifikasi' => [
+            'description'   => 'Dikembalikan oleh Perpajakan/Akutansi ke Team Verifikasi untuk klarifikasi. current_handler BELUM berpindah - dokumen masih terlihat di Perpajakan/Akutansi sampai Team Verifikasi ambil alih via sendBackToMainList().',
+            'set_by'        => ['perpajakan', 'akutansi'],
+            'received_by'   => 'team_verifikasi',
+            'discriminator' => 'return_source: perpajakan|akutansi',
+        ],
+        'returned_to_bidang' => [
+            'description'   => 'Dikembalikan oleh Team Verifikasi ke Bagian (sub-unit). Bagian harus revisi dan kirim ulang.',
+            'set_by'        => ['team_verifikasi'],
+            'received_by'   => 'bagian_{code}',
+            'discriminator' => 'return_source: AKN|DPM|KPL|PMO|SDM|SKH|TAN|TEP',
+        ],
+        'returned_to_operator' => [
+            'description'   => 'Dikembalikan oleh Team Verifikasi ke Operator. Operator harus revisi dan kirim ulang.',
+            'set_by'        => ['team_verifikasi'],
+            'received_by'   => 'operator',
+            'discriminator' => 'return_source: team_verifikasi',
+        ],
     ],
 ];

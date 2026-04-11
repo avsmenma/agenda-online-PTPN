@@ -10,16 +10,16 @@ class PengembalianDokumenController extends Controller
     {
         // Operator only sees returned documents (status = returned_to_Operator)
         $dokumens = \App\Models\Dokumen::where('created_by', 'operator')
-            ->where('status', 'returned_to_Operator')
+            ->where('status', 'returned_to_operator')
             ->latest('returned_at')
             ->paginate(10);
 
         // Get statistics
         $totalDibaca = \App\Models\Dokumen::where('created_by', 'operator')
-            ->where('status', 'returned_to_Operator')
+            ->where('status', 'returned_to_operator')
             ->count();
         $totalDikembalikan = \App\Models\Dokumen::where('created_by', 'operator')
-            ->where('status', 'returned_to_Operator')
+            ->where('status', 'returned_to_operator')
             ->count();
         $totalDikirim = \App\Models\Dokumen::where('created_by', 'operator')
             ->where('status', 'sent_to_team_verifikasi')

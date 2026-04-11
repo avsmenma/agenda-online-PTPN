@@ -594,7 +594,7 @@ class DokumenController extends Controller
                 'percentage' => 0
             ];
             $totalPercentage = 50;
-        } elseif ($dokumen->status === 'returned_to_Operator') {
+        } elseif ($dokumen->status === 'returned_to_operator') {
             $timeline[] = [
                 'step' => 'Terkirim ke Ibu Yuni',
                 'status' => 'completed',
@@ -1032,7 +1032,7 @@ class DokumenController extends Controller
 
         // Check if status allows editing
         // Include sent_to_team_verifikasi for Bagian documents that were resent
-        $allowedStatuses = ['draft', 'returned_to_Operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan', 'sent_to_team_verifikasi'];
+        $allowedStatuses = ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan', 'sent_to_team_verifikasi'];
         $isAllowedStatus = in_array($status, $allowedStatuses);
 
         // Additional check: document from Bagian with current_handler = operator can be edited
@@ -1142,7 +1142,7 @@ class DokumenController extends Controller
 
             // Update dokumen
             // IMPORTANT: Status is NOT updated here - it only changes via workflow (send, return, etc)
-            // BUT: For rejected documents, we need to ensure status remains 'returned_to_Operator' so they can be resent
+            // BUT: For rejected documents, we need to ensure status remains 'returned_to_operator' so they can be resent
             // Only update fields that are filled in the request, otherwise keep existing values
             // Use filled() to check if field is present and not empty (handles empty string vs null)
             $updateData = [
@@ -1172,9 +1172,9 @@ class DokumenController extends Controller
                 // 'keterangan' => REMOVED - not used anymore
             ];
 
-            // For rejected documents, ensure status remains 'returned_to_Operator' so they can be resent
-            // Don't change status if it's already 'returned_to_Operator' (for rejected documents)
-            if ($isRejected && $dokumen->status !== 'returned_to_Operator') {
+            // For rejected documents, ensure status remains 'returned_to_operator' so they can be resent
+            // Don't change status if it's already 'returned_to_operator' (for rejected documents)
+            if ($isRejected && $dokumen->status !== 'returned_to_operator') {
                 // Keep current status, don't change it
                 // Status will remain as is, but document can still be edited
             }
@@ -1644,7 +1644,7 @@ class DokumenController extends Controller
 
             // Check if document status is allowed (case-insensitive)
             $statusLower = strtolower($dokumen->status ?? '');
-            $allowedStatuses = ['draft', 'returned_to_Operator', 'sedang diproses', 'menunggu_approval_keuangan', 'sent_to_team_verifikasi'];
+            $allowedStatuses = ['draft', 'returned_to_operator', 'sedang diproses', 'menunggu_approval_keuangan', 'sent_to_team_verifikasi'];
             $isAllowedStatus = in_array($statusLower, $allowedStatuses);
 
             // Check if document is from Bagian (current_handler = operator but created_by != operator)

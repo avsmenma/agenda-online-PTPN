@@ -106,6 +106,10 @@ class Dokumen extends Model
         'urgency_sent_by',
         // Auto-forward tracking
         'auto_forwarded_at',
+        // R12: Perpajakan return fields (from migration 2025_11_19)
+        'perpajakan_return_data',
+        'pengembalian_awaiting_fix',
+        'returned_from_perpajakan_fixed_at',
     ];
 
     protected $casts = [
@@ -153,6 +157,10 @@ class Dokumen extends Model
         'urgency_sent_at' => 'datetime',
         // Auto-forward cast
         'auto_forwarded_at' => 'datetime',
+        // R12: Perpajakan return fields casts
+        'perpajakan_return_data'              => 'array',
+        'pengembalian_awaiting_fix'           => 'boolean',
+        'returned_from_perpajakan_fixed_at'   => 'datetime',
     ];
 
     public function dokumenPos(): HasMany
@@ -1142,7 +1150,7 @@ class Dokumen extends Model
         // Perpajakan -> Team Verifikasi
         // Akutansi -> Team Verifikasi
         $originalSender = 'operator';
-        $returnStatus = 'returned_to_Operator';
+        $returnStatus = 'returned_to_operator';
 
         // Unified return fields (Opsi B - Phase 3 complete)
         $this->return_source = $roleCode; // Who is returning the document
@@ -1221,7 +1229,7 @@ class Dokumen extends Model
             'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
             'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
             'selesai' => 'Selesai',
-            'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
             'returned_from_Team Verifikasi' => 'Dikembalikan dari Team Verifikasi',
@@ -1259,7 +1267,7 @@ class Dokumen extends Model
             'approved_perpajakan' => 'Approved by Perpajakan',
             'approved_akutansi' => 'Approved by Akutansi',
             'selesai' => 'Selesai',
-            'returned_to_Operator' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Bagian',
             'rejected_Team Verifikasi' => 'Ditolak oleh Ibu Yuni',
             'rejected_data_tidik_lengkap' => 'Ditolak (Data Tidak Lengkap)',
@@ -1381,7 +1389,7 @@ class Dokumen extends Model
                 }
 
                 // If returned to sender
-                if ($this->status === 'returned_to_Operator') {
+                if ($this->status === 'returned_to_operator') {
                     return 'Dikembalikan untuk Revisi';
                 }
 
@@ -1397,7 +1405,7 @@ class Dokumen extends Model
                 'waiting_reviewer_approval' => 'Menunggu Approval Reviewer',
                 'menunggu_di_approve' => 'Menunggu Approval',
                 'sent_to_team_verifikasi' => 'Terkirim',
-                'returned_to_Operator' => 'Dikembalikan untuk Revisi',
+                'returned_to_operator' => 'Dikembalikan untuk Revisi',
                 'selesai' => 'Selesai',
                 'completed' => 'Selesai',
             ];
