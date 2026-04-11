@@ -606,7 +606,7 @@ class DokumenController extends Controller
             $timeline[] = [
                 'step' => 'Dikembalikan ke Ibu Tarapul',
                 'status' => 'completed',
-                'time' => $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d M Y H:i') : '',
+                'time' => $dokumen->returned_at ? $dokumen->returned_at->format('d M Y H:i') : '',
                 'description' => $dokumen->return_reason ? 'Dikembalikan: ' . $dokumen->return_reason : 'Dokumen dikembalikan untuk perbaikan',
                 'percentage' => 40
             ];

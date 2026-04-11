@@ -1363,7 +1363,7 @@ class TeamVerifikasiController extends Controller
         $dates = [
             'Tanggal Dikirim ke Team Verifikasi' => $dokumen->getDataForRole('team_verifikasi')?->received_at ? $dokumen->getDataForRole('team_verifikasi')->received_at->format('d-m-Y H:i') : null,
             'Tanggal Diproses' => $dokumen->getDataForRole('team_verifikasi')?->processed_at ? $dokumen->getDataForRole('team_verifikasi')->processed_at->format('d-m-Y H:i') : null,
-            'Tanggal Dikembalikan' => $dokumen->returned_to_Operator_at ? $dokumen->returned_to_Operator_at->format('d-m-Y H:i') : null,
+            'Tanggal Dikembalikan' => $dokumen->returned_at ? $dokumen->returned_at->format('d-m-Y H:i') : null,
         ];
 
         foreach ($dates as $label => $value) {

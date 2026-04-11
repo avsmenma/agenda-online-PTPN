@@ -910,8 +910,8 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 8: Dikembalikan
-        if ($dokumen->returned_to_Operator_at || $dokumen->returned_at) {
-            $returnTime = $dokumen->returned_to_Operator_at ?? $dokumen->returned_at;
+        if ($dokumen->returned_at) {
+            $returnTime = $dokumen->returned_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $returnTime) : null;
 
             $events[] = [
@@ -1596,7 +1596,7 @@ class OwnerDashboardController extends Controller
      */
     private function getReturnDestination($dokumen)
     {
-        if ($dokumen->returned_to_Operator_at)
+        if ($dokumen->returned_at)
             return 'Operator';
         if ($dokumen->return_source === 'perpajakan' || $dokumen->return_source === 'akutansi' || $dokumen->return_source === 'pembayaran')
             return 'Ibu Tarapul (Department)';
@@ -2360,11 +2360,11 @@ class OwnerDashboardController extends Controller
         }
 
         // Return to Ibu A
-        if ($dokumen->returned_to_Operator_at) {
+        if ($dokumen->returned_at) {
             $returns[] = [
                 'from' => 'reviewer',
                 'to' => 'sender',
-                'timestamp' => $dokumen->returned_to_Operator_at,
+                'timestamp' => $dokumen->returned_at,
                 'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
                 'returned_to' => 'Operator'
@@ -2440,17 +2440,17 @@ class OwnerDashboardController extends Controller
             }
 
             // Check if returned to Ibu A and sent back
-            if ($dokumen->returned_to_Operator_at) {
+            if ($dokumen->returned_at) {
                 $hasCycle = true;
-                if (!$returnTimestamp || $dokumen->returned_to_Operator_at->gt($returnTimestamp)) {
-                    $returnTimestamp = $dokumen->returned_to_Operator_at;
+                if (!$returnTimestamp || $dokumen->returned_at->gt($returnTimestamp)) {
+                    $returnTimestamp = $dokumen->returned_at;
                 }
 
                 // Check if sent to Ibu B again after return
                 $teamVerifikasiReceivedAt = $dokumen->getDataForRole('team_verifikasi')?->received_at;
                 if (
                     $teamVerifikasiReceivedAt &&
-                    $teamVerifikasiReceivedAt->gt($dokumen->returned_to_Operator_at)
+                    $teamVerifikasiReceivedAt->gt($dokumen->returned_at)
                 ) {
                     $isResend = true;
                     if (!$resendTimestamp || $teamVerifikasiReceivedAt->gt($resendTimestamp)) {
