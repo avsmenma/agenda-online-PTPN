@@ -56,16 +56,6 @@ class DashboardPembayaranController extends Controller
         // STATISTICS CARDS (with Rupiah values)
         // ============================================
 
-        // Base query for statistics - with same year/month filter
-        $statsQuery = Dokumen::whereNotNull('nomor_agenda');
-        if ($year) {
-            $statsQuery->whereYear('created_at', $year);
-        }
-        if ($month) {
-            $statsQuery->whereMonth('created_at', $month);
-        }
-        $allDokumensData = $statsQuery->get();
-
         // Helper function to calculate computed status
         $getComputedStatus = function ($doc) use ($belumSiapHandlers) {
             if (
@@ -83,23 +73,58 @@ class DashboardPembayaranController extends Controller
             return 'belum_siap_dibayar';
         };
 
-        // Add computed status to all documents
-        $allDokumensData->each(function ($doc) use ($getComputedStatus) {
-            $doc->computed_status = $getComputedStatus($doc);
+        // OPTIMIZED: Use aggregate DB queries instead of ->get() to prevent memory exhaustion
+        $baseStatsFilter = function() use ($year, $month) {
+            $q = Dokumen::whereNotNull('nomor_agenda');
+            if ($year) { $q->whereYear('created_at', $year); }
+            if ($month) { $q->whereMonth('created_at', $month); }
+            return $q;
+        };
+
+        // Sudah dibayar: has tanggal_dibayar OR link_bukti OR status_pembayaran matches
+        $sudahDibayarQuery = $baseStatsFilter()->where(function ($q) {
+            $q->whereNotNull('tanggal_dibayar')
+              ->orWhereNotNull('link_bukti_pembayaran')
+              ->orWhere('status_pembayaran', 'sudah_dibayar')
+              ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+              ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR');
         });
+        $countSudahDibayar = (clone $sudahDibayarQuery)->count();
+        $nilaiSudahDibayar = (clone $sudahDibayarQuery)->sum('nilai_rupiah');
+
+        // Siap dibayar: current_handler=pembayaran OR status=sent_to_pembayaran, AND NOT sudah_dibayar
+        $siapDibayarQuery = $baseStatsFilter()->where(function ($q) {
+            $q->where('current_handler', 'pembayaran')
+              ->orWhere('status', 'sent_to_pembayaran');
+        })->where(function ($q) {
+            $q->whereNull('tanggal_dibayar');
+        })->where(function ($q) {
+            $q->whereNull('status_pembayaran')
+              ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+        })->whereNull('link_bukti_pembayaran');
+        $countSiapDibayar = (clone $siapDibayarQuery)->count();
+        $nilaiSiapDibayar = (clone $siapDibayarQuery)->sum('nilai_rupiah');
+
+        // Total
+        $totalCount = $baseStatsFilter()->count();
+        $totalNilai = $baseStatsFilter()->sum('nilai_rupiah');
+
+        // Belum siap = total - sudah - siap
+        $countBelumSiap = $totalCount - $countSudahDibayar - $countSiapDibayar;
+        $nilaiBelumSiap = $totalNilai - $nilaiSudahDibayar - $nilaiSiapDibayar;
 
         $statistics = [
-            'total_documents' => $allDokumensData->count(),
-            'total_nilai' => $allDokumensData->sum('nilai_rupiah'),
+            'total_documents' => $totalCount,
+            'total_nilai' => $totalNilai,
             'by_status' => [
-                'belum_dibayar' => $allDokumensData->where('computed_status', 'belum_siap_dibayar')->count(),
-                'siap_dibayar' => $allDokumensData->where('computed_status', 'siap_dibayar')->count(),
-                'sudah_dibayar' => $allDokumensData->where('computed_status', 'sudah_dibayar')->count(),
+                'belum_dibayar' => max(0, $countBelumSiap),
+                'siap_dibayar' => $countSiapDibayar,
+                'sudah_dibayar' => $countSudahDibayar,
             ],
             'total_nilai_by_status' => [
-                'belum_dibayar' => $allDokumensData->where('computed_status', 'belum_siap_dibayar')->sum('nilai_rupiah'),
-                'siap_dibayar' => $allDokumensData->where('computed_status', 'siap_dibayar')->sum('nilai_rupiah'),
-                'sudah_dibayar' => $allDokumensData->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
+                'belum_dibayar' => max(0, $nilaiBelumSiap),
+                'siap_dibayar' => $nilaiSiapDibayar,
+                'sudah_dibayar' => $nilaiSudahDibayar,
             ],
         ];
 
@@ -122,6 +147,7 @@ class DashboardPembayaranController extends Controller
                         });
                     });
             })
+            ->select(['id', 'nomor_agenda', 'current_handler', 'status', 'status_pembayaran', 'tanggal_dibayar', 'tanggal_masuk', 'created_at'])
             ->get();
 
         foreach ($allDokumensPembayaran as $dok) {
