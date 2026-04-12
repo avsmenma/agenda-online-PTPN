@@ -3860,7 +3860,8 @@
       $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
     }
 
-    $isOperatorSpreadsheet = strtolower($module ?? '') === 'operator' && !$isOwner && !$isBagianUser;
+    // Spreadsheet mode dinonaktifkan — operator kembali ke tampilan tabel normal dengan sidebar
+    $isOperatorSpreadsheet = false;
   @endphp
 
   {{-- ═══════════════════════════════════════════════════════════════════
