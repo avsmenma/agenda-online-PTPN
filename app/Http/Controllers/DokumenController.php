@@ -1513,17 +1513,25 @@ class DokumenController extends Controller
                 }
             } elseif ($field === 'dibayar_kepada') {
                 // Save to dibayarKepadas relation
+                // Support both comma-separated (from text input) and newline-separated (legacy)
                 $dokumen->dibayarKepadas()->delete();
-                $names = array_filter(array_map('trim', explode("\n", $value ?? '')));
+                $rawValue = $value ?? '';
+                // Normalize: replace newlines with commas, then split by comma
+                $normalized = preg_replace('/[\r\n]+/', ',', $rawValue);
+                $names = array_filter(array_map('trim', explode(',', $normalized)));
                 foreach ($names as $nama) {
                     if (!empty($nama)) {
                         \App\Models\DibayarKepada::create(['dokumen_id' => $dokumen->id, 'nama_penerima' => $nama]);
                     }
                 }
                 DB::commit();
-                // Return formatted display value
+                // Return formatted display value (comma-separated for text input display)
                 $displayValue = $dokumen->dibayarKepadas()->pluck('nama_penerima')->implode(', ');
-                return response()->json(['success' => true, 'display_value' => $displayValue ?: '-']);
+                return response()->json([
+                    'success'       => true,
+                    'display_value' => $displayValue ?: '-',
+                    'raw_value'     => $displayValue, // raw value = same as display for text input
+                ]);
             }
 
             $dokumen->$field = $saveValue;

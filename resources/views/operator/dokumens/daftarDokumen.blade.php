@@ -1,4 +1,4 @@
-﻿@extends('layouts/app')
+@extends('layouts/app')
 @section('content')
 
   <style>
@@ -2923,7 +2923,12 @@
                     } elseif (in_array($col, $dateCols)) {
                       $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : '';
                     } elseif ($col === 'dibayar_kepada') {
-                      $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode("\n");
+                      // Gunakan separator koma agar cocok dengan input text (bukan textarea)
+                      $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode(', ');
+                      // Fallback ke field langsung jika relasi kosong
+                      if (empty($ieRaw) && !empty($dokumen->dibayar_kepada)) {
+                        $ieRaw = $dokumen->dibayar_kepada;
+                      }
                     } else {
                       $ieRaw = $dokumen->$col ?? '';
                     }
@@ -6020,7 +6025,7 @@
                 nomor_miro          : 'text',
                 no_faktur           : 'text',
                 pemaraf             : 'text',
-                dibayar_kepada      : 'textarea',
+                dibayar_kepada      : 'text',
                 kategori            : 'select_kategori',
                 jenis_dokumen       : 'select_sub',
                 jenis_sub_pekerjaan : 'select_item',
@@ -6101,6 +6106,11 @@
                   el.type = 'text';
                   el.className = 'ie-input';
                   el.value = rawValue ?? '';
+                  // Hubungkan datalist autocomplete untuk dibayar_kepada
+                  if (fieldName === 'dibayar_kepada') {
+                    el.setAttribute('list', 'ie-dibayar-kepada-list');
+                    el.placeholder = 'Nama penerima (pisah koma)';
+                  }
                 }
                 return el;
               }
@@ -6314,8 +6324,66 @@
             })();
           </script>
 
+          {{-- Datalist autocomplete untuk field "Dibayar Kepada" --}}
+          <datalist id="ie-dibayar-kepada-list"></datalist>
+          <script>
+            (function() {
+              const list = document.getElementById('ie-dibayar-kepada-list');
+              if (!list) return;
+
+              // 1) Pre-populate dari teks yang sudah ada di kolom tabel (DOM scraping)
+              const seen = new Set();
+              document.querySelectorAll('td.col-dibayar_kepada').forEach(function(td) {
+                const txt = td.textContent.trim();
+                if (txt && txt !== '-') {
+                  // Bisa berisi beberapa penerima dipisah koma
+                  txt.split(',').forEach(function(name) {
+                    const n = name.trim();
+                    if (n && !seen.has(n)) {
+                      seen.add(n);
+                      const opt = document.createElement('option');
+                      opt.value = n;
+                      list.appendChild(opt);
+                    }
+                  });
+                }
+              });
+
+              // 2) Live fetch saat user mengetik di input ie-dibayar-kepada
+              let fetchTimer = null;
+              document.addEventListener('input', function(e) {
+                if (!e.target || e.target.getAttribute('list') !== 'ie-dibayar-kepada-list') return;
+                clearTimeout(fetchTimer);
+                const q = e.target.value.trim();
+                if (q.length < 2) return;
+                fetchTimer = setTimeout(function() {
+                  fetch('/api/autocomplete/payment-recipients?q=' + encodeURIComponent(q), {
+                    headers: {
+                      'Accept': 'application/json',
+                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    }
+                  })
+                  .then(function(r) { return r.ok ? r.json() : []; })
+                  .then(function(data) {
+                    const items = Array.isArray(data) ? data : [];
+                    items.forEach(function(name) {
+                      if (typeof name === 'string' && !seen.has(name)) {
+                        seen.add(name);
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        list.appendChild(opt);
+                      }
+                    });
+                  })
+                  .catch(function() {});
+                }, 250);
+              });
+            })();
+          </script>
+
+
           {{-- ============================================================
-               AJAX "Semua" loader ΓÇö no page reload, progressive loading
+               AJAX "Semua" loader — no page reload, progressive loading
                ============================================================ --}}
           <script>
           (function() {
