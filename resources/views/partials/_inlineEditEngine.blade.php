@@ -132,7 +132,7 @@
     jenis_pph           : 'text',
     dpp_pph             : 'number',
     ppn_terhutang       : 'number',
-    dibayar_kepada      : 'textarea',
+    dibayar_kepada      : 'text',
     kategori            : 'select_kategori',
     jenis_dokumen       : 'select_sub',
     jenis_sub_pekerjaan : 'select_item',
@@ -146,8 +146,8 @@
   let activeOverlay = null; // backdrop + popup for textarea fields
 
   /* ── Floating overlay for long-text fields ── */
-  const OVERLAY_FIELDS = ['uraian_spp', 'dibayar_kepada'];
-  const OVERLAY_LABELS = { uraian_spp: 'Edit Uraian SPP', dibayar_kepada: 'Edit Dibayar Kepada' };
+  const OVERLAY_FIELDS = ['uraian_spp'];
+  const OVERLAY_LABELS = { uraian_spp: 'Edit Uraian SPP' };
 
   function openOverlay(cell, field, rawValue) {
     closeOverlay(false); // tidy up any existing overlay
@@ -316,7 +316,7 @@
     return sel;
   }
 
-  function createInput(fieldType, rawValue) {
+  function createInput(fieldType, rawValue, fieldName) {
     let el;
     if (fieldType === 'textarea') {
       el = document.createElement('textarea');
@@ -334,6 +334,11 @@
     } else {
       el = document.createElement('input');
       el.type = 'text'; el.className = 'ie-input'; el.value = rawValue ?? '';
+      // Autocomplete untuk dibayar_kepada
+      if (fieldName === 'dibayar_kepada') {
+        el.setAttribute('list', 'ie-dibayar-kepada-list');
+        el.placeholder = 'Nama penerima (pisah koma)';
+      }
     }
     return el;
   }
@@ -357,7 +362,7 @@
     cell.dataset.originalHtml = cell.innerHTML;
     cell.dataset.originalRaw  = rawValue;
     activeCell  = cell;
-    activeInput = createInput(fieldType, rawValue);
+    activeInput = createInput(fieldType, rawValue, field);
     cell.classList.add('ie-editing');
     cell.innerHTML = '';
     cell.appendChild(activeInput);
@@ -476,5 +481,60 @@
     if (e.target.closest('.ie-cell')) { e.stopPropagation(); e.preventDefault(); }
   }, true);
 
+})();
+</script>
+
+{{-- Datalist autocomplete untuk field Dibayar Kepada (dipakai oleh semua role) --}}
+<datalist id="ie-dibayar-kepada-list"></datalist>
+<script>
+(function() {
+  const list = document.getElementById('ie-dibayar-kepada-list');
+  if (!list) return;
+
+  // Pre-populate dari nilai yang sudah tampil di kolom tabel
+  const seen = new Set();
+  document.querySelectorAll('td.col-dibayar_kepada').forEach(function(td) {
+    const txt = td.textContent.trim();
+    if (txt && txt !== '-') {
+      txt.split(',').forEach(function(name) {
+        const n = name.trim();
+        if (n && !seen.has(n)) {
+          seen.add(n);
+          const opt = document.createElement('option');
+          opt.value = n;
+          list.appendChild(opt);
+        }
+      });
+    }
+  });
+
+  // Live fetch saat user mengetik 2+ karakter
+  let fetchTimer = null;
+  document.addEventListener('input', function(e) {
+    if (!e.target || e.target.getAttribute('list') !== 'ie-dibayar-kepada-list') return;
+    clearTimeout(fetchTimer);
+    const q = e.target.value.trim();
+    if (q.length < 2) return;
+    fetchTimer = setTimeout(function() {
+      fetch('/api/autocomplete/payment-recipients?q=' + encodeURIComponent(q), {
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        }
+      })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(data) {
+        (Array.isArray(data) ? data : []).forEach(function(name) {
+          if (typeof name === 'string' && !seen.has(name)) {
+            seen.add(name);
+            const opt = document.createElement('option');
+            opt.value = name;
+            list.appendChild(opt);
+          }
+        });
+      })
+      .catch(function() {});
+    }, 250);
+  });
 })();
 </script>

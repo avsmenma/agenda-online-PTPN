@@ -4331,7 +4331,7 @@
                     if ($isCellEditable) {
                       if (in_array($col, ['nilai_rupiah','dpp_pph','ppn_terhutang'])) { $ieRaw = $dokumen->$col ?? ''; }
                       elseif (in_array($col, $dateCols)) { $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : ''; }
-                      elseif ($col === 'dibayar_kepada') { $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode("\n"); }
+                      elseif ($col === 'dibayar_kepada') { $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode(', '); }
                       else { $ieRaw = $dokumen->$col ?? ''; }
                     }
                   @endphp
