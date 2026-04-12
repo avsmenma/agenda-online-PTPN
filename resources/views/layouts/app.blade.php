@@ -3841,10 +3841,10 @@
           request()->is('*dokumensPerpajakan*') ||
           request()->is('*rekapan-perpajakan*');
       } elseif ($module === 'team_verifikasi') {
-        $isSubmenuPageForHeader = request()->routeIs('dokumensB.*') ||
-          request()->routeIs('team_verifikasi.*') ||
-          request()->is('*dokumensB*') ||
-          request()->is('*rekapan-Team Verifikasi*');
+        $isSubmenuPageForHeader = request()->routeIs('documents.verifikasi.*') ||
+          request()->routeIs('reports.verifikasi.*') ||
+          request()->routeIs('returns.verifikasi.*') ||
+          request()->is('*documents/verifikasi*');
       } else {
         $isSubmenuPageForHeader = request()->is('*dokumens*') ||
           request()->is('*rekapan*') ||
@@ -4061,39 +4061,42 @@
       // Note: $isOwner is already defined at the top of the body section
       $module = strtolower($module ?? 'operator');
 
+      // URL dashboard per role — menggunakan route yang benar sesuai web.php
       $dashboardUrl = match ($module) {
-        'operator', 'operator' => '/dashboard',
-        'team_verifikasi', 'team_verifikasi' => '/dashboardB',
-        'pembayaran' => '/dashboardPembayaran',
-        'akutansi' => '/dashboardAkutansi',
-        'perpajakan' => '/dashboardPerpajakan',
-        default => '/dashboard'
+        'operator'        => '/dashboard',
+        'team_verifikasi' => '/documents/verifikasi',
+        'pembayaran'      => '/dashboard/pembayaran',
+        'akutansi'        => '/dashboard/akutansi',
+        'perpajakan'      => '/dashboard/perpajakan',
+        default           => '/dashboard'
       };
+      // URL halaman daftar dokumen per role — route baru (professional URLs)
       $dokumenUrl = match ($module) {
-        'operator', 'operator' => '/dokumens',
-        'team_verifikasi', 'team_verifikasi' => '/dokumensB',
-        'pembayaran' => '/dokumensPembayaran',
-        'akutansi' => '/dokumensAkutansi',
-        'perpajakan' => '/dokumensPerpajakan',
-        default => '/dokumens'
+        'operator'        => '/documents',
+        'team_verifikasi' => '/documents/verifikasi',
+        'pembayaran'      => '/documents/pembayaran',
+        'akutansi'        => '/documents/akutansi',
+        'perpajakan'      => '/documents/perpajakan',
+        default           => '/documents'
       };
+      // URL halaman pengembalian/rekapan per role
       $pengembalianUrl = match ($module) {
-        'team_verifikasi', 'team_verifikasi' => '/pengembalian-dokumensB',
-        'pembayaran' => '/rekapan-keterlambatan',
-        'akutansi' => '/pengembalian-dokumensAkutansi',
-        'perpajakan' => '/pengembalian-dokumensPerpajakan',
-        default => '/pengembalian-dokumens'
+        'team_verifikasi' => '/returns/verifikasi',
+        'pembayaran'      => '/returns/pembayaran',
+        'akutansi'        => '/returns/akutansi',
+        'perpajakan'      => '/returns/perpajakan',
+        default           => '/pengembalian-dokumens'
       };
       $tambahDokumenUrl = match ($module) {
-        'operator', 'operator' => '/dokumens/create',
-        default => null
+        'operator' => '/documents/create',
+        default    => null
       };
       $editDokumenUrl = match ($module) {
-        'pembayaran' => '/dokumensPembayaran', // This will be handled by individual edit routes
-        'akutansi' => '/dokumensAkutansi',
-        'perpajakan' => '/dokumensPerpajakan',
-        'team_verifikasi', 'team_verifikasi' => '/dokumensB',
-        default => null
+        'pembayaran'      => '/documents/pembayaran',
+        'akutansi'        => '/documents/akutansi',
+        'perpajakan'      => '/documents/perpajakan',
+        'team_verifikasi' => '/documents/verifikasi',
+        default           => null
       };
     @endphp
 
@@ -4259,31 +4262,37 @@
         @else
           {{-- Regular Dokumen menu for other roles --}}
           @php
-            // Determine route based on module
+            // Determine route based on module — gunakan route() helper sesuai web.php
             $menuRoute = match ($module) {
-              'pembayaran' => route('documents.pembayaran.index'),
-              'akutansi' => url($dokumenUrl),
-              'perpajakan' => url($dokumenUrl),
-              'team_verifikasi' => url($dokumenUrl),
-              default => url($dokumenUrl)
+              'pembayaran'      => route('documents.pembayaran.index'),
+              'akutansi'        => route('documents.akutansi.index'),
+              'perpajakan'      => route('documents.perpajakan.index'),
+              'team_verifikasi' => route('documents.verifikasi.index'),
+              default           => url($dokumenUrl)
             };
 
             // Check if current route is within this module
             $isModuleActive = match ($module) {
-              'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
-              request()->routeIs('pembayaran.*') ||
-              request()->routeIs('rekapanKeterlambatan.*') ||
+              'pembayaran' => request()->routeIs('documents.pembayaran.*') ||
+              request()->routeIs('reports.pembayaran.*') ||
+              request()->routeIs('returns.pembayaran.*') ||
               request()->routeIs('csv.import.*') ||
-              request()->is('*dokumensPembayaran*') ||
-              request()->is('*rekapan-pembayaran*') ||
+              request()->is('*documents/pembayaran*') ||
+              request()->is('*reports/pembayaran*') ||
               request()->is('*rekapan-keterlambatan*') ||
               request()->is('*csv-import*'),
-              'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
-              request()->routeIs('akutansi.*'),
-              'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
-              request()->routeIs('perpajakan.*'),
-              'team_verifikasi' => request()->routeIs('dokumensB.*') ||
-              request()->routeIs('team_verifikasi.*'),
+              'akutansi' => request()->routeIs('documents.akutansi.*') ||
+              request()->routeIs('reports.akutansi.*') ||
+              request()->routeIs('returns.akutansi.*') ||
+              request()->is('*documents/akutansi*'),
+              'perpajakan' => request()->routeIs('documents.perpajakan.*') ||
+              request()->routeIs('reports.perpajakan.*') ||
+              request()->routeIs('returns.perpajakan.*') ||
+              request()->is('*documents/perpajakan*'),
+              'team_verifikasi' => request()->routeIs('documents.verifikasi.*') ||
+              request()->routeIs('reports.verifikasi.*') ||
+              request()->routeIs('returns.verifikasi.*') ||
+              request()->is('*documents/verifikasi*'),
               default => false
             };
           @endphp
@@ -4385,30 +4394,28 @@
     // Enhanced detection for pembayaran module
     $isSubmenuPage = false;
     if ($module === 'pembayaran') {
-      $isSubmenuPage = request()->routeIs('dokumensPembayaran.*') ||
-        request()->routeIs('pembayaran.*') ||
-        request()->routeIs('rekapanKeterlambatan.*') ||
+      $isSubmenuPage = request()->routeIs('documents.pembayaran.*') ||
+        request()->routeIs('reports.pembayaran.*') ||
+        request()->routeIs('returns.pembayaran.*') ||
         request()->routeIs('csv.import.*') ||
-        request()->is('*dokumensPembayaran*') ||
-        request()->is('*rekapan-pembayaran*') ||
+        request()->is('*documents/pembayaran*') ||
         request()->is('*rekapan-keterlambatan*') ||
-        request()->is('*csv-import*') ||
-        request()->is('*pengembalian-dokumensPembayaran*');
+        request()->is('*csv-import*');
     } elseif ($module === 'akutansi') {
-      $isSubmenuPage = request()->routeIs('dokumensAkutansi.*') ||
-        request()->routeIs('akutansi.*') ||
-        request()->is('*dokumensAkutansi*') ||
-        request()->is('*rekapan-akutansi*');
+      $isSubmenuPage = request()->routeIs('documents.akutansi.*') ||
+        request()->routeIs('reports.akutansi.*') ||
+        request()->routeIs('returns.akutansi.*') ||
+        request()->is('*documents/akutansi*');
     } elseif ($module === 'perpajakan') {
-      $isSubmenuPage = request()->routeIs('dokumensPerpajakan.*') ||
-        request()->routeIs('perpajakan.*') ||
-        request()->is('*dokumensPerpajakan*') ||
-        request()->is('*rekapan-perpajakan*');
+      $isSubmenuPage = request()->routeIs('documents.perpajakan.*') ||
+        request()->routeIs('reports.perpajakan.*') ||
+        request()->routeIs('returns.perpajakan.*') ||
+        request()->is('*documents/perpajakan*');
     } elseif ($module === 'team_verifikasi') {
-      $isSubmenuPage = request()->routeIs('dokumensB.*') ||
-        request()->routeIs('team_verifikasi.*') ||
-        request()->is('*dokumensB*') ||
-        request()->is('*rekapan-Team Verifikasi*');
+      $isSubmenuPage = request()->routeIs('documents.verifikasi.*') ||
+        request()->routeIs('reports.verifikasi.*') ||
+        request()->routeIs('returns.verifikasi.*') ||
+        request()->is('*documents/verifikasi*');
     } elseif ($isBagianUser) {
       $isSubmenuPage = request()->is('*bagian/documents*') ||
         request()->is('*bagian/tracking*');
