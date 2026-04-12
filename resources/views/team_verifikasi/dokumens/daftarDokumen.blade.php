@@ -4331,7 +4331,13 @@
                     if ($isCellEditable) {
                       if (in_array($col, ['nilai_rupiah','dpp_pph','ppn_terhutang'])) { $ieRaw = $dokumen->$col ?? ''; }
                       elseif (in_array($col, $dateCols)) { $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : ''; }
-                      elseif ($col === 'dibayar_kepada') { $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode(', '); }
+                      elseif ($col === 'dibayar_kepada') {
+                        $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode(', ');
+                        // Fallback: jika relasi kosong, gunakan field langsung
+                        if (empty($ieRaw) && !empty($dokumen->dibayar_kepada)) {
+                          $ieRaw = $dokumen->dibayar_kepada;
+                        }
+                      }
                       else { $ieRaw = $dokumen->$col ?? ''; }
                     }
                   @endphp
