@@ -3178,10 +3178,6 @@
         <i class="fa-solid fa-table-columns me-2"></i>
         Kustomisasi Kolom Tabel
       </button>
-      <button type="button" id="btnFullscreen" onclick="toggleFullscreen()" class="btn-fullscreen">
-        <i class="fa-solid fa-expand me-1" id="fullscreenIcon"></i>
-        <span id="fullscreenText">Fullscreen</span>
-      </button>
     </form>
   </div>
 
