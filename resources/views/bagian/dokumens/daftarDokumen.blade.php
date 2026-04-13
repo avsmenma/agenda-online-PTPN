@@ -1331,6 +1331,18 @@
                               {{ $doc->bulan ?? '-' }}
                             @elseif($col == 'tahun')
                               {{ $doc->tahun ?? '-' }}
+                            @elseif($col == 'npwp')
+                              {{ $doc->npwp ?? '-' }}
+                            @elseif($col == 'link_dokumen_pajak')
+                              @if($doc->link_dokumen_pajak)
+                                <a href="{{ $doc->link_dokumen_pajak }}" target="_blank" rel="noopener noreferrer"
+                                  class="ie-link-anchor" onclick="event.stopPropagation();"
+                                  title="{{ $doc->link_dokumen_pajak }}">
+                                  <i class="fa-solid fa-link fa-sm"></i> Link Pajak
+                                </a>
+                              @else
+                                -
+                              @endif
                             @else
                               -
                             @endif

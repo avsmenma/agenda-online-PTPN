@@ -477,6 +477,9 @@ class DashboardPembayaranController extends Controller
             'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
             'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
             'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
+            // Perpajakan data (read-only view)
+            'npwp' => 'NPWP',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         $data = [

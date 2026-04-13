@@ -679,6 +679,9 @@ class TeamVerifikasiController extends Controller
             'ppn_terhutang' => 'PPH Terhutang',
             // Role-specific columns
             'kebun' => 'Kebun',
+            // Perpajakan data (read-only view)
+            'npwp' => 'NPWP',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         // Get selected columns from request or session

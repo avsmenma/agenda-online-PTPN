@@ -182,6 +182,9 @@ class DokumenController extends Controller
             // Role-specific columns
             'status' => 'Status',
             'kebun' => 'Kebun',
+            // Perpajakan data (read-only view for Operator)
+            'npwp' => 'NPWP',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         // Get selected columns from request or session
@@ -316,6 +319,7 @@ class DokumenController extends Controller
             'no_berita_acara' => 'No Berita Acara', 'tanggal_berita_acara' => 'Tgl Berita Acara',
             'status' => 'Status', 'no_faktur' => 'No Faktur', 'tanggal_faktur' => 'Tgl Faktur',
             'nomor_miro' => 'Nomor MIRO',
+            'npwp' => 'NPWP', 'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         $selectedColumns = session('dokumens_table_columns', [

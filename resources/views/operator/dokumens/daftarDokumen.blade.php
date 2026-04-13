@@ -3133,13 +3133,25 @@
                   @elseif($col == 'dpp_pph')
                     {{ $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}
                   @elseif($col == 'ppn_terhutang')
-                    {{ $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
-                  @else
-                    -
-                  @endif
-                </td>
-              @endforeach
-              <td class="col-action" onclick="event.stopPropagation()">
+                  {{ $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
+                  @elseif($col == 'npwp')
+                  {{ $dokumen->npwp ?? '-' }}
+                  @elseif($col == 'link_dokumen_pajak')
+                      @if($dokumen->link_dokumen_pajak)
+                          <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" rel="noopener noreferrer"
+                            class="ie-link-anchor" onclick="event.stopPropagation();"
+                         title="{{ $dokumen->link_dokumen_pajak }}">
+                         <i class="fa-solid fa-link fa-sm"></i> Link Pajak
+                       </a>
+                     @else
+                       -
+                     @endif
+                   @else
+                     -
+                   @endif
+                 </td>
+               @endforeach
+               <td class="col-action" onclick="event.stopPropagation()">
                 <div class="action-buttons">
                   @php
                     // Check if document has been sent to Team Verifikasi

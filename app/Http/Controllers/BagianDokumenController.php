@@ -216,6 +216,9 @@ class BagianDokumenController extends Controller
             'umur_dokumen' => 'Umur Dokumen',
             'status_pembayaran' => 'Status Pembayaran',
             'kebun' => 'Kebun',
+            // Perpajakan data (read-only view)
+            'npwp' => 'NPWP',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         // Get selected columns from request or session
