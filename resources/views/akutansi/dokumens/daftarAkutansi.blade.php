@@ -343,6 +343,30 @@
       box-shadow: 0 2px 6px rgba(136, 151, 23, 0.2);
     }
 
+    .btn-fullscreen {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      white-space: nowrap;
+    }
+    .btn-fullscreen:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    }
+    .btn-fullscreen:active { transform: translateY(0); }
+
     /* Table Container - Enhanced Horizontal Scroll from perpajakan */
     .table-dokumen {
       background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
@@ -3082,6 +3106,84 @@
   </script>
 
 
+
+  {{-- ===== SEARCH & FILTER TOOLBAR ===== --}}
+  <div class="search-box" style="margin-bottom: 1rem;">
+    <form action="{{ route('documents.akutansi.index') }}" method="GET"
+      class="d-flex align-items-center flex-wrap gap-3" id="filterForm">
+      <div class="input-group" style="flex: 1; min-width: 280px;">
+        <span class="input-group-text">
+          <i class="fa-solid fa-magnifying-glass text-muted"></i>
+        </span>
+        <input type="text" class="form-control" name="search"
+          placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..."
+          value="{{ request('search') }}">
+      </div>
+      <div class="filter-section">
+        <div class="year-filter-wrapper" style="position: relative;">
+          <button type="button" class="btn-year-filter" id="yearFilterBtn" onclick="openYearFilterModal()">
+            <i class="fa-solid fa-calendar-alt me-2"></i>
+            <span id="yearFilterBtnText">
+              @php
+                $year = request('year');
+                $filterType = request('year_filter_type', 'tanggal_spp');
+                $filterTypeLabels = [
+                  'tanggal_spp' => 'Tgl SPP',
+                  'tanggal_masuk' => 'Tgl Masuk',
+                  'nomor_spp' => 'No SPP'
+                ];
+              @endphp
+              @if($year)
+                {{ $year }} ({{ $filterTypeLabels[$filterType] ?? 'Tgl SPP' }})
+              @else
+                Filter Tahun
+              @endif
+            </span>
+            <i class="fa-solid fa-chevron-down ms-2"></i>
+          </button>
+          <input type="hidden" name="year" id="yearSelect" value="{{ request('year') }}">
+          <input type="hidden" name="year_filter_type" id="yearFilterType"
+            value="{{ request('year_filter_type', 'tanggal_spp') }}">
+        </div>
+      </div>
+      <div class="filter-section">
+        <select name="status" class="form-select">
+          <option value="">Semua Status</option>
+          <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
+          <option value="terkirim_perpajakan" {{ request('status') == 'terkirim_perpajakan' ? 'selected' : '' }}>Terkirim ke Perpajakan</option>
+          <option value="terkirim_pembayaran" {{ request('status') == 'terkirim_pembayaran' ? 'selected' : '' }}>Terkirim ke Pembayaran</option>
+          <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve</option>
+          <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
+        </select>
+      </div>
+      {{-- Preserve per_page and columns parameters --}}
+      @if(request('per_page'))
+        <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+      @endif
+      @if(request('columns'))
+        @foreach(request('columns') as $column)
+          <input type="hidden" name="columns[]" value="{{ $column }}">
+        @endforeach
+      @endif
+      @if(request('keterlambatan'))
+        <input type="hidden" name="keterlambatan" value="{{ request('keterlambatan') }}">
+      @endif
+      <button type="submit" class="btn-filter">
+        <i class="fa-solid fa-magnifying-glass me-2"></i>Cari
+      </button>
+      <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
+        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+      </button>
+      <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
+        <i class="fa-solid fa-table-columns me-2"></i>
+        Kustomisasi Kolom Tabel
+      </button>
+      <button type="button" id="btnFullscreen" onclick="toggleFullscreen()" class="btn-fullscreen">
+        <i class="fa-solid fa-expand me-1" id="fullscreenIcon"></i>
+        <span id="fullscreenText">Fullscreen</span>
+      </button>
+    </form>
+  </div>
 
   {{-- ===== REDESIGNED TABLE SECTION AKUTANSI ===== --}}
 
