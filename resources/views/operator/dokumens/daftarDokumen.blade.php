@@ -6403,7 +6403,9 @@
                 } else if (field === 'nomor_spp' || field === 'dibayar_kepada') {
                   return `<span class="select-text">${displayValue}</span>`;
                 } else if (field === 'uraian_spp') {
-                  return `<span>${displayValue}</span>`;
+                  // Gunakan style yang sama persis dengan render Blade asli agar lebar kolom tidak berubah
+                  const safeText = String(displayValue ?? '-').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  return `<span title="${safeText}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">${displayValue || '-'}</span>`;
                 }
                 return displayValue || '-';
               }
