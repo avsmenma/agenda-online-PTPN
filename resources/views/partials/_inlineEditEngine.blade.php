@@ -329,7 +329,12 @@
     } else if (fieldType === 'number') {
       el = document.createElement('input');
       el.type = 'text'; el.className = 'ie-input';
-      el.value = rawValue ? String(rawValue).replace(/[^0-9]/g, '') : '';
+      // Gunakan parseFloat→round agar nilai decimal MySQL (e.g. "4832149.00")
+      // menjadi "4832149" — bukan strip naif yang mengubah "4832149.00" → "483214900"
+      const num = rawValue
+        ? String(Math.round(parseFloat(String(rawValue).replace(/[^0-9.]/g, '')) || 0))
+        : '';
+      el.value = num;
       el.placeholder = '0';
     } else {
       el = document.createElement('input');
@@ -385,7 +390,18 @@
     const field    = cell.dataset.field;
     const newValue = activeInput.value;
     const oldRaw   = cell.dataset.originalRaw ?? '';
-    if (newValue === oldRaw) { cancelCell(cell); return; }
+
+    // Untuk field number, normalisasi oldRaw dengan cara yang sama seperti createInput
+    // agar "4832149.00" (decimal MySQL) dibandingkan sebagai "4832149"
+    let compareOld = oldRaw;
+    const fieldType = FIELD_TYPE[field];
+    if (fieldType === 'number') {
+      compareOld = oldRaw
+        ? String(Math.round(parseFloat(String(oldRaw).replace(/[^0-9.]/g, '')) || 0))
+        : '';
+    }
+    if (newValue === compareOld) { cancelCell(cell); return; }
+
     const dokumenId = cell.closest('tr').dataset.dokumenId;
     if (!dokumenId) { cancelCell(cell); return; }
     cell.classList.remove('ie-editing');
