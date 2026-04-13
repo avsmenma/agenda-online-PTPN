@@ -18,3 +18,47 @@ Thumbs.db
 *.log
 .local
 
+
+# Claude / Antigravity AI config
+.claude/
+.antigravity/
+
+# Dokumentasi deployment pribadi
+AWS_DEPLOYMENT_GUIDE.md
+DEPLOYMENT_SUMMARY.md
+KNOWN_ISSUES.md
+
+# Log & catatan pribadi
+*.log
+laporan_*.txt
+laporan_*.md
+migrate_status.txt
+data_csv/
+
+# File SQL manual (bukan migration Laravel)
+*.sql
+*.dump
+*.bak
+
+# File lama/backup
+*_old.blade.php
+*_backup.*
+*_bak.*
+*_temp.*
+
+# File besar yang tidak perlu di-repo
+*.xlsx
+*.xls
+*.csv
+!database/seeders/data/*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
