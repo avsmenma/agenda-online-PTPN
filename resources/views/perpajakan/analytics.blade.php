@@ -1,4 +1,4 @@
-@extends('layouts/app')
+﻿@extends('layouts/app')
 @section('content')
 
   @php
@@ -874,118 +874,8 @@
     <div class="table-responsive scrollbar-visible">
       <table class="table table-hover align-middle mb-0">
         <thead>
-          <tr>
-            <th>No</th>
-            <th>Nomor Agenda</th>
-            <th>Bulan</th>
-            <th>Tahun</th>
-            <th>Tanggal Masuk</th>
-            <th>Nomor SPP</th>
-            <th>Uraian SPP</th>
-            <th>Nilai Rupiah</th>
-            <th>Bagian</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="dokumenTableBody">
-          @forelse($dokumens as $index => $dokumen)
-            <tr onclick="openViewDocumentModal({{ $dokumen->id }})" style="cursor: pointer;">
-              <td style="text-align: center;">{{ ($dokumens->currentPage() - 1) * $dokumens->perPage() + $index + 1 }}</td>
-              <td class="select-text"><strong>{{ $dokumen->nomor_agenda ?? '-' }}</strong></td>
-              <td>
-                <span style="font-weight: 600; color: #1a4d3e;">
-                  {{ $dokumen->bulan ?? '-' }}
-                </span>
-              </td>
-              <td>
-                <span style="font-weight: 600; color: #1a4d3e;">
-                  {{ $dokumen->tahun ?? '-' }}
-                </span>
-              </td>
-              <td class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y') : '-' }}</td>
-              <td class="select-text">{{ $dokumen->nomor_spp ?? '-' }}</td>
-              <td class="select-text">{{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}</td>
-              <td class="select-text"><strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
-              <td>
-                @if($dokumen->bagian)
-                  @php
-                    $bagianColors = [
-                      'AKN' => 'background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);', // Cyan
-                      'DPM' => 'background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);', // Blue
-                      'KPL' => 'background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);', // Purple
-                      'PMO' => 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);', // Amber
-                      'SDM' => 'background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);', // Pink
-                      'SKH' => 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);', // Emerald
-                      'TAN' => 'background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);', // Teal
-                      'TEP' => 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);', // Red
-                    ];
-                    $bagianStyle = $bagianColors[strtoupper($dokumen->bagian)] ?? 'background: linear-gradient(135deg, #64748b 0%, #475569 100%);';
-                  @endphp
-                  <span class="badge"
-                    style="{{ $bagianStyle }} color: white; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
-                    {{ $dokumen->bagian }}
-                  </span>
-                @else
-                  <span class="text-muted">-</span>
-                @endif
-              </td>
-              <td>
-                @php
-                  // Use status_perpajakan for perpajakan-specific status
-                  $statusPerpajakan = $dokumen->status_perpajakan ?? '';
-
-                  if ($statusPerpajakan == 'sedang_diproses' || !empty($dokumen->deadline_at)) {
-                    // Has deadline or is being processed
-                    $statusDisplay = 'Sedang Diproses';
-                  } elseif ($statusPerpajakan == 'selesai') {
-                    $statusDisplay = 'Selesai';
-                  } elseif ($dokumen->status == 'sent_to_akutansi') {
-                    $statusDisplay = 'Terkirim ke Akutansi';
-                  } elseif ($dokumen->status == 'sent_to_perpajakan' && is_null($dokumen->deadline_at) && empty($statusPerpajakan)) {
-                    // Only show Terkunci if no deadline AND no status_perpajakan set
-                    $statusDisplay = 'Terkunci';
-                  } else {
-                    $statusDisplay = !empty($statusPerpajakan) ? ucfirst(str_replace('_', ' ', $statusPerpajakan)) : ucfirst(str_replace('_', ' ', $dokumen->status ?? ''));
-                  }
-                @endphp
-                @if($statusDisplay == 'Terkunci')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    🔒 Terkunci
-                  </span>
-                @elseif($statusDisplay == 'Sedang Diproses')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    ⏳ Sedang Diproses
-                  </span>
-                @elseif($statusDisplay == 'Selesai')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    ✓ Selesai
-                  </span>
-                @elseif($statusDisplay == 'Terkirim ke Akutansi')
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #1a4d3e 0%, #40916c 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    📤 Terkirim ke Akutansi
-                  </span>
-                @else
-                  <span class="badge"
-                    style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 4px 12px; border-radius: 12px;">
-                    {{ $statusDisplay }}
-                  </span>
-                @endif
-              </td>
-            </tr>
-          @empty
-            <tr>
-              <td colspan="10" class="empty-state">
-                <i class="fa-solid fa-inbox"></i>
-                <h5>Belum ada dokumen</h5>
-                <p>Tidak ada dokumen untuk periode yang dipilih</p>
-              </td>
-            </tr>
-          @endforelse
-        </tbody>
+        @include('partials._analyticsTableRows')
+      </tbody>
       </table>
     </div>
 
@@ -1201,6 +1091,7 @@
   </script>
 
 @endsection
+
 
 
 
