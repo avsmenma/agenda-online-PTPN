@@ -2912,7 +2912,7 @@
               @endphp
               @foreach($filteredColumns as $col)
                 @php
-                  $nonEditableCols = ['tanggal_masuk','status','nomor_mirror','keterangan'];
+                  $nonEditableCols = ['tanggal_masuk','status','nomor_mirror','keterangan','npwp','link_dokumen_pajak'];
                   $isCellEditable = $canInlineEdit && !in_array($col, $nonEditableCols);
                 @endphp
                 @php
