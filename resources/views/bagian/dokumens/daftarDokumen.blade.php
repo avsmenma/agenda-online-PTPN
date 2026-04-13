@@ -1087,10 +1087,12 @@
             </thead>
             <tbody>
               @foreach($dokumens as $index => $doc)
-                      @php
-                        $statusLower = strtolower($doc->status ?? '');
-                      @endphp
-                      <tr onclick="showDocumentDetail({{ json_encode([
+              @php
+                $statusLower = strtolower($doc->status ?? '');
+                // Bagian bisa edit saat status belum dikirim atau dikembalikan
+                $canInlineEdit = in_array($doc->status ?? '', ['belum dikirim', 'returned_to_bidang']);
+              @endphp
+              <tr onclick="showDocumentDetail({{ json_encode([
                   'id' => $doc->id,
                   'nomor_agenda' => $doc->nomor_agenda,
                   'nomor_spp' => $doc->nomor_spp,
@@ -1120,6 +1122,27 @@
                 ]) }})">
                         <td>{{ $dokumens->firstItem() + $index }}</td>
                         @foreach($selectedColumns as $col)
+                          @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
+                            <td class="ie-cell"
+                                data-id="{{ $doc->id }}"
+                                data-field="{{ $col }}"
+                                @if($col === 'nilai_rupiah') data-raw="{{ $doc->nilai_rupiah ?? '' }}"
+                                @elseif($col === 'tanggal_spp') data-raw="{{ $doc->tanggal_spp ? $doc->tanggal_spp->format('Y-m-d') : '' }}"
+                                @else data-raw="{{ $doc->$col ?? '' }}"
+                                @endif
+                                onclick="event.stopPropagation()"
+                                title="Klik dua kali untuk mengedit">
+                              @if($col === 'uraian_spp')
+                                <span class="ie-display" style="display: block; white-space: normal; word-wrap: break-word; line-height: 1.5; max-width: 300px;">{{ $doc->uraian_spp ?? '-' }}</span>
+                              @elseif($col === 'nilai_rupiah')
+                                <span class="ie-display"><strong style="color: #000000;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong></span>
+                              @elseif($col === 'tanggal_spp')
+                                <span class="ie-display">{{ $doc->tanggal_spp ? $doc->tanggal_spp->format('d-m-Y') : '-' }}</span>
+                              @else
+                                <span class="ie-display">{{ $doc->$col ?? '-' }}</span>
+                              @endif
+                            </td>
+                          @else
                           <td>
                             @if($col == 'nomor_agenda')
                               <strong style="color: #000000;">{{ $doc->nomor_agenda }}</strong>
@@ -1312,6 +1335,7 @@
                               -
                             @endif
                           </td>
+                          @endif {{-- end @if(in_array...) / @else non-editable --}}
                         @endforeach
                         <td onclick="event.stopPropagation()">
                           <div class="action-buttons">
@@ -3336,5 +3360,25 @@
       });
     };
   </script>
+
+{{-- Inline Edit Engine (Bagian) --}}
+@php
+  $ieKategoriList = [];
+  $ieSubKriteriaList = [];
+  $ieItemSubKriteriaList = [];
+  $ieJenisPembayaranList = [];
+  try {
+    $ieKategoriList = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get(['id_kategori_kriteria as id', 'nama_kriteria'])->toArray();
+    $ieSubKriteriaList = \App\Models\SubKriteria::all(['id_sub_kriteria as id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
+    $ieItemSubKriteriaList = \App\Models\ItemSubKriteria::all(['id_item_sub_kriteria as id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
+    $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
+  } catch (\Exception $e) {}
+@endphp
+@include('partials._inlineEditEngine', [
+  'ieKategoriList'        => $ieKategoriList,
+  'ieSubKriteriaList'     => $ieSubKriteriaList,
+  'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
+  'ieJenisPembayaranList' => $ieJenisPembayaranList,
+])
 
 @endsection

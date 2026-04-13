@@ -5926,43 +5926,68 @@
                 border-left: none !important;
               }
 
-              /* ---- Inline edit: Textarea besar untuk Uraian SPP ---- */
-              .ie-cell {
-                position: relative;
+              /* =====================================================
+                 CSS OVERLAY POPUP (uraian_spp → modal popup)
+                 ===================================================== */
+              .ie-overlay-backdrop {
+                position: fixed; inset: 0; z-index: 9998;
+                background: rgba(0,0,0,0.15);
+                animation: ie-backdrop-in .12s ease;
               }
-
-              /* Textarea uraian muncul sebagai overlay floating */
-              .ie-textarea-large {
-                position: absolute;
-                z-index: 1000;
-                top: 0;
-                left: 0;
-                min-width: 420px;
-                max-width: 600px;
-                width: max-content;
-                min-height: 140px;
-                resize: both;
+              @keyframes ie-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+              .ie-overlay-popup {
+                position: fixed; z-index: 9999;
+                width: 480px; max-width: calc(100vw - 32px);
                 background: #fff;
                 border: 2px solid #083E40;
-                border-radius: 8px;
-                box-shadow: 0 8px 24px rgba(8, 62, 64, 0.25);
-                padding: 10px 12px;
-                font-size: 13.5px;
-                line-height: 1.6;
-                color: #1a1a2e;
-                font-family: inherit;
+                border-radius: 10px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+                padding: 12px 14px 10px;
+                animation: ie-popup-in .15s cubic-bezier(.2,.8,.3,1);
               }
-
-              .ie-textarea-large:focus {
-                outline: none;
-                border-color: #889717;
-                box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.2), 0 8px 24px rgba(8, 62, 64, 0.2);
+              @keyframes ie-popup-in {
+                from { opacity: 0; transform: translateY(-6px) scale(.98); }
+                to   { opacity: 1; transform: translateY(0)    scale(1); }
               }
-
-              /* Saat cell sedang diedit dengan textarea besar, beri overflow visible */
-              .ie-cell.ie-editing:has(.ie-textarea-large) {
-                overflow: visible;
+              .ie-overlay-header {
+                display: flex; align-items: center; justify-content: space-between;
+                margin-bottom: 8px;
               }
+              .ie-overlay-label {
+                font-size: 11px; font-weight: 600; color: #083E40;
+                text-transform: uppercase; letter-spacing: .5px;
+              }
+              .ie-overlay-close {
+                background: none; border: none; cursor: pointer; padding: 2px 6px;
+                font-size: 16px; color: #6b7280; line-height: 1; border-radius: 4px;
+              }
+              .ie-overlay-close:hover { background: #f3f4f6; color: #111; }
+              .ie-overlay-textarea {
+                width: 100%; box-sizing: border-box;
+                min-height: 160px; max-height: 340px;
+                border: 1px solid #d1d5db; border-radius: 6px;
+                padding: 8px 10px; font-size: 13px; font-family: inherit;
+                background: #f8fff8; color: #111;
+                resize: vertical; line-height: 1.6; outline: none;
+                transition: border-color .15s;
+              }
+              .ie-overlay-textarea:focus { border-color: #083E40; box-shadow: 0 0 0 3px rgba(8,62,64,.12); }
+              .ie-overlay-footer {
+                display: flex; align-items: center; justify-content: space-between;
+                margin-top: 8px; gap: 8px;
+              }
+              .ie-overlay-charcount { font-size: 11px; color: #9ca3af; }
+              .ie-overlay-actions { display: flex; gap: 6px; }
+              .ie-overlay-btn {
+                padding: 5px 16px; border-radius: 6px; border: none; cursor: pointer;
+                font-size: 12px; font-weight: 600; transition: all .15s;
+              }
+              .ie-overlay-btn-save { background: #083E40; color: #fff; }
+              .ie-overlay-btn-save:hover { background: #0a5254; }
+              .ie-overlay-btn-cancel { background: #f3f4f6; color: #374151; }
+              .ie-overlay-btn-cancel:hover { background: #e5e7eb; }
+              /* Saat overlay terbuka, cell cukup highlight tanpa overflow */
+              .ie-cell.ie-editing:has(.ie-overlay-textarea) { overflow: visible; }
 
               /* =====================================================
                  SCROLL PERFORMANCE ΓÇö mirip virtual scrolling
@@ -6036,6 +6061,129 @@
 
               let activeCell = null;
               let activeInput = null;
+              let activeOverlay = null; // backdrop + popup untuk uraian_spp
+
+              // ---- Long-text fields → modal overlay (bukan floating textarea) ----
+              const OVERLAY_FIELDS = ['uraian_spp'];
+              const OVERLAY_LABELS = { uraian_spp: 'Edit Uraian SPP' };
+
+              // ---- Overlay functions (modal popup untuk field panjang) ----
+              function openOverlay(cell, field, rawValue) {
+                closeOverlay(false);
+                const backdrop = document.createElement('div');
+                backdrop.className = 'ie-overlay-backdrop';
+                const popup = document.createElement('div');
+                popup.className = 'ie-overlay-popup';
+                const rect = cell.getBoundingClientRect();
+                let top = rect.bottom + 6;
+                const popupW = Math.min(480, window.innerWidth - 32);
+                let left = rect.left;
+                if (left + popupW > window.innerWidth - 16) left = window.innerWidth - popupW - 16;
+                if (left < 8) left = 8;
+                if (top + 300 > window.innerHeight) top = Math.max(8, rect.top - 310);
+                popup.style.top  = top  + 'px';
+                popup.style.left = left + 'px';
+                popup.style.width = popupW + 'px';
+                // Header
+                const header = document.createElement('div');
+                header.className = 'ie-overlay-header';
+                const label = document.createElement('span');
+                label.className = 'ie-overlay-label';
+                label.textContent = OVERLAY_LABELS[field] || 'Edit';
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'ie-overlay-close'; closeBtn.type = 'button';
+                closeBtn.textContent = '✕'; closeBtn.title = 'Tutup (Esc)';
+                header.appendChild(label); header.appendChild(closeBtn);
+                // Textarea
+                const ta = document.createElement('textarea');
+                ta.className = 'ie-overlay-textarea';
+                ta.value = rawValue ?? ''; ta.rows = 7;
+                ta.placeholder = 'Ketik uraian di sini…';
+                // Footer
+                const footer = document.createElement('div');
+                footer.className = 'ie-overlay-footer';
+                const charCount = document.createElement('span');
+                charCount.className = 'ie-overlay-charcount';
+                charCount.textContent = ta.value.length + ' karakter';
+                ta.addEventListener('input', () => { charCount.textContent = ta.value.length + ' karakter'; });
+                const actions = document.createElement('div');
+                actions.className = 'ie-overlay-actions';
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'ie-overlay-btn ie-overlay-btn-cancel';
+                cancelBtn.type = 'button'; cancelBtn.textContent = 'Batal';
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'ie-overlay-btn ie-overlay-btn-save';
+                saveBtn.type = 'button'; saveBtn.textContent = '💾 Simpan';
+                actions.appendChild(cancelBtn); actions.appendChild(saveBtn);
+                footer.appendChild(charCount); footer.appendChild(actions);
+                popup.appendChild(header); popup.appendChild(ta); popup.appendChild(footer);
+                document.body.appendChild(backdrop); document.body.appendChild(popup);
+                activeOverlay = { backdrop, popup, ta, cell, field };
+                activeInput = ta;
+                cell.classList.add('ie-editing');
+                cell.dataset.originalRaw  = rawValue ?? '';
+                cell.dataset.originalHtml = cell.innerHTML;
+                setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 20);
+                const doSave = () => { const v = ta.value; closeOverlay(false); commitOverlayValue(cell, field, v, rawValue ?? ''); };
+                const doCancel = () => closeOverlay(true);
+                saveBtn.addEventListener('click', doSave);
+                cancelBtn.addEventListener('click', doCancel);
+                closeBtn.addEventListener('click', doCancel);
+                backdrop.addEventListener('click', doSave);
+                ta.addEventListener('keydown', e => {
+                  if (e.key === 'Escape') { e.preventDefault(); doCancel(); }
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doSave(); }
+                });
+              }
+
+              function closeOverlay(restoreHtml) {
+                if (!activeOverlay) return;
+                const { backdrop, popup, cell } = activeOverlay;
+                cell.classList.remove('ie-editing');
+                if (restoreHtml) cell.innerHTML = cell.dataset.originalHtml || '';
+                backdrop.remove(); popup.remove();
+                activeOverlay = null; activeCell = null; activeInput = null;
+              }
+
+              function commitOverlayValue(cell, field, newValue, oldRaw) {
+                if (newValue === oldRaw) return;
+                const dokumenId = cell.closest('tr').dataset.dokumenId;
+                if (!dokumenId) return;
+                cell.classList.add('ie-saving');
+                cell.innerHTML = (cell.dataset.originalHtml || newValue) + '<span class="ie-spinner"></span>';
+                fetch(`/documents/${dokumenId}/inline-update`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                  },
+                  body: JSON.stringify({ field, value: newValue }),
+                })
+                .then(r => r.json())
+                .then(data => {
+                  cell.classList.remove('ie-saving');
+                  if (data.success) {
+                    const display = data.display_value ?? newValue ?? '-';
+                    cell.dataset.raw = data.raw_value ?? newValue;
+                    cell.innerHTML = buildDisplayHtml(field, display, cell.dataset.raw);
+                    cell.classList.add('ie-saved');
+                    setTimeout(() => cell.classList.remove('ie-saved'), 700);
+                  } else {
+                    cell.innerHTML = cell.dataset.originalHtml;
+                    cell.classList.add('ie-error');
+                    setTimeout(() => cell.classList.remove('ie-error'), 700);
+                    showIeToast('error', data.message || 'Gagal menyimpan.');
+                  }
+                })
+                .catch(() => {
+                  cell.classList.remove('ie-saving');
+                  cell.innerHTML = cell.dataset.originalHtml;
+                  cell.classList.add('ie-error');
+                  setTimeout(() => cell.classList.remove('ie-error'), 700);
+                  showIeToast('error', 'Koneksi gagal. Coba lagi.');
+                });
+              }
 
               // ---- Build select options ----
               function buildSelect(field, currentVal) {
@@ -6074,14 +6222,12 @@
               function createInput(fieldType, rawValue, fieldName) {
                 let el;
                 if (fieldType === 'textarea') {
+                  // uraian_spp ditangani oleh overlay — fallback ke textarea biasa untuk field lain
                   el = document.createElement('textarea');
                   el.className = 'ie-input ie-textarea';
                   el.value = rawValue ?? '';
-                  // Uraian SPP butuh ruang lebih besar
-                  el.rows = (fieldName === 'uraian_spp') ? 6 : 3;
-                  if (fieldName === 'uraian_spp') {
-                    el.classList.add('ie-textarea-large');
-                  }
+                  el.rows = 3;
+                  // NOTE: ie-textarea-large dihapus — uraian_spp kini pakai openOverlay()
                 } else if (fieldType.startsWith('select_')) {
                   el = buildSelect(fieldType, rawValue ?? '');
                 } else if (fieldType === 'date') {
@@ -6117,6 +6263,7 @@
 
               // ---- Activate a cell ----
               function activateCell(cell) {
+                if (activeOverlay) return; // overlay sudah terbuka
                 if (activeCell && activeCell !== cell) {
                   commitCell(activeCell);
                 }
@@ -6124,6 +6271,13 @@
 
                 const field = cell.dataset.field;
                 if (!field) return;
+
+                // Long-text fields → modal overlay popup
+                if (OVERLAY_FIELDS.includes(field)) {
+                  activeCell = cell;
+                  openOverlay(cell, field, cell.dataset.raw ?? '');
+                  return;
+                }
 
                 const fieldType = FIELD_TYPE[field] || 'text';
                 const rawValue = cell.dataset.raw ?? '';

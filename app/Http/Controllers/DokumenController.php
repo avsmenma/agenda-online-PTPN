@@ -1417,7 +1417,7 @@ class DokumenController extends Controller
         // Validate permission: user's role must match document's current_handler
         $userRole = strtolower(auth()->user()->role ?? '');
         $currentHandler = strtolower($dokumen->current_handler ?? '');
-        $editableRoles = ['operator', 'team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi'];
+        $editableRoles = ['operator', 'team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran', 'bagian'];
 
         // Normalize role aliases: 'verifikasi' and 'team_verifikasi' are the same role
         $normaliseRole = function (string $r): string {
@@ -1433,16 +1433,30 @@ class DokumenController extends Controller
         ];
         $docStatus = strtolower($dokumen->status ?? '');
 
+        // For bagian: allow edit when status is 'belum_dikirim' or 'returned_to_bidang'
+        $bagianAllowedStatuses = ['belum dikirim', 'belum_dikirim', 'returned_to_bidang'];
+        $isBagianUser = $userRole === 'bagian';
+        $isBagianAllowed = $isBagianUser && in_array($docStatus, $bagianAllowedStatuses);
+
+        // For pembayaran: allow edit when handler is pembayaran or status is sent_to_pembayaran
+        $isPembayaranUser = $userRole === 'pembayaran';
+        $pembayaranAllowedHandlers = ['pembayaran'];
+        $pembayaranAllowedStatuses = ['sent_to_pembayaran', 'processed_by_pembayaran', 'processed_by_akutansi'];
+        $isPembayaranAllowed = $isPembayaranUser &&
+            (in_array($currentHandler, $pembayaranAllowedHandlers) || in_array($dokumen->status ?? '', $pembayaranAllowedStatuses));
+
         // For team_verifikasi / verifikasi:
         //   Allow if handler matches OR if document status indicates it's at their stage
         $isVerifikasiUser = in_array($userRole, ['team_verifikasi', 'verifikasi']);
-        $isVerifikasiHandler = $handlerNorm === 'team_verifikasi';
         $isVerifikasiStatus  = in_array($docStatus, $verifikasiAllowedStatuses);
 
-        // Primary gate: role must be in editableRoles AND (handler matches OR verifikasi status check passes)
+        // Primary gate: role must be in editableRoles AND (handler matches OR special rules pass)
         $handlerMatchesUser = $handlerNorm === $userRoleNorm;
         $passedGate = in_array($userRole, $editableRoles)
-            && ($handlerMatchesUser || ($isVerifikasiUser && $isVerifikasiStatus));
+            && ($handlerMatchesUser
+                || ($isVerifikasiUser && $isVerifikasiStatus)
+                || $isBagianAllowed
+                || $isPembayaranAllowed);
 
         if (!$passedGate) {
             return response()->json(['success' => false, 'message' => 'Anda tidak memiliki izin untuk mengedit dokumen ini.'], 403);

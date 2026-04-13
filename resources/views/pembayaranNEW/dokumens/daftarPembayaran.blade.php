@@ -1414,6 +1414,9 @@
               $paymentStatus = 'belum_siap_bayar';
             }
           }
+          // Inline edit: Pembayaran bisa edit saat dokumen sudah berada di tangan mereka
+          $canInlineEdit = in_array($dokumen->current_handler ?? '', ['pembayaran'])
+            || in_array($dokumen->status ?? '', ['sent_to_pembayaran', 'processed_by_pembayaran', 'processed_by_akutansi']);
         @endphp
         <tr 
           @if($paymentStatus === 'belum_siap_bayar')
@@ -1432,6 +1435,28 @@
           <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
+            @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
+              {{-- Editable cell: attr set directly on td, no wrapper needed --}}
+              <td class="col-{{ $col }} ie-cell"
+                  data-id="{{ $dokumen->id }}"
+                  data-field="{{ $col }}"
+                  @if($col === 'nilai_rupiah') data-raw="{{ $dokumen->nilai_rupiah ?? '' }}"
+                  @elseif($col === 'tanggal_spp') data-raw="{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : '' }}"
+                  @else data-raw="{{ $dokumen->$col ?? '' }}"
+                  @endif
+                  onclick="event.stopPropagation()"
+                  title="Klik dua kali untuk mengedit">
+                @if($col === 'uraian_spp')
+                  <span class="ie-display" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">{{ $dokumen->uraian_spp ?? '-' }}</span>
+                @elseif($col === 'nilai_rupiah')
+                  <span class="ie-display"><strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></span>
+                @elseif($col === 'tanggal_spp')
+                  <span class="ie-display">{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</span>
+                @else
+                  <span class="ie-display">{{ $dokumen->$col ?? '-' }}</span>
+                @endif
+              </td>
+            @else
             <td class="col-{{ $col }}">
               @if($col == 'nomor_agenda')
                 <strong>{{ $dokumen->nomor_agenda }}</strong>
@@ -1442,9 +1467,7 @@
               @elseif($col == 'nomor_spp')
                 {{ $dokumen->nomor_spp }}
               @elseif($col == 'uraian_spp')
-                <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">
-                  {{ $dokumen->uraian_spp ?? '-' }}
-                </span>
+                <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">{{ $dokumen->uraian_spp ?? '-' }}</span>
               @elseif($col == 'nilai_rupiah')
                 <strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
               @elseif($col == 'tanggal_spp')
@@ -1613,7 +1636,8 @@
                 {{ $dokumen->$col ?? '-' }}
               @endif
             </td>
-            @endif
+            @endif {{-- end @if(in_array...) / @else non-editable --}}
+            @endif {{-- end @if($col !== 'status') --}}
           @endforeach
           <td class="col-status">
             @if(!in_array('status_pembayaran', $selectedColumns))
@@ -4150,6 +4174,26 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
   }
 </script>
+
+{{-- Inline Edit Engine (Pembayaran) --}}
+@php
+  $ieKategoriList = [];
+  $ieSubKriteriaList = [];
+  $ieItemSubKriteriaList = [];
+  $ieJenisPembayaranList = [];
+  try {
+    $ieKategoriList = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get(['id_kategori_kriteria as id', 'nama_kriteria'])->toArray();
+    $ieSubKriteriaList = \App\Models\SubKriteria::all(['id_sub_kriteria as id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
+    $ieItemSubKriteriaList = \App\Models\ItemSubKriteria::all(['id_item_sub_kriteria as id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
+    $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
+  } catch (\Exception $e) {}
+@endphp
+@include('partials._inlineEditEngine', [
+  'ieKategoriList'      => $ieKategoriList,
+  'ieSubKriteriaList'   => $ieSubKriteriaList,
+  'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
+  'ieJenisPembayaranList' => $ieJenisPembayaranList,
+])
 
 @endsection
 

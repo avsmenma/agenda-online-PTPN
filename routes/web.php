@@ -317,7 +317,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
 });
 
 // Inline edit — accessible by all roles that can handle documents
-Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpajakan,akutansi'])
+Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran,bagian'])
     ->prefix('documents')->name('documents.')
     ->group(function () {
         Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
