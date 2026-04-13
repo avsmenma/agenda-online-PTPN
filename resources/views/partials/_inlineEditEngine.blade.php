@@ -139,7 +139,14 @@
     jenis_pembayaran    : 'select_jenis',
     bulan               : 'select_bulan',
     tahun               : 'text',
+    // Perpajakan-specific
+    npwp                : 'text',
+    link_dokumen_pajak  : 'text',
   };
+
+  // Fields yang menggunakan anchor tag di dalam cell —
+  // klik anchor = buka link, klik di luar anchor = edit field
+  const LINK_FIRST_CLICK_FIELDS = ['link_dokumen_pajak'];
 
   let activeCell  = null;
   let activeInput = null;
@@ -489,8 +496,17 @@
 
   document.addEventListener('click', function(e) {
     const cell = e.target.closest('.ie-cell');
-    if (cell) { e.stopPropagation(); activateCell(cell); }
-    else if (activeCell) commitCell(activeCell);
+    if (cell) {
+      // Jika user klik sebuah <a> di dalam cell link → biarkan link terbuka, jangan edit
+      if (e.target.tagName === 'A' || e.target.closest('a')) {
+        e.stopPropagation();
+        return; // buka link, tidak memicu inline edit
+      }
+      e.stopPropagation();
+      activateCell(cell);
+    } else if (activeCell) {
+      commitCell(activeCell);
+    }
   });
 
   document.addEventListener('dblclick', function(e) {

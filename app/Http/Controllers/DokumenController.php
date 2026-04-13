@@ -1489,6 +1489,7 @@ class DokumenController extends Controller
             'tanggal_paraf', 'pemaraf', 'bulan', 'tahun',
             // Perpajakan-specific
             'jenis_pph', 'dpp_pph', 'ppn_terhutang', 'tanggal_selesai_verifikasi_pajak',
+            'npwp', 'link_dokumen_pajak',
         ];
 
         if (!in_array($field, $editableFields)) {
@@ -1519,6 +1520,9 @@ class DokumenController extends Controller
                 if ($saveValue <= 0) $saveValue = null;
             } elseif (in_array($field, ['tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_paraf', 'tanggal_miro', 'tanggal_selesai_verifikasi_pajak'])) {
                 $saveValue = !empty($value) ? $value : null;
+            } elseif ($field === 'link_dokumen_pajak') {
+                // Simpan URL, null jika kosong
+                $saveValue = !empty(trim($value ?? '')) ? trim($value) : null;
             } elseif ($field === 'nomor_agenda') {
                 // Check uniqueness
                 $exists = Dokumen::where('nomor_agenda', $value)->where('id', '!=', $dokumen->id)->exists();
@@ -1585,6 +1589,14 @@ class DokumenController extends Controller
                 $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
             } elseif (in_array($field, ['dpp_pph', 'ppn_terhutang']) && $saveValue) {
                 $displayValue = number_format($saveValue, 0, ',', '.');
+            } elseif ($field === 'link_dokumen_pajak') {
+                // Kembalikan HTML link seperti di Blade agar cell langsung menampilkan link
+                if ($saveValue) {
+                    $displayValue = '<a href="' . htmlspecialchars($saveValue) . '" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; text-decoration: none;">'
+                        . '<i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>';
+                } else {
+                    $displayValue = '-';
+                }
             }
 
             return response()->json([
