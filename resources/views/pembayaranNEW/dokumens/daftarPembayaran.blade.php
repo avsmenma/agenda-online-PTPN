@@ -4195,6 +4195,9 @@ document.addEventListener('DOMContentLoaded', function() {
   'ieJenisPembayaranList' => $ieJenisPembayaranList,
 ])
 
+{{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
+@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+
 @endsection
 
 

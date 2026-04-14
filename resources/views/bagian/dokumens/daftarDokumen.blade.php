@@ -3393,4 +3393,7 @@
   'ieJenisPembayaranList' => $ieJenisPembayaranList,
 ])
 
+{{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
+@include('partials._activeCellNav', ['tableSelector' => '.data-table'])
+
 @endsection
