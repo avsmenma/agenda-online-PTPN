@@ -1,6 +1,8 @@
-@extends('layouts.app')
+@extends('layouts.programmer')
 
 @section('title', 'Database Tools')
+@section('page_title', 'Database Tools')
+@section('page_breadcrumb', 'Programmer → Database Tools')
 
 @section('content')
     <style>
@@ -155,16 +157,13 @@
     </style>
 
     <div class="container-fluid">
-        <div class="row mb-4">
-            <div class="col-12">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('programmer.dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Database Tools</li>
-                    </ol>
-                </nav>
+        <div class="prog-page-header">
+            <div class="prog-page-header-left">
+                <a href="{{ route('programmer.dashboard') }}" class="btn-back-prog mb-2">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                </a>
                 <h2><i class="fas fa-database text-primary me-2"></i>Database Tools</h2>
-                <p class="text-muted">Backup, export, dan kelola database</p>
+                <p>Backup, export, dan kelola database</p>
             </div>
         </div>
 

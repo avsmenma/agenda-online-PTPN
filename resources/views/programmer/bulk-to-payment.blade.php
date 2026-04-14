@@ -1,19 +1,18 @@
-@extends('layouts.app')
+@extends('layouts.programmer')
 
 @section('title', 'Bulk Direct to Payment')
+@section('page_title', 'Bulk Direct to Payment')
+@section('page_breadcrumb', 'Programmer → Bulk Direct to Payment')
 
 @section('content')
     <div class="container-fluid">
-        <div class="row mb-4">
-            <div class="col-12">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('programmer.dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Bulk Direct to Payment</li>
-                    </ol>
-                </nav>
+        <div class="prog-page-header">
+            <div class="prog-page-header-left">
+                <a href="{{ route('programmer.dashboard') }}" class="btn-back-prog mb-2">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                </a>
                 <h2><i class="fas fa-fast-forward text-warning me-2"></i>Bulk Direct to Payment</h2>
-                <p class="text-muted">Kirim dokumen langsung ke Pembayaran tanpa melalui workflow normal</p>
+                <p>Kirim dokumen langsung ke Pembayaran tanpa melalui workflow normal</p>
             </div>
         </div>
 

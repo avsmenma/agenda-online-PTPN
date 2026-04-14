@@ -1,16 +1,18 @@
-@extends('layouts.app')
+@extends('layouts.programmer')
 
 @section('title', 'Bulk Set Date Payment')
+@section('page_title', 'Bulk Set Date Payment')
+@section('page_breadcrumb', 'Programmer → Bulk Set Date Payment')
 
 @section('content')
     <div class="container-fluid">
-        <div class="row mb-4">
-            <div class="col-12">
-                <a href="{{ route('programmer.dashboard') }}" class="btn btn-outline-secondary mb-3">
-                    <i class="fas fa-arrow-left me-2"></i>Kembali ke Dashboard
+        <div class="prog-page-header">
+            <div class="prog-page-header-left">
+                <a href="{{ route('programmer.dashboard') }}" class="btn-back-prog mb-2">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
                 </a>
                 <h2><i class="fas fa-calendar-check me-2 text-info"></i>Bulk Set Date Payment</h2>
-                <p class="text-muted">Set tanggal pembayaran massal untuk dokumen yang sudah siap bayar di Pembayaran</p>
+                <p>Set tanggal pembayaran massal untuk dokumen yang sudah siap bayar di Pembayaran</p>
             </div>
         </div>
 

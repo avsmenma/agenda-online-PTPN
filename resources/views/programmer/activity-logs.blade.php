@@ -1,20 +1,18 @@
-@extends('layouts.app')
+@extends('layouts.programmer')
 
 @section('title', 'Riwayat Aktivitas Dokumen')
+@section('page_title', 'Riwayat Aktivitas')
+@section('page_breadcrumb', 'Programmer → Riwayat Aktivitas')
 
 @section('content')
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <h2><i class="fas fa-history me-2 text-primary"></i>Riwayat Aktivitas Dokumen</h2>
-                    <p class="text-muted mb-0">Seluruh log aktivitas dokumen dari semua role</p>
-                </div>
-                <a href="{{ route('programmer.dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Kembali
-                </a>
-            </div>
+    <div class="prog-page-header">
+        <div class="prog-page-header-left">
+            <a href="{{ route('programmer.dashboard') }}" class="btn-back-prog mb-2">
+                <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+            </a>
+            <h2><i class="fas fa-history me-2 text-primary"></i>Riwayat Aktivitas Dokumen</h2>
+            <p>Seluruh log aktivitas dokumen dari semua role</p>
         </div>
     </div>
 

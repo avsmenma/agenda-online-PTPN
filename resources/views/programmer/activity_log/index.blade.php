@@ -1,21 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.programmer')
 
 @section('title', 'Audit Trail - Aktivitas Programmer')
+@section('page_title', 'Audit Trail')
+@section('page_breadcrumb', 'Programmer → Audit Trail')
 
 @section('content')
 <div class="container-fluid px-4 py-4">
 
     {{-- === HEADER === --}}
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
+    <div class="prog-page-header">
+        <div class="prog-page-header-left">
+            <a href="{{ route('programmer.dashboard') }}" class="btn-back-prog mb-2">
+                <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+            </a>
             <h2 class="mb-1 fw-bold" style="color:#1e293b;">
                 <i class="fas fa-shield-alt me-2 text-danger"></i>Audit Trail Programmer
             </h2>
-            <p class="text-muted mb-0 small">
-                Catatan semua tindakan sensitif yang dilakukan oleh akun programmer
-            </p>
+            <p class="mb-0 small">Catatan semua tindakan sensitif yang dilakukan oleh akun programmer</p>
         </div>
-        <div class="text-end">
+        <div>
             <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 fs-6">
                 <i class="fas fa-lock me-1"></i>Log bersifat permanen &amp; tidak dapat dihapus
             </span>
