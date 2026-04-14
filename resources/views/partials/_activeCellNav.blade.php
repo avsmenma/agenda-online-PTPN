@@ -151,7 +151,33 @@
     attachCellListeners();
     attachKeyboardListener();
 
+    // Auto-pilih cell pertama saat halaman dimuat (seperti spreadsheet)
+    autoSelectFirstCell();
+
     console.log('✅ Active Cell Navigation initialized on', TABLE_SELECTOR);
+  }
+
+  /**
+   * Otomatis pilih cell pertama dari baris pertama data.
+   * Kolom yang dipilih = kolom ke-1 (index 1) agar skip kolom "No" / checkbox.
+   * Jika tabel hanya punya 1 kolom, fallback ke kolom ke-0.
+   */
+  function autoSelectFirstCell() {
+    // Tunggu sebentar agar layout/render selesai sepenuhnya
+    setTimeout(function () {
+      if (!tbodyEl) return;
+      const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'));
+      if (rows.length === 0) return; // tabel kosong, tidak ada yang dipilih
+
+      const firstRow = rows[0];
+      const cols = Array.from(firstRow.querySelectorAll('td'));
+      if (cols.length === 0) return;
+
+      // Pilih kolom ke-1 (Nomor Agenda) jika ada, fallback ke kolom ke-0
+      const startCol = cols.length > 1 ? 1 : 0;
+
+      setActiveCell(0, startCol);
+    }, 150); // 150ms cukup untuk render selesai
   }
 
   /** Buat elemen indikator posisi di bawah tabel */
