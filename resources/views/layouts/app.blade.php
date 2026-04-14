@@ -7505,6 +7505,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1500);
       }, 80);
     }
+
+    // Ctrl+Z → Back ke halaman sebelumnya (Simulasi tombol Back Browser) di semua role
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+      // Periksa apakah user sedang mengetik sesuatu di input/textarea
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        // Biarkan default browser behavior (Undo text)
+        return;
+      }
+      e.preventDefault(); // Cegah fungsi undo bawaan browser di luar input
+      window.history.back();
+    }
   });
 
 
