@@ -363,8 +363,8 @@
     const field = cell.dataset.field;
     if (!field) return;
 
-    // Catat waktu aktivasi — digunakan oleh onKeyDown untuk cooldown Enter key
-    // sehingga tombol Enter yang memicu aktivasi tidak langsung menyimpan data
+    // Catat waktu aktivasi — digunakan oleh onKeyDown & blur untuk cooldown
+    // sehingga tombol Enter/blur yang memicu aktivasi tidak langsung menyimpan data
     activationTime = Date.now();
 
     // Long-text fields → floating overlay
@@ -392,10 +392,16 @@
       activeInput.addEventListener('change', () => commitCell(cell));
     } else {
       activeInput.addEventListener('blur', () => {
+        // Cooldown: abaikan blur yang terjadi dalam 350ms setelah aktivasi.
+        // Ini mencegah phantom-blur (kehilangan fokus sesaat saat input baru dibuat)
+        // yang terjadi ketika cell diaktifkan via Enter key dari active cell navigation.
+        const msSinceActivation = Date.now() - activationTime;
+        if (msSinceActivation < 350) return;
         setTimeout(() => { if (activeCell === cell) commitCell(cell); }, 80);
       });
     }
   }
+
 
   function commitCell(cell) {
     if (!cell || !activeInput) return;
