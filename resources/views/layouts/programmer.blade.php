@@ -368,6 +368,10 @@
        class="{{ request()->routeIs('programmer.bulk-to-payment*') ? 'active' : '' }}">
       <i class="fas fa-fast-forward nav-icon"></i> Bulk to Payment
     </a>
+    <a href="{{ route('programmer.bulk-send-to-role.form') }}"
+       class="{{ request()->routeIs('programmer.bulk-send-to-role*') ? 'active' : '' }}">
+      <i class="fas fa-share-square nav-icon"></i> Bulk Send to Role
+    </a>
     <a href="{{ route('programmer.bulk-set-date-payment.form') }}"
        class="{{ request()->routeIs('programmer.bulk-set-date-payment*') ? 'active' : '' }}">
       <i class="fas fa-calendar-check nav-icon"></i> Bulk Set Date Payment

@@ -744,6 +744,14 @@ Route::middleware(['auth', 'role:programmer'])
             ->name('bulk-to-payment.preview');
         Route::post('/bulk-to-payment', [\App\Http\Controllers\ProgrammerController::class, 'bulkDirectToPayment'])
             ->name('bulk-to-payment.execute');
+            
+        // Bulk Send to Role (Verifikasi, Perpajakan, Akutansi)
+        Route::get('/bulk-send-to-role', [\App\Http\Controllers\ProgrammerController::class, 'showBulkSendToRoleForm'])
+            ->name('bulk-send-to-role.form');
+        Route::post('/bulk-send-to-role/preview', [\App\Http\Controllers\ProgrammerController::class, 'previewBulkSendToRole'])
+            ->name('bulk-send-to-role.preview');
+        Route::post('/bulk-send-to-role', [\App\Http\Controllers\ProgrammerController::class, 'bulkSendToRole'])
+            ->name('bulk-send-to-role.execute');
 
         // Bulk Set Date Payment
         Route::get('/bulk-set-date-payment', [\App\Http\Controllers\ProgrammerController::class, 'showBulkSetDatePaymentForm'])

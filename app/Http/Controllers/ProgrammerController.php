@@ -55,6 +55,193 @@ final class ProgrammerController extends Controller
     }
 
     /**
+     * Show bulk send to role form (Verifikasi / Perpajakan / Akutansi)
+     */
+    public function showBulkSendToRoleForm(): View
+    {
+        return view('programmer.bulk-send-to-role');
+    }
+
+    /**
+     * Preview documents before bulk-send to a specific role
+     */
+    public function previewBulkSendToRole(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nomor_agendas' => 'required|string',
+            'target_role'   => 'required|in:team_verifikasi,perpajakan,akutansi',
+        ]);
+
+        $targetRole    = $validated['target_role'];
+        $nomorAgendas  = $this->parseNomorAgendaList($validated['nomor_agendas']);
+
+        // Full workflow order — used to compare positions
+        $workflowOrder = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+        $targetIndex   = array_search($targetRole, $workflowOrder);
+
+        $actionable = [];
+        $skipped    = [];
+        $notFound   = [];
+
+        foreach ($nomorAgendas as $nomorAgenda) {
+            $dokumen = Dokumen::where('nomor_agenda', $nomorAgenda)->first();
+
+            if (!$dokumen) {
+                $notFound[] = $nomorAgenda;
+                continue;
+            }
+
+            $currentHandler = strtolower($dokumen->current_handler ?? 'operator');
+            if ($currentHandler === 'verifikasi') {
+                $currentHandler = 'team_verifikasi';
+            }
+
+            $currentIndex = array_search($currentHandler, $workflowOrder);
+
+            // If current position is already AT or PAST target → skip
+            if ($currentIndex !== false && $currentIndex >= $targetIndex) {
+                $skipped[] = [
+                    'nomor_agenda'    => $dokumen->nomor_agenda,
+                    'current_handler' => $currentHandler,
+                    'reason'          => 'Sudah berada di atau melewati ' . $targetRole,
+                ];
+                continue;
+            }
+
+            $actionable[] = [
+                'id'              => $dokumen->id,
+                'nomor_agenda'    => $dokumen->nomor_agenda,
+                'nomor_spp'       => $dokumen->nomor_spp,
+                'uraian_spp'      => $dokumen->uraian_spp,
+                'nilai_rupiah'    => number_format((float)($dokumen->nilai_rupiah ?? 0), 0, ',', '.'),
+                'current_handler' => $currentHandler,
+                'status'          => $dokumen->status,
+            ];
+        }
+
+        return response()->json([
+            'success'          => true,
+            'target_role'      => $targetRole,
+            'actionable'       => $actionable,
+            'skipped'          => $skipped,
+            'not_found'        => $notFound,
+            'total_actionable' => count($actionable),
+            'total_skipped'    => count($skipped),
+            'total_not_found'  => count($notFound),
+        ]);
+    }
+
+    /**
+     * Bulk send documents to a chosen intermediate role (Verifikasi / Perpajakan / Akutansi)
+     */
+    public function bulkSendToRole(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nomor_agendas' => 'required|string',
+            'target_role'   => 'required|in:team_verifikasi,perpajakan,akutansi',
+        ]);
+
+        set_time_limit(300);
+        DB::disableQueryLog();
+
+        $user       = Auth::user();
+        $targetRole = $validated['target_role'];
+
+        $nomorAgendas = $this->parseNomorAgendaList($validated['nomor_agendas']);
+
+        // Full workflow order
+        $workflowOrder = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+        $targetIndex   = array_search($targetRole, $workflowOrder);
+
+        $processed    = 0;
+        $failed       = 0;
+        $skipped      = 0;
+        $errors       = [];
+        $processedDocs = [];
+
+        $chunks = array_chunk($nomorAgendas, 50);
+
+        Log::info("Programmer bulk-send-to-role: Start — target={$targetRole}, " . count($nomorAgendas) . " docs, " . count($chunks) . " chunks", [
+            'by' => $user->name ?? 'Programmer',
+        ]);
+
+        foreach ($chunks as $chunkIndex => $chunk) {
+            DB::beginTransaction();
+            try {
+                foreach ($chunk as $nomorAgenda) {
+                    try {
+                        $dokumen = Dokumen::where('nomor_agenda', $nomorAgenda)->first();
+
+                        if (!$dokumen) {
+                            $failed++;
+                            $errors[] = "Dokumen {$nomorAgenda} tidak ditemukan";
+                            continue;
+                        }
+
+                        $currentHandler = strtolower($dokumen->current_handler ?? 'operator');
+                        if ($currentHandler === 'verifikasi') {
+                            $currentHandler = 'team_verifikasi';
+                        }
+
+                        $currentIndex = array_search($currentHandler, $workflowOrder);
+
+                        // Skip if already at or past target
+                        if ($currentIndex !== false && $currentIndex >= $targetIndex) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        // Simulate workflow only up to target role
+                        $this->simulateWorkflowToTarget($dokumen, $targetRole, $user->name ?? 'Programmer');
+
+                        $processed++;
+                        $processedDocs[] = $nomorAgenda;
+
+                    } catch (\Exception $e) {
+                        $failed++;
+                        $errors[] = "Error {$nomorAgenda}: " . $e->getMessage();
+                        Log::error("Programmer bulk-send-to-role error for {$nomorAgenda}: " . $e->getMessage());
+                    }
+                }
+
+                DB::commit();
+                Log::info("Chunk " . ($chunkIndex + 1) . "/" . count($chunks) . " committed — {$processed} processed so far");
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Chunk " . ($chunkIndex + 1) . " failed: " . $e->getMessage());
+                $failed += count($chunk);
+                $errors[] = "Chunk " . ($chunkIndex + 1) . " gagal: " . $e->getMessage();
+            }
+        }
+
+        // Audit trail
+        $roleLabels = [
+            'team_verifikasi' => 'Team Verifikasi',
+            'perpajakan'      => 'Perpajakan',
+            'akutansi'        => 'Akutansi',
+        ];
+        $this->logActivity('bulk_send_to_role', null,
+            "Bulk Send ke {$roleLabels[$targetRole]}: {$processed} berhasil" .
+            ($skipped > 0 ? ", {$skipped} dilewati"  : '') .
+            ($failed > 0  ? ", {$failed} gagal"       : '') .
+            (count($processedDocs) <= 10 ? ' [' . implode(', ', array_slice($processedDocs, 0, 10)) . ']' : '')
+        );
+
+        return response()->json([
+            'success'        => true,
+            'processed'      => $processed,
+            'skipped'        => $skipped,
+            'failed'         => $failed,
+            'processed_docs' => $processedDocs,
+            'errors'         => $errors,
+            'message'        => "Berhasil mengirim {$processed} dokumen ke {$roleLabels[$targetRole]}" .
+                               ($skipped > 0 ? ", {$skipped} dilewati" : '') .
+                               ($failed > 0  ? ", {$failed} gagal"     : ''),
+        ]);
+    }
+
+    /**
      * Preview documents before sending to payment
      */
     public function previewDocuments(Request $request): JsonResponse
@@ -299,6 +486,80 @@ final class ProgrammerController extends Controller
         ];
 
         return $paths[strtolower($currentRole)] ?? ['pembayaran'];
+    }
+
+    /**
+     * Get workflow path to reach a specific target role from current role
+     */
+    private function getWorkflowPathToTarget(string $currentRole, string $targetRole): array
+    {
+        $workflowOrder = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+        $currentIndex = array_search(strtolower($currentRole), $workflowOrder);
+        $targetIndex  = array_search(strtolower($targetRole), $workflowOrder);
+
+        if ($currentIndex === false || $targetIndex === false || $currentIndex >= $targetIndex) {
+            return [];
+        }
+
+        return array_slice($workflowOrder, $currentIndex + 1, $targetIndex - $currentIndex);
+    }
+
+    /**
+     * Simulate workflow step-by-step from current position to a target position
+     */
+    private function simulateWorkflowToTarget(Dokumen $dokumen, string $targetRole, string $performedBy): void
+    {
+        $currentRole = $dokumen->current_handler ?? 'operator';
+        $normalizedCurrentRole = strtolower($currentRole);
+        if ($normalizedCurrentRole === 'verifikasi') {
+            $normalizedCurrentRole = 'team_verifikasi';
+        }
+
+        $workflowPath = $this->getWorkflowPathToTarget($normalizedCurrentRole, $targetRole);
+
+        if (empty($workflowPath)) {
+            return; // Already at or past the target
+        }
+
+        Log::info("Bulk workflow simulation starting for {$dokumen->nomor_agenda}", [
+            'from_role' => $normalizedCurrentRole,
+            'to_target' => $targetRole,
+            'path' => $workflowPath,
+            'performed_by' => $performedBy
+        ]);
+
+        $senderRole = $normalizedCurrentRole;
+
+        foreach ($workflowPath as $index => $stepRole) {
+            $dokumen->sendToRoleInbox($stepRole, $senderRole);
+            Log::info("Bulk workflow: {$dokumen->nomor_agenda} sent to {$stepRole} inbox from {$senderRole}");
+            $dokumen->approveFromRoleInbox($stepRole);
+            Log::info("Bulk workflow: {$dokumen->nomor_agenda} approved in {$stepRole}");
+            
+            $senderRole = $stepRole;
+        }
+
+        \App\Models\DokumenActivityLog::create([
+            'dokumen_id' => $dokumen->id,
+            'stage' => $targetRole,
+            'action' => 'bulk_workflow_to_role_complete',
+            'action_description' => "Dokumen dilanjutkan ke {$targetRole} via workflow simulasi dari {$normalizedCurrentRole} (Programmer bulk operation)",
+            'performed_by' => $performedBy,
+            'action_at' => now(),
+            'details' => [
+                'method' => 'simulate_workflow_to_target',
+                'from_role' => $normalizedCurrentRole,
+                'target_role' => $targetRole,
+                'workflow_path' => $workflowPath,
+            ],
+        ]);
+
+        Log::info("Bulk workflow completed: {$dokumen->nomor_agenda}", [
+            'from_role' => $normalizedCurrentRole,
+            'to_role' => $targetRole,
+            'steps' => count($workflowPath),
+            'by' => $performedBy
+        ]);
     }
 
     /**

@@ -109,6 +109,7 @@
       @php
       $tools = [
         ['route'=>'programmer.bulk-to-payment.form',       'icon'=>'fa-fast-forward',  'color'=>'#f59e0b','bg'=>'#fef3c7','title'=>'Bulk Direct to Payment',   'desc'=>'Kirim dokumen langsung ke Pembayaran (skip workflow)'],
+        ['route'=>'programmer.bulk-send-to-role.form',     'icon'=>'fa-share-square',  'color'=>'#ec4899','bg'=>'#fce7f3','title'=>'Bulk Send to Role',        'desc'=>'Kirim massal ke Verifikasi, Perpajakan, atau Akutansi'],
         ['route'=>'programmer.bulk-set-date-payment.form', 'icon'=>'fa-calendar-check','color'=>'#0ea5e9','bg'=>'#e0f2fe','title'=>'Bulk Set Date Payment',     'desc'=>'Set tanggal pembayaran massal untuk dokumen siap bayar'],
         ['route'=>'programmer.document-tools',             'icon'=>'fa-tools',          'color'=>'#6366f1','bg'=>'#e0e7ff','title'=>'Document Tools',            'desc'=>'Lihat ID dokumen dan edit timestamp role'],
         ['route'=>'programmer.user-management',            'icon'=>'fa-users-cog',      'color'=>'#10b981','bg'=>'#d1fae5','title'=>'User Management',           'desc'=>'Kelola user, username, password, dan role'],
