@@ -592,7 +592,7 @@ final class ProgrammerController extends Controller
             'email' => 'required|email|max:255',
             'role' => 'required|string',
             'bagian_code' => 'nullable|string|max:50',
-            'phone_number' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:500',
             'password' => 'nullable|string|min:8',
         ]);
 
@@ -669,7 +669,7 @@ final class ProgrammerController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'role' => 'required|string',
             'bagian_code' => 'nullable|string|max:50',
-            'phone_number' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:500',
             'password' => 'required|string|min:8',
         ]);
 
