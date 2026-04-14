@@ -1855,13 +1855,16 @@
 </div>
 
 <!-- Modal: Column Customization -->
-<div class="customization-modal" id="columnCustomizationModal">
+<div class="customization-modal" id="columnCustomizationModal" onclick="handleModalBackdropClick(event)">
   <div class="modal-content-custom">
     <div class="modal-header-custom">
       <h3>
         <i class="fa-solid fa-table-columns"></i>
         Kustomisasi Kolom Tabel
       </h3>
+      <button type="button" class="modal-close-btn" onclick="closeColumnCustomizationModal()" title="Tutup">
+        <i class="fa-solid fa-times"></i>
+      </button>
     </div>
 
     <div class="modal-body-custom">
@@ -2023,6 +2026,30 @@
 
 .customization-modal.show {
   display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6c757d;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #212529;
 }
 
 .modal-content-custom {
@@ -2469,6 +2496,13 @@ function closeColumnCustomizationModal() {
   const modal = document.getElementById('columnCustomizationModal');
   modal.classList.remove('show');
   document.body.style.overflow = '';
+}
+
+// Close modal when clicking on backdrop (outside modal-content-custom)
+function handleModalBackdropClick(event) {
+  if (event.target === document.getElementById('columnCustomizationModal')) {
+    closeColumnCustomizationModal();
+  }
 }
 
 function toggleColumn(columnElement) {
@@ -3892,47 +3926,8 @@ function editDocumentFromModal() {
 }
 </style>
 
-<script>
-// Column Customization Modal Functions
-function openColumnCustomizationModal() {
-  const modal = new bootstrap.Modal(document.getElementById('columnCustomizationModal'));
-  modal.show();
-}
 
-function saveColumnSelection() {
-  const checkboxes = document.querySelectorAll('#columnCustomizationModal input[name="columns[]"]:checked');
-  const columns = Array.from(checkboxes).map(cb => cb.value);
-  
-  if (columns.length === 0) {
-    alert('Pilih minimal satu kolom untuk ditampilkan.');
-    return;
-  }
-  
-  // Build URL with column parameters
-  const params = new URLSearchParams(window.location.search);
-  
-  // Clear existing columns
-  params.delete('columns[]');
-  
-  // Add selected columns
-  columns.forEach(col => {
-    params.append('columns[]', col);
-  });
-  
-  // Navigate with new params
-  window.location.href = window.location.pathname + '?' + params.toString();
-}
 
-function resetColumnSelection() {
-  // Default columns
-  const defaultColumns = ['nomor_agenda', 'nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'dibayar_kepada', 'deadline'];
-  
-  // Uncheck all
-  document.querySelectorAll('#columnCustomizationModal input[name="columns[]"]').forEach(cb => {
-    cb.checked = defaultColumns.includes(cb.value);
-  });
-}
-</script>
 
 <!-- Modal: Success Notification (Modern & Professional) -->
 <div class="modal fade" id="successNotificationModal" tabindex="-1" aria-labelledby="successNotificationLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
