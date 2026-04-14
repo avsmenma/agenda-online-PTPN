@@ -148,9 +148,10 @@
   // klik anchor = buka link, klik di luar anchor = edit field
   const LINK_FIRST_CLICK_FIELDS = ['link_dokumen_pajak'];
 
-  let activeCell  = null;
-  let activeInput = null;
-  let activeOverlay = null; // backdrop + popup for textarea fields
+  let activeCell     = null;
+  let activeInput    = null;
+  let activeOverlay  = null; // backdrop + popup for textarea fields
+  let activationTime = 0;   // timestamp saat cell diaktifkan (untuk cooldown Enter key)
 
   /* ── Floating overlay for long-text fields ── */
   const OVERLAY_FIELDS = ['uraian_spp'];
@@ -362,6 +363,10 @@
     const field = cell.dataset.field;
     if (!field) return;
 
+    // Catat waktu aktivasi — digunakan oleh onKeyDown untuk cooldown Enter key
+    // sehingga tombol Enter yang memicu aktivasi tidak langsung menyimpan data
+    activationTime = Date.now();
+
     // Long-text fields → floating overlay
     if (OVERLAY_FIELDS.includes(field)) {
       activeCell = cell;
@@ -458,9 +463,17 @@
 
   function onKeyDown(e) {
     if (!activeCell) return;
-    if (e.key === 'Escape') { e.preventDefault(); cancelCell(activeCell); }
-    else if (e.key === 'Enter' && activeInput && activeInput.tagName !== 'TEXTAREA') {
-      e.preventDefault(); commitCell(activeCell);
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelCell(activeCell);
+    } else if (e.key === 'Enter' && activeInput && activeInput.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      // Cooldown: abaikan Enter selama 250ms pertama setelah cell diaktifkan.
+      // Ini mencegah tombol Enter yang sama (yang memicu aktivasi via active cell
+      // navigation) langsung meng-commit sebelum user sempat mengedit nilai.
+      const msSinceActivation = Date.now() - activationTime;
+      if (msSinceActivation < 250) return; // terlalu cepat — abaikan
+      commitCell(activeCell);
     } else if (e.key === 'Tab') {
       e.preventDefault();
       const direction   = e.shiftKey ? -1 : 1;
