@@ -494,6 +494,11 @@
     setTimeout(() => t.remove(), 3500);
   }
 
+  // Expose ke window agar modul lain (_activeCellNav) bisa memanggil inline edit
+  window.ieActivateCell = activateCell;
+  window.ieCommitCell   = commitCell;
+  window.ieCancelCell   = cancelCell;
+
   document.addEventListener('click', function(e) {
     const cell = e.target.closest('.ie-cell');
     if (cell) {

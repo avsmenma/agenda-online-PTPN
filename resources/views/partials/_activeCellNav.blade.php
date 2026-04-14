@@ -326,6 +326,8 @@
       // Jangan aktifkan jika sedang mengetik di input/textarea/select
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (['input', 'textarea', 'select'].includes(tag)) return;
+      // Jangan aktifkan jika inline edit sedang aktif (ada ie-editing)
+      if (document.querySelector('.ie-cell.ie-editing')) return;
       // Jangan aktifkan jika ada modal terbuka
       if (document.querySelector('.modal-overlay.show, .modal.show')) return;
       // Jangan aktifkan jika belum ada cell aktif dan bukan Enter
@@ -347,6 +349,19 @@
         case 'ArrowUp':
           e.preventDefault();
           moveCell(-1, 0);
+          break;
+        case 'Enter':
+          // Jika cell aktif adalah ie-cell (dapat diedit), Enter = masuk edit mode
+          if (activeCell && activeCell.classList.contains('ie-cell')) {
+            e.preventDefault();
+            // Panggil inline edit engine jika sudah di-load
+            if (typeof window.ieActivateCell === 'function') {
+              window.ieActivateCell(activeCell);
+            } else {
+              // Fallback: simulasi klik jika inline edit engine belum load
+              activeCell.click();
+            }
+          }
           break;
         case 'Escape':
           clearHighlight();
