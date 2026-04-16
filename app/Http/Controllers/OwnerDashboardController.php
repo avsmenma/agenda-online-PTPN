@@ -404,6 +404,7 @@ class OwnerDashboardController extends Controller
                     'status_label' => $statusLabel,
                     'status_class' => $statusClass,
                     'created_at' => $doc->created_at ? $doc->created_at->toISOString() : null,
+                    'updated_at' => $doc->updated_at ? $doc->updated_at->toISOString() : null,
                 ];
             })
             ->toArray();
@@ -505,6 +506,7 @@ class OwnerDashboardController extends Controller
                     'status_label' => $statusLabel,
                     'status_class' => $statusClass,
                     'created_at' => $doc->created_at ? $doc->created_at->toISOString() : null,
+                    'updated_at' => $doc->updated_at ? $doc->updated_at->toISOString() : null,
                 ];
             });
 

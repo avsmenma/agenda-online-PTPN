@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 <style>
   /* ================================================
-     OWNER DASHBOARD — Sesuai Referensi Mockup
+     OWNER DASHBOARD â€” Sesuai Referensi Mockup
      ================================================ */
   :root {
     --bg: #f4f6fb;
@@ -34,7 +34,7 @@
     min-height: 100vh;
   }
 
-  /* ── TOPBAR ── */
+  /* â”€â”€ TOPBAR â”€â”€ */
   .owner-topbar {
     background: var(--card);
     border-bottom: 1px solid var(--border);
@@ -66,10 +66,10 @@
   .ctrl-pill svg { width: 13px; height: 13px; flex-shrink: 0; }
   .badge-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-  /* ── CONTENT AREA ── */
+  /* â”€â”€ CONTENT AREA â”€â”€ */
   .owner-content { padding: 24px 28px; }
 
-  /* ── STAT CARDS ── */
+  /* â”€â”€ STAT CARDS â”€â”€ */
   .stats-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -121,7 +121,7 @@
   }
   .stat-icon svg { width: 18px; height: 18px; }
 
-  /* ── CARD ── */
+  /* â”€â”€ CARD â”€â”€ */
   .dash-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -146,7 +146,7 @@
   }
   .see-all:hover { text-decoration: underline; }
 
-  /* ── CHARTS ROW ── */
+  /* â”€â”€ CHARTS ROW â”€â”€ */
   .charts-row {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -170,7 +170,7 @@
     font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.1);
   }
 
-  /* ── TOP BAGIAN TABLE ── */
+  /* â”€â”€ TOP BAGIAN TABLE â”€â”€ */
   .top-table { width: 100%; border-collapse: collapse; }
   .top-table thead th {
     font-size: 10.5px; font-weight: 600;
@@ -187,7 +187,7 @@
   .val-up   { color: var(--green); }
   .val-down { color: var(--red); }
 
-  /* ── BOTTOM ROW ── */
+  /* â”€â”€ BOTTOM ROW â”€â”€ */
   .bottom-row {
     display: grid;
     grid-template-columns: 1.3fr 1fr 1fr;
@@ -224,11 +224,11 @@
   .status-siap               { background: var(--accent-light); color: var(--accent); }
   .status-sudah              { background: var(--green-light);  color: var(--green); }
   /* Role-based status pills */
-  .status-input              { background: #f1f5f9; color: #475569; }  /* slate  — operator */
-  .status-verifikasi         { background: #f5f3ff; color: #7c3aed; }  /* purple — team verifikasi */
-  .status-perpajakan         { background: #eff6ff; color: #2563eb; }  /* blue   — perpajakan */
-  .status-akutansi           { background: #ecfeff; color: #0891b2; }  /* cyan   — akutansi */
-  .status-pembayaran-role    { background: #fffbeb; color: #d97706; }  /* amber  — menunggu bayar */
+  .status-input              { background: #f1f5f9; color: #475569; }  /* slate  â€” operator */
+  .status-verifikasi         { background: #f5f3ff; color: #7c3aed; }  /* purple â€” team verifikasi */
+  .status-perpajakan         { background: #eff6ff; color: #2563eb; }  /* blue   â€” perpajakan */
+  .status-akutansi           { background: #ecfeff; color: #0891b2; }  /* cyan   â€” akutansi */
+  .status-pembayaran-role    { background: #fffbeb; color: #d97706; }  /* amber  â€” menunggu bayar */
   .doc-amount { font-weight: 600; font-size: 12px; text-align: right; }
 
   /* Per Bagian horizontal bars */
@@ -435,7 +435,7 @@
             <div class="dash-card-title">Top Bagian</div>
             <div class="dash-card-sub">Volume & keterlambatan</div>
           </div>
-          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua →</a>
+          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua â†’</a>
         </div>
         <table class="top-table">
           <thead>
@@ -459,7 +459,7 @@
                 </td>
                 <td>{{ number_format($b['count']) }}</td>
                 <td class="return-val {{ ($b['terlambat'] ?? 0) > 0 ? 'val-down' : 'val-up' }}">
-                  {{ ($b['terlambat'] ?? 0) > 0 ? '↓ '.$b['terlambat'] : '✓ 0' }}
+                  {{ ($b['terlambat'] ?? 0) > 0 ? 'â†“ '.$b['terlambat'] : 'âœ“ 0' }}
                 </td>
               </tr>
             @endforeach
@@ -470,20 +470,20 @@
     </div>{{-- /.charts-row --}}
 
     {{-- BOTTOM ROW --}}
-    <div class="bottom-row">
+    <div class="bottom-row" style="grid-template-columns: 1fr 300px;">
 
-      {{-- Dokumen Terbaru (Real-time) --}}
+      {{-- Dokumen Terbaru (Real-time) â€” Extended --}}
       <div class="dash-card">
         <div class="dash-card-header">
           <div>
             <div class="dash-card-title">Dokumen Terbaru</div>
             <div class="dash-card-sub">
               <span class="realtime-badge">
-                <span class="realtime-dot"></span> Live — update otomatis
+                <span class="realtime-dot"></span> Live â€” update otomatis
               </span>
             </div>
           </div>
-          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua →</a>
+          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua â†’</a>
         </div>
         <table class="doc-table" id="recentDocsTable">
           <thead>
@@ -492,6 +492,8 @@
               <th>Bagian</th>
               <th>Status</th>
               <th style="text-align:right">Nilai</th>
+              <th style="text-align:center">Umur Dok</th>
+              <th style="text-align:center">Durasi Peran</th>
             </tr>
           </thead>
           <tbody id="recentDocsTbody">
@@ -503,7 +505,9 @@
               ];
             @endphp
             @forelse($recentDocuments ?? [] as $doc)
-              <tr class="doc-row-new">
+              <tr class="doc-row-new"
+                  data-created="{{ $doc['created_at'] ?? '' }}"
+                  data-handler-since="{{ $doc['updated_at'] ?? '' }}">
                 <td>
                   <div class="doc-name" title="{{ $doc['uraian_spp'] ?? '-' }}">
                     {{ Str::limit($doc['uraian_spp'] ?? '-', 28) }}
@@ -529,47 +533,26 @@
                       : 'Rp '.number_format($val, 0, ',', '.');
                   @endphp
                 </td>
+                <td style="text-align:center">
+                  <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">
+                    â€”
+                  </span>
+                </td>
+                <td style="text-align:center">
+                  <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">
+                    â€”
+                  </span>
+                </td>
               </tr>
             @empty
               <tr>
-                <td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px 0">
+                <td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px 0">
                   Belum ada dokumen
                 </td>
               </tr>
             @endforelse
           </tbody>
         </table>
-      </div>
-
-      {{-- Per Bagian Horizontal Bars --}}
-      <div class="dash-card">
-        <div class="dash-card-header">
-          <div>
-            <div class="dash-card-title">Per Bagian</div>
-            <div class="dash-card-sub">Distribusi volume dokumen</div>
-          </div>
-          <a class="see-all" href="{{ url('/owner/analytics') }}">Detail →</a>
-        </div>
-        <div class="types-list">
-          @php
-            $maxCount = collect($bagianStats ?? [])->max('count') ?: 1;
-            $totalAll = collect($bagianStats ?? [])->sum('count') ?: 1;
-          @endphp
-          @foreach($bagianStats ?? [] as $b)
-            @php
-              $pct = round(($b['count'] / $totalAll) * 100, 1);
-              $barWidth = round(($b['count'] / $maxCount) * 100, 1);
-            @endphp
-            <div class="type-row">
-              <span class="type-name" style="font-weight:600;color:{{ $b['color'] ?? '#94a3b8' }}">{{ $b['code'] }}</span>
-              <div class="type-bar-wrap">
-                <div class="type-bar" style="width:{{ $barWidth }}%;background:{{ $b['color'] ?? '#94a3b8' }}"></div>
-              </div>
-              <span class="type-pct">{{ $pct }}%</span>
-              <span class="type-count">{{ number_format($b['count']) }} dok</span>
-            </div>
-          @endforeach
-        </div>
       </div>
 
       {{-- Status Pembayaran Donut --}}
@@ -624,7 +607,7 @@
 </div>{{-- /.owner-dash --}}
 
 <script>
-// ── Trend Chart ──────────────────────────────────────────
+// â”€â”€ Trend Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const trendLabels = @json($chartLabels ?? []);
 const trendData   = @json($chartData ?? []);
 
@@ -640,32 +623,18 @@ if (tCtx) {
         data: trendData,
         borderColor: '#0f766e',
         backgroundColor: 'rgba(15,118,110,.08)',
-        fill: true,
-        tension: 0.45,
-        pointRadius: 0,
-        pointHoverRadius: 5,
-        pointHoverBackgroundColor: '#0f766e',
-        borderWidth: 2.5,
+        fill: true, tension: 0.45,
+        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#0f766e', borderWidth: 2.5,
       }]
     },
     options: {
       plugins: {
         legend: { display: false },
-        tooltip: {
-          mode: 'index', intersect: false,
-          callbacks: { label: ctx => ` ${ctx.raw} dokumen` }
-        }
+        tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ` ${ctx.raw} dokumen` } }
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0', maxTicksLimit: 6 }
-        },
-        y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0' },
-          border: { display: false }
-        }
+        x: { grid: { display: false }, ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0', maxTicksLimit: 6 } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0' }, border: { display: false } }
       },
       interaction: { mode: 'index', intersect: false }
     }
@@ -678,45 +647,31 @@ document.querySelectorAll('.period-tab').forEach(tab => {
     document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
     this.classList.add('active');
     const days = parseInt(this.dataset.days);
-    fetch(`/owner/api/trend-chart?days=${days}`, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    }).then(r => r.json()).then(data => {
-      if (data.labels && trendChart) {
-        trendChart.data.labels = data.labels;
-        trendChart.data.datasets[0].data = data.data;
-        trendChart.update();
-      }
-    }).catch(() => {}); // Fail silently
+    fetch(`/owner/api/trend-chart?days=${days}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json()).then(data => {
+        if (data.labels && trendChart) {
+          trendChart.data.labels = data.labels;
+          trendChart.data.datasets[0].data = data.data;
+          trendChart.update();
+        }
+      }).catch(() => {});
   });
 });
 
-// ── Donut Chart ───────────────────────────────────────────
+// â”€â”€ Donut Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const dCtx = document.getElementById('donutChart')?.getContext('2d');
 if (dCtx) {
   new Chart(dCtx, {
     type: 'doughnut',
     data: {
       labels: ['Sudah Dibayar', 'Belum Dibayar', 'Siap Dibayar'],
-      datasets: [{
-        data: [{{ $dokumenSelesai }}, {{ $dokumenProses }}, {{ $dokumenSiapBayar }}],
-        backgroundColor: ['#10b981', '#f59e0b', '#2563eb'],
-        borderWidth: 0,
-        hoverOffset: 6,
-      }]
+      datasets: [{ data: [{{ $dokumenSelesai }}, {{ $dokumenProses }}, {{ $dokumenSiapBayar }}], backgroundColor: ['#10b981', '#f59e0b', '#2563eb'], borderWidth: 0, hoverOffset: 6 }]
     },
-    options: {
-      cutout: '72%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: ctx => ` ${ctx.raw.toLocaleString('id-ID')} dokumen` }
-        }
-      }
-    }
+    options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toLocaleString('id-ID')} dokumen` } } } }
   });
 }
 
-// ── Real-time Dokumen Terbaru ─────────────────────────────
+// â”€â”€ Real-time Dokumen Terbaru â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const bagianColors = {
   'AKN': '#7C3AED', 'DPM': '#22c55e', 'KPL': '#f59e0b',
   'PMO': '#06b6d4', 'SDM': '#8b5cf6', 'SKH': '#ec4899',
@@ -734,10 +689,29 @@ function truncate(str, len) {
   return str.length > len ? str.substring(0, len) + '...' : str;
 }
 
-function buildDocRow(doc, isNew = false) {
+/**
+ * Format elapsed seconds â†’ compact string
+ * e.g: "2h 03j 15m"  /  "5j 03m 10d"  /  "43m 10d"  /  "12d"
+ * (h=hari, j=jam, m=menit, d=detik)
+ */
+function formatDuration(totalSeconds) {
+  if (totalSeconds < 0) totalSeconds = 0;
+  const d = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = Math.floor(totalSeconds % 60);
+  if (d > 0)  return `${d}h ${String(h).padStart(2,'0')}j ${String(m).padStart(2,'0')}m`;
+  if (h > 0)  return `${h}j ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}d`;
+  if (m > 0)  return `${m}m ${String(s).padStart(2,'0')}d`;
+  return `${s}d`;
+}
+
+function buildDocRow(doc) {
   const color = bagianColors[doc.bagian] || '#94a3b8';
   return `
-    <tr class="doc-row-new${isNew ? '' : ''}">
+    <tr class="doc-row-new"
+        data-created="${doc.created_at || ''}"
+        data-handler-since="${doc.updated_at || ''}">
       <td>
         <div class="doc-name" title="${(doc.uraian_spp || '-').replace(/"/g,'&quot;')}">${truncate(doc.uraian_spp, 28)}</div>
         <div class="doc-no">${doc.nomor_spp || '-'}</div>
@@ -745,9 +719,43 @@ function buildDocRow(doc, isNew = false) {
       <td><span style="font-size:11.5px;font-weight:600;color:${color}">${doc.bagian || '-'}</span></td>
       <td><span class="status-pill ${doc.status_class || 'status-belum'}">${doc.status_label || 'Menunggu'}</span></td>
       <td class="doc-amount">${formatCurrency(doc.nilai_rupiah)}</td>
+      <td style="text-align:center">
+        <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">â€”</span>
+      </td>
+      <td style="text-align:center">
+        <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">â€”</span>
+      </td>
     </tr>`;
 }
 
+// â”€â”€ Real-time timer tick â€” every 1 second â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function tickTimers() {
+  const now = Date.now();
+  document.querySelectorAll('#recentDocsTbody tr[data-created]').forEach(row => {
+    const createdTs      = row.dataset.created      ? new Date(row.dataset.created).getTime()      : null;
+    const handlerSinceTs = row.dataset.handlerSince ? new Date(row.dataset.handlerSince).getTime() : null;
+
+    const ageCell  = row.querySelector('.timer-age');
+    const roleCell = row.querySelector('.timer-role');
+
+    if (ageCell && createdTs) {
+      const secs = Math.floor((now - createdTs) / 1000);
+      ageCell.textContent = formatDuration(secs);
+      ageCell.style.color = secs > 259200 ? '#ef4444' : '#475569'; // red if >3 days
+    }
+    if (roleCell && handlerSinceTs) {
+      const secs = Math.floor((now - handlerSinceTs) / 1000);
+      roleCell.textContent = formatDuration(secs);
+      roleCell.style.color = secs > 86400 ? '#f59e0b' : '#0f766e'; // amber if >1 day same handler
+    }
+  });
+}
+
+// Start ticker immediately and update every second
+tickTimers();
+setInterval(tickTimers, 1000);
+
+// â”€â”€ Poll for new documents every 10 seconds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let lastSeenIds = [];
 
 function pollRecentDocs() {
@@ -762,25 +770,22 @@ function pollRecentDocs() {
     if (!data.success || !Array.isArray(data.documents)) return;
     const docs = data.documents;
     const newIds = docs.map(d => d.id);
-
-    // Check if anything changed
     const hasChanged = JSON.stringify(newIds) !== JSON.stringify(lastSeenIds);
     if (!hasChanged) return;
 
     const tbody = document.getElementById('recentDocsTbody');
     if (!tbody) return;
-
-    const isFirstLoad = lastSeenIds.length === 0;
     lastSeenIds = newIds;
 
     if (docs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px 0">Belum ada dokumen</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px 0">Belum ada dokumen</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = docs.map((doc, i) => buildDocRow(doc, !isFirstLoad && i < 1)).join('');
+    tbody.innerHTML = docs.map(doc => buildDocRow(doc)).join('');
+    tickTimers(); // Update timers immediately after render
   })
-  .catch(() => {}); // Fail silently
+  .catch(() => {});
 }
 
 // Initial poll + every 10 seconds
