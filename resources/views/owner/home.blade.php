@@ -1,585 +1,784 @@
 @extends('layouts.app')
 
 @section('content')
-    <style>
-        /* ============================================
-           DASHBOARD KABAG KEUANGAN — REDESIGNED
-           ============================================ */
+<style>
+  /* ================================================
+     OWNER DASHBOARD — Sesuai Referensi Mockup
+     ================================================ */
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --border: #e8ecf4;
+    --text-primary: #1a2340;
+    --text-secondary: #6b7a99;
+    --text-muted: #a0aec0;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --green: #10b981;
+    --green-light: #ecfdf5;
+    --orange: #f59e0b;
+    --orange-light: #fffbeb;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --teal: #0f766e;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  }
 
-        /* BASE */
-        .home-dashboard {
-            padding: 0 0 40px;
-            min-height: 100vh;
-            background-color: #F0F4F8;
-            font-family: 'DM Sans', 'Segoe UI', sans-serif;
-            color: #1e293b;
-        }
+  .owner-dash {
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--bg);
+    min-height: 100vh;
+  }
 
-        /* HEADER BANNER */
-        .dash-banner {
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            padding: 28px 36px 24px;
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            margin: 24px 24px 0;
-        }
-        .dash-banner .circle-decor {
-            position: absolute;
-            border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.08);
-            pointer-events: none;
-        }
-        .dash-banner .circle-decor:nth-child(1) { width:180px; height:180px; right:-60px; top:-60px; }
-        .dash-banner .circle-decor:nth-child(2) { width:300px; height:300px; right:-80px; top:-80px; }
-        .dash-banner .circle-decor:nth-child(3) { width:420px; height:420px; right:-100px; top:-100px; }
-        .banner-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            position: relative;
-            z-index: 1;
-        }
-        .banner-greeting { color: rgba(255,255,255,0.65); font-size: 13px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        .banner-greeting strong { color: white; }
-        .banner-title { color: white; font-size: 26px; font-weight: 700; margin: 0 0 4px; }
-        .banner-subtitle { color: rgba(255,255,255,0.6); margin: 0; font-size: 13px; }
+  /* ── TOPBAR ── */
+  .owner-topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .owner-topbar-title {
+    font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .owner-topbar-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .owner-topbar-controls { display: flex; align-items: center; gap: 10px; }
+  .ctrl-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 13px; border-radius: 8px;
+    border: 1px solid var(--border); background: white;
+    font-size: 12px; color: var(--text-secondary); font-weight: 500;
+    cursor: pointer; transition: border-color .15s;
+    white-space: nowrap;
+  }
+  .ctrl-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .ctrl-pill svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-        /* Glassmorphism summary */
-        .banner-summary {
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 12px 18px;
-            border: 1px solid rgba(255,255,255,0.2);
-            font-size: 12px;
-            color: white;
-            min-width: 240px;
-            flex-shrink: 0;
-        }
-        .banner-summary-title { font-weight: 600; margin-bottom: 8px; color: rgba(255,255,255,0.8); }
-        .banner-summary-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .banner-summary-row .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-        .banner-summary-row span { color: rgba(255,255,255,0.85); }
+  /* ── CONTENT AREA ── */
+  .owner-content { padding: 24px 28px; }
 
-        /* CONTENT AREA */
-        .dash-content { padding: 24px 36px 0; }
+  /* ── STAT CARDS ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 768px)  { .stats-row { grid-template-columns: 1fr 1fr; } }
 
-        /* STAT CARDS */
-        .stat-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 14px;
-            padding: 18px 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            border-top: 3px solid var(--stat-color, #0D9488);
-            position: relative;
-            overflow: hidden;
-            text-decoration: none !important;
-            display: block;
-            color: inherit;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            color: inherit;
-        }
-        .stat-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .stat-card .stat-label {
-            font-size: 11px; color: #94a3b8; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
-        }
-        .stat-card .stat-value {
-            font-size: 30px; font-weight: 800; color: #0f172a; line-height: 1;
-        }
-        .stat-card .stat-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-        }
-        .stat-change { font-size: 11px; font-weight: 600; margin-top: 8px; }
-        .stat-change.pos { color: #10B981; }
-        .stat-change.neg { color: #EF4444; }
-        .stat-change.neutral { color: #94a3b8; }
-        .stat-card .stat-detail { margin-top: 12px; font-size: 12px; color: #0D9488; cursor: pointer; font-weight: 500; }
-        .stat-nilai {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            margin: 4px 0 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 14px;
+    box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+    animation: fadeUp .4s ease both;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.09); }
+  .stat-card.accent {
+    background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+    border-color: transparent;
+  }
+  .stat-card:nth-child(1) { animation-delay: .05s; }
+  .stat-card:nth-child(2) { animation-delay: .1s; }
+  .stat-card:nth-child(3) { animation-delay: .15s; }
+  .stat-card:nth-child(4) { animation-delay: .2s; }
+  .stat-card:nth-child(5) { animation-delay: .25s; }
 
-        /* Total Nilai card */
-        .stat-card.gradient {
-            background: linear-gradient(135deg, #0D4F4A, #0D9488);
-            border-top: none;
-            color: white;
-        }
-        .stat-card.gradient .stat-label { color: rgba(255,255,255,0.65); }
-        .stat-card.gradient .stat-value { color: white; font-size: 20px; font-weight: 800; line-height: 1.2; }
-        .stat-card.gradient .stat-change { color: rgba(255,255,255,0.7); }
-        .stat-card.gradient .stat-detail { color: rgba(255,255,255,0.7); }
+  .stat-label {
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted); margin-bottom: 10px;
+  }
+  .stat-card.accent .stat-label { color: rgba(255,255,255,.7); }
+  .stat-value {
+    font-family: 'Sora', sans-serif;
+    font-size: 26px; font-weight: 700;
+    color: var(--text-primary); line-height: 1; margin-bottom: 6px;
+  }
+  .stat-card.accent .stat-value { color: white; font-size: 20px; }
+  .stat-sub { font-size: 11px; color: var(--text-muted); }
+  .stat-card.accent .stat-sub { color: rgba(255,255,255,.65); }
+  .stat-icon {
+    position: absolute; right: 16px; top: 16px;
+    width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat-icon svg { width: 18px; height: 18px; }
 
-        /* CHARTS ROW */
-        .charts-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .chart-card {
-            background: white;
-            border-radius: 14px;
-            padding: 20px 24px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        }
-        .chart-card h3 { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
-        .chart-card .chart-sub { margin: 2px 0 0; font-size: 12px; color: #94a3b8; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-        .chart-legend-inline { display: flex; gap: 16px; font-size: 11px; color: #64748b; }
+  /* ── CARD ── */
+  .dash-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    animation: fadeUp .5s ease both;
+    animation-delay: .3s;
+  }
+  .dash-card-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; margin-bottom: 16px;
+  }
+  .dash-card-title {
+    font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; font-weight: 700; color: var(--text-primary);
+  }
+  .dash-card-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .see-all {
+    font-size: 11.5px; color: var(--accent); font-weight: 600;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  .see-all:hover { text-decoration: underline; }
 
-        /* Donut legend */
-        .donut-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-        .legend-item .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-        .legend-item .lbl { color: #64748b; }
-        .legend-item strong { margin-left: auto; color: #0f172a; }
+  /* ── CHARTS ROW ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 14px; margin-bottom: 20px;
+  }
+  @media (max-width: 1024px) { .charts-row { grid-template-columns: 1fr; } }
 
-        /* BAGIAN SECTION */
-        .bagian-row-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .bagian-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-        .bagian-badge {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 700; flex-shrink: 0;
-            text-decoration: none;
-            transition: all 0.15s ease;
-        }
-        .bagian-badge:hover { cursor: pointer; opacity: 0.8; transform: scale(1.05); }
-        .terlambat-link {
-            color: #EF4444; font-size: 11px; font-weight: 600;
-            text-decoration: none; transition: all 0.15s ease;
-        }
-        .terlambat-link:hover { cursor: pointer; text-decoration: underline; opacity: 0.8; color: #EF4444; }
-        .bagian-info { flex: 1; }
-        .bagian-meta { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
-        .progress-bar { height: 5px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+  /* Period tabs */
+  .period-tabs {
+    display: flex; background: var(--bg);
+    border-radius: 8px; padding: 3px; gap: 2px;
+  }
+  .period-tab {
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 11.5px; font-weight: 500;
+    color: var(--text-muted); cursor: pointer;
+    transition: all .15s;
+  }
+  .period-tab.active {
+    background: white; color: var(--text-primary);
+    font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  }
 
-        /* BOTTOM GRID CARDS */
-        .bagian-grid-section {
-            background: white;
-            border-radius: 14px;
-            padding: 20px 24px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        }
-        .bagian-grid-section .section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-        .bagian-grid-section .section-head h3 { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
-        .bagian-grid-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
-        }
-        .bagian-grid-card {
-            border-radius: 12px;
-            padding: 14px;
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none !important;
-            display: block;
-            color: inherit;
-        }
-        .bagian-grid-card:hover {
-            transform: translateY(-2px);
-            color: inherit;
-        }
-        .bagian-grid-card .bg-icon {
-            width: 38px; height: 38px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; margin-bottom: 10px;
-        }
-        .bagian-grid-card .bg-name { font-weight: 700; font-size: 13px; color: #0f172a; }
-        .bagian-grid-card .bg-count { font-size: 18px; font-weight: 800; margin: 2px 0; }
-        .bagian-grid-card .bg-label { font-size: 11px; color: #94a3b8; }
-        .bagian-grid-card .bg-link { margin-top: 8px; font-size: 11px; font-weight: 500; }
+  /* ── TOP BAGIAN TABLE ── */
+  .top-table { width: 100%; border-collapse: collapse; }
+  .top-table thead th {
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted); padding: 0 0 10px; text-align: left;
+  }
+  .top-table thead th:not(:first-child) { text-align: right; }
+  .top-table tbody tr { border-top: 1px solid var(--border); }
+  .top-table tbody td { padding: 10px 0; font-size: 12.5px; }
+  .top-table tbody td:not(:first-child) { text-align: right; }
+  .bagian-name { font-weight: 600; color: var(--text-primary); }
+  .bagian-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+  .return-val { font-weight: 600; }
+  .val-up   { color: var(--green); }
+  .val-down { color: var(--red); }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .charts-row { grid-template-columns: 1fr; }
-            .bagian-row-grid { grid-template-columns: 1fr; }
-            .banner-inner { flex-direction: column; gap: 16px; }
-            .banner-summary { min-width: auto; }
-        }
-        @media (max-width: 768px) {
-            .dash-banner { padding: 20px; }
-            .dash-content { padding: 16px; }
-            .stat-cards { grid-template-columns: repeat(2, 1fr); }
-            .bagian-grid-cards { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 480px) {
-            .stat-cards { grid-template-columns: 1fr; }
-            .bagian-grid-cards { grid-template-columns: 1fr; }
-        }
+  /* ── BOTTOM ROW ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 14px; margin-bottom: 20px;
+  }
+  @media (max-width: 1100px) { .bottom-row { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 768px)  { .bottom-row { grid-template-columns: 1fr; } }
 
-        /* Dark mode */
-        html.dark .home-dashboard { background-color: #0f172a; }
-        html.dark .stat-card, html.dark .chart-card, html.dark .bagian-grid-section { background: #1e293b; }
-        html.dark .stat-card .stat-value, html.dark .chart-card h3 { color: #f1f5f9; }
-        html.dark .bagian-grid-card { background: #1e293b; border-color: #334155; }
-    </style>
+  /* Recent Docs Table */
+  .doc-table { width: 100%; border-collapse: collapse; }
+  .doc-table th {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text-muted);
+    padding-bottom: 10px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-table td {
+    padding: 10px 0; font-size: 12px;
+    border-bottom: 1px solid var(--border); vertical-align: middle;
+  }
+  .doc-table tr:last-child td { border-bottom: none; }
+  .doc-name {
+    font-weight: 600; color: var(--text-primary);
+    max-width: 160px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .doc-no { font-size: 10.5px; color: var(--text-muted); }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 10.5px; font-weight: 600;
+  }
+  .status-belum { background: var(--orange-light); color: var(--orange); }
+  .status-siap  { background: var(--accent-light); color: var(--accent); }
+  .status-sudah { background: var(--green-light); color: var(--green); }
+  .doc-amount { font-weight: 600; font-size: 12px; text-align: right; }
 
-    <div class="home-dashboard">
+  /* Per Bagian horizontal bars */
+  .types-list { display: flex; flex-direction: column; gap: 0; }
+  .type-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 9px; overflow: hidden; }
+  .type-bar { height: 100%; border-radius: 9px; transition: width .5s ease; }
+  .type-name { font-size: 12px; color: var(--text-secondary); min-width: 36px; }
+  .type-pct { font-size: 11.5px; font-weight: 600; color: var(--text-primary); min-width: 36px; text-align: right; }
+  .type-count { font-size: 11px; color: var(--text-muted); min-width: 55px; text-align: right; }
 
-        {{-- ============ HEADER BANNER ============ --}}
-        <div class="dash-banner">
-            <div class="circle-decor"></div>
-            <div class="circle-decor"></div>
-            <div class="circle-decor"></div>
+  /* Donut */
+  .donut-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 16px; }
+  .donut-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .donut-center-val {
+    font-family: 'Sora', sans-serif; font-size: 22px;
+    font-weight: 700; color: var(--text-primary);
+  }
+  .donut-center-lbl { font-size: 10px; color: var(--text-muted); }
+  .legend-list { display: flex; flex-direction: column; gap: 8px; }
+  .legend-row { display: flex; align-items: center; justify-content: space-between; }
+  .legend-left { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { font-size: 12px; color: var(--text-secondary); }
+  .legend-pct { font-size: 12px; font-weight: 600; color: var(--text-primary); }
 
-            <div class="banner-inner">
-                <div>
-                    <div class="banner-greeting">
-                        <span style="font-size:20px">📊</span>
-                        <span>{{ $greeting }}, <strong>Pak Herry</strong></span>
-                    </div>
-                    <h1 class="banner-title">Dashboard Kabag Keuangan</h1>
-                    <p class="banner-subtitle">Pantau dan kelola semua dokumen perusahaan dengan mudah</p>
-                </div>
+  /* Real-time indicator */
+  .realtime-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; color: var(--green); font-weight: 500;
+  }
+  .realtime-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); animation: pulse-dot 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .5; transform: scale(.8); }
+  }
 
-                {{-- Ringkasan Hari Ini --}}
-                <div class="banner-summary">
-                    <div class="banner-summary-title">☀️ Ringkasan Hari Ini</div>
-                    <div class="banner-summary-row">
-                        <div class="dot" style="background:#10B981"></div>
-                        <span>{{ $hariIni['masuk'] }} dokumen baru masuk</span>
-                    </div>
-                    <div class="banner-summary-row">
-                        <div class="dot" style="background:#F59E0B"></div>
-                        <span>{{ $hariIni['mendekati'] }} mendekati batas waktu</span>
-                    </div>
-                    <div class="banner-summary-row">
-                        <div class="dot" style="background:#EF4444"></div>
-                        <span>{{ $hariIni['terlambat'] }} dokumen terlambat</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes rowFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .doc-row-new { animation: rowFadeIn .4s ease both; }
+</style>
 
-        <div class="dash-content">
+{{-- Load Chart.js --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-            {{-- ============ STAT CARDS ============ --}}
-            <div class="stat-cards">
-                {{-- Total Dokumen --}}
-                <a href="{{ url('/owner/dokumen') }}" class="stat-card" style="--stat-color:#0D9488">
-                    <div class="stat-card-top">
-                        <div>
-                            <div class="stat-label">Total Dokumen</div>
-                            <div class="stat-value" data-counter="{{ $totalDokumen }}">0</div>
-                            @if($totalDokumenTrend != 0)
-                            <div class="stat-change {{ $totalDokumenTrend > 0 ? 'pos' : 'neg' }}">
-                                {{ $totalDokumenTrend > 0 ? '↑ +'.$totalDokumenTrend.'%' : '↓ '.$totalDokumenTrend.'%' }} vs bulan lalu
-                            </div>
-                            @endif
-                        </div>
-                        <div class="stat-icon" style="background:#0D948818">📄</div>
-                    </div>
-                    <div class="stat-detail">Lihat Detail →</div>
-                </a>
+<div class="owner-dash">
 
-                {{-- Belum Dibayar --}}
-                <a href="{{ url('/owner/dokumen?status=belum_siap') }}" class="stat-card" style="--stat-color:#F59E0B">
-                    <div class="stat-card-top">
-                        <div>
-                            <div class="stat-label">Belum Dibayar</div>
-                            <div class="stat-value" data-counter="{{ $dokumenProses }}">0</div>
-                            @if($prosesTrend != 0)
-                            <div class="stat-change {{ $prosesTrend > 0 ? 'neg' : 'pos' }}">
-                                {{ $prosesTrend > 0 ? '↑ +'.$prosesTrend.'%' : '↓ '.$prosesTrend.'%' }} vs bulan lalu
-                            </div>
-                            @endif
-                        </div>
-                        <div class="stat-icon" style="background:#F59E0B18">⏳</div>
-                    </div>
-                    <div class="stat-nilai">Rp {{ number_format($nilaiBelumDibayar, 0, ',', '.') }}</div>
-                    <div class="stat-detail">Lihat Detail →</div>
-                </a>
-
-                {{-- Siap Dibayar --}}
-                <a href="{{ url('/owner/dokumen?status=siap_dibayar') }}" class="stat-card" style="--stat-color:#3B82F6">
-                    <div class="stat-card-top">
-                        <div>
-                            <div class="stat-label">Siap Dibayar</div>
-                            <div class="stat-value" data-counter="{{ $dokumenSiapBayar }}">0</div>
-                            @if($siapTrend != 0)
-                            <div class="stat-change {{ $siapTrend > 0 ? 'pos' : 'neg' }}">
-                                {{ $siapTrend > 0 ? '↑ +'.$siapTrend.'%' : '↓ '.$siapTrend.'%' }} vs bulan lalu
-                            </div>
-                            @endif
-                        </div>
-                        <div class="stat-icon" style="background:#3B82F618">✅</div>
-                    </div>
-                    <div class="stat-nilai">Rp {{ number_format($nilaiSiapDibayar, 0, ',', '.') }}</div>
-                    <div class="stat-detail">Lihat Detail →</div>
-                </a>
-
-                {{-- Sudah Dibayar --}}
-                <a href="{{ url('/owner/dokumen?status=sudah_dibayar') }}" class="stat-card" style="--stat-color:#10B981">
-                    <div class="stat-card-top">
-                        <div>
-                            <div class="stat-label">Sudah Dibayar</div>
-                            <div class="stat-value" data-counter="{{ $dokumenSelesai }}">0</div>
-                            @if($selesaiTrend != 0)
-                            <div class="stat-change {{ $selesaiTrend > 0 ? 'pos' : 'neg' }}">
-                                {{ $selesaiTrend > 0 ? '↑ +'.$selesaiTrend.'%' : '↓ '.$selesaiTrend.'%' }} vs bulan lalu
-                            </div>
-                            @endif
-                        </div>
-                        <div class="stat-icon" style="background:#10B98118">💳</div>
-                    </div>
-                    <div class="stat-nilai">Rp {{ number_format($nilaiSudahDibayar, 0, ',', '.') }}</div>
-                    <div class="stat-detail">Lihat Detail →</div>
-                </a>
-
-                {{-- Total Nilai --}}
-                <div class="stat-card gradient">
-                    <div class="stat-label">Total Nilai (RP)</div>
-                    <div class="stat-value" data-counter="{{ $totalNilai }}" data-prefix="Rp ">0</div>
-                    @if($nilaiTrend != 0)
-                    <div class="stat-change">
-                        {{ $nilaiTrend > 0 ? '↑ +'.$nilaiTrend.'%' : '↓ '.$nilaiTrend.'%' }} vs bulan lalu
-                    </div>
-                    @endif
-                    <div style="margin-top:12px; font-size:20px">💰</div>
-                </div>
-            </div>
-
-            {{-- ============ CHARTS ROW ============ --}}
-            <div class="charts-row">
-                {{-- Area Chart Tren 30 Hari --}}
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <div>
-                            <h3>Tren Dokumen 30 Hari</h3>
-                            <p class="chart-sub">Jumlah dokumen masuk per hari</p>
-                        </div>
-                        <div class="chart-legend-inline">
-                            <span><span style="color:#0D9488">●</span> Masuk</span>
-                        </div>
-                    </div>
-                    <div style="position:relative; height:200px;">
-                        <canvas id="trendChart"></canvas>
-                    </div>
-                </div>
-
-                {{-- Donut Chart --}}
-                <div class="chart-card">
-                    <h3>Overview Status</h3>
-                    <p class="chart-sub">Distribusi status pembayaran</p>
-                    <div style="display:flex; justify-content:center; margin-top:12px;">
-                        <canvas id="donutChart" width="160" height="160"></canvas>
-                    </div>
-                    <div class="donut-legend">
-                        <div class="legend-item">
-                            <div class="dot" style="background:#10B981"></div>
-                            <span class="lbl">Sudah Dibayar</span>
-                            <strong>{{ number_format($dokumenSelesai) }}</strong>
-                        </div>
-                        <div class="legend-item">
-                            <div class="dot" style="background:#F59E0B"></div>
-                            <span class="lbl">Belum Dibayar</span>
-                            <strong>{{ number_format($dokumenProses) }}</strong>
-                        </div>
-                        <div class="legend-item">
-                            <div class="dot" style="background:#3B82F6"></div>
-                            <span class="lbl">Siap Bayar</span>
-                            <strong>{{ number_format($dokumenSiapBayar) }}</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- ============ BAGIAN SECTION ============ --}}
-            <div class="bagian-row-grid">
-                {{-- Bar Chart Volume per Bagian --}}
-                <div class="chart-card">
-                    <h3>Volume per Bagian</h3>
-                    <p class="chart-sub">Total dokumen dan keterlambatan</p>
-                    <div style="position:relative; height:220px; margin-top:16px;">
-                        <canvas id="bagianChart"></canvas>
-                    </div>
-                </div>
-
-                {{-- Progress List per Bagian --}}
-                <div class="chart-card">
-                    <h3>Dokumen per Bagian</h3>
-                    <p class="chart-sub" style="margin-bottom:14px">Dengan indikator keterlambatan</p>
-                    @foreach($bagianStats as $b)
-                        <div class="bagian-row">
-                            <a href="{{ url('/owner/dokumen?filter_bagian=' . $b['code']) }}"
-                               class="bagian-badge" style="background:{{ $b['color'] }}20; color:{{ $b['color'] }}"
-                               title="Lihat semua dokumen bagian {{ $b['code'] }}">
-                                {{ $b['code'] }}
-                            </a>
-                            <div class="bagian-info">
-                                <div class="bagian-meta">
-                                    <span style="font-weight:600; color:#0f172a">{{ number_format($b['count']) }} dokumen</span>
-                                    @if($b['terlambat'] > 0)
-                                        <a href="{{ url('/owner/dokumen?filter_bagian=' . $b['code'] . '&filter_umur=3') }}"
-                                           class="terlambat-link"
-                                           title="Lihat {{ $b['terlambat'] }} dokumen terlambat di bagian {{ $b['code'] }}">
-                                            ⚠ {{ $b['terlambat'] }} terlambat
-                                        </a>
-                                    @endif
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="
-                                        width: {{ ($b['count'] / $maxBagian) * 100 }}%;
-                                        background: {{ $b['terlambat'] > 0
-                                            ? 'linear-gradient(90deg,'.$b['color'].',#EF4444)'
-                                            : $b['color'] }};
-                                    "></div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- ============ GRID CARD BAGIAN (EXISTING IMPROVED) ============ --}}
-            <div class="bagian-grid-section">
-                <div class="section-head">
-                    <span style="font-size:16px">🗂</span>
-                    <h3>Dokumen per Bagian</h3>
-                </div>
-                <div class="bagian-grid-cards">
-                    @foreach($bagianStats as $b)
-                        <a href="{{ url('/owner/dokumen?filter_bagian=' . $b['code']) }}"
-                           class="bagian-grid-card"
-                           style="--accent:{{ $b['color'] }}"
-                           onmouseenter="this.style.background='{{ $b['color'] }}12'; this.style.borderColor='{{ $b['color'] }}40'; this.style.transform='translateY(-2px)'"
-                           onmouseleave="this.style.background='#F8FAFC'; this.style.borderColor='#E2E8F0'; this.style.transform='translateY(0)'"
-                        >
-                            <div class="bg-icon" style="background:{{ $b['color'] }}20">{{ $b['emoji'] }}</div>
-                            <div class="bg-name">{{ $b['code'] }}</div>
-                            <div class="bg-count" style="color:{{ $b['color'] }}">{{ number_format($b['count']) }}</div>
-                            <div class="bg-label">dokumen</div>
-                            <div class="bg-link" style="color:{{ $b['color'] }}">Lihat →</div>
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-
-        </div>
+  {{-- TOPBAR --}}
+  <div class="owner-topbar">
+    <div>
+      <div class="owner-topbar-title">Overview Keuangan</div>
+      <div class="owner-topbar-subtitle">Pantau dan kelola semua dokumen perusahaan</div>
     </div>
+    <div class="owner-topbar-controls">
+      <div class="ctrl-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        {{ now()->format('d M Y') }}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="ctrl-pill">
+        <span class="badge-dot" style="background:var(--green)"></span>
+        Semua Bagian
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="ctrl-pill">
+        30 Hari Terakhir
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+    </div>
+  </div>
 
-    {{-- Chart.js CDN --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script>
-        // === ANIMATED COUNTER ===
-        function animateCounter(el, target, duration) {
-            duration = duration || 1200;
-            var prefix = el.dataset.prefix || '';
-            var start = performance.now();
-            var update = function(ts) {
-                var p = Math.min((ts - start) / duration, 1);
-                var eased = 1 - Math.pow(1 - p, 3);
-                el.textContent = prefix + Math.floor(eased * target).toLocaleString('id-ID');
-                if (p < 1) requestAnimationFrame(update);
-            };
-            requestAnimationFrame(update);
+  {{-- CONTENT --}}
+  <div class="owner-content">
+
+    {{-- STAT CARDS ROW --}}
+    <div class="stats-row">
+
+      {{-- Total Dokumen --}}
+      <div class="stat-card">
+        <div class="stat-label">Total Dokumen</div>
+        <div class="stat-icon" style="background:#f0f4ff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+        </div>
+        <div class="stat-value">{{ number_format($totalDokumen) }}</div>
+        <div class="stat-sub">Total seluruh dokumen</div>
+      </div>
+
+      {{-- Belum Dibayar --}}
+      <div class="stat-card">
+        <div class="stat-label">Belum Dibayar</div>
+        <div class="stat-icon" style="background:#fffbeb">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="stat-value" style="color:#f59e0b">{{ number_format($dokumenProses) }}</div>
+        <div class="stat-sub" style="font-weight:600;color:#f59e0b">
+          Rp {{ number_format($nilaiBelumDibayar, 0, ',', '.') }}
+        </div>
+      </div>
+
+      {{-- Siap Dibayar --}}
+      <div class="stat-card">
+        <div class="stat-label">Siap Dibayar</div>
+        <div class="stat-icon" style="background:#eff4ff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="stat-value" style="color:#2563eb">{{ number_format($dokumenSiapBayar) }}</div>
+        <div class="stat-sub">Rp {{ number_format($nilaiSiapDibayar, 0, ',', '.') }}</div>
+      </div>
+
+      {{-- Sudah Dibayar --}}
+      <div class="stat-card">
+        <div class="stat-label">Sudah Dibayar</div>
+        <div class="stat-icon" style="background:#ecfdf5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+        </div>
+        <div class="stat-value" style="color:#10b981">{{ number_format($dokumenSelesai) }}</div>
+        <div class="stat-sub" style="font-weight:600;color:#10b981">
+          Rp {{ number_format($nilaiSudahDibayar, 0, ',', '.') }}
+        </div>
+      </div>
+
+      {{-- Total Nilai (accent) --}}
+      <div class="stat-card accent">
+        <div class="stat-label">Total Nilai</div>
+        @php
+          $totalNilaiNum = (float)($totalNilai ?? 0);
+          $totalNilaiShort = $totalNilaiNum >= 1_000_000_000
+            ? 'Rp ' . number_format($totalNilaiNum / 1_000_000_000, 1, ',', '.') . ' M'
+            : 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' Jt';
+        @endphp
+        <div class="stat-value">{{ $totalNilaiShort }}</div>
+        <div class="stat-sub">Rp {{ number_format($totalNilaiNum, 0, ',', '.') }}</div>
+        <div style="margin-top:12px;font-size:11px;color:rgba(255,255,255,.7)">Per {{ now()->format('d F Y') }}</div>
+      </div>
+
+    </div>{{-- /.stats-row --}}
+
+    {{-- CHARTS ROW --}}
+    <div class="charts-row">
+
+      {{-- Tren Dokumen Masuk --}}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <div class="dash-card-title">Tren Dokumen Masuk</div>
+            <div class="dash-card-sub">Volume dokumen 30 hari terakhir</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="period-tabs">
+              <div class="period-tab" data-days="7">7H</div>
+              <div class="period-tab active" data-days="30">30H</div>
+              <div class="period-tab" data-days="90">90H</div>
+            </div>
+          </div>
+        </div>
+        <canvas id="trendChart" height="90"></canvas>
+      </div>
+
+      {{-- Top Bagian Table --}}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <div class="dash-card-title">Top Bagian</div>
+            <div class="dash-card-sub">Volume & keterlambatan</div>
+          </div>
+          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua →</a>
+        </div>
+        <table class="top-table">
+          <thead>
+            <tr>
+              <th>Bagian</th>
+              <th>Dokumen</th>
+              <th>Terlambat</th>
+            </tr>
+          </thead>
+          <tbody>
+            @php
+              $topBagian = collect($bagianStats ?? [])->take(5);
+            @endphp
+            @foreach($topBagian as $b)
+              <tr>
+                <td>
+                  <span style="display:flex;align-items:center">
+                    <span class="bagian-dot" style="background:{{ $b['color'] ?? '#94a3b8' }}; width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:7px"></span>
+                    <span class="bagian-name">{{ $b['code'] }}</span>
+                  </span>
+                </td>
+                <td>{{ number_format($b['count']) }}</td>
+                <td class="return-val {{ ($b['terlambat'] ?? 0) > 0 ? 'val-down' : 'val-up' }}">
+                  {{ ($b['terlambat'] ?? 0) > 0 ? '↓ '.$b['terlambat'] : '✓ 0' }}
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+
+    </div>{{-- /.charts-row --}}
+
+    {{-- BOTTOM ROW --}}
+    <div class="bottom-row">
+
+      {{-- Dokumen Terbaru (Real-time) --}}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <div class="dash-card-title">Dokumen Terbaru</div>
+            <div class="dash-card-sub">
+              <span class="realtime-badge">
+                <span class="realtime-dot"></span> Live — update otomatis
+              </span>
+            </div>
+          </div>
+          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua →</a>
+        </div>
+        <table class="doc-table" id="recentDocsTable">
+          <thead>
+            <tr>
+              <th>Dokumen</th>
+              <th>Bagian</th>
+              <th>Status</th>
+              <th style="text-align:right">Nilai</th>
+            </tr>
+          </thead>
+          <tbody id="recentDocsTbody">
+            @php
+              $bagianColors = [
+                'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
+                'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
+                'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
+              ];
+            @endphp
+            @forelse($recentDocuments ?? [] as $doc)
+              <tr class="doc-row-new">
+                <td>
+                  <div class="doc-name" title="{{ $doc['uraian_spp'] ?? '-' }}">
+                    {{ Str::limit($doc['uraian_spp'] ?? '-', 28) }}
+                  </div>
+                  <div class="doc-no">{{ $doc['nomor_spp'] ?? '-' }}</div>
+                </td>
+                <td>
+                  @php $bColor = $bagianColors[$doc['bagian'] ?? ''] ?? '#94a3b8'; @endphp
+                  <span style="font-size:11.5px;font-weight:600;color:{{ $bColor }}">
+                    {{ $doc['bagian'] ?? '-' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-pill {{ $doc['status_class'] ?? 'status-belum' }}">
+                    {{ $doc['status_label'] ?? 'Menunggu' }}
+                  </span>
+                </td>
+                <td class="doc-amount">
+                  @php
+                    $val = (float)($doc['nilai_rupiah'] ?? 0);
+                    echo $val >= 1_000_000
+                      ? 'Rp '.number_format($val/1_000_000, 1, ',', '.').' Jt'
+                      : 'Rp '.number_format($val, 0, ',', '.');
+                  @endphp
+                </td>
+              </tr>
+            @empty
+              <tr>
+                <td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px 0">
+                  Belum ada dokumen
+                </td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+
+      {{-- Per Bagian Horizontal Bars --}}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <div class="dash-card-title">Per Bagian</div>
+            <div class="dash-card-sub">Distribusi volume dokumen</div>
+          </div>
+          <a class="see-all" href="{{ url('/owner/analytics') }}">Detail →</a>
+        </div>
+        <div class="types-list">
+          @php
+            $maxCount = collect($bagianStats ?? [])->max('count') ?: 1;
+            $totalAll = collect($bagianStats ?? [])->sum('count') ?: 1;
+          @endphp
+          @foreach($bagianStats ?? [] as $b)
+            @php
+              $pct = round(($b['count'] / $totalAll) * 100, 1);
+              $barWidth = round(($b['count'] / $maxCount) * 100, 1);
+            @endphp
+            <div class="type-row">
+              <span class="type-name" style="font-weight:600;color:{{ $b['color'] ?? '#94a3b8' }}">{{ $b['code'] }}</span>
+              <div class="type-bar-wrap">
+                <div class="type-bar" style="width:{{ $barWidth }}%;background:{{ $b['color'] ?? '#94a3b8' }}"></div>
+              </div>
+              <span class="type-pct">{{ $pct }}%</span>
+              <span class="type-count">{{ number_format($b['count']) }} dok</span>
+            </div>
+          @endforeach
+        </div>
+      </div>
+
+      {{-- Status Pembayaran Donut --}}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <div class="dash-card-title">Status Pembayaran</div>
+            <div class="dash-card-sub">Distribusi status dokumen</div>
+          </div>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donutChart"></canvas>
+          <div class="donut-center">
+            <div class="donut-center-val">{{ number_format($totalDokumen) }}</div>
+            <div class="donut-center-lbl">Total Dok</div>
+          </div>
+        </div>
+        <div class="legend-list">
+          @php
+            $totalDonut = $totalDokumen ?: 1;
+            $pctSudah = round(($dokumenSelesai / $totalDonut) * 100, 1);
+            $pctBelum = round(($dokumenProses / $totalDonut) * 100, 1);
+            $pctSiap  = round(($dokumenSiapBayar / $totalDonut) * 100, 1);
+          @endphp
+          <div class="legend-row">
+            <div class="legend-left">
+              <div class="legend-dot" style="background:#10b981"></div>
+              <span class="legend-name">Sudah Dibayar</span>
+            </div>
+            <span class="legend-pct">{{ $pctSudah }}%</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-left">
+              <div class="legend-dot" style="background:#f59e0b"></div>
+              <span class="legend-name">Belum Dibayar</span>
+            </div>
+            <span class="legend-pct">{{ $pctBelum }}%</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-left">
+              <div class="legend-dot" style="background:#2563eb"></div>
+              <span class="legend-name">Siap Dibayar</span>
+            </div>
+            <span class="legend-pct">{{ $pctSiap }}%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>{{-- /.bottom-row --}}
+
+  </div>{{-- /.owner-content --}}
+</div>{{-- /.owner-dash --}}
+
+<script>
+// ── Trend Chart ──────────────────────────────────────────
+const trendLabels = @json($chartLabels ?? []);
+const trendData   = @json($chartData ?? []);
+
+const tCtx = document.getElementById('trendChart')?.getContext('2d');
+let trendChart;
+if (tCtx) {
+  trendChart = new Chart(tCtx, {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [{
+        label: 'Dokumen Masuk',
+        data: trendData,
+        borderColor: '#0f766e',
+        backgroundColor: 'rgba(15,118,110,.08)',
+        fill: true,
+        tension: 0.45,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#0f766e',
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index', intersect: false,
+          callbacks: { label: ctx => ` ${ctx.raw} dokumen` }
         }
-        document.querySelectorAll('[data-counter]').forEach(function(el) {
-            animateCounter(el, parseInt(el.dataset.counter));
-        });
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0', maxTicksLimit: 6 }
+        },
+        y: {
+          grid: { color: '#f1f5f9' },
+          ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0' },
+          border: { display: false }
+        }
+      },
+      interaction: { mode: 'index', intersect: false }
+    }
+  });
+}
 
-        // === AREA CHART — TREN 30 HARI ===
-        new Chart(document.getElementById('trendChart'), {
-            type: 'line',
-            data: {
-                labels: @json($chartLabels),
-                datasets: [{
-                    label: 'Dokumen Masuk',
-                    data: @json($chartData),
-                    borderColor: '#0D9488',
-                    backgroundColor: 'rgba(13,148,136,0.08)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    pointHoverBackgroundColor: '#0D9488'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 } }, beginAtZero: true }
-                }
-            }
-        });
+// Period tab switching
+document.querySelectorAll('.period-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    const days = parseInt(this.dataset.days);
+    fetch(`/owner/api/trend-chart?days=${days}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(r => r.json()).then(data => {
+      if (data.labels && trendChart) {
+        trendChart.data.labels = data.labels;
+        trendChart.data.datasets[0].data = data.data;
+        trendChart.update();
+      }
+    }).catch(() => {}); // Fail silently
+  });
+});
 
-        // === DONUT CHART — PROPORSI STATUS ===
-        new Chart(document.getElementById('donutChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Sudah Dibayar', 'Belum Dibayar', 'Siap Bayar'],
-                datasets: [{
-                    data: [{{ $dokumenSelesai }}, {{ $dokumenProses }}, {{ $dokumenSiapBayar }}],
-                    backgroundColor: ['#10B981', '#F59E0B', '#3B82F6'],
-                    borderWidth: 3,
-                    borderColor: 'white'
-                }]
-            },
-            options: {
-                responsive: false,
-                cutout: '65%',
-                plugins: { legend: { display: false } }
-            }
-        });
+// ── Donut Chart ───────────────────────────────────────────
+const dCtx = document.getElementById('donutChart')?.getContext('2d');
+if (dCtx) {
+  new Chart(dCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Sudah Dibayar', 'Belum Dibayar', 'Siap Dibayar'],
+      datasets: [{
+        data: [{{ $dokumenSelesai }}, {{ $dokumenProses }}, {{ $dokumenSiapBayar }}],
+        backgroundColor: ['#10b981', '#f59e0b', '#2563eb'],
+        borderWidth: 0,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw.toLocaleString('id-ID')} dokumen` }
+        }
+      }
+    }
+  });
+}
 
-        // === BAR CHART — VOLUME PER BAGIAN ===
-        var bagianData = @json($bagianStats);
-        new Chart(document.getElementById('bagianChart'), {
-            type: 'bar',
-            data: {
-                labels: bagianData.map(function(b) { return b.code; }),
-                datasets: [{
-                    label: 'Total Dokumen',
-                    data: bagianData.map(function(b) { return b.count; }),
-                    backgroundColor: bagianData.map(function(b) { return b.color; }),
-                    borderRadius: 4,
-                    barPercentage: 0.6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 } }, beginAtZero: true }
-                }
-            }
-        });
-    </script>
+// ── Real-time Dokumen Terbaru ─────────────────────────────
+const bagianColors = {
+  'AKN': '#7C3AED', 'DPM': '#22c55e', 'KPL': '#f59e0b',
+  'PMO': '#06b6d4', 'SDM': '#8b5cf6', 'SKH': '#ec4899',
+  'TAN': '#10b981', 'TEP': '#6366f1', 'PTI': '#3B82F6',
+};
+
+function formatCurrency(val) {
+  val = parseFloat(val) || 0;
+  if (val >= 1_000_000) return 'Rp ' + (val / 1_000_000).toFixed(1).replace('.', ',') + ' Jt';
+  return 'Rp ' + val.toLocaleString('id-ID');
+}
+
+function truncate(str, len) {
+  if (!str) return '-';
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+function buildDocRow(doc, isNew = false) {
+  const color = bagianColors[doc.bagian] || '#94a3b8';
+  return `
+    <tr class="doc-row-new${isNew ? '' : ''}">
+      <td>
+        <div class="doc-name" title="${(doc.uraian_spp || '-').replace(/"/g,'&quot;')}">${truncate(doc.uraian_spp, 28)}</div>
+        <div class="doc-no">${doc.nomor_spp || '-'}</div>
+      </td>
+      <td><span style="font-size:11.5px;font-weight:600;color:${color}">${doc.bagian || '-'}</span></td>
+      <td><span class="status-pill ${doc.status_class || 'status-belum'}">${doc.status_label || 'Menunggu'}</span></td>
+      <td class="doc-amount">${formatCurrency(doc.nilai_rupiah)}</td>
+    </tr>`;
+}
+
+let lastSeenIds = [];
+
+function pollRecentDocs() {
+  fetch('/owner/api/recent-documents', {
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.success || !Array.isArray(data.documents)) return;
+    const docs = data.documents;
+    const newIds = docs.map(d => d.id);
+
+    // Check if anything changed
+    const hasChanged = JSON.stringify(newIds) !== JSON.stringify(lastSeenIds);
+    if (!hasChanged) return;
+
+    const tbody = document.getElementById('recentDocsTbody');
+    if (!tbody) return;
+
+    const isFirstLoad = lastSeenIds.length === 0;
+    lastSeenIds = newIds;
+
+    if (docs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px 0">Belum ada dokumen</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = docs.map((doc, i) => buildDocRow(doc, !isFirstLoad && i < 1)).join('');
+  })
+  .catch(() => {}); // Fail silently
+}
+
+// Initial poll + every 10 seconds
+pollRecentDocs();
+setInterval(pollRecentDocs, 10000);
+</script>
 @endsection

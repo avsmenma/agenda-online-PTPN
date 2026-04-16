@@ -9,6 +9,8 @@
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts for Owner Dashboard -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <!-- Flatpickr CSS -->
@@ -3739,6 +3741,114 @@
     .dark .swal2-backdrop-show {
       background: rgba(0, 0, 0, 0.7) !important;
     }
+
+    /* ========================================
+       OWNER SIDEBAR - Fixed 240px Modern Design
+       ======================================== */
+    .sidebar-owner {
+      width: 240px !important;
+      background: #ffffff;
+      border-right: 1px solid #e8ecf4;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 1000;
+      padding: 0 0 16px;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    .sidebar-owner:hover { width: 240px !important; box-shadow: none; }
+    .sidebar-owner:not(:hover) a { font-size: inherit; line-height: inherit; color: inherit; padding: 9px 10px; justify-content: flex-start; }
+    .sidebar-owner:not(:hover) a i { font-size: 16px; color: #6b7a99; }
+    .sidebar-owner:not(:hover) hr { display: block; }
+    .sidebar-owner:not(:hover) h4 { font-size: 13px; line-height: 1.2; justify-content: flex-start; padding: 0; }
+
+    .dark .sidebar-owner {
+      background: #1e293b;
+      border-right-color: #334155;
+    }
+
+    /* Owner sidebar logo */
+    .owner-sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #e8ecf4;
+    }
+    .dark .owner-sidebar-logo { border-bottom-color: #334155; }
+    .owner-logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #0f766e, #10b981);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .owner-logo-icon svg { width: 20px; height: 20px; color: white; }
+    .owner-logo-text { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 13px; color: #1a2340; line-height: 1.2; }
+    .owner-logo-sub { font-size: 10px; color: #a0aec0; font-weight: 400; }
+    .dark .owner-logo-text { color: #f1f5f9; }
+    .dark .owner-logo-sub { color: #94a3b8; }
+
+    /* Owner sidebar nav section */
+    .owner-sidebar-section { padding: 16px 12px 4px; }
+    .owner-sidebar-label {
+      font-size: 10px; font-weight: 600; color: #a0aec0;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 0 8px 8px;
+    }
+    .dark .owner-sidebar-label { color: #94a3b8; }
+
+    .sidebar-owner .owner-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 9px;
+      color: #6b7a99; font-weight: 500; font-size: 13px;
+      cursor: pointer; transition: all .15s; margin-bottom: 2px;
+      text-decoration: none; white-space: nowrap;
+    }
+    .sidebar-owner .owner-nav-item:hover { background: #f4f6fb; color: #1a2340; }
+    .sidebar-owner .owner-nav-item.active { background: #eff4ff; color: #2563eb; font-weight: 600; }
+    .sidebar-owner .owner-nav-item i { width: 16px; font-size: 14px; text-align: center; flex-shrink: 0; }
+    .dark .sidebar-owner .owner-nav-item { color: #cbd5e1; }
+    .dark .sidebar-owner .owner-nav-item:hover { background: #334155; color: #f1f5f9; }
+    .dark .sidebar-owner .owner-nav-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; }
+
+    .sidebar-owner .bagian-dot-nav {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; flex-shrink: 0;
+    }
+
+    /* Owner sidebar bottom user card */
+    .owner-sidebar-bottom {
+      margin-top: auto; padding: 12px;
+      border-top: 1px solid #e8ecf4;
+    }
+    .dark .owner-sidebar-bottom { border-top-color: #334155; }
+    .owner-user-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; border-radius: 10px;
+      background: #f4f6fb; cursor: pointer; text-decoration: none;
+    }
+    .dark .owner-user-card { background: #334155; }
+    .owner-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #0f766e, #10b981);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .owner-user-info { flex: 1; min-width: 0; }
+    .owner-user-name { font-weight: 600; font-size: 12.5px; color: #1a2340; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .owner-user-role-text { font-size: 11px; color: #a0aec0; }
+    .dark .owner-user-name { color: #f1f5f9; }
+    .dark .owner-user-role-text { color: #94a3b8; }
+
+    /* Owner content area — wider margin for fixed sidebar */
+    body.owner-layout .content {
+      margin-left: 240px !important;
+    }
+    body.owner-layout .topbar {
+      margin-left: 240px !important;
+    }
   </style>
 
 
@@ -3803,7 +3913,7 @@
   </script>
 </head>
 
-<body>
+<body class="{{ isset($module) && strtolower($module ?? '') === 'owner' ? 'owner-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
@@ -4052,9 +4162,11 @@
 
   <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
   @if(!($isOperatorSpreadsheet ?? false))
-  <div class="sidebar">
+  <div class="{{ $isOwner ? 'sidebar-owner' : 'sidebar' }}">
+    @if(!$isOwner)
     <h4 class="text-center mb-4"><img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN" class="sidebar-logo-img"> Agenda Online</h4>
     <hr>
+    @endif
 
     @php
       // Normalize module to lowercase untuk konsistensi
@@ -4112,45 +4224,112 @@
     <script>window._userModule = @json($module);</script>
 
     @if($isOwner)
-      <!-- Owner Menu - Clean and Simple -->
-      <div style="flex: 1; display: flex; flex-direction: column;">
-        <a href="{{ url('/owner/home') }}" class="{{ $menuHome ?? '' }}">
-          <i class="fa-solid fa-house"></i> Home
+      {{-- ═══ NEW OWNER SIDEBAR (matches reference mockup) ═══ --}}
+
+      {{-- Logo / Brand --}}
+      <div class="owner-sidebar-logo">
+        <div class="owner-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:white">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="owner-logo-text">Agenda Online</div>
+          <div class="owner-logo-sub">PTPN IV Regional V</div>
+        </div>
+      </div>
+
+      {{-- MENU Section --}}
+      <div class="owner-sidebar-section" style="flex:0 0 auto;">
+        <div class="owner-sidebar-label">Menu</div>
+        <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
         </a>
-        <a href="{{ url('/owner/dokumen') }}" class="{{ $menuDokumen ?? '' }}">
-          <i class="fa-solid fa-file-lines"></i> Dokumen
+        <a href="{{ url('/owner/dokumen') }}" class="owner-nav-item {{ $menuDokumen ?? '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          Dokumen
         </a>
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
             request()->routeIs('owner.rekapan-keterlambatan*');
         @endphp
         <a href="{{ url('/owner/rekapan-keterlambatan') }}"
-          class="{{ $menuRekapanKeterlambatan ?? '' }} sidebar-menu-trigger {{ $isRekapanKeterlambatanActive ? 'active' : '' }}"
-          data-submenu="rekapan-keterlambatan" aria-expanded="{{ $isRekapanKeterlambatanActive ? 'true' : 'false' }}">
-          <i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan
+          class="owner-nav-item {{ $menuRekapanKeterlambatan ?? '' }} {{ $isRekapanKeterlambatanActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Rekapan Keterlambatan
         </a>
         @php
           $isAnalyticsActive = request()->is('*owner/analytics*') || request()->routeIs('analytics.*');
         @endphp
-        <a href="{{ url('/owner/analytics') }}" class="{{ $isAnalyticsActive ? 'active' : '' }}">
-          <i class="fa-solid fa-chart-line"></i> Analisis Kinerja
+        <a href="{{ url('/owner/analytics') }}" class="owner-nav-item {{ $isAnalyticsActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          Analisis Kinerja
         </a>
         @php
           $isAuditTrailActive = request()->is('*owner/programmer-logs*') || request()->routeIs('owner.programmer-logs');
         @endphp
-        <a href="{{ url('/owner/programmer-logs') }}" class="{{ $isAuditTrailActive ? 'active' : '' }}">
-          <i class="fa-solid fa-shield-halved"></i> Audit Trail
+        <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Audit Trail
         </a>
       </div>
-      <div style="margin-top: auto; padding-bottom: 20px;">
-        <a href="{{ url('/logout') }}"
-          onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();" class="logout-link">
-          <i class="fa-solid fa-sign-out-alt"></i> Keluar
+
+      {{-- BAGIAN Section --}}
+      <div class="owner-sidebar-section" style="flex:0 0 auto; overflow-y: auto;">
+        <div class="owner-sidebar-label">Bagian</div>
+        @php
+          $bagianColors = [
+            'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
+            'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
+            'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
+          ];
+        @endphp
+        @foreach($bagianColors as $bagianCode => $bagianColor)
+          <div class="owner-nav-item" style="cursor:default">
+            <span class="bagian-dot-nav" style="background:{{ $bagianColor }}; width:8px; height:8px;"></span>
+            {{ $bagianCode }}
+          </div>
+        @endforeach
+      </div>
+
+      {{-- User Card Bottom --}}
+      <div class="owner-sidebar-bottom">
+        <a class="owner-user-card" href="{{ url('/logout') }}"
+          onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();"
+          title="Keluar">
+          @php
+            $authUser = auth()->user();
+            $initials = $authUser ? strtoupper(substr($authUser->name ?? 'U', 0, 1) . (strpos($authUser->name ?? '', ' ') !== false ? substr($authUser->name, strpos($authUser->name, ' ') + 1, 1) : '')) : 'U';
+          @endphp
+          <div class="owner-avatar">{{ $initials }}</div>
+          <div class="owner-user-info">
+            <div class="owner-user-name">{{ $authUser->name ?? 'Pengguna' }}</div>
+            <div class="owner-user-role-text">{{ ucfirst(str_replace('_', ' ', $authUser->role ?? 'Owner')) }}</div>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#a0aec0;flex-shrink:0">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
         </a>
         <form id="logout-form-owner" action="{{ url('/logout') }}" method="POST" style="display: none;">
           @csrf
         </form>
       </div>
+
     @else
     <!-- Regular Menu for other roles -->
     <div style="flex: 1; display: flex; flex-direction: column;">

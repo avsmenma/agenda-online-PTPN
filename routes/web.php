@@ -221,6 +221,16 @@ Route::get('owner/api/real-time-updates', [OwnerDashboardController::class, 'get
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.api.real-time-updates');
 
+// Recent documents API for dashboard polling
+Route::get('owner/api/recent-documents', [OwnerDashboardController::class, 'getRecentDocuments'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.api.recent-documents');
+
+// Trend chart API for period tab switching
+Route::get('owner/api/trend-chart', [OwnerDashboardController::class, 'getTrendChart'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.api.trend-chart');
+
 // Tracking Dokumen routes - Available for all roles
 Route::get('tracking-dokumen', [OwnerDashboardController::class, 'trackingDokumen'])
     ->middleware('auth')

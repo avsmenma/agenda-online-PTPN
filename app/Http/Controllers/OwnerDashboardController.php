@@ -388,6 +388,34 @@ class OwnerDashboardController extends Controller
         $bagianStats = $this->getBagianStatistics();
         $maxBagian = collect($bagianStats)->max('count') ?: 1;
 
+        // === RECENT DOCUMENTS (5 terbaru) ===
+        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($doc) {
+                $statusLabel = 'Menunggu';
+                $statusClass = 'status-belum';
+                if ($doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar)) {
+                    $statusLabel = 'Dibayar';
+                    $statusClass = 'status-sudah';
+                } elseif ($doc->status_pembayaran === 'siap_dibayar') {
+                    $statusLabel = 'Siap Bayar';
+                    $statusClass = 'status-siap';
+                }
+                return [
+                    'id' => $doc->id,
+                    'uraian_spp' => $doc->uraian_spp ?? '-',
+                    'nomor_spp' => $doc->nomor_spp ?? '-',
+                    'bagian' => $doc->bagian ?? '-',
+                    'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
+                    'status_label' => $statusLabel,
+                    'status_class' => $statusClass,
+                    'created_at' => $doc->created_at ? $doc->created_at->toISOString() : null,
+                ];
+            })
+            ->toArray();
+
         return view('owner.home', compact(
             'greeting',
             'hariIni',
@@ -407,7 +435,8 @@ class OwnerDashboardController extends Controller
             'selesaiTrend',
             'nilaiTrend',
             'chartLabels',
-            'chartData'
+            'chartData',
+            'recentDocuments'
         ))
             ->with('title', 'Dashboard Kabag Keuangan - Home')
             ->with('module', 'owner')
@@ -462,6 +491,59 @@ class OwnerDashboardController extends Controller
         usort($stats, fn($a, $b) => $b['count'] - $a['count']);
 
         return $stats;
+    }
+
+    /**
+     * API: Get recent documents for real-time dashboard polling
+     */
+    public function getRecentDocuments(): JsonResponse
+    {
+        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($doc) {
+                $statusLabel = 'Menunggu';
+                $statusClass = 'status-belum';
+                if ($doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar)) {
+                    $statusLabel = 'Dibayar';
+                    $statusClass = 'status-sudah';
+                } elseif ($doc->status_pembayaran === 'siap_dibayar') {
+                    $statusLabel = 'Siap Bayar';
+                    $statusClass = 'status-siap';
+                }
+                return [
+                    'id' => $doc->id,
+                    'uraian_spp' => $doc->uraian_spp ?? '-',
+                    'nomor_spp' => $doc->nomor_spp ?? '-',
+                    'bagian' => $doc->bagian ?? '-',
+                    'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
+                    'status_label' => $statusLabel,
+                    'status_class' => $statusClass,
+                    'created_at' => $doc->created_at ? $doc->created_at->toISOString() : null,
+                ];
+            });
+
+        return response()->json(['success' => true, 'documents' => $docs]);
+    }
+
+    /**
+     * API: Get trend chart data for a given number of days
+     */
+    public function getTrendChart(Request $request): JsonResponse
+    {
+        $days = min(max((int) $request->query('days', 30), 7), 365);
+
+        $trend = Dokumen::selectRaw('DATE(created_at) as tgl, COUNT(*) as total')
+            ->where('created_at', '>=', now()->subDays($days))
+            ->groupBy('tgl')
+            ->orderBy('tgl')
+            ->get();
+
+        $labels = $trend->pluck('tgl')->map(fn($d) => Carbon::parse($d)->format('d M'))->toArray();
+        $data   = $trend->pluck('total')->toArray();
+
+        return response()->json(['success' => true, 'labels' => $labels, 'data' => $data]);
     }
 
     /**
